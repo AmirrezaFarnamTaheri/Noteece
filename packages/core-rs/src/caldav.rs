@@ -675,12 +675,18 @@ fn fetch_calendar_events(
 
     // SECURITY: Validate content type to ensure we're parsing XML
     if let Some(content_type) = response.headers().get(reqwest::header::CONTENT_TYPE) {
-        let ct = content_type.to_str().unwrap_or("");
-        if !ct.contains("xml") && !ct.contains("text/calendar") {
-            return Err(CalDavError::Parse(format!(
-                "Unexpected content type (expected XML): {}",
-                ct
-            )));
+        match content_type.to_str() {
+            Ok(ct) => {
+                if !ct.contains("xml") && !ct.contains("text/calendar") {
+                    return Err(CalDavError::Parse(format!(
+                        "Unexpected content type (expected XML): {}",
+                        ct
+                    )));
+                }
+            }
+            Err(_) => {
+                return Err(CalDavError::Parse("Invalid Content-Type header encoding".to_string()));
+            }
         }
     }
 
