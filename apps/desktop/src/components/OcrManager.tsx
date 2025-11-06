@@ -163,15 +163,26 @@ export function OcrManager() {
     }
   };
 
-  // Get status badge
-  const getStatusBadge = (status: string) => {
-    const colors = {
+  // Get status badge with robust handling of unknown/malformed status values
+  const getStatusBadge = (rawStatus: string) => {
+    // Normalize status to lowercase and handle null/undefined
+    const normalizedStatus = (rawStatus ?? '').toLowerCase().trim();
+
+    const colors: Record<string, string> = {
       queued: 'blue',
       processing: 'yellow',
       completed: 'green',
       failed: 'red',
     };
-    return <Badge color={colors[status as keyof typeof colors] || 'gray'}>{status}</Badge>;
+
+    // Validate status is a known value
+    const validStatuses = ['queued', 'processing', 'completed', 'failed'];
+    const isValidStatus = validStatuses.includes(normalizedStatus);
+
+    const color = isValidStatus ? colors[normalizedStatus] : 'gray';
+    const label = isValidStatus ? normalizedStatus : 'unknown';
+
+    return <Badge color={color}>{label}</Badge>;
   };
 
   // Get status icon

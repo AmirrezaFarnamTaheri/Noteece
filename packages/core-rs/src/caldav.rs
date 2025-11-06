@@ -913,6 +913,12 @@ fn parse_icalendar(ical_data: &str) -> Result<Vec<CalDavEvent>, CalDavError> {
 
 /// Parse iCalendar datetime format to Unix timestamp
 ///
+/// Supports multiple iCalendar datetime formats:
+/// - All-day events: YYYYMMDD (e.g., "20250107")
+/// - DateTime: YYYYMMDDTHHMMSS (e.g., "20250107T143000")
+/// - DateTime UTC: YYYYMMDDTHHMMSSZ (e.g., "20250107T143000Z")
+/// - With separators: YYYY-MM-DDTHH:MM:SSZ
+///
 /// SECURITY NOTE: Manual string slicing is used here for performance and to avoid
 /// external parser dependencies. Input is validated at each step with bounds checks
 /// and parse error handling. This is acceptable because:
@@ -930,40 +936,96 @@ fn parse_ical_datetime(datetime_str: &str) -> Result<i64, CalDavError> {
         return Err(CalDavError::Parse("Empty datetime string".to_string()));
     }
 
-    // iCalendar datetime format: YYYYMMDDTHHMMSSZ or YYYYMMDDTHHMMSS
+    // Remove common separators (: and -)
     let clean_str = trimmed.replace([':', '-'], "");
 
-    // Bounds check before slicing to prevent panics
-    if clean_str.len() < 15 {
+    // Check for UTC 'Z' suffix and remove it
+    let is_utc = clean_str.ends_with('Z') || clean_str.ends_with('z');
+    let clean_str = if is_utc {
+        &clean_str[..clean_str.len() - 1]
+    } else {
+        &clean_str
+    };
+
+    // All-day event format: YYYYMMDD (8 digits, no time component)
+    if clean_str.len() == 8 && clean_str.chars().all(|c| c.is_ascii_digit()) {
+        let year: i32 = clean_str.get(0..4)
+            .and_then(|s| s.parse().ok())
+            .ok_or_else(|| CalDavError::Parse(format!("Invalid year in '{}'", datetime_str)))?;
+
+        let month: u32 = clean_str.get(4..6)
+            .and_then(|s| s.parse().ok())
+            .ok_or_else(|| CalDavError::Parse(format!("Invalid month in '{}'", datetime_str)))?;
+
+        let day: u32 = clean_str.get(6..8)
+            .and_then(|s| s.parse().ok())
+            .ok_or_else(|| CalDavError::Parse(format!("Invalid day in '{}'", datetime_str)))?;
+
+        let date = NaiveDate::from_ymd_opt(year, month, day)
+            .ok_or_else(|| CalDavError::Parse(format!(
+                "Invalid date values: year={}, month={}, day={}",
+                year, month, day
+            )))?;
+
+        // All-day events start at midnight UTC
+        let datetime = NaiveDateTime::new(date, NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+        return Ok(datetime.and_utc().timestamp());
+    }
+
+    // DateTime format: Split on 'T' if present, otherwise assume contiguous date+time
+    let (date_part, time_part) = if let Some(t_pos) = clean_str.find('T') {
+        (&clean_str[0..t_pos], &clean_str[t_pos + 1..])
+    } else if clean_str.len() >= 15 {
+        // No 'T' separator, assume YYYYMMDDHHMMSS format
+        (&clean_str[0..8], &clean_str[8..])
+    } else {
         return Err(CalDavError::Parse(format!(
-            "Datetime string too short (got {}, need at least 15 chars): '{}'",
-            clean_str.len(),
+            "Invalid datetime format (expected YYYYMMDD or YYYYMMDDTHHMMSS): '{}'",
+            datetime_str
+        )));
+    };
+
+    // Validate date part is exactly 8 characters
+    if date_part.len() != 8 {
+        return Err(CalDavError::Parse(format!(
+            "Invalid date part length (expected 8, got {}): '{}'",
+            date_part.len(),
             datetime_str
         )));
     }
 
-    // Safe slicing with validation at each step
-    let year: i32 = clean_str.get(0..4)
+    // Validate time part is at least 6 characters (HHMMSS)
+    if time_part.len() < 6 {
+        return Err(CalDavError::Parse(format!(
+            "Invalid time part length (expected at least 6, got {}): '{}'",
+            time_part.len(),
+            datetime_str
+        )));
+    }
+
+    // Parse date components
+    let year: i32 = date_part.get(0..4)
         .and_then(|s| s.parse().ok())
         .ok_or_else(|| CalDavError::Parse(format!("Invalid year in '{}'", datetime_str)))?;
 
-    let month: u32 = clean_str.get(4..6)
+    let month: u32 = date_part.get(4..6)
         .and_then(|s| s.parse().ok())
         .ok_or_else(|| CalDavError::Parse(format!("Invalid month in '{}'", datetime_str)))?;
 
-    let day: u32 = clean_str.get(6..8)
+    let day: u32 = date_part.get(6..8)
         .and_then(|s| s.parse().ok())
         .ok_or_else(|| CalDavError::Parse(format!("Invalid day in '{}'", datetime_str)))?;
 
-    let hour: u32 = clean_str.get(9..11)
+    // Parse time components
+    let hour: u32 = time_part.get(0..2)
         .and_then(|s| s.parse().ok())
         .ok_or_else(|| CalDavError::Parse(format!("Invalid hour in '{}'", datetime_str)))?;
 
-    let minute: u32 = clean_str.get(11..13)
+    let minute: u32 = time_part.get(2..4)
         .and_then(|s| s.parse().ok())
         .ok_or_else(|| CalDavError::Parse(format!("Invalid minute in '{}'", datetime_str)))?;
 
-    let second: u32 = clean_str.get(13..15)
+    let second: u32 = time_part.get(4..6)
         .and_then(|s| s.parse().ok())
         .ok_or_else(|| CalDavError::Parse(format!("Invalid second in '{}'", datetime_str)))?;
 
@@ -982,6 +1044,8 @@ fn parse_ical_datetime(datetime_str: &str) -> Result<i64, CalDavError> {
 
     let datetime = NaiveDateTime::new(date, time);
 
+    // Treat as UTC (iCalendar spec: dates without timezone info are floating,
+    // but we normalize to UTC for consistency)
     Ok(datetime.and_utc().timestamp())
 }
 
