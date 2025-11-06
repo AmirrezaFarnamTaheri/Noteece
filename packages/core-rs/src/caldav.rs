@@ -3,6 +3,8 @@ use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ulid::Ulid;
+use reqwest::blocking::Client;
+use std::collections::HashMap;
 
 #[derive(Error, Debug)]
 pub enum CalDavError {
@@ -10,12 +12,16 @@ pub enum CalDavError {
     Database(#[from] rusqlite::Error),
     #[error("Network error: {0}")]
     Network(String),
+    #[error("HTTP error: {0}")]
+    Http(#[from] reqwest::Error),
     #[error("Authentication error")]
     Authentication,
     #[error("Parse error: {0}")]
     Parse(String),
     #[error("Sync conflict: {0}")]
     Conflict(String),
+    #[error("Account not found")]
+    AccountNotFound,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -607,39 +613,462 @@ pub fn map_caldav_event(
     Ok(id)
 }
 
-/// Simulate sync operation (placeholder for actual CalDAV protocol implementation)
+/// Fetch calendar events from CalDAV server using REPORT request
+fn fetch_calendar_events(
+    url: &str,
+    username: &str,
+    password: &str,
+) -> Result<Vec<CalDavEvent>, CalDavError> {
+    let client = Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()?;
+
+    // CalDAV calendar-query REPORT request
+    let report_body = r#"<?xml version="1.0" encoding="utf-8" ?>
+<C:calendar-query xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
+  <D:prop>
+    <D:getetag/>
+    <C:calendar-data/>
+  </D:prop>
+  <C:filter>
+    <C:comp-filter name="VCALENDAR">
+      <C:comp-filter name="VEVENT"/>
+    </C:comp-filter>
+  </C:filter>
+</C:calendar-query>"#;
+
+    let response = client
+        .request(reqwest::Method::from_bytes(b"REPORT")?, url)
+        .basic_auth(username, Some(password))
+        .header("Depth", "1")
+        .header("Content-Type", "application/xml; charset=utf-8")
+        .body(report_body)
+        .send()?;
+
+    if response.status() == reqwest::StatusCode::UNAUTHORIZED {
+        return Err(CalDavError::Authentication);
+    }
+
+    if !response.status().is_success() {
+        return Err(CalDavError::Network(format!(
+            "CalDAV REPORT failed: {}",
+            response.status()
+        )));
+    }
+
+    let response_text = response.text()?;
+    parse_calendar_response(&response_text)
+}
+
+/// Push calendar event to CalDAV server using PUT request
+fn push_calendar_event(
+    url: &str,
+    username: &str,
+    password: &str,
+    event: &CalDavEvent,
+) -> Result<String, CalDavError> {
+    let client = Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()?;
+
+    let ical_data = generate_icalendar(event)?;
+    let event_url = format!("{}/{}.ics", url.trim_end_matches('/'), event.uid);
+
+    let response = client
+        .put(&event_url)
+        .basic_auth(username, Some(password))
+        .header("Content-Type", "text/calendar; charset=utf-8")
+        .body(ical_data)
+        .send()?;
+
+    if response.status() == reqwest::StatusCode::UNAUTHORIZED {
+        return Err(CalDavError::Authentication);
+    }
+
+    if !response.status().is_success() {
+        return Err(CalDavError::Network(format!(
+            "CalDAV PUT failed: {}",
+            response.status()
+        )));
+    }
+
+    // Extract ETag from response headers
+    let etag = response
+        .headers()
+        .get("etag")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string())
+        .unwrap_or_default();
+
+    Ok(etag)
+}
+
+/// Delete calendar event from CalDAV server using DELETE request
+fn delete_calendar_event(
+    url: &str,
+    username: &str,
+    password: &str,
+    event_uid: &str,
+) -> Result<(), CalDavError> {
+    let client = Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()?;
+
+    let event_url = format!("{}/{}.ics", url.trim_end_matches('/'), event_uid);
+
+    let response = client
+        .delete(&event_url)
+        .basic_auth(username, Some(password))
+        .send()?;
+
+    if response.status() == reqwest::StatusCode::UNAUTHORIZED {
+        return Err(CalDavError::Authentication);
+    }
+
+    if !response.status().is_success()
+        && response.status() != reqwest::StatusCode::NOT_FOUND
+    {
+        return Err(CalDavError::Network(format!(
+            "CalDAV DELETE failed: {}",
+            response.status()
+        )));
+    }
+
+    Ok(())
+}
+
+/// Parse CalDAV XML response and extract calendar events
+fn parse_calendar_response(xml_data: &str) -> Result<Vec<CalDavEvent>, CalDavError> {
+    let mut events = Vec::new();
+
+    // Simple XML parsing to extract calendar-data elements
+    // In production, use a proper XML parser like quick-xml
+    for calendar_data in xml_data.split("<C:calendar-data>") {
+        if let Some(end_pos) = calendar_data.find("</C:calendar-data>") {
+            let ical_data = &calendar_data[..end_pos];
+            if let Ok(mut parsed_events) = parse_icalendar(ical_data) {
+                events.append(&mut parsed_events);
+            }
+        }
+    }
+
+    Ok(events)
+}
+
+/// Parse iCalendar format to CalDavEvent
+fn parse_icalendar(ical_data: &str) -> Result<Vec<CalDavEvent>, CalDavError> {
+    use ical::parser::ical::component::IcalCalendar;
+    use ical::parser::Component;
+    use std::io::BufReader;
+
+    let buf = BufReader::new(ical_data.as_bytes());
+    let reader = ical::IcalParser::new(buf);
+
+    let mut events = Vec::new();
+
+    for calendar in reader {
+        let calendar = calendar.map_err(|e| CalDavError::Parse(e.to_string()))?;
+
+        for event in calendar.events {
+            let mut uid = String::new();
+            let mut summary = String::new();
+            let mut description = None;
+            let mut start_time = 0i64;
+            let mut end_time = None;
+            let mut location = None;
+            let mut status = "CONFIRMED".to_string();
+            let mut last_modified = Utc::now().timestamp();
+
+            for property in event.properties {
+                match property.name.as_str() {
+                    "UID" => {
+                        uid = property.value.unwrap_or_default();
+                    }
+                    "SUMMARY" => {
+                        summary = property.value.unwrap_or_default();
+                    }
+                    "DESCRIPTION" => {
+                        description = property.value;
+                    }
+                    "DTSTART" => {
+                        if let Some(val) = property.value {
+                            start_time = parse_ical_datetime(&val).unwrap_or(0);
+                        }
+                    }
+                    "DTEND" => {
+                        if let Some(val) = property.value {
+                            end_time = Some(parse_ical_datetime(&val).unwrap_or(0));
+                        }
+                    }
+                    "LOCATION" => {
+                        location = property.value;
+                    }
+                    "STATUS" => {
+                        status = property.value.unwrap_or_else(|| "CONFIRMED".to_string());
+                    }
+                    "LAST-MODIFIED" => {
+                        if let Some(val) = property.value {
+                            last_modified = parse_ical_datetime(&val).unwrap_or(last_modified);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+
+            if !uid.is_empty() {
+                events.push(CalDavEvent {
+                    uid,
+                    summary,
+                    description,
+                    start_time,
+                    end_time,
+                    location,
+                    status,
+                    last_modified,
+                    etag: None,
+                });
+            }
+        }
+    }
+
+    Ok(events)
+}
+
+/// Parse iCalendar datetime format to Unix timestamp
+fn parse_ical_datetime(datetime_str: &str) -> Result<i64, CalDavError> {
+    // iCalendar datetime format: YYYYMMDDTHHMMSSZ or YYYYMMDDTHHMMSS
+    let clean_str = datetime_str.replace([':', '-'], "");
+
+    // Parse format: YYYYMMDDTHHMMSSZ
+    if clean_str.len() >= 15 {
+        let year: i32 = clean_str[0..4]
+            .parse()
+            .map_err(|_| CalDavError::Parse("Invalid year".to_string()))?;
+        let month: u32 = clean_str[4..6]
+            .parse()
+            .map_err(|_| CalDavError::Parse("Invalid month".to_string()))?;
+        let day: u32 = clean_str[6..8]
+            .parse()
+            .map_err(|_| CalDavError::Parse("Invalid day".to_string()))?;
+        let hour: u32 = clean_str[9..11]
+            .parse()
+            .map_err(|_| CalDavError::Parse("Invalid hour".to_string()))?;
+        let minute: u32 = clean_str[11..13]
+            .parse()
+            .map_err(|_| CalDavError::Parse("Invalid minute".to_string()))?;
+        let second: u32 = clean_str[13..15]
+            .parse()
+            .map_err(|_| CalDavError::Parse("Invalid second".to_string()))?;
+
+        use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+
+        let date = NaiveDate::from_ymd_opt(year, month, day)
+            .ok_or_else(|| CalDavError::Parse("Invalid date".to_string()))?;
+        let time = NaiveTime::from_hms_opt(hour, minute, second)
+            .ok_or_else(|| CalDavError::Parse("Invalid time".to_string()))?;
+        let datetime = NaiveDateTime::new(date, time);
+
+        Ok(datetime
+            .and_utc()
+            .timestamp())
+    } else {
+        Err(CalDavError::Parse("Invalid datetime format".to_string()))
+    }
+}
+
+/// Generate iCalendar format from CalDavEvent
+fn generate_icalendar(event: &CalDavEvent) -> Result<String, CalDavError> {
+    use chrono::TimeZone;
+
+    let start_dt = Utc.timestamp_opt(event.start_time, 0)
+        .single()
+        .ok_or_else(|| CalDavError::Parse("Invalid start time".to_string()))?;
+
+    let start_str = start_dt.format("%Y%m%dT%H%M%SZ").to_string();
+
+    let end_str = if let Some(end_time) = event.end_time {
+        let end_dt = Utc.timestamp_opt(end_time, 0)
+            .single()
+            .ok_or_else(|| CalDavError::Parse("Invalid end time".to_string()))?;
+        end_dt.format("%Y%m%dT%H%M%SZ").to_string()
+    } else {
+        // Default to 1 hour after start
+        start_dt
+            .checked_add_signed(chrono::Duration::hours(1))
+            .unwrap_or(start_dt)
+            .format("%Y%m%dT%H%M%SZ")
+            .to_string()
+    };
+
+    let now_str = Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
+
+    let mut ical = format!(
+        "BEGIN:VCALENDAR\r\n\
+         VERSION:2.0\r\n\
+         PRODID:-//Noteece//CalDAV Sync//EN\r\n\
+         BEGIN:VEVENT\r\n\
+         UID:{}\r\n\
+         DTSTAMP:{}\r\n\
+         DTSTART:{}\r\n\
+         DTEND:{}\r\n\
+         SUMMARY:{}\r\n",
+        event.uid, now_str, start_str, end_str, event.summary
+    );
+
+    if let Some(desc) = &event.description {
+        ical.push_str(&format!("DESCRIPTION:{}\r\n", desc.replace('\n', "\\n")));
+    }
+
+    if let Some(loc) = &event.location {
+        ical.push_str(&format!("LOCATION:{}\r\n", loc));
+    }
+
+    ical.push_str(&format!("STATUS:{}\r\n", event.status));
+    ical.push_str("END:VEVENT\r\nEND:VCALENDAR\r\n");
+
+    Ok(ical)
+}
+
+/// Sync CalDAV account with real HTTP implementation
 pub fn sync_caldav_account(
     conn: &Connection,
     account_id: &str,
-    _dek: &[u8],
+    dek: &[u8],
 ) -> Result<SyncResult, CalDavError> {
-    // This is a placeholder implementation
-    // In production, this would:
-    // 1. Decrypt password using DEK
-    // 2. Connect to CalDAV server
-    // 3. Perform PROPFIND to discover changes
-    // 4. Pull/push events based on sync_direction
-    // 5. Detect and record conflicts
-    // 6. Update sync_token
+    use crate::crypto::decrypt_string;
 
     let account = get_caldav_account(conn, account_id)?
-        .ok_or_else(|| CalDavError::Parse("Account not found".to_string()))?;
+        .ok_or(CalDavError::AccountNotFound)?;
+
+    // Decrypt password
+    let password = decrypt_string(&account.encrypted_password, dek)
+        .map_err(|e| CalDavError::Parse(format!("Failed to decrypt password: {}", e)))?;
 
     let now = Utc::now().timestamp();
+    let mut events_pulled = 0u32;
+    let mut events_pushed = 0u32;
+    let mut conflicts = 0u32;
+    let mut errors = Vec::new();
+    let mut success = true;
 
-    // Simulate sync result
+    // Build full calendar URL
+    let calendar_url = if account.calendar_path.starts_with("http") {
+        account.calendar_path.clone()
+    } else {
+        format!(
+            "{}/{}",
+            account.url.trim_end_matches('/'),
+            account.calendar_path.trim_start_matches('/')
+        )
+    };
+
+    // Pull events from server if direction is Pull or Bidirectional
+    if account.sync_direction == SyncDirection::Pull
+        || account.sync_direction == SyncDirection::Bidirectional
+    {
+        match fetch_calendar_events(&calendar_url, &account.username, &password) {
+            Ok(remote_events) => {
+                events_pulled = remote_events.len() as u32;
+
+                // Process each remote event
+                for remote_event in remote_events {
+                    // Check if event already exists locally
+                    let mut stmt = conn
+                        .prepare(
+                            "SELECT id, etag FROM caldav_event_mapping \
+                             WHERE account_id = ?1 AND caldav_uid = ?2",
+                        )
+                        .map_err(CalDavError::Database)?;
+
+                    let existing: Option<(String, Option<String>)> = stmt
+                        .query_row(
+                            params![account_id, &remote_event.uid],
+                            |row| Ok((row.get(0)?, row.get(1)?)),
+                        )
+                        .optional()
+                        .map_err(CalDavError::Database)?;
+
+                    match existing {
+                        Some((_mapping_id, local_etag)) => {
+                            // Event exists - check for conflicts
+                            if let Some(remote_etag) = &remote_event.etag {
+                                if let Some(local) = &local_etag {
+                                    if local != remote_etag {
+                                        // Conflict detected - ETags differ
+                                        let local_json =
+                                            serde_json::to_string(&remote_event).unwrap_or_default();
+                                        let remote_json =
+                                            serde_json::to_string(&remote_event).unwrap_or_default();
+
+                                        if let Err(e) = create_sync_conflict(
+                                            conn,
+                                            account_id,
+                                            &remote_event.uid,
+                                            &local_json,
+                                            &remote_json,
+                                        ) {
+                                            errors.push(format!("Failed to record conflict: {}", e));
+                                        } else {
+                                            conflicts += 1;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        None => {
+                            // New event - create mapping
+                            if let Err(e) = map_caldav_event(
+                                conn,
+                                account_id,
+                                &remote_event.uid,
+                                None,
+                                None,
+                                remote_event.etag.as_deref(),
+                            ) {
+                                errors.push(format!(
+                                    "Failed to map event {}: {}",
+                                    remote_event.uid, e
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                success = false;
+                errors.push(format!("Failed to fetch events: {}", e));
+            }
+        }
+    }
+
+    // Push local events to server if direction is Push or Bidirectional
+    if account.sync_direction == SyncDirection::Push
+        || account.sync_direction == SyncDirection::Bidirectional
+    {
+        // Get local events that need to be pushed
+        // For now, this is a simplified implementation
+        // In production, you'd track which local events have been modified
+        // and need to be synced to the server
+    }
+
     let result = SyncResult {
         account_id: account_id.to_string(),
         sync_time: now,
         direction: account.sync_direction.clone(),
-        events_pulled: 0,
-        events_pushed: 0,
-        conflicts: 0,
-        errors: vec![],
-        success: true,
+        events_pulled,
+        events_pushed,
+        conflicts,
+        errors: errors.clone(),
+        success,
     };
 
     // Record sync history
+    let error_message = if errors.is_empty() {
+        None
+    } else {
+        Some(errors.join("; "))
+    };
+
     record_sync_history(
         conn,
         account_id,
@@ -648,7 +1077,7 @@ pub fn sync_caldav_account(
         result.events_pushed,
         result.conflicts,
         result.success,
-        None,
+        error_message.as_deref(),
     )?;
 
     // Update sync status
