@@ -811,8 +811,10 @@ fn parse_calendar_response(xml_data: &str) -> Result<Vec<CalDavEvent>, CalDavErr
 }
 
 /// Parse iCalendar format to CalDavEvent
+///
+/// SECURITY: Skip events with missing or unparsable required fields (UID, DTSTART)
+/// instead of defaulting to sentinel values like 0, which could cause data corruption.
 fn parse_icalendar(ical_data: &str) -> Result<Vec<CalDavEvent>, CalDavError> {
-    use ical::parser::ical::component::IcalCalendar;
     use ical::parser::Component;
     use std::io::BufReader;
 
@@ -825,19 +827,19 @@ fn parse_icalendar(ical_data: &str) -> Result<Vec<CalDavEvent>, CalDavError> {
         let calendar = calendar.map_err(|e| CalDavError::Parse(e.to_string()))?;
 
         for event in calendar.events {
-            let mut uid = String::new();
+            let mut uid: Option<String> = None;
             let mut summary = String::new();
             let mut description = None;
-            let mut start_time = 0i64;
-            let mut end_time = None;
+            let mut start_time: Option<i64> = None;
+            let mut end_time: Option<i64> = None;
             let mut location = None;
             let mut status = "CONFIRMED".to_string();
-            let mut last_modified = Utc::now().timestamp();
+            let mut last_modified: Option<i64> = None;
 
             for property in event.properties {
                 match property.name.as_str() {
                     "UID" => {
-                        uid = property.value.unwrap_or_default();
+                        uid = Some(property.value.unwrap_or_default());
                     }
                     "SUMMARY" => {
                         summary = property.value.unwrap_or_default();
@@ -847,12 +849,18 @@ fn parse_icalendar(ical_data: &str) -> Result<Vec<CalDavEvent>, CalDavError> {
                     }
                     "DTSTART" => {
                         if let Some(val) = property.value {
-                            start_time = parse_ical_datetime(&val).unwrap_or(0);
+                            // Skip event if DTSTART cannot be parsed
+                            if let Ok(ts) = parse_ical_datetime(&val) {
+                                start_time = Some(ts);
+                            }
                         }
                     }
                     "DTEND" => {
                         if let Some(val) = property.value {
-                            end_time = Some(parse_ical_datetime(&val).unwrap_or(0));
+                            // DTEND is optional; only set if parsable
+                            if let Ok(ts) = parse_ical_datetime(&val) {
+                                end_time = Some(ts);
+                            }
                         }
                     }
                     "LOCATION" => {
@@ -863,26 +871,40 @@ fn parse_icalendar(ical_data: &str) -> Result<Vec<CalDavEvent>, CalDavError> {
                     }
                     "LAST-MODIFIED" => {
                         if let Some(val) = property.value {
-                            last_modified = parse_ical_datetime(&val).unwrap_or(last_modified);
+                            if let Ok(ts) = parse_ical_datetime(&val) {
+                                last_modified = Some(ts);
+                            }
                         }
                     }
                     _ => {}
                 }
             }
 
-            if !uid.is_empty() {
-                events.push(CalDavEvent {
-                    uid,
-                    summary,
-                    description,
-                    start_time,
-                    end_time,
-                    location,
-                    status,
-                    last_modified,
-                    etag: None,
-                });
-            }
+            // Validate required fields before adding event
+            let uid = match uid {
+                Some(u) if !u.is_empty() => u,
+                _ => continue, // Skip events without valid UID
+            };
+
+            let start_time = match start_time {
+                Some(ts) => ts,
+                None => continue, // Skip events without valid DTSTART
+            };
+
+            // Use current timestamp if LAST-MODIFIED is missing
+            let last_modified = last_modified.unwrap_or_else(|| Utc::now().timestamp());
+
+            events.push(CalDavEvent {
+                uid,
+                summary,
+                description,
+                start_time,
+                end_time,
+                location,
+                status,
+                last_modified,
+                etag: None,
+            });
         }
     }
 

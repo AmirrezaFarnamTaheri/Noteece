@@ -109,7 +109,7 @@ const SyncStatus: React.FC = () => {
     queryKey: ['syncHistory', activeSpaceId],
     queryFn: () =>
       invoke<SyncHistoryEntry[]>('get_sync_history_for_space_cmd', {
-        spaceId: activeSpaceId || '',
+        space_id: activeSpaceId || '',
         limit: 20,
       }),
     enabled: !!activeSpaceId,
@@ -118,7 +118,7 @@ const SyncStatus: React.FC = () => {
   // Resolve conflict mutation
   const resolveConflictMutation = useMutation({
     mutationFn: ({ entityId, resolution }: { entityId: string; resolution: string }) =>
-      invoke('resolve_sync_conflict_cmd', { entityId, resolution }),
+      invoke('resolve_sync_conflict_cmd', { entity_id: entityId, resolution }),
     onSuccess: () => {
       notifications.show({
         title: 'Conflict Resolved',
@@ -145,27 +145,35 @@ const SyncStatus: React.FC = () => {
       setSyncProgress(0);
 
       // Simulate progress for now (in real implementation, this would track actual sync progress)
+      let cleared = false;
       const progressInterval = setInterval(() => {
         setSyncProgress((prev) => Math.min(prev + 10, 90));
       }, 200);
 
+      const clearProgress = () => {
+        if (!cleared) {
+          clearInterval(progressInterval);
+          cleared = true;
+        }
+      };
+
       try {
         // Record the sync attempt
         await invoke('record_sync_cmd', {
-          spaceId: activeSpaceId || '',
+          space_id: activeSpaceId || '',
           direction: 'bidirectional',
-          entitiesPushed: 0,
-          entitiesPulled: 0,
-          conflicts: 0,
+          entities_pushed: 0,
+          entities_pulled: 0,
+          conflicts_detected: 0,
           success: true,
-          errorMessage: null,
+          error_message: null,
         });
 
-        clearInterval(progressInterval);
+        clearProgress();
         setSyncProgress(100);
         return true;
       } catch (error) {
-        clearInterval(progressInterval);
+        clearProgress();
         throw error;
       }
     },
