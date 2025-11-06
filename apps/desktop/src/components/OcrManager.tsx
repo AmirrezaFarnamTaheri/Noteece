@@ -39,7 +39,6 @@ export function OcrManager() {
   const [searchResults, setSearchResults] = useState<OcrResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [language, setLanguage] = useState('eng');
   const [isUploading, setIsUploading] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<OcrResult | null>(null);
@@ -101,19 +100,10 @@ export function OcrManager() {
 
   // Process OCR for an uploaded image
   const handleProcessOcr = async () => {
-    if (!selectedFile) {
-      notifications.show({
-        title: 'No file selected',
-        message: 'Please select an image file',
-        color: 'yellow',
-      });
-      return;
-    }
-
     setIsUploading(true);
     try {
       // For Tauri, we need to get the file path
-      // In a real scenario, you'd use Tauri's file dialog
+      // Open file dialog to select image
       const filePath = await open({
         title: 'Select Image for OCR',
         multiple: false,
@@ -128,8 +118,8 @@ export function OcrManager() {
         return;
       }
 
-      // Generate a blob ID (in real app, this would come from blob storage)
-      const blobId = `blob_${Date.now()}`;
+      // Generate a unique blob ID
+      const blobId = `blob_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
       const result = await invoke<string>('process_ocr_cmd', {
         blobId,
@@ -147,7 +137,6 @@ export function OcrManager() {
       const status = await invoke<OcrResult>('get_ocr_status_cmd', { blobId });
       setCurrentStatus(status);
       setUploadModalOpen(false);
-      setSelectedFile(null);
     } catch (error) {
       notifications.show({
         title: 'OCR processing failed',

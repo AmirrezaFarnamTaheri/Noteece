@@ -5,7 +5,7 @@ use ulid::Ulid;
 
 /// Initialize sync database tables
 pub fn init_sync_tables(conn: &Connection) -> Result<(), rusqlite::Error> {
-    // Device tracking table
+    // Device tracking table (device registry for discovery)
     conn.execute(
         "CREATE TABLE IF NOT EXISTS sync_state (
             device_id TEXT PRIMARY KEY,
@@ -65,6 +65,20 @@ pub fn init_sync_tables(conn: &Connection) -> Result<(), rusqlite::Error> {
             device_id TEXT NOT NULL,
             clock_value INTEGER NOT NULL DEFAULT 0,
             PRIMARY KEY (space_id, device_id)
+        )",
+        [],
+    )?;
+
+    // Entity sync log table
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS entity_sync_log (
+            id TEXT PRIMARY KEY,
+            entity_type TEXT NOT NULL,
+            entity_id TEXT NOT NULL,
+            synced_at INTEGER NOT NULL,
+            device_id TEXT NOT NULL,
+            operation TEXT NOT NULL,
+            created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
         )",
         [],
     )?;
@@ -380,7 +394,7 @@ impl SyncAgent {
     fn get_last_sync_time(&self, conn: &Connection, space_id: Ulid) -> Result<i64, SyncError> {
         let result: Option<i64> = conn
             .query_row(
-                "SELECT MAX(last_sync_at) FROM sync_state WHERE space_id = ?1",
+                "SELECT MAX(sync_time) FROM sync_history WHERE space_id = ?1",
                 [space_id.to_string()],
                 |row| row.get(0),
             )
@@ -396,8 +410,12 @@ impl SyncAgent {
     ) -> Result<HashMap<String, i64>, SyncError> {
         let mut clock = HashMap::new();
 
-        let mut stmt =
-            conn.prepare("SELECT device_id, last_sync_at FROM sync_state WHERE space_id = ?1")?;
+        let mut stmt = conn.prepare(
+            "SELECT device_id, MAX(sync_time)
+             FROM sync_history
+             WHERE space_id = ?1
+             GROUP BY device_id",
+        )?;
 
         let rows = stmt.query_map([space_id.to_string()], |row| {
             Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
@@ -762,11 +780,13 @@ impl SyncAgent {
     }
 
     fn log_entity_sync(&self, conn: &Connection, delta: &SyncDelta) -> Result<(), SyncError> {
+        let log_id = Ulid::new().to_string();
         conn.execute(
             "INSERT INTO entity_sync_log (
-                entity_type, entity_id, synced_at, device_id, operation
-            ) VALUES (?1, ?2, ?3, ?4, ?5)",
+                id, entity_type, entity_id, synced_at, device_id, operation
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
             rusqlite::params![
+                log_id,
                 &delta.entity_type,
                 &delta.entity_id,
                 delta.timestamp,

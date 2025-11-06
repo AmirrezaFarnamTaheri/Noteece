@@ -853,14 +853,39 @@ fn init_sync_tables_cmd(db: State<DbConnection>) -> Result<(), String> {
     }
 }
 
+/// Get or generate device ID for this installation
+fn get_local_device_id() -> String {
+    // In production, this should be stored in a config file or generated once
+    // For now, use hostname + MAC address hash or similar unique identifier
+    use std::env;
+
+    // Try to get hostname, fall back to random if not available
+    let hostname = env::var("COMPUTERNAME")
+        .or_else(|_| env::var("HOSTNAME"))
+        .unwrap_or_else(|_| {
+            // Generate a stable device ID based on machine characteristics
+            use ulid::Ulid;
+            format!("desktop_{}", Ulid::new())
+        });
+
+    hostname
+}
+
+fn get_local_device_name() -> String {
+    use std::env;
+    env::var("COMPUTERNAME")
+        .or_else(|_| env::var("HOSTNAME"))
+        .unwrap_or_else(|_| "Desktop".to_string())
+}
+
 #[tauri::command]
 fn get_sync_devices_cmd(db: State<DbConnection>) -> Result<Vec<DeviceInfo>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let agent = SyncAgent::new(
-            "desktop_main".to_string(),
-            "Desktop".to_string(),
-            8765,
+            get_local_device_id(),
+            get_local_device_name(),
+            8765, // TODO: Make this configurable
         );
         agent.get_devices(conn).map_err(|e| e.to_string())
     } else {
@@ -880,9 +905,9 @@ fn register_sync_device_cmd(
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let agent = SyncAgent::new(
-            "desktop_main".to_string(),
-            "Desktop".to_string(),
-            8765,
+            get_local_device_id(),
+            get_local_device_name(),
+            8765, // TODO: Make this configurable
         );
 
         let device_type_enum = match device_type.as_str() {
@@ -921,9 +946,9 @@ fn get_sync_history_for_space_cmd(
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let agent = SyncAgent::new(
-            "desktop_main".to_string(),
-            "Desktop".to_string(),
-            8765,
+            get_local_device_id(),
+            get_local_device_name(),
+            8765, // TODO: Make this configurable
         );
         agent.get_sync_history(conn, &space_id, limit).map_err(|e| e.to_string())
     } else {
@@ -936,9 +961,9 @@ fn get_sync_conflicts_cmd(db: State<DbConnection>) -> Result<Vec<SyncConflict>, 
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let agent = SyncAgent::new(
-            "desktop_main".to_string(),
-            "Desktop".to_string(),
-            8765,
+            get_local_device_id(),
+            get_local_device_name(),
+            8765, // TODO: Make this configurable
         );
         agent.get_unresolved_conflicts(conn).map_err(|e| e.to_string())
     } else {
@@ -955,10 +980,37 @@ fn resolve_sync_conflict_cmd(
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let agent = SyncAgent::new(
-            "desktop_main".to_string(),
-            "Desktop".to_string(),
-            8765,
+            get_local_device_id(),
+            get_local_device_name(),
+            8765, // TODO: Make this configurable
         );
+
+        // Get the conflict from database
+        let conflict = conn
+            .query_row(
+                "SELECT entity_type, entity_id, local_version, remote_version, conflict_type
+                 FROM sync_conflict
+                 WHERE entity_id = ?1 AND resolved = 0",
+                [&entity_id],
+                |row| {
+                    let conflict_type_str: String = row.get(4)?;
+                    let conflict_type = match conflict_type_str.as_str() {
+                        "UpdateUpdate" => ConflictType::UpdateUpdate,
+                        "UpdateDelete" => ConflictType::UpdateDelete,
+                        "DeleteUpdate" => ConflictType::DeleteUpdate,
+                        _ => ConflictType::UpdateUpdate,
+                    };
+
+                    Ok(SyncConflict {
+                        entity_type: row.get(0)?,
+                        entity_id: row.get(1)?,
+                        local_version: row.get(2)?,
+                        remote_version: row.get(3)?,
+                        conflict_type,
+                    })
+                },
+            )
+            .map_err(|e| format!("Conflict not found: {}", e))?;
 
         let resolution_type = match resolution.as_str() {
             "use_local" => SyncConflictResolution::UseLocal,
@@ -967,7 +1019,13 @@ fn resolve_sync_conflict_cmd(
             _ => return Err("Invalid resolution type".to_string()),
         };
 
-        agent.resolve_conflict(conn, &entity_id, resolution_type).map_err(|e| e.to_string())
+        // TODO: Replace with actual DEK from secure state management
+        // For now, using empty slice as encryption is not fully implemented
+        let dek: &[u8] = &[];
+
+        agent
+            .resolve_conflict(conn, &conflict, resolution_type, dek)
+            .map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
@@ -987,9 +1045,9 @@ fn record_sync_cmd(
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let agent = SyncAgent::new(
-            "desktop_main".to_string(),
-            "Desktop".to_string(),
-            8765,
+            get_local_device_id(),
+            get_local_device_name(),
+            8765, // TODO: Make this configurable
         );
         agent
             .record_sync_history(

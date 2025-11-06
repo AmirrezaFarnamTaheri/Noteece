@@ -197,7 +197,68 @@ fn init_default_roles(conn: &Connection) -> Result<(), rusqlite::Error> {
     Ok(())
 }
 
-/// Get all users in a space
+/// Get all user permissions for a space in bulk (optimized to avoid N+1 queries)
+fn get_all_space_user_permissions(
+    conn: &Connection,
+    space_id: &str,
+) -> Result<std::collections::HashMap<String, Vec<String>>, CollaborationError> {
+    use std::collections::HashMap;
+
+    let mut permissions_map: HashMap<String, Vec<String>> = HashMap::new();
+
+    // Get all role permissions for users in this space
+    let mut stmt = conn.prepare(
+        "SELECT sur.user_id, rp.permission
+         FROM space_user_roles sur
+         JOIN role_permissions rp ON sur.role_id = rp.role_id
+         WHERE sur.space_id = ?1",
+    )?;
+
+    let role_perms = stmt
+        .query_map([space_id], |row| {
+            let user_id: String = row.get(0)?;
+            let permission: String = row.get(1)?;
+            Ok((user_id, permission))
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    for (user_id, permission) in role_perms {
+        permissions_map
+            .entry(user_id)
+            .or_insert_with(Vec::new)
+            .push(permission);
+    }
+
+    // Get all custom permissions (overrides) for users in this space
+    let mut stmt = conn.prepare(
+        "SELECT user_id, permission, granted
+         FROM user_permissions
+         WHERE space_id = ?1",
+    )?;
+
+    let custom_perms = stmt
+        .query_map([space_id], |row| {
+            let user_id: String = row.get(0)?;
+            let permission: String = row.get(1)?;
+            let granted: i32 = row.get(2)?;
+            Ok((user_id, permission, granted))
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    // Apply custom permissions
+    for (user_id, permission, granted) in custom_perms {
+        let perms = permissions_map.entry(user_id).or_insert_with(Vec::new);
+        if granted == 1 && !perms.contains(&permission) {
+            perms.push(permission);
+        } else if granted == 0 {
+            perms.retain(|p| p != &permission);
+        }
+    }
+
+    Ok(permissions_map)
+}
+
+/// Get all users in a space (optimized to avoid N+1 query)
 pub fn get_space_users(
     conn: &Connection,
     space_id: &str,
@@ -224,19 +285,29 @@ pub fn get_space_users(
         })?
         .collect::<Result<Vec<_>, _>>()?;
 
-    let mut space_users = Vec::new();
-    for (user_id, email, role, status, last_active, joined_at) in users {
-        let permissions = get_user_permissions(conn, space_id, &user_id)?;
-        space_users.push(SpaceUser {
-            user_id,
-            email,
-            role,
-            status,
-            permissions,
-            last_active,
-            joined_at,
-        });
-    }
+    // Fetch all permissions in bulk (single query instead of N queries)
+    let permissions_map = get_all_space_user_permissions(conn, space_id)?;
+
+    // Map permissions to users in memory
+    let space_users: Vec<SpaceUser> = users
+        .into_iter()
+        .map(|(user_id, email, role, status, last_active, joined_at)| {
+            let permissions = permissions_map
+                .get(&user_id)
+                .cloned()
+                .unwrap_or_else(Vec::new);
+
+            SpaceUser {
+                user_id,
+                email,
+                role,
+                status,
+                permissions,
+                last_active,
+                joined_at,
+            }
+        })
+        .collect();
 
     Ok(space_users)
 }
@@ -314,7 +385,15 @@ pub fn invite_user(
     }
 
     let id = Ulid::new().to_string();
-    let token = Ulid::new().to_string(); // In production, use secure random token
+
+    // Generate cryptographically secure random token (32 bytes = 64 hex chars)
+    use rand::Rng;
+    let token: String = rand::thread_rng()
+        .sample_iter(&rand::distributions::Alphanumeric)
+        .take(64)
+        .map(char::from)
+        .collect();
+
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()

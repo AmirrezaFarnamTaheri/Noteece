@@ -441,12 +441,11 @@ const SyncStatus: React.FC = () => {
                       size="xs"
                       onClick={() => {
                         setSelectedConflict(conflict);
-                          setConflictModalOpened(true);
-                        }}
-                      >
-                        Resolve
-                      </Button>
-                    )}
+                        setConflictModalOpened(true);
+                      }}
+                    >
+                      Resolve
+                    </Button>
                   </Group>
                 </Card>
               ))}

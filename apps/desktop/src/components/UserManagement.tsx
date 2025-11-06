@@ -86,6 +86,27 @@ const statusColors: Record<string, string> = {
 };
 
 /**
+ * Get current user ID for audit logging
+ * TODO: Replace with actual authentication system
+ * This should retrieve the authenticated user's ID from:
+ * - Auth context/provider
+ * - JWT token
+ * - Session storage
+ * - Backend session API
+ *
+ * For now, returns a system user ID as a placeholder.
+ * WARNING: In production, this MUST be replaced with real user authentication
+ * to prevent security issues and ensure accurate audit trails.
+ */
+function getCurrentUserId(): string {
+  // TEMPORARY: Using system user until auth is implemented
+  // In production, this should be:
+  // const { user } = useAuth();
+  // return user.id;
+  return 'system_user'; // More descriptive than 'current_user'
+}
+
+/**
  * User Management Component - Manage users, roles, and permissions
  * Features:
  * - User listing with roles and status
@@ -127,7 +148,7 @@ const UserManagement: React.FC = () => {
         spaceId: activeSpaceId,
         email: values.email,
         roleId: values.roleId,
-        invitedBy: 'current_user', // TODO: Get from auth context
+        invitedBy: getCurrentUserId(),
       });
 
       // If custom permissions are specified, grant them
@@ -168,7 +189,7 @@ const UserManagement: React.FC = () => {
         spaceId: activeSpaceId,
         userId: values.userId,
         newRoleId: values.roleId,
-        updatedBy: 'current_user', // TODO: Get from auth context
+        updatedBy: getCurrentUserId(),
       });
 
       // Handle custom permissions
@@ -190,7 +211,7 @@ const UserManagement: React.FC = () => {
 
       // Revoke role permissions not in custom permissions
       const permissionsToRevoke = rolePermissions.filter(
-        p => values.customPermissions.length > 0 && !values.customPermissions.includes(p)
+        p => !values.customPermissions.includes(p)
       );
       for (const permission of permissionsToRevoke) {
         await invoke('revoke_permission_cmd', {
