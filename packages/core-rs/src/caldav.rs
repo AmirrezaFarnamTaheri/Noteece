@@ -878,43 +878,35 @@ fn parse_calendar_response(xml_data: &str) -> Result<Vec<CalDavEvent>, CalDavErr
     // Matches: <c:calendar-data>, <cal:calendar-data>, <C:CALENDAR-DATA>, etc.
     let mut search_pos = 0;
     while let Some(start_idx) = lower_xml[search_pos..].find(":calendar-data>") {
-        // Find the actual start of the opening tag (search backwards for '<')
         let tag_start_pos = search_pos + start_idx;
-        if let Some(open_bracket) = lower_xml[..tag_start_pos].rfind('<') {
-            // Position after the opening tag
+        if let Some(_open_bracket) = lower_xml[..tag_start_pos].rfind('<') {
             let content_start = tag_start_pos + ":calendar-data>".len();
 
-            // Find corresponding closing tag (case-insensitive, namespace-agnostic)
             if let Some(close_idx) = lower_xml[content_start..].find("</") {
                 let close_tag_start = content_start + close_idx;
 
                 // Verify this is actually a calendar-data closing tag
-                if lower_xml[close_tag_start..].starts_with("</")
-                    && lower_xml[close_tag_start + 2..].starts_with("c:calendar-data>")
-                        .or(lower_xml[close_tag_start + 2..].starts_with("cal:calendar-data>"))
-                        .or(lower_xml[close_tag_start + 2..].starts_with("calendar-data>"))
-                        .unwrap_or(false)
-                {
-                    // Extract iCalendar data from the original XML (preserve case)
+                let is_calendar_close =
+                    lower_xml[close_tag_start..].starts_with("</")
+                    && (lower_xml[close_tag_start + 2..].starts_with("c:calendar-data>")
+                        || lower_xml[close_tag_start + 2..].starts_with("cal:calendar-data>")
+                        || lower_xml[close_tag_start + 2..].starts_with("calendar-data>"));
+
+                if is_calendar_close {
                     let ical_data = &xml_data[content_start..close_tag_start];
 
-                    // Parse and add events
                     if let Ok(mut parsed_events) = parse_icalendar(ical_data) {
                         events.append(&mut parsed_events);
                     }
 
-                    // Continue searching after this closing tag
                     search_pos = close_tag_start + "calendar-data>".len();
                 } else {
-                    // Not a valid closing tag, continue searching
                     search_pos = content_start;
                 }
             } else {
-                // No closing tag found, stop searching
                 break;
             }
         } else {
-            // Malformed XML, continue searching
             search_pos = tag_start_pos + 1;
         }
     }
