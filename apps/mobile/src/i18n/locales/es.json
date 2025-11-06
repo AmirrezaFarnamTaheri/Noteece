@@ -1,0 +1,295 @@
+{
+  "common": {
+    "appName": "Noteece",
+    "tagline": "Tu Bóveda de Inteligencia Personal",
+    "ok": "OK",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "done": "Hecho",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "tryAgain": "Intentar de Nuevo",
+    "noData": "No hay datos disponibles"
+  },
+
+  "onboarding": {
+    "step1": {
+      "title": "Tu Bóveda de Inteligencia Personal",
+      "description": "Noteece es tu base de conocimiento personal cifrada que aprende de tus datos para ayudarte a trabajar mejor.",
+      "features": {
+        "encryption": "Cifrado de extremo a extremo",
+        "offline": "Local primero, funciona sin conexión",
+        "zeroKnowledge": "Arquitectura de conocimiento cero"
+      }
+    },
+    "step2": {
+      "title": "Inteligencia Foresight 3.0",
+      "description": "Motor de correlación avanzado que sintetiza tus tareas, tiempo, salud y finanzas en información procesable.",
+      "features": {
+        "briefs": "Resúmenes diarios y predicciones",
+        "burnout": "Análisis de riesgo de agotamiento",
+        "recommendations": "Recomendaciones inteligentes"
+      }
+    },
+    "step3": {
+      "title": "Sincronización Local Fluida",
+      "description": "Sincroniza de forma segura entre tus dispositivos en tu red local. No se requiere nube.",
+      "features": {
+        "p2p": "Cifrado punto a punto",
+        "conflicts": "Resolución automática de conflictos",
+        "background": "Sincronización en segundo plano"
+      }
+    },
+    "step4": {
+      "title": "Puente Físico-Digital",
+      "description": "Usa etiquetas NFC y geocercas para combinar tus flujos de trabajo digitales y físicos.",
+      "features": {
+        "nfc": "Acciones con etiquetas NFC",
+        "location": "Recordatorios basados en ubicación",
+        "capture": "Atajos de captura rápida"
+      }
+    },
+    "password": {
+      "title": "Crea Tu Bóveda",
+      "description": "Elige una contraseña fuerte. Esto cifra todos tus datos localmente.",
+      "placeholder": "Contraseña (mín. 8 caracteres)",
+      "confirmPlaceholder": "Confirmar contraseña",
+      "warning": "Esta contraseña no se puede recuperar. Guárdala de forma segura.",
+      "tooShort": "La contraseña debe tener al menos 8 caracteres",
+      "mismatch": "Las contraseñas no coinciden",
+      "creating": "Creando...",
+      "createButton": "Crear Bóveda"
+    },
+    "getStarted": "Comenzar"
+  },
+
+  "unlock": {
+    "title": "Noteece",
+    "subtitle": "Ingresa tu contraseña para desbloquear",
+    "placeholder": "Contraseña de la bóveda",
+    "unlocking": "Desbloqueando...",
+    "unlockButton": "Desbloquear Bóveda",
+    "biometric": "Usar Biometría",
+    "biometricComingSoon": "La autenticación biométrica estará disponible en una futura actualización.",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "forgotMessage": "Por razones de seguridad, si olvidas tu contraseña de la bóveda, deberás restablecer la aplicación y perderás todos los datos cifrados. Asegúrate de hacer copias de seguridad de tus datos regularmente.",
+    "incorrectPassword": "Contraseña Incorrecta",
+    "incorrectMessage": "La contraseña que ingresaste es incorrecta. Por favor, inténtalo de nuevo.",
+    "securityBadge": "Cifrado de extremo a extremo • Conocimiento cero"
+  },
+
+  "tabs": {
+    "today": "Hoy",
+    "tasks": "Tareas",
+    "capture": "Capturar",
+    "insights": "Información",
+    "more": "Más"
+  },
+
+  "today": {
+    "greeting": {
+      "morning": "Buenos días",
+      "afternoon": "Buenas tardes",
+      "evening": "Buenas noches"
+    },
+    "pullToRefresh": "Desliza para actualizar",
+    "emptyState": {
+      "title": "Tu día está despejado",
+      "message": "No hay tareas o eventos programados para hoy"
+    },
+    "dailyBrief": "Resumen Diario"
+  },
+
+  "tasks": {
+    "filters": {
+      "all": "Todas",
+      "today": "Hoy",
+      "upcoming": "Próximas",
+      "completed": "Completadas"
+    },
+    "addTask": "Agregar tarea",
+    "taskPlaceholder": "Título de la tarea...",
+    "emptyState": {
+      "noTasks": "No hay tareas todavía",
+      "noCompleted": "No hay tareas completadas",
+      "addFirst": "Toca + para agregar tu primera tarea",
+      "completeMessage": "Completa algunas tareas para verlas aquí"
+    }
+  },
+
+  "capture": {
+    "title": "Captura Rápida",
+    "types": {
+      "note": {
+        "label": "Nota",
+        "description": "Captura pensamientos e ideas"
+      },
+      "task": {
+        "label": "Tarea",
+        "description": "Agrega una tarea rápida"
+      },
+      "voice": {
+        "label": "Voz",
+        "description": "Graba memo de voz"
+      },
+      "photo": {
+        "label": "Foto",
+        "description": "Captura con OCR"
+      }
+    },
+    "titlePlaceholder": {
+      "note": "Título de la nota...",
+      "task": "Título de la tarea..."
+    },
+    "contentPlaceholder": {
+      "note": "Comienza a escribir tu nota...",
+      "task": "Agrega descripción de la tarea..."
+    },
+    "comingSoon": {
+      "title": "Próximamente",
+      "voice": "La grabación de voz estará disponible pronto",
+      "photo": "La captura de fotos con OCR estará disponible pronto"
+    },
+    "quickActions": {
+      "title": "Acciones Rápidas",
+      "addDate": "Agregar Fecha al Título",
+      "clear": "Limpiar Todo"
+    },
+    "emptyContent": "Por favor ingresa contenido para capturar",
+    "captured": "{{type}} capturada exitosamente"
+  },
+
+  "insights": {
+    "title": "Información",
+    "subtitle": "Impulsado por Foresight 3.0",
+    "filters": {
+      "all": "Todas",
+      "high": "Alta",
+      "medium": "Media",
+      "low": "Baja"
+    },
+    "suggestedActions": "Acciones Sugeridas",
+    "emptyState": {
+      "title": "No hay información todavía",
+      "message": "Usa la aplicación durante unos días y Foresight comenzará a generar información personalizada"
+    },
+    "types": {
+      "daily_brief": "Resumen Diario",
+      "productivity_trend": "Productividad",
+      "goal_progress": "Progreso de Objetivos",
+      "mood_correlation": "Bienestar",
+      "milestone_risk": "Alerta de Riesgo"
+    }
+  },
+
+  "more": {
+    "title": "Más",
+    "user": {
+      "name": "Usuario de Noteece",
+      "status": "Bóveda cifrada activa"
+    },
+    "sections": {
+      "syncBackup": {
+        "title": "Sincronización y Respaldo",
+        "manualSync": "Sincronización Manual",
+        "manualSyncDesc": "Sincronizar con dispositivos en red local",
+        "backgroundSync": "Sincronización en Segundo Plano",
+        "backgroundSyncDesc": "Sincronización automática cada 15 minutos"
+      },
+      "features": {
+        "title": "Características",
+        "nfc": "Disparadores NFC",
+        "nfcDesc": "Usa etiquetas NFC para acciones rápidas",
+        "location": "Recordatorios de Ubicación",
+        "locationDesc": "Recordatorios de tareas basados en geocercas"
+      },
+      "dataPrivacy": {
+        "title": "Datos y Privacidad",
+        "changePassword": "Cambiar Contraseña de la Bóveda",
+        "export": "Exportar Datos",
+        "exportDesc": "Exporta todos tus datos",
+        "clearData": "Borrar Todos los Datos",
+        "clearDataDesc": "Eliminar todos los datos locales"
+      },
+      "about": {
+        "title": "Acerca de",
+        "version": "Versión",
+        "documentation": "Documentación",
+        "openSource": "Código Abierto",
+        "openSourceDesc": "Construido con ❤️ como código abierto"
+      }
+    },
+    "lockVault": {
+      "title": "Bloquear Bóveda",
+      "message": "¿Estás seguro de que quieres bloquear la bóveda?",
+      "confirm": "Bloquear"
+    },
+    "syncSuccess": "Sincronización completada exitosamente",
+    "syncNoDevices": "No se encontraron dispositivos para sincronizar",
+    "syncError": "Sincronización fallida. Por favor, inténtalo de nuevo.",
+    "nfcNotAvailable": "NFC no está disponible en este dispositivo o está deshabilitado en la configuración",
+    "nfcEnabled": "Ahora puedes usar etiquetas NFC para activar acciones rápidas",
+    "comingSoon": "Próximamente",
+    "locationComingSoon": "Los recordatorios de ubicación estarán disponibles pronto",
+    "clearDataWarning": "Esto eliminará permanentemente todos tus datos locales. Esta acción no se puede deshacer."
+  },
+
+  "errors": {
+    "general": "Ocurrió un error",
+    "network": "Error de red. Por favor verifica tu conexión.",
+    "database": "Error de base de datos. Por favor, inténtalo de nuevo.",
+    "unknown": "Ocurrió un error inesperado",
+    "tryAgainLater": "Por favor, inténtalo de nuevo más tarde"
+  },
+
+  "legal": {
+    "privacy": {
+      "title": "Política de Privacidad",
+      "lastUpdated": "Última Actualización: 6 de noviembre de 2025",
+      "intro": "Noteece se compromete a proteger tu privacidad con una arquitectura de conocimiento cero y local primero.",
+      "noDataCollection": "NO recopilamos, transmitimos ni tenemos acceso a:",
+      "items": {
+        "personal": "Tu información personal",
+        "content": "Tus notas, tareas o cualquier contenido",
+        "location": "Tus datos de ubicación",
+        "usage": "Tus patrones de uso o análisis"
+      },
+      "localFirst": "Todos los datos se almacenan cifrados en tu dispositivo usando cifrado estándar de la industria.",
+      "openSource": "Noteece es de código abierto. Puedes verificar nuestras afirmaciones de privacidad revisando el código fuente.",
+      "contact": "Para preguntas de privacidad, contáctanos en: privacy@noteece.app",
+      "fullPolicy": "Ver Política de Privacidad Completa"
+    },
+    "terms": {
+      "title": "Términos de Servicio",
+      "lastUpdated": "Última Actualización: 6 de noviembre de 2025",
+      "intro": "Al usar Noteece, aceptas estos términos.",
+      "license": "Noteece está licenciado bajo la Licencia Pública General GNU v3.0 (GPL v3).",
+      "yourData": "Conservas todos los derechos sobre tus datos. No tenemos acceso a ellos.",
+      "noWarranty": "La aplicación se proporciona 'tal cual' sin garantía de ningún tipo.",
+      "passwordWarning": "Si pierdes tu contraseña, tus datos están permanentemente cifrados e irrecuperables.",
+      "lawfulUse": "Aceptas usar la aplicación solo para fines legales.",
+      "contact": "Para preguntas legales, contáctanos en: legal@noteece.app",
+      "fullTerms": "Ver Términos de Servicio Completos"
+    },
+    "license": {
+      "title": "Licencia de Código Abierto",
+      "type": "Licencia Pública General GNU v3.0",
+      "description": "Noteece es software libre y de código abierto. Eres libre de usar, estudiar, modificar y distribuir este software bajo los términos de GPL v3.",
+      "freedoms": "Esta licencia asegura tu libertad para:",
+      "items": {
+        "use": "Usar la aplicación para cualquier propósito",
+        "study": "Estudiar cómo funciona la aplicación",
+        "modify": "Modificar la aplicación para adaptarla a tus necesidades",
+        "distribute": "Distribuir copias y modificaciones"
+      },
+      "repository": "Código fuente disponible en: github.com/[tu-usuario]/Noteece",
+      "fullLicense": "Ver Licencia Completa"
+    }
+  }
+}

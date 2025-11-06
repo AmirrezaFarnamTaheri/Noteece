@@ -1,0 +1,29 @@
+.kanbanContainer {
+  padding: 20px;
+}
+
+.createTaskButton {
+  margin-bottom: 20px;
+}
+
+.columnsContainer {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+.column {
+  flex: 0 0 280px;
+  background-color: #f4f5f7;
+  border-radius: 4px;
+}
+
+.taskList {
+  min-height: 100px;
+  padding: 8px;
+}
+
+.taskCard {
+  margin-bottom: 8px;
+}

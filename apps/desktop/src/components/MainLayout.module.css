@@ -1,0 +1,21 @@
+/* apps/desktop/src/components/MainLayout.module.css */
+
+.navLink {
+  display: 'block';
+  padding: '10px 15px';
+  border-radius: '4px';
+  text-decoration: 'none';
+  color: '#c1c2c5';
+  margin-bottom: '5px';
+  transition: 'background-color 0.2s, color 0.2s';
+}
+
+.navLink:hover {
+  background-color: '#25262b';
+  color: '#fff';
+}
+
+.navLinkActive {
+  background-color: '#228be6';
+  color: '#fff';
+}

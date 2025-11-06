@@ -1,0 +1,26 @@
+{
+  "common": {
+    "appName": "Noteece",
+    "tagline": "Votre Coffre d'Intelligence Personnelle",
+    "ok": "OK",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "back": "Retour",
+    "next": "Suivant"
+  },
+  "onboarding": {
+    "step1": {
+      "title": "Votre Coffre d'Intelligence Personnelle",
+      "description": "Noteece est votre base de connaissances personnelle chiffrée."
+    },
+    "password": {
+      "title": "Créez Votre Coffre",
+      "createButton": "Créer le Coffre"
+    }
+  },
+  "unlock": {
+    "title": "Noteece",
+    "unlockButton": "Déverrouiller le Coffre"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "common": {
+    "appName": "Noteece",
+    "tagline": "あなたの個人インテリジェンス金庫",
+    "ok": "OK",
+    "cancel": "キャンセル",
+    "save": "保存"
+  },
+  "onboarding": {
+    "step1": { "title": "あなたの個人インテリジェンス金庫" },
+    "password": { "title": "金庫を作成", "createButton": "金庫を作成" }
+  },
+  "unlock": { "title": "Noteece", "unlockButton": "金庫をロック解除" }
+}

@@ -1,0 +1,17 @@
+/* apps/desktop/src/components/NoteEditor.module.css */
+
+.editorContainer {
+  display: flex;
+  height: 100%;
+}
+
+.noteList {
+  width: 300px;
+  border-right: 1px solid #e0e0e0;
+  padding: 20px;
+}
+
+.editor {
+  flex: 1;
+  padding: 20px;
+}

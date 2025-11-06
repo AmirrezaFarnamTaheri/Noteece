@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="2048" height="2048" viewBox="0 0 2048 2048" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="2048" height="2048" fill="#0A0E27"/>
+
+  <!-- Gradient overlay -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0" y1="0" x2="2048" y2="2048" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1E2235" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#6366F1" stop-opacity="0.05"/>
+    </linearGradient>
+    <linearGradient id="nGradient" x1="724" y1="774" x2="1324" y2="1274" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="2048" height="2048" fill="url(#bgGradient)"/>
+
+  <!-- Centered app icon (scaled down to 500x500 area) -->
+  <g transform="translate(774, 774)" filter="url(#shadow)">
+    <!-- N symbol -->
+    <path d="M 100 125 L 100 375 L 140 375 L 140 225 L 360 375 L 400 375 L 400 125 L 360 125 L 360 275 L 140 125 Z"
+          fill="url(#nGradient)"
+          stroke="#8B5CF6"
+          stroke-width="6"/>
+
+    <!-- Lock accent -->
+    <g opacity="0.95">
+      <circle cx="380" cy="150" r="24" fill="none" stroke="#8B5CF6" stroke-width="6"/>
+      <rect x="366" y="165" width="28" height="20" rx="4" fill="#8B5CF6"/>
+      <circle cx="380" cy="175" r="4" fill="#0A0E27"/>
+    </g>
+  </g>
+
+  <!-- App name below icon -->
+  <text x="1024" y="1400" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="96" fill="#E4E7EC" text-anchor="middle">
+    Noteece
+  </text>
+
+  <!-- Tagline -->
+  <text x="1024" y="1500" font-family="system-ui, -apple-system, sans-serif" font-weight="400" font-size="56" fill="#64748B" text-anchor="middle">
+    Your Personal Intelligence Vault
+  </text>
+
+  <!-- Shadow filter -->
+  <defs>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#6366F1" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+</svg>

@@ -1,0 +1,17 @@
+{
+  "name": "@noteece/ui",
+  "version": "0.0.1",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@mantine/core": "^8.3.6",
+    "@tabler/icons-react": "^3.19.0",
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

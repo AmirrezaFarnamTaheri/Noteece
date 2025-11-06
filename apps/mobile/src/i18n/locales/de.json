@@ -1,0 +1,17 @@
+{
+  "common": {
+    "appName": "Noteece",
+    "tagline": "Ihr Persönlicher Intelligenz-Tresor",
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "save": "Speichern"
+  },
+  "onboarding": {
+    "step1": { "title": "Ihr Persönlicher Intelligenz-Tresor" },
+    "password": {
+      "title": "Erstellen Sie Ihren Tresor",
+      "createButton": "Tresor Erstellen"
+    }
+  },
+  "unlock": { "title": "Noteece", "unlockButton": "Tresor Entsperren" }
+}

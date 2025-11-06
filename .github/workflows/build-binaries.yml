@@ -1,0 +1,204 @@
+name: Build Binaries
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_profile:
+        description: 'Build Profile'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - preview
+          - production
+      platform:
+        description: 'Platform'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - ios
+          - android
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build_mobile:
+    name: Build Mobile Apps
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        working-directory: apps/mobile
+        run: npm install --legacy-peer-deps
+
+      - name: Run type check
+        working-directory: apps/mobile
+        run: npm run type-check
+        continue-on-error: true
+
+      - name: Run linting
+        working-directory: apps/mobile
+        run: npm run lint
+
+      - name: Build iOS (Preview)
+        if: (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'ios') && github.event.inputs.build_profile == 'preview'
+        working-directory: apps/mobile
+        run: eas build --profile preview --platform ios --non-interactive --no-wait
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build Android (Preview)
+        if: (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'android') && github.event.inputs.build_profile == 'preview'
+        working-directory: apps/mobile
+        run: eas build --profile preview --platform android --non-interactive --no-wait
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build iOS (Production)
+        if: (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'ios') && github.event.inputs.build_profile == 'production'
+        working-directory: apps/mobile
+        run: eas build --profile production --platform ios --non-interactive --no-wait
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build Android (Production)
+        if: (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'android') && github.event.inputs.build_profile == 'production'
+        working-directory: apps/mobile
+        run: eas build --profile production --platform android --non-interactive --no-wait
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+  build_desktop:
+    name: Build Desktop Apps
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build Rust package
+        working-directory: packages/core-rs
+        run: cargo build --release
+
+      - name: Build desktop app
+        working-directory: apps/desktop
+        run: |
+          pnpm install
+          pnpm build
+
+      - name: Package binaries (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir -p dist/linux
+          cp packages/core-rs/target/release/noteece-core dist/linux/
+          tar -czf noteece-linux-x64.tar.gz -C dist/linux .
+
+      - name: Package binaries (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          mkdir -p dist/macos
+          cp packages/core-rs/target/release/noteece-core dist/macos/
+          tar -czf noteece-macos-x64.tar.gz -C dist/macos .
+
+      - name: Package binaries (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          mkdir -p dist/windows
+          cp packages/core-rs/target/release/noteece-core.exe dist/windows/
+          Compress-Archive -Path dist/windows/* -DestinationPath noteece-windows-x64.zip
+
+      - name: Upload artifacts (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: noteece-linux-x64
+          path: noteece-linux-x64.tar.gz
+          retention-days: 30
+
+      - name: Upload artifacts (macOS)
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: noteece-macos-x64
+          path: noteece-macos-x64.tar.gz
+          retention-days: 30
+
+      - name: Upload artifacts (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: noteece-windows-x64
+          path: noteece-windows-x64.zip
+          retention-days: 30
+
+  create_release:
+    name: Create Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build_mobile, build_desktop]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/noteece-linux-x64/*
+            artifacts/noteece-macos-x64/*
+            artifacts/noteece-windows-x64/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,63 @@
+import React, { useState } from 'react';
+import { Button, TextInput, Paper, Title, Container } from '@mantine/core';
+import { invoke } from '@tauri-apps/api/core';
+import { useNavigate } from 'react-router-dom';
+
+const VaultManagement: React.FC = () => {
+  const [path, setPath] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+
+  const handleCreateVault = async () => {
+    try {
+      await invoke('create_vault', { path, password });
+      navigate('/main');
+    } catch (error) {
+      console.error('Failed to create vault:', error);
+    }
+  };
+
+  const handleUnlockVault = async () => {
+    try {
+      await invoke('unlock_vault', { path, password });
+      navigate('/main');
+    } catch (error) {
+      console.error('Failed to unlock vault:', error);
+    }
+  };
+
+  return (
+    <Container size="xs" my={40}>
+      <Title align="center" sx={(theme) => ({ fontFamily: `Greycliff CF, ${theme.fontFamily}`, fontWeight: 900 })}>
+        Vault Management
+      </Title>
+
+      <Paper withBorder shadow="md" p={30} mt={30} radius="md">
+        <TextInput
+          label="Vault Path"
+          placeholder="/path/to/vault"
+          value={path}
+          onChange={(event) => setPath(event.currentTarget.value)}
+          required
+        />
+        <TextInput
+          label="Password"
+          placeholder="Your password"
+          type="password"
+          value={password}
+          onChange={(event) => setPassword(event.currentTarget.value)}
+          required
+          mt="md"
+        />
+        <Button fullWidth mt="xl" onClick={handleCreateVault}>
+          Create Vault
+        </Button>
+        <Button fullWidth mt="md" onClick={handleUnlockVault}>
+          Unlock Vault
+        </Button>
+      </Paper>
+    </Container>
+  );
+};
+
+export default VaultManagement;

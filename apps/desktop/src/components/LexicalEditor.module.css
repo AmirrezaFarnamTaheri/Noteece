@@ -1,0 +1,176 @@
+.editorContainer {
+  position: relative;
+  min-height: 400px;
+  padding: 0;
+  margin-top: 1rem;
+  background-color: var(--mantine-color-dark-7);
+}
+
+.editorInner {
+  position: relative;
+  padding: 1rem;
+}
+
+.contentEditable {
+  min-height: 350px;
+  outline: none;
+  padding: 1rem;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--mantine-color-gray-0);
+}
+
+.placeholder {
+  position: absolute;
+  top: 1rem;
+  left: 2rem;
+  color: var(--mantine-color-gray-6);
+  pointer-events: none;
+  font-size: 16px;
+}
+
+/* Typography styles */
+:global(.lexical-paragraph) {
+  margin: 0 0 1em 0;
+}
+
+:global(.lexical-h1) {
+  font-size: 2em;
+  font-weight: 700;
+  margin: 0.67em 0;
+  color: var(--mantine-color-blue-4);
+}
+
+:global(.lexical-h2) {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin: 0.75em 0;
+  color: var(--mantine-color-blue-5);
+}
+
+:global(.lexical-h3) {
+  font-size: 1.25em;
+  font-weight: 600;
+  margin: 0.83em 0;
+  color: var(--mantine-color-blue-6);
+}
+
+:global(.lexical-h4),
+:global(.lexical-h5),
+:global(.lexical-h6) {
+  font-size: 1em;
+  font-weight: 600;
+  margin: 1em 0;
+  color: var(--mantine-color-gray-3);
+}
+
+:global(.lexical-quote) {
+  border-left: 4px solid var(--mantine-color-gray-6);
+  padding-left: 1rem;
+  margin: 1em 0;
+  font-style: italic;
+  color: var(--mantine-color-gray-4);
+}
+
+/* List styles */
+:global(.lexical-ol),
+:global(.lexical-ul) {
+  padding-left: 1.5rem;
+  margin: 1em 0;
+}
+
+:global(.lexical-list-item) {
+  margin: 0.5em 0;
+}
+
+/* Code styles */
+:global(.lexical-code) {
+  background-color: var(--mantine-color-dark-6);
+  border: 1px solid var(--mantine-color-dark-4);
+  border-radius: 4px;
+  padding: 1rem;
+  margin: 1em 0;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+
+:global(.lexical-text-code) {
+  background-color: var(--mantine-color-dark-6);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+/* Link styles */
+:global(.lexical-link) {
+  color: var(--mantine-color-blue-4);
+  text-decoration: none;
+  border-bottom: 1px solid var(--mantine-color-blue-6);
+  transition: all 0.2s ease;
+}
+
+:global(.lexical-link:hover) {
+  color: var(--mantine-color-blue-3);
+  border-bottom-color: var(--mantine-color-blue-4);
+}
+
+/* Text formatting */
+:global(.lexical-text-bold) {
+  font-weight: 700;
+}
+
+:global(.lexical-text-italic) {
+  font-style: italic;
+}
+
+:global(.lexical-text-underline) {
+  text-decoration: underline;
+}
+
+:global(.lexical-text-strikethrough) {
+  text-decoration: line-through;
+}
+
+/* Code highlighting tokens */
+:global(.lexical-token-comment) {
+  color: var(--mantine-color-gray-6);
+}
+
+:global(.lexical-token-keyword) {
+  color: var(--mantine-color-violet-4);
+}
+
+:global(.lexical-token-function) {
+  color: var(--mantine-color-blue-4);
+}
+
+:global(.lexical-token-string) {
+  color: var(--mantine-color-green-4);
+}
+
+:global(.lexical-token-number) {
+  color: var(--mantine-color-orange-4);
+}
+
+:global(.lexical-token-boolean) {
+  color: var(--mantine-color-red-4);
+}
+
+:global(.lexical-token-operator) {
+  color: var(--mantine-color-pink-4);
+}
+
+:global(.lexical-token-punctuation) {
+  color: var(--mantine-color-gray-4);
+}
+
+:global(.lexical-token-property) {
+  color: var(--mantine-color-cyan-4);
+}
+
+:global(.lexical-token-class-name) {
+  color: var(--mantine-color-yellow-4);
+}

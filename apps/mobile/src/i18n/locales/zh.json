@@ -1,0 +1,14 @@
+{
+  "common": {
+    "appName": "Noteece",
+    "tagline": "您的个人智能保险库",
+    "ok": "确定",
+    "cancel": "取消",
+    "save": "保存"
+  },
+  "onboarding": {
+    "step1": { "title": "您的个人智能保险库" },
+    "password": { "title": "创建您的保险库", "createButton": "创建保险库" }
+  },
+  "unlock": { "title": "Noteece", "unlockButton": "解锁保险库" }
+}

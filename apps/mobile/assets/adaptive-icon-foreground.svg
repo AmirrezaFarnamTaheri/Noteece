@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="nGradient" x1="350" y1="400" x2="674" y2="624" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- N symbol (centered with safe zone) -->
+  <g filter="url(#shadow)">
+    <path d="M 350 400 L 350 624 L 410 624 L 410 500 L 614 624 L 674 624 L 674 400 L 614 400 L 614 524 L 410 400 Z"
+          fill="url(#nGradient)"
+          stroke="#8B5CF6"
+          stroke-width="8"/>
+  </g>
+
+  <!-- Lock accent -->
+  <g opacity="0.95">
+    <circle cx="640" cy="425" r="36" fill="none" stroke="#8B5CF6" stroke-width="10"/>
+    <rect x="616" y="440" width="48" height="32" rx="6" fill="#8B5CF6"/>
+    <circle cx="640" cy="456" r="6" fill="#0A0E27"/>
+  </g>
+
+  <!-- Shadow filter -->
+  <defs>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#6366F1" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+</svg>

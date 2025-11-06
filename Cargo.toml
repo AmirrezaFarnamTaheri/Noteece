@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "packages/core-rs",
+    "apps/desktop/src-tauri",
+]

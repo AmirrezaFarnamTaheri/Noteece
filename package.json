@@ -1,0 +1,26 @@
+{
+  "name": "noteece",
+  "version": "1.0.0",
+  "description": "A local-first, end-to-end encrypted workspace designed for speed-of-thought productivity",
+  "author": {
+    "name": "Amirreza Farnam Taheri",
+    "email": "taheri.farnam@gmail.com"
+  },
+  "license": "GPL-3.0",
+  "private": true,
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.2.5",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.5",
+    "turbo": "^1.13.3",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-import-resolver-typescript": "^3.6.1"
+  },
+  "packageManager": "pnpm@8.15.6"
+}

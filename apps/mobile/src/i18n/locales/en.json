@@ -1,0 +1,295 @@
+{
+  "common": {
+    "appName": "Noteece",
+    "tagline": "Your Personal Intelligence Vault",
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "tryAgain": "Try Again",
+    "noData": "No data available"
+  },
+
+  "onboarding": {
+    "step1": {
+      "title": "Your Personal Intelligence Vault",
+      "description": "Noteece is your encrypted personal knowledge base that learns from your data to help you work smarter.",
+      "features": {
+        "encryption": "End-to-end encryption",
+        "offline": "Local-first, offline-capable",
+        "zeroKnowledge": "Zero-knowledge architecture"
+      }
+    },
+    "step2": {
+      "title": "Foresight 3.0 Intelligence",
+      "description": "Advanced correlation engine that synthesizes your tasks, time, health, and finance data into actionable insights.",
+      "features": {
+        "briefs": "Daily briefs and predictions",
+        "burnout": "Burnout risk analysis",
+        "recommendations": "Smart recommendations"
+      }
+    },
+    "step3": {
+      "title": "Seamless Local Sync",
+      "description": "Sync securely between your devices on your local network. No cloud required.",
+      "features": {
+        "p2p": "Peer-to-peer encryption",
+        "conflicts": "Automatic conflict resolution",
+        "background": "Background sync"
+      }
+    },
+    "step4": {
+      "title": "Physical-Digital Bridge",
+      "description": "Use NFC tags and geofencing to blend your digital and physical workflows.",
+      "features": {
+        "nfc": "NFC trigger actions",
+        "location": "Location-based reminders",
+        "capture": "Quick capture shortcuts"
+      }
+    },
+    "password": {
+      "title": "Create Your Vault",
+      "description": "Choose a strong password. This encrypts all your data locally.",
+      "placeholder": "Password (min 8 characters)",
+      "confirmPlaceholder": "Confirm password",
+      "warning": "This password cannot be recovered. Store it safely.",
+      "tooShort": "Password must be at least 8 characters long",
+      "mismatch": "Passwords don't match",
+      "creating": "Creating...",
+      "createButton": "Create Vault"
+    },
+    "getStarted": "Get Started"
+  },
+
+  "unlock": {
+    "title": "Noteece",
+    "subtitle": "Enter your password to unlock",
+    "placeholder": "Vault password",
+    "unlocking": "Unlocking...",
+    "unlockButton": "Unlock Vault",
+    "biometric": "Use Biometrics",
+    "biometricComingSoon": "Biometric authentication will be available in a future update.",
+    "forgotPassword": "Forgot password?",
+    "forgotMessage": "For security reasons, if you forget your vault password, you will need to reset the app and lose all encrypted data. Make sure to back up your data regularly.",
+    "incorrectPassword": "Incorrect Password",
+    "incorrectMessage": "The password you entered is incorrect. Please try again.",
+    "securityBadge": "End-to-end encrypted • Zero-knowledge"
+  },
+
+  "tabs": {
+    "today": "Today",
+    "tasks": "Tasks",
+    "capture": "Capture",
+    "insights": "Insights",
+    "more": "More"
+  },
+
+  "today": {
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "pullToRefresh": "Pull to refresh",
+    "emptyState": {
+      "title": "Your day is clear",
+      "message": "No tasks or events scheduled for today"
+    },
+    "dailyBrief": "Daily Brief"
+  },
+
+  "tasks": {
+    "filters": {
+      "all": "All",
+      "today": "Today",
+      "upcoming": "Upcoming",
+      "completed": "Completed"
+    },
+    "addTask": "Add task",
+    "taskPlaceholder": "Task title...",
+    "emptyState": {
+      "noTasks": "No tasks yet",
+      "noCompleted": "No completed tasks",
+      "addFirst": "Tap + to add your first task",
+      "completeMessage": "Complete some tasks to see them here"
+    }
+  },
+
+  "capture": {
+    "title": "Quick Capture",
+    "types": {
+      "note": {
+        "label": "Note",
+        "description": "Capture thoughts and ideas"
+      },
+      "task": {
+        "label": "Task",
+        "description": "Add a quick task"
+      },
+      "voice": {
+        "label": "Voice",
+        "description": "Record voice memo"
+      },
+      "photo": {
+        "label": "Photo",
+        "description": "Capture with OCR"
+      }
+    },
+    "titlePlaceholder": {
+      "note": "Note title...",
+      "task": "Task title..."
+    },
+    "contentPlaceholder": {
+      "note": "Start writing your note...",
+      "task": "Add task description..."
+    },
+    "comingSoon": {
+      "title": "Coming Soon",
+      "voice": "Voice recording will be available soon",
+      "photo": "Photo capture with OCR will be available soon"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "addDate": "Add Date to Title",
+      "clear": "Clear All"
+    },
+    "emptyContent": "Please enter some content to capture",
+    "captured": "{{type}} captured successfully"
+  },
+
+  "insights": {
+    "title": "Insights",
+    "subtitle": "Foresight 3.0 powered",
+    "filters": {
+      "all": "All",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "suggestedActions": "Suggested Actions",
+    "emptyState": {
+      "title": "No insights yet",
+      "message": "Use the app for a few days and Foresight will start generating personalized insights"
+    },
+    "types": {
+      "daily_brief": "Daily Brief",
+      "productivity_trend": "Productivity",
+      "goal_progress": "Goal Progress",
+      "mood_correlation": "Well-being",
+      "milestone_risk": "Risk Alert"
+    }
+  },
+
+  "more": {
+    "title": "More",
+    "user": {
+      "name": "Noteece User",
+      "status": "Encrypted vault active"
+    },
+    "sections": {
+      "syncBackup": {
+        "title": "Sync & Backup",
+        "manualSync": "Manual Sync",
+        "manualSyncDesc": "Sync with devices on local network",
+        "backgroundSync": "Background Sync",
+        "backgroundSyncDesc": "Auto-sync every 15 minutes"
+      },
+      "features": {
+        "title": "Features",
+        "nfc": "NFC Triggers",
+        "nfcDesc": "Use NFC tags for quick actions",
+        "location": "Location Reminders",
+        "locationDesc": "Geofence-based task reminders"
+      },
+      "dataPrivacy": {
+        "title": "Data & Privacy",
+        "changePassword": "Change Vault Password",
+        "export": "Export Data",
+        "exportDesc": "Export all your data",
+        "clearData": "Clear All Data",
+        "clearDataDesc": "Delete all local data"
+      },
+      "about": {
+        "title": "About",
+        "version": "Version",
+        "documentation": "Documentation",
+        "openSource": "Open Source",
+        "openSourceDesc": "Built with ❤️ as open source"
+      }
+    },
+    "lockVault": {
+      "title": "Lock Vault",
+      "message": "Are you sure you want to lock the vault?",
+      "confirm": "Lock"
+    },
+    "syncSuccess": "Sync completed successfully",
+    "syncNoDevices": "No devices found to sync with",
+    "syncError": "Sync failed. Please try again.",
+    "nfcNotAvailable": "NFC is not available on this device or is disabled in settings",
+    "nfcEnabled": "You can now use NFC tags to trigger quick actions",
+    "comingSoon": "Coming Soon",
+    "locationComingSoon": "Location reminders will be available soon",
+    "clearDataWarning": "This will permanently delete all your local data. This action cannot be undone."
+  },
+
+  "errors": {
+    "general": "An error occurred",
+    "network": "Network error. Please check your connection.",
+    "database": "Database error. Please try again.",
+    "unknown": "An unexpected error occurred",
+    "tryAgainLater": "Please try again later"
+  },
+
+  "legal": {
+    "privacy": {
+      "title": "Privacy Policy",
+      "lastUpdated": "Last Updated: November 6, 2025",
+      "intro": "Noteece is committed to protecting your privacy with a zero-knowledge, local-first architecture.",
+      "noDataCollection": "We DO NOT collect, transmit, or have access to:",
+      "items": {
+        "personal": "Your personal information",
+        "content": "Your notes, tasks, or any content",
+        "location": "Your location data",
+        "usage": "Your usage patterns or analytics"
+      },
+      "localFirst": "All data is stored encrypted on your device using industry-standard encryption.",
+      "openSource": "Noteece is open source. You can verify our privacy claims by reviewing the source code.",
+      "contact": "For privacy questions, contact us at: privacy@noteece.app",
+      "fullPolicy": "View Full Privacy Policy"
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "lastUpdated": "Last Updated: November 6, 2025",
+      "intro": "By using Noteece, you agree to these terms.",
+      "license": "Noteece is licensed under GNU General Public License v3.0 (GPL v3).",
+      "yourData": "You retain all rights to your data. We have no access to it.",
+      "noWarranty": "The app is provided 'as is' without warranty of any kind.",
+      "passwordWarning": "If you lose your password, your data is permanently encrypted and unrecoverable.",
+      "lawfulUse": "You agree to use the app only for lawful purposes.",
+      "contact": "For legal questions, contact us at: legal@noteece.app",
+      "fullTerms": "View Full Terms of Service"
+    },
+    "license": {
+      "title": "Open Source License",
+      "type": "GNU General Public License v3.0",
+      "description": "Noteece is free and open source software. You are free to use, study, modify, and distribute this software under the terms of GPL v3.",
+      "freedoms": "This license ensures your freedom to:",
+      "items": {
+        "use": "Use the app for any purpose",
+        "study": "Study how the app works",
+        "modify": "Modify the app to suit your needs",
+        "distribute": "Distribute copies and modifications"
+      },
+      "repository": "Source code available at: github.com/[your-username]/Noteece",
+      "fullLicense": "View Full License"
+    }
+  }
+}

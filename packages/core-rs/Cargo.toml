@@ -1,0 +1,42 @@
+[package]
+name = "core-rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+generic-array = "1.0.0"
+gray_matter = "0.2.2"
+aead = "0.5.2"
+aes = "0.8.4"
+aes-kw = "0.2.1"
+pbkdf2 = "0.12.2"
+sha2 = "0.10.9"
+base32 = "0.5.1"
+chacha20poly1305 = "0.10.1"
+hex = "0.4.3"
+hkdf = "0.12.4"
+rand = "0.8.5"
+rand_core = { version = "0.6.4", features = ["getrandom"] }
+rusqlite = { version = "0.37.0", features = ["bundled-sqlcipher"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0.69"
+ulid = { version = "1.2.1", features = ["serde"] }
+log = "0.4"
+env_logger = "0.10"
+regex = "1.12.2"
+zstd = "0.13.3"
+chrono = { version = "0.4.42", features = ["serde"] }
+zip = { version = "6.0.0", features = ["time"] }
+walkdir = "2.5.0"
+ical = "0.11.0"
+ics = "0.5.8"
+yrs = "0.15.0"
+uuid = { version = "1.10.0", features = ["v4", "serde"] }
+
+[dev-dependencies]
+tempfile = "3.23.0"
+
+[[bin]]
+name = "perf-harness"
+path = "src/bin/perf_harness.rs"
