@@ -22,6 +22,7 @@ use core_rs::caldav::{add_caldav_account, get_caldav_accounts, get_caldav_accoun
 use core_rs::personal_modes::{create_health_metric, get_health_metrics, create_health_goal, create_transaction, get_transactions, create_recipe, get_recipes, add_recipe_ingredient, create_trip, get_trips, add_itinerary_item, HealthMetric, HealthGoal, Transaction, Recipe, Trip};
 use core_rs::temporal_graph::{build_current_graph, save_graph_snapshot, get_graph_evolution, create_milestone, detect_major_notes, GraphSnapshot, GraphEvolution, GraphMilestone};
 use core_rs::sync_agent::{init_sync_tables, SyncAgent, DeviceInfo, DeviceType, SyncHistoryEntry, SyncConflict, ConflictType, ConflictResolution as SyncConflictResolution};
+use core_rs::collaboration::{init_rbac_tables, get_space_users, check_permission, invite_user, update_user_role, grant_permission, revoke_permission, suspend_user, activate_user, get_roles, add_user_to_space, remove_user_from_space, SpaceUser, Role, UserInvitation, CollaborationError};
 use rusqlite::Connection;
 use std::sync::Mutex;
 use tauri::State;
@@ -1007,6 +1008,165 @@ fn record_sync_cmd(
     }
 }
 
+// User Management / RBAC Commands
+#[tauri::command]
+fn init_rbac_tables_cmd(db: State<DbConnection>) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        init_rbac_tables(conn).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_space_users_cmd(space_id: &str, db: State<DbConnection>) -> Result<Vec<SpaceUser>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_space_users(conn, space_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn check_permission_cmd(
+    space_id: &str,
+    user_id: &str,
+    permission: &str,
+    db: State<DbConnection>,
+) -> Result<bool, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        check_permission(conn, space_id, user_id, permission).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn invite_user_cmd(
+    space_id: &str,
+    email: &str,
+    role_id: &str,
+    invited_by: &str,
+    db: State<DbConnection>,
+) -> Result<UserInvitation, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        invite_user(conn, space_id, email, role_id, invited_by).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn update_user_role_cmd(
+    space_id: &str,
+    user_id: &str,
+    new_role_id: &str,
+    updated_by: &str,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        update_user_role(conn, space_id, user_id, new_role_id, updated_by)
+            .map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn grant_permission_cmd(
+    space_id: &str,
+    user_id: &str,
+    permission: &str,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        grant_permission(conn, space_id, user_id, permission).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn revoke_permission_cmd(
+    space_id: &str,
+    user_id: &str,
+    permission: &str,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        revoke_permission(conn, space_id, user_id, permission).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn suspend_user_cmd(space_id: &str, user_id: &str, db: State<DbConnection>) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        suspend_user(conn, space_id, user_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn activate_user_cmd(space_id: &str, user_id: &str, db: State<DbConnection>) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        activate_user(conn, space_id, user_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_roles_cmd(db: State<DbConnection>) -> Result<Vec<Role>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_roles(conn).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn add_user_to_space_cmd(
+    space_id: &str,
+    user_id: &str,
+    email: &str,
+    role_id: &str,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        add_user_to_space(conn, space_id, user_id, email, role_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn remove_user_from_space_cmd(
+    space_id: &str,
+    user_id: &str,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        remove_user_from_space(conn, space_id, user_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
 // Personal Modes - Health Commands
 #[tauri::command]
 fn create_health_metric_cmd(space_id: &str, metric_type: &str, value: f64, unit: &str, recorded_at: i64, db: State<DbConnection>) -> Result<HealthMetric, String> {
@@ -1261,7 +1421,19 @@ fn main() {
         build_current_graph_cmd,
         get_graph_evolution_cmd,
         detect_major_notes_cmd,
-        shutdown_clear_keys_cmd
+        shutdown_clear_keys_cmd,
+        init_rbac_tables_cmd,
+        get_space_users_cmd,
+        check_permission_cmd,
+        invite_user_cmd,
+        update_user_role_cmd,
+        grant_permission_cmd,
+        revoke_permission_cmd,
+        suspend_user_cmd,
+        activate_user_cmd,
+        get_roles_cmd,
+        add_user_to_space_cmd,
+        remove_user_from_space_cmd
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

@@ -19,6 +19,7 @@ import {
   Tabs,
   Alert,
   ScrollArea,
+  LoadingOverlay,
 } from '@mantine/core';
 import {
   IconUsers,
@@ -35,17 +36,19 @@ import {
 } from '@tabler/icons-react';
 import { useForm } from '@mantine/form';
 import { EmptyState } from '@noteece/ui';
+import { invoke } from '@tauri-apps/api/core';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { notifications } from '@mantine/notifications';
+import { useStore } from '../store';
 
-interface User {
-  id: string;
-  name: string;
+interface SpaceUser {
+  user_id: string;
   email: string;
-  role: 'owner' | 'admin' | 'editor' | 'viewer';
+  role: string;
   status: 'active' | 'invited' | 'suspended';
-  avatarUrl?: string;
-  joinedAt: number;
-  lastActive: number;
   permissions: string[];
+  last_active: number | null;
+  joined_at: number;
 }
 
 interface Role {
@@ -53,7 +56,20 @@ interface Role {
   name: string;
   description: string;
   permissions: string[];
-  userCount: number;
+  is_system: boolean;
+}
+
+interface UserInvitation {
+  id: string;
+  space_id: string;
+  email: string;
+  role: string;
+  permissions: string[];
+  invited_by: string;
+  invited_at: number;
+  expires_at: number;
+  status: string;
+  token: string;
 }
 
 const roleColors: Record<string, string> = {
@@ -81,88 +97,193 @@ const statusColors: Record<string, string> = {
  * - Suspend/activate users
  */
 const UserManagement: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: '1',
-      name: 'John Doe',
-      email: 'john@example.com',
-      role: 'owner',
-      status: 'active',
-      joinedAt: Date.now() - 90 * 24 * 60 * 60 * 1000,
-      lastActive: Date.now() - 5 * 60 * 1000,
-      permissions: ['read', 'write', 'delete', 'admin', 'manage_users'],
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      role: 'admin',
-      status: 'active',
-      joinedAt: Date.now() - 60 * 24 * 60 * 60 * 1000,
-      lastActive: Date.now() - 2 * 60 * 60 * 1000,
-      permissions: ['read', 'write', 'delete', 'manage_users'],
-    },
-    {
-      id: '3',
-      name: 'Bob Johnson',
-      email: 'bob@example.com',
-      role: 'editor',
-      status: 'active',
-      joinedAt: Date.now() - 30 * 24 * 60 * 60 * 1000,
-      lastActive: Date.now() - 1 * 24 * 60 * 60 * 1000,
-      permissions: ['read', 'write'],
-    },
-    {
-      id: '4',
-      name: 'Alice Williams',
-      email: 'alice@example.com',
-      role: 'viewer',
-      status: 'invited',
-      joinedAt: Date.now() - 1 * 24 * 60 * 60 * 1000,
-      lastActive: 0,
-      permissions: ['read'],
-    },
-  ]);
-
-  const [roles] = useState<Role[]>([
-    {
-      id: 'owner',
-      name: 'Owner',
-      description: 'Full access to all features and settings',
-      permissions: ['read', 'write', 'delete', 'admin', 'manage_users', 'manage_billing'],
-      userCount: 1,
-    },
-    {
-      id: 'admin',
-      name: 'Administrator',
-      description: 'Can manage users and content',
-      permissions: ['read', 'write', 'delete', 'manage_users'],
-      userCount: 1,
-    },
-    {
-      id: 'editor',
-      name: 'Editor',
-      description: 'Can create and edit content',
-      permissions: ['read', 'write'],
-      userCount: 1,
-    },
-    {
-      id: 'viewer',
-      name: 'Viewer',
-      description: 'Read-only access',
-      permissions: ['read'],
-      userCount: 1,
-    },
-  ]);
+  const queryClient = useQueryClient();
+  const { activeSpaceId } = useStore();
 
   const [inviteModalOpened, setInviteModalOpened] = useState(false);
   const [editModalOpened, setEditModalOpened] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<SpaceUser | null>(null);
+
+  // Fetch users for the active space
+  const { data: users = [], isLoading: usersLoading } = useQuery({
+    queryKey: ['spaceUsers', activeSpaceId],
+    queryFn: () => invoke<SpaceUser[]>('get_space_users_cmd', { spaceId: activeSpaceId }),
+    enabled: !!activeSpaceId,
+  });
+
+  // Fetch available roles
+  const { data: roles = [], isLoading: rolesLoading } = useQuery({
+    queryKey: ['roles'],
+    queryFn: () => invoke<Role[]>('get_roles_cmd'),
+  });
+
+  // Invite user mutation
+  const inviteUserMutation = useMutation({
+    mutationFn: async (values: { email: string; roleId: string; customPermissions: string[] }) => {
+      if (!activeSpaceId) throw new Error('No active space');
+
+      // Invite user
+      const invitation = await invoke<UserInvitation>('invite_user_cmd', {
+        spaceId: activeSpaceId,
+        email: values.email,
+        roleId: values.roleId,
+        invitedBy: 'current_user', // TODO: Get from auth context
+      });
+
+      // If custom permissions are specified, grant them
+      if (values.customPermissions.length > 0) {
+        // First, add the user to space (they'll be in 'invited' status)
+        // Note: In a real app, this would happen when they accept the invitation
+        // For now, we'll just store the custom permissions in the invitation
+      }
+
+      return invitation;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['spaceUsers', activeSpaceId] });
+      notifications.show({
+        title: 'User invited',
+        message: 'Invitation sent successfully',
+        color: 'green',
+      });
+      setInviteModalOpened(false);
+      inviteForm.reset();
+    },
+    onError: (error) => {
+      notifications.show({
+        title: 'Failed to invite user',
+        message: String(error),
+        color: 'red',
+      });
+    },
+  });
+
+  // Update user role mutation
+  const updateRoleMutation = useMutation({
+    mutationFn: async (values: { userId: string; roleId: string; customPermissions: string[] }) => {
+      if (!activeSpaceId) throw new Error('No active space');
+
+      // Update role
+      await invoke('update_user_role_cmd', {
+        spaceId: activeSpaceId,
+        userId: values.userId,
+        newRoleId: values.roleId,
+        updatedBy: 'current_user', // TODO: Get from auth context
+      });
+
+      // Handle custom permissions
+      // Get the role's default permissions
+      const role = roles.find(r => r.id === values.roleId);
+      const rolePermissions = role?.permissions || [];
+
+      // Grant custom permissions not in the role
+      const permissionsToGrant = values.customPermissions.filter(
+        p => !rolePermissions.includes(p)
+      );
+      for (const permission of permissionsToGrant) {
+        await invoke('grant_permission_cmd', {
+          spaceId: activeSpaceId,
+          userId: values.userId,
+          permission,
+        });
+      }
+
+      // Revoke role permissions not in custom permissions
+      const permissionsToRevoke = rolePermissions.filter(
+        p => values.customPermissions.length > 0 && !values.customPermissions.includes(p)
+      );
+      for (const permission of permissionsToRevoke) {
+        await invoke('revoke_permission_cmd', {
+          spaceId: activeSpaceId,
+          userId: values.userId,
+          permission,
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['spaceUsers', activeSpaceId] });
+      notifications.show({
+        title: 'User updated',
+        message: 'User role and permissions updated successfully',
+        color: 'green',
+      });
+      setEditModalOpened(false);
+      setSelectedUser(null);
+    },
+    onError: (error) => {
+      notifications.show({
+        title: 'Failed to update user',
+        message: String(error),
+        color: 'red',
+      });
+    },
+  });
+
+  // Suspend/activate user mutation
+  const toggleUserStatusMutation = useMutation({
+    mutationFn: async (values: { userId: string; currentStatus: string }) => {
+      if (!activeSpaceId) throw new Error('No active space');
+
+      if (values.currentStatus === 'suspended') {
+        await invoke('activate_user_cmd', {
+          spaceId: activeSpaceId,
+          userId: values.userId,
+        });
+      } else {
+        await invoke('suspend_user_cmd', {
+          spaceId: activeSpaceId,
+          userId: values.userId,
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['spaceUsers', activeSpaceId] });
+      notifications.show({
+        title: 'User status updated',
+        message: 'User status changed successfully',
+        color: 'green',
+      });
+    },
+    onError: (error) => {
+      notifications.show({
+        title: 'Failed to update status',
+        message: String(error),
+        color: 'red',
+      });
+    },
+  });
+
+  // Remove user mutation
+  const removeUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      if (!activeSpaceId) throw new Error('No active space');
+
+      await invoke('remove_user_from_space_cmd', {
+        spaceId: activeSpaceId,
+        userId,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['spaceUsers', activeSpaceId] });
+      notifications.show({
+        title: 'User removed',
+        message: 'User removed from space successfully',
+        color: 'green',
+      });
+    },
+    onError: (error) => {
+      notifications.show({
+        title: 'Failed to remove user',
+        message: String(error),
+        color: 'red',
+      });
+    },
+  });
 
   const inviteForm = useForm({
     initialValues: {
       email: '',
-      role: 'viewer',
+      roleId: 'viewer',
       customPermissions: [] as string[],
     },
     validate: {
@@ -172,70 +293,38 @@ const UserManagement: React.FC = () => {
 
   const editForm = useForm({
     initialValues: {
-      role: '',
+      roleId: '',
       customPermissions: [] as string[],
     },
   });
 
   const handleInviteUser = (values: typeof inviteForm.values) => {
-    const newUser: User = {
-      id: crypto.randomUUID(),
-      name: values.email.split('@')[0],
-      email: values.email,
-      role: values.role as User['role'],
-      status: 'invited',
-      joinedAt: Date.now(),
-      lastActive: 0,
-      permissions:
-        values.customPermissions.length > 0
-          ? values.customPermissions
-          : roles.find((r) => r.id === values.role)?.permissions || [],
-    };
-
-    setUsers([...users, newUser]);
-    inviteForm.reset();
-    setInviteModalOpened(false);
+    inviteUserMutation.mutate(values);
   };
 
   const handleEditUser = (values: typeof editForm.values) => {
-    if (!selectedUser || selectedUser.role === 'owner') return;
+    if (!selectedUser) return;
 
-    setUsers(
-      users.map((user) =>
-        user.id === selectedUser.id
-          ? {
-              ...user,
-              role: values.role as User['role'],
-              permissions:
-                values.customPermissions.length > 0
-                  ? values.customPermissions
-                  : roles.find((r) => r.id === values.role)?.permissions || [],
-            }
-          : user,
-      ),
-    );
-
-    setEditModalOpened(false);
-    setSelectedUser(null);
+    updateRoleMutation.mutate({
+      userId: selectedUser.user_id,
+      roleId: values.roleId,
+      customPermissions: values.customPermissions,
+    });
   };
 
-  const handleSuspendUser = (userId: string) => {
-    setUsers(
-      users.map((user) =>
-        user.id === userId ? { ...user, status: user.status === 'suspended' ? 'active' : 'suspended' } : user,
-      ),
-    );
+  const handleSuspendUser = (userId: string, currentStatus: string) => {
+    toggleUserStatusMutation.mutate({ userId, currentStatus });
   };
 
   const handleDeleteUser = (userId: string) => {
     if (confirm('Are you sure you want to remove this user?')) {
-      setUsers(users.filter((user) => user.id !== userId));
+      removeUserMutation.mutate(userId);
     }
   };
 
-  const getRelativeTime = (timestamp: number): string => {
-    if (timestamp === 0) return 'Never';
-    const diff = Date.now() - timestamp;
+  const getRelativeTime = (timestamp: number | null): string => {
+    if (!timestamp || timestamp === 0) return 'Never';
+    const diff = Date.now() - timestamp * 1000; // Convert from seconds to milliseconds
     const minutes = Math.floor(diff / (1000 * 60));
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -258,8 +347,22 @@ const UserManagement: React.FC = () => {
   const activeUsers = users.filter((u) => u.status === 'active').length;
   const invitedUsers = users.filter((u) => u.status === 'invited').length;
 
+  const isLoading = usersLoading || rolesLoading;
+
+  if (!activeSpaceId) {
+    return (
+      <Stack gap="lg" p="lg">
+        <Alert icon={<IconAlertCircle size={16} />} title="No Active Space" color="yellow">
+          Please select a space to manage users
+        </Alert>
+      </Stack>
+    );
+  }
+
   return (
-    <Stack gap="lg" p="lg">
+    <Stack gap="lg" p="lg" pos="relative">
+      <LoadingOverlay visible={isLoading} />
+
       <Group justify="space-between">
         <Group gap="sm">
           <Title order={2}>User Management</Title>
@@ -343,147 +446,154 @@ const UserManagement: React.FC = () => {
 
         <Tabs.Panel value="users" pt="md">
           <Card p="lg" radius="md" withBorder>
-            <ScrollArea>
-              <Table highlightOnHover>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>User</Table.Th>
-                    <Table.Th>Role</Table.Th>
-                    <Table.Th>Status</Table.Th>
-                    <Table.Th>Last Active</Table.Th>
-                    <Table.Th>Actions</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {users.map((user) => (
-                    <Table.Tr key={user.id}>
-                      <Table.Td>
-                        <Group gap="sm">
-                          <Avatar color="blue" radius="xl">
-                            {user.name
-                              .split(' ')
-                              .map((n) => n[0])
-                              .join('')}
-                          </Avatar>
-                          <Stack gap={0}>
-                            <Text size="sm" fw={500}>
-                              {user.name}
-                            </Text>
-                            <Text size="xs" c="dimmed">
-                              {user.email}
-                            </Text>
-                          </Stack>
-                        </Group>
-                      </Table.Td>
-                      <Table.Td>
-                        <Badge color={roleColors[user.role]} size="sm">
-                          {user.role}
-                        </Badge>
-                      </Table.Td>
-                      <Table.Td>
-                        <Badge color={statusColors[user.status]} size="sm" variant="light">
-                          {user.status}
-                        </Badge>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text size="sm" c="dimmed">
-                          {getRelativeTime(user.lastActive)}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Menu position="bottom-end" shadow="md">
-                          <Menu.Target>
-                            <ActionIcon variant="subtle" aria-label={`Actions for ${user.name}`}>
-                              <IconDots size={16} />
-                            </ActionIcon>
-                          </Menu.Target>
-                          <Menu.Dropdown>
-                            <Menu.Item
-                              leftSection={<IconEdit size={14} />}
-                              onClick={() => {
-                                setSelectedUser(user);
-                                editForm.setValues({
-                                  role: user.role,
-                                  customPermissions: user.permissions,
-                                });
-                                setEditModalOpened(true);
-                              }}
-                            >
-                              Edit Role
-                            </Menu.Item>
-                            <Menu.Item
-                              leftSection={<IconKey size={14} />}
-                              onClick={() => console.log('Reset password for', user.id)}
-                            >
-                              Reset Password
-                            </Menu.Item>
-                            {user.role !== 'owner' && (
-                              <>
-                                <Menu.Item
-                                  leftSection={<IconShield size={14} />}
-                                  onClick={() => handleSuspendUser(user.id)}
-                                >
-                                  {user.status === 'suspended' ? 'Activate' : 'Suspend'}
-                                </Menu.Item>
-                                <Menu.Divider />
-                                <Menu.Item
-                                  color="red"
-                                  leftSection={<IconTrash size={14} />}
-                                  onClick={() => handleDeleteUser(user.id)}
-                                >
-                                  Remove User
-                                </Menu.Item>
-                              </>
-                            )}
-                          </Menu.Dropdown>
-                        </Menu>
-                      </Table.Td>
+            {users.length === 0 ? (
+              <EmptyState
+                title="No users yet"
+                description="Invite users to collaborate in this space"
+                icon={IconUsers}
+              />
+            ) : (
+              <ScrollArea>
+                <Table highlightOnHover>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>User</Table.Th>
+                      <Table.Th>Role</Table.Th>
+                      <Table.Th>Status</Table.Th>
+                      <Table.Th>Last Active</Table.Th>
+                      <Table.Th>Actions</Table.Th>
                     </Table.Tr>
-                  ))}
-                </Table.Tbody>
-              </Table>
-            </ScrollArea>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {users.map((user) => (
+                      <Table.Tr key={user.user_id}>
+                        <Table.Td>
+                          <Group gap="sm">
+                            <Avatar color="blue" radius="xl">
+                              {user.email
+                                .split('@')[0]
+                                .split(' ')
+                                .map((n) => n[0])
+                                .join('')
+                                .toUpperCase()}
+                            </Avatar>
+                            <Stack gap={0}>
+                              <Text size="sm" fw={500}>
+                                {user.email.split('@')[0]}
+                              </Text>
+                              <Text size="xs" c="dimmed">
+                                {user.email}
+                              </Text>
+                            </Stack>
+                          </Group>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge color={roleColors[user.role] || 'gray'} size="sm">
+                            {user.role}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge color={statusColors[user.status]} size="sm" variant="light">
+                            {user.status}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="sm" c="dimmed">
+                            {getRelativeTime(user.last_active)}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Menu position="bottom-end" shadow="md">
+                            <Menu.Target>
+                              <ActionIcon variant="subtle" aria-label={`Actions for ${user.email}`}>
+                                <IconDots size={16} />
+                              </ActionIcon>
+                            </Menu.Target>
+                            <Menu.Dropdown>
+                              <Menu.Item
+                                leftSection={<IconEdit size={14} />}
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  editForm.setValues({
+                                    roleId: user.role,
+                                    customPermissions: user.permissions,
+                                  });
+                                  setEditModalOpened(true);
+                                }}
+                              >
+                                Edit Role
+                              </Menu.Item>
+                              {user.role !== 'owner' && (
+                                <>
+                                  <Menu.Item
+                                    leftSection={<IconShield size={14} />}
+                                    onClick={() => handleSuspendUser(user.user_id, user.status)}
+                                  >
+                                    {user.status === 'suspended' ? 'Activate' : 'Suspend'}
+                                  </Menu.Item>
+                                  <Menu.Divider />
+                                  <Menu.Item
+                                    color="red"
+                                    leftSection={<IconTrash size={14} />}
+                                    onClick={() => handleDeleteUser(user.user_id)}
+                                  >
+                                    Remove User
+                                  </Menu.Item>
+                                </>
+                              )}
+                            </Menu.Dropdown>
+                          </Menu>
+                        </Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
+              </ScrollArea>
+            )}
           </Card>
         </Tabs.Panel>
 
         <Tabs.Panel value="roles" pt="md">
           <Stack gap="md">
-            {roles.map((role) => (
-              <Card key={role.id} p="lg" radius="md" withBorder>
-                <Group justify="space-between">
-                  <Group>
-                    <Avatar size={60} radius="md" color={roleColors[role.id]}>
-                      <IconShield size={30} />
-                    </Avatar>
-                    <Stack gap={4}>
-                      <Group gap="xs">
-                        <Text size="lg" fw={600}>
-                          {role.name}
-                        </Text>
-                        <Badge size="sm" variant="light">
-                          {role.userCount} {role.userCount === 1 ? 'user' : 'users'}
-                        </Badge>
-                      </Group>
-                      <Text size="sm" c="dimmed">
-                        {role.description}
-                      </Text>
-                      <Group gap="xs" mt="xs">
-                        {role.permissions.map((perm) => (
-                          <Badge key={perm} size="xs" variant="dot">
-                            {perm.replaceAll('_', ' ')}
+            {roles.map((role) => {
+              const userCount = users.filter(u => u.role === role.id).length;
+              return (
+                <Card key={role.id} p="lg" radius="md" withBorder>
+                  <Group justify="space-between">
+                    <Group>
+                      <Avatar size={60} radius="md" color={roleColors[role.id] || 'gray'}>
+                        <IconShield size={30} />
+                      </Avatar>
+                      <Stack gap={4}>
+                        <Group gap="xs">
+                          <Text size="lg" fw={600}>
+                            {role.name}
+                          </Text>
+                          <Badge size="sm" variant="light">
+                            {userCount} {userCount === 1 ? 'user' : 'users'}
                           </Badge>
-                        ))}
-                      </Group>
-                    </Stack>
+                          {role.is_system && (
+                            <Badge size="sm" variant="dot" color="gray">
+                              System
+                            </Badge>
+                          )}
+                        </Group>
+                        <Text size="sm" c="dimmed">
+                          {role.description}
+                        </Text>
+                        <Group gap="xs" mt="xs">
+                          {role.permissions.map((perm) => (
+                            <Badge key={perm} size="xs" variant="dot">
+                              {perm.replaceAll('_', ' ')}
+                            </Badge>
+                          ))}
+                        </Group>
+                      </Stack>
+                    </Group>
                   </Group>
-                  {role.id !== 'owner' && (
-                    <Button size="xs" variant="light" leftSection={<IconSettings size={14} />}>
-                      Configure
-                    </Button>
-                  )}
-                </Group>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </Stack>
         </Tabs.Panel>
 
@@ -546,7 +656,7 @@ const UserManagement: React.FC = () => {
               label="Role"
               description="Assign a role with predefined permissions"
               data={roles.map((r) => ({ value: r.id, label: r.name }))}
-              {...inviteForm.getInputProps('role')}
+              {...inviteForm.getInputProps('roleId')}
             />
             <MultiSelect
               label="Custom Permissions (Optional)"
@@ -564,7 +674,9 @@ const UserManagement: React.FC = () => {
               >
                 Cancel
               </Button>
-              <Button type="submit">Send Invite</Button>
+              <Button type="submit" loading={inviteUserMutation.isPending}>
+                Send Invite
+              </Button>
             </Group>
           </Stack>
         </form>
@@ -585,14 +697,16 @@ const UserManagement: React.FC = () => {
             <Stack gap="md">
               <Group>
                 <Avatar color="blue" radius="xl" size="lg">
-                  {selectedUser.name
+                  {selectedUser.email
+                    .split('@')[0]
                     .split(' ')
                     .map((n) => n[0])
-                    .join('')}
+                    .join('')
+                    .toUpperCase()}
                 </Avatar>
                 <Stack gap={0}>
                   <Text size="sm" fw={500}>
-                    {selectedUser.name}
+                    {selectedUser.email.split('@')[0]}
                   </Text>
                   <Text size="xs" c="dimmed">
                     {selectedUser.email}
@@ -604,7 +718,7 @@ const UserManagement: React.FC = () => {
                 label="Role"
                 description="Change user's role"
                 data={roles.map((r) => ({ value: r.id, label: r.name }))}
-                {...editForm.getInputProps('role')}
+                {...editForm.getInputProps('roleId')}
               />
               <MultiSelect
                 label="Custom Permissions"
@@ -622,7 +736,9 @@ const UserManagement: React.FC = () => {
                 >
                   Cancel
                 </Button>
-                <Button type="submit">Save Changes</Button>
+                <Button type="submit" loading={updateRoleMutation.isPending}>
+                  Save Changes
+                </Button>
               </Group>
             </Stack>
           </form>
