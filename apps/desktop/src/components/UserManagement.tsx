@@ -128,7 +128,7 @@ const UserManagement: React.FC = () => {
   // Fetch users for the active space
   const { data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ['spaceUsers', activeSpaceId],
-    queryFn: () => invoke<SpaceUser[]>('get_space_users_cmd', { spaceId: activeSpaceId }),
+    queryFn: () => invoke<SpaceUser[]>('get_space_users_cmd', { space_id: activeSpaceId }),
     enabled: !!activeSpaceId,
   });
 
@@ -145,7 +145,7 @@ const UserManagement: React.FC = () => {
 
       // Invite user
       const invitation = await invoke<UserInvitation>('invite_user_cmd', {
-        spaceId: activeSpaceId,
+        space_id: activeSpaceId,
         email: values.email,
         roleId: values.roleId,
         invitedBy: getCurrentUserId(),
@@ -186,7 +186,7 @@ const UserManagement: React.FC = () => {
 
       // Update role
       await invoke('update_user_role_cmd', {
-        spaceId: activeSpaceId,
+        space_id: activeSpaceId,
         userId: values.userId,
         newRoleId: values.roleId,
         updatedBy: getCurrentUserId(),
@@ -203,7 +203,7 @@ const UserManagement: React.FC = () => {
       );
       for (const permission of permissionsToGrant) {
         await invoke('grant_permission_cmd', {
-          spaceId: activeSpaceId,
+          space_id: activeSpaceId,
           userId: values.userId,
           permission,
         });
@@ -215,7 +215,7 @@ const UserManagement: React.FC = () => {
       );
       for (const permission of permissionsToRevoke) {
         await invoke('revoke_permission_cmd', {
-          spaceId: activeSpaceId,
+          space_id: activeSpaceId,
           userId: values.userId,
           permission,
         });
@@ -247,12 +247,12 @@ const UserManagement: React.FC = () => {
 
       if (values.currentStatus === 'suspended') {
         await invoke('activate_user_cmd', {
-          spaceId: activeSpaceId,
+          space_id: activeSpaceId,
           userId: values.userId,
         });
       } else {
         await invoke('suspend_user_cmd', {
-          spaceId: activeSpaceId,
+          space_id: activeSpaceId,
           userId: values.userId,
         });
       }
@@ -280,7 +280,7 @@ const UserManagement: React.FC = () => {
       if (!activeSpaceId) throw new Error('No active space');
 
       await invoke('remove_user_from_space_cmd', {
-        spaceId: activeSpaceId,
+        space_id: activeSpaceId,
         userId,
       });
     },

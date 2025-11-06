@@ -619,8 +619,17 @@ fn fetch_calendar_events(
     username: &str,
     password: &str,
 ) -> Result<Vec<CalDavEvent>, CalDavError> {
+    // SECURITY: Enforce HTTPS for credential transmission
+    if !url.starts_with("https://") && !url.starts_with("http://localhost") && !url.starts_with("http://127.0.0.1") {
+        return Err(CalDavError::Network(
+            "CalDAV URL must use HTTPS (or localhost for testing). HTTP is insecure for credential transmission.".to_string()
+        ));
+    }
+
+    // SECURITY: Disable automatic redirects to prevent credential leakage
     let client = Client::builder()
         .timeout(std::time::Duration::from_secs(30))
+        .redirect(reqwest::redirect::Policy::none())
         .build()?;
 
     // CalDAV calendar-query REPORT request
@@ -645,6 +654,14 @@ fn fetch_calendar_events(
         .body(report_body)
         .send()?;
 
+    // SECURITY: Detect and reject redirects to prevent credential leakage
+    if response.status().is_redirection() {
+        return Err(CalDavError::Network(format!(
+            "Unexpected redirect ({}). Redirects are disabled for security.",
+            response.status()
+        )));
+    }
+
     if response.status() == reqwest::StatusCode::UNAUTHORIZED {
         return Err(CalDavError::Authentication);
     }
@@ -667,8 +684,16 @@ fn push_calendar_event(
     password: &str,
     event: &CalDavEvent,
 ) -> Result<String, CalDavError> {
+    // SECURITY: Enforce HTTPS
+    if !url.starts_with("https://") && !url.starts_with("http://localhost") && !url.starts_with("http://127.0.0.1") {
+        return Err(CalDavError::Network(
+            "CalDAV URL must use HTTPS (or localhost for testing). HTTP is insecure for credential transmission.".to_string()
+        ));
+    }
+
     let client = Client::builder()
         .timeout(std::time::Duration::from_secs(30))
+        .redirect(reqwest::redirect::Policy::none())
         .build()?;
 
     let ical_data = generate_icalendar(event)?;
@@ -680,6 +705,13 @@ fn push_calendar_event(
         .header("Content-Type", "text/calendar; charset=utf-8")
         .body(ical_data)
         .send()?;
+
+    if response.status().is_redirection() {
+        return Err(CalDavError::Network(format!(
+            "Unexpected redirect ({}). Redirects are disabled for security.",
+            response.status()
+        )));
+    }
 
     if response.status() == reqwest::StatusCode::UNAUTHORIZED {
         return Err(CalDavError::Authentication);
@@ -710,8 +742,16 @@ fn delete_calendar_event(
     password: &str,
     event_uid: &str,
 ) -> Result<(), CalDavError> {
+    // SECURITY: Enforce HTTPS
+    if !url.starts_with("https://") && !url.starts_with("http://localhost") && !url.starts_with("http://127.0.0.1") {
+        return Err(CalDavError::Network(
+            "CalDAV URL must use HTTPS (or localhost for testing). HTTP is insecure for credential transmission.".to_string()
+        ));
+    }
+
     let client = Client::builder()
         .timeout(std::time::Duration::from_secs(30))
+        .redirect(reqwest::redirect::Policy::none())
         .build()?;
 
     let event_url = format!("{}/{}.ics", url.trim_end_matches('/'), event_uid);
@@ -720,6 +760,13 @@ fn delete_calendar_event(
         .delete(&event_url)
         .basic_auth(username, Some(password))
         .send()?;
+
+    if response.status().is_redirection() {
+        return Err(CalDavError::Network(format!(
+            "Unexpected redirect ({}). Redirects are disabled for security.",
+            response.status()
+        )));
+    }
 
     if response.status() == reqwest::StatusCode::UNAUTHORIZED {
         return Err(CalDavError::Authentication);
@@ -738,11 +785,19 @@ fn delete_calendar_event(
 }
 
 /// Parse CalDAV XML response and extract calendar events
+///
+/// SECURITY NOTE: This uses simple string splitting for XML parsing which is fragile
+/// but acceptable for CalDAV's limited, trusted CalDAV server responses. For production
+/// deployments with untrusted or complex XML, migrate to a proper XML parser like quick-xml
+/// to protect against entity expansion attacks, XML bombs, and other XML-specific vulnerabilities.
+///
+/// Mitigation: CalDAV servers are explicitly configured by users (not arbitrary internet sources),
+/// and the format is standardized (RFC 4791), reducing attack surface.
 fn parse_calendar_response(xml_data: &str) -> Result<Vec<CalDavEvent>, CalDavError> {
     let mut events = Vec::new();
 
     // Simple XML parsing to extract calendar-data elements
-    // In production, use a proper XML parser like quick-xml
+    // TODO: Migrate to quick-xml for production-grade XML security
     for calendar_data in xml_data.split("<C:calendar-data>") {
         if let Some(end_pos) = calendar_data.find("</C:calendar-data>") {
             let ical_data = &calendar_data[..end_pos];
@@ -835,45 +890,77 @@ fn parse_icalendar(ical_data: &str) -> Result<Vec<CalDavEvent>, CalDavError> {
 }
 
 /// Parse iCalendar datetime format to Unix timestamp
+///
+/// SECURITY NOTE: Manual string slicing is used here for performance and to avoid
+/// external parser dependencies. Input is validated at each step with bounds checks
+/// and parse error handling. This is acceptable because:
+/// 1. Input comes from trusted CalDAV servers (user-configured, RFC 4791 compliant)
+/// 2. All slicing operations use safe bounds checking
+/// 3. chrono validates date/time values for correctness
+///
+/// For production with untrusted datetime sources, consider a formal datetime parser.
 fn parse_ical_datetime(datetime_str: &str) -> Result<i64, CalDavError> {
-    // iCalendar datetime format: YYYYMMDDTHHMMSSZ or YYYYMMDDTHHMMSS
-    let clean_str = datetime_str.replace([':', '-'], "");
+    use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
-    // Parse format: YYYYMMDDTHHMMSSZ
-    if clean_str.len() >= 15 {
-        let year: i32 = clean_str[0..4]
-            .parse()
-            .map_err(|_| CalDavError::Parse("Invalid year".to_string()))?;
-        let month: u32 = clean_str[4..6]
-            .parse()
-            .map_err(|_| CalDavError::Parse("Invalid month".to_string()))?;
-        let day: u32 = clean_str[6..8]
-            .parse()
-            .map_err(|_| CalDavError::Parse("Invalid day".to_string()))?;
-        let hour: u32 = clean_str[9..11]
-            .parse()
-            .map_err(|_| CalDavError::Parse("Invalid hour".to_string()))?;
-        let minute: u32 = clean_str[11..13]
-            .parse()
-            .map_err(|_| CalDavError::Parse("Invalid minute".to_string()))?;
-        let second: u32 = clean_str[13..15]
-            .parse()
-            .map_err(|_| CalDavError::Parse("Invalid second".to_string()))?;
-
-        use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
-
-        let date = NaiveDate::from_ymd_opt(year, month, day)
-            .ok_or_else(|| CalDavError::Parse("Invalid date".to_string()))?;
-        let time = NaiveTime::from_hms_opt(hour, minute, second)
-            .ok_or_else(|| CalDavError::Parse("Invalid time".to_string()))?;
-        let datetime = NaiveDateTime::new(date, time);
-
-        Ok(datetime
-            .and_utc()
-            .timestamp())
-    } else {
-        Err(CalDavError::Parse("Invalid datetime format".to_string()))
+    // Normalize and trim input
+    let trimmed = datetime_str.trim();
+    if trimmed.is_empty() {
+        return Err(CalDavError::Parse("Empty datetime string".to_string()));
     }
+
+    // iCalendar datetime format: YYYYMMDDTHHMMSSZ or YYYYMMDDTHHMMSS
+    let clean_str = trimmed.replace([':', '-'], "");
+
+    // Bounds check before slicing to prevent panics
+    if clean_str.len() < 15 {
+        return Err(CalDavError::Parse(format!(
+            "Datetime string too short (got {}, need at least 15 chars): '{}'",
+            clean_str.len(),
+            datetime_str
+        )));
+    }
+
+    // Safe slicing with validation at each step
+    let year: i32 = clean_str.get(0..4)
+        .and_then(|s| s.parse().ok())
+        .ok_or_else(|| CalDavError::Parse(format!("Invalid year in '{}'", datetime_str)))?;
+
+    let month: u32 = clean_str.get(4..6)
+        .and_then(|s| s.parse().ok())
+        .ok_or_else(|| CalDavError::Parse(format!("Invalid month in '{}'", datetime_str)))?;
+
+    let day: u32 = clean_str.get(6..8)
+        .and_then(|s| s.parse().ok())
+        .ok_or_else(|| CalDavError::Parse(format!("Invalid day in '{}'", datetime_str)))?;
+
+    let hour: u32 = clean_str.get(9..11)
+        .and_then(|s| s.parse().ok())
+        .ok_or_else(|| CalDavError::Parse(format!("Invalid hour in '{}'", datetime_str)))?;
+
+    let minute: u32 = clean_str.get(11..13)
+        .and_then(|s| s.parse().ok())
+        .ok_or_else(|| CalDavError::Parse(format!("Invalid minute in '{}'", datetime_str)))?;
+
+    let second: u32 = clean_str.get(13..15)
+        .and_then(|s| s.parse().ok())
+        .ok_or_else(|| CalDavError::Parse(format!("Invalid second in '{}'", datetime_str)))?;
+
+    // Validate date and time values with chrono
+    let date = NaiveDate::from_ymd_opt(year, month, day)
+        .ok_or_else(|| CalDavError::Parse(format!(
+            "Invalid date values: year={}, month={}, day={}",
+            year, month, day
+        )))?;
+
+    let time = NaiveTime::from_hms_opt(hour, minute, second)
+        .ok_or_else(|| CalDavError::Parse(format!(
+            "Invalid time values: hour={}, minute={}, second={}",
+            hour, minute, second
+        )))?;
+
+    let datetime = NaiveDateTime::new(date, time);
+
+    Ok(datetime.and_utc().timestamp())
 }
 
 /// Generate iCalendar format from CalDavEvent

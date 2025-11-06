@@ -127,16 +127,31 @@ export function OcrManager() {
         language: language || undefined,
       });
 
-      notifications.show({
-        title: 'OCR completed',
-        message: `Successfully extracted text from image`,
-        color: 'green',
-      });
-
-      // Get the status
+      // Get the status to verify completion before notifying
       const status = await invoke<OcrResult>('get_ocr_status_cmd', { blobId });
       setCurrentStatus(status);
-      setUploadModalOpen(false);
+
+      // Only notify success after verifying the status
+      if (status.status === 'completed') {
+        notifications.show({
+          title: 'OCR completed',
+          message: 'Successfully extracted text from image',
+          color: 'green',
+        });
+        setUploadModalOpen(false);
+      } else if (status.status === 'failed') {
+        notifications.show({
+          title: 'OCR failed',
+          message: status.error_message ?? 'OCR processing failed',
+          color: 'red',
+        });
+      } else {
+        notifications.show({
+          title: 'OCR queued',
+          message: 'Image is queued or processing; results will appear shortly',
+          color: 'blue',
+        });
+      }
     } catch (error) {
       notifications.show({
         title: 'OCR processing failed',
