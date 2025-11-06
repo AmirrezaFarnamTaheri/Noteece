@@ -756,6 +756,90 @@ fn sync_caldav_account_cmd(account_id: &str, db: State<DbConnection>) -> Result<
     }
 }
 
+#[tauri::command]
+fn get_caldav_account_cmd(account_id: &str, db: State<DbConnection>) -> Result<Option<CalDavAccount>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_caldav_account(conn, account_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn update_caldav_account_cmd(
+    account_id: &str,
+    enabled: Option<bool>,
+    auto_sync: Option<bool>,
+    sync_frequency: Option<i64>,
+    sync_direction: Option<String>,
+    db: State<DbConnection>
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let direction = sync_direction.and_then(|d| match d.as_str() {
+            "pull" => Some(SyncDirection::Pull),
+            "push" => Some(SyncDirection::Push),
+            "bidirectional" => Some(SyncDirection::Bidirectional),
+            _ => None,
+        });
+        update_caldav_account(conn, account_id, enabled, auto_sync, sync_frequency, direction).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn delete_caldav_account_cmd(account_id: &str, db: State<DbConnection>) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        delete_caldav_account(conn, account_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_sync_history_cmd(account_id: &str, limit: u32, db: State<DbConnection>) -> Result<Vec<SyncResult>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        // get_sync_history returns Vec<SyncResult> which is already serializable
+        get_sync_history(conn, account_id, limit).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_unresolved_conflicts_cmd(account_id: &str, db: State<DbConnection>) -> Result<Vec<SyncConflict>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_unresolved_conflicts(conn, account_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn resolve_conflict_cmd(
+    conflict_id: &str,
+    resolution: String,
+    db: State<DbConnection>
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let resolution_type = match resolution.as_str() {
+            "accept_local" => ConflictResolution::AcceptLocal,
+            "accept_remote" => ConflictResolution::AcceptRemote,
+            "merge" => ConflictResolution::Merge,
+            _ => return Err("Invalid resolution type".to_string()),
+        };
+        resolve_conflict(conn, conflict_id, resolution_type).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
 // Personal Modes - Health Commands
 #[tauri::command]
 fn create_health_metric_cmd(space_id: &str, metric_type: &str, value: f64, unit: &str, recorded_at: i64, db: State<DbConnection>) -> Result<HealthMetric, String> {
@@ -985,7 +1069,13 @@ fn main() {
         record_insight_feedback_cmd,
         add_caldav_account_cmd,
         get_caldav_accounts_cmd,
+        get_caldav_account_cmd,
+        update_caldav_account_cmd,
+        delete_caldav_account_cmd,
         sync_caldav_account_cmd,
+        get_sync_history_cmd,
+        get_unresolved_conflicts_cmd,
+        resolve_conflict_cmd,
         create_health_metric_cmd,
         get_health_metrics_cmd,
         create_transaction_cmd,
