@@ -21,11 +21,11 @@ echo "-----------------------------------"
 cd packages/core-rs
 
 echo "1. Collaboration RBAC Tests (Token Security, N+1 Fix, Permissions)"
-cargo test collaboration_rbac --no-fail-fast -- --nocapture
+cargo test -p core-rs collaboration_rbac --no-fail-fast -- --nocapture
 
 echo ""
 echo "2. Sync Agent Tests (Database Schema, Query Optimization)"
-cargo test sync_agent_comprehensive --no-fail-fast -- --nocapture
+cargo test -p core-rs sync_agent_comprehensive --no-fail-fast -- --nocapture
 
 cd ../..
 

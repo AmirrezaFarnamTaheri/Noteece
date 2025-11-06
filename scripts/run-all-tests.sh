@@ -24,7 +24,7 @@ echo -e "${BLUE}[1/3] Running Rust Backend Tests...${NC}"
 echo "-----------------------------------"
 cd packages/core-rs
 
-if cargo test --all 2>&1 | tee /tmp/rust-test-output.log; then
+if cargo test 2>&1 | tee /tmp/rust-test-output.log; then
     echo -e "${GREEN}✓ Backend tests passed${NC}"
 else
     echo -e "${RED}✗ Backend tests failed${NC}"

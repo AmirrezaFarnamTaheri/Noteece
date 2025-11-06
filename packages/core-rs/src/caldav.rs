@@ -673,8 +673,75 @@ fn fetch_calendar_events(
         )));
     }
 
-    let response_text = response.text()?;
+    // SECURITY: Validate content type to ensure we're parsing XML
+    if let Some(content_type) = response.headers().get(reqwest::header::CONTENT_TYPE) {
+        let ct = content_type.to_str().unwrap_or("");
+        if !ct.contains("xml") && !ct.contains("text/calendar") {
+            return Err(CalDavError::Parse(format!(
+                "Unexpected content type (expected XML): {}",
+                ct
+            )));
+        }
+    }
+
+    // SECURITY: Enforce maximum payload size to prevent memory exhaustion
+    // CalDAV responses can be large for calendars with many events, but 10MB is reasonable
+    const MAX_RESPONSE_SIZE: usize = 10 * 1024 * 1024; // 10 MB
+    let bytes = response.bytes()?;
+    if bytes.len() > MAX_RESPONSE_SIZE {
+        return Err(CalDavError::Network(format!(
+            "CalDAV REPORT response too large: {} bytes (limit: {} bytes)",
+            bytes.len(),
+            MAX_RESPONSE_SIZE
+        )));
+    }
+
+    let response_text = String::from_utf8_lossy(&bytes).to_string();
     parse_calendar_response(&response_text)
+}
+
+/// Sanitize event UID to prevent path traversal attacks
+///
+/// SECURITY: UIDs are used to construct filesystem-like paths in CalDAV URLs.
+/// Malicious UIDs containing path traversal sequences (../, //, etc.) could
+/// potentially access or modify unintended calendar resources.
+fn sanitize_event_uid(uid: &str) -> Result<String, CalDavError> {
+    // Remove all forward and backward slashes
+    let sanitized = uid
+        .replace('/', "")
+        .replace('\\', "")
+        .trim()
+        .to_string();
+
+    // Reject if empty after sanitization
+    if sanitized.is_empty() {
+        return Err(CalDavError::Parse(
+            "Invalid event UID: empty after sanitization".to_string()
+        ));
+    }
+
+    // Reject if contains path traversal sequences
+    if sanitized.contains("..") {
+        return Err(CalDavError::Parse(
+            "Invalid event UID: contains path traversal sequence (..)".to_string()
+        ));
+    }
+
+    // Reject control characters and other dangerous characters
+    if sanitized.chars().any(|c| c.is_control() || c == '\0') {
+        return Err(CalDavError::Parse(
+            "Invalid event UID: contains control characters".to_string()
+        ));
+    }
+
+    // Limit UID length to prevent excessive URL lengths
+    if sanitized.len() > 255 {
+        return Err(CalDavError::Parse(
+            "Invalid event UID: exceeds maximum length (255 characters)".to_string()
+        ));
+    }
+
+    Ok(sanitized)
 }
 
 /// Push calendar event to CalDAV server using PUT request
@@ -697,7 +764,10 @@ fn push_calendar_event(
         .build()?;
 
     let ical_data = generate_icalendar(event)?;
-    let event_url = format!("{}/{}.ics", url.trim_end_matches('/'), event.uid);
+
+    // SECURITY: Sanitize UID to prevent path traversal
+    let safe_uid = sanitize_event_uid(&event.uid)?;
+    let event_url = format!("{}/{}.ics", url.trim_end_matches('/'), safe_uid);
 
     let response = client
         .put(&event_url)
@@ -754,7 +824,9 @@ fn delete_calendar_event(
         .redirect(reqwest::redirect::Policy::none())
         .build()?;
 
-    let event_url = format!("{}/{}.ics", url.trim_end_matches('/'), event_uid);
+    // SECURITY: Sanitize UID to prevent path traversal
+    let safe_uid = sanitize_event_uid(event_uid)?;
+    let event_url = format!("{}/{}.ics", url.trim_end_matches('/'), safe_uid);
 
     let response = client
         .delete(&event_url)
@@ -786,7 +858,10 @@ fn delete_calendar_event(
 
 /// Parse CalDAV XML response and extract calendar events
 ///
-/// SECURITY NOTE: This uses simple string splitting for XML parsing which is fragile
+/// This function uses tolerant XML parsing that handles various namespace prefixes
+/// and case variations commonly seen in CalDAV responses from different servers.
+///
+/// SECURITY NOTE: This uses simple string matching for XML parsing which is fragile
 /// but acceptable for CalDAV's limited, trusted CalDAV server responses. For production
 /// deployments with untrusted or complex XML, migrate to a proper XML parser like quick-xml
 /// to protect against entity expansion attacks, XML bombs, and other XML-specific vulnerabilities.
@@ -796,14 +871,51 @@ fn delete_calendar_event(
 fn parse_calendar_response(xml_data: &str) -> Result<Vec<CalDavEvent>, CalDavError> {
     let mut events = Vec::new();
 
-    // Simple XML parsing to extract calendar-data elements
-    // TODO: Migrate to quick-xml for production-grade XML security
-    for calendar_data in xml_data.split("<C:calendar-data>") {
-        if let Some(end_pos) = calendar_data.find("</C:calendar-data>") {
-            let ical_data = &calendar_data[..end_pos];
-            if let Ok(mut parsed_events) = parse_icalendar(ical_data) {
-                events.append(&mut parsed_events);
+    // Convert to lowercase for case-insensitive matching
+    let lower_xml = xml_data.to_lowercase();
+
+    // Find all calendar-data elements (namespace-agnostic, case-insensitive)
+    // Matches: <c:calendar-data>, <cal:calendar-data>, <C:CALENDAR-DATA>, etc.
+    let mut search_pos = 0;
+    while let Some(start_idx) = lower_xml[search_pos..].find(":calendar-data>") {
+        // Find the actual start of the opening tag (search backwards for '<')
+        let tag_start_pos = search_pos + start_idx;
+        if let Some(open_bracket) = lower_xml[..tag_start_pos].rfind('<') {
+            // Position after the opening tag
+            let content_start = tag_start_pos + ":calendar-data>".len();
+
+            // Find corresponding closing tag (case-insensitive, namespace-agnostic)
+            if let Some(close_idx) = lower_xml[content_start..].find("</") {
+                let close_tag_start = content_start + close_idx;
+
+                // Verify this is actually a calendar-data closing tag
+                if lower_xml[close_tag_start..].starts_with("</")
+                    && lower_xml[close_tag_start + 2..].starts_with("c:calendar-data>")
+                        .or(lower_xml[close_tag_start + 2..].starts_with("cal:calendar-data>"))
+                        .or(lower_xml[close_tag_start + 2..].starts_with("calendar-data>"))
+                        .unwrap_or(false)
+                {
+                    // Extract iCalendar data from the original XML (preserve case)
+                    let ical_data = &xml_data[content_start..close_tag_start];
+
+                    // Parse and add events
+                    if let Ok(mut parsed_events) = parse_icalendar(ical_data) {
+                        events.append(&mut parsed_events);
+                    }
+
+                    // Continue searching after this closing tag
+                    search_pos = close_tag_start + "calendar-data>".len();
+                } else {
+                    // Not a valid closing tag, continue searching
+                    search_pos = content_start;
+                }
+            } else {
+                // No closing tag found, stop searching
+                break;
             }
+        } else {
+            // Malformed XML, continue searching
+            search_pos = tag_start_pos + 1;
         }
     }
 

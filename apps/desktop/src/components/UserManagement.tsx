@@ -128,7 +128,13 @@ const UserManagement: React.FC = () => {
   // Fetch users for the active space
   const { data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ['spaceUsers', activeSpaceId],
-    queryFn: () => invoke<SpaceUser[]>('get_space_users_cmd', { space_id: activeSpaceId }),
+    queryFn: async () => {
+      // Guard against missing space ID to prevent backend errors
+      if (!activeSpaceId) {
+        return [];
+      }
+      return await invoke<SpaceUser[]>('get_space_users_cmd', { space_id: activeSpaceId });
+    },
     enabled: !!activeSpaceId,
   });
 

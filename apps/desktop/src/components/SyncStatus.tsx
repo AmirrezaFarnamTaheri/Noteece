@@ -95,6 +95,13 @@ const SyncStatus: React.FC = () => {
     queryKey: ['syncDevices'],
     queryFn: () => invoke<SyncDevice[]>('get_sync_devices_cmd'),
     refetchInterval: 30000, // Refetch every 30 seconds
+    onError: (error) => {
+      notifications.show({
+        title: 'Failed to load devices',
+        message: String(error),
+        color: 'red',
+      });
+    },
   });
 
   // Fetch sync conflicts
@@ -102,6 +109,13 @@ const SyncStatus: React.FC = () => {
     queryKey: ['syncConflicts'],
     queryFn: () => invoke<SyncConflict[]>('get_sync_conflicts_cmd'),
     refetchInterval: 15000, // Refetch every 15 seconds
+    onError: (error) => {
+      notifications.show({
+        title: 'Failed to load conflicts',
+        message: String(error),
+        color: 'red',
+      });
+    },
   });
 
   // Fetch sync history
