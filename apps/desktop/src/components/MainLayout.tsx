@@ -16,6 +16,7 @@ import {
   IconFileText,
   IconChartBar,
   IconCommand,
+  IconScan,
 } from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
 import CommandPalette from './CommandPalette';
@@ -55,6 +56,7 @@ const navLinkGroups = [
       { icon: IconUsers, label: 'Users', to: '/main/users' },
       { icon: IconDatabaseImport, label: 'Import', to: '/main/import' },
       { icon: IconCloud, label: 'Sync', to: '/main/sync' },
+      { icon: IconScan, label: 'OCR', to: '/main/ocr' },
       { icon: IconSettings, label: 'Settings', to: '/main/settings' },
     ],
   },

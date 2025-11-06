@@ -3,6 +3,89 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use ulid::Ulid;
 
+/// Initialize sync database tables
+pub fn init_sync_tables(conn: &Connection) -> Result<(), rusqlite::Error> {
+    // Device tracking table (device registry for discovery)
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS sync_state (
+            device_id TEXT PRIMARY KEY,
+            device_name TEXT NOT NULL,
+            device_type TEXT NOT NULL,
+            last_seen INTEGER NOT NULL,
+            sync_address TEXT NOT NULL,
+            sync_port INTEGER NOT NULL,
+            protocol_version TEXT NOT NULL,
+            trusted INTEGER NOT NULL DEFAULT 0,
+            created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+        )",
+        [],
+    )?;
+
+    // Sync history table
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS sync_history (
+            id TEXT PRIMARY KEY,
+            device_id TEXT NOT NULL,
+            space_id TEXT NOT NULL,
+            sync_time INTEGER NOT NULL,
+            direction TEXT NOT NULL,
+            entities_pushed INTEGER NOT NULL DEFAULT 0,
+            entities_pulled INTEGER NOT NULL DEFAULT 0,
+            conflicts_detected INTEGER NOT NULL DEFAULT 0,
+            success INTEGER NOT NULL DEFAULT 1,
+            error_message TEXT,
+            FOREIGN KEY (device_id) REFERENCES sync_state(device_id)
+        )",
+        [],
+    )?;
+
+    // Sync conflicts table
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS sync_conflict (
+            id TEXT PRIMARY KEY,
+            entity_type TEXT NOT NULL,
+            entity_id TEXT NOT NULL,
+            local_version BLOB,
+            remote_version BLOB,
+            conflict_type TEXT NOT NULL,
+            detected_at INTEGER NOT NULL,
+            resolved INTEGER NOT NULL DEFAULT 0,
+            resolved_at INTEGER,
+            resolution TEXT,
+            device_id TEXT NOT NULL,
+            FOREIGN KEY (device_id) REFERENCES sync_state(device_id)
+        )",
+        [],
+    )?;
+
+    // Vector clock table
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS sync_vector_clock (
+            space_id TEXT NOT NULL,
+            device_id TEXT NOT NULL,
+            clock_value INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (space_id, device_id)
+        )",
+        [],
+    )?;
+
+    // Entity sync log table
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS entity_sync_log (
+            id TEXT PRIMARY KEY,
+            entity_type TEXT NOT NULL,
+            entity_id TEXT NOT NULL,
+            synced_at INTEGER NOT NULL,
+            device_id TEXT NOT NULL,
+            operation TEXT NOT NULL,
+            created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+        )",
+        [],
+    )?;
+
+    Ok(())
+}
+
 /// Sync agent handles device discovery and synchronization
 pub struct SyncAgent {
     device_id: String,
@@ -311,7 +394,7 @@ impl SyncAgent {
     fn get_last_sync_time(&self, conn: &Connection, space_id: Ulid) -> Result<i64, SyncError> {
         let result: Option<i64> = conn
             .query_row(
-                "SELECT MAX(last_sync_at) FROM sync_state WHERE space_id = ?1",
+                "SELECT MAX(sync_time) FROM sync_history WHERE space_id = ?1",
                 [space_id.to_string()],
                 |row| row.get(0),
             )
@@ -327,8 +410,12 @@ impl SyncAgent {
     ) -> Result<HashMap<String, i64>, SyncError> {
         let mut clock = HashMap::new();
 
-        let mut stmt =
-            conn.prepare("SELECT device_id, last_sync_at FROM sync_state WHERE space_id = ?1")?;
+        let mut stmt = conn.prepare(
+            "SELECT device_id, MAX(sync_time)
+             FROM sync_history
+             WHERE space_id = ?1
+             GROUP BY device_id",
+        )?;
 
         let rows = stmt.query_map([space_id.to_string()], |row| {
             Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
@@ -693,11 +780,13 @@ impl SyncAgent {
     }
 
     fn log_entity_sync(&self, conn: &Connection, delta: &SyncDelta) -> Result<(), SyncError> {
+        let log_id = Ulid::new().to_string();
         conn.execute(
             "INSERT INTO entity_sync_log (
-                entity_type, entity_id, synced_at, device_id, operation
-            ) VALUES (?1, ?2, ?3, ?4, ?5)",
+                id, entity_type, entity_id, synced_at, device_id, operation
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
             rusqlite::params![
+                log_id,
                 &delta.entity_type,
                 &delta.entity_id,
                 delta.timestamp,
@@ -715,6 +804,131 @@ impl SyncAgent {
         )?;
         Ok(())
     }
+
+    /// Get sync history for a space
+    pub fn get_sync_history(
+        &self,
+        conn: &Connection,
+        space_id: &str,
+        limit: u32,
+    ) -> Result<Vec<SyncHistoryEntry>, SyncError> {
+        let mut stmt = conn.prepare(
+            "SELECT id, device_id, space_id, sync_time, direction, entities_pushed,
+                    entities_pulled, conflicts_detected, success, error_message
+             FROM sync_history
+             WHERE space_id = ?1
+             ORDER BY sync_time DESC
+             LIMIT ?2",
+        )?;
+
+        let entries = stmt
+            .query_map(rusqlite::params![space_id, limit], |row| {
+                Ok(SyncHistoryEntry {
+                    id: row.get(0)?,
+                    device_id: row.get(1)?,
+                    space_id: row.get(2)?,
+                    sync_time: row.get(3)?,
+                    direction: row.get(4)?,
+                    entities_pushed: row.get(5)?,
+                    entities_pulled: row.get(6)?,
+                    conflicts_detected: row.get(7)?,
+                    success: row.get::<_, i32>(8)? == 1,
+                    error_message: row.get(9)?,
+                })
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(entries)
+    }
+
+    /// Get unresolved conflicts
+    pub fn get_unresolved_conflicts(
+        &self,
+        conn: &Connection,
+    ) -> Result<Vec<SyncConflict>, SyncError> {
+        let mut stmt = conn.prepare(
+            "SELECT entity_type, entity_id, local_version, remote_version, conflict_type
+             FROM sync_conflict
+             WHERE resolved = 0
+             ORDER BY detected_at DESC",
+        )?;
+
+        let conflicts = stmt
+            .query_map([], |row| {
+                let conflict_type_str: String = row.get(4)?;
+                let conflict_type = match conflict_type_str.as_str() {
+                    "UpdateUpdate" => ConflictType::UpdateUpdate,
+                    "UpdateDelete" => ConflictType::UpdateDelete,
+                    "DeleteUpdate" => ConflictType::DeleteUpdate,
+                    _ => ConflictType::UpdateUpdate,
+                };
+
+                Ok(SyncConflict {
+                    entity_type: row.get(0)?,
+                    entity_id: row.get(1)?,
+                    local_version: row.get(2)?,
+                    remote_version: row.get(3)?,
+                    conflict_type,
+                })
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(conflicts)
+    }
+
+    /// Record sync history
+    pub fn record_sync_history(
+        &self,
+        conn: &Connection,
+        space_id: &str,
+        direction: &str,
+        entities_pushed: u32,
+        entities_pulled: u32,
+        conflicts: u32,
+        success: bool,
+        error_message: Option<&str>,
+    ) -> Result<String, SyncError> {
+        let id = Ulid::new().to_string();
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
+
+        conn.execute(
+            "INSERT INTO sync_history (id, device_id, space_id, sync_time, direction,
+                                       entities_pushed, entities_pulled, conflicts_detected,
+                                       success, error_message)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            rusqlite::params![
+                id,
+                &self.device_id,
+                space_id,
+                now,
+                direction,
+                entities_pushed as i32,
+                entities_pulled as i32,
+                conflicts as i32,
+                if success { 1 } else { 0 },
+                error_message,
+            ],
+        )?;
+
+        Ok(id)
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncHistoryEntry {
+    pub id: String,
+    pub device_id: String,
+    pub space_id: String,
+    pub sync_time: i64,
+    pub direction: String,
+    pub entities_pushed: i32,
+    pub entities_pulled: i32,
+    pub conflicts_detected: i32,
+    pub success: bool,
+    pub error_message: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

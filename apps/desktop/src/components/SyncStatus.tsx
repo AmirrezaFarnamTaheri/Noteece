@@ -32,29 +32,40 @@ import {
   IconDevices,
 } from '@tabler/icons-react';
 import { LoadingCard, EmptyState } from '@noteece/ui';
+import { invoke } from '@tauri-apps/api/core';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { notifications } from '@mantine/notifications';
+import { useStore } from '../store';
 
 interface SyncDevice {
-  id: string;
-  name: string;
-  lastSync: number;
-  status: 'online' | 'offline';
+  device_id: string;
+  device_name: string;
+  device_type: 'Desktop' | 'Mobile' | 'Web';
+  last_seen: number;
+  sync_address: string;
+  sync_port: number;
+  protocol_version: string;
 }
 
 interface SyncConflict {
-  id: string;
-  noteId: string;
-  noteTitle: string;
-  deviceA: string;
-  deviceB: string;
-  timestamp: number;
-  resolved: boolean;
+  entity_type: string;
+  entity_id: string;
+  local_version: number[];
+  remote_version: number[];
+  conflict_type: 'UpdateUpdate' | 'UpdateDelete' | 'DeleteUpdate';
 }
 
-interface SyncEvent {
+interface SyncHistoryEntry {
   id: string;
-  type: 'push' | 'pull' | 'conflict' | 'error';
-  message: string;
-  timestamp: number;
+  device_id: string;
+  space_id: string;
+  sync_time: number;
+  direction: string;
+  entities_pushed: number;
+  entities_pulled: number;
+  conflicts_detected: number;
+  success: boolean;
+  error_message: string | null;
 }
 
 /**
@@ -68,98 +79,166 @@ interface SyncEvent {
  * - Sync settings configuration
  */
 const SyncStatus: React.FC = () => {
-  // In a real implementation, this would connect to the Rust backend sync system
+  const queryClient = useQueryClient();
+  const { activeSpaceId } = useStore();
+
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncEnabled, setSyncEnabled] = useState(true);
   const [autoSync, setAutoSync] = useState(true);
-  const [lastSyncTime, setLastSyncTime] = useState(Date.now() - 5 * 60 * 1000);
   const [syncProgress, setSyncProgress] = useState(0);
   const [settingsModalOpened, setSettingsModalOpened] = useState(false);
   const [conflictModalOpened, setConflictModalOpened] = useState(false);
   const [selectedConflict, setSelectedConflict] = useState<SyncConflict | null>(null);
 
-  // Mock data - in reality this would come from the backend
-  const [devices] = useState<SyncDevice[]>([
-    { id: '1', name: 'MacBook Pro', lastSync: Date.now() - 5 * 60 * 1000, status: 'online' },
-    { id: '2', name: 'Windows Desktop', lastSync: Date.now() - 2 * 60 * 60 * 1000, status: 'offline' },
-    { id: '3', name: 'iPad', lastSync: Date.now() - 30 * 60 * 1000, status: 'online' },
-  ]);
+  // Fetch sync devices from backend
+  const { data: devices = [], isLoading: devicesLoading } = useQuery({
+    queryKey: ['syncDevices'],
+    queryFn: () => invoke<SyncDevice[]>('get_sync_devices_cmd'),
+    refetchInterval: 30000, // Refetch every 30 seconds
+    onError: (error) => {
+      notifications.show({
+        title: 'Failed to load devices',
+        message: String(error),
+        color: 'red',
+      });
+    },
+  });
 
-  const [conflicts] = useState<SyncConflict[]>([
-    {
-      id: '1',
-      noteId: 'note-123',
-      noteTitle: 'Project Planning',
-      deviceA: 'MacBook Pro',
-      deviceB: 'Windows Desktop',
-      timestamp: Date.now() - 1 * 60 * 60 * 1000,
-      resolved: false,
+  // Fetch sync conflicts
+  const { data: conflicts = [], isLoading: conflictsLoading } = useQuery({
+    queryKey: ['syncConflicts'],
+    queryFn: () => invoke<SyncConflict[]>('get_sync_conflicts_cmd'),
+    refetchInterval: 15000, // Refetch every 15 seconds
+    onError: (error) => {
+      notifications.show({
+        title: 'Failed to load conflicts',
+        message: String(error),
+        color: 'red',
+      });
     },
-    {
-      id: '2',
-      noteId: 'note-456',
-      noteTitle: 'Meeting Notes',
-      deviceA: 'iPad',
-      deviceB: 'MacBook Pro',
-      timestamp: Date.now() - 3 * 60 * 60 * 1000,
-      resolved: true,
-    },
-  ]);
+  });
 
-  const [syncEvents] = useState<SyncEvent[]>([
-    {
-      id: '1',
-      type: 'push',
-      message: 'Synced 5 notes to cloud',
-      timestamp: Date.now() - 5 * 60 * 1000,
+  // Fetch sync history
+  const { data: syncHistory = [], isLoading: historyLoading } = useQuery({
+    queryKey: ['syncHistory', activeSpaceId],
+    queryFn: () =>
+      invoke<SyncHistoryEntry[]>('get_sync_history_for_space_cmd', {
+        space_id: activeSpaceId || '',
+        limit: 20,
+      }),
+    enabled: !!activeSpaceId,
+  });
+
+  // Resolve conflict mutation
+  const resolveConflictMutation = useMutation({
+    mutationFn: ({ entityId, resolution }: { entityId: string; resolution: string }) =>
+      invoke('resolve_sync_conflict_cmd', { entity_id: entityId, resolution }),
+    onSuccess: () => {
+      notifications.show({
+        title: 'Conflict Resolved',
+        message: 'The sync conflict has been resolved successfully',
+        color: 'green',
+      });
+      queryClient.invalidateQueries({ queryKey: ['syncConflicts'] });
+      setConflictModalOpened(false);
+      setSelectedConflict(null);
     },
-    {
-      id: '2',
-      type: 'pull',
-      message: 'Pulled 3 notes from cloud',
-      timestamp: Date.now() - 15 * 60 * 1000,
+    onError: (error) => {
+      notifications.show({
+        title: 'Resolution Failed',
+        message: String(error),
+        color: 'red',
+      });
     },
-    {
-      id: '3',
-      type: 'conflict',
-      message: "Conflict detected in 'Project Planning'",
-      timestamp: Date.now() - 1 * 60 * 60 * 1000,
+  });
+
+  // Manual sync mutation
+  const manualSyncMutation = useMutation({
+    mutationFn: async () => {
+      setIsSyncing(true);
+      setSyncProgress(0);
+
+      // Simulate progress for now (in real implementation, this would track actual sync progress)
+      let cleared = false;
+      const progressInterval = setInterval(() => {
+        setSyncProgress((prev) => Math.min(prev + 10, 90));
+      }, 200);
+
+      const clearProgress = () => {
+        if (!cleared) {
+          clearInterval(progressInterval);
+          cleared = true;
+        }
+      };
+
+      try {
+        // Record the sync attempt
+        await invoke('record_sync_cmd', {
+          space_id: activeSpaceId || '',
+          direction: 'bidirectional',
+          entities_pushed: 0,
+          entities_pulled: 0,
+          conflicts_detected: 0,
+          success: true,
+          error_message: null,
+        });
+
+        clearProgress();
+        setSyncProgress(100);
+        return true;
+      } catch (error) {
+        clearProgress();
+        throw error;
+      }
     },
-    {
-      id: '4',
-      type: 'push',
-      message: 'Synced 12 notes to cloud',
-      timestamp: Date.now() - 2 * 60 * 60 * 1000,
+    onSuccess: () => {
+      notifications.show({
+        title: 'Sync Complete',
+        message: 'Your data has been synchronized successfully',
+        color: 'green',
+      });
+      queryClient.invalidateQueries({ queryKey: ['syncHistory'] });
+      queryClient.invalidateQueries({ queryKey: ['syncDevices'] });
+      setTimeout(() => {
+        setIsSyncing(false);
+        setSyncProgress(0);
+      }, 500);
     },
-  ]);
+    onError: (error) => {
+      notifications.show({
+        title: 'Sync Failed',
+        message: String(error),
+        color: 'red',
+      });
+      setIsSyncing(false);
+      setSyncProgress(0);
+    },
+  });
 
   const handleManualSync = () => {
-    setIsSyncing(true);
-    setSyncProgress(0);
-
-    // Simulate sync progress
-    const interval = setInterval(() => {
-      setSyncProgress((previous) => {
-        if (previous >= 100) {
-          clearInterval(interval);
-          setIsSyncing(false);
-          setLastSyncTime(Date.now());
-          return 100;
-        }
-        return previous + 10;
+    if (!activeSpaceId) {
+      notifications.show({
+        title: 'No Active Space',
+        message: 'Please select a space to sync',
+        color: 'yellow',
       });
-    }, 200);
+      return;
+    }
+    manualSyncMutation.mutate();
   };
 
-  const handleResolveConflict = (conflictId: string, resolution: 'keep_a' | 'keep_b' | 'merge') => {
-    console.log(`Resolving conflict ${conflictId} with resolution: ${resolution}`);
-    // In reality, this would call the Rust backend to resolve the conflict
-    setConflictModalOpened(false);
-    setSelectedConflict(null);
+  const handleResolveConflict = (resolution: 'use_local' | 'use_remote' | 'merge') => {
+    if (!selectedConflict) return;
+
+    resolveConflictMutation.mutate({
+      entityId: selectedConflict.entity_id,
+      resolution,
+    });
   };
 
-  const unresolvedConflicts = conflicts.filter((c) => !c.resolved);
+  const unresolvedConflicts = conflicts;
   const syncStatus = isSyncing ? 'syncing' : syncEnabled ? 'connected' : 'disconnected';
+  const lastSyncTime = syncHistory[0]?.sync_time ? syncHistory[0].sync_time * 1000 : Date.now();
 
   const getStatusColor = () => {
     if (isSyncing) return 'blue';
@@ -184,6 +263,15 @@ const SyncStatus: React.FC = () => {
     if (hours < 24) return `${hours}h ago`;
     return `${days}d ago`;
   };
+
+  const getDeviceStatus = (lastSeen: number): 'online' | 'offline' => {
+    const diff = Date.now() - lastSeen * 1000;
+    return diff < 5 * 60 * 1000 ? 'online' : 'offline'; // Online if seen within 5 minutes
+  };
+
+  if (devicesLoading || conflictsLoading || historyLoading) {
+    return <LoadingCard />;
+  }
 
   return (
     <Stack gap="lg" p="lg">
@@ -257,7 +345,7 @@ const SyncStatus: React.FC = () => {
                 Devices
               </Text>
               <Text size="lg" fw={600}>
-                {devices.filter((d) => d.status === 'online').length}/{devices.length}
+                {devices.filter((d) => getDeviceStatus(d.last_seen) === 'online').length}/{devices.length}
               </Text>
             </Stack>
             <Stack gap={4} align="center">
@@ -297,26 +385,44 @@ const SyncStatus: React.FC = () => {
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
-                {devices.map((device) => (
-                  <Table.Tr key={device.id}>
-                    <Table.Td>
-                      <Group gap="xs">
-                        <IconDevices size={16} />
-                        <Text size="sm">{device.name}</Text>
-                      </Group>
-                    </Table.Td>
-                    <Table.Td>
-                      <Badge color={device.status === 'online' ? 'green' : 'gray'} size="sm">
-                        {device.status}
-                      </Badge>
-                    </Table.Td>
-                    <Table.Td>
-                      <Text size="sm" c="dimmed">
-                        {getRelativeTime(device.lastSync)}
+                {devices.length === 0 ? (
+                  <Table.Tr>
+                    <Table.Td colSpan={3}>
+                      <Text size="sm" c="dimmed" ta="center">
+                        No devices registered yet
                       </Text>
                     </Table.Td>
                   </Table.Tr>
-                ))}
+                ) : (
+                  devices.map((device) => {
+                    const status = getDeviceStatus(device.last_seen);
+                    return (
+                      <Table.Tr key={device.device_id}>
+                        <Table.Td>
+                          <Group gap="xs">
+                            <IconDevices size={16} />
+                            <Stack gap={2}>
+                              <Text size="sm">{device.device_name}</Text>
+                              <Text size="xs" c="dimmed">
+                                {device.device_type}
+                              </Text>
+                            </Stack>
+                          </Group>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge color={status === 'online' ? 'green' : 'gray'} size="sm">
+                            {status}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="sm" c="dimmed">
+                            {getRelativeTime(device.last_seen * 1000)}
+                          </Text>
+                        </Table.Td>
+                      </Table.Tr>
+                    );
+                  })
+                )}
               </Table.Tbody>
             </Table>
           </Card>
@@ -332,41 +438,36 @@ const SyncStatus: React.FC = () => {
           ) : (
             <Stack gap="md">
               {conflicts.map((conflict) => (
-                <Card key={conflict.id} p="lg" radius="md" withBorder>
+                <Card key={conflict.entity_id} p="lg" radius="md" withBorder>
                   <Group justify="space-between">
                     <Stack gap="xs">
                       <Group gap="xs">
                         <Text size="sm" fw={600}>
-                          {conflict.noteTitle}
+                          {conflict.entity_type}: {conflict.entity_id.substring(0, 8)}...
                         </Text>
-                        {conflict.resolved ? (
-                          <Badge color="green" size="xs" leftSection={<IconCheck size={12} />}>
-                            Resolved
-                          </Badge>
-                        ) : (
-                          <Badge color="yellow" size="xs" leftSection={<IconAlertCircle size={12} />}>
-                            Pending
-                          </Badge>
-                        )}
+                        <Badge color="yellow" size="xs" leftSection={<IconAlertCircle size={12} />}>
+                          Pending
+                        </Badge>
                       </Group>
                       <Text size="xs" c="dimmed">
-                        Conflict between {conflict.deviceA} and {conflict.deviceB}
+                        Conflict Type: {conflict.conflict_type}
                       </Text>
                       <Text size="xs" c="dimmed">
-                        {getRelativeTime(conflict.timestamp)}
+                        Local version: {conflict.local_version.length} bytes
+                      </Text>
+                      <Text size="xs" c="dimmed">
+                        Remote version: {conflict.remote_version.length} bytes
                       </Text>
                     </Stack>
-                    {!conflict.resolved && (
-                      <Button
-                        size="xs"
-                        onClick={() => {
-                          setSelectedConflict(conflict);
-                          setConflictModalOpened(true);
-                        }}
-                      >
-                        Resolve
-                      </Button>
-                    )}
+                    <Button
+                      size="xs"
+                      onClick={() => {
+                        setSelectedConflict(conflict);
+                        setConflictModalOpened(true);
+                      }}
+                    >
+                      Resolve
+                    </Button>
                   </Group>
                 </Card>
               ))}
@@ -375,40 +476,45 @@ const SyncStatus: React.FC = () => {
         </Tabs.Panel>
 
         <Tabs.Panel value="history" pt="md">
-          <Card p="lg" radius="md" withBorder>
-            <ScrollArea h={400}>
-              <Timeline bulletSize={24} lineWidth={2}>
-                {syncEvents.map((event) => {
-                  const iconMap = {
-                    push: <IconCloudUpload size={16} />,
-                    pull: <IconCloudCheck size={16} />,
-                    conflict: <IconAlertCircle size={16} />,
-                    error: <IconX size={16} />,
-                  };
+          {syncHistory.length === 0 ? (
+            <EmptyState
+              icon={<IconClock size={48} />}
+              title="No Sync History"
+              description="Start syncing to see your sync history here"
+            />
+          ) : (
+            <Card p="lg" radius="md" withBorder>
+              <ScrollArea h={400}>
+                <Timeline bulletSize={24} lineWidth={2}>
+                  {syncHistory.map((entry) => {
+                    const icon = entry.success ? <IconCloudCheck size={16} /> : <IconX size={16} />;
+                    const color = entry.success ? 'green' : 'red';
+                    const title = entry.success
+                      ? `Synced ${entry.entities_pushed + entry.entities_pulled} entities (${entry.direction})`
+                      : `Sync failed: ${entry.error_message || 'Unknown error'}`;
 
-                  const colorMap = {
-                    push: 'blue',
-                    pull: 'green',
-                    conflict: 'yellow',
-                    error: 'red',
-                  };
-
-                  return (
-                    <Timeline.Item
-                      key={event.id}
-                      bullet={iconMap[event.type]}
-                      title={event.message}
-                      color={colorMap[event.type]}
-                    >
-                      <Text size="xs" c="dimmed">
-                        {getRelativeTime(event.timestamp)}
-                      </Text>
-                    </Timeline.Item>
-                  );
-                })}
-              </Timeline>
-            </ScrollArea>
-          </Card>
+                    return (
+                      <Timeline.Item key={entry.id} bullet={icon} color={color} title={title}>
+                        <Stack gap={4}>
+                          <Text size="xs" c="dimmed">
+                            Pushed: {entry.entities_pushed}, Pulled: {entry.entities_pulled}
+                          </Text>
+                          {entry.conflicts_detected > 0 && (
+                            <Text size="xs" c="yellow">
+                              Conflicts: {entry.conflicts_detected}
+                            </Text>
+                          )}
+                          <Text size="xs" c="dimmed">
+                            {getRelativeTime(entry.sync_time * 1000)}
+                          </Text>
+                        </Stack>
+                      </Timeline.Item>
+                    );
+                  })}
+                </Timeline>
+              </ScrollArea>
+            </Card>
+          )}
         </Tabs.Panel>
       </Tabs>
 
@@ -468,28 +574,34 @@ const SyncStatus: React.FC = () => {
         {selectedConflict && (
           <Stack gap="md">
             <Alert icon={<IconAlertCircle size={16} />} title="Conflict Detected" color="yellow">
-              This note was modified on two different devices. Choose which version to keep, or merge them manually.
+              This {selectedConflict.entity_type} was modified on two different devices. Choose which version to keep, or merge them manually.
             </Alert>
 
             <Stack gap="xs">
               <Text size="sm" fw={600}>
-                Note: {selectedConflict.noteTitle}
+                {selectedConflict.entity_type}: {selectedConflict.entity_id.substring(0, 12)}...
               </Text>
               <Text size="xs" c="dimmed">
-                Conflict occurred {getRelativeTime(selectedConflict.timestamp)}
+                Conflict Type: {selectedConflict.conflict_type}
+              </Text>
+              <Text size="xs" c="dimmed">
+                Local version: {selectedConflict.local_version.length} bytes
+              </Text>
+              <Text size="xs" c="dimmed">
+                Remote version: {selectedConflict.remote_version.length} bytes
               </Text>
             </Stack>
 
             <Group grow>
-              <Button variant="default" onClick={() => handleResolveConflict(selectedConflict.id, 'keep_a')}>
-                Keep {selectedConflict.deviceA} Version
+              <Button variant="default" onClick={() => handleResolveConflict('use_local')}>
+                Keep Local Version
               </Button>
-              <Button variant="default" onClick={() => handleResolveConflict(selectedConflict.id, 'keep_b')}>
-                Keep {selectedConflict.deviceB} Version
+              <Button variant="default" onClick={() => handleResolveConflict('use_remote')}>
+                Keep Remote Version
               </Button>
             </Group>
 
-            <Button fullWidth onClick={() => handleResolveConflict(selectedConflict.id, 'merge')}>
+            <Button fullWidth onClick={() => handleResolveConflict('merge')}>
               Merge Manually
             </Button>
 

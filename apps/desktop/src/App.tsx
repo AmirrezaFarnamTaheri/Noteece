@@ -26,6 +26,7 @@ import SyncStatus from './components/SyncStatus';
 import UserManagement from './components/UserManagement';
 import FormTemplates from './components/FormTemplates';
 import LocalAnalytics from './components/LocalAnalytics';
+import { OcrManager } from './components/OcrManager';
 
 function App() {
   const { setSpaces, setActiveSpaceId, activeSpaceId } = useStore();
@@ -68,6 +69,7 @@ function App() {
             <Route path="users" element={<UserManagement />} />
             <Route path="templates" element={<FormTemplates />} />
             <Route path="analytics" element={<LocalAnalytics />} />
+            <Route path="ocr" element={<OcrManager />} />
           </Route>
         </Routes>
       </Router>

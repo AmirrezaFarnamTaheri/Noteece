@@ -18,9 +18,11 @@ use core_rs::tag::{get_all_tags_in_space, Tag};
 use core_rs::time_tracking::{TimeEntry, TimeStats, start_time_entry, stop_time_entry, get_task_time_entries, get_project_time_entries, get_running_entries, get_recent_time_entries, get_task_time_stats, get_project_time_stats, delete_time_entry, create_manual_time_entry};
 use core_rs::ocr::{queue_ocr, get_ocr_status, search_ocr_text, process_ocr_job, OcrResult};
 use core_rs::foresight::{generate_insights, get_active_insights, dismiss_insight, record_feedback, Insight, FeedbackType};
-use core_rs::caldav::{add_caldav_account, get_caldav_accounts, get_caldav_account, update_caldav_account, delete_caldav_account, sync_caldav_account, get_sync_history, get_unresolved_conflicts, resolve_conflict, CalDavAccount, SyncResult, SyncConflict, SyncDirection, ConflictResolution};
+use core_rs::caldav::{add_caldav_account, get_caldav_accounts, get_caldav_account, update_caldav_account, delete_caldav_account, sync_caldav_account, get_sync_history as get_caldav_sync_history, get_unresolved_conflicts as get_caldav_conflicts, resolve_conflict as resolve_caldav_conflict, CalDavAccount, SyncResult, SyncConflict as CalDavSyncConflict, SyncDirection, ConflictResolution as CalDavConflictResolution};
 use core_rs::personal_modes::{create_health_metric, get_health_metrics, create_health_goal, create_transaction, get_transactions, create_recipe, get_recipes, add_recipe_ingredient, create_trip, get_trips, add_itinerary_item, HealthMetric, HealthGoal, Transaction, Recipe, Trip};
 use core_rs::temporal_graph::{build_current_graph, save_graph_snapshot, get_graph_evolution, create_milestone, detect_major_notes, GraphSnapshot, GraphEvolution, GraphMilestone};
+use core_rs::sync_agent::{init_sync_tables, SyncAgent, DeviceInfo, DeviceType, SyncHistoryEntry, SyncConflict, ConflictType, ConflictResolution as SyncConflictResolution};
+use core_rs::collaboration::{init_rbac_tables, get_space_users, check_permission, invite_user, update_user_role, grant_permission, revoke_permission, suspend_user, activate_user, get_roles, add_user_to_space, remove_user_from_space, SpaceUser, Role, UserInvitation, CollaborationError};
 use rusqlite::Connection;
 use std::sync::Mutex;
 use tauri::State;
@@ -756,6 +758,473 @@ fn sync_caldav_account_cmd(account_id: &str, db: State<DbConnection>) -> Result<
     }
 }
 
+#[tauri::command]
+fn get_caldav_account_cmd(account_id: &str, db: State<DbConnection>) -> Result<Option<CalDavAccount>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_caldav_account(conn, account_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn update_caldav_account_cmd(
+    account_id: &str,
+    enabled: Option<bool>,
+    auto_sync: Option<bool>,
+    sync_frequency: Option<i64>,
+    sync_direction: Option<String>,
+    db: State<DbConnection>
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let direction = sync_direction.and_then(|d| match d.as_str() {
+            "pull" => Some(SyncDirection::Pull),
+            "push" => Some(SyncDirection::Push),
+            "bidirectional" => Some(SyncDirection::Bidirectional),
+            _ => None,
+        });
+        update_caldav_account(conn, account_id, enabled, auto_sync, sync_frequency, direction).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn delete_caldav_account_cmd(account_id: &str, db: State<DbConnection>) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        delete_caldav_account(conn, account_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_sync_history_cmd(account_id: &str, limit: u32, db: State<DbConnection>) -> Result<Vec<SyncResult>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        // get_caldav_sync_history returns Vec<SyncResult> which is already serializable
+        get_caldav_sync_history(conn, account_id, limit).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_unresolved_conflicts_cmd(account_id: &str, db: State<DbConnection>) -> Result<Vec<CalDavSyncConflict>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_caldav_conflicts(conn, account_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn resolve_conflict_cmd(
+    conflict_id: &str,
+    resolution: String,
+    db: State<DbConnection>
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let resolution_type = match resolution.as_str() {
+            "accept_local" => CalDavConflictResolution::AcceptLocal,
+            "accept_remote" => CalDavConflictResolution::AcceptRemote,
+            "merge" => CalDavConflictResolution::Merge,
+            _ => return Err("Invalid resolution type".to_string()),
+        };
+        resolve_caldav_conflict(conn, conflict_id, resolution_type).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+// Sync Agent Commands
+#[tauri::command]
+fn init_sync_tables_cmd(db: State<DbConnection>) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        init_sync_tables(conn).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Get or generate device ID for this installation
+fn get_local_device_id() -> String {
+    // In production, this should be stored in a config file or generated once
+    // For now, use hostname + MAC address hash or similar unique identifier
+    use std::env;
+
+    // Try to get hostname, fall back to random if not available
+    let hostname = env::var("COMPUTERNAME")
+        .or_else(|_| env::var("HOSTNAME"))
+        .unwrap_or_else(|_| {
+            // Generate a stable device ID based on machine characteristics
+            use ulid::Ulid;
+            format!("desktop_{}", Ulid::new())
+        });
+
+    hostname
+}
+
+fn get_local_device_name() -> String {
+    use std::env;
+    env::var("COMPUTERNAME")
+        .or_else(|_| env::var("HOSTNAME"))
+        .unwrap_or_else(|_| "Desktop".to_string())
+}
+
+#[tauri::command]
+fn get_sync_devices_cmd(db: State<DbConnection>) -> Result<Vec<DeviceInfo>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let agent = SyncAgent::new(
+            get_local_device_id(),
+            get_local_device_name(),
+            8765, // TODO: Make this configurable
+        );
+        agent.get_devices(conn).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn register_sync_device_cmd(
+    device_id: String,
+    device_name: String,
+    device_type: String,
+    sync_address: String,
+    sync_port: u16,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let agent = SyncAgent::new(
+            get_local_device_id(),
+            get_local_device_name(),
+            8765, // TODO: Make this configurable
+        );
+
+        let device_type_enum = match device_type.as_str() {
+            "mobile" => DeviceType::Mobile,
+            "web" => DeviceType::Web,
+            _ => DeviceType::Desktop,
+        };
+
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
+
+        let device_info = DeviceInfo {
+            device_id,
+            device_name,
+            device_type: device_type_enum,
+            last_seen: now,
+            sync_address,
+            sync_port,
+            protocol_version: "1.0.0".to_string(),
+        };
+
+        agent.register_device(conn, &device_info).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_sync_history_for_space_cmd(
+    space_id: String,
+    limit: u32,
+    db: State<DbConnection>,
+) -> Result<Vec<SyncHistoryEntry>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let agent = SyncAgent::new(
+            get_local_device_id(),
+            get_local_device_name(),
+            8765, // TODO: Make this configurable
+        );
+        agent.get_sync_history(conn, &space_id, limit).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_sync_conflicts_cmd(db: State<DbConnection>) -> Result<Vec<SyncConflict>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let agent = SyncAgent::new(
+            get_local_device_id(),
+            get_local_device_name(),
+            8765, // TODO: Make this configurable
+        );
+        agent.get_unresolved_conflicts(conn).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn resolve_sync_conflict_cmd(
+    entity_id: String,
+    resolution: String,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let agent = SyncAgent::new(
+            get_local_device_id(),
+            get_local_device_name(),
+            8765, // TODO: Make this configurable
+        );
+
+        // Get the conflict from database
+        let conflict = conn
+            .query_row(
+                "SELECT entity_type, entity_id, local_version, remote_version, conflict_type
+                 FROM sync_conflict
+                 WHERE entity_id = ?1 AND resolved = 0",
+                [&entity_id],
+                |row| {
+                    let conflict_type_str: String = row.get(4)?;
+                    let conflict_type = match conflict_type_str.as_str() {
+                        "UpdateUpdate" => ConflictType::UpdateUpdate,
+                        "UpdateDelete" => ConflictType::UpdateDelete,
+                        "DeleteUpdate" => ConflictType::DeleteUpdate,
+                        _ => ConflictType::UpdateUpdate,
+                    };
+
+                    Ok(SyncConflict {
+                        entity_type: row.get(0)?,
+                        entity_id: row.get(1)?,
+                        local_version: row.get(2)?,
+                        remote_version: row.get(3)?,
+                        conflict_type,
+                    })
+                },
+            )
+            .map_err(|e| format!("Conflict not found: {}", e))?;
+
+        let resolution_type = match resolution.as_str() {
+            "use_local" => SyncConflictResolution::UseLocal,
+            "use_remote" => SyncConflictResolution::UseRemote,
+            "merge" => SyncConflictResolution::Merge,
+            _ => return Err("Invalid resolution type".to_string()),
+        };
+
+        // TODO: Replace with actual DEK from secure state management
+        // For now, using empty slice as encryption is not fully implemented
+        let dek: &[u8] = &[];
+
+        agent
+            .resolve_conflict(conn, &conflict, resolution_type, dek)
+            .map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn record_sync_cmd(
+    space_id: String,
+    direction: String,
+    entities_pushed: u32,
+    entities_pulled: u32,
+    conflicts: u32,
+    success: bool,
+    error_message: Option<String>,
+    db: State<DbConnection>,
+) -> Result<String, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let agent = SyncAgent::new(
+            get_local_device_id(),
+            get_local_device_name(),
+            8765, // TODO: Make this configurable
+        );
+        agent
+            .record_sync_history(
+                conn,
+                &space_id,
+                &direction,
+                entities_pushed,
+                entities_pulled,
+                conflicts,
+                success,
+                error_message.as_deref(),
+            )
+            .map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+// User Management / RBAC Commands
+#[tauri::command]
+fn init_rbac_tables_cmd(db: State<DbConnection>) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        init_rbac_tables(conn).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_space_users_cmd(space_id: &str, db: State<DbConnection>) -> Result<Vec<SpaceUser>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_space_users(conn, space_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn check_permission_cmd(
+    space_id: &str,
+    user_id: &str,
+    permission: &str,
+    db: State<DbConnection>,
+) -> Result<bool, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        check_permission(conn, space_id, user_id, permission).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn invite_user_cmd(
+    space_id: &str,
+    email: &str,
+    role_id: &str,
+    invited_by: &str,
+    db: State<DbConnection>,
+) -> Result<UserInvitation, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        invite_user(conn, space_id, email, role_id, invited_by).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn update_user_role_cmd(
+    space_id: &str,
+    user_id: &str,
+    new_role_id: &str,
+    updated_by: &str,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        update_user_role(conn, space_id, user_id, new_role_id, updated_by)
+            .map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn grant_permission_cmd(
+    space_id: &str,
+    user_id: &str,
+    permission: &str,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        grant_permission(conn, space_id, user_id, permission).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn revoke_permission_cmd(
+    space_id: &str,
+    user_id: &str,
+    permission: &str,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        revoke_permission(conn, space_id, user_id, permission).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn suspend_user_cmd(space_id: &str, user_id: &str, db: State<DbConnection>) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        suspend_user(conn, space_id, user_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn activate_user_cmd(space_id: &str, user_id: &str, db: State<DbConnection>) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        activate_user(conn, space_id, user_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_roles_cmd(db: State<DbConnection>) -> Result<Vec<Role>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_roles(conn).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn add_user_to_space_cmd(
+    space_id: &str,
+    user_id: &str,
+    email: &str,
+    role_id: &str,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        add_user_to_space(conn, space_id, user_id, email, role_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn remove_user_from_space_cmd(
+    space_id: &str,
+    user_id: &str,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        remove_user_from_space(conn, space_id, user_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
 // Personal Modes - Health Commands
 #[tauri::command]
 fn create_health_metric_cmd(space_id: &str, metric_type: &str, value: f64, unit: &str, recorded_at: i64, db: State<DbConnection>) -> Result<HealthMetric, String> {
@@ -985,7 +1454,20 @@ fn main() {
         record_insight_feedback_cmd,
         add_caldav_account_cmd,
         get_caldav_accounts_cmd,
+        get_caldav_account_cmd,
+        update_caldav_account_cmd,
+        delete_caldav_account_cmd,
         sync_caldav_account_cmd,
+        get_sync_history_cmd,
+        get_unresolved_conflicts_cmd,
+        resolve_conflict_cmd,
+        init_sync_tables_cmd,
+        get_sync_devices_cmd,
+        register_sync_device_cmd,
+        get_sync_history_for_space_cmd,
+        get_sync_conflicts_cmd,
+        resolve_sync_conflict_cmd,
+        record_sync_cmd,
         create_health_metric_cmd,
         get_health_metrics_cmd,
         create_transaction_cmd,
@@ -997,7 +1479,19 @@ fn main() {
         build_current_graph_cmd,
         get_graph_evolution_cmd,
         detect_major_notes_cmd,
-        shutdown_clear_keys_cmd
+        shutdown_clear_keys_cmd,
+        init_rbac_tables_cmd,
+        get_space_users_cmd,
+        check_permission_cmd,
+        invite_user_cmd,
+        update_user_role_cmd,
+        grant_permission_cmd,
+        revoke_permission_cmd,
+        suspend_user_cmd,
+        activate_user_cmd,
+        get_roles_cmd,
+        add_user_to_space_cmd,
+        remove_user_from_space_cmd
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
