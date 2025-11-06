@@ -387,12 +387,11 @@ pub fn invite_user(
     let id = Ulid::new().to_string();
 
     // Generate cryptographically secure random token (32 bytes = 64 hex chars)
-    use rand::Rng;
-    let token: String = rand::thread_rng()
-        .sample_iter(&rand::distributions::Alphanumeric)
-        .take(64)
-        .map(char::from)
-        .collect();
+    // Generate cryptographically secure 32-byte token and hex-encode to 64 chars (256-bit entropy)
+    use rand::RngCore;
+    let mut raw = [0u8; 32];
+    rand::thread_rng().fill_bytes(&mut raw);
+    let token = hex::encode(raw); // requires 'hex' crate in Cargo.toml
 
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
