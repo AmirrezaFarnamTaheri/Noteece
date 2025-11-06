@@ -346,14 +346,25 @@ For more details, see the [Security Architecture](DEVELOPER_GUIDE.md#security-ar
 
 ### In Progress 🚧
 
-- CalDAV 2-way sync (partially implemented)
-- Sync backend integration (backend ready, UI complete, connection pending)
-- User management backend (backend ready, UI complete)
+- CalDAV 2-way sync (90% complete - commands added, needs WebDAV protocol)
+- Sync backend integration (backend ready, UI complete, Tauri commands needed)
+- User management backend (backend minimal, UI complete, needs expansion)
+
+### Completed Recently (Nov 2025) 🎉
+
+- ✅ **OCR Integration** - Full frontend UI with backend integration
+  - Image upload and text extraction
+  - Search across OCR results
+  - Tesseract integration with security validation
+  - Accessible via `/main/ocr` route
+- ✅ **CalDAV Commands** - Added 6 missing Tauri commands
+  - Account management (get, update, delete)
+  - Sync history and conflict resolution
+  - Ready for WebDAV protocol implementation
 
 ### Planned 📋
 
-- OCR integration (backend ready)
-- Automation DSL (scaffolding exists)
+- Automation DSL (requires full design and implementation)
 - Plugin system
 - Apple Watch companion app
 - Voice command integration (Siri Shortcuts, Google Assistant)
