@@ -10,6 +10,7 @@ pub mod timeline;
 pub mod webview;
 pub mod sync;
 pub mod analytics;
+pub mod intelligence;
 
 // Re-export commonly used types
 pub use account::{
@@ -50,4 +51,9 @@ pub use sync::{
 pub use analytics::{
     AnalyticsOverview, PlatformStats, TimeSeriesPoint, CategoryStats,
     EngagementStats, TopPost, get_analytics_overview,
+};
+
+pub use intelligence::{
+    ContentInsight, Sentiment, AutoCategorizationRule, RuleType,
+    analyze_post_content, auto_categorize_posts, create_auto_rule,
 };

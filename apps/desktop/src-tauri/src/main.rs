@@ -23,7 +23,7 @@ use core_rs::personal_modes::{create_health_metric, get_health_metrics, create_h
 use core_rs::temporal_graph::{build_current_graph, save_graph_snapshot, get_graph_evolution, create_milestone, detect_major_notes, GraphSnapshot, GraphEvolution, GraphMilestone};
 use core_rs::sync_agent::{init_sync_tables, SyncAgent, DeviceInfo, DeviceType, SyncHistoryEntry, SyncConflict, ConflictType, ConflictResolution as SyncConflictResolution};
 use core_rs::collaboration::{init_rbac_tables, get_space_users, check_permission, invite_user, update_user_role, grant_permission, revoke_permission, suspend_user, activate_user, get_roles, add_user_to_space, remove_user_from_space, SpaceUser, Role, UserInvitation, CollaborationError};
-use core_rs::social::{add_social_account, get_social_accounts, get_social_account, update_social_account, delete_social_account, store_social_posts, get_unified_timeline, create_category, get_categories, assign_category, get_timeline_stats, create_webview_session, get_webview_session, save_session_cookies, get_platform_url, get_platform_display_name, get_accounts_needing_sync as get_social_accounts_needing_sync, get_all_sync_tasks, start_sync, complete_sync, fail_sync, get_sync_history, get_sync_stats, SocialAccount, SocialPost, TimelinePost, TimelineFilters, SocialCategory, TimelineStats, WebViewSession, SyncTask, SyncStatus, SyncStats};
+use core_rs::social::{add_social_account, get_social_accounts, get_social_account, update_social_account, delete_social_account, store_social_posts, get_unified_timeline, create_category, get_categories, assign_category, get_timeline_stats, create_webview_session, get_webview_session, save_session_cookies, get_platform_url, get_platform_display_name, get_accounts_needing_sync as get_social_accounts_needing_sync, get_all_sync_tasks, start_sync, complete_sync, fail_sync, get_sync_history, get_sync_stats, auto_categorize_posts, SocialAccount, SocialPost, TimelinePost, TimelineFilters, SocialCategory, TimelineStats, WebViewSession, SyncTask, SyncStatus, SyncStats};
 use rusqlite::Connection;
 use std::sync::Mutex;
 use tauri::State;
@@ -1623,6 +1623,25 @@ fn search_social_posts_cmd(
     }
 }
 
+/// Auto-categorize uncategorized posts
+#[tauri::command]
+fn auto_categorize_posts_cmd(
+    space_id: &str,
+    db: State<DbConnection>,
+) -> Result<usize, String> {
+    // Input validation
+    if space_id.len() > 100 || space_id.is_empty() {
+        return Err("Invalid space_id".to_string());
+    }
+
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        auto_categorize_posts(conn, space_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
 // ============================================================================
 // WEBVIEW & EXTRACTION COMMANDS
 // ============================================================================
@@ -2019,6 +2038,7 @@ fn main() {
         get_timeline_stats_cmd,
         get_analytics_overview_cmd,
         search_social_posts_cmd,
+        auto_categorize_posts_cmd,
         // Social Media WebView commands
         open_social_webview,
         handle_extracted_data,

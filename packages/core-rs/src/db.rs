@@ -326,6 +326,16 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
                 last_used INTEGER NOT NULL
             );
 
+            -- Auto-categorization rules
+            CREATE TABLE social_auto_rule (
+                id TEXT PRIMARY KEY,
+                category_id TEXT NOT NULL REFERENCES social_category(id) ON DELETE CASCADE,
+                rule_type TEXT NOT NULL CHECK(rule_type IN('author_contains', 'content_contains', 'platform_equals', 'hashtag_contains', 'url_contains')),
+                pattern TEXT NOT NULL,
+                priority INTEGER NOT NULL DEFAULT 0,
+                created_at INTEGER NOT NULL
+            );
+
             -- Indexes for performance
             CREATE INDEX idx_social_post_account ON social_post(account_id, timestamp DESC);
             CREATE INDEX idx_social_post_platform ON social_post(platform, timestamp DESC);
@@ -333,6 +343,7 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
             CREATE INDEX idx_social_sync_history ON social_sync_history(account_id, sync_time DESC);
             CREATE INDEX idx_social_account_space ON social_account(space_id, enabled);
             CREATE INDEX idx_social_category_space ON social_category(space_id);
+            CREATE INDEX idx_social_auto_rule_category ON social_auto_rule(category_id, priority DESC);
 
             INSERT INTO schema_version (version) VALUES (6);
             ",
