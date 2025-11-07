@@ -7,6 +7,7 @@
 
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { hapticManager } from "@/lib/haptics";
 
 export interface ThemeConfig {
   mode: "light" | "dark" | "auto";
@@ -172,6 +173,11 @@ export const useAppContext = create<AppState>((set, get) => ({
 
     set({ settings: updatedSettings });
     await AsyncStorage.setItem("app_settings", JSON.stringify(updatedSettings));
+
+    // Update haptic manager if haptics setting changed
+    if ("haptics" in newSettings && newSettings.haptics !== undefined) {
+      hapticManager.setEnabled(newSettings.haptics);
+    }
   },
 
   loadSettings: async () => {
@@ -180,6 +186,9 @@ export const useAppContext = create<AppState>((set, get) => ({
       if (stored) {
         const settings = JSON.parse(stored);
         set({ settings: { ...DEFAULT_SETTINGS, ...settings } });
+
+        // Update haptic manager with loaded settings
+        hapticManager.setEnabled(settings.haptics !== false);
       }
     } catch (error) {
       console.error("[AppContext] Failed to load settings:", error);
