@@ -21,6 +21,7 @@ pub mod ocr;
 pub mod personal_modes;
 pub mod project;
 pub mod search;
+pub mod social;
 pub mod space;
 pub mod srs;
 pub mod sync;

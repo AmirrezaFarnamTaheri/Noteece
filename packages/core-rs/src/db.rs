@@ -233,6 +233,110 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
             ",
         )?;
     }
+    if current_version < 6 {
+        log::info!("[db] Migrating to version 6 - Social Media Suite");
+        tx.execute_batch(
+            "
+            -- Social Media Accounts
+            CREATE TABLE social_account (
+                id TEXT PRIMARY KEY,
+                space_id TEXT NOT NULL REFERENCES space(id),
+                platform TEXT NOT NULL,
+                username TEXT NOT NULL,
+                display_name TEXT,
+                encrypted_credentials TEXT NOT NULL,
+                enabled INTEGER NOT NULL DEFAULT 1,
+                last_sync INTEGER,
+                sync_frequency_minutes INTEGER NOT NULL DEFAULT 60,
+                created_at INTEGER NOT NULL,
+                UNIQUE(space_id, platform, username)
+            );
+
+            -- Social Posts/Content
+            CREATE TABLE social_post (
+                id TEXT PRIMARY KEY,
+                account_id TEXT NOT NULL REFERENCES social_account(id) ON DELETE CASCADE,
+                platform TEXT NOT NULL,
+                platform_post_id TEXT,
+                author TEXT NOT NULL,
+                author_handle TEXT,
+                content TEXT,
+                content_html TEXT,
+                media_urls_json TEXT,
+                timestamp INTEGER NOT NULL,
+                fetched_at INTEGER NOT NULL,
+                likes INTEGER,
+                shares INTEGER,
+                comments INTEGER,
+                views INTEGER,
+                post_type TEXT,
+                reply_to TEXT,
+                raw_json TEXT NOT NULL,
+                UNIQUE(account_id, platform_post_id)
+            );
+
+            -- Categories (user-defined cross-platform)
+            CREATE TABLE social_category (
+                id TEXT PRIMARY KEY,
+                space_id TEXT NOT NULL REFERENCES space(id),
+                name TEXT NOT NULL,
+                color TEXT,
+                icon TEXT,
+                filters_json TEXT,
+                created_at INTEGER NOT NULL,
+                UNIQUE(space_id, name)
+            );
+
+            -- Post-Category Mapping
+            CREATE TABLE social_post_category (
+                post_id TEXT REFERENCES social_post(id) ON DELETE CASCADE,
+                category_id TEXT REFERENCES social_category(id) ON DELETE CASCADE,
+                assigned_at INTEGER NOT NULL,
+                assigned_by TEXT,
+                PRIMARY KEY(post_id, category_id)
+            );
+
+            -- Full-text search for social content
+            CREATE VIRTUAL TABLE social_post_fts USING fts5(
+                content,
+                author,
+                tokenize='porter unicode61 remove_diacritics 2'
+            );
+
+            -- Sync history
+            CREATE TABLE social_sync_history (
+                id TEXT PRIMARY KEY,
+                account_id TEXT NOT NULL REFERENCES social_account(id) ON DELETE CASCADE,
+                sync_time INTEGER NOT NULL,
+                posts_fetched INTEGER NOT NULL DEFAULT 0,
+                errors_count INTEGER NOT NULL DEFAULT 0,
+                success INTEGER NOT NULL DEFAULT 1,
+                error_message TEXT
+            );
+
+            -- WebView Sessions (for multi-account management)
+            CREATE TABLE social_webview_session (
+                id TEXT PRIMARY KEY,
+                account_id TEXT NOT NULL REFERENCES social_account(id) ON DELETE CASCADE,
+                platform TEXT NOT NULL,
+                cookies TEXT,
+                session_data TEXT,
+                created_at INTEGER NOT NULL,
+                last_used INTEGER NOT NULL
+            );
+
+            -- Indexes for performance
+            CREATE INDEX idx_social_post_account ON social_post(account_id, timestamp DESC);
+            CREATE INDEX idx_social_post_platform ON social_post(platform, timestamp DESC);
+            CREATE INDEX idx_social_post_timestamp ON social_post(timestamp DESC);
+            CREATE INDEX idx_social_sync_history ON social_sync_history(account_id, sync_time DESC);
+            CREATE INDEX idx_social_account_space ON social_account(space_id, enabled);
+            CREATE INDEX idx_social_category_space ON social_category(space_id);
+
+            INSERT INTO schema_version (version) VALUES (6);
+            ",
+        )?;
+    }
     tx.commit()?;
     log::info!("[db] Migration finished");
     Ok(())

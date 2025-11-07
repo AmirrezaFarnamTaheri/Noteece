@@ -129,6 +129,39 @@ A **local-first**, **end-to-end encrypted**, **Markdown-centric** workspace desi
 - **Comprehensive Testing:** 8+ test suites covering components, widgets, and user flows
 - **Accessible Design:** ARIA labels, keyboard navigation, and semantic HTML throughout
 
+### Social Media Suite 🆕 (In Development)
+
+A comprehensive local-first social media aggregation and management system with zero infrastructure costs:
+
+- **Multi-Account Management:** Unlimited accounts per platform with encrypted credential storage
+- **Unified Timeline:** Cross-platform timeline aggregating all your social feeds in one place
+- **Smart Categories:** Organize subscriptions and content across platforms (e.g., "Work" category includes LinkedIn posts + Slack messages + work Twitter)
+- **15+ Platform Support:** Twitter/X, Instagram, Facebook, YouTube, Reddit, LinkedIn, Discord, Telegram, WhatsApp, Spotify, TikTok, and more
+- **Three Operation Modes:**
+  - **Light Mode:** RSS-only aggregation, minimal resources (100MB RAM)
+  - **Medium Mode:** WebView scraping + local ML categorization (500MB RAM)
+  - **Heavy Mode:** Full automation + AI processing + analytics (2GB RAM)
+- **Privacy-First Architecture:**
+  - All data stored locally in encrypted SQLite vault
+  - No external servers or tracking
+  - You own and control all your social data
+  - Encrypted OAuth tokens and session storage
+- **Advanced Features:**
+  - Full-text search across all platforms
+  - Focus modes (Deep Work, Social Time, Learning, Detox)
+  - Time limits and platform blocklists
+  - Engagement analytics and screen time tracking
+  - Cross-platform content categorization
+  - Local AI for auto-categorization and sentiment analysis
+- **Mobile Integration:**
+  - Share targets for quick capture from any app
+  - Background sync every 30 minutes
+  - Native mobile timeline
+  - Push notification parsing (Android)
+
+**Status:** Phase 1 in development (Database schema + account management)
+**Documentation:** See `docs/social-media-suite-roadmap.md` for full 16-week implementation plan
+
 ## Screenshots
 
 _Coming soon..._
