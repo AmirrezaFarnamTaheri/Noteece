@@ -42,11 +42,16 @@
     const linkEl = element.querySelector(SELECTORS.link);
     if (!linkEl) return null;
 
-    const href = linkEl.getAttribute('href');
+    let href = linkEl.getAttribute('href');
     if (!href) return null;
 
-    // Extract pin ID from /pin/PIN_ID/
-    const match = href.match(/\/pin\/(\d+)/);
+    // Normalize relative URLs to absolute URLs
+    if (href.startsWith('/')) {
+      href = 'https://www.pinterest.com' + href;
+    }
+
+    // Extract pin ID from /pin/PIN_ID/ - support alphanumeric IDs
+    const match = href.match(/\/pin\/([a-zA-Z0-9_-]+)/);
     if (match) return match[1];
 
     return null;

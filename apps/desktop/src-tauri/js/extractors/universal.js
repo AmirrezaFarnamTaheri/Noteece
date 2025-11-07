@@ -148,7 +148,11 @@
         const timeElement = element.querySelector('time[datetime]');
         if (timeElement) {
             const datetime = timeElement.getAttribute('datetime');
-            return new Date(datetime).getTime(); // Already in milliseconds
+            const timestamp = new Date(datetime).getTime();
+            // Validate that the result is a valid, finite number
+            if (Number.isFinite(timestamp) && !Number.isNaN(timestamp)) {
+                return timestamp; // Already in milliseconds
+            }
         }
 
         // Try data attributes
@@ -156,11 +160,14 @@
                         element.getAttribute('data-timestamp');
         if (dataTime) {
             const parsed = parseInt(dataTime);
-            // Detect if timestamp is in seconds (< year 2100 in seconds)
-            if (parsed < 4102444800) {
-                return parsed * 1000; // Convert seconds to milliseconds
+            // Validate that parsing succeeded
+            if (!Number.isNaN(parsed) && Number.isFinite(parsed)) {
+                // Detect if timestamp is in seconds (< year 2100 in seconds)
+                if (parsed < 4102444800) {
+                    return parsed * 1000; // Convert seconds to milliseconds
+                }
+                return parsed; // Already in milliseconds
             }
-            return parsed; // Already in milliseconds
         }
 
         // Fallback to current time

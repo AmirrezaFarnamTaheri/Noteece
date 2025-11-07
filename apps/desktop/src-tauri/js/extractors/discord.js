@@ -119,14 +119,30 @@
   function extractMedia(element) {
     const media = [];
 
-    // Extract images
+    // Extract images - check multiple sources for highest quality
     const images = element.querySelectorAll(SELECTORS.image);
     images.forEach(img => {
-      const src = img.getAttribute('src');
-      if (src && !src.includes('avatar')) {
+      // Priority order: data-fullsize > parent <a> href > srcset > data-src > src
+      let url = img.getAttribute('data-fullsize') ||
+                img.parentElement?.tagName === 'A' ? img.parentElement.getAttribute('href') : null;
+
+      if (!url) {
+        // Parse srcset for highest resolution
+        const srcset = img.getAttribute('srcset');
+        if (srcset) {
+          const sources = srcset.split(',').map(s => s.trim().split(' '));
+          // Get the last (highest resolution) source
+          url = sources[sources.length - 1]?.[0];
+        }
+      }
+
+      // Fallback to data-src or regular src
+      url = url || img.getAttribute('data-src') || img.getAttribute('src');
+
+      if (url && !url.includes('avatar')) {
         media.push({
           type: 'image',
-          url: src,
+          url: url,
           alt: img.getAttribute('alt'),
         });
       }

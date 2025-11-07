@@ -125,9 +125,34 @@
     const videoEl = element.querySelector(SELECTORS.video);
     if (!videoEl) return [];
 
+    // Try to get a valid HTTPS URL from multiple sources
+    let videoUrl = null;
+
+    // Check <source> elements first (often have higher quality)
+    const sources = videoEl.querySelectorAll('source');
+    for (const source of sources) {
+      const src = source.getAttribute('src');
+      if (src && src.startsWith('https://')) {
+        videoUrl = src;
+        break;
+      }
+    }
+
+    // Fallback to video element src attribute
+    if (!videoUrl) {
+      const src = videoEl.getAttribute('src');
+      // Validate URL - reject blob:, data:, and other non-persistent URLs
+      if (src && src.startsWith('https://')) {
+        videoUrl = src;
+      }
+    }
+
+    // Only return if we have a valid persistent URL
+    if (!videoUrl) return [];
+
     return [{
       type: 'video',
-      url: videoEl.getAttribute('src') || '',
+      url: videoUrl,
       poster: videoEl.getAttribute('poster'),
     }];
   }

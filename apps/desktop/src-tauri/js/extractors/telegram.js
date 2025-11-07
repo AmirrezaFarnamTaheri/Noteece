@@ -62,13 +62,25 @@
       return `tg_${messageId.getAttribute('data-message-id')}`;
     }
 
-    // Fallback: generate from content and time
+    // Fallback: generate from content, channel, and numeric timestamp
     const contentEl = element.querySelector(SELECTORS.content);
     const timeEl = element.querySelector(SELECTORS.time);
+    const channelEl = document.querySelector(SELECTORS.channelName);
+
     if (contentEl) {
       const content = utils.safeText(contentEl).substring(0, 30);
-      const time = timeEl ? utils.safeText(timeEl) : Date.now();
-      return `tg_${content.replace(/\W/g, '_')}_${time}_${Math.random().toString(36).substr(2, 9)}`;
+      const channel = channelEl ? utils.safeText(channelEl).replace(/\W/g, '_') : 'unknown';
+
+      // Use numeric timestamp from time element or current time
+      let timestamp = Date.now();
+      if (timeEl) {
+        const timeAttr = timeEl.getAttribute('datetime');
+        if (timeAttr) {
+          timestamp = new Date(timeAttr).getTime();
+        }
+      }
+
+      return `tg_${channel}_${content.replace(/\W/g, '_')}_${timestamp}`;
     }
 
     return `tg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;

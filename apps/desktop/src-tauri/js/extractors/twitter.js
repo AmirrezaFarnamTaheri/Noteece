@@ -134,8 +134,11 @@
         const id = getTweetId(tweetElement);
         if (!id) return null;
 
+        // Create globally unique ID with platform prefix
+        const globalId = `twitter-${id}`;
+
         // Skip if already extracted
-        if (utils.isAlreadyExtracted(`twitter-${id}`)) {
+        if (utils.isAlreadyExtracted(globalId)) {
             return null;
         }
 
@@ -152,7 +155,7 @@
         else if (hasQuotedTweet(tweetElement)) type = 'quote';
 
         return utils.normalizePost({
-            id,
+            id: globalId,  // Use globally unique ID
             author: author.name,
             handle: author.handle ? `@${author.handle}` : null,
             content: content.text,
