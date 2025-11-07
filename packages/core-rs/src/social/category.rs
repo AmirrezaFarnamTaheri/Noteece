@@ -33,7 +33,7 @@ pub fn create_category(
     filters: Option<CategoryFilters>,
 ) -> Result<SocialCategory, SocialError> {
     let id = Ulid::new().to_string();
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
     let filters_json = filters.as_ref().map(|f| serde_json::to_string(f)).transpose()?;
 
     conn.execute(
@@ -175,7 +175,7 @@ pub fn assign_category(
     category_id: &str,
     assigned_by: &str, // 'user', 'auto', or 'ai'
 ) -> Result<(), SocialError> {
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
 
     conn.execute(
         "INSERT OR IGNORE INTO social_post_category (

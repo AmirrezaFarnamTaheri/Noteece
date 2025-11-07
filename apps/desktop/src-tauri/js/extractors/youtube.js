@@ -36,21 +36,42 @@
   };
 
   /**
-   * Extract video ID from various YouTube URL formats
+   * Extract video ID from various YouTube URL formats and data attributes
    */
   function getVideoId(element) {
-    const linkEl = element.querySelector('a#video-title, a#thumbnail');
-    if (!linkEl) return null;
+    // Try data-video-id attribute first (most reliable)
+    const dataVideoId = element.getAttribute('data-video-id');
+    if (dataVideoId) return dataVideoId;
 
-    const href = linkEl.getAttribute('href');
-    if (!href) return null;
+    // Try finding in child elements
+    const childWithId = element.querySelector('[data-video-id]');
+    if (childWithId) {
+      const id = childWithId.getAttribute('data-video-id');
+      if (id) return id;
+    }
 
-    // Extract video ID from /watch?v=VIDEO_ID or /shorts/VIDEO_ID
-    const watchMatch = href.match(/[?&]v=([^&]+)/);
-    if (watchMatch) return watchMatch[1];
+    // Try extracting from link href
+    const linkEl = element.querySelector('a#video-title, a#thumbnail, a[href*="/watch"], a[href*="/shorts"]');
+    if (linkEl) {
+      const href = linkEl.getAttribute('href');
+      if (href) {
+        // Extract video ID from /watch?v=VIDEO_ID
+        const watchMatch = href.match(/[?&]v=([^&]+)/);
+        if (watchMatch) return watchMatch[1];
 
-    const shortsMatch = href.match(/\/shorts\/([^?&]+)/);
-    if (shortsMatch) return shortsMatch[1];
+        // Extract from /shorts/VIDEO_ID
+        const shortsMatch = href.match(/\/shorts\/([^?&/]+)/);
+        if (shortsMatch) return shortsMatch[1];
+      }
+    }
+
+    // Try extracting from thumbnail URL (contains video ID)
+    const thumbnailEl = element.querySelector('img[src*="ytimg.com/vi/"]');
+    if (thumbnailEl) {
+      const src = thumbnailEl.getAttribute('src');
+      const match = src?.match(/\/vi\/([^/]+)\//);
+      if (match) return match[1];
+    }
 
     return null;
   }
@@ -123,16 +144,23 @@
     const channel = extractChannel(videoElement);
     const metadata = extractMetadata(videoElement);
 
+    // Extract thumbnail with fallback to standard YouTube thumbnail URL
+    let thumbnailUrl = utils.safeAttr(thumbnailEl, 'src');
+    if (!thumbnailUrl || thumbnailUrl.includes('data:image')) {
+      // Fallback to YouTube's standard thumbnail URL
+      thumbnailUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+    }
+
     const video = {
       id: videoId,
-      author: channel.name,
+      author: channel.name || 'Unknown',
       handle: channel.handle,
       content: title,
       contentHtml: `<a href="https://youtube.com/watch?v=${videoId}">${title}</a>`,
       url: `https://youtube.com/watch?v=${videoId}`,
       media: [{
         type: 'thumbnail',
-        url: utils.safeAttr(thumbnailEl, 'src'),
+        url: thumbnailUrl,
       }],
       metadata: {
         channelUrl: channel.url,

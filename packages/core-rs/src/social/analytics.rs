@@ -81,7 +81,7 @@ fn get_platform_stats(
     space_id: &str,
     days: i64,
 ) -> Result<Vec<PlatformStats>, SocialError> {
-    let cutoff = chrono::Utc::now().timestamp() - (days * 24 * 60 * 60);
+    let cutoff = chrono::Utc::now().timestamp_millis() - (days * 24 * 60 * 60 * 1000);
 
     let mut stmt = conn.prepare(
         "SELECT p.platform,
@@ -120,10 +120,10 @@ fn get_time_series(
     space_id: &str,
     days: i64,
 ) -> Result<Vec<TimeSeriesPoint>, SocialError> {
-    let cutoff = chrono::Utc::now().timestamp() - (days * 24 * 60 * 60);
+    let cutoff = chrono::Utc::now().timestamp_millis() - (days * 24 * 60 * 60 * 1000);
 
     let mut stmt = conn.prepare(
-        "SELECT DATE(p.timestamp, 'unixepoch') as date,
+        "SELECT DATE(p.timestamp / 1000, 'unixepoch') as date,
                 COUNT(*) as count
          FROM social_post p
          JOIN social_account a ON p.account_id = a.id
@@ -153,7 +153,7 @@ fn get_category_stats(
     space_id: &str,
     days: i64,
 ) -> Result<Vec<CategoryStats>, SocialError> {
-    let cutoff = chrono::Utc::now().timestamp() - (days * 24 * 60 * 60);
+    let cutoff = chrono::Utc::now().timestamp_millis() - (days * 24 * 60 * 60 * 1000);
 
     let mut stmt = conn.prepare(
         "SELECT c.name,
@@ -191,7 +191,7 @@ fn get_engagement_stats(
     space_id: &str,
     days: i64,
 ) -> Result<EngagementStats, SocialError> {
-    let cutoff = chrono::Utc::now().timestamp() - (days * 24 * 60 * 60);
+    let cutoff = chrono::Utc::now().timestamp_millis() - (days * 24 * 60 * 60 * 1000);
 
     let mut stmt = conn.prepare(
         "SELECT COUNT(*) as total_posts,
@@ -236,7 +236,7 @@ fn get_top_posts(
     space_id: &str,
     days: i64,
 ) -> Result<Vec<TopPost>, SocialError> {
-    let cutoff = chrono::Utc::now().timestamp() - (days * 24 * 60 * 60);
+    let cutoff = chrono::Utc::now().timestamp_millis() - (days * 24 * 60 * 60 * 1000);
 
     let mut stmt = conn.prepare(
         "SELECT p.id, p.platform, p.author, p.content, p.timestamp,

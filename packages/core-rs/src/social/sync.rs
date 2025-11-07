@@ -35,7 +35,7 @@ pub fn get_accounts_needing_sync(
     conn: &Connection,
     space_id: &str,
 ) -> Result<Vec<SyncTask>, SocialError> {
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
 
     let mut stmt = conn.prepare(
         "SELECT id, platform, username, last_sync, sync_frequency_minutes
@@ -52,9 +52,9 @@ pub fn get_accounts_needing_sync(
             let last_sync: Option<i64> = row.get(3)?;
             let sync_frequency_minutes: i64 = row.get(4)?;
 
-            // Calculate next sync time
+            // Calculate next sync time (convert minutes to milliseconds)
             let next_sync = if let Some(last) = last_sync {
-                last + (sync_frequency_minutes * 60)
+                last + (sync_frequency_minutes * 60 * 1000)
             } else {
                 0 // Never synced, sync immediately
             };
@@ -96,7 +96,7 @@ pub fn get_all_sync_tasks(
             let sync_frequency_minutes: i64 = row.get(4)?;
 
             let next_sync = if let Some(last) = last_sync {
-                last + (sync_frequency_minutes * 60)
+                last + (sync_frequency_minutes * 60 * 1000)
             } else {
                 0
             };
@@ -121,7 +121,7 @@ pub fn start_sync(
     conn: &Connection,
     account_id: &str,
 ) -> Result<(), SocialError> {
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
 
     conn.execute(
         "INSERT INTO social_sync_history (
@@ -144,7 +144,7 @@ pub fn complete_sync(
     posts_synced: i64,
     duration_ms: i64,
 ) -> Result<(), SocialError> {
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
 
     // Update the most recent in_progress sync record
     conn.execute(
@@ -249,8 +249,8 @@ pub fn get_sync_stats(
     conn: &Connection,
     space_id: &str,
 ) -> Result<SyncStats, SocialError> {
-    let now = Utc::now().timestamp();
-    let today_start = now - (now % 86400); // Start of current day
+    let now = Utc::now().timestamp_millis();
+    let today_start = now - (now % 86400000); // Start of current day (milliseconds in a day)
 
     // Total accounts
     let total_accounts: i64 = conn.query_row(

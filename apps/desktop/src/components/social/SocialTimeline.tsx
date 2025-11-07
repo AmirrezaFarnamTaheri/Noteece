@@ -64,8 +64,11 @@ export function SocialTimeline({ spaceId }: SocialTimelineProps) {
       };
     },
     getNextPageParam: (lastPage, allPages) => {
-      if (lastPage.has_more) {
-        return allPages.reduce((sum, page) => sum + page.posts.length, 0);
+      // Only fetch next page if the last page was full (indicating more data may exist)
+      if (lastPage.has_more && lastPage.posts.length > 0) {
+        // Calculate offset as total number of posts fetched so far
+        const currentOffset = allPages.reduce((sum, page) => sum + page.posts.length, 0);
+        return currentOffset;
       }
       return undefined;
     },
@@ -95,18 +98,18 @@ export function SocialTimeline({ spaceId }: SocialTimelineProps) {
     };
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // Helper function to get start time based on time range
+  // Helper function to get start time based on time range (in milliseconds)
   function getStartTime(timeRange: string): number | null {
-    const now = Date.now() / 1000; // Convert to seconds
+    const now = Date.now(); // Already in milliseconds
     switch (timeRange) {
       case 'today':
-        return now - 86400; // 24 hours
+        return now - 86400000; // 24 hours
       case 'week':
-        return now - 604800; // 7 days
+        return now - 604800000; // 7 days
       case 'month':
-        return now - 2592000; // 30 days
+        return now - 2592000000; // 30 days
       case 'year':
-        return now - 31536000; // 365 days
+        return now - 31536000000; // 365 days
       default:
         return null;
     }

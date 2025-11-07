@@ -49,7 +49,7 @@ pub fn add_social_account(
     use crate::crypto::encrypt_string;
 
     let id = Ulid::new().to_string();
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
 
     // Encrypt credentials (OAuth tokens, cookies, etc.)
     let encrypted_creds = encrypt_string(credentials, dek)?;
@@ -218,7 +218,7 @@ pub fn update_last_sync(
     conn: &Connection,
     account_id: &str,
 ) -> Result<(), SocialError> {
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
     conn.execute(
         "UPDATE social_account SET last_sync = ?1 WHERE id = ?2",
         params![now, account_id],
@@ -231,7 +231,7 @@ pub fn get_accounts_needing_sync(
     conn: &Connection,
     space_id: &str,
 ) -> Result<Vec<SocialAccount>, SocialError> {
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
 
     let mut stmt = conn.prepare(
         "SELECT id, space_id, platform, username, display_name,
@@ -241,7 +241,7 @@ pub fn get_accounts_needing_sync(
          WHERE space_id = ?1
            AND enabled = 1
            AND (last_sync IS NULL
-                OR last_sync < ?2 - (sync_frequency_minutes * 60))",
+                OR last_sync < ?2 - (sync_frequency_minutes * 60 * 1000))",
     )?;
 
     let accounts = stmt.query_map(params![space_id, now], |row| {

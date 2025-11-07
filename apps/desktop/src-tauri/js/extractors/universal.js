@@ -141,24 +141,30 @@
 
     /**
      * Parse timestamp from various formats
+     * Always returns milliseconds since epoch
      */
     function parseTimestamp(element) {
         // Try <time> element with datetime attribute
         const timeElement = element.querySelector('time[datetime]');
         if (timeElement) {
             const datetime = timeElement.getAttribute('datetime');
-            return new Date(datetime).getTime() / 1000;
+            return new Date(datetime).getTime(); // Already in milliseconds
         }
 
         // Try data attributes
         const dataTime = element.getAttribute('data-time') ||
                         element.getAttribute('data-timestamp');
         if (dataTime) {
-            return parseInt(dataTime);
+            const parsed = parseInt(dataTime);
+            // Detect if timestamp is in seconds (< year 2100 in seconds)
+            if (parsed < 4102444800) {
+                return parsed * 1000; // Convert seconds to milliseconds
+            }
+            return parsed; // Already in milliseconds
         }
 
         // Fallback to current time
-        return Date.now() / 1000;
+        return Date.now(); // Already in milliseconds
     }
 
     /**
@@ -224,8 +230,16 @@
 
     /**
      * Normalize post data
+     * All timestamps are in milliseconds since epoch
      */
     function normalizePost(rawData) {
+        let timestamp = rawData.timestamp || Date.now();
+
+        // Ensure timestamp is in milliseconds (detect seconds and convert)
+        if (timestamp < 4102444800) {
+            timestamp = timestamp * 1000;
+        }
+
         return {
             platform_post_id: rawData.id || null,
             author: rawData.author || 'Unknown',
@@ -233,7 +247,7 @@
             content: rawData.content || null,
             content_html: rawData.contentHtml || null,
             media_urls: rawData.media || [],
-            timestamp: rawData.timestamp || Math.floor(Date.now() / 1000),
+            timestamp: timestamp,
             engagement: {
                 likes: rawData.likes || null,
                 shares: rawData.shares || null,

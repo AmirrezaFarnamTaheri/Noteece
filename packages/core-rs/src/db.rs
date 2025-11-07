@@ -300,6 +300,7 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
             CREATE VIRTUAL TABLE social_post_fts USING fts5(
                 content,
                 author,
+                post_id UNINDEXED,
                 tokenize='porter unicode61 remove_diacritics 2'
             );
 
@@ -308,9 +309,9 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
                 id TEXT PRIMARY KEY,
                 account_id TEXT NOT NULL REFERENCES social_account(id) ON DELETE CASCADE,
                 sync_time INTEGER NOT NULL,
-                posts_fetched INTEGER NOT NULL DEFAULT 0,
-                errors_count INTEGER NOT NULL DEFAULT 0,
-                success INTEGER NOT NULL DEFAULT 1,
+                posts_synced INTEGER NOT NULL DEFAULT 0,
+                sync_duration_ms INTEGER NOT NULL DEFAULT 0,
+                status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN('pending', 'in_progress', 'completed', 'failed')),
                 error_message TEXT
             );
 

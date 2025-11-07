@@ -43,7 +43,7 @@ pub fn store_social_posts(
     const MAX_MEDIA_JSON_SIZE: usize = 100_000; // 100KB limit
     const MAX_RAW_JSON_SIZE: usize = 500_000; // 500KB limit
 
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
     let mut stored = 0;
 
     // Use transaction for atomicity
@@ -107,11 +107,11 @@ pub fn store_social_posts(
                 stored += rows;
 
                 // Also update FTS index if post has content
-                // Fix: Use last_insert_rowid() instead of SELECT ROWID
+                // Store post_id explicitly to avoid relying on rowid association
                 if let Some(content) = &post.content {
                     let _ = tx.execute(
-                        "INSERT INTO social_post_fts (rowid, content, author) VALUES (last_insert_rowid(), ?, ?)",
-                        params![content, &post.author],
+                        "INSERT INTO social_post_fts (content, author, post_id) VALUES (?, ?, ?)",
+                        params![content, &post.author, &post_id],
                     );
                 }
             }
@@ -212,7 +212,7 @@ pub fn search_social_posts(
          JOIN social_account a ON p.account_id = a.id
          WHERE a.space_id = ?1
            AND p.id IN (
-               SELECT rowid FROM social_post_fts
+               SELECT post_id FROM social_post_fts
                WHERE social_post_fts MATCH ?2
            )
          ORDER BY p.timestamp DESC

@@ -1366,6 +1366,25 @@ fn add_social_account_cmd(
     credentials: &str,
     db: State<DbConnection>,
 ) -> Result<SocialAccount, String> {
+    // Input validation
+    if space_id.len() > 100 || space_id.is_empty() {
+        return Err("Invalid space_id".to_string());
+    }
+    if platform.len() > 50 || platform.is_empty() {
+        return Err("Invalid platform".to_string());
+    }
+    if username.len() > 200 || username.is_empty() {
+        return Err("Invalid username".to_string());
+    }
+    if let Some(name) = display_name {
+        if name.len() > 200 {
+            return Err("Display name too long".to_string());
+        }
+    }
+    if credentials.len() > 50000 {
+        return Err("Credentials payload too large".to_string());
+    }
+
     let conn = db.conn.lock().unwrap();
     let dek = db.dek.lock().unwrap();
 
@@ -1585,6 +1604,17 @@ fn search_social_posts_cmd(
     limit: i64,
     db: State<DbConnection>,
 ) -> Result<Vec<TimelinePost>, String> {
+    // Input validation
+    if space_id.len() > 100 || space_id.is_empty() {
+        return Err("Invalid space_id".to_string());
+    }
+    if query.len() > 1000 {
+        return Err("Search query too long".to_string());
+    }
+    if limit < 1 || limit > 1000 {
+        return Err("Invalid limit (must be between 1 and 1000)".to_string());
+    }
+
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         search_social_posts(conn, space_id, query, Some(limit)).map_err(|e| e.to_string())
@@ -1698,14 +1728,34 @@ fn handle_extracted_data(
     data: String,
     db: State<DbConnection>,
 ) -> Result<(), String> {
+    // Input validation - protect against malicious/oversized payloads from compromised WebViews
+    if account_id.len() > 100 || account_id.is_empty() {
+        return Err("Invalid account_id".to_string());
+    }
+    if platform.len() > 50 || platform.is_empty() {
+        return Err("Invalid platform".to_string());
+    }
+    if event_type.len() > 100 {
+        return Err("Invalid event_type".to_string());
+    }
+    // Limit JSON payload size to prevent DoS (10MB limit)
+    if data.len() > 10_000_000 {
+        return Err("Data payload too large".to_string());
+    }
+
     let conn = db.conn.lock().unwrap();
 
     if let Some(conn) = conn.as_ref() {
         match event_type.as_str() {
             "posts_batch" => {
-                // Parse JSON array of posts
+                // Parse JSON array of posts with size limit
                 let posts: Vec<SocialPost> = serde_json::from_str(&data)
                     .map_err(|e| format!("Failed to parse posts: {}", e))?;
+
+                // Validate number of posts in batch
+                if posts.len() > 1000 {
+                    return Err("Too many posts in batch (max 1000)".to_string());
+                }
 
                 // Store posts
                 let stored = store_social_posts(conn, &account_id, posts)

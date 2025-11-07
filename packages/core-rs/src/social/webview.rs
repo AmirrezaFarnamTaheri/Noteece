@@ -25,7 +25,7 @@ pub fn create_webview_session(
     dek: &[u8],
 ) -> Result<WebViewSession, SocialError> {
     let id = Ulid::new().to_string();
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
 
     conn.execute(
         "INSERT INTO social_webview_session (
@@ -85,7 +85,7 @@ pub fn save_session_cookies(
     dek: &[u8],
 ) -> Result<(), SocialError> {
     let encrypted_cookies = encrypt_string(cookies_json, dek)?;
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
 
     conn.execute(
         "UPDATE social_webview_session SET cookies = ?1, last_used = ?2 WHERE id = ?3",
@@ -103,7 +103,7 @@ pub fn save_session_data(
     dek: &[u8],
 ) -> Result<(), SocialError> {
     let encrypted_data = encrypt_string(session_data_json, dek)?;
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
 
     conn.execute(
         "UPDATE social_webview_session SET session_data = ?1, last_used = ?2 WHERE id = ?3",
@@ -168,7 +168,7 @@ pub fn update_session_last_used(
     conn: &Connection,
     session_id: &str,
 ) -> Result<(), SocialError> {
-    let now = Utc::now().timestamp();
+    let now = Utc::now().timestamp_millis();
     conn.execute(
         "UPDATE social_webview_session SET last_used = ?1 WHERE id = ?2",
         params![now, session_id],
