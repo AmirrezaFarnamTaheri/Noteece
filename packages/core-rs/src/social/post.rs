@@ -94,6 +94,26 @@ pub fn store_social_posts(
             continue;
         }
 
+        // Validate timestamp: must not be in the future or unreasonably old
+        // Allow posts from up to 10 years ago (315360000000 ms)
+        const MAX_AGE_MS: i64 = 315360000000;
+        if post.timestamp > now {
+            log::warn!(
+                "[Social::Post] Skipping post with future timestamp {} (now: {})",
+                post.timestamp,
+                now
+            );
+            continue;
+        }
+        if post.timestamp < (now - MAX_AGE_MS) {
+            log::warn!(
+                "[Social::Post] Skipping post with timestamp too old: {} (cutoff: {})",
+                post.timestamp,
+                now - MAX_AGE_MS
+            );
+            continue;
+        }
+
         // Try to insert, skip if duplicate
         match tx.execute(
             "INSERT OR IGNORE INTO social_post (

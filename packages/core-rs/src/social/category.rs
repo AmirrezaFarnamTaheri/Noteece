@@ -322,8 +322,9 @@ pub fn auto_categorize_posts(conn: &Connection, space_id: &str) -> Result<usize,
                 "SELECT p.id FROM social_post p
                  JOIN social_account a ON p.account_id = a.id
                  WHERE a.space_id = ?1
-                   AND p.id NOT IN (
-                       SELECT post_id FROM social_post_category WHERE category_id = ?2
+                   AND NOT EXISTS (
+                       SELECT 1 FROM social_post_category spc
+                       WHERE spc.post_id = p.id AND spc.category_id = ?2
                    )",
             );
 

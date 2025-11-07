@@ -16,6 +16,8 @@ pub enum SocialError {
     Platform(String),
     #[error("Serialization error: {0}")]
     Serialization(#[from] serde_json::Error),
+    #[error("Sync already in progress for account: {0}")]
+    SyncInProgress(String),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

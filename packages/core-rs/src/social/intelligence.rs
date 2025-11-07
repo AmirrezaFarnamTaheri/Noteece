@@ -151,8 +151,24 @@ fn detect_sentiment(content: &str) -> Sentiment {
 
 /// Extract topics from content using keyword analysis
 fn extract_topics(content: &str) -> Vec<String> {
+    const MAX_CONTENT_LENGTH: usize = 10_000; // Cap content length for analysis
+    const MAX_TOPICS: usize = 5; // Maximum topics to return
+    const MIN_KEYWORD_MATCHES: usize = 1; // Minimum keyword matches for a topic
+
     let mut topics = Vec::new();
-    let content_lower = content.to_lowercase();
+
+    // Normalize content: trim, lowercase, cap length
+    let normalized_content = content.trim().to_lowercase();
+    let content_lower = if normalized_content.len() > MAX_CONTENT_LENGTH {
+        &normalized_content[..MAX_CONTENT_LENGTH]
+    } else {
+        &normalized_content
+    };
+
+    // Early return for empty content
+    if content_lower.is_empty() {
+        return topics;
+    }
 
     // Topic keywords mapping
     let topic_keywords: HashMap<&str, Vec<&str>> = [
@@ -237,20 +253,31 @@ fn extract_topics(content: &str) -> Vec<String> {
     .cloned()
     .collect();
 
-    for (topic, keywords) in topic_keywords {
+    // Score topics by keyword matches
+    let mut topic_scores: Vec<(&str, usize)> = Vec::new();
+    for (topic, keywords) in topic_keywords.iter() {
         let matches = keywords
             .iter()
             .filter(|keyword| content_lower.contains(keyword))
             .count();
 
-        if matches > 0 {
-            topics.push(topic.to_string());
+        if matches >= MIN_KEYWORD_MATCHES {
+            topic_scores.push((topic, matches));
         }
     }
 
+    // Sort by number of matches (descending) and cap results
+    topic_scores.sort_by(|a, b| b.1.cmp(&a.1));
+    topics = topic_scores
+        .into_iter()
+        .take(MAX_TOPICS)
+        .map(|(topic, _)| topic.to_string())
+        .collect();
+
     log::debug!(
-        "[Social::Intelligence] Extracted {} topics: {:?}",
+        "[Social::Intelligence] Extracted {} topics from {} chars: {:?}",
         topics.len(),
+        content_lower.len(),
         topics
     );
 
@@ -296,8 +323,9 @@ pub fn auto_categorize_posts(conn: &Connection, space_id: &str) -> Result<usize,
          FROM social_post p
          JOIN social_account a ON p.account_id = a.id
          WHERE a.space_id = ?1
-           AND p.id NOT IN (
-               SELECT post_id FROM social_post_category
+           AND NOT EXISTS (
+               SELECT 1 FROM social_post_category spc
+               WHERE spc.post_id = p.id
            )
          LIMIT 100",
     )?;

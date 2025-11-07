@@ -82,10 +82,34 @@ export async function getSocialAccount(
   if (rows.length === 0) return null;
 
   const row = rows[0];
+
+  // Normalize credentials_encrypted robustly (mirror getSocialAccounts)
+  let creds: Uint8Array;
+  const raw = row.credentials_encrypted;
+
+  if (raw instanceof Uint8Array) {
+    creds = raw;
+  } else if (raw && typeof raw.byteLength === "number") {
+    // ArrayBuffer or similar
+    creds = new Uint8Array(raw);
+  } else if (raw && typeof raw === "string") {
+    // Some SQLite drivers can yield base64 strings; best-effort decode
+    try {
+      const bin = atob(raw);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      creds = arr;
+    } catch {
+      creds = new Uint8Array(0);
+    }
+  } else {
+    creds = new Uint8Array(0);
+  }
+
   return {
     ...row,
     enabled: row.enabled === 1,
-    credentials_encrypted: new Uint8Array(row.credentials_encrypted),
+    credentials_encrypted: creds,
   };
 }
 
@@ -168,29 +192,49 @@ export async function getTimelinePosts(
 
   const rows = await dbQuery<any>(sql, params);
 
-  return rows.map((row) => ({
-    id: row.id,
-    account_id: row.account_id,
-    platform: row.platform as Platform,
-    platform_post_id: row.platform_post_id,
-    author: row.author,
-    author_avatar: row.author_avatar,
-    content: row.content,
-    content_html: row.content_html,
-    url: row.url,
-    media_urls: row.media_urls ? JSON.parse(row.media_urls) : undefined,
-    engagement: {
-      likes: row.engagement_likes,
-      comments: row.engagement_comments,
-      shares: row.engagement_shares,
-      views: row.engagement_views,
-    },
-    created_at: row.created_at,
-    collected_at: row.collected_at,
-    account_username: row.account_username,
-    account_display_name: row.account_display_name,
-    categories: parseCategories(row),
-  }));
+  return rows.map((row) => {
+    // Safely parse media_urls JSON with validation
+    let mediaUrls: string[] | undefined;
+    if (row.media_urls != null) {
+      try {
+        const parsed = typeof row.media_urls === "string"
+          ? JSON.parse(row.media_urls)
+          : row.media_urls;
+        if (Array.isArray(parsed)) {
+          mediaUrls = parsed.filter((u) => typeof u === "string");
+        } else {
+          mediaUrls = undefined;
+        }
+      } catch {
+        // Invalid JSON, skip media URLs rather than crash
+        mediaUrls = undefined;
+      }
+    }
+
+    return {
+      id: row.id,
+      account_id: row.account_id,
+      platform: row.platform as Platform,
+      platform_post_id: row.platform_post_id,
+      author: row.author,
+      author_avatar: row.author_avatar,
+      content: row.content,
+      content_html: row.content_html,
+      url: row.url,
+      media_urls: mediaUrls,
+      engagement: {
+        likes: row.engagement_likes,
+        comments: row.engagement_comments,
+        shares: row.engagement_shares,
+        views: row.engagement_views,
+      },
+      created_at: row.created_at,
+      collected_at: row.collected_at,
+      account_username: row.account_username,
+      account_display_name: row.account_display_name,
+      categories: parseCategories(row),
+    };
+  });
 }
 
 function parseCategories(row: any): SocialCategory[] {
@@ -243,6 +287,25 @@ export async function getPostById(postId: string): Promise<TimelinePost | null> 
   if (rows.length === 0) return null;
 
   const row = rows[0];
+
+  // Safely parse media_urls JSON with validation
+  let mediaUrls: string[] | undefined;
+  if (row.media_urls != null) {
+    try {
+      const parsed = typeof row.media_urls === "string"
+        ? JSON.parse(row.media_urls)
+        : row.media_urls;
+      if (Array.isArray(parsed)) {
+        mediaUrls = parsed.filter((u) => typeof u === "string");
+      } else {
+        mediaUrls = undefined;
+      }
+    } catch {
+      // Invalid JSON, skip media URLs rather than crash
+      mediaUrls = undefined;
+    }
+  }
+
   return {
     id: row.id,
     account_id: row.account_id,
@@ -253,7 +316,7 @@ export async function getPostById(postId: string): Promise<TimelinePost | null> 
     content: row.content,
     content_html: row.content_html,
     url: row.url,
-    media_urls: row.media_urls ? JSON.parse(row.media_urls) : undefined,
+    media_urls: mediaUrls,
     engagement: {
       likes: row.engagement_likes,
       comments: row.engagement_comments,

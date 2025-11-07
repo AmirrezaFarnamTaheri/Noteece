@@ -41,11 +41,16 @@ pub fn get_accounts_needing_sync(
 
     let now = Utc::now().timestamp_millis();
 
+    // Exclude accounts with in-progress syncs to prevent concurrent syncs
     let mut stmt = conn.prepare(
-        "SELECT id, platform, username, last_sync, sync_frequency_minutes
-         FROM social_account
-         WHERE space_id = ?1 AND enabled = 1
-         ORDER BY (last_sync IS NOT NULL), last_sync ASC",
+        "SELECT sa.id, sa.platform, sa.username, sa.last_sync, sa.sync_frequency_minutes
+         FROM social_account sa
+         WHERE sa.space_id = ?1 AND sa.enabled = 1
+           AND NOT EXISTS (
+               SELECT 1 FROM social_sync_history ssh
+               WHERE ssh.account_id = sa.id AND ssh.status = 'in_progress'
+           )
+         ORDER BY (sa.last_sync IS NOT NULL), sa.last_sync ASC",
     )?;
 
     let tasks = stmt
@@ -137,6 +142,22 @@ pub fn get_all_sync_tasks(conn: &Connection, space_id: &str) -> Result<Vec<SyncT
 /// Record sync start
 pub fn start_sync(conn: &Connection, account_id: &str) -> Result<(), SocialError> {
     log::debug!("[Social::Sync] Starting sync for account {}", account_id);
+
+    // Check if there's already an in-progress sync for this account
+    let in_progress_count: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM social_sync_history
+         WHERE account_id = ?1 AND status = 'in_progress'",
+        [account_id],
+        |row| row.get(0),
+    )?;
+
+    if in_progress_count > 0 {
+        log::warn!(
+            "[Social::Sync] Sync already in progress for account {}",
+            account_id
+        );
+        return Err(SocialError::SyncInProgress(account_id.to_string()));
+    }
 
     let now = Utc::now().timestamp_millis();
 
