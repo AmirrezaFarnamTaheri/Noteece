@@ -88,11 +88,11 @@ export async function storeSocialPosts(
  */
 export async function getUnifiedTimeline(
   spaceId: string,
-  filters?: TimelineFilters
+  filters: TimelineFilters = {}
 ): Promise<TimelinePost[]> {
   return await invoke('get_unified_timeline_cmd', {
     spaceId,
-    filters: filters || {},
+    filters,
   });
 }
 
