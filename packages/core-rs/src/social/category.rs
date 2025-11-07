@@ -32,6 +32,12 @@ pub fn create_category(
     icon: Option<&str>,
     filters: Option<CategoryFilters>,
 ) -> Result<SocialCategory, SocialError> {
+    log::debug!(
+        "[Social::Category] Creating category '{}' in space {}",
+        name,
+        space_id
+    );
+
     let id = Ulid::new().to_string();
     let now = Utc::now().timestamp_millis();
     let filters_json = filters
@@ -44,7 +50,17 @@ pub fn create_category(
             id, space_id, name, color, icon, filters_json, created_at
         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
         params![&id, space_id, name, color, icon, filters_json, now],
-    )?;
+    )
+    .map_err(|e| {
+        log::error!("[Social::Category] Failed to create category: {}", e);
+        e
+    })?;
+
+    log::info!(
+        "[Social::Category] Successfully created category {} ({})",
+        id,
+        name
+    );
 
     Ok(SocialCategory {
         id: id.clone(),
@@ -62,12 +78,22 @@ pub fn get_categories(
     conn: &Connection,
     space_id: &str,
 ) -> Result<Vec<SocialCategory>, SocialError> {
-    let mut stmt = conn.prepare(
-        "SELECT id, space_id, name, color, icon, filters_json, created_at
+    log::debug!(
+        "[Social::Category] Fetching categories for space {}",
+        space_id
+    );
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, space_id, name, color, icon, filters_json, created_at
          FROM social_category
          WHERE space_id = ?1
          ORDER BY name",
-    )?;
+        )
+        .map_err(|e| {
+            log::error!("[Social::Category] Failed to prepare query: {}", e);
+            e
+        })?;
 
     let categories = stmt.query_map([space_id], |row| {
         let filters_json: Option<String> = row.get(5)?;
@@ -88,6 +114,12 @@ pub fn get_categories(
     for category in categories {
         result.push(category?);
     }
+
+    log::info!(
+        "[Social::Category] Retrieved {} categories for space {}",
+        result.len(),
+        space_id
+    );
 
     Ok(result)
 }
@@ -133,33 +165,63 @@ pub fn update_category(
     color: Option<&str>,
     icon: Option<&str>,
 ) -> Result<(), SocialError> {
+    log::debug!("[Social::Category] Updating category {}", category_id);
+
     if let Some(name) = name {
         conn.execute(
             "UPDATE social_category SET name = ?1 WHERE id = ?2",
             params![name, category_id],
-        )?;
+        )
+        .map_err(|e| {
+            log::error!("[Social::Category] Failed to update name: {}", e);
+            e
+        })?;
     }
 
     if let Some(color) = color {
         conn.execute(
             "UPDATE social_category SET color = ?1 WHERE id = ?2",
             params![color, category_id],
-        )?;
+        )
+        .map_err(|e| {
+            log::error!("[Social::Category] Failed to update color: {}", e);
+            e
+        })?;
     }
 
     if let Some(icon) = icon {
         conn.execute(
             "UPDATE social_category SET icon = ?1 WHERE id = ?2",
             params![icon, category_id],
-        )?;
+        )
+        .map_err(|e| {
+            log::error!("[Social::Category] Failed to update icon: {}", e);
+            e
+        })?;
     }
+
+    log::info!(
+        "[Social::Category] Successfully updated category {}",
+        category_id
+    );
 
     Ok(())
 }
 
 /// Delete a category
 pub fn delete_category(conn: &Connection, category_id: &str) -> Result<(), SocialError> {
-    conn.execute("DELETE FROM social_category WHERE id = ?1", [category_id])?;
+    log::warn!("[Social::Category] Deleting category {}", category_id);
+
+    conn.execute("DELETE FROM social_category WHERE id = ?1", [category_id])
+        .map_err(|e| {
+            log::error!("[Social::Category] Failed to delete category: {}", e);
+            e
+        })?;
+
+    log::info!(
+        "[Social::Category] Successfully deleted category {}",
+        category_id
+    );
     Ok(())
 }
 
@@ -170,6 +232,13 @@ pub fn assign_category(
     category_id: &str,
     assigned_by: &str, // 'user', 'auto', or 'ai'
 ) -> Result<(), SocialError> {
+    log::debug!(
+        "[Social::Category] Assigning category {} to post {} (by: {})",
+        category_id,
+        post_id,
+        assigned_by
+    );
+
     let now = Utc::now().timestamp_millis();
 
     conn.execute(
@@ -177,7 +246,11 @@ pub fn assign_category(
             post_id, category_id, assigned_at, assigned_by
         ) VALUES (?1, ?2, ?3, ?4)",
         params![post_id, category_id, now, assigned_by],
-    )?;
+    )
+    .map_err(|e| {
+        log::error!("[Social::Category] Failed to assign category: {}", e);
+        e
+    })?;
 
     Ok(())
 }
@@ -234,6 +307,11 @@ pub fn get_post_categories(
 
 /// Auto-categorize posts based on rules
 pub fn auto_categorize_posts(conn: &Connection, space_id: &str) -> Result<usize, SocialError> {
+    log::debug!(
+        "[Social::Category] Starting auto-categorization for space {}",
+        space_id
+    );
+
     let categories = get_categories(conn, space_id)?;
     let mut categorized = 0;
 
@@ -298,6 +376,12 @@ pub fn auto_categorize_posts(conn: &Connection, space_id: &str) -> Result<usize,
             }
         }
     }
+
+    log::info!(
+        "[Social::Category] Auto-categorized {} posts in space {}",
+        categorized,
+        space_id
+    );
 
     Ok(categorized)
 }
