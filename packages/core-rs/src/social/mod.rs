@@ -4,65 +4,63 @@
 // with zero infrastructure costs. All data is stored in an encrypted SQLite vault.
 
 pub mod account;
-pub mod post;
+pub mod analytics;
 pub mod category;
+pub mod focus;
+pub mod intelligence;
+pub mod post;
+pub mod sync;
 pub mod timeline;
 pub mod webview;
-pub mod sync;
-pub mod analytics;
-pub mod intelligence;
-pub mod focus;
 
 // Re-export commonly used types
 pub use account::{
-    SocialAccount, SocialError, add_social_account, get_social_accounts,
-    get_social_account, update_social_account, delete_social_account,
-    get_decrypted_credentials, update_last_sync, get_accounts_needing_sync,
+    add_social_account, delete_social_account, get_accounts_needing_sync,
+    get_decrypted_credentials, get_social_account, get_social_accounts, update_last_sync,
+    update_social_account, SocialAccount, SocialError,
 };
 
 pub use post::{
-    SocialPost, Engagement, store_social_posts, get_social_posts,
-    search_social_posts, delete_old_posts, get_post_statistics,
+    delete_old_posts, get_post_statistics, get_social_posts, search_social_posts,
+    store_social_posts, Engagement, SocialPost,
 };
 
 pub use category::{
-    SocialCategory, CategoryFilters, create_category, get_categories,
-    get_category, update_category, delete_category, assign_category,
-    remove_category, get_post_categories, auto_categorize_posts,
+    assign_category, auto_categorize_posts, create_category, delete_category, get_categories,
+    get_category, get_post_categories, remove_category, update_category, CategoryFilters,
+    SocialCategory,
 };
 
 pub use timeline::{
-    TimelinePost, TimelineFilters, TimelineStats, get_unified_timeline,
-    get_category_timeline, get_platform_timeline, get_timeline_stats,
+    get_category_timeline, get_platform_timeline, get_timeline_stats, get_unified_timeline,
+    TimelineFilters, TimelinePost, TimelineStats,
 };
 
 pub use webview::{
-    WebViewSession, create_webview_session, get_webview_session,
-    save_session_cookies, save_session_data, get_session_cookies,
-    get_session_data, update_session_last_used, delete_webview_session,
-    delete_account_sessions, get_platform_url, get_platform_display_name,
+    create_webview_session, delete_account_sessions, delete_webview_session,
+    get_platform_display_name, get_platform_url, get_session_cookies, get_session_data,
+    get_webview_session, save_session_cookies, save_session_data, update_session_last_used,
+    WebViewSession,
 };
 
 pub use sync::{
-    SyncTask, SyncStatus, SyncStats, get_accounts_needing_sync,
-    get_all_sync_tasks, start_sync, complete_sync, fail_sync,
-    get_sync_history, get_sync_stats,
+    complete_sync, fail_sync, get_accounts_needing_sync, get_all_sync_tasks, get_sync_history,
+    get_sync_stats, start_sync, SyncStats, SyncStatus, SyncTask,
 };
 
 pub use analytics::{
-    AnalyticsOverview, PlatformStats, TimeSeriesPoint, CategoryStats,
-    EngagementStats, TopPost, get_analytics_overview,
+    get_analytics_overview, AnalyticsOverview, CategoryStats, EngagementStats, PlatformStats,
+    TimeSeriesPoint, TopPost,
 };
 
 pub use intelligence::{
-    ContentInsight, Sentiment, AutoCategorizationRule, RuleType,
-    analyze_post_content, auto_categorize_posts, create_auto_rule,
+    analyze_post_content, auto_categorize_posts, create_auto_rule, AutoCategorizationRule,
+    ContentInsight, RuleType, Sentiment,
 };
 
 pub use focus::{
-    FocusMode, TimeLimit, AutomationRule, TriggerType, ActionType,
-    create_focus_mode, get_focus_modes, activate_focus_mode,
-    deactivate_all_focus_modes, is_platform_blocked, create_preset_focus_modes,
-    create_automation_rule, get_automation_rules, delete_focus_mode,
-    toggle_automation_rule,
+    activate_focus_mode, create_automation_rule, create_focus_mode, create_preset_focus_modes,
+    deactivate_all_focus_modes, delete_focus_mode, get_automation_rules, get_focus_modes,
+    is_platform_blocked, toggle_automation_rule, ActionType, AutomationRule, FocusMode, TimeLimit,
+    TriggerType,
 };

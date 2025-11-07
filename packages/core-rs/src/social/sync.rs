@@ -3,7 +3,6 @@
  *
  * Manages background synchronization of social media accounts
  */
-
 use chrono::Utc;
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
@@ -76,10 +75,7 @@ pub fn get_accounts_needing_sync(
 }
 
 /// Get all accounts for a space regardless of sync status
-pub fn get_all_sync_tasks(
-    conn: &Connection,
-    space_id: &str,
-) -> Result<Vec<SyncTask>, SocialError> {
+pub fn get_all_sync_tasks(conn: &Connection, space_id: &str) -> Result<Vec<SyncTask>, SocialError> {
     let mut stmt = conn.prepare(
         "SELECT id, platform, username, last_sync, sync_frequency_minutes
          FROM social_account
@@ -117,21 +113,14 @@ pub fn get_all_sync_tasks(
 }
 
 /// Record sync start
-pub fn start_sync(
-    conn: &Connection,
-    account_id: &str,
-) -> Result<(), SocialError> {
+pub fn start_sync(conn: &Connection, account_id: &str) -> Result<(), SocialError> {
     let now = Utc::now().timestamp_millis();
 
     conn.execute(
         "INSERT INTO social_sync_history (
             id, account_id, sync_time, posts_synced, sync_duration_ms, status
         ) VALUES (?1, ?2, ?3, 0, 0, 'in_progress')",
-        params![
-            ulid::Ulid::new().to_string(),
-            account_id,
-            now,
-        ],
+        params![ulid::Ulid::new().to_string(), account_id, now,],
     )?;
 
     Ok(())
@@ -245,10 +234,7 @@ pub struct SyncStats {
     pub last_sync_time: Option<i64>,
 }
 
-pub fn get_sync_stats(
-    conn: &Connection,
-    space_id: &str,
-) -> Result<SyncStats, SocialError> {
+pub fn get_sync_stats(conn: &Connection, space_id: &str) -> Result<SyncStats, SocialError> {
     let now = Utc::now().timestamp_millis();
     let today_start = now - (now % 86400000); // Start of current day (milliseconds in a day)
 

@@ -4,14 +4,14 @@ use serde::{Deserialize, Serialize};
 use ulid::Ulid;
 
 use super::account::SocialError;
-use crate::crypto::{encrypt_string, decrypt_string};
+use crate::crypto::{decrypt_string, encrypt_string};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WebViewSession {
     pub id: String,
     pub account_id: String,
     pub platform: String,
-    pub cookies: Option<String>, // Encrypted
+    pub cookies: Option<String>,      // Encrypted
     pub session_data: Option<String>, // Encrypted
     pub created_at: i64,
     pub last_used: i64,
@@ -119,13 +119,10 @@ pub fn get_session_cookies(
     session_id: &str,
     dek: &[u8],
 ) -> Result<Option<String>, SocialError> {
-    let mut stmt = conn.prepare(
-        "SELECT cookies FROM social_webview_session WHERE id = ?1",
-    )?;
+    let mut stmt = conn.prepare("SELECT cookies FROM social_webview_session WHERE id = ?1")?;
 
-    let result: Result<Option<String>, rusqlite::Error> = stmt.query_row([session_id], |row| {
-        row.get(0)
-    });
+    let result: Result<Option<String>, rusqlite::Error> =
+        stmt.query_row([session_id], |row| row.get(0));
 
     match result {
         Ok(Some(encrypted)) => {
@@ -144,13 +141,10 @@ pub fn get_session_data(
     session_id: &str,
     dek: &[u8],
 ) -> Result<Option<String>, SocialError> {
-    let mut stmt = conn.prepare(
-        "SELECT session_data FROM social_webview_session WHERE id = ?1",
-    )?;
+    let mut stmt = conn.prepare("SELECT session_data FROM social_webview_session WHERE id = ?1")?;
 
-    let result: Result<Option<String>, rusqlite::Error> = stmt.query_row([session_id], |row| {
-        row.get(0)
-    });
+    let result: Result<Option<String>, rusqlite::Error> =
+        stmt.query_row([session_id], |row| row.get(0));
 
     match result {
         Ok(Some(encrypted)) => {
@@ -164,10 +158,7 @@ pub fn get_session_data(
 }
 
 /// Update last used timestamp for a session
-pub fn update_session_last_used(
-    conn: &Connection,
-    session_id: &str,
-) -> Result<(), SocialError> {
+pub fn update_session_last_used(conn: &Connection, session_id: &str) -> Result<(), SocialError> {
     let now = Utc::now().timestamp_millis();
     conn.execute(
         "UPDATE social_webview_session SET last_used = ?1 WHERE id = ?2",
@@ -177,10 +168,7 @@ pub fn update_session_last_used(
 }
 
 /// Delete a WebView session
-pub fn delete_webview_session(
-    conn: &Connection,
-    session_id: &str,
-) -> Result<(), SocialError> {
+pub fn delete_webview_session(conn: &Connection, session_id: &str) -> Result<(), SocialError> {
     conn.execute(
         "DELETE FROM social_webview_session WHERE id = ?1",
         [session_id],
@@ -189,10 +177,7 @@ pub fn delete_webview_session(
 }
 
 /// Delete all sessions for an account
-pub fn delete_account_sessions(
-    conn: &Connection,
-    account_id: &str,
-) -> Result<(), SocialError> {
+pub fn delete_account_sessions(conn: &Connection, account_id: &str) -> Result<(), SocialError> {
     conn.execute(
         "DELETE FROM social_webview_session WHERE account_id = ?1",
         [account_id],

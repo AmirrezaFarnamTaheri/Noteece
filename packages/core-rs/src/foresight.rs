@@ -217,20 +217,29 @@ pub fn generate_insights(
 
 /// Generate the daily brief (Foresight 3.0 "Ambient OS")
 /// This synthesizes all modules into a single morning overview
-pub fn generate_daily_brief(
-    conn: &Connection,
-    space_id: Ulid,
-) -> Result<Insight, ForesightError> {
+pub fn generate_daily_brief(conn: &Connection, space_id: Ulid) -> Result<Insight, ForesightError> {
     let now = Utc::now();
-    let today_start = now.date_naive().and_hms_opt(0, 0, 0).unwrap().and_utc().timestamp();
-    let today_end = now.date_naive().and_hms_opt(23, 59, 59).unwrap().and_utc().timestamp();
+    let today_start = now
+        .date_naive()
+        .and_hms_opt(0, 0, 0)
+        .unwrap()
+        .and_utc()
+        .timestamp();
+    let today_end = now
+        .date_naive()
+        .and_hms_opt(23, 59, 59)
+        .unwrap()
+        .and_utc()
+        .timestamp();
 
     // Gather data from all modules
     let mut brief_items = Vec::new();
     let mut suggested_actions = Vec::new();
 
     // 1. Calendar events (CalDAV)
-    if let Ok(upcoming_events) = fetch_upcoming_calendar_events(conn, space_id, today_start, today_end) {
+    if let Ok(upcoming_events) =
+        fetch_upcoming_calendar_events(conn, space_id, today_start, today_end)
+    {
         if !upcoming_events.is_empty() {
             let next_event = &upcoming_events[0];
             let time_until = next_event.0 - now.timestamp();
@@ -238,8 +247,7 @@ pub fn generate_daily_brief(
 
             brief_items.push(format!(
                 "📅 Next meeting: **{}** in {} minutes",
-                next_event.1,
-                minutes_until
+                next_event.1, minutes_until
             ));
         }
     }
@@ -248,15 +256,13 @@ pub fn generate_daily_brief(
     if let Ok(tasks) = fetch_tasks_due_today(conn, space_id, today_end) {
         if !tasks.is_empty() {
             let top_task = &tasks[0];
-            brief_items.push(format!(
-                "✅ Top priority: **{}**",
-                top_task.1
-            ));
+            brief_items.push(format!("✅ Top priority: **{}**", top_task.1));
 
             suggested_actions.push(SuggestedAction {
                 action_type: "start_timer".to_string(),
                 label: format!("Start 25-min timer on '{}'", top_task.1),
-                description: "Begin a focused work session on your highest priority task".to_string(),
+                description: "Begin a focused work session on your highest priority task"
+                    .to_string(),
                 parameters: serde_json::json!({
                     "task_id": top_task.0,
                     "duration_minutes": 25
@@ -268,10 +274,7 @@ pub fn generate_daily_brief(
     // 3. Time tracking from yesterday
     if let Ok(yesterday_hours) = fetch_yesterday_work_hours(conn, space_id) {
         if yesterday_hours > 0.0 {
-            brief_items.push(format!(
-                "⏱️ Yesterday: {:.1} hours logged",
-                yesterday_hours
-            ));
+            brief_items.push(format!("⏱️ Yesterday: {:.1} hours logged", yesterday_hours));
         }
     }
 
@@ -281,7 +284,11 @@ pub fn generate_daily_brief(
             if insight.insight_type == InsightType::MoodCorrelation {
                 brief_items.push(format!(
                     "💭 Insight: {}",
-                    insight.description.split('.').next().unwrap_or(&insight.description)
+                    insight
+                        .description
+                        .split('.')
+                        .next()
+                        .unwrap_or(&insight.description)
                 ));
             }
         }
@@ -299,7 +306,11 @@ pub fn generate_daily_brief(
     let description = if brief_items.is_empty() {
         format!("{}. No urgent items today.", greeting)
     } else {
-        format!("{}. Here's your day at a glance:\n\n{}", greeting, brief_items.join("\n\n"))
+        format!(
+            "{}. Here's your day at a glance:\n\n{}",
+            greeting,
+            brief_items.join("\n\n")
+        )
     };
 
     Ok(Insight {
@@ -333,12 +344,10 @@ fn fetch_upcoming_calendar_events(
     let mut stmt = conn.prepare(
         "SELECT start_time, summary FROM caldav_event_cache
          WHERE start_time BETWEEN ?1 AND ?2
-         ORDER BY start_time ASC LIMIT 3"
+         ORDER BY start_time ASC LIMIT 3",
     )?;
 
-    let events = stmt.query_map(params![start, end], |row| {
-        Ok((row.get(0)?, row.get(1)?))
-    })?;
+    let events = stmt.query_map(params![start, end], |row| Ok((row.get(0)?, row.get(1)?)))?;
 
     let mut result = Vec::new();
     for event in events {
@@ -360,7 +369,7 @@ fn fetch_tasks_due_today(
          WHERE space_id = ?1 AND status != 'completed'
          AND due_date IS NOT NULL AND due_date <= ?2
          ORDER BY priority DESC, due_date ASC
-         LIMIT 5"
+         LIMIT 5",
     )?;
 
     let tasks = stmt.query_map(params![space_id.to_string(), today_end], |row| {
@@ -377,24 +386,29 @@ fn fetch_tasks_due_today(
     Ok(result)
 }
 
-fn fetch_yesterday_work_hours(
-    conn: &Connection,
-    space_id: Ulid,
-) -> Result<f64, ForesightError> {
+fn fetch_yesterday_work_hours(conn: &Connection, space_id: Ulid) -> Result<f64, ForesightError> {
     let now = Utc::now();
-    let yesterday_start = (now - Duration::days(1)).date_naive()
-        .and_hms_opt(0, 0, 0).unwrap().and_utc().timestamp();
-    let yesterday_end = (now - Duration::days(1)).date_naive()
-        .and_hms_opt(23, 59, 59).unwrap().and_utc().timestamp();
+    let yesterday_start = (now - Duration::days(1))
+        .date_naive()
+        .and_hms_opt(0, 0, 0)
+        .unwrap()
+        .and_utc()
+        .timestamp();
+    let yesterday_end = (now - Duration::days(1))
+        .date_naive()
+        .and_hms_opt(23, 59, 59)
+        .unwrap()
+        .and_utc()
+        .timestamp();
 
     let mut stmt = conn.prepare(
         "SELECT COALESCE(SUM(duration_seconds), 0) FROM time_entry
-         WHERE space_id = ?1 AND started_at BETWEEN ?2 AND ?3"
+         WHERE space_id = ?1 AND started_at BETWEEN ?2 AND ?3",
     )?;
 
     let total_seconds: i64 = stmt.query_row(
         params![space_id.to_string(), yesterday_start, yesterday_end],
-        |row| row.get(0)
+        |row| row.get(0),
     )?;
 
     Ok(total_seconds as f64 / 3600.0)

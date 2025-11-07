@@ -48,12 +48,27 @@ pub fn add_social_account(
 ) -> Result<SocialAccount, SocialError> {
     use crate::crypto::encrypt_string;
 
+    log::debug!(
+        "[Social::Account] Adding account - space_id={}, platform={}, username={}",
+        space_id,
+        platform,
+        username
+    );
+
     let id = Ulid::new().to_string();
     let now = Utc::now().timestamp_millis();
 
     // Encrypt credentials (OAuth tokens, cookies, etc.)
-    let encrypted_creds = encrypt_string(credentials, dek)?;
+    log::debug!(
+        "[Social::Account] Encrypting credentials for account {}",
+        id
+    );
+    let encrypted_creds = encrypt_string(credentials, dek).map_err(|e| {
+        log::error!("[Social::Account] Failed to encrypt credentials: {}", e);
+        e
+    })?;
 
+    log::debug!("[Social::Account] Inserting account {} into database", id);
     conn.execute(
         "INSERT INTO social_account (
             id, space_id, platform, username, display_name,
@@ -69,7 +84,18 @@ pub fn add_social_account(
             &encrypted_creds,
             now
         ],
-    )?;
+    )
+    .map_err(|e| {
+        log::error!("[Social::Account] Database insert failed: {}", e);
+        e
+    })?;
+
+    log::info!(
+        "[Social::Account] Successfully added account {} - platform={}, username={}",
+        id,
+        platform,
+        username
+    );
 
     Ok(SocialAccount {
         id: id.clone(),
@@ -90,14 +116,24 @@ pub fn get_social_accounts(
     conn: &Connection,
     space_id: &str,
 ) -> Result<Vec<SocialAccount>, SocialError> {
-    let mut stmt = conn.prepare(
-        "SELECT id, space_id, platform, username, display_name,
+    log::debug!(
+        "[Social::Account] Fetching all accounts for space_id={}",
+        space_id
+    );
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, space_id, platform, username, display_name,
                 encrypted_credentials, enabled, last_sync,
                 sync_frequency_minutes, created_at
          FROM social_account
          WHERE space_id = ?1
          ORDER BY platform, username",
-    )?;
+        )
+        .map_err(|e| {
+            log::error!("[Social::Account] Failed to prepare query: {}", e);
+            e
+        })?;
 
     let accounts = stmt.query_map([space_id], |row| {
         Ok(SocialAccount {
@@ -118,6 +154,12 @@ pub fn get_social_accounts(
     for account in accounts {
         result.push(account?);
     }
+
+    log::info!(
+        "[Social::Account] Retrieved {} accounts for space {}",
+        result.len(),
+        space_id
+    );
 
     Ok(result)
 }
@@ -165,33 +207,86 @@ pub fn update_social_account(
     sync_frequency_minutes: Option<i32>,
     display_name: Option<&str>,
 ) -> Result<(), SocialError> {
+    log::debug!(
+        "[Social::Account] Updating account {} - enabled={:?}, sync_freq={:?}, display_name={:?}",
+        account_id,
+        enabled,
+        sync_frequency_minutes,
+        display_name
+    );
+
     if let Some(enabled) = enabled {
+        log::debug!(
+            "[Social::Account] Setting enabled={} for account {}",
+            enabled,
+            account_id
+        );
         conn.execute(
             "UPDATE social_account SET enabled = ?1 WHERE id = ?2",
             params![if enabled { 1 } else { 0 }, account_id],
-        )?;
+        )
+        .map_err(|e| {
+            log::error!("[Social::Account] Failed to update enabled status: {}", e);
+            e
+        })?;
     }
 
     if let Some(frequency) = sync_frequency_minutes {
+        log::debug!(
+            "[Social::Account] Setting sync_frequency={} for account {}",
+            frequency,
+            account_id
+        );
         conn.execute(
             "UPDATE social_account SET sync_frequency_minutes = ?1 WHERE id = ?2",
             params![frequency, account_id],
-        )?;
+        )
+        .map_err(|e| {
+            log::error!("[Social::Account] Failed to update sync frequency: {}", e);
+            e
+        })?;
     }
 
     if let Some(name) = display_name {
+        log::debug!(
+            "[Social::Account] Setting display_name for account {}",
+            account_id
+        );
         conn.execute(
             "UPDATE social_account SET display_name = ?1 WHERE id = ?2",
             params![name, account_id],
-        )?;
+        )
+        .map_err(|e| {
+            log::error!("[Social::Account] Failed to update display name: {}", e);
+            e
+        })?;
     }
+
+    log::info!(
+        "[Social::Account] Successfully updated account {}",
+        account_id
+    );
 
     Ok(())
 }
 
 /// Delete a social account and all associated data (cascades to posts, sessions)
 pub fn delete_social_account(conn: &Connection, account_id: &str) -> Result<(), SocialError> {
-    conn.execute("DELETE FROM social_account WHERE id = ?1", [account_id])?;
+    log::warn!(
+        "[Social::Account] Deleting account {} and all associated data",
+        account_id
+    );
+
+    conn.execute("DELETE FROM social_account WHERE id = ?1", [account_id])
+        .map_err(|e| {
+            log::error!("[Social::Account] Failed to delete account: {}", e);
+            e
+        })?;
+
+    log::info!(
+        "[Social::Account] Successfully deleted account {}",
+        account_id
+    );
     Ok(())
 }
 
@@ -206,23 +301,58 @@ pub fn get_decrypted_credentials(
 ) -> Result<String, SocialError> {
     use crate::crypto::decrypt_string;
 
-    let account = get_social_account(conn, account_id)?
-        .ok_or(SocialError::AccountNotFound)?;
+    log::debug!(
+        "[Social::Account] Decrypting credentials for account {}",
+        account_id
+    );
 
-    let credentials = decrypt_string(&account.encrypted_credentials, dek)?;
+    let account = get_social_account(conn, account_id)?.ok_or_else(|| {
+        log::error!(
+            "[Social::Account] Account {} not found for credential decryption",
+            account_id
+        );
+        SocialError::AccountNotFound
+    })?;
+
+    let credentials = decrypt_string(&account.encrypted_credentials, dek).map_err(|e| {
+        log::error!(
+            "[Social::Account] Failed to decrypt credentials for account {}: {}",
+            account_id,
+            e
+        );
+        e
+    })?;
+
+    log::debug!(
+        "[Social::Account] Successfully decrypted credentials for account {}",
+        account_id
+    );
     Ok(credentials)
 }
 
 /// Update last sync timestamp
-pub fn update_last_sync(
-    conn: &Connection,
-    account_id: &str,
-) -> Result<(), SocialError> {
+pub fn update_last_sync(conn: &Connection, account_id: &str) -> Result<(), SocialError> {
     let now = Utc::now().timestamp_millis();
+
+    log::debug!(
+        "[Social::Account] Updating last_sync for account {} to {}",
+        account_id,
+        now
+    );
+
     conn.execute(
         "UPDATE social_account SET last_sync = ?1 WHERE id = ?2",
         params![now, account_id],
-    )?;
+    )
+    .map_err(|e| {
+        log::error!("[Social::Account] Failed to update last_sync: {}", e);
+        e
+    })?;
+
+    log::debug!(
+        "[Social::Account] Successfully updated last_sync for account {}",
+        account_id
+    );
     Ok(())
 }
 
@@ -231,10 +361,16 @@ pub fn get_accounts_needing_sync(
     conn: &Connection,
     space_id: &str,
 ) -> Result<Vec<SocialAccount>, SocialError> {
+    log::debug!(
+        "[Social::Account] Checking for accounts needing sync in space {}",
+        space_id
+    );
+
     let now = Utc::now().timestamp_millis();
 
-    let mut stmt = conn.prepare(
-        "SELECT id, space_id, platform, username, display_name,
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, space_id, platform, username, display_name,
                 encrypted_credentials, enabled, last_sync,
                 sync_frequency_minutes, created_at
          FROM social_account
@@ -242,7 +378,11 @@ pub fn get_accounts_needing_sync(
            AND enabled = 1
            AND (last_sync IS NULL
                 OR last_sync < ?2 - (sync_frequency_minutes * 60 * 1000))",
-    )?;
+        )
+        .map_err(|e| {
+            log::error!("[Social::Account] Failed to prepare sync query: {}", e);
+            e
+        })?;
 
     let accounts = stmt.query_map(params![space_id, now], |row| {
         Ok(SocialAccount {
@@ -263,6 +403,12 @@ pub fn get_accounts_needing_sync(
     for account in accounts {
         result.push(account?);
     }
+
+    log::info!(
+        "[Social::Account] Found {} accounts needing sync in space {}",
+        result.len(),
+        space_id
+    );
 
     Ok(result)
 }
@@ -293,7 +439,8 @@ mod tests {
             Some("Test User"),
             "oauth_token_here",
             &dek,
-        ).unwrap();
+        )
+        .unwrap();
 
         assert_eq!(account.platform, "twitter");
         assert_eq!(account.username, "testuser");

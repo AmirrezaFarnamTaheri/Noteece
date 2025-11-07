@@ -1,29 +1,81 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use core_rs::vault::{create_vault, unlock_vault};
-use core_rs::project::{get_project, get_projects_in_space, get_project_milestones, get_project_risks, get_project_updates, create_project_risk, Project, ProjectMilestone, ProjectRisk, ProjectUpdate};
-use core_rs::search::{create_saved_search, get_saved_search, get_saved_searches, update_saved_search, delete_saved_search, execute_saved_search, SavedSearch};
-use core_rs::weekly_review::generate_weekly_review;
-use core_rs::form::{create_form_template, get_form_template, get_form_templates_for_space, update_form_template, delete_form_template, FormTemplate, FormField};
 use core_rs::analytics::{get_analytics_data, AnalyticsData};
-use core_rs::note::{Note, create_note, get_note, get_all_notes_in_space, update_note_content, trash_note, get_or_create_daily_note, get_recent_notes};
+use core_rs::caldav::{
+    add_caldav_account, delete_caldav_account, get_caldav_account, get_caldav_accounts,
+    get_sync_history as get_caldav_sync_history, get_unresolved_conflicts as get_caldav_conflicts,
+    resolve_conflict as resolve_caldav_conflict, sync_caldav_account, update_caldav_account,
+    CalDavAccount, ConflictResolution as CalDavConflictResolution,
+    SyncConflict as CalDavSyncConflict, SyncDirection, SyncResult,
+};
+use core_rs::collaboration::{
+    activate_user, add_user_to_space, check_permission, get_roles, get_space_users,
+    grant_permission, init_rbac_tables, invite_user, remove_user_from_space, revoke_permission,
+    suspend_user, update_user_role, CollaborationError, Role, SpaceUser, UserInvitation,
+};
+use core_rs::foresight::{
+    dismiss_insight, generate_insights, get_active_insights, record_feedback, FeedbackType, Insight,
+};
+use core_rs::form::{
+    create_form_template, delete_form_template, get_form_template, get_form_templates_for_space,
+    update_form_template, FormField, FormTemplate,
+};
+use core_rs::import::{import_from_notion, import_from_obsidian};
+use core_rs::mode::{disable_mode, enable_mode, get_space_modes, Mode};
+use core_rs::note::{
+    create_note, get_all_notes_in_space, get_note, get_or_create_daily_note, get_recent_notes,
+    trash_note, update_note_content, Note,
+};
+use core_rs::ocr::{get_ocr_status, process_ocr_job, queue_ocr, search_ocr_text, OcrResult};
+use core_rs::personal_modes::{
+    add_itinerary_item, add_recipe_ingredient, create_health_goal, create_health_metric,
+    create_recipe, create_transaction, create_trip, get_health_metrics, get_recipes,
+    get_transactions, get_trips, HealthGoal, HealthMetric, Recipe, Transaction, Trip,
+};
+use core_rs::project::{
+    create_project_risk, get_project, get_project_milestones, get_project_risks,
+    get_project_updates, get_projects_in_space, Project, ProjectMilestone, ProjectRisk,
+    ProjectUpdate,
+};
 use core_rs::search::search_notes;
-use core_rs::mode::{get_space_modes, enable_mode, disable_mode, Mode};
-use core_rs::task::{Task, create_task, get_task, get_tasks_by_project, get_all_tasks_in_space, update_task, delete_task, get_upcoming_tasks};
-use core_rs::import::{import_from_obsidian, import_from_notion};
-use core_rs::srs::{get_due_cards, review_card, KnowledgeCard};
+use core_rs::search::{
+    create_saved_search, delete_saved_search, execute_saved_search, get_saved_search,
+    get_saved_searches, update_saved_search, SavedSearch,
+};
+use core_rs::social::{
+    add_social_account, assign_category, auto_categorize_posts, complete_sync, create_category,
+    create_webview_session, delete_social_account, fail_sync,
+    get_accounts_needing_sync as get_social_accounts_needing_sync, get_all_sync_tasks,
+    get_categories, get_platform_display_name, get_platform_url, get_social_account,
+    get_social_accounts, get_sync_history, get_sync_stats, get_timeline_stats,
+    get_unified_timeline, get_webview_session, save_session_cookies, start_sync,
+    store_social_posts, update_social_account, CategoryFilters, SocialAccount, SocialCategory,
+    SocialPost, SyncStats, SyncStatus, SyncTask, TimelineFilters, TimelinePost, TimelineStats,
+    WebViewSession,
+};
 use core_rs::space::{get_all_spaces, Space};
+use core_rs::srs::{get_due_cards, review_card, KnowledgeCard};
+use core_rs::sync_agent::{
+    init_sync_tables, ConflictResolution as SyncConflictResolution, ConflictType, DeviceInfo,
+    DeviceType, SyncAgent, SyncConflict, SyncHistoryEntry,
+};
 use core_rs::tag::{get_all_tags_in_space, Tag};
-use core_rs::time_tracking::{TimeEntry, TimeStats, start_time_entry, stop_time_entry, get_task_time_entries, get_project_time_entries, get_running_entries, get_recent_time_entries, get_task_time_stats, get_project_time_stats, delete_time_entry, create_manual_time_entry};
-use core_rs::ocr::{queue_ocr, get_ocr_status, search_ocr_text, process_ocr_job, OcrResult};
-use core_rs::foresight::{generate_insights, get_active_insights, dismiss_insight, record_feedback, Insight, FeedbackType};
-use core_rs::caldav::{add_caldav_account, get_caldav_accounts, get_caldav_account, update_caldav_account, delete_caldav_account, sync_caldav_account, get_sync_history as get_caldav_sync_history, get_unresolved_conflicts as get_caldav_conflicts, resolve_conflict as resolve_caldav_conflict, CalDavAccount, SyncResult, SyncConflict as CalDavSyncConflict, SyncDirection, ConflictResolution as CalDavConflictResolution};
-use core_rs::personal_modes::{create_health_metric, get_health_metrics, create_health_goal, create_transaction, get_transactions, create_recipe, get_recipes, add_recipe_ingredient, create_trip, get_trips, add_itinerary_item, HealthMetric, HealthGoal, Transaction, Recipe, Trip};
-use core_rs::temporal_graph::{build_current_graph, save_graph_snapshot, get_graph_evolution, create_milestone, detect_major_notes, GraphSnapshot, GraphEvolution, GraphMilestone};
-use core_rs::sync_agent::{init_sync_tables, SyncAgent, DeviceInfo, DeviceType, SyncHistoryEntry, SyncConflict, ConflictType, ConflictResolution as SyncConflictResolution};
-use core_rs::collaboration::{init_rbac_tables, get_space_users, check_permission, invite_user, update_user_role, grant_permission, revoke_permission, suspend_user, activate_user, get_roles, add_user_to_space, remove_user_from_space, SpaceUser, Role, UserInvitation, CollaborationError};
-use core_rs::social::{add_social_account, get_social_accounts, get_social_account, update_social_account, delete_social_account, store_social_posts, get_unified_timeline, create_category, get_categories, assign_category, get_timeline_stats, create_webview_session, get_webview_session, save_session_cookies, get_platform_url, get_platform_display_name, get_accounts_needing_sync as get_social_accounts_needing_sync, get_all_sync_tasks, start_sync, complete_sync, fail_sync, get_sync_history, get_sync_stats, auto_categorize_posts, SocialAccount, SocialPost, TimelinePost, TimelineFilters, CategoryFilters, SocialCategory, TimelineStats, WebViewSession, SyncTask, SyncStatus, SyncStats};
+use core_rs::task::{
+    create_task, delete_task, get_all_tasks_in_space, get_task, get_tasks_by_project,
+    get_upcoming_tasks, update_task, Task,
+};
+use core_rs::temporal_graph::{
+    build_current_graph, create_milestone, detect_major_notes, get_graph_evolution,
+    save_graph_snapshot, GraphEvolution, GraphMilestone, GraphSnapshot,
+};
+use core_rs::time_tracking::{
+    create_manual_time_entry, delete_time_entry, get_project_time_entries, get_project_time_stats,
+    get_recent_time_entries, get_running_entries, get_task_time_entries, get_task_time_stats,
+    start_time_entry, stop_time_entry, TimeEntry, TimeStats,
+};
+use core_rs::vault::{create_vault, unlock_vault};
+use core_rs::weekly_review::generate_weekly_review;
 use rusqlite::Connection;
 use std::sync::Mutex;
 use tauri::State;
@@ -85,10 +137,17 @@ fn get_project_cmd(id: &str, db: State<DbConnection>) -> Result<Option<Project>,
 }
 
 #[tauri::command]
-fn create_project_risk_cmd(project_id: &str, description: &str, likelihood: &str, impact: &str, db: State<DbConnection>) -> Result<ProjectRisk, String> {
+fn create_project_risk_cmd(
+    project_id: &str,
+    description: &str,
+    likelihood: &str,
+    impact: &str,
+    db: State<DbConnection>,
+) -> Result<ProjectRisk, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
-        create_project_risk(conn, project_id, description, impact, likelihood, "", None).map_err(|e| e.to_string())
+        create_project_risk(conn, project_id, description, impact, likelihood, "", None)
+            .map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
@@ -105,7 +164,10 @@ fn get_all_projects_cmd(space_id: &str, db: State<DbConnection>) -> Result<Vec<P
 }
 
 #[tauri::command]
-fn get_all_tasks_in_space_cmd(space_id: &str, db: State<DbConnection>) -> Result<Vec<Task>, String> {
+fn get_all_tasks_in_space_cmd(
+    space_id: &str,
+    db: State<DbConnection>,
+) -> Result<Vec<Task>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
@@ -116,7 +178,10 @@ fn get_all_tasks_in_space_cmd(space_id: &str, db: State<DbConnection>) -> Result
 }
 
 #[tauri::command]
-fn get_all_notes_in_space_cmd(space_id: &str, db: State<DbConnection>) -> Result<Vec<Note>, String> {
+fn get_all_notes_in_space_cmd(
+    space_id: &str,
+    db: State<DbConnection>,
+) -> Result<Vec<Note>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
@@ -127,7 +192,10 @@ fn get_all_notes_in_space_cmd(space_id: &str, db: State<DbConnection>) -> Result
 }
 
 #[tauri::command]
-fn get_project_milestones_cmd(project_id: &str, db: State<DbConnection>) -> Result<Vec<ProjectMilestone>, String> {
+fn get_project_milestones_cmd(
+    project_id: &str,
+    db: State<DbConnection>,
+) -> Result<Vec<ProjectMilestone>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         get_project_milestones(conn, project_id).map_err(|e| e.to_string())
@@ -137,7 +205,10 @@ fn get_project_milestones_cmd(project_id: &str, db: State<DbConnection>) -> Resu
 }
 
 #[tauri::command]
-fn get_project_risks_cmd(project_id: &str, db: State<DbConnection>) -> Result<Vec<ProjectRisk>, String> {
+fn get_project_risks_cmd(
+    project_id: &str,
+    db: State<DbConnection>,
+) -> Result<Vec<ProjectRisk>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         get_project_risks(conn, project_id).map_err(|e| e.to_string())
@@ -147,7 +218,10 @@ fn get_project_risks_cmd(project_id: &str, db: State<DbConnection>) -> Result<Ve
 }
 
 #[tauri::command]
-fn get_project_updates_cmd(project_id: &str, db: State<DbConnection>) -> Result<Vec<ProjectUpdate>, String> {
+fn get_project_updates_cmd(
+    project_id: &str,
+    db: State<DbConnection>,
+) -> Result<Vec<ProjectUpdate>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         get_project_updates(conn, project_id).map_err(|e| e.to_string())
@@ -157,7 +231,13 @@ fn get_project_updates_cmd(project_id: &str, db: State<DbConnection>) -> Result<
 }
 
 #[tauri::command]
-fn create_saved_search_cmd(space_id: &str, title: &str, query_string: &str, scope: &str, db: State<DbConnection>) -> Result<SavedSearch, String> {
+fn create_saved_search_cmd(
+    space_id: &str,
+    title: &str,
+    query_string: &str,
+    scope: &str,
+    db: State<DbConnection>,
+) -> Result<SavedSearch, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         create_saved_search(conn, space_id, title, query_string, scope).map_err(|e| e.to_string())
@@ -177,7 +257,10 @@ fn get_saved_search_cmd(id: &str, db: State<DbConnection>) -> Result<Option<Save
 }
 
 #[tauri::command]
-fn get_saved_searches_cmd(space_id: &str, db: State<DbConnection>) -> Result<Vec<SavedSearch>, String> {
+fn get_saved_searches_cmd(
+    space_id: &str,
+    db: State<DbConnection>,
+) -> Result<Vec<SavedSearch>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         get_saved_searches(conn, space_id).map_err(|e| e.to_string())
@@ -187,7 +270,13 @@ fn get_saved_searches_cmd(space_id: &str, db: State<DbConnection>) -> Result<Vec
 }
 
 #[tauri::command]
-fn update_saved_search_cmd(id: &str, title: &str, query_string: &str, scope: &str, db: State<DbConnection>) -> Result<(), String> {
+fn update_saved_search_cmd(
+    id: &str,
+    title: &str,
+    query_string: &str,
+    scope: &str,
+    db: State<DbConnection>,
+) -> Result<(), String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         update_saved_search(conn, id, title, query_string, scope).map_err(|e| e.to_string())
@@ -207,7 +296,10 @@ fn delete_saved_search_cmd(id: &str, db: State<DbConnection>) -> Result<(), Stri
 }
 
 #[tauri::command]
-fn execute_saved_search_cmd(saved_search: SavedSearch, db: State<DbConnection>) -> Result<Vec<String>, String> {
+fn execute_saved_search_cmd(
+    saved_search: SavedSearch,
+    db: State<DbConnection>,
+) -> Result<Vec<String>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         execute_saved_search(conn, &saved_search).map_err(|e| e.to_string())
@@ -261,7 +353,12 @@ fn disable_mode_cmd(space_id: &str, mode: Mode, db: State<DbConnection>) -> Resu
 }
 
 #[tauri::command]
-fn create_note_cmd(space_id: &str, title: &str, content: &str, db: State<DbConnection>) -> Result<Note, String> {
+fn create_note_cmd(
+    space_id: &str,
+    title: &str,
+    content: &str,
+    db: State<DbConnection>,
+) -> Result<Note, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
@@ -283,7 +380,12 @@ fn get_note_cmd(id: &str, db: State<DbConnection>) -> Result<Option<Note>, Strin
 }
 
 #[tauri::command]
-fn update_note_content_cmd(id: &str, title: &str, content: &str, db: State<DbConnection>) -> Result<(), String> {
+fn update_note_content_cmd(
+    id: &str,
+    title: &str,
+    content: &str,
+    db: State<DbConnection>,
+) -> Result<(), String> {
     let mut conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_mut() {
         let note_ulid = Ulid::from_string(id).map_err(|e| e.to_string())?;
@@ -305,7 +407,12 @@ fn trash_note_cmd(id: &str, db: State<DbConnection>) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn create_task_cmd(space_id: &str, title: &str, description: Option<String>, db: State<DbConnection>) -> Result<Task, String> {
+fn create_task_cmd(
+    space_id: &str,
+    title: &str,
+    description: Option<String>,
+    db: State<DbConnection>,
+) -> Result<Task, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
@@ -348,7 +455,10 @@ fn delete_task_cmd(id: &str, db: State<DbConnection>) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn get_tasks_by_project_cmd(project_id: &str, db: State<DbConnection>) -> Result<Vec<Task>, String> {
+fn get_tasks_by_project_cmd(
+    project_id: &str,
+    db: State<DbConnection>,
+) -> Result<Vec<Task>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let project_ulid = Ulid::from_string(project_id).map_err(|e| e.to_string())?;
@@ -359,7 +469,11 @@ fn get_tasks_by_project_cmd(project_id: &str, db: State<DbConnection>) -> Result
 }
 
 #[tauri::command]
-fn import_from_obsidian_cmd(space_id: &str, path: &str, db: State<DbConnection>) -> Result<(), String> {
+fn import_from_obsidian_cmd(
+    space_id: &str,
+    path: &str,
+    db: State<DbConnection>,
+) -> Result<(), String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
@@ -370,7 +484,11 @@ fn import_from_obsidian_cmd(space_id: &str, path: &str, db: State<DbConnection>)
 }
 
 #[tauri::command]
-fn import_from_notion_cmd(space_id: &str, path: &str, db: State<DbConnection>) -> Result<(), String> {
+fn import_from_notion_cmd(
+    space_id: &str,
+    path: &str,
+    db: State<DbConnection>,
+) -> Result<(), String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
@@ -402,7 +520,12 @@ fn review_card_cmd(card_id: &str, quality: u32, db: State<DbConnection>) -> Resu
 }
 
 #[tauri::command]
-fn create_form_template_cmd(space_id: &str, name: &str, fields: Vec<FormField>, db: State<DbConnection>) -> Result<FormTemplate, String> {
+fn create_form_template_cmd(
+    space_id: &str,
+    name: &str,
+    fields: Vec<FormField>,
+    db: State<DbConnection>,
+) -> Result<FormTemplate, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         create_form_template(conn, space_id, name, fields).map_err(|e| e.to_string())
@@ -422,7 +545,10 @@ fn get_form_template_cmd(id: &str, db: State<DbConnection>) -> Result<FormTempla
 }
 
 #[tauri::command]
-fn get_form_templates_for_space_cmd(space_id: &str, db: State<DbConnection>) -> Result<Vec<FormTemplate>, String> {
+fn get_form_templates_for_space_cmd(
+    space_id: &str,
+    db: State<DbConnection>,
+) -> Result<Vec<FormTemplate>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         get_form_templates_for_space(conn, space_id).map_err(|e| e.to_string())
@@ -432,7 +558,12 @@ fn get_form_templates_for_space_cmd(space_id: &str, db: State<DbConnection>) -> 
 }
 
 #[tauri::command]
-fn update_form_template_cmd(id: &str, name: &str, fields: Vec<FormField>, db: State<DbConnection>) -> Result<(), String> {
+fn update_form_template_cmd(
+    id: &str,
+    name: &str,
+    fields: Vec<FormField>,
+    db: State<DbConnection>,
+) -> Result<(), String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         update_form_template(conn, id, name, fields).map_err(|e| e.to_string())
@@ -452,7 +583,11 @@ fn delete_form_template_cmd(id: &str, db: State<DbConnection>) -> Result<(), Str
 }
 
 #[tauri::command]
-fn search_notes_cmd(query: &str, scope: &str, db: State<DbConnection>) -> Result<Vec<Note>, String> {
+fn search_notes_cmd(
+    query: &str,
+    scope: &str,
+    db: State<DbConnection>,
+) -> Result<Vec<Note>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         search_notes(conn, query, scope).map_err(|e| e.to_string())
@@ -494,12 +629,28 @@ fn start_time_entry_cmd(
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
-        let task_ulid = task_id.map(|id| Ulid::from_string(&id)).transpose().map_err(|e| e.to_string())?;
-        let project_ulid = project_id.map(|id| Ulid::from_string(&id)).transpose().map_err(|e| e.to_string())?;
-        let note_ulid = note_id.map(|id| Ulid::from_string(&id)).transpose().map_err(|e| e.to_string())?;
+        let task_ulid = task_id
+            .map(|id| Ulid::from_string(&id))
+            .transpose()
+            .map_err(|e| e.to_string())?;
+        let project_ulid = project_id
+            .map(|id| Ulid::from_string(&id))
+            .transpose()
+            .map_err(|e| e.to_string())?;
+        let note_ulid = note_id
+            .map(|id| Ulid::from_string(&id))
+            .transpose()
+            .map_err(|e| e.to_string())?;
 
-        start_time_entry(conn, space_ulid, task_ulid, project_ulid, note_ulid, description)
-            .map_err(|e| e.to_string())
+        start_time_entry(
+            conn,
+            space_ulid,
+            task_ulid,
+            project_ulid,
+            note_ulid,
+            description,
+        )
+        .map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
@@ -517,7 +668,10 @@ fn stop_time_entry_cmd(entry_id: &str, db: State<DbConnection>) -> Result<TimeEn
 }
 
 #[tauri::command]
-fn get_task_time_entries_cmd(task_id: &str, db: State<DbConnection>) -> Result<Vec<TimeEntry>, String> {
+fn get_task_time_entries_cmd(
+    task_id: &str,
+    db: State<DbConnection>,
+) -> Result<Vec<TimeEntry>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let ulid = Ulid::from_string(task_id).map_err(|e| e.to_string())?;
@@ -528,7 +682,10 @@ fn get_task_time_entries_cmd(task_id: &str, db: State<DbConnection>) -> Result<V
 }
 
 #[tauri::command]
-fn get_project_time_entries_cmd(project_id: &str, db: State<DbConnection>) -> Result<Vec<TimeEntry>, String> {
+fn get_project_time_entries_cmd(
+    project_id: &str,
+    db: State<DbConnection>,
+) -> Result<Vec<TimeEntry>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let ulid = Ulid::from_string(project_id).map_err(|e| e.to_string())?;
@@ -539,7 +696,10 @@ fn get_project_time_entries_cmd(project_id: &str, db: State<DbConnection>) -> Re
 }
 
 #[tauri::command]
-fn get_running_entries_cmd(space_id: &str, db: State<DbConnection>) -> Result<Vec<TimeEntry>, String> {
+fn get_running_entries_cmd(
+    space_id: &str,
+    db: State<DbConnection>,
+) -> Result<Vec<TimeEntry>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
@@ -550,7 +710,11 @@ fn get_running_entries_cmd(space_id: &str, db: State<DbConnection>) -> Result<Ve
 }
 
 #[tauri::command]
-fn get_recent_time_entries_cmd(space_id: &str, limit: i64, db: State<DbConnection>) -> Result<Vec<TimeEntry>, String> {
+fn get_recent_time_entries_cmd(
+    space_id: &str,
+    limit: i64,
+    db: State<DbConnection>,
+) -> Result<Vec<TimeEntry>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
@@ -572,7 +736,10 @@ fn get_task_time_stats_cmd(task_id: &str, db: State<DbConnection>) -> Result<Tim
 }
 
 #[tauri::command]
-fn get_project_time_stats_cmd(project_id: &str, db: State<DbConnection>) -> Result<TimeStats, String> {
+fn get_project_time_stats_cmd(
+    project_id: &str,
+    db: State<DbConnection>,
+) -> Result<TimeStats, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let ulid = Ulid::from_string(project_id).map_err(|e| e.to_string())?;
@@ -607,9 +774,18 @@ fn create_manual_time_entry_cmd(
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
-        let task_ulid = task_id.map(|id| Ulid::from_string(&id)).transpose().map_err(|e| e.to_string())?;
-        let project_ulid = project_id.map(|id| Ulid::from_string(&id)).transpose().map_err(|e| e.to_string())?;
-        let note_ulid = note_id.map(|id| Ulid::from_string(&id)).transpose().map_err(|e| e.to_string())?;
+        let task_ulid = task_id
+            .map(|id| Ulid::from_string(&id))
+            .transpose()
+            .map_err(|e| e.to_string())?;
+        let project_ulid = project_id
+            .map(|id| Ulid::from_string(&id))
+            .transpose()
+            .map_err(|e| e.to_string())?;
+        let note_ulid = note_id
+            .map(|id| Ulid::from_string(&id))
+            .transpose()
+            .map_err(|e| e.to_string())?;
 
         create_manual_time_entry(
             conn,
@@ -620,7 +796,8 @@ fn create_manual_time_entry_cmd(
             description,
             started_at,
             duration_seconds,
-        ).map_err(|e| e.to_string())
+        )
+        .map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
@@ -648,7 +825,11 @@ fn get_ocr_status_cmd(blob_id: &str, db: State<DbConnection>) -> Result<Option<O
 }
 
 #[tauri::command]
-fn search_ocr_text_cmd(query: &str, limit: u32, db: State<DbConnection>) -> Result<Vec<OcrResult>, String> {
+fn search_ocr_text_cmd(
+    query: &str,
+    limit: u32,
+    db: State<DbConnection>,
+) -> Result<Vec<OcrResult>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         search_ocr_text(conn, query, limit).map_err(|e| e.to_string())
@@ -658,7 +839,12 @@ fn search_ocr_text_cmd(query: &str, limit: u32, db: State<DbConnection>) -> Resu
 }
 
 #[tauri::command]
-fn process_ocr_cmd(blob_id: &str, image_path: &str, language: Option<String>, db: State<DbConnection>) -> Result<String, String> {
+fn process_ocr_cmd(
+    blob_id: &str,
+    image_path: &str,
+    language: Option<String>,
+    db: State<DbConnection>,
+) -> Result<String, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let path = std::path::Path::new(image_path);
@@ -717,8 +903,14 @@ fn record_insight_feedback_cmd(
             "not_helpful" => FeedbackType::NotHelpful,
             _ => FeedbackType::Dismissed,
         };
-        record_feedback(conn, insight_id, action_taken, action_type.as_deref(), feedback)
-            .map_err(|e| e.to_string())
+        record_feedback(
+            conn,
+            insight_id,
+            action_taken,
+            action_type.as_deref(),
+            feedback,
+        )
+        .map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
@@ -726,12 +918,19 @@ fn record_insight_feedback_cmd(
 
 // CalDAV Commands
 #[tauri::command]
-fn add_caldav_account_cmd(url: &str, username: &str, password: &str, calendar_path: &str, db: State<DbConnection>) -> Result<CalDavAccount, String> {
+fn add_caldav_account_cmd(
+    url: &str,
+    username: &str,
+    password: &str,
+    calendar_path: &str,
+    db: State<DbConnection>,
+) -> Result<CalDavAccount, String> {
     let conn = db.conn.lock().unwrap();
     let dek_lock = db.dek.lock().unwrap();
 
     if let (Some(conn), Some(dek)) = (conn.as_ref(), dek_lock.as_ref()) {
-        add_caldav_account(conn, url, username, password, calendar_path, dek.as_slice()).map_err(|e| e.to_string())
+        add_caldav_account(conn, url, username, password, calendar_path, dek.as_slice())
+            .map_err(|e| e.to_string())
     } else {
         Err("Database connection or vault not available".to_string())
     }
@@ -748,7 +947,10 @@ fn get_caldav_accounts_cmd(db: State<DbConnection>) -> Result<Vec<CalDavAccount>
 }
 
 #[tauri::command]
-fn sync_caldav_account_cmd(account_id: &str, db: State<DbConnection>) -> Result<SyncResult, String> {
+fn sync_caldav_account_cmd(
+    account_id: &str,
+    db: State<DbConnection>,
+) -> Result<SyncResult, String> {
     let conn = db.conn.lock().unwrap();
     let dek_lock = db.dek.lock().unwrap();
 
@@ -760,7 +962,10 @@ fn sync_caldav_account_cmd(account_id: &str, db: State<DbConnection>) -> Result<
 }
 
 #[tauri::command]
-fn get_caldav_account_cmd(account_id: &str, db: State<DbConnection>) -> Result<Option<CalDavAccount>, String> {
+fn get_caldav_account_cmd(
+    account_id: &str,
+    db: State<DbConnection>,
+) -> Result<Option<CalDavAccount>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         get_caldav_account(conn, account_id).map_err(|e| e.to_string())
@@ -776,7 +981,7 @@ fn update_caldav_account_cmd(
     auto_sync: Option<bool>,
     sync_frequency: Option<i64>,
     sync_direction: Option<String>,
-    db: State<DbConnection>
+    db: State<DbConnection>,
 ) -> Result<(), String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
@@ -786,7 +991,15 @@ fn update_caldav_account_cmd(
             "bidirectional" => Some(SyncDirection::Bidirectional),
             _ => None,
         });
-        update_caldav_account(conn, account_id, enabled, auto_sync, sync_frequency, direction).map_err(|e| e.to_string())
+        update_caldav_account(
+            conn,
+            account_id,
+            enabled,
+            auto_sync,
+            sync_frequency,
+            direction,
+        )
+        .map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
@@ -803,7 +1016,11 @@ fn delete_caldav_account_cmd(account_id: &str, db: State<DbConnection>) -> Resul
 }
 
 #[tauri::command]
-fn get_sync_history_cmd(account_id: &str, limit: u32, db: State<DbConnection>) -> Result<Vec<SyncResult>, String> {
+fn get_sync_history_cmd(
+    account_id: &str,
+    limit: u32,
+    db: State<DbConnection>,
+) -> Result<Vec<SyncResult>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         // get_caldav_sync_history returns Vec<SyncResult> which is already serializable
@@ -814,7 +1031,10 @@ fn get_sync_history_cmd(account_id: &str, limit: u32, db: State<DbConnection>) -
 }
 
 #[tauri::command]
-fn get_unresolved_conflicts_cmd(account_id: &str, db: State<DbConnection>) -> Result<Vec<CalDavSyncConflict>, String> {
+fn get_unresolved_conflicts_cmd(
+    account_id: &str,
+    db: State<DbConnection>,
+) -> Result<Vec<CalDavSyncConflict>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         get_caldav_conflicts(conn, account_id).map_err(|e| e.to_string())
@@ -827,7 +1047,7 @@ fn get_unresolved_conflicts_cmd(account_id: &str, db: State<DbConnection>) -> Re
 fn resolve_conflict_cmd(
     conflict_id: &str,
     resolution: String,
-    db: State<DbConnection>
+    db: State<DbConnection>,
 ) -> Result<(), String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
@@ -932,7 +1152,9 @@ fn register_sync_device_cmd(
             protocol_version: "1.0.0".to_string(),
         };
 
-        agent.register_device(conn, &device_info).map_err(|e| e.to_string())
+        agent
+            .register_device(conn, &device_info)
+            .map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
@@ -951,7 +1173,9 @@ fn get_sync_history_for_space_cmd(
             get_local_device_name(),
             8765, // TODO: Make this configurable
         );
-        agent.get_sync_history(conn, &space_id, limit).map_err(|e| e.to_string())
+        agent
+            .get_sync_history(conn, &space_id, limit)
+            .map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
@@ -966,7 +1190,9 @@ fn get_sync_conflicts_cmd(db: State<DbConnection>) -> Result<Vec<SyncConflict>, 
             get_local_device_name(),
             8765, // TODO: Make this configurable
         );
-        agent.get_unresolved_conflicts(conn).map_err(|e| e.to_string())
+        agent
+            .get_unresolved_conflicts(conn)
+            .map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
@@ -1228,22 +1454,45 @@ fn remove_user_from_space_cmd(
 
 // Personal Modes - Health Commands
 #[tauri::command]
-fn create_health_metric_cmd(space_id: &str, metric_type: &str, value: f64, unit: &str, recorded_at: i64, db: State<DbConnection>) -> Result<HealthMetric, String> {
+fn create_health_metric_cmd(
+    space_id: &str,
+    metric_type: &str,
+    value: f64,
+    unit: &str,
+    recorded_at: i64,
+    db: State<DbConnection>,
+) -> Result<HealthMetric, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
-        create_health_metric(conn, space_ulid, metric_type, value, unit, recorded_at, None, None).map_err(|e| e.to_string())
+        create_health_metric(
+            conn,
+            space_ulid,
+            metric_type,
+            value,
+            unit,
+            recorded_at,
+            None,
+            None,
+        )
+        .map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
 }
 
 #[tauri::command]
-fn get_health_metrics_cmd(space_id: &str, metric_type: Option<String>, limit: u32, db: State<DbConnection>) -> Result<Vec<HealthMetric>, String> {
+fn get_health_metrics_cmd(
+    space_id: &str,
+    metric_type: Option<String>,
+    limit: u32,
+    db: State<DbConnection>,
+) -> Result<Vec<HealthMetric>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
-        get_health_metrics(conn, space_ulid, metric_type.as_deref(), limit).map_err(|e| e.to_string())
+        get_health_metrics(conn, space_ulid, metric_type.as_deref(), limit)
+            .map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
@@ -1251,18 +1500,42 @@ fn get_health_metrics_cmd(space_id: &str, metric_type: Option<String>, limit: u3
 
 // Personal Modes - Finance Commands
 #[tauri::command]
-fn create_transaction_cmd(space_id: &str, transaction_type: &str, amount: f64, currency: &str, category: &str, account: &str, date: i64, db: State<DbConnection>) -> Result<Transaction, String> {
+fn create_transaction_cmd(
+    space_id: &str,
+    transaction_type: &str,
+    amount: f64,
+    currency: &str,
+    category: &str,
+    account: &str,
+    date: i64,
+    db: State<DbConnection>,
+) -> Result<Transaction, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
-        create_transaction(conn, space_ulid, transaction_type, amount, currency, category, account, date, None).map_err(|e| e.to_string())
+        create_transaction(
+            conn,
+            space_ulid,
+            transaction_type,
+            amount,
+            currency,
+            category,
+            account,
+            date,
+            None,
+        )
+        .map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
 }
 
 #[tauri::command]
-fn get_transactions_cmd(space_id: &str, limit: u32, db: State<DbConnection>) -> Result<Vec<Transaction>, String> {
+fn get_transactions_cmd(
+    space_id: &str,
+    limit: u32,
+    db: State<DbConnection>,
+) -> Result<Vec<Transaction>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
@@ -1274,18 +1547,30 @@ fn get_transactions_cmd(space_id: &str, limit: u32, db: State<DbConnection>) -> 
 
 // Personal Modes - Recipe Commands
 #[tauri::command]
-fn create_recipe_cmd(space_id: &str, note_id: &str, name: &str, servings: i32, difficulty: &str, db: State<DbConnection>) -> Result<Recipe, String> {
+fn create_recipe_cmd(
+    space_id: &str,
+    note_id: &str,
+    name: &str,
+    servings: i32,
+    difficulty: &str,
+    db: State<DbConnection>,
+) -> Result<Recipe, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
-        create_recipe(conn, space_ulid, note_id, name, servings, difficulty).map_err(|e| e.to_string())
+        create_recipe(conn, space_ulid, note_id, name, servings, difficulty)
+            .map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
 }
 
 #[tauri::command]
-fn get_recipes_cmd(space_id: &str, limit: u32, db: State<DbConnection>) -> Result<Vec<Recipe>, String> {
+fn get_recipes_cmd(
+    space_id: &str,
+    limit: u32,
+    db: State<DbConnection>,
+) -> Result<Vec<Recipe>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
@@ -1297,11 +1582,28 @@ fn get_recipes_cmd(space_id: &str, limit: u32, db: State<DbConnection>) -> Resul
 
 // Personal Modes - Travel Commands
 #[tauri::command]
-fn create_trip_cmd(space_id: &str, note_id: &str, name: &str, destination: &str, start_date: i64, end_date: i64, db: State<DbConnection>) -> Result<Trip, String> {
+fn create_trip_cmd(
+    space_id: &str,
+    note_id: &str,
+    name: &str,
+    destination: &str,
+    start_date: i64,
+    end_date: i64,
+    db: State<DbConnection>,
+) -> Result<Trip, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
-        create_trip(conn, space_ulid, note_id, name, destination, start_date, end_date).map_err(|e| e.to_string())
+        create_trip(
+            conn,
+            space_ulid,
+            note_id,
+            name,
+            destination,
+            start_date,
+            end_date,
+        )
+        .map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
@@ -1320,7 +1622,10 @@ fn get_trips_cmd(space_id: &str, limit: u32, db: State<DbConnection>) -> Result<
 
 // Temporal Graph Commands
 #[tauri::command]
-fn build_current_graph_cmd(space_id: &str, db: State<DbConnection>) -> Result<GraphSnapshot, String> {
+fn build_current_graph_cmd(
+    space_id: &str,
+    db: State<DbConnection>,
+) -> Result<GraphSnapshot, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
@@ -1331,18 +1636,28 @@ fn build_current_graph_cmd(space_id: &str, db: State<DbConnection>) -> Result<Gr
 }
 
 #[tauri::command]
-fn get_graph_evolution_cmd(space_id: &str, start_time: i64, end_time: i64, snapshot_limit: u32, db: State<DbConnection>) -> Result<GraphEvolution, String> {
+fn get_graph_evolution_cmd(
+    space_id: &str,
+    start_time: i64,
+    end_time: i64,
+    snapshot_limit: u32,
+    db: State<DbConnection>,
+) -> Result<GraphEvolution, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
-        get_graph_evolution(conn, space_ulid, start_time, end_time, snapshot_limit).map_err(|e| e.to_string())
+        get_graph_evolution(conn, space_ulid, start_time, end_time, snapshot_limit)
+            .map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
 }
 
 #[tauri::command]
-fn detect_major_notes_cmd(space_id: &str, db: State<DbConnection>) -> Result<Vec<GraphMilestone>, String> {
+fn detect_major_notes_cmd(
+    space_id: &str,
+    db: State<DbConnection>,
+) -> Result<Vec<GraphMilestone>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
@@ -1458,10 +1773,7 @@ fn update_social_account_cmd(
 
 /// Delete a social account
 #[tauri::command]
-fn delete_social_account_cmd(
-    account_id: &str,
-    db: State<DbConnection>,
-) -> Result<(), String> {
+fn delete_social_account_cmd(account_id: &str, db: State<DbConnection>) -> Result<(), String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         delete_social_account(conn, account_id).map_err(|e| e.to_string())
@@ -1555,10 +1867,7 @@ fn assign_social_category_cmd(
 
 /// Delete a category
 #[tauri::command]
-fn delete_social_category_cmd(
-    category_id: &str,
-    db: State<DbConnection>,
-) -> Result<(), String> {
+fn delete_social_category_cmd(category_id: &str, db: State<DbConnection>) -> Result<(), String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         delete_category(conn, category_id).map_err(|e| e.to_string())
@@ -1625,10 +1934,7 @@ fn search_social_posts_cmd(
 
 /// Auto-categorize uncategorized posts
 #[tauri::command]
-fn auto_categorize_posts_cmd(
-    space_id: &str,
-    db: State<DbConnection>,
-) -> Result<usize, String> {
+fn auto_categorize_posts_cmd(space_id: &str, db: State<DbConnection>) -> Result<usize, String> {
     // Input validation
     if space_id.len() > 100 || space_id.is_empty() {
         return Err("Invalid space_id".to_string());
@@ -1675,7 +1981,8 @@ async fn open_social_webview(
         let window_label = format!("social-{}-{}", account.platform, &account_id[..8]);
 
         // Create WebView window
-        let parsed_url = url.parse()
+        let parsed_url = url
+            .parse()
             .map_err(|e: url::ParseError| format!("Invalid platform URL: {}", e))?;
 
         let window = tauri::WindowBuilder::new(
@@ -1728,7 +2035,10 @@ async fn open_social_webview(
                 account_id_clone, platform_clone
             );
 
-            let full_script = format!("{}\n{}\n{}", config_script, universal_script, platform_script);
+            let full_script = format!(
+                "{}\n{}\n{}",
+                config_script, universal_script, platform_script
+            );
 
             window
                 .eval(&full_script)
@@ -1790,10 +2100,14 @@ fn handle_extracted_data(
                 }
 
                 // Store posts
-                let stored = store_social_posts(conn, &account_id, posts)
-                    .map_err(|e| e.to_string())?;
+                let stored =
+                    store_social_posts(conn, &account_id, posts).map_err(|e| e.to_string())?;
 
-                log::info!("[Social] Stored {} posts for account {}", stored, account_id);
+                log::info!(
+                    "[Social] Stored {} posts for account {}",
+                    stored,
+                    account_id
+                );
                 Ok(())
             }
             _ => {
@@ -1840,10 +2154,7 @@ fn get_webview_session_cmd(
 
 /// Get accounts that need syncing
 #[tauri::command]
-fn get_sync_tasks_cmd(
-    space_id: String,
-    db: State<DbConnection>,
-) -> Result<Vec<SyncTask>, String> {
+fn get_sync_tasks_cmd(space_id: String, db: State<DbConnection>) -> Result<Vec<SyncTask>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         get_social_accounts_needing_sync(conn, &space_id).map_err(|e| e.to_string())
@@ -1883,10 +2194,7 @@ fn get_sync_history_cmd(
 
 /// Get sync statistics for a space
 #[tauri::command]
-fn get_sync_stats_cmd(
-    space_id: String,
-    db: State<DbConnection>,
-) -> Result<SyncStats, String> {
+fn get_sync_stats_cmd(space_id: String, db: State<DbConnection>) -> Result<SyncStats, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         get_sync_stats(conn, &space_id).map_err(|e| e.to_string())
@@ -1905,170 +2213,174 @@ fn shutdown_clear_keys_cmd(db: State<DbConnection>) -> Result<(), String> {
 }
 
 fn main() {
-  tauri::Builder::default()
-    .manage(DbConnection {
-        conn: Mutex::new(None),
-        dek: Mutex::new(None),
-    })
-    .on_window_event(|event| {
-        if let tauri::WindowEvent::CloseRequested { .. } = event.event() {
-            // Best-effort cleanup: clear keys before window closes
-            if let Some(app) = event.window().app_handle().try_state::<DbConnection>() {
-                if let Ok(mut dek_guard) = app.dek.lock() {
-                    *dek_guard = None; // Zeroize on drop
+    tauri::Builder::default()
+        .manage(DbConnection {
+            conn: Mutex::new(None),
+            dek: Mutex::new(None),
+        })
+        .on_window_event(|event| {
+            if let tauri::WindowEvent::CloseRequested { .. } = event.event() {
+                // Best-effort cleanup: clear keys before window closes
+                if let Some(app) = event.window().app_handle().try_state::<DbConnection>() {
+                    if let Ok(mut dek_guard) = app.dek.lock() {
+                        *dek_guard = None; // Zeroize on drop
+                    }
                 }
             }
-        }
-    })
-    .setup(|app| {
-        // Register global exit handler to ensure DEK is reliably cleared
-        let app_handle = app.handle();
-        std::panic::set_hook(Box::new(move |_| {
-            if let Some(db) = app_handle.try_state::<DbConnection>() {
-                if let Ok(mut dek_guard) = db.dek.lock() {
-                    *dek_guard = None; // Ensure DEK is cleared on app exit
+        })
+        .setup(|app| {
+            // Register global exit handler to ensure DEK is reliably cleared
+            let app_handle = app.handle();
+            std::panic::set_hook(Box::new(move |_| {
+                if let Some(db) = app_handle.try_state::<DbConnection>() {
+                    if let Ok(mut dek_guard) = db.dek.lock() {
+                        *dek_guard = None; // Ensure DEK is cleared on app exit
+                    }
                 }
-            }
-        }));
-        Ok(())
-    })
-    .invoke_handler(tauri::generate_handler![
-        create_vault_cmd,
-        unlock_vault_cmd,
-        get_project_cmd,
-        get_all_projects_cmd,
-        get_project_milestones_cmd,
-        get_project_risks_cmd,
-        get_project_updates_cmd,
-        create_project_risk_cmd,
-        create_saved_search_cmd,
-        get_saved_search_cmd,
-        get_saved_searches_cmd,
-        update_saved_search_cmd,
-        delete_saved_search_cmd,
-        execute_saved_search_cmd,
-        generate_weekly_review_cmd,
-        get_space_modes_cmd,
-        enable_mode_cmd,
-        disable_mode_cmd,
-        create_note_cmd,
-        get_note_cmd,
-        update_note_content_cmd,
-        trash_note_cmd,
-        create_task_cmd,
-        get_task_cmd,
-        update_task_cmd,
-        delete_task_cmd,
-        get_tasks_by_project_cmd,
-        get_due_cards_cmd,
-        review_card_cmd,
-        get_all_notes_in_space_cmd,
-        get_all_tasks_in_space_cmd,
-        import_from_obsidian_cmd,
-        import_from_notion_cmd,
-        create_form_template_cmd,
-        get_form_template_cmd,
-        get_form_templates_for_space_cmd,
-        update_form_template_cmd,
-        delete_form_template_cmd,
-        get_analytics_data_cmd,
-        search_notes_cmd,
-        get_or_create_daily_note_cmd,
-        get_all_spaces_cmd,
-        get_all_tags_in_space_cmd,
-        get_upcoming_tasks_cmd,
-        get_recent_notes_cmd,
-        start_time_entry_cmd,
-        stop_time_entry_cmd,
-        get_task_time_entries_cmd,
-        get_project_time_entries_cmd,
-        get_running_entries_cmd,
-        get_recent_time_entries_cmd,
-        get_task_time_stats_cmd,
-        get_project_time_stats_cmd,
-        delete_time_entry_cmd,
-        create_manual_time_entry_cmd,
-        queue_ocr_cmd,
-        get_ocr_status_cmd,
-        search_ocr_text_cmd,
-        process_ocr_cmd,
-        generate_insights_cmd,
-        get_active_insights_cmd,
-        dismiss_insight_cmd,
-        record_insight_feedback_cmd,
-        add_caldav_account_cmd,
-        get_caldav_accounts_cmd,
-        get_caldav_account_cmd,
-        update_caldav_account_cmd,
-        delete_caldav_account_cmd,
-        sync_caldav_account_cmd,
-        get_sync_history_cmd,
-        get_unresolved_conflicts_cmd,
-        resolve_conflict_cmd,
-        init_sync_tables_cmd,
-        get_sync_devices_cmd,
-        register_sync_device_cmd,
-        get_sync_history_for_space_cmd,
-        get_sync_conflicts_cmd,
-        resolve_sync_conflict_cmd,
-        record_sync_cmd,
-        create_health_metric_cmd,
-        get_health_metrics_cmd,
-        create_transaction_cmd,
-        get_transactions_cmd,
-        create_recipe_cmd,
-        get_recipes_cmd,
-        create_trip_cmd,
-        get_trips_cmd,
-        build_current_graph_cmd,
-        get_graph_evolution_cmd,
-        detect_major_notes_cmd,
-        shutdown_clear_keys_cmd,
-        init_rbac_tables_cmd,
-        get_space_users_cmd,
-        check_permission_cmd,
-        invite_user_cmd,
-        update_user_role_cmd,
-        grant_permission_cmd,
-        revoke_permission_cmd,
-        suspend_user_cmd,
-        activate_user_cmd,
-        get_roles_cmd,
-        add_user_to_space_cmd,
-        remove_user_from_space_cmd,
-        // Social Media Suite commands
-        add_social_account_cmd,
-        get_social_accounts_cmd,
-        get_social_account_cmd,
-        update_social_account_cmd,
-        delete_social_account_cmd,
-        store_social_posts_cmd,
-        get_unified_timeline_cmd,
-        create_social_category_cmd,
-        get_social_categories_cmd,
-        assign_social_category_cmd,
-        delete_social_category_cmd,
-        get_timeline_stats_cmd,
-        get_analytics_overview_cmd,
-        search_social_posts_cmd,
-        auto_categorize_posts_cmd,
-        // Social Media WebView commands
-        open_social_webview,
-        handle_extracted_data,
-        save_webview_cookies,
-        get_webview_session_cmd,
-        // Social Media Sync commands
-        get_sync_tasks_cmd,
-        get_all_sync_tasks_cmd,
-        get_sync_history_cmd,
-        get_sync_stats_cmd
-    ])
-    .run(tauri::generate_context!())
-    .expect("error while running tauri application");
+            }));
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            create_vault_cmd,
+            unlock_vault_cmd,
+            get_project_cmd,
+            get_all_projects_cmd,
+            get_project_milestones_cmd,
+            get_project_risks_cmd,
+            get_project_updates_cmd,
+            create_project_risk_cmd,
+            create_saved_search_cmd,
+            get_saved_search_cmd,
+            get_saved_searches_cmd,
+            update_saved_search_cmd,
+            delete_saved_search_cmd,
+            execute_saved_search_cmd,
+            generate_weekly_review_cmd,
+            get_space_modes_cmd,
+            enable_mode_cmd,
+            disable_mode_cmd,
+            create_note_cmd,
+            get_note_cmd,
+            update_note_content_cmd,
+            trash_note_cmd,
+            create_task_cmd,
+            get_task_cmd,
+            update_task_cmd,
+            delete_task_cmd,
+            get_tasks_by_project_cmd,
+            get_due_cards_cmd,
+            review_card_cmd,
+            get_all_notes_in_space_cmd,
+            get_all_tasks_in_space_cmd,
+            import_from_obsidian_cmd,
+            import_from_notion_cmd,
+            create_form_template_cmd,
+            get_form_template_cmd,
+            get_form_templates_for_space_cmd,
+            update_form_template_cmd,
+            delete_form_template_cmd,
+            get_analytics_data_cmd,
+            search_notes_cmd,
+            get_or_create_daily_note_cmd,
+            get_all_spaces_cmd,
+            get_all_tags_in_space_cmd,
+            get_upcoming_tasks_cmd,
+            get_recent_notes_cmd,
+            start_time_entry_cmd,
+            stop_time_entry_cmd,
+            get_task_time_entries_cmd,
+            get_project_time_entries_cmd,
+            get_running_entries_cmd,
+            get_recent_time_entries_cmd,
+            get_task_time_stats_cmd,
+            get_project_time_stats_cmd,
+            delete_time_entry_cmd,
+            create_manual_time_entry_cmd,
+            queue_ocr_cmd,
+            get_ocr_status_cmd,
+            search_ocr_text_cmd,
+            process_ocr_cmd,
+            generate_insights_cmd,
+            get_active_insights_cmd,
+            dismiss_insight_cmd,
+            record_insight_feedback_cmd,
+            add_caldav_account_cmd,
+            get_caldav_accounts_cmd,
+            get_caldav_account_cmd,
+            update_caldav_account_cmd,
+            delete_caldav_account_cmd,
+            sync_caldav_account_cmd,
+            get_sync_history_cmd,
+            get_unresolved_conflicts_cmd,
+            resolve_conflict_cmd,
+            init_sync_tables_cmd,
+            get_sync_devices_cmd,
+            register_sync_device_cmd,
+            get_sync_history_for_space_cmd,
+            get_sync_conflicts_cmd,
+            resolve_sync_conflict_cmd,
+            record_sync_cmd,
+            create_health_metric_cmd,
+            get_health_metrics_cmd,
+            create_transaction_cmd,
+            get_transactions_cmd,
+            create_recipe_cmd,
+            get_recipes_cmd,
+            create_trip_cmd,
+            get_trips_cmd,
+            build_current_graph_cmd,
+            get_graph_evolution_cmd,
+            detect_major_notes_cmd,
+            shutdown_clear_keys_cmd,
+            init_rbac_tables_cmd,
+            get_space_users_cmd,
+            check_permission_cmd,
+            invite_user_cmd,
+            update_user_role_cmd,
+            grant_permission_cmd,
+            revoke_permission_cmd,
+            suspend_user_cmd,
+            activate_user_cmd,
+            get_roles_cmd,
+            add_user_to_space_cmd,
+            remove_user_from_space_cmd,
+            // Social Media Suite commands
+            add_social_account_cmd,
+            get_social_accounts_cmd,
+            get_social_account_cmd,
+            update_social_account_cmd,
+            delete_social_account_cmd,
+            store_social_posts_cmd,
+            get_unified_timeline_cmd,
+            create_social_category_cmd,
+            get_social_categories_cmd,
+            assign_social_category_cmd,
+            delete_social_category_cmd,
+            get_timeline_stats_cmd,
+            get_analytics_overview_cmd,
+            search_social_posts_cmd,
+            auto_categorize_posts_cmd,
+            // Social Media WebView commands
+            open_social_webview,
+            handle_extracted_data,
+            save_webview_cookies,
+            get_webview_session_cmd,
+            // Social Media Sync commands
+            get_sync_tasks_cmd,
+            get_all_sync_tasks_cmd,
+            get_sync_history_cmd,
+            get_sync_stats_cmd
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }
 
 #[tauri::command]
-fn get_recent_notes_cmd(space_id: &str, limit: u32, db: State<DbConnection>) -> Result<Vec<Note>, String> {
+fn get_recent_notes_cmd(
+    space_id: &str,
+    limit: u32,
+    db: State<DbConnection>,
+) -> Result<Vec<Note>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         get_recent_notes(conn, space_id, limit).map_err(|e| e.to_string())
@@ -2078,7 +2390,11 @@ fn get_recent_notes_cmd(space_id: &str, limit: u32, db: State<DbConnection>) -> 
 }
 
 #[tauri::command]
-fn get_upcoming_tasks_cmd(space_id: &str, limit: u32, db: State<DbConnection>) -> Result<Vec<Task>, String> {
+fn get_upcoming_tasks_cmd(
+    space_id: &str,
+    limit: u32,
+    db: State<DbConnection>,
+) -> Result<Vec<Task>, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;

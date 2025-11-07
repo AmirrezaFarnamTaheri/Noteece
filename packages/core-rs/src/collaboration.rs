@@ -146,7 +146,14 @@ fn init_default_roles(conn: &Connection) -> Result<(), rusqlite::Error> {
             "owner",
             "Owner",
             "Full control over the space including user management and billing",
-            vec!["read", "write", "delete", "admin", "manage_users", "manage_billing"],
+            vec![
+                "read",
+                "write",
+                "delete",
+                "admin",
+                "manage_users",
+                "manage_billing",
+            ],
         ),
         (
             "admin",
@@ -160,12 +167,7 @@ fn init_default_roles(conn: &Connection) -> Result<(), rusqlite::Error> {
             "Can read, write, and delete content",
             vec!["read", "write", "delete"],
         ),
-        (
-            "viewer",
-            "Viewer",
-            "Can only read content",
-            vec!["read"],
-        ),
+        ("viewer", "Viewer", "Can only read content", vec!["read"]),
     ];
 
     for (id, name, description, permissions) in roles {

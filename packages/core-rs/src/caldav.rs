@@ -1,10 +1,10 @@
 use chrono::{DateTime, Utc};
+use reqwest::blocking::Client;
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use thiserror::Error;
 use ulid::Ulid;
-use reqwest::blocking::Client;
-use std::collections::HashMap;
 
 #[derive(Error, Debug)]
 pub enum CalDavError {
@@ -620,7 +620,10 @@ fn fetch_calendar_events(
     password: &str,
 ) -> Result<Vec<CalDavEvent>, CalDavError> {
     // SECURITY: Enforce HTTPS for credential transmission
-    if !url.starts_with("https://") && !url.starts_with("http://localhost") && !url.starts_with("http://127.0.0.1") {
+    if !url.starts_with("https://")
+        && !url.starts_with("http://localhost")
+        && !url.starts_with("http://127.0.0.1")
+    {
         return Err(CalDavError::Network(
             "CalDAV URL must use HTTPS (or localhost for testing). HTTP is insecure for credential transmission.".to_string()
         ));
@@ -685,7 +688,9 @@ fn fetch_calendar_events(
                 }
             }
             Err(_) => {
-                return Err(CalDavError::Parse("Invalid Content-Type header encoding".to_string()));
+                return Err(CalDavError::Parse(
+                    "Invalid Content-Type header encoding".to_string(),
+                ));
             }
         }
     }
@@ -713,37 +718,33 @@ fn fetch_calendar_events(
 /// potentially access or modify unintended calendar resources.
 fn sanitize_event_uid(uid: &str) -> Result<String, CalDavError> {
     // Remove all forward and backward slashes
-    let sanitized = uid
-        .replace('/', "")
-        .replace('\\', "")
-        .trim()
-        .to_string();
+    let sanitized = uid.replace('/', "").replace('\\', "").trim().to_string();
 
     // Reject if empty after sanitization
     if sanitized.is_empty() {
         return Err(CalDavError::Parse(
-            "Invalid event UID: empty after sanitization".to_string()
+            "Invalid event UID: empty after sanitization".to_string(),
         ));
     }
 
     // Reject if contains path traversal sequences
     if sanitized.contains("..") {
         return Err(CalDavError::Parse(
-            "Invalid event UID: contains path traversal sequence (..)".to_string()
+            "Invalid event UID: contains path traversal sequence (..)".to_string(),
         ));
     }
 
     // Reject control characters and other dangerous characters
     if sanitized.chars().any(|c| c.is_control() || c == '\0') {
         return Err(CalDavError::Parse(
-            "Invalid event UID: contains control characters".to_string()
+            "Invalid event UID: contains control characters".to_string(),
         ));
     }
 
     // Limit UID length to prevent excessive URL lengths
     if sanitized.len() > 255 {
         return Err(CalDavError::Parse(
-            "Invalid event UID: exceeds maximum length (255 characters)".to_string()
+            "Invalid event UID: exceeds maximum length (255 characters)".to_string(),
         ));
     }
 
@@ -758,7 +759,10 @@ fn push_calendar_event(
     event: &CalDavEvent,
 ) -> Result<String, CalDavError> {
     // SECURITY: Enforce HTTPS
-    if !url.starts_with("https://") && !url.starts_with("http://localhost") && !url.starts_with("http://127.0.0.1") {
+    if !url.starts_with("https://")
+        && !url.starts_with("http://localhost")
+        && !url.starts_with("http://127.0.0.1")
+    {
         return Err(CalDavError::Network(
             "CalDAV URL must use HTTPS (or localhost for testing). HTTP is insecure for credential transmission.".to_string()
         ));
@@ -819,7 +823,10 @@ fn delete_calendar_event(
     event_uid: &str,
 ) -> Result<(), CalDavError> {
     // SECURITY: Enforce HTTPS
-    if !url.starts_with("https://") && !url.starts_with("http://localhost") && !url.starts_with("http://127.0.0.1") {
+    if !url.starts_with("https://")
+        && !url.starts_with("http://localhost")
+        && !url.starts_with("http://127.0.0.1")
+    {
         return Err(CalDavError::Network(
             "CalDAV URL must use HTTPS (or localhost for testing). HTTP is insecure for credential transmission.".to_string()
         ));
@@ -850,9 +857,7 @@ fn delete_calendar_event(
         return Err(CalDavError::Authentication);
     }
 
-    if !response.status().is_success()
-        && response.status() != reqwest::StatusCode::NOT_FOUND
-    {
+    if !response.status().is_success() && response.status() != reqwest::StatusCode::NOT_FOUND {
         return Err(CalDavError::Network(format!(
             "CalDAV DELETE failed: {}",
             response.status()
@@ -892,8 +897,7 @@ fn parse_calendar_response(xml_data: &str) -> Result<Vec<CalDavEvent>, CalDavErr
                 let close_tag_start = content_start + close_idx;
 
                 // Verify this is actually a calendar-data closing tag
-                let is_calendar_close =
-                    lower_xml[close_tag_start..].starts_with("</")
+                let is_calendar_close = lower_xml[close_tag_start..].starts_with("</")
                     && (lower_xml[close_tag_start + 2..].starts_with("c:calendar-data>")
                         || lower_xml[close_tag_start + 2..].starts_with("cal:calendar-data>")
                         || lower_xml[close_tag_start + 2..].starts_with("calendar-data>"));
@@ -1059,23 +1063,27 @@ fn parse_ical_datetime(datetime_str: &str) -> Result<i64, CalDavError> {
 
     // All-day event format: YYYYMMDD (8 digits, no time component)
     if clean_str.len() == 8 && clean_str.chars().all(|c| c.is_ascii_digit()) {
-        let year: i32 = clean_str.get(0..4)
+        let year: i32 = clean_str
+            .get(0..4)
             .and_then(|s| s.parse().ok())
             .ok_or_else(|| CalDavError::Parse(format!("Invalid year in '{}'", datetime_str)))?;
 
-        let month: u32 = clean_str.get(4..6)
+        let month: u32 = clean_str
+            .get(4..6)
             .and_then(|s| s.parse().ok())
             .ok_or_else(|| CalDavError::Parse(format!("Invalid month in '{}'", datetime_str)))?;
 
-        let day: u32 = clean_str.get(6..8)
+        let day: u32 = clean_str
+            .get(6..8)
             .and_then(|s| s.parse().ok())
             .ok_or_else(|| CalDavError::Parse(format!("Invalid day in '{}'", datetime_str)))?;
 
-        let date = NaiveDate::from_ymd_opt(year, month, day)
-            .ok_or_else(|| CalDavError::Parse(format!(
+        let date = NaiveDate::from_ymd_opt(year, month, day).ok_or_else(|| {
+            CalDavError::Parse(format!(
                 "Invalid date values: year={}, month={}, day={}",
                 year, month, day
-            )))?;
+            ))
+        })?;
 
         // All-day events start at midnight UTC
         let datetime = NaiveDateTime::new(date, NaiveTime::from_hms_opt(0, 0, 0).unwrap());
@@ -1114,43 +1122,51 @@ fn parse_ical_datetime(datetime_str: &str) -> Result<i64, CalDavError> {
     }
 
     // Parse date components
-    let year: i32 = date_part.get(0..4)
+    let year: i32 = date_part
+        .get(0..4)
         .and_then(|s| s.parse().ok())
         .ok_or_else(|| CalDavError::Parse(format!("Invalid year in '{}'", datetime_str)))?;
 
-    let month: u32 = date_part.get(4..6)
+    let month: u32 = date_part
+        .get(4..6)
         .and_then(|s| s.parse().ok())
         .ok_or_else(|| CalDavError::Parse(format!("Invalid month in '{}'", datetime_str)))?;
 
-    let day: u32 = date_part.get(6..8)
+    let day: u32 = date_part
+        .get(6..8)
         .and_then(|s| s.parse().ok())
         .ok_or_else(|| CalDavError::Parse(format!("Invalid day in '{}'", datetime_str)))?;
 
     // Parse time components
-    let hour: u32 = time_part.get(0..2)
+    let hour: u32 = time_part
+        .get(0..2)
         .and_then(|s| s.parse().ok())
         .ok_or_else(|| CalDavError::Parse(format!("Invalid hour in '{}'", datetime_str)))?;
 
-    let minute: u32 = time_part.get(2..4)
+    let minute: u32 = time_part
+        .get(2..4)
         .and_then(|s| s.parse().ok())
         .ok_or_else(|| CalDavError::Parse(format!("Invalid minute in '{}'", datetime_str)))?;
 
-    let second: u32 = time_part.get(4..6)
+    let second: u32 = time_part
+        .get(4..6)
         .and_then(|s| s.parse().ok())
         .ok_or_else(|| CalDavError::Parse(format!("Invalid second in '{}'", datetime_str)))?;
 
     // Validate date and time values with chrono
-    let date = NaiveDate::from_ymd_opt(year, month, day)
-        .ok_or_else(|| CalDavError::Parse(format!(
+    let date = NaiveDate::from_ymd_opt(year, month, day).ok_or_else(|| {
+        CalDavError::Parse(format!(
             "Invalid date values: year={}, month={}, day={}",
             year, month, day
-        )))?;
+        ))
+    })?;
 
-    let time = NaiveTime::from_hms_opt(hour, minute, second)
-        .ok_or_else(|| CalDavError::Parse(format!(
+    let time = NaiveTime::from_hms_opt(hour, minute, second).ok_or_else(|| {
+        CalDavError::Parse(format!(
             "Invalid time values: hour={}, minute={}, second={}",
             hour, minute, second
-        )))?;
+        ))
+    })?;
 
     let datetime = NaiveDateTime::new(date, time);
 
@@ -1163,14 +1179,16 @@ fn parse_ical_datetime(datetime_str: &str) -> Result<i64, CalDavError> {
 fn generate_icalendar(event: &CalDavEvent) -> Result<String, CalDavError> {
     use chrono::TimeZone;
 
-    let start_dt = Utc.timestamp_opt(event.start_time, 0)
+    let start_dt = Utc
+        .timestamp_opt(event.start_time, 0)
         .single()
         .ok_or_else(|| CalDavError::Parse("Invalid start time".to_string()))?;
 
     let start_str = start_dt.format("%Y%m%dT%H%M%SZ").to_string();
 
     let end_str = if let Some(end_time) = event.end_time {
-        let end_dt = Utc.timestamp_opt(end_time, 0)
+        let end_dt = Utc
+            .timestamp_opt(end_time, 0)
             .single()
             .ok_or_else(|| CalDavError::Parse("Invalid end time".to_string()))?;
         end_dt.format("%Y%m%dT%H%M%SZ").to_string()
@@ -1220,8 +1238,7 @@ pub fn sync_caldav_account(
 ) -> Result<SyncResult, CalDavError> {
     use crate::crypto::decrypt_string;
 
-    let account = get_caldav_account(conn, account_id)?
-        .ok_or(CalDavError::AccountNotFound)?;
+    let account = get_caldav_account(conn, account_id)?.ok_or(CalDavError::AccountNotFound)?;
 
     // Decrypt password
     let password = decrypt_string(&account.encrypted_password, dek)
@@ -1264,10 +1281,9 @@ pub fn sync_caldav_account(
                         .map_err(CalDavError::Database)?;
 
                     let existing: Option<(String, Option<String>)> = stmt
-                        .query_row(
-                            params![account_id, &remote_event.uid],
-                            |row| Ok((row.get(0)?, row.get(1)?)),
-                        )
+                        .query_row(params![account_id, &remote_event.uid], |row| {
+                            Ok((row.get(0)?, row.get(1)?))
+                        })
                         .optional()
                         .map_err(CalDavError::Database)?;
 
@@ -1278,10 +1294,10 @@ pub fn sync_caldav_account(
                                 if let Some(local) = &local_etag {
                                     if local != remote_etag {
                                         // Conflict detected - ETags differ
-                                        let local_json =
-                                            serde_json::to_string(&remote_event).unwrap_or_default();
-                                        let remote_json =
-                                            serde_json::to_string(&remote_event).unwrap_or_default();
+                                        let local_json = serde_json::to_string(&remote_event)
+                                            .unwrap_or_default();
+                                        let remote_json = serde_json::to_string(&remote_event)
+                                            .unwrap_or_default();
 
                                         if let Err(e) = create_sync_conflict(
                                             conn,
@@ -1290,7 +1306,8 @@ pub fn sync_caldav_account(
                                             &local_json,
                                             &remote_json,
                                         ) {
-                                            errors.push(format!("Failed to record conflict: {}", e));
+                                            errors
+                                                .push(format!("Failed to record conflict: {}", e));
                                         } else {
                                             conflicts += 1;
                                         }

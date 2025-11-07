@@ -4,7 +4,6 @@
  * Provides focus mode presets with platform restrictions, time limits,
  * and automation rules to help users maintain healthy social media habits.
  */
-
 use chrono::Utc;
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
@@ -46,18 +45,18 @@ pub struct AutomationRule {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TriggerType {
-    TimeOfDay,      // e.g., "09:00"
-    DayOfWeek,      // e.g., "monday"
-    PlatformOpen,   // e.g., "twitter"
-    CategoryPost,   // e.g., "work"
+    TimeOfDay,    // e.g., "09:00"
+    DayOfWeek,    // e.g., "monday"
+    PlatformOpen, // e.g., "twitter"
+    CategoryPost, // e.g., "work"
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ActionType {
-    ActivateFocusMode,  // value = focus_mode_id
-    DisableSync,        // value = platform
-    SendNotification,   // value = message
-    AutoCategorize,     // value = category_id
+    ActivateFocusMode, // value = focus_mode_id
+    DisableSync,       // value = platform
+    SendNotification,  // value = message
+    AutoCategorize,    // value = category_id
 }
 
 /// Create a focus mode
@@ -81,7 +80,16 @@ pub fn create_focus_mode(
             id, space_id, name, description, icon, is_active,
             blocked_platforms, allowed_platforms, created_at
         ) VALUES (?1, ?2, ?3, ?4, ?5, 0, ?6, ?7, ?8)",
-        params![&id, space_id, name, description, icon, &blocked_json, &allowed_json, now],
+        params![
+            &id,
+            space_id,
+            name,
+            description,
+            icon,
+            &blocked_json,
+            &allowed_json,
+            now
+        ],
     )?;
 
     Ok(FocusMode {
@@ -99,10 +107,7 @@ pub fn create_focus_mode(
 }
 
 /// Get all focus modes for a space
-pub fn get_focus_modes(
-    conn: &Connection,
-    space_id: &str,
-) -> Result<Vec<FocusMode>, SocialError> {
+pub fn get_focus_modes(conn: &Connection, space_id: &str) -> Result<Vec<FocusMode>, SocialError> {
     let mut stmt = conn.prepare(
         "SELECT id, space_id, name, description, icon, is_active,
                 blocked_platforms, allowed_platforms, created_at
@@ -157,10 +162,7 @@ pub fn activate_focus_mode(
 }
 
 /// Deactivate all focus modes
-pub fn deactivate_all_focus_modes(
-    conn: &Connection,
-    space_id: &str,
-) -> Result<(), SocialError> {
+pub fn deactivate_all_focus_modes(conn: &Connection, space_id: &str) -> Result<(), SocialError> {
     conn.execute(
         "UPDATE social_focus_mode SET is_active = 0 WHERE space_id = ?1",
         [space_id],
@@ -370,10 +372,7 @@ pub fn get_automation_rules(
 }
 
 /// Delete a focus mode
-pub fn delete_focus_mode(
-    conn: &Connection,
-    focus_mode_id: &str,
-) -> Result<(), SocialError> {
+pub fn delete_focus_mode(conn: &Connection, focus_mode_id: &str) -> Result<(), SocialError> {
     conn.execute(
         "DELETE FROM social_focus_mode WHERE id = ?1",
         [focus_mode_id],

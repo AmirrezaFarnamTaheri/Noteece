@@ -4,7 +4,6 @@
  * Provides intelligent categorization, sentiment analysis, and content insights
  * using rule-based and ML approaches.
  */
-
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -48,11 +47,7 @@ pub enum RuleType {
 }
 
 /// Analyze post content and generate insights
-pub fn analyze_post_content(
-    content: &str,
-    author: &str,
-    platform: &str,
-) -> ContentInsight {
+pub fn analyze_post_content(content: &str, author: &str, platform: &str) -> ContentInsight {
     let sentiment = detect_sentiment(content);
     let topics = extract_topics(content);
     let summary = generate_summary(content);
@@ -72,23 +67,52 @@ fn detect_sentiment(content: &str) -> Sentiment {
 
     // Positive indicators
     let positive_words = [
-        "love", "great", "amazing", "excellent", "wonderful", "fantastic",
-        "happy", "joy", "success", "excited", "beautiful", "perfect",
-        "awesome", "brilliant", "glad", "thank", "congrat",
+        "love",
+        "great",
+        "amazing",
+        "excellent",
+        "wonderful",
+        "fantastic",
+        "happy",
+        "joy",
+        "success",
+        "excited",
+        "beautiful",
+        "perfect",
+        "awesome",
+        "brilliant",
+        "glad",
+        "thank",
+        "congrat",
     ];
 
     // Negative indicators
     let negative_words = [
-        "hate", "terrible", "awful", "bad", "worst", "angry", "sad",
-        "disappoint", "fail", "problem", "issue", "concern", "worry",
-        "unfortunate", "upset", "frustrat",
+        "hate",
+        "terrible",
+        "awful",
+        "bad",
+        "worst",
+        "angry",
+        "sad",
+        "disappoint",
+        "fail",
+        "problem",
+        "issue",
+        "concern",
+        "worry",
+        "unfortunate",
+        "upset",
+        "frustrat",
     ];
 
-    let positive_count = positive_words.iter()
+    let positive_count = positive_words
+        .iter()
         .filter(|word| content_lower.contains(word))
         .count();
 
-    let negative_count = negative_words.iter()
+    let negative_count = negative_words
+        .iter()
         .filter(|word| content_lower.contains(word))
         .count();
 
@@ -110,20 +134,90 @@ fn extract_topics(content: &str) -> Vec<String> {
 
     // Topic keywords mapping
     let topic_keywords: HashMap<&str, Vec<&str>> = [
-        ("tech", vec!["code", "programming", "software", "ai", "ml", "tech", "computer", "algorithm"]),
-        ("work", vec!["work", "job", "career", "meeting", "project", "deadline", "office"]),
-        ("health", vec!["health", "fitness", "workout", "exercise", "diet", "wellness"]),
-        ("news", vec!["news", "breaking", "report", "announce", "update", "alert"]),
-        ("entertainment", vec!["movie", "music", "game", "show", "concert", "entertainment"]),
-        ("politics", vec!["politics", "government", "election", "policy", "vote", "senator"]),
-        ("sports", vec!["sport", "game", "team", "player", "match", "score", "win", "lose"]),
-        ("food", vec!["food", "recipe", "cook", "restaurant", "meal", "delicious"]),
-        ("travel", vec!["travel", "trip", "vacation", "flight", "hotel", "destination"]),
-        ("business", vec!["business", "startup", "entrepreneur", "invest", "market", "finance"]),
-    ].iter().cloned().collect();
+        (
+            "tech",
+            vec![
+                "code",
+                "programming",
+                "software",
+                "ai",
+                "ml",
+                "tech",
+                "computer",
+                "algorithm",
+            ],
+        ),
+        (
+            "work",
+            vec![
+                "work", "job", "career", "meeting", "project", "deadline", "office",
+            ],
+        ),
+        (
+            "health",
+            vec![
+                "health", "fitness", "workout", "exercise", "diet", "wellness",
+            ],
+        ),
+        (
+            "news",
+            vec!["news", "breaking", "report", "announce", "update", "alert"],
+        ),
+        (
+            "entertainment",
+            vec!["movie", "music", "game", "show", "concert", "entertainment"],
+        ),
+        (
+            "politics",
+            vec![
+                "politics",
+                "government",
+                "election",
+                "policy",
+                "vote",
+                "senator",
+            ],
+        ),
+        (
+            "sports",
+            vec![
+                "sport", "game", "team", "player", "match", "score", "win", "lose",
+            ],
+        ),
+        (
+            "food",
+            vec!["food", "recipe", "cook", "restaurant", "meal", "delicious"],
+        ),
+        (
+            "travel",
+            vec![
+                "travel",
+                "trip",
+                "vacation",
+                "flight",
+                "hotel",
+                "destination",
+            ],
+        ),
+        (
+            "business",
+            vec![
+                "business",
+                "startup",
+                "entrepreneur",
+                "invest",
+                "market",
+                "finance",
+            ],
+        ),
+    ]
+    .iter()
+    .cloned()
+    .collect();
 
     for (topic, keywords) in topic_keywords {
-        let matches = keywords.iter()
+        let matches = keywords
+            .iter()
             .filter(|keyword| content_lower.contains(keyword))
             .count();
 
@@ -159,10 +253,7 @@ fn generate_summary(content: &str) -> Option<String> {
 }
 
 /// Auto-categorize posts based on rules
-pub fn auto_categorize_posts(
-    conn: &Connection,
-    space_id: &str,
-) -> Result<usize, SocialError> {
+pub fn auto_categorize_posts(conn: &Connection, space_id: &str) -> Result<usize, SocialError> {
     let categories = get_categories(conn, space_id)?;
     let mut categorized = 0;
 
@@ -180,12 +271,7 @@ pub fn auto_categorize_posts(
 
     let posts: Vec<(String, Option<String>, String, String)> = stmt
         .query_map([space_id], |row| {
-            Ok((
-                row.get(0)?,
-                row.get(1)?,
-                row.get(2)?,
-                row.get(3)?,
-            ))
+            Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?))
         })?
         .filter_map(Result::ok)
         .collect();
@@ -199,12 +285,16 @@ pub fn auto_categorize_posts(
             let category_name_lower = category.name.to_lowercase();
 
             // Check if any topic matches category name
-            let has_topic_match = insight.topics.iter()
-                .any(|topic| category_name_lower.contains(topic) || topic.contains(&category_name_lower));
+            let has_topic_match = insight.topics.iter().any(|topic| {
+                category_name_lower.contains(topic) || topic.contains(&category_name_lower)
+            });
 
             // Platform-based categorization
             let is_work_platform = matches!(platform.as_str(), "linkedin" | "slack");
-            let is_work_category = matches!(category.name.to_lowercase().as_str(), "work" | "professional" | "career");
+            let is_work_category = matches!(
+                category.name.to_lowercase().as_str(),
+                "work" | "professional" | "career"
+            );
 
             if has_topic_match || (is_work_platform && is_work_category) {
                 if assign_category(conn, &post_id, &category.id, Some("auto")).is_ok() {
@@ -252,10 +342,19 @@ mod tests {
 
     #[test]
     fn test_sentiment_detection() {
-        assert_eq!(detect_sentiment("I love this amazing product!"), Sentiment::Positive);
-        assert_eq!(detect_sentiment("This is terrible and awful"), Sentiment::Negative);
+        assert_eq!(
+            detect_sentiment("I love this amazing product!"),
+            Sentiment::Positive
+        );
+        assert_eq!(
+            detect_sentiment("This is terrible and awful"),
+            Sentiment::Negative
+        );
         assert_eq!(detect_sentiment("The weather is nice"), Sentiment::Neutral);
-        assert_eq!(detect_sentiment("I love it but hate the price"), Sentiment::Mixed);
+        assert_eq!(
+            detect_sentiment("I love it but hate the price"),
+            Sentiment::Mixed
+        );
     }
 
     #[test]

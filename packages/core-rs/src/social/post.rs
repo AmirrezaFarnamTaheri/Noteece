@@ -43,11 +43,21 @@ pub fn store_social_posts(
     const MAX_MEDIA_JSON_SIZE: usize = 100_000; // 100KB limit
     const MAX_RAW_JSON_SIZE: usize = 500_000; // 500KB limit
 
+    log::debug!(
+        "[Social::Post] Storing {} posts for account {}",
+        posts.len(),
+        account_id
+    );
+
     let now = Utc::now().timestamp_millis();
     let mut stored = 0;
 
     // Use transaction for atomicity
-    let tx = conn.unchecked_transaction()?;
+    log::debug!("[Social::Post] Starting transaction for batch insert");
+    let tx = conn.unchecked_transaction().map_err(|e| {
+        log::error!("[Social::Post] Failed to start transaction: {}", e);
+        e
+    })?;
 
     for post in posts {
         let post_id = Ulid::new().to_string();
@@ -56,7 +66,9 @@ pub fn store_social_posts(
         let mut media_json = serde_json::to_string(&post.media_urls)?;
         if media_json.len() > MAX_MEDIA_JSON_SIZE {
             log::warn!("Post media JSON exceeds size limit, truncating media list");
-            let truncated_media = post.media_urls.iter()
+            let truncated_media = post
+                .media_urls
+                .iter()
                 .take(100) // Limit to 100 media items
                 .cloned()
                 .collect::<Vec<_>>();
@@ -118,12 +130,30 @@ pub fn store_social_posts(
     }
 
     // Commit transaction
-    tx.commit()?;
+    log::debug!(
+        "[Social::Post] Committing transaction with {} posts stored",
+        stored
+    );
+    tx.commit().map_err(|e| {
+        log::error!("[Social::Post] Failed to commit transaction: {}", e);
+        e
+    })?;
 
     // Update account last_sync timestamp
     if stored > 0 {
+        log::debug!(
+            "[Social::Post] Updating last_sync for account {}",
+            account_id
+        );
         super::account::update_last_sync(conn, account_id)?;
     }
+
+    log::info!(
+        "[Social::Post] Successfully stored {} out of {} posts for account {}",
+        stored,
+        posts.len(),
+        account_id
+    );
 
     Ok(stored)
 }
@@ -136,8 +166,15 @@ pub fn get_social_posts(
 ) -> Result<Vec<SocialPost>, SocialError> {
     let limit = limit.unwrap_or(100);
 
-    let mut stmt = conn.prepare(
-        "SELECT id, account_id, platform, platform_post_id,
+    log::debug!(
+        "[Social::Post] Fetching up to {} posts for account {}",
+        limit,
+        account_id
+    );
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, account_id, platform, platform_post_id,
                 author, author_handle, content, content_html,
                 media_urls_json, timestamp, fetched_at,
                 likes, shares, comments, views,
@@ -146,7 +183,11 @@ pub fn get_social_posts(
          WHERE account_id = ?1
          ORDER BY timestamp DESC
          LIMIT ?2",
-    )?;
+        )
+        .map_err(|e| {
+            log::error!("[Social::Post] Failed to prepare query: {}", e);
+            e
+        })?;
 
     let posts = stmt.query_map(params![account_id, limit], |row| {
         let media_json: Option<String> = row.get(8)?;
@@ -182,6 +223,12 @@ pub fn get_social_posts(
         result.push(post?);
     }
 
+    log::info!(
+        "[Social::Post] Retrieved {} posts for account {}",
+        result.len(),
+        account_id
+    );
+
     Ok(result)
 }
 
@@ -193,6 +240,13 @@ pub fn search_social_posts(
     limit: Option<i64>,
 ) -> Result<Vec<SocialPost>, SocialError> {
     let limit = limit.unwrap_or(100);
+
+    log::debug!(
+        "[Social::Post] Searching posts in space {} with query '{}', limit={}",
+        space_id,
+        query,
+        limit
+    );
 
     let mut stmt = conn.prepare(
         "SELECT p.id, p.account_id, p.platform, p.platform_post_id,
@@ -245,6 +299,12 @@ pub fn search_social_posts(
         result.push(post?);
     }
 
+    log::info!(
+        "[Social::Post] Search returned {} posts for query '{}'",
+        result.len(),
+        query
+    );
+
     Ok(result)
 }
 
@@ -254,11 +314,28 @@ pub fn delete_old_posts(
     account_id: &str,
     before_timestamp: i64,
 ) -> Result<usize, SocialError> {
-    let deleted = conn.execute(
-        "DELETE FROM social_post
+    log::debug!(
+        "[Social::Post] Deleting posts for account {} before timestamp {}",
+        account_id,
+        before_timestamp
+    );
+
+    let deleted = conn
+        .execute(
+            "DELETE FROM social_post
          WHERE account_id = ?1 AND timestamp < ?2",
-        params![account_id, before_timestamp],
-    )?;
+            params![account_id, before_timestamp],
+        )
+        .map_err(|e| {
+            log::error!("[Social::Post] Failed to delete old posts: {}", e);
+            e
+        })?;
+
+    log::info!(
+        "[Social::Post] Deleted {} old posts for account {}",
+        deleted,
+        account_id
+    );
 
     Ok(deleted)
 }
@@ -268,23 +345,36 @@ pub fn get_post_statistics(
     conn: &Connection,
     space_id: &str,
 ) -> Result<Vec<(String, i64)>, SocialError> {
-    let mut stmt = conn.prepare(
-        "SELECT p.platform, COUNT(*) as count
+    log::debug!(
+        "[Social::Post] Fetching post statistics for space {}",
+        space_id
+    );
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT p.platform, COUNT(*) as count
          FROM social_post p
          JOIN social_account a ON p.account_id = a.id
          WHERE a.space_id = ?1
          GROUP BY p.platform
          ORDER BY count DESC",
-    )?;
+        )
+        .map_err(|e| {
+            log::error!("[Social::Post] Failed to prepare statistics query: {}", e);
+            e
+        })?;
 
-    let stats = stmt.query_map([space_id], |row| {
-        Ok((row.get(0)?, row.get(1)?))
-    })?;
+    let stats = stmt.query_map([space_id], |row| Ok((row.get(0)?, row.get(1)?)))?;
 
     let mut result = Vec::new();
     for stat in stats {
         result.push(stat?);
     }
+
+    log::info!(
+        "[Social::Post] Retrieved statistics for {} platforms",
+        result.len()
+    );
 
     Ok(result)
 }

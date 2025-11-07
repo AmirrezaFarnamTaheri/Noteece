@@ -2,9 +2,9 @@
 // Tests all security fixes from Session 5 QA
 
 use core_rs::collaboration::{
-    add_user_to_space, check_permission, grant_permission, init_rbac_tables, invite_user,
-    remove_user_from_space, revoke_permission, update_user_role, get_space_users,
-    get_roles, activate_user, suspend_user,
+    activate_user, add_user_to_space, check_permission, get_roles, get_space_users,
+    grant_permission, init_rbac_tables, invite_user, remove_user_from_space, revoke_permission,
+    suspend_user, update_user_role,
 };
 use core_rs::db;
 use rusqlite::Connection;
@@ -237,15 +237,24 @@ fn test_get_space_users_bulk_fetch_small() {
     // Add 10 users
     for i in 0..10 {
         let user_id = Ulid::new().to_string();
-        add_user_to_space(&conn, &space_id, &user_id, &format!("user{}@example.com", i), "viewer")
-            .expect("Failed to add user");
+        add_user_to_space(
+            &conn,
+            &space_id,
+            &user_id,
+            &format!("user{}@example.com", i),
+            "viewer",
+        )
+        .expect("Failed to add user");
     }
 
     let users = get_space_users(&conn, &space_id).expect("Failed to get space users");
 
     assert_eq!(users.len(), 10);
     for user in &users {
-        assert!(!user.permissions.is_empty(), "User should have permissions loaded");
+        assert!(
+            !user.permissions.is_empty(),
+            "User should have permissions loaded"
+        );
     }
 }
 
@@ -268,8 +277,14 @@ fn test_get_space_users_bulk_fetch_large() {
             1 => "editor",
             _ => "viewer",
         };
-        add_user_to_space(&conn, &space_id, &user_id, &format!("user{}@example.com", i), role)
-            .expect("Failed to add user");
+        add_user_to_space(
+            &conn,
+            &space_id,
+            &user_id,
+            &format!("user{}@example.com", i),
+            role,
+        )
+        .expect("Failed to add user");
 
         // Add custom permissions to some users
         if i % 5 == 0 {
@@ -327,10 +342,22 @@ fn test_get_space_users_mixed_permissions() {
     let user = &users[0];
 
     // Should include both role and custom permissions
-    assert!(user.permissions.contains(&"read_notes".to_string()), "Missing role permission");
-    assert!(user.permissions.contains(&"manage_tags".to_string()), "Missing custom permission");
-    assert!(user.permissions.contains(&"export_data".to_string()), "Missing custom permission");
-    assert!(user.permissions.contains(&"import_data".to_string()), "Missing custom permission");
+    assert!(
+        user.permissions.contains(&"read_notes".to_string()),
+        "Missing role permission"
+    );
+    assert!(
+        user.permissions.contains(&"manage_tags".to_string()),
+        "Missing custom permission"
+    );
+    assert!(
+        user.permissions.contains(&"export_data".to_string()),
+        "Missing custom permission"
+    );
+    assert!(
+        user.permissions.contains(&"import_data".to_string()),
+        "Missing custom permission"
+    );
 }
 
 // ============== PERMISSION REVOCATION FIX TESTS ==============
@@ -355,8 +382,8 @@ fn test_permission_revocation_with_empty_custom_permissions() {
     grant_permission(&conn, &space_id, &user_id, "manage_tags").expect("Failed");
 
     // Verify custom permission exists
-    let has_manage = check_permission(&conn, &space_id, &user_id, "manage_tags")
-        .expect("Failed to check");
+    let has_manage =
+        check_permission(&conn, &space_id, &user_id, "manage_tags").expect("Failed to check");
     assert!(has_manage);
 
     // Now revoke the custom permission (simulating UI reset to role defaults)
@@ -364,13 +391,16 @@ fn test_permission_revocation_with_empty_custom_permissions() {
 
     // CRITICAL TEST: Permission should be revoked even when customPermissions array is empty
     // This tests the Session 5 fix where we removed the `length > 0` check
-    let has_manage_after = check_permission(&conn, &space_id, &user_id, "manage_tags")
-        .expect("Failed to check");
-    assert!(!has_manage_after, "Permission should be revoked (Session 5 fix verification)");
+    let has_manage_after =
+        check_permission(&conn, &space_id, &user_id, "manage_tags").expect("Failed to check");
+    assert!(
+        !has_manage_after,
+        "Permission should be revoked (Session 5 fix verification)"
+    );
 
     // Role permissions should still exist
-    let can_write = check_permission(&conn, &space_id, &user_id, "write_notes")
-        .expect("Failed to check");
+    let can_write =
+        check_permission(&conn, &space_id, &user_id, "write_notes").expect("Failed to check");
     assert!(can_write, "Role permissions should remain intact");
 }
 
@@ -506,7 +536,10 @@ fn test_nonexistent_space() {
 
     let result = check_permission(&conn, &fake_space, &user_id, "read_notes");
     assert!(result.is_ok());
-    assert!(!result.unwrap(), "Nonexistent space should deny permissions");
+    assert!(
+        !result.unwrap(),
+        "Nonexistent space should deny permissions"
+    );
 }
 
 #[test]

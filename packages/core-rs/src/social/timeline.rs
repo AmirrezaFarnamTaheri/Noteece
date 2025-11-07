@@ -56,7 +56,9 @@ pub fn get_unified_timeline(
         if !platforms.is_empty() {
             query.push_str(" AND p.platform IN (");
             for (i, platform) in platforms.iter().enumerate() {
-                if i > 0 { query.push_str(", "); }
+                if i > 0 {
+                    query.push_str(", ");
+                }
                 query.push('?');
                 params.push(Box::new(platform.clone()));
             }
@@ -69,7 +71,9 @@ pub fn get_unified_timeline(
         if !categories.is_empty() {
             query.push_str(" AND pc.category_id IN (");
             for (i, category) in categories.iter().enumerate() {
-                if i > 0 { query.push_str(", "); }
+                if i > 0 {
+                    query.push_str(", ");
+                }
                 query.push('?');
                 params.push(Box::new(category.clone()));
             }
@@ -269,10 +273,7 @@ pub struct TimelineStats {
     pub this_week_posts: i64,
 }
 
-pub fn get_timeline_stats(
-    conn: &Connection,
-    space_id: &str,
-) -> Result<TimelineStats, SocialError> {
+pub fn get_timeline_stats(conn: &Connection, space_id: &str) -> Result<TimelineStats, SocialError> {
     let now = chrono::Utc::now().timestamp_millis();
     let today_start = now - (now % 86400000); // 86400000 ms = 1 day
     let week_start = today_start - (6 * 86400000); // 6 days

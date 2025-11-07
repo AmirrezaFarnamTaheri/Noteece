@@ -34,7 +34,10 @@ pub fn create_category(
 ) -> Result<SocialCategory, SocialError> {
     let id = Ulid::new().to_string();
     let now = Utc::now().timestamp_millis();
-    let filters_json = filters.as_ref().map(|f| serde_json::to_string(f)).transpose()?;
+    let filters_json = filters
+        .as_ref()
+        .map(|f| serde_json::to_string(f))
+        .transpose()?;
 
     conn.execute(
         "INSERT INTO social_category (
@@ -68,8 +71,7 @@ pub fn get_categories(
 
     let categories = stmt.query_map([space_id], |row| {
         let filters_json: Option<String> = row.get(5)?;
-        let filters = filters_json
-            .and_then(|s| serde_json::from_str(&s).ok());
+        let filters = filters_json.and_then(|s| serde_json::from_str(&s).ok());
 
         Ok(SocialCategory {
             id: row.get(0)?,
@@ -103,8 +105,7 @@ pub fn get_category(
 
     let result = stmt.query_row([category_id], |row| {
         let filters_json: Option<String> = row.get(5)?;
-        let filters = filters_json
-            .and_then(|s| serde_json::from_str(&s).ok());
+        let filters = filters_json.and_then(|s| serde_json::from_str(&s).ok());
 
         Ok(SocialCategory {
             id: row.get(0)?,
@@ -157,14 +158,8 @@ pub fn update_category(
 }
 
 /// Delete a category
-pub fn delete_category(
-    conn: &Connection,
-    category_id: &str,
-) -> Result<(), SocialError> {
-    conn.execute(
-        "DELETE FROM social_category WHERE id = ?1",
-        [category_id],
-    )?;
+pub fn delete_category(conn: &Connection, category_id: &str) -> Result<(), SocialError> {
+    conn.execute("DELETE FROM social_category WHERE id = ?1", [category_id])?;
     Ok(())
 }
 
@@ -216,8 +211,7 @@ pub fn get_post_categories(
 
     let categories = stmt.query_map([post_id], |row| {
         let filters_json: Option<String> = row.get(5)?;
-        let filters = filters_json
-            .and_then(|s| serde_json::from_str(&s).ok());
+        let filters = filters_json.and_then(|s| serde_json::from_str(&s).ok());
 
         Ok(SocialCategory {
             id: row.get(0)?,
@@ -239,10 +233,7 @@ pub fn get_post_categories(
 }
 
 /// Auto-categorize posts based on rules
-pub fn auto_categorize_posts(
-    conn: &Connection,
-    space_id: &str,
-) -> Result<usize, SocialError> {
+pub fn auto_categorize_posts(conn: &Connection, space_id: &str) -> Result<usize, SocialError> {
     let categories = get_categories(conn, space_id)?;
     let mut categorized = 0;
 
@@ -255,7 +246,7 @@ pub fn auto_categorize_posts(
                  WHERE a.space_id = ?1
                    AND p.id NOT IN (
                        SELECT post_id FROM social_post_category WHERE category_id = ?2
-                   )"
+                   )",
             );
 
             let mut params_vec: Vec<Box<dyn rusqlite::ToSql>> = vec![
@@ -267,7 +258,9 @@ pub fn auto_categorize_posts(
             if let Some(platforms) = filters.platforms {
                 query.push_str(" AND p.platform IN (");
                 for (i, platform) in platforms.iter().enumerate() {
-                    if i > 0 { query.push_str(", "); }
+                    if i > 0 {
+                        query.push_str(", ");
+                    }
                     query.push('?');
                     params_vec.push(Box::new(platform.clone()));
                 }
@@ -277,7 +270,9 @@ pub fn auto_categorize_posts(
             if let Some(keywords) = filters.keywords {
                 query.push_str(" AND (");
                 for (i, keyword) in keywords.iter().enumerate() {
-                    if i > 0 { query.push_str(" OR "); }
+                    if i > 0 {
+                        query.push_str(" OR ");
+                    }
                     query.push_str("p.content LIKE ? ESCAPE '\\'");
                     // Escape SQL LIKE special characters % and _
                     let escaped_keyword = keyword
