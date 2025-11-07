@@ -91,6 +91,12 @@
     if (!durationStr) return 0;
 
     const parts = durationStr.split(':').map(p => parseInt(p, 10));
+
+    // Validate all parts are valid numbers
+    if (parts.some(p => !Number.isFinite(p) || p < 0)) {
+      return 0;
+    }
+
     if (parts.length === 3) {
       // HH:MM:SS
       return parts[0] * 3600 + parts[1] * 60 + parts[2];

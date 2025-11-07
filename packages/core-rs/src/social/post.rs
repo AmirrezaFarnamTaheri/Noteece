@@ -53,14 +53,14 @@ pub fn store_social_posts(
         let post_id = Ulid::new().to_string();
 
         // Cap media JSON size to prevent OOM
-        let media_json = serde_json::to_string(&post.media_urls)?;
+        let mut media_json = serde_json::to_string(&post.media_urls)?;
         if media_json.len() > MAX_MEDIA_JSON_SIZE {
             log::warn!("Post media JSON exceeds size limit, truncating media list");
             let truncated_media = post.media_urls.iter()
                 .take(100) // Limit to 100 media items
                 .cloned()
                 .collect::<Vec<_>>();
-            let media_json = serde_json::to_string(&truncated_media)?;
+            media_json = serde_json::to_string(&truncated_media)?;
             if media_json.len() > MAX_MEDIA_JSON_SIZE {
                 continue; // Skip post if still too large
             }
@@ -105,15 +105,7 @@ pub fn store_social_posts(
         ) {
             Ok(rows) if rows > 0 => {
                 stored += rows;
-
-                // Also update FTS index if post has content
-                // Store post_id explicitly to avoid relying on rowid association
-                if let Some(content) = &post.content {
-                    let _ = tx.execute(
-                        "INSERT INTO social_post_fts (content, author, post_id) VALUES (?, ?, ?)",
-                        params![content, &post.author, &post_id],
-                    );
-                }
+                // FTS index is automatically updated by triggers
             }
             Ok(_) => {
                 // Post already exists (INSERT OR IGNORE), not an error

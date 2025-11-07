@@ -96,7 +96,7 @@ fn get_platform_stats(
          ORDER BY post_count DESC",
     )?;
 
-    let stats = stmt.query_map([space_id, &cutoff.to_string()], |row| {
+    let stats = stmt.query_map(params![space_id, cutoff], |row| {
         Ok(PlatformStats {
             platform: row.get(0)?,
             post_count: row.get(1)?,
@@ -132,7 +132,7 @@ fn get_time_series(
          ORDER BY date ASC",
     )?;
 
-    let points = stmt.query_map([space_id, &cutoff.to_string()], |row| {
+    let points = stmt.query_map(params![space_id, cutoff], |row| {
         Ok(TimeSeriesPoint {
             date: row.get(0)?,
             count: row.get(1)?,
@@ -169,7 +169,7 @@ fn get_category_stats(
          LIMIT 10",
     )?;
 
-    let stats = stmt.query_map([space_id, &cutoff.to_string()], |row| {
+    let stats = stmt.query_map(params![space_id, cutoff], |row| {
         Ok(CategoryStats {
             category_name: row.get(0)?,
             post_count: row.get(1)?,
@@ -204,7 +204,7 @@ fn get_engagement_stats(
          WHERE a.space_id = ?1 AND p.timestamp >= ?2",
     )?;
 
-    let result = stmt.query_row([space_id, &cutoff.to_string()], |row| {
+    let result = stmt.query_row(params![space_id, cutoff], |row| {
         let total_posts: i64 = row.get(0)?;
         let total_likes: i64 = row.get(1)?;
         let total_comments: i64 = row.get(2)?;
@@ -248,7 +248,7 @@ fn get_top_posts(
          LIMIT 10",
     )?;
 
-    let posts = stmt.query_map([space_id, &cutoff.to_string()], |row| {
+    let posts = stmt.query_map(params![space_id, cutoff], |row| {
         let content: Option<String> = row.get(3)?;
         let truncated_content = content
             .unwrap_or_default()

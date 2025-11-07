@@ -186,6 +186,12 @@
         if (!match) return null;
 
         let number = parseFloat(match[1]);
+
+        // Validate number is finite before processing
+        if (!Number.isFinite(number) || number < 0) {
+            return null;
+        }
+
         const suffix = match[2];
 
         if (suffix === 'k') number *= 1000;

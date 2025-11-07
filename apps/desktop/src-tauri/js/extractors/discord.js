@@ -50,7 +50,7 @@
     const id = element.getAttribute('id');
     if (id) {
       const match = id.match(/chat-messages-(\d+)/);
-      if (match) return match[1];
+      if (match) return `dc_${match[1]}`;
     }
 
     // Try to get from data attributes
@@ -58,19 +58,17 @@
     if (messageContainer) {
       const listItemId = messageContainer.getAttribute('data-list-item-id');
       const match = listItemId?.match(/chat-messages___chat-messages-(\d+)/);
-      if (match) return match[1];
+      if (match) return `dc_${match[1]}`;
     }
 
-    // Fallback: generate ID
+    // Fallback: compose from channel + author + time + content prefix
+    const channelEl = document.querySelector(SELECTORS.channelName);
+    const channel = (utils.safeText(channelEl) || 'channel').toLowerCase().replace(/\W+/g, '_');
+    const authorId = element.querySelector(SELECTORS.authorId)?.getAttribute('data-author-id') || 'anon';
     const contentEl = element.querySelector(SELECTORS.content);
-    const authorEl = element.querySelector(SELECTORS.author);
-    if (contentEl && authorEl) {
-      const text = utils.safeText(contentEl).substring(0, 30);
-      const author = utils.safeText(authorEl);
-      return `dc_${author.replace(/\s/g, '_')}_${text.replace(/\s/g, '_')}_${Math.random().toString(36).substr(2, 9)}`;
-    }
-
-    return `dc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const contentPrefix = contentEl ? utils.safeText(contentEl).substring(0, 24).replace(/\W+/g, '_') : 'msg';
+    const ts = Date.now();
+    return `dc_${channel}_${authorId}_${contentPrefix}_${ts}_${Math.random().toString(36).substr(2,6)}`;
   }
 
   /**

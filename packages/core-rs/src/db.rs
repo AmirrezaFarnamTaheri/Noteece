@@ -304,6 +304,24 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
                 tokenize='porter unicode61 remove_diacritics 2'
             );
 
+            -- Triggers to maintain FTS index automatically
+            CREATE TRIGGER social_post_ai AFTER INSERT ON social_post BEGIN
+                INSERT INTO social_post_fts(rowid, content, author, post_id)
+                VALUES (new.rowid, COALESCE(new.content, ''), COALESCE(new.author, ''), new.id);
+            END;
+
+            CREATE TRIGGER social_post_ad AFTER DELETE ON social_post BEGIN
+                DELETE FROM social_post_fts WHERE rowid = old.rowid;
+            END;
+
+            CREATE TRIGGER social_post_au AFTER UPDATE ON social_post BEGIN
+                UPDATE social_post_fts
+                SET content = COALESCE(new.content, ''),
+                    author = COALESCE(new.author, ''),
+                    post_id = new.id
+                WHERE rowid = old.rowid;
+            END;
+
             -- Sync history
             CREATE TABLE social_sync_history (
                 id TEXT PRIMARY KEY,

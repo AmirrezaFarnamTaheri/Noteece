@@ -36,18 +36,25 @@
   };
 
   /**
+   * Validate YouTube video ID format (11 alphanumeric characters, dash, underscore)
+   */
+  function isValidYouTubeId(id) {
+    return typeof id === 'string' && /^[A-Za-z0-9_-]{11}$/.test(id);
+  }
+
+  /**
    * Extract video ID from various YouTube URL formats and data attributes
    */
   function getVideoId(element) {
     // Try data-video-id attribute first (most reliable)
     const dataVideoId = element.getAttribute('data-video-id');
-    if (dataVideoId) return dataVideoId;
+    if (dataVideoId && isValidYouTubeId(dataVideoId)) return dataVideoId;
 
     // Try finding in child elements
     const childWithId = element.querySelector('[data-video-id]');
     if (childWithId) {
       const id = childWithId.getAttribute('data-video-id');
-      if (id) return id;
+      if (id && isValidYouTubeId(id)) return id;
     }
 
     // Try extracting from link href
@@ -57,11 +64,11 @@
       if (href) {
         // Extract video ID from /watch?v=VIDEO_ID
         const watchMatch = href.match(/[?&]v=([^&]+)/);
-        if (watchMatch) return watchMatch[1];
+        if (watchMatch && isValidYouTubeId(watchMatch[1])) return watchMatch[1];
 
         // Extract from /shorts/VIDEO_ID
         const shortsMatch = href.match(/\/shorts\/([^?&/]+)/);
-        if (shortsMatch) return shortsMatch[1];
+        if (shortsMatch && isValidYouTubeId(shortsMatch[1])) return shortsMatch[1];
       }
     }
 
@@ -70,7 +77,7 @@
     if (thumbnailEl) {
       const src = thumbnailEl.getAttribute('src');
       const match = src?.match(/\/vi\/([^/]+)\//);
-      if (match) return match[1];
+      if (match && isValidYouTubeId(match[1])) return match[1];
     }
 
     return null;
