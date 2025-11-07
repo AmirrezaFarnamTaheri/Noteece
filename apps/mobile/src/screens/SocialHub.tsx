@@ -21,6 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { PostCard } from "../components/social/PostCard";
 import { CategoryPicker } from "../components/social/CategoryPicker";
 import { useSharedContent } from "../hooks/useSharedContent";
+import { useCurrentSpace } from "../store/app-context";
 import {
   getTimelinePosts,
   getCategories,
@@ -54,7 +55,8 @@ export function SocialHub() {
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
-  const spaceId = "default"; // TODO: Get from context/state
+  // Get current space from context
+  const spaceId = useCurrentSpace();
 
   // Shared content from other apps
   const { hasSharedContent, sharedItems, processItems, refresh } =

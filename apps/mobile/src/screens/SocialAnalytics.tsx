@@ -23,6 +23,7 @@ import {
   getCategoryStats,
   getTotalPostCount,
 } from "../lib/social-database";
+import { useCurrentSpace } from "../store/app-context";
 import type { PlatformStats, CategoryStats } from "../types/social";
 
 const { width } = Dimensions.get("window");
@@ -34,7 +35,8 @@ export function SocialAnalytics() {
   const [categoryStats, setCategoryStats] = useState<CategoryStats[]>([]);
   const [totalPosts, setTotalPosts] = useState(0);
 
-  const spaceId = "default"; // TODO: Get from context/state
+  // Get current space from context
+  const spaceId = useCurrentSpace();
 
   useEffect(() => {
     loadAnalytics();

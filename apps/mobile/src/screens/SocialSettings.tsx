@@ -21,6 +21,8 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import * as TaskManager from "expo-task-manager";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
 import {
   isBiometricAvailable,
   isSocialBiometricEnabled,
@@ -33,6 +35,8 @@ import {
   stopBackgroundSync,
   triggerManualSync,
 } from "../lib/sync/background-sync";
+import { useCurrentSpace } from "../store/app-context";
+import { dbQuery } from "../lib/database";
 
 interface SettingsItem {
   key: string;
@@ -69,6 +73,9 @@ function formatLastSync(isoString: string): string {
 }
 
 export function SocialSettings() {
+  // Get current space
+  const spaceId = useCurrentSpace();
+
   // Settings state
   const [autoSync, setAutoSync] = useState(true);
   const [wifiOnly, setWifiOnly] = useState(true);
@@ -83,6 +90,7 @@ export function SocialSettings() {
   // Sync state
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Load settings on mount
   useEffect(() => {
@@ -241,21 +249,72 @@ export function SocialSettings() {
     );
   };
 
-  const handleExportData = () => {
-    Alert.alert(
-      "Export Data",
-      "Export your social media data to a JSON file",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Export",
-          onPress: () => {
-            // TODO: Implement export functionality
-            Alert.alert("Coming Soon", "Export functionality will be available soon");
-          },
+  const handleExportData = async () => {
+    try {
+      setIsExporting(true);
+
+      // Query all social data
+      const [posts, categories, accounts, focusModes] = await Promise.all([
+        dbQuery("SELECT * FROM social_post WHERE space_id = ?", [spaceId]),
+        dbQuery("SELECT * FROM social_category WHERE space_id = ?", [spaceId]),
+        dbQuery("SELECT * FROM social_account WHERE space_id = ?", [spaceId]),
+        dbQuery("SELECT * FROM social_focus_mode WHERE space_id = ?", [spaceId]),
+      ]);
+
+      // Create export data
+      const exportData = {
+        version: "1.0.0",
+        exportedAt: new Date().toISOString(),
+        spaceId,
+        data: {
+          posts,
+          categories,
+          accounts,
+          focusModes,
         },
-      ]
-    );
+        metadata: {
+          postsCount: posts.length,
+          categoriesCount: categories.length,
+          accountsCount: accounts.length,
+          focusModesCount: focusModes.length,
+        },
+      };
+
+      // Create file
+      const fileName = `noteece_social_export_${Date.now()}.json`;
+      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+
+      await FileSystem.writeAsStringAsync(
+        fileUri,
+        JSON.stringify(exportData, null, 2),
+        { encoding: FileSystem.EncodingType.UTF8 }
+      );
+
+      // Share file
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: "application/json",
+          dialogTitle: "Export Social Data",
+          UTI: "public.json",
+        });
+
+        Alert.alert(
+          "Export Complete",
+          `Exported ${posts.length} posts, ${categories.length} categories, and ${accounts.length} accounts.`
+        );
+      } else {
+        Alert.alert(
+          "Export Complete",
+          `Data saved to ${fileName}. Sharing not available on this device.`
+        );
+      }
+    } catch (error) {
+      console.error("Export failed:", error);
+      Alert.alert("Export Failed", "Failed to export data. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const settings: SettingsItem[] = [
@@ -322,11 +381,13 @@ export function SocialSettings() {
     },
     {
       key: "exportData",
-      title: "Export Data",
-      subtitle: "Export your social media data to JSON",
+      title: isExporting ? "Exporting..." : "Export Data",
+      subtitle: isExporting
+        ? "Creating export file..."
+        : "Export your social media data to JSON",
       type: "button",
       icon: "download",
-      onPress: handleExportData,
+      onPress: isExporting ? undefined : handleExportData,
     },
   ];
 
