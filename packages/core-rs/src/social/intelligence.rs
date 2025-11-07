@@ -399,6 +399,8 @@ pub fn create_auto_rule(
 mod tests {
     use super::*;
 
+    // ===== Sentiment Detection Tests =====
+
     #[test]
     fn test_sentiment_detection() {
         assert_eq!(
@@ -417,6 +419,55 @@ mod tests {
     }
 
     #[test]
+    fn test_sentiment_edge_cases() {
+        // Empty string
+        assert_eq!(detect_sentiment(""), Sentiment::Neutral);
+
+        // Multiple positive indicators
+        assert_eq!(
+            detect_sentiment("I'm so happy and excited about this wonderful news!"),
+            Sentiment::Positive
+        );
+
+        // Multiple negative indicators
+        assert_eq!(
+            detect_sentiment("This is the worst, most disappointing failure ever"),
+            Sentiment::Negative
+        );
+
+        // Case insensitivity
+        assert_eq!(
+            detect_sentiment("I LOVE this AMAZING product"),
+            Sentiment::Positive
+        );
+        assert_eq!(
+            detect_sentiment("i hate terrible things"),
+            Sentiment::Negative
+        );
+
+        // Partial word matches
+        assert_eq!(
+            detect_sentiment("I congratulate you on your success"),
+            Sentiment::Positive
+        );
+    }
+
+    #[test]
+    fn test_sentiment_neutral_content() {
+        assert_eq!(
+            detect_sentiment("The meeting is at 3pm tomorrow"),
+            Sentiment::Neutral
+        );
+        assert_eq!(
+            detect_sentiment("Please review the attached document"),
+            Sentiment::Neutral
+        );
+        assert_eq!(detect_sentiment("1234567890"), Sentiment::Neutral);
+    }
+
+    // ===== Topic Extraction Tests =====
+
+    #[test]
     fn test_topic_extraction() {
         let topics = extract_topics("Just finished coding a new algorithm for AI");
         assert!(topics.contains(&"tech".to_string()));
@@ -426,9 +477,162 @@ mod tests {
     }
 
     #[test]
+    fn test_topic_extraction_multiple_topics() {
+        // Multiple topics in one post
+        let topics =
+            extract_topics("Just finished my workout at the gym, now heading to the office");
+        assert!(topics.contains(&"health".to_string()));
+        assert!(topics.contains(&"work".to_string()));
+
+        // Business and tech overlap
+        let topics = extract_topics("Our startup is building AI software for investors");
+        assert!(topics.contains(&"business".to_string()));
+        assert!(topics.contains(&"tech".to_string()));
+    }
+
+    #[test]
+    fn test_topic_extraction_edge_cases() {
+        // Empty string
+        let topics = extract_topics("");
+        assert_eq!(topics.len(), 0);
+
+        // No matching keywords
+        let topics = extract_topics("xyzabc123");
+        assert_eq!(topics.len(), 0);
+
+        // Case insensitivity
+        let topics = extract_topics("PROGRAMMING AI MACHINE LEARNING");
+        assert!(topics.contains(&"tech".to_string()));
+
+        // Partial matches
+        let topics = extract_topics("I'm a programmer working on algorithms");
+        assert!(topics.contains(&"tech".to_string()));
+        assert!(topics.contains(&"work".to_string()));
+    }
+
+    #[test]
+    fn test_topic_extraction_all_categories() {
+        // Tech
+        assert!(extract_topics("coding software development").contains(&"tech".to_string()));
+
+        // Work
+        assert!(extract_topics("office meeting deadline").contains(&"work".to_string()));
+
+        // Health
+        assert!(extract_topics("fitness workout exercise").contains(&"health".to_string()));
+
+        // News
+        assert!(extract_topics("breaking news report").contains(&"news".to_string()));
+
+        // Entertainment
+        assert!(extract_topics("watching a movie concert").contains(&"entertainment".to_string()));
+
+        // Politics
+        assert!(extract_topics("election government policy").contains(&"politics".to_string()));
+
+        // Sports
+        assert!(extract_topics("team player match score").contains(&"sports".to_string()));
+
+        // Food
+        assert!(extract_topics("delicious recipe cooking").contains(&"food".to_string()));
+
+        // Travel
+        assert!(extract_topics("vacation trip destination").contains(&"travel".to_string()));
+
+        // Business
+        assert!(extract_topics("startup entrepreneur investment").contains(&"business".to_string()));
+    }
+
+    // ===== Summary Generation Tests =====
+
+    #[test]
     fn test_summary_generation() {
         let content = "This is a test. It should only return the first sentence.";
         let summary = generate_summary(content);
         assert_eq!(summary, Some("This is a test.".to_string()));
+    }
+
+    #[test]
+    fn test_summary_edge_cases() {
+        // Empty string
+        assert_eq!(generate_summary(""), None);
+
+        // Short content without punctuation
+        let summary = generate_summary("Hello world");
+        assert_eq!(summary, Some("Hello world".to_string()));
+
+        // Long content without sentence breaks
+        let long_content = "a".repeat(200);
+        let summary = generate_summary(&long_content);
+        assert!(summary.is_some());
+        assert!(summary.unwrap().ends_with("..."));
+
+        // Content exactly 100 chars
+        let content_100 = "a".repeat(100);
+        let summary = generate_summary(&content_100);
+        assert_eq!(summary, Some(content_100));
+    }
+
+    #[test]
+    fn test_summary_different_terminators() {
+        // Period
+        let summary = generate_summary("First sentence. Second sentence.");
+        assert_eq!(summary, Some("First sentence.".to_string()));
+
+        // Exclamation mark
+        let summary = generate_summary("Exciting news! More details follow.");
+        assert_eq!(summary, Some("Exciting news!".to_string()));
+
+        // Question mark
+        let summary = generate_summary("Is this working? Yes it is.");
+        assert_eq!(summary, Some("Is this working?".to_string()));
+    }
+
+    #[test]
+    fn test_summary_truncation() {
+        // First sentence too long (>150 chars)
+        let long_sentence = format!("{}.", "a".repeat(200));
+        let summary = generate_summary(&long_sentence);
+        assert!(summary.is_some());
+        let result = summary.unwrap();
+        assert!(result.len() <= 103); // 100 chars + "..."
+        assert!(result.ends_with("..."));
+    }
+
+    // ===== Content Insight Tests =====
+
+    #[test]
+    fn test_analyze_post_content() {
+        let insight = analyze_post_content("I love coding AI algorithms!", "user123", "twitter");
+
+        assert_eq!(insight.sentiment, Sentiment::Positive);
+        assert!(insight.topics.contains(&"tech".to_string()));
+        assert!(insight.summary.is_some());
+        assert_eq!(insight.post_id, ""); // Set by caller
+    }
+
+    #[test]
+    fn test_analyze_post_content_empty() {
+        let insight = analyze_post_content("", "user123", "twitter");
+
+        assert_eq!(insight.sentiment, Sentiment::Neutral);
+        assert_eq!(insight.topics.len(), 0);
+        assert_eq!(insight.summary, None);
+    }
+
+    #[test]
+    fn test_analyze_post_content_complex() {
+        let content = "Terrible news! Our startup's AI project failed due to poor planning. Very disappointing.";
+        let insight = analyze_post_content(content, "founder", "linkedin");
+
+        // Should be negative despite tech/business topics
+        assert_eq!(insight.sentiment, Sentiment::Negative);
+
+        // Should detect both business and tech topics
+        assert!(insight.topics.contains(&"business".to_string()));
+        assert!(insight.topics.contains(&"tech".to_string()));
+
+        // Should have a summary
+        assert!(insight.summary.is_some());
     }
 }
