@@ -24,6 +24,12 @@ pub fn create_webview_session(
     platform: &str,
     dek: &[u8],
 ) -> Result<WebViewSession, SocialError> {
+    log::debug!(
+        "[Social::WebView] Creating session for account {} on platform {}",
+        account_id,
+        platform
+    );
+
     let id = Ulid::new().to_string();
     let now = Utc::now().timestamp_millis();
 
@@ -32,7 +38,13 @@ pub fn create_webview_session(
             id, account_id, platform, cookies, session_data, created_at, last_used
         ) VALUES (?1, ?2, ?3, NULL, NULL, ?4, ?5)",
         params![&id, account_id, platform, now, now],
-    )?;
+    )
+    .map_err(|e| {
+        log::error!("[Social::WebView] Failed to create session: {}", e);
+        e
+    })?;
+
+    log::info!("[Social::WebView] Successfully created session {}", id);
 
     Ok(WebViewSession {
         id: id.clone(),
@@ -84,7 +96,15 @@ pub fn save_session_cookies(
     cookies_json: &str,
     dek: &[u8],
 ) -> Result<(), SocialError> {
-    let encrypted_cookies = encrypt_string(cookies_json, dek)?;
+    log::debug!(
+        "[Social::WebView] Saving cookies for session {}",
+        session_id
+    );
+
+    let encrypted_cookies = encrypt_string(cookies_json, dek).map_err(|e| {
+        log::error!("[Social::WebView] Failed to encrypt cookies: {}", e);
+        e
+    })?;
     let now = Utc::now().timestamp_millis();
 
     conn.execute(
