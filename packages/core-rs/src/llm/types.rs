@@ -96,6 +96,8 @@ impl LLMRequest {
     }
 
     /// Compute a cache key for this request
+    /// SECURITY: Must include ALL request parameters to prevent cache poisoning
+    /// where different parameter sets incorrectly share cached responses
     pub fn cache_key(&self) -> String {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
@@ -115,6 +117,23 @@ impl LLMRequest {
         // Hash temperature
         if let Some(temp) = self.temperature {
             temp.to_bits().hash(&mut hasher);
+        }
+
+        // Hash max_tokens (prevents truncated responses from matching full ones)
+        if let Some(max) = self.max_tokens {
+            max.hash(&mut hasher);
+        }
+
+        // Hash top_p (sampling parameter affects response distribution)
+        if let Some(top_p) = self.top_p {
+            top_p.to_bits().hash(&mut hasher);
+        }
+
+        // Hash stop_sequences (affects where response terminates)
+        if let Some(ref stop) = self.stop_sequences {
+            for seq in stop {
+                seq.hash(&mut hasher);
+            }
         }
 
         format!("{:x}", hasher.finish())

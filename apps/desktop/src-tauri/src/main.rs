@@ -2023,17 +2023,16 @@ async fn open_social_webview(
         let platform_clone = account.platform.clone();
 
         window.once("tauri://created", move |_| {
-            let config_script = format!(
-                r#"
-                window.__NOTEECE_CONFIG__ = {{
-                    accountId: '{}',
-                    platform: '{}',
-                    pollInterval: 5000,
-                    debug: true,
-                }};
-                "#,
-                account_id_clone, platform_clone
-            );
+            // SECURITY: Use JSON serialization to prevent XSS injection
+            // DO NOT use format! with user-controlled data in JavaScript context
+            let config = serde_json::json!({
+                "accountId": account_id_clone,
+                "platform": platform_clone,
+                "pollInterval": 5000,
+                "debug": true,
+            });
+
+            let config_script = format!("window.__NOTEECE_CONFIG__ = {};", config.to_string());
 
             let full_script = format!(
                 "{}\n{}\n{}",
