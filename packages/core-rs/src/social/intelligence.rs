@@ -48,9 +48,22 @@ pub enum RuleType {
 
 /// Analyze post content and generate insights
 pub fn analyze_post_content(content: &str, author: &str, platform: &str) -> ContentInsight {
+    log::debug!(
+        "[Social::Intelligence] Analyzing post content - author: {}, platform: {}, content_len: {}",
+        author,
+        platform,
+        content.len()
+    );
+
     let sentiment = detect_sentiment(content);
     let topics = extract_topics(content);
     let summary = generate_summary(content);
+
+    log::info!(
+        "[Social::Intelligence] Analysis complete - sentiment: {:?}, topics: {:?}",
+        sentiment,
+        topics
+    );
 
     ContentInsight {
         post_id: String::new(), // Will be set by caller
@@ -116,7 +129,7 @@ fn detect_sentiment(content: &str) -> Sentiment {
         .filter(|word| content_lower.contains(word))
         .count();
 
-    if positive_count > 0 && negative_count > 0 {
+    let sentiment = if positive_count > 0 && negative_count > 0 {
         Sentiment::Mixed
     } else if positive_count > negative_count {
         Sentiment::Positive
@@ -124,7 +137,16 @@ fn detect_sentiment(content: &str) -> Sentiment {
         Sentiment::Negative
     } else {
         Sentiment::Neutral
-    }
+    };
+
+    log::debug!(
+        "[Social::Intelligence] Sentiment detected: {:?} (positive: {}, negative: {})",
+        sentiment,
+        positive_count,
+        negative_count
+    );
+
+    sentiment
 }
 
 /// Extract topics from content using keyword analysis
@@ -226,6 +248,12 @@ fn extract_topics(content: &str) -> Vec<String> {
         }
     }
 
+    log::debug!(
+        "[Social::Intelligence] Extracted {} topics: {:?}",
+        topics.len(),
+        topics
+    );
+
     topics
 }
 
@@ -254,6 +282,11 @@ fn generate_summary(content: &str) -> Option<String> {
 
 /// Auto-categorize posts based on rules
 pub fn auto_categorize_posts(conn: &Connection, space_id: &str) -> Result<usize, SocialError> {
+    log::debug!(
+        "[Social::Intelligence] Starting auto-categorization for space {}",
+        space_id
+    );
+
     let categories = get_categories(conn, space_id)?;
     let mut categorized = 0;
 
@@ -275,6 +308,11 @@ pub fn auto_categorize_posts(conn: &Connection, space_id: &str) -> Result<usize,
         })?
         .filter_map(Result::ok)
         .collect();
+
+    log::debug!(
+        "[Social::Intelligence] Found {} uncategorized posts to process",
+        posts.len()
+    );
 
     for (post_id, content_opt, author, platform) in posts {
         let content = content_opt.unwrap_or_default();
@@ -305,6 +343,13 @@ pub fn auto_categorize_posts(conn: &Connection, space_id: &str) -> Result<usize,
         }
     }
 
+    log::info!(
+        "[Social::Intelligence] Auto-categorization complete for space {}: {} posts categorized out of {}",
+        space_id,
+        categorized,
+        posts.len()
+    );
+
     Ok(categorized)
 }
 
@@ -316,6 +361,14 @@ pub fn create_auto_rule(
     pattern: &str,
     priority: i32,
 ) -> Result<String, SocialError> {
+    log::debug!(
+        "[Social::Intelligence] Creating auto-categorization rule - category: {}, type: {:?}, pattern: {}, priority: {}",
+        category_id,
+        rule_type,
+        pattern,
+        priority
+    );
+
     let id = ulid::Ulid::new().to_string();
     let now = chrono::Utc::now().timestamp_millis();
     let rule_type_str = match rule_type {
@@ -332,6 +385,12 @@ pub fn create_auto_rule(
         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         params![&id, category_id, rule_type_str, pattern, priority, now],
     )?;
+
+    log::info!(
+        "[Social::Intelligence] Created auto-categorization rule {} for category {}",
+        id,
+        category_id
+    );
 
     Ok(id)
 }
