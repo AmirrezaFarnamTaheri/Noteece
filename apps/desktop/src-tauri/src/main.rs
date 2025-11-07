@@ -23,7 +23,7 @@ use core_rs::personal_modes::{create_health_metric, get_health_metrics, create_h
 use core_rs::temporal_graph::{build_current_graph, save_graph_snapshot, get_graph_evolution, create_milestone, detect_major_notes, GraphSnapshot, GraphEvolution, GraphMilestone};
 use core_rs::sync_agent::{init_sync_tables, SyncAgent, DeviceInfo, DeviceType, SyncHistoryEntry, SyncConflict, ConflictType, ConflictResolution as SyncConflictResolution};
 use core_rs::collaboration::{init_rbac_tables, get_space_users, check_permission, invite_user, update_user_role, grant_permission, revoke_permission, suspend_user, activate_user, get_roles, add_user_to_space, remove_user_from_space, SpaceUser, Role, UserInvitation, CollaborationError};
-use core_rs::social::{add_social_account, get_social_accounts, get_social_account, update_social_account, delete_social_account, store_social_posts, get_unified_timeline, create_category, get_categories, assign_category, get_timeline_stats, create_webview_session, get_webview_session, save_session_cookies, get_platform_url, get_platform_display_name, SocialAccount, SocialPost, TimelinePost, TimelineFilters, SocialCategory, TimelineStats, WebViewSession};
+use core_rs::social::{add_social_account, get_social_accounts, get_social_account, update_social_account, delete_social_account, store_social_posts, get_unified_timeline, create_category, get_categories, assign_category, get_timeline_stats, create_webview_session, get_webview_session, save_session_cookies, get_platform_url, get_platform_display_name, get_accounts_needing_sync as get_social_accounts_needing_sync, get_all_sync_tasks, start_sync, complete_sync, fail_sync, get_sync_history, get_sync_stats, SocialAccount, SocialPost, TimelinePost, TimelineFilters, SocialCategory, TimelineStats, WebViewSession, SyncTask, SyncStatus, SyncStats};
 use rusqlite::Connection;
 use std::sync::Mutex;
 use tauri::State;
@@ -1589,6 +1589,10 @@ async fn open_social_webview(
         let universal_script = include_str!("../js/extractors/universal.js");
         let platform_script = match account.platform.as_str() {
             "twitter" => include_str!("../js/extractors/twitter.js"),
+            "youtube" => include_str!("../js/extractors/youtube.js"),
+            "instagram" => include_str!("../js/extractors/instagram.js"),
+            "tiktok" => include_str!("../js/extractors/tiktok.js"),
+            "pinterest" => include_str!("../js/extractors/pinterest.js"),
             _ => "",
         };
 
@@ -1684,6 +1688,63 @@ fn get_webview_session_cmd(
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         get_webview_session(conn, &account_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Get accounts that need syncing
+#[tauri::command]
+fn get_sync_tasks_cmd(
+    space_id: String,
+    db: State<DbConnection>,
+) -> Result<Vec<SyncTask>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_social_accounts_needing_sync(conn, &space_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Get all sync tasks for a space
+#[tauri::command]
+fn get_all_sync_tasks_cmd(
+    space_id: String,
+    db: State<DbConnection>,
+) -> Result<Vec<SyncTask>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_all_sync_tasks(conn, &space_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Get sync history for an account
+#[tauri::command]
+fn get_sync_history_cmd(
+    account_id: String,
+    limit: i64,
+    db: State<DbConnection>,
+) -> Result<Vec<SyncStatus>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_sync_history(conn, &account_id, limit).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Get sync statistics for a space
+#[tauri::command]
+fn get_sync_stats_cmd(
+    space_id: String,
+    db: State<DbConnection>,
+) -> Result<SyncStats, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_sync_stats(conn, &space_id).map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
@@ -1846,7 +1907,12 @@ fn main() {
         open_social_webview,
         handle_extracted_data,
         save_webview_cookies,
-        get_webview_session_cmd
+        get_webview_session_cmd,
+        // Social Media Sync commands
+        get_sync_tasks_cmd,
+        get_all_sync_tasks_cmd,
+        get_sync_history_cmd,
+        get_sync_stats_cmd
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

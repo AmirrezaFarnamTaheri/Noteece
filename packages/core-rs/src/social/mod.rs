@@ -8,6 +8,7 @@ pub mod post;
 pub mod category;
 pub mod timeline;
 pub mod webview;
+pub mod sync;
 
 // Re-export commonly used types
 pub use account::{
@@ -37,4 +38,10 @@ pub use webview::{
     save_session_cookies, save_session_data, get_session_cookies,
     get_session_data, update_session_last_used, delete_webview_session,
     delete_account_sessions, get_platform_url, get_platform_display_name,
+};
+
+pub use sync::{
+    SyncTask, SyncStatus, SyncStats, get_accounts_needing_sync,
+    get_all_sync_tasks, start_sync, complete_sync, fail_sync,
+    get_sync_history, get_sync_stats,
 };

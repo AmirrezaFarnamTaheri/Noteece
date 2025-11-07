@@ -5,9 +5,10 @@
  */
 
 import { Container, Tabs, Title, Text, Stack, Card, Group, Badge, Center, Loader } from '@mantine/core';
-import { IconUsers, IconTimeline, IconTags, IconChartBar } from '@tabler/icons-react';
+import { IconUsers, IconTimeline, IconTags, IconChartBar, IconRefresh } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { SocialAccountList } from './SocialAccountList';
+import { SyncStatusPanel } from './SyncStatusPanel';
 import { getTimelineStats } from '../../services/socialApi';
 
 interface SocialHubProps {
@@ -75,6 +76,9 @@ export function SocialHub({ spaceId }: SocialHubProps) {
             <Tabs.Tab value="accounts" leftSection={<IconUsers size={16} />}>
               Accounts
             </Tabs.Tab>
+            <Tabs.Tab value="sync" leftSection={<IconRefresh size={16} />}>
+              Sync Status
+            </Tabs.Tab>
             <Tabs.Tab value="timeline" leftSection={<IconTimeline size={16} />}>
               Timeline
             </Tabs.Tab>
@@ -88,6 +92,10 @@ export function SocialHub({ spaceId }: SocialHubProps) {
 
           <Tabs.Panel value="accounts" pt="xl">
             <SocialAccountList spaceId={spaceId} />
+          </Tabs.Panel>
+
+          <Tabs.Panel value="sync" pt="xl">
+            <SyncStatusPanel spaceId={spaceId} />
           </Tabs.Panel>
 
           <Tabs.Panel value="timeline" pt="xl">
@@ -134,13 +142,13 @@ export function SocialHub({ spaceId }: SocialHubProps) {
         </Tabs>
 
         {/* Status Badge */}
-        <Card shadow="sm" padding="md" radius="md" withBorder bg="blue.0">
+        <Card shadow="sm" padding="md" radius="md" withBorder bg="green.0">
           <Group>
-            <Badge size="lg" variant="filled" color="blue">
-              Phase 1 - Week 2
+            <Badge size="lg" variant="filled" color="green">
+              Phase 2 - Week 5
             </Badge>
             <Text size="sm">
-              Social Media Suite is in active development. Account management is now functional!
+              Social Media Suite - 5 platform extractors active! YouTube, Instagram, TikTok, Pinterest, and Twitter now supported.
             </Text>
           </Group>
         </Card>
