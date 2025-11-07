@@ -1,4 +1,4 @@
-use rusqlite::Connection;
+use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 
 use super::account::SocialError;
@@ -60,11 +60,26 @@ pub fn get_analytics_overview(
     space_id: &str,
     days: i64,
 ) -> Result<AnalyticsOverview, SocialError> {
+    log::debug!(
+        "[Social::Analytics] Getting analytics overview for space {} (last {} days)",
+        space_id,
+        days
+    );
+
     let platform_stats = get_platform_stats(conn, space_id, days)?;
     let time_series = get_time_series(conn, space_id, days)?;
     let category_stats = get_category_stats(conn, space_id, days)?;
     let engagement = get_engagement_stats(conn, space_id, days)?;
     let top_posts = get_top_posts(conn, space_id, days)?;
+
+    log::info!(
+        "[Social::Analytics] Analytics overview completed for space {}: {} platforms, {} time points, {} categories, {} top posts",
+        space_id,
+        platform_stats.len(),
+        time_series.len(),
+        category_stats.len(),
+        top_posts.len()
+    );
 
     Ok(AnalyticsOverview {
         platform_stats,
@@ -81,6 +96,12 @@ fn get_platform_stats(
     space_id: &str,
     days: i64,
 ) -> Result<Vec<PlatformStats>, SocialError> {
+    log::debug!(
+        "[Social::Analytics] Getting platform stats for space {} (last {} days)",
+        space_id,
+        days
+    );
+
     let cutoff = chrono::Utc::now().timestamp_millis() - (days * 24 * 60 * 60 * 1000);
 
     let mut stmt = conn.prepare(
@@ -111,6 +132,11 @@ fn get_platform_stats(
         result.push(stat?);
     }
 
+    log::debug!(
+        "[Social::Analytics] Retrieved {} platform stats",
+        result.len()
+    );
+
     Ok(result)
 }
 
@@ -120,6 +146,12 @@ fn get_time_series(
     space_id: &str,
     days: i64,
 ) -> Result<Vec<TimeSeriesPoint>, SocialError> {
+    log::debug!(
+        "[Social::Analytics] Getting time series data for space {} (last {} days)",
+        space_id,
+        days
+    );
+
     let cutoff = chrono::Utc::now().timestamp_millis() - (days * 24 * 60 * 60 * 1000);
 
     let mut stmt = conn.prepare(
@@ -144,6 +176,11 @@ fn get_time_series(
         result.push(point?);
     }
 
+    log::debug!(
+        "[Social::Analytics] Retrieved {} time series points",
+        result.len()
+    );
+
     Ok(result)
 }
 
@@ -153,6 +190,12 @@ fn get_category_stats(
     space_id: &str,
     days: i64,
 ) -> Result<Vec<CategoryStats>, SocialError> {
+    log::debug!(
+        "[Social::Analytics] Getting category stats for space {} (last {} days)",
+        space_id,
+        days
+    );
+
     let cutoff = chrono::Utc::now().timestamp_millis() - (days * 24 * 60 * 60 * 1000);
 
     let mut stmt = conn.prepare(
@@ -182,6 +225,11 @@ fn get_category_stats(
         result.push(stat?);
     }
 
+    log::debug!(
+        "[Social::Analytics] Retrieved {} category stats",
+        result.len()
+    );
+
     Ok(result)
 }
 
@@ -191,6 +239,12 @@ fn get_engagement_stats(
     space_id: &str,
     days: i64,
 ) -> Result<EngagementStats, SocialError> {
+    log::debug!(
+        "[Social::Analytics] Getting engagement stats for space {} (last {} days)",
+        space_id,
+        days
+    );
+
     let cutoff = chrono::Utc::now().timestamp_millis() - (days * 24 * 60 * 60 * 1000);
 
     let mut stmt = conn.prepare(
@@ -227,6 +281,17 @@ fn get_engagement_stats(
         })
     })?;
 
+    log::info!(
+        "[Social::Analytics] Engagement stats for space {}: {} posts, {} likes, {} comments, {} shares, {} views, {:.2}% engagement rate",
+        space_id,
+        result.total_posts,
+        result.total_likes,
+        result.total_comments,
+        result.total_shares,
+        result.total_views,
+        result.avg_engagement_rate
+    );
+
     Ok(result)
 }
 
@@ -236,6 +301,12 @@ fn get_top_posts(
     space_id: &str,
     days: i64,
 ) -> Result<Vec<TopPost>, SocialError> {
+    log::debug!(
+        "[Social::Analytics] Getting top posts for space {} (last {} days)",
+        space_id,
+        days
+    );
+
     let cutoff = chrono::Utc::now().timestamp_millis() - (days * 24 * 60 * 60 * 1000);
 
     let mut stmt = conn.prepare(
@@ -270,6 +341,8 @@ fn get_top_posts(
     for post in posts {
         result.push(post?);
     }
+
+    log::debug!("[Social::Analytics] Retrieved {} top posts", result.len());
 
     Ok(result)
 }
