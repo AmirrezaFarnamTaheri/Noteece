@@ -2177,9 +2177,9 @@ fn get_all_sync_tasks_cmd(
     }
 }
 
-/// Get sync history for an account
+/// Get sync history for a social media account
 #[tauri::command]
-fn get_sync_history_cmd(
+fn get_social_sync_history_cmd(
     account_id: String,
     limit: i64,
     db: State<DbConnection>,
@@ -2368,7 +2368,7 @@ fn main() {
             // Social Media Sync commands
             get_sync_tasks_cmd,
             get_all_sync_tasks_cmd,
-            get_sync_history_cmd,
+            get_social_sync_history_cmd,
             get_sync_stats_cmd
         ])
         .run(tauri::generate_context!())
