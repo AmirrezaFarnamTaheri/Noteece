@@ -15,9 +15,8 @@ pub mod webview;
 
 // Re-export commonly used types
 pub use account::{
-    add_social_account, delete_social_account, get_accounts_needing_sync,
-    get_decrypted_credentials, get_social_account, get_social_accounts, update_last_sync,
-    update_social_account, SocialAccount, SocialError,
+    add_social_account, delete_social_account, get_decrypted_credentials, get_social_account,
+    get_social_accounts, update_last_sync, update_social_account, SocialAccount, SocialError,
 };
 
 pub use post::{
@@ -26,9 +25,8 @@ pub use post::{
 };
 
 pub use category::{
-    assign_category, auto_categorize_posts, create_category, delete_category, get_categories,
-    get_category, get_post_categories, remove_category, update_category, CategoryFilters,
-    SocialCategory,
+    assign_category, create_category, delete_category, get_categories, get_category,
+    get_post_categories, remove_category, update_category, CategoryFilters, SocialCategory,
 };
 
 pub use timeline::{
