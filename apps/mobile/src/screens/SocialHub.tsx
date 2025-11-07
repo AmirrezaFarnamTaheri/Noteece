@@ -15,9 +15,12 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Alert,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { PostCard } from "../components/social/PostCard";
 import { CategoryPicker } from "../components/social/CategoryPicker";
+import { useSharedContent } from "../hooks/useSharedContent";
 import {
   getTimelinePosts,
   getCategories,
@@ -52,6 +55,10 @@ export function SocialHub() {
   const [hasMore, setHasMore] = useState(true);
 
   const spaceId = "default"; // TODO: Get from context/state
+
+  // Shared content from other apps
+  const { hasSharedContent, sharedItems, processItems, refresh } =
+    useSharedContent();
 
   // Load initial data
   useEffect(() => {
@@ -98,6 +105,9 @@ export function SocialHub() {
       ]);
       setPosts(newPosts);
       setCategories(newCategories);
+
+      // Also check for shared content
+      await refresh();
       setHasMore(newPosts.length === 50);
     } catch (error) {
       console.error("Failed to refresh:", error);
@@ -194,6 +204,28 @@ export function SocialHub() {
         ? prev.filter((c) => c !== categoryId)
         : [...prev, categoryId],
     );
+  };
+
+  const handleSharedItemPress = (item: any) => {
+    Alert.alert(
+      "Shared Content",
+      `Type: ${item.type}\n${item.url || item.text || ""}`,
+      [
+        { text: "Dismiss", style: "cancel" },
+        {
+          text: "Process",
+          onPress: async () => {
+            await processItems([item.timestamp]);
+            Alert.alert("Success", "Shared content has been processed");
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDismissSharedContent = async () => {
+    const timestamps = sharedItems.map((item) => item.timestamp);
+    await processItems(timestamps);
   };
 
   // Apply filters when they change
@@ -324,6 +356,54 @@ export function SocialHub() {
               <Text style={styles.clearFiltersText}>Clear All Filters</Text>
             </TouchableOpacity>
           )}
+        </View>
+      )}
+
+      {/* Shared Content Banner */}
+      {hasSharedContent && sharedItems.length > 0 && (
+        <View style={styles.sharedContentBanner}>
+          <View style={styles.sharedContentHeader}>
+            <Ionicons name="share-outline" size={20} color="#007AFF" />
+            <Text style={styles.sharedContentTitle}>
+              {sharedItems.length} shared{" "}
+              {sharedItems.length === 1 ? "item" : "items"}
+            </Text>
+            <TouchableOpacity
+              onPress={handleDismissSharedContent}
+              style={styles.dismissButton}
+            >
+              <Ionicons name="close-circle" size={20} color="#666" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.sharedItemsScroll}
+          >
+            {sharedItems.map((item, index) => (
+              <TouchableOpacity
+                key={`${item.timestamp}-${index}`}
+                style={styles.sharedItemCard}
+                onPress={() => handleSharedItemPress(item)}
+              >
+                <Ionicons
+                  name={
+                    item.type === "url"
+                      ? "link"
+                      : item.type === "image"
+                      ? "image"
+                      : "text"
+                  }
+                  size={24}
+                  color="#007AFF"
+                />
+                <Text style={styles.sharedItemType}>{item.type}</Text>
+                <Text style={styles.sharedItemPreview} numberOfLines={2}>
+                  {item.url || item.text || ""}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
       )}
 
@@ -504,5 +584,53 @@ const styles = StyleSheet.create({
   footerLoader: {
     paddingVertical: 20,
     alignItems: "center",
+  },
+  sharedContentBanner: {
+    backgroundColor: "#E3F2FD",
+    borderBottomWidth: 1,
+    borderBottomColor: "#90CAF9",
+    paddingVertical: 12,
+  },
+  sharedContentHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    gap: 8,
+  },
+  sharedContentTitle: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1976D2",
+  },
+  dismissButton: {
+    padding: 4,
+  },
+  sharedItemsScroll: {
+    paddingHorizontal: 16,
+  },
+  sharedItemCard: {
+    backgroundColor: "#FFF",
+    borderRadius: 8,
+    padding: 12,
+    marginRight: 12,
+    width: 140,
+    borderWidth: 1,
+    borderColor: "#90CAF9",
+    alignItems: "center",
+  },
+  sharedItemType: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#007AFF",
+    marginTop: 4,
+    textTransform: "uppercase",
+  },
+  sharedItemPreview: {
+    fontSize: 11,
+    color: "#666",
+    marginTop: 4,
+    textAlign: "center",
   },
 });

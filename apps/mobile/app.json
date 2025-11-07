@@ -68,7 +68,8 @@
             "buildToolsVersion": "34.0.0"
           }
         }
-      ]
+      ],
+      "./plugins/withShareExtension.js"
     ],
     "scheme": "noteece",
     "experiments": {
