@@ -9,6 +9,7 @@ pub mod category;
 pub mod timeline;
 pub mod webview;
 pub mod sync;
+pub mod analytics;
 
 // Re-export commonly used types
 pub use account::{
@@ -44,4 +45,9 @@ pub use sync::{
     SyncTask, SyncStatus, SyncStats, get_accounts_needing_sync,
     get_all_sync_tasks, start_sync, complete_sync, fail_sync,
     get_sync_history, get_sync_stats,
+};
+
+pub use analytics::{
+    AnalyticsOverview, PlatformStats, TimeSeriesPoint, CategoryStats,
+    EngagementStats, TopPost, get_analytics_overview,
 };

@@ -99,7 +99,10 @@ export type Platform =
   | 'castbox'
   | 'fotmob'
   | 'sofascore'
-  | 'gmail';
+  | 'gmail'
+  | 'tinder'
+  | 'bumble'
+  | 'hinge';
 
 export interface PlatformInfo {
   id: Platform;
@@ -270,5 +273,29 @@ export const SUPPORTED_PLATFORMS: Record<Platform, PlatformInfo> = {
     color: '#EA4335',
     supportsMultipleAccounts: true,
     authMethod: 'oauth',
+  },
+  tinder: {
+    id: 'tinder',
+    name: 'Tinder',
+    icon: '🔥',
+    color: '#FE3C72',
+    supportsMultipleAccounts: false,
+    authMethod: 'cookies',
+  },
+  bumble: {
+    id: 'bumble',
+    name: 'Bumble',
+    icon: '🐝',
+    color: '#FFC629',
+    supportsMultipleAccounts: false,
+    authMethod: 'cookies',
+  },
+  hinge: {
+    id: 'hinge',
+    name: 'Hinge',
+    icon: '💝',
+    color: '#A100FF',
+    supportsMultipleAccounts: false,
+    authMethod: 'cookies',
   },
 };

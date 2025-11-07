@@ -5,12 +5,14 @@
  */
 
 import { Container, Tabs, Title, Text, Stack, Card, Group, Badge, Center, Loader } from '@mantine/core';
-import { IconUsers, IconTimeline, IconTags, IconChartBar, IconRefresh } from '@tabler/icons-react';
+import { IconUsers, IconTimeline, IconTags, IconChartBar, IconRefresh, IconSearch } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { SocialAccountList } from './SocialAccountList';
 import { SyncStatusPanel } from './SyncStatusPanel';
 import { SocialTimeline } from './SocialTimeline';
 import { CategoryManager } from './CategoryManager';
+import { SocialAnalytics } from './SocialAnalytics';
+import { SocialSearch } from './SocialSearch';
 import { getTimelineStats } from '../../services/socialApi';
 
 interface SocialHubProps {
@@ -87,6 +89,9 @@ export function SocialHub({ spaceId }: SocialHubProps) {
             <Tabs.Tab value="categories" leftSection={<IconTags size={16} />}>
               Categories
             </Tabs.Tab>
+            <Tabs.Tab value="search" leftSection={<IconSearch size={16} />}>
+              Search
+            </Tabs.Tab>
             <Tabs.Tab value="analytics" leftSection={<IconChartBar size={16} />}>
               Analytics
             </Tabs.Tab>
@@ -108,18 +113,12 @@ export function SocialHub({ spaceId }: SocialHubProps) {
             <CategoryManager spaceId={spaceId} />
           </Tabs.Panel>
 
+          <Tabs.Panel value="search" pt="xl">
+            <SocialSearch spaceId={spaceId} />
+          </Tabs.Panel>
+
           <Tabs.Panel value="analytics" pt="xl">
-            <Center py="xl">
-              <Stack align="center">
-                <Text size="xl">📊</Text>
-                <Text size="lg" fw={500}>
-                  Analytics Coming Soon
-                </Text>
-                <Text size="sm" c="dimmed" ta="center">
-                  Track your social media usage and engagement
-                </Text>
-              </Stack>
-            </Center>
+            <SocialAnalytics spaceId={spaceId} />
           </Tabs.Panel>
         </Tabs>
 
@@ -127,10 +126,10 @@ export function SocialHub({ spaceId }: SocialHubProps) {
         <Card shadow="sm" padding="md" radius="md" withBorder bg="violet.0">
           <Group>
             <Badge size="lg" variant="filled" color="violet">
-              Phase 3 - Week 9
+              Phase 3 - Week 12 Complete! 🎉
             </Badge>
             <Text size="sm">
-              Social Media Suite - 15 platform extractors + category system! Twitter, YouTube, Instagram, TikTok, Pinterest, LinkedIn, Discord, Reddit, Spotify, Castbox, FotMob, SofaScore, Telegram, and Gmail now supported. Cross-platform categories with auto-categorization enabled!
+              Social Media Suite - 18 platform extractors with analytics & search! Now supporting Twitter, YouTube, Instagram, TikTok, Pinterest, LinkedIn, Discord, Reddit, Spotify, Castbox, FotMob, SofaScore, Telegram, Gmail, Tinder, Bumble, and Hinge. Features: Category system, Analytics dashboard, FTS search, and privacy-first dating app integration!
             </Text>
           </Group>
         </Card>

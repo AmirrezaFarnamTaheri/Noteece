@@ -1562,6 +1562,37 @@ fn get_timeline_stats_cmd(
     }
 }
 
+/// Get analytics overview
+#[tauri::command]
+fn get_analytics_overview_cmd(
+    space_id: &str,
+    days: i64,
+    db: State<DbConnection>,
+) -> Result<AnalyticsOverview, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_analytics_overview(conn, space_id, days).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Search social posts with FTS
+#[tauri::command]
+fn search_social_posts_cmd(
+    space_id: &str,
+    query: &str,
+    limit: i64,
+    db: State<DbConnection>,
+) -> Result<Vec<TimelinePost>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        search_social_posts(conn, space_id, query, Some(limit)).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
 // ============================================================================
 // WEBVIEW & EXTRACTION COMMANDS
 // ============================================================================
@@ -1622,6 +1653,9 @@ async fn open_social_webview(
             "sofascore" => include_str!("../js/extractors/sofascore.js"),
             "telegram" => include_str!("../js/extractors/telegram.js"),
             "gmail" => include_str!("../js/extractors/gmail.js"),
+            "tinder" => include_str!("../js/extractors/tinder.js"),
+            "bumble" => include_str!("../js/extractors/bumble.js"),
+            "hinge" => include_str!("../js/extractors/hinge.js"),
             _ => "",
         };
 
@@ -1933,6 +1967,8 @@ fn main() {
         assign_social_category_cmd,
         delete_social_category_cmd,
         get_timeline_stats_cmd,
+        get_analytics_overview_cmd,
+        search_social_posts_cmd,
         // Social Media WebView commands
         open_social_webview,
         handle_extracted_data,
