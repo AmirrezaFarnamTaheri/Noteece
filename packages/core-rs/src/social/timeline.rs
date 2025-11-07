@@ -37,6 +37,14 @@ pub fn get_unified_timeline(
     space_id: &str,
     filters: TimelineFilters,
 ) -> Result<Vec<TimelinePost>, SocialError> {
+    log::debug!(
+        "[Social::Timeline] Building unified timeline for space {} with filters: platforms={:?}, categories={:?}, limit={:?}",
+        space_id,
+        filters.platforms,
+        filters.categories,
+        filters.limit
+    );
+
     let mut query = String::from(
         "SELECT p.id, p.platform, a.username, p.author, p.author_handle,
                 p.content, p.timestamp, p.likes, p.shares, p.comments, p.views,
@@ -134,6 +142,12 @@ pub fn get_unified_timeline(
     for post in posts {
         result.push(post?);
     }
+
+    log::info!(
+        "[Social::Timeline] Retrieved {} posts for unified timeline in space {}",
+        result.len(),
+        space_id
+    );
 
     Ok(result)
 }
