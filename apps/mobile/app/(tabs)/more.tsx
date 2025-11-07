@@ -14,6 +14,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, typography, spacing } from "@/lib/theme";
 import { useVaultStore } from "@/store/vault";
+import { useAppContext, useSettings, useUpdateSetting } from "@/store/app-context";
 import {
   startBackgroundSync,
   stopBackgroundSync,
@@ -26,6 +27,8 @@ import { exportAllData, clearAllData, getDataStats } from "@/lib/data-utils";
 
 export default function MoreScreen() {
   const { lockVault } = useVaultStore();
+  const settings = useSettings();
+  const updateSetting = useUpdateSetting();
   const [backgroundSyncEnabled, setBackgroundSyncEnabled] = useState(false);
   const [nfcEnabled, setNfcEnabled] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -329,7 +332,156 @@ export default function MoreScreen() {
     }
   };
 
+  const handleThemeModeChange = () => {
+    Alert.alert("Theme Mode", "Choose your preferred theme", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Light",
+        onPress: () => updateSetting("theme", { ...settings.theme, mode: "light" }),
+      },
+      {
+        text: "Dark",
+        onPress: () => updateSetting("theme", { ...settings.theme, mode: "dark" }),
+      },
+      {
+        text: "Auto (System)",
+        onPress: () => updateSetting("theme", { ...settings.theme, mode: "auto" }),
+      },
+    ]);
+  };
+
+  const handleFontSizeChange = () => {
+    Alert.alert("Font Size", "Choose your preferred font size", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Small",
+        onPress: () => updateSetting("theme", { ...settings.theme, fontSize: "small" }),
+      },
+      {
+        text: "Medium",
+        onPress: () => updateSetting("theme", { ...settings.theme, fontSize: "medium" }),
+      },
+      {
+        text: "Large",
+        onPress: () => updateSetting("theme", { ...settings.theme, fontSize: "large" }),
+      },
+    ]);
+  };
+
+  const handleFontFamilyChange = () => {
+    Alert.alert("Font Family", "Choose your preferred font", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Default",
+        onPress: () => updateSetting("theme", { ...settings.theme, fontFamily: "default" }),
+      },
+      {
+        text: "Dyslexic-Friendly",
+        onPress: () => updateSetting("theme", { ...settings.theme, fontFamily: "dyslexic" }),
+      },
+      {
+        text: "Monospace",
+        onPress: () => updateSetting("theme", { ...settings.theme, fontFamily: "monospace" }),
+      },
+    ]);
+  };
+
+  const handleToggleNotifications = async (value: boolean) => {
+    try {
+      await updateSetting("notifications", value);
+    } catch (error) {
+      console.error("Failed to toggle notifications:", error);
+      Alert.alert("Error", "Failed to update notification settings");
+    }
+  };
+
+  const handleToggleHaptics = async (value: boolean) => {
+    try {
+      await updateSetting("haptics", value);
+    } catch (error) {
+      console.error("Failed to toggle haptics:", error);
+      Alert.alert("Error", "Failed to update haptic settings");
+    }
+  };
+
+  const getThemeModeLabel = () => {
+    switch (settings.theme.mode) {
+      case "light":
+        return "Light";
+      case "dark":
+        return "Dark";
+      case "auto":
+        return "Auto (System)";
+      default:
+        return "Dark";
+    }
+  };
+
+  const getFontSizeLabel = () => {
+    return settings.theme.fontSize.charAt(0).toUpperCase() + settings.theme.fontSize.slice(1);
+  };
+
+  const getFontFamilyLabel = () => {
+    switch (settings.theme.fontFamily) {
+      case "default":
+        return "Default";
+      case "dyslexic":
+        return "Dyslexic-Friendly";
+      case "monospace":
+        return "Monospace";
+      default:
+        return "Default";
+    }
+  };
+
   const settingsSections = [
+    {
+      title: "General",
+      items: [
+        {
+          icon: "notifications-outline",
+          label: "Notifications",
+          subtitle: "Push notifications and alerts",
+          toggle: true,
+          value: settings.notifications,
+          onToggle: handleToggleNotifications,
+        },
+        {
+          icon: "phone-portrait-outline",
+          label: "Haptic Feedback",
+          subtitle: "Vibration on interactions",
+          toggle: true,
+          value: settings.haptics,
+          onToggle: handleToggleHaptics,
+        },
+      ],
+    },
+    {
+      title: "Appearance",
+      items: [
+        {
+          icon: "color-palette-outline",
+          label: "Theme Mode",
+          subtitle: getThemeModeLabel(),
+          onPress: handleThemeModeChange,
+          showChevron: true,
+        },
+        {
+          icon: "text-outline",
+          label: "Font Size",
+          subtitle: getFontSizeLabel(),
+          onPress: handleFontSizeChange,
+          showChevron: true,
+        },
+        {
+          icon: "list-outline",
+          label: "Font Family",
+          subtitle: getFontFamilyLabel(),
+          onPress: handleFontFamilyChange,
+          showChevron: true,
+        },
+      ],
+    },
     {
       title: "Sync & Backup",
       items: [
