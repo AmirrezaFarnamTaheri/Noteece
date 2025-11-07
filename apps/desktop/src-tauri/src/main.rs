@@ -1978,7 +1978,14 @@ async fn open_social_webview(
         // Get platform URL and display name
         let url = get_platform_url(&account.platform);
         let display_name = get_platform_display_name(&account.platform);
-        let window_label = format!("social-{}-{}", account.platform, &account_id[..8]);
+
+        // Safe slice: handle account_id shorter than 8 chars
+        let id_suffix = if account_id.len() >= 8 {
+            &account_id[..8]
+        } else {
+            &account_id[..]
+        };
+        let window_label = format!("social-{}-{}", account.platform, id_suffix);
 
         // Create WebView window
         let parsed_url = url
@@ -1995,7 +2002,7 @@ async fn open_social_webview(
         .build()
         .map_err(|e| e.to_string())?;
 
-        // Read extraction scripts
+        // Read extraction scripts - validate platform support early
         let universal_script = include_str!("../js/extractors/universal.js");
         let platform_script = match account.platform.as_str() {
             "twitter" => include_str!("../js/extractors/twitter.js"),
@@ -2015,7 +2022,12 @@ async fn open_social_webview(
             "tinder" => include_str!("../js/extractors/tinder.js"),
             "bumble" => include_str!("../js/extractors/bumble.js"),
             "hinge" => include_str!("../js/extractors/hinge.js"),
-            _ => "",
+            _ => {
+                return Err(format!(
+                    "Unsupported platform: '{}'. No extractor script available.",
+                    account.platform
+                ))
+            }
         };
 
         // Inject config and extraction scripts after page loads

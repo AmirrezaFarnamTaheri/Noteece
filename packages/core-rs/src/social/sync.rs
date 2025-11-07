@@ -259,7 +259,7 @@ pub fn get_sync_history(
             let account_id: String = row.get(0)?;
             let sync_time: i64 = row.get(1)?;
             let posts_synced: i64 = row.get(2)?;
-            let sync_duration: i64 = row.get(3)?;
+            let sync_duration_ms: i64 = row.get(3)?;
             let status: String = row.get(4)?;
 
             Ok(SyncStatus {
@@ -267,7 +267,8 @@ pub fn get_sync_history(
                 status,
                 started_at: Some(sync_time),
                 completed_at: if status == "completed" {
-                    Some(sync_time + (sync_duration / 1000))
+                    // Both sync_time and sync_duration_ms are in milliseconds
+                    Some(sync_time + sync_duration_ms)
                 } else {
                     None
                 },

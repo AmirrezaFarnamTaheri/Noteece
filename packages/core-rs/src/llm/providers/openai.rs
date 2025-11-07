@@ -5,6 +5,15 @@
 use super::*;
 use serde::{Deserialize, Serialize};
 
+/// Convert internal Role enum to OpenAI-compatible role string
+fn role_to_openai_string(role: &Role) -> &'static str {
+    match role {
+        Role::System => "system",
+        Role::User => "user",
+        Role::Assistant => "assistant",
+    }
+}
+
 /// OpenAI provider for cloud-based LLM inference
 pub struct OpenAIProvider {
     api_key: String,
@@ -40,12 +49,12 @@ impl LLMProvider for OpenAIProvider {
             .unwrap_or(&"gpt-3.5-turbo".to_string())
             .clone();
 
-        // Convert messages to OpenAI format
+        // Convert messages to OpenAI format using explicit role mapping
         let messages: Vec<OpenAIMessage> = request
             .messages
             .iter()
             .map(|m| OpenAIMessage {
-                role: format!("{:?}", m.role).to_lowercase(),
+                role: role_to_openai_string(&m.role).to_string(),
                 content: m.content.clone(),
             })
             .collect();

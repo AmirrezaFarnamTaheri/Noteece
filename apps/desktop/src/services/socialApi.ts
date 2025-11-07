@@ -61,8 +61,8 @@ export async function updateSocialAccount(
   return await invoke('update_social_account_cmd', {
     accountId,
     enabled: options.enabled,
-    syncFrequencyMinutes: options.syncFrequencyMinutes,
-    displayName: options.displayName,
+    sync_frequency_minutes: options.syncFrequencyMinutes,
+    display_name: options.displayName,
   });
 }
 
