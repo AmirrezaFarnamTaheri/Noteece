@@ -9,6 +9,7 @@ import { IconUsers, IconTimeline, IconTags, IconChartBar, IconRefresh } from '@t
 import { useQuery } from '@tanstack/react-query';
 import { SocialAccountList } from './SocialAccountList';
 import { SyncStatusPanel } from './SyncStatusPanel';
+import { SocialTimeline } from './SocialTimeline';
 import { getTimelineStats } from '../../services/socialApi';
 
 interface SocialHubProps {
@@ -99,17 +100,7 @@ export function SocialHub({ spaceId }: SocialHubProps) {
           </Tabs.Panel>
 
           <Tabs.Panel value="timeline" pt="xl">
-            <Center py="xl">
-              <Stack align="center">
-                <Text size="xl">⏳</Text>
-                <Text size="lg" fw={500}>
-                  Timeline Coming Soon
-                </Text>
-                <Text size="sm" c="dimmed" ta="center">
-                  Add accounts and start syncing to see your unified timeline
-                </Text>
-              </Stack>
-            </Center>
+            <SocialTimeline spaceId={spaceId} />
           </Tabs.Panel>
 
           <Tabs.Panel value="categories" pt="xl">
@@ -142,13 +133,13 @@ export function SocialHub({ spaceId }: SocialHubProps) {
         </Tabs>
 
         {/* Status Badge */}
-        <Card shadow="sm" padding="md" radius="md" withBorder bg="green.0">
+        <Card shadow="sm" padding="md" radius="md" withBorder bg="violet.0">
           <Group>
-            <Badge size="lg" variant="filled" color="green">
-              Phase 2 - Week 5
+            <Badge size="lg" variant="filled" color="violet">
+              Phase 3 - Week 8
             </Badge>
             <Text size="sm">
-              Social Media Suite - 5 platform extractors active! YouTube, Instagram, TikTok, Pinterest, and Twitter now supported.
+              Social Media Suite - 10 platform extractors + unified timeline! Twitter, YouTube, Instagram, TikTok, Pinterest, LinkedIn, Discord, Reddit, Spotify, and Castbox now supported.
             </Text>
           </Group>
         </Card>

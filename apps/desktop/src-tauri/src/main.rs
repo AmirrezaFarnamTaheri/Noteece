@@ -1593,6 +1593,11 @@ async fn open_social_webview(
             "instagram" => include_str!("../js/extractors/instagram.js"),
             "tiktok" => include_str!("../js/extractors/tiktok.js"),
             "pinterest" => include_str!("../js/extractors/pinterest.js"),
+            "linkedin" => include_str!("../js/extractors/linkedin.js"),
+            "discord" => include_str!("../js/extractors/discord.js"),
+            "reddit" => include_str!("../js/extractors/reddit.js"),
+            "spotify" => include_str!("../js/extractors/spotify.js"),
+            "castbox" => include_str!("../js/extractors/castbox.js"),
             _ => "",
         };
 
