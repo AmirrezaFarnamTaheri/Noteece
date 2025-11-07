@@ -1488,11 +1488,17 @@ fn create_social_category_cmd(
     name: &str,
     color: Option<&str>,
     icon: Option<&str>,
+    keywords: Option<Vec<String>>,
     db: State<DbConnection>,
 ) -> Result<SocialCategory, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
-        create_category(conn, space_id, name, color, icon, None).map_err(|e| e.to_string())
+        let filters = keywords.map(|kw| CategoryFilters {
+            platforms: None,
+            authors: None,
+            keywords: Some(kw),
+        });
+        create_category(conn, space_id, name, color, icon, filters).map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
@@ -1523,6 +1529,20 @@ fn assign_social_category_cmd(
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         assign_category(conn, post_id, category_id, assigned_by).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Delete a category
+#[tauri::command]
+fn delete_social_category_cmd(
+    category_id: &str,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        delete_category(conn, category_id).map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
@@ -1598,6 +1618,10 @@ async fn open_social_webview(
             "reddit" => include_str!("../js/extractors/reddit.js"),
             "spotify" => include_str!("../js/extractors/spotify.js"),
             "castbox" => include_str!("../js/extractors/castbox.js"),
+            "fotmob" => include_str!("../js/extractors/fotmob.js"),
+            "sofascore" => include_str!("../js/extractors/sofascore.js"),
+            "telegram" => include_str!("../js/extractors/telegram.js"),
+            "gmail" => include_str!("../js/extractors/gmail.js"),
             _ => "",
         };
 
@@ -1907,6 +1931,7 @@ fn main() {
         create_social_category_cmd,
         get_social_categories_cmd,
         assign_social_category_cmd,
+        delete_social_category_cmd,
         get_timeline_stats_cmd,
         // Social Media WebView commands
         open_social_webview,

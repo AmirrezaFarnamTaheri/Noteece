@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { SocialAccountList } from './SocialAccountList';
 import { SyncStatusPanel } from './SyncStatusPanel';
 import { SocialTimeline } from './SocialTimeline';
+import { CategoryManager } from './CategoryManager';
 import { getTimelineStats } from '../../services/socialApi';
 
 interface SocialHubProps {
@@ -104,17 +105,7 @@ export function SocialHub({ spaceId }: SocialHubProps) {
           </Tabs.Panel>
 
           <Tabs.Panel value="categories" pt="xl">
-            <Center py="xl">
-              <Stack align="center">
-                <Text size="xl">🏷️</Text>
-                <Text size="lg" fw={500}>
-                  Categories Coming Soon
-                </Text>
-                <Text size="sm" c="dimmed" ta="center">
-                  Organize your social content with cross-platform categories
-                </Text>
-              </Stack>
-            </Center>
+            <CategoryManager spaceId={spaceId} />
           </Tabs.Panel>
 
           <Tabs.Panel value="analytics" pt="xl">
@@ -136,10 +127,10 @@ export function SocialHub({ spaceId }: SocialHubProps) {
         <Card shadow="sm" padding="md" radius="md" withBorder bg="violet.0">
           <Group>
             <Badge size="lg" variant="filled" color="violet">
-              Phase 3 - Week 8
+              Phase 3 - Week 9
             </Badge>
             <Text size="sm">
-              Social Media Suite - 10 platform extractors + unified timeline! Twitter, YouTube, Instagram, TikTok, Pinterest, LinkedIn, Discord, Reddit, Spotify, and Castbox now supported.
+              Social Media Suite - 15 platform extractors + category system! Twitter, YouTube, Instagram, TikTok, Pinterest, LinkedIn, Discord, Reddit, Spotify, Castbox, FotMob, SofaScore, Telegram, and Gmail now supported. Cross-platform categories with auto-categorization enabled!
             </Text>
           </Group>
         </Card>

@@ -95,7 +95,11 @@ export type Platform =
   | 'pinterest'
   | 'snapchat'
   | 'mastodon'
-  | 'bluesky';
+  | 'bluesky'
+  | 'castbox'
+  | 'fotmob'
+  | 'sofascore'
+  | 'gmail';
 
 export interface PlatformInfo {
   id: Platform;
@@ -234,5 +238,37 @@ export const SUPPORTED_PLATFORMS: Record<Platform, PlatformInfo> = {
     color: '#1185FE',
     supportsMultipleAccounts: false,
     authMethod: 'password',
+  },
+  castbox: {
+    id: 'castbox',
+    name: 'Castbox',
+    icon: '🎙️',
+    color: '#FF6B00',
+    supportsMultipleAccounts: false,
+    authMethod: 'cookies',
+  },
+  fotmob: {
+    id: 'fotmob',
+    name: 'FotMob',
+    icon: '⚽',
+    color: '#00B140',
+    supportsMultipleAccounts: false,
+    authMethod: 'cookies',
+  },
+  sofascore: {
+    id: 'sofascore',
+    name: 'SofaScore',
+    icon: '🏆',
+    color: '#0D1F2D',
+    supportsMultipleAccounts: false,
+    authMethod: 'cookies',
+  },
+  gmail: {
+    id: 'gmail',
+    name: 'Gmail',
+    icon: '📧',
+    color: '#EA4335',
+    supportsMultipleAccounts: true,
+    authMethod: 'oauth',
   },
 };

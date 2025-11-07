@@ -41,7 +41,7 @@ pub fn get_unified_timeline(
         "SELECT p.id, p.platform, a.username, p.author, p.author_handle,
                 p.content, p.timestamp, p.likes, p.shares, p.comments, p.views,
                 p.media_urls_json, p.post_type,
-                GROUP_CONCAT(c.name, ',') as categories
+                GROUP_CONCAT(DISTINCT c.name, ',') as categories
          FROM social_post p
          JOIN social_account a ON p.account_id = a.id
          LEFT JOIN social_post_category pc ON p.id = pc.post_id

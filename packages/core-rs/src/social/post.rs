@@ -40,16 +40,41 @@ pub fn store_social_posts(
     account_id: &str,
     posts: Vec<SocialPost>,
 ) -> Result<usize, SocialError> {
+    const MAX_MEDIA_JSON_SIZE: usize = 100_000; // 100KB limit
+    const MAX_RAW_JSON_SIZE: usize = 500_000; // 500KB limit
+
     let now = Utc::now().timestamp();
     let mut stored = 0;
 
+    // Use transaction for atomicity
+    let tx = conn.unchecked_transaction()?;
+
     for post in posts {
         let post_id = Ulid::new().to_string();
+
+        // Cap media JSON size to prevent OOM
         let media_json = serde_json::to_string(&post.media_urls)?;
+        if media_json.len() > MAX_MEDIA_JSON_SIZE {
+            log::warn!("Post media JSON exceeds size limit, truncating media list");
+            let truncated_media = post.media_urls.iter()
+                .take(100) // Limit to 100 media items
+                .cloned()
+                .collect::<Vec<_>>();
+            let media_json = serde_json::to_string(&truncated_media)?;
+            if media_json.len() > MAX_MEDIA_JSON_SIZE {
+                continue; // Skip post if still too large
+            }
+        }
+
+        // Cap raw JSON size
         let raw_json = serde_json::to_string(&post)?;
+        if raw_json.len() > MAX_RAW_JSON_SIZE {
+            log::warn!("Post raw JSON exceeds size limit, skipping");
+            continue;
+        }
 
         // Try to insert, skip if duplicate
-        match conn.execute(
+        match tx.execute(
             "INSERT OR IGNORE INTO social_post (
                 id, account_id, platform, platform_post_id,
                 author, author_handle, content, content_html,
@@ -78,23 +103,30 @@ pub fn store_social_posts(
                 &raw_json,
             ],
         ) {
-            Ok(rows) => {
+            Ok(rows) if rows > 0 => {
                 stored += rows;
 
                 // Also update FTS index if post has content
+                // Fix: Use last_insert_rowid() instead of SELECT ROWID
                 if let Some(content) = &post.content {
-                    let _ = conn.execute(
-                        "INSERT INTO social_post_fts (rowid, content, author)
-                         SELECT ROWID, ?, ? FROM social_post WHERE id = ?",
-                        params![content, &post.author, &post_id],
+                    let _ = tx.execute(
+                        "INSERT INTO social_post_fts (rowid, content, author) VALUES (last_insert_rowid(), ?, ?)",
+                        params![content, &post.author],
                     );
                 }
             }
+            Ok(_) => {
+                // Post already exists (INSERT OR IGNORE), not an error
+            }
             Err(e) => {
-                log::warn!("Failed to store post {}: {}", post.platform_post_id.as_ref().unwrap_or(&"unknown".to_string()), e);
+                // Don't log sensitive post IDs, just log sanitized error
+                log::warn!("Failed to store social post: {}", e);
             }
         }
     }
+
+    // Commit transaction
+    tx.commit()?;
 
     // Update account last_sync timestamp
     if stored > 0 {

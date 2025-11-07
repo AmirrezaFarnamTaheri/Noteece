@@ -278,8 +278,13 @@ pub fn auto_categorize_posts(
                 query.push_str(" AND (");
                 for (i, keyword) in keywords.iter().enumerate() {
                     if i > 0 { query.push_str(" OR "); }
-                    query.push_str("p.content LIKE ?");
-                    params_vec.push(Box::new(format!("%{}%", keyword)));
+                    query.push_str("p.content LIKE ? ESCAPE '\\'");
+                    // Escape SQL LIKE special characters % and _
+                    let escaped_keyword = keyword
+                        .replace('\\', "\\\\")
+                        .replace('%', "\\%")
+                        .replace('_', "\\_");
+                    params_vec.push(Box::new(format!("%{}%", escaped_keyword)));
                 }
                 query.push(')');
             }

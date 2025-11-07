@@ -103,13 +103,15 @@ export async function createSocialCategory(
   spaceId: string,
   name: string,
   color?: string | null,
-  icon?: string | null
+  icon?: string | null,
+  keywords?: string[] | null
 ): Promise<SocialCategory> {
   return await invoke('create_social_category_cmd', {
     spaceId,
     name,
     color,
     icon,
+    keywords,
   });
 }
 
@@ -133,6 +135,13 @@ export async function assignSocialCategory(
     categoryId,
     assignedBy,
   });
+}
+
+/**
+ * Delete a category
+ */
+export async function deleteSocialCategory(categoryId: string): Promise<void> {
+  return await invoke('delete_social_category_cmd', { categoryId });
 }
 
 /**
