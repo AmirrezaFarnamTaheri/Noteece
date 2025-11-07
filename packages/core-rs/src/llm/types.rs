@@ -104,36 +104,64 @@ impl LLMRequest {
 
         let mut hasher = DefaultHasher::new();
 
-        // Hash model
-        if let Some(model) = &self.model {
-            model.hash(&mut hasher);
-        }
-
-        // Hash messages (role + content)
-        for msg in &self.messages {
-            format!("{:?}:{}", msg.role, msg.content).hash(&mut hasher);
-        }
-
-        // Hash temperature
-        if let Some(temp) = self.temperature {
-            temp.to_bits().hash(&mut hasher);
-        }
-
-        // Hash max_tokens (prevents truncated responses from matching full ones)
-        if let Some(max) = self.max_tokens {
-            max.hash(&mut hasher);
-        }
-
-        // Hash top_p (sampling parameter affects response distribution)
-        if let Some(top_p) = self.top_p {
-            top_p.to_bits().hash(&mut hasher);
-        }
-
-        // Hash stop_sequences (affects where response terminates)
-        if let Some(ref stop) = self.stop_sequences {
-            for seq in stop {
-                seq.hash(&mut hasher);
+        // Model: include presence marker to disambiguate Some vs None
+        match &self.model {
+            Some(m) => {
+                "model:some".hash(&mut hasher);
+                m.hash(&mut hasher);
             }
+            None => {
+                "model:none".hash(&mut hasher);
+            }
+        }
+
+        // Messages: include count and per-field markers to avoid concat ambiguities
+        "messages:len".hash(&mut hasher);
+        self.messages.len().hash(&mut hasher);
+        for msg in &self.messages {
+            "msg:role".hash(&mut hasher);
+            format!("{:?}", msg.role).hash(&mut hasher);
+            "msg:content".hash(&mut hasher);
+            msg.content.hash(&mut hasher);
+        }
+
+        // Temperature: disambiguate presence
+        match self.temperature {
+            Some(t) => {
+                "temp:some".hash(&mut hasher);
+                t.to_bits().hash(&mut hasher);
+            }
+            None => "temp:none".hash(&mut hasher),
+        }
+
+        // max_tokens: disambiguate presence
+        match self.max_tokens {
+            Some(m) => {
+                "max:some".hash(&mut hasher);
+                m.hash(&mut hasher);
+            }
+            None => "max:none".hash(&mut hasher),
+        }
+
+        // top_p: disambiguate presence
+        match self.top_p {
+            Some(tp) => {
+                "top_p:some".hash(&mut hasher);
+                tp.to_bits().hash(&mut hasher);
+            }
+            None => "top_p:none".hash(&mut hasher),
+        }
+
+        // stop_sequences: include count and disambiguate presence
+        match &self.stop_sequences {
+            Some(stops) => {
+                "stop:some".hash(&mut hasher);
+                stops.len().hash(&mut hasher);
+                for s in stops {
+                    s.hash(&mut hasher);
+                }
+            }
+            None => "stop:none".hash(&mut hasher),
         }
 
         format!("{:x}", hasher.finish())

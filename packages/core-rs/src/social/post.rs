@@ -85,6 +85,15 @@ pub fn store_social_posts(
             continue;
         }
 
+        // Skip posts with missing external ID to ensure proper deduplication
+        if post.platform_post_id.as_deref().unwrap_or("").is_empty() {
+            log::warn!(
+                "[Social::Post] Skipping post with empty platform_post_id for account {}",
+                account_id
+            );
+            continue;
+        }
+
         // Try to insert, skip if duplicate
         match tx.execute(
             "INSERT OR IGNORE INTO social_post (

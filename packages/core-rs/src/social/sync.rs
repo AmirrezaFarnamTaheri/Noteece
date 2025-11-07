@@ -45,7 +45,7 @@ pub fn get_accounts_needing_sync(
         "SELECT id, platform, username, last_sync, sync_frequency_minutes
          FROM social_account
          WHERE space_id = ?1 AND enabled = 1
-         ORDER BY last_sync ASC NULLS FIRST",
+         ORDER BY (last_sync IS NOT NULL), last_sync ASC",
     )?;
 
     let tasks = stmt
