@@ -23,6 +23,7 @@ use core_rs::personal_modes::{create_health_metric, get_health_metrics, create_h
 use core_rs::temporal_graph::{build_current_graph, save_graph_snapshot, get_graph_evolution, create_milestone, detect_major_notes, GraphSnapshot, GraphEvolution, GraphMilestone};
 use core_rs::sync_agent::{init_sync_tables, SyncAgent, DeviceInfo, DeviceType, SyncHistoryEntry, SyncConflict, ConflictType, ConflictResolution as SyncConflictResolution};
 use core_rs::collaboration::{init_rbac_tables, get_space_users, check_permission, invite_user, update_user_role, grant_permission, revoke_permission, suspend_user, activate_user, get_roles, add_user_to_space, remove_user_from_space, SpaceUser, Role, UserInvitation, CollaborationError};
+use core_rs::social::{add_social_account, get_social_accounts, get_social_account, update_social_account, delete_social_account, store_social_posts, get_unified_timeline, create_category, get_categories, assign_category, get_timeline_stats, SocialAccount, SocialPost, TimelinePost, TimelineFilters, SocialCategory, TimelineStats};
 use rusqlite::Connection;
 use std::sync::Mutex;
 use tauri::State;
@@ -1351,6 +1352,196 @@ fn detect_major_notes_cmd(space_id: &str, db: State<DbConnection>) -> Result<Vec
     }
 }
 
+// ============================================================================
+// SOCIAL MEDIA SUITE COMMANDS
+// ============================================================================
+
+/// Add a new social media account
+#[tauri::command]
+fn add_social_account_cmd(
+    space_id: &str,
+    platform: &str,
+    username: &str,
+    display_name: Option<&str>,
+    credentials: &str,
+    db: State<DbConnection>,
+) -> Result<SocialAccount, String> {
+    let conn = db.conn.lock().unwrap();
+    let dek = db.dek.lock().unwrap();
+
+    if let (Some(conn), Some(dek)) = (conn.as_ref(), dek.as_ref()) {
+        add_social_account(
+            conn,
+            space_id,
+            platform,
+            username,
+            display_name,
+            credentials,
+            dek.as_slice(),
+        )
+        .map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Get all social accounts for a space
+#[tauri::command]
+fn get_social_accounts_cmd(
+    space_id: &str,
+    db: State<DbConnection>,
+) -> Result<Vec<SocialAccount>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_social_accounts(conn, space_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Get a single social account
+#[tauri::command]
+fn get_social_account_cmd(
+    account_id: &str,
+    db: State<DbConnection>,
+) -> Result<Option<SocialAccount>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_social_account(conn, account_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Update social account settings
+#[tauri::command]
+fn update_social_account_cmd(
+    account_id: &str,
+    enabled: Option<bool>,
+    sync_frequency_minutes: Option<i32>,
+    display_name: Option<&str>,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        update_social_account(
+            conn,
+            account_id,
+            enabled,
+            sync_frequency_minutes,
+            display_name,
+        )
+        .map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Delete a social account
+#[tauri::command]
+fn delete_social_account_cmd(
+    account_id: &str,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        delete_social_account(conn, account_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Store social posts (bulk insert from platform extractors)
+#[tauri::command]
+fn store_social_posts_cmd(
+    account_id: &str,
+    posts: Vec<SocialPost>,
+    db: State<DbConnection>,
+) -> Result<usize, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        store_social_posts(conn, account_id, posts).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Get unified timeline across all platforms
+#[tauri::command]
+fn get_unified_timeline_cmd(
+    space_id: &str,
+    filters: TimelineFilters,
+    db: State<DbConnection>,
+) -> Result<Vec<TimelinePost>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_unified_timeline(conn, space_id, filters).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Create a new category
+#[tauri::command]
+fn create_social_category_cmd(
+    space_id: &str,
+    name: &str,
+    color: Option<&str>,
+    icon: Option<&str>,
+    db: State<DbConnection>,
+) -> Result<SocialCategory, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        create_category(conn, space_id, name, color, icon, None).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Get all categories for a space
+#[tauri::command]
+fn get_social_categories_cmd(
+    space_id: &str,
+    db: State<DbConnection>,
+) -> Result<Vec<SocialCategory>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_categories(conn, space_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Assign a category to a post
+#[tauri::command]
+fn assign_social_category_cmd(
+    post_id: &str,
+    category_id: &str,
+    assigned_by: &str,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        assign_category(conn, post_id, category_id, assigned_by).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Get timeline statistics
+#[tauri::command]
+fn get_timeline_stats_cmd(
+    space_id: &str,
+    db: State<DbConnection>,
+) -> Result<TimelineStats, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_timeline_stats(conn, space_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
 /// Explicit shutdown handler to clear the Data Encryption Key from memory
 #[tauri::command]
 fn shutdown_clear_keys_cmd(db: State<DbConnection>) -> Result<(), String> {
@@ -1491,7 +1682,19 @@ fn main() {
         activate_user_cmd,
         get_roles_cmd,
         add_user_to_space_cmd,
-        remove_user_from_space_cmd
+        remove_user_from_space_cmd,
+        // Social Media Suite commands
+        add_social_account_cmd,
+        get_social_accounts_cmd,
+        get_social_account_cmd,
+        update_social_account_cmd,
+        delete_social_account_cmd,
+        store_social_posts_cmd,
+        get_unified_timeline_cmd,
+        create_social_category_cmd,
+        get_social_categories_cmd,
+        assign_social_category_cmd,
+        get_timeline_stats_cmd
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
