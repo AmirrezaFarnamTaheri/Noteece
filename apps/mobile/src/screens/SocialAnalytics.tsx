@@ -23,6 +23,7 @@ import {
   getCategoryStats,
   getTotalPostCount,
 } from "../lib/social-database";
+import { ErrorFallback } from "../components/errors";
 import { useCurrentSpace } from "../store/app-context";
 import type { PlatformStats, CategoryStats } from "../types/social";
 
@@ -31,6 +32,7 @@ const { width } = Dimensions.get("window");
 export function SocialAnalytics() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const [platformStats, setPlatformStats] = useState<PlatformStats[]>([]);
   const [categoryStats, setCategoryStats] = useState<CategoryStats[]>([]);
   const [totalPosts, setTotalPosts] = useState(0);
@@ -45,6 +47,7 @@ export function SocialAnalytics() {
   const loadAnalytics = async () => {
     try {
       setLoading(true);
+      setError(null);
       const [platforms, categories, total] = await Promise.all([
         getPlatformStats(spaceId),
         getCategoryStats(spaceId),
@@ -54,8 +57,9 @@ export function SocialAnalytics() {
       setPlatformStats(platforms);
       setCategoryStats(categories);
       setTotalPosts(total);
-    } catch (error) {
-      console.error("Failed to load analytics:", error);
+    } catch (err) {
+      console.error("Failed to load analytics:", err);
+      setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setLoading(false);
     }
@@ -66,6 +70,16 @@ export function SocialAnalytics() {
     await loadAnalytics();
     setRefreshing(false);
   };
+
+  if (error) {
+    return (
+      <ErrorFallback
+        error={error}
+        message="Failed to load analytics"
+        onRetry={loadAnalytics}
+      />
+    );
+  }
 
   if (loading) {
     return (

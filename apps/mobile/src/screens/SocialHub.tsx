@@ -20,6 +20,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { PostCard } from "../components/social/PostCard";
 import { CategoryPicker } from "../components/social/CategoryPicker";
+import { ErrorFallback } from "../components/errors";
 import { useSharedContent } from "../hooks/useSharedContent";
 import { useCurrentSpace } from "../store/app-context";
 import {
@@ -42,6 +43,7 @@ export function SocialHub() {
   const [categories, setCategories] = useState<SocialCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const [selectedPost, setSelectedPost] = useState<TimelinePost | null>(null);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
@@ -70,14 +72,16 @@ export function SocialHub() {
   const loadData = async () => {
     try {
       setLoading(true);
+      setError(null);
       const [fetchedPosts, fetchedCategories] = await Promise.all([
         loadPosts(),
         loadCategories(),
       ]);
       setPosts(fetchedPosts);
       setCategories(fetchedCategories);
-    } catch (error) {
-      console.error("Failed to load social data:", error);
+    } catch (err) {
+      console.error("Failed to load social data:", err);
+      setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setLoading(false);
     }
@@ -245,6 +249,16 @@ export function SocialHub() {
     "reddit",
     "tiktok",
   ];
+
+  if (error && posts.length === 0) {
+    return (
+      <ErrorFallback
+        error={error}
+        message="Failed to load social feed"
+        onRetry={loadData}
+      />
+    );
+  }
 
   if (loading && posts.length === 0) {
     return (
