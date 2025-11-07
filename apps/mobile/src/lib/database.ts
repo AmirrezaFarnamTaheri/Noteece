@@ -193,9 +193,16 @@ async function runMigrations(currentVersion: number): Promise<void> {
         CREATE INDEX IF NOT EXISTS idx_social_post_created ON social_post(created_at DESC);
         CREATE INDEX IF NOT EXISTS idx_social_post_platform ON social_post(platform);
         CREATE INDEX IF NOT EXISTS idx_social_post_author ON social_post(author);
+        CREATE INDEX IF NOT EXISTS idx_social_post_account_created ON social_post(account_id, created_at DESC);
         CREATE INDEX IF NOT EXISTS idx_social_account_space ON social_account(space_id);
         CREATE INDEX IF NOT EXISTS idx_social_category_space ON social_category(space_id);
         CREATE INDEX IF NOT EXISTS idx_social_focus_active ON social_focus_mode(space_id, is_active);
+        CREATE INDEX IF NOT EXISTS idx_social_sync_history_account_time ON social_sync_history(account_id, sync_time DESC);
+
+        -- Unique index for post deduplication (prevents duplicate posts from same account)
+        CREATE UNIQUE INDEX IF NOT EXISTS ux_social_post_account_platform_post
+          ON social_post(account_id, platform_post_id)
+          WHERE platform_post_id IS NOT NULL;
       `);
 
       console.log("Migration v2 -> v3 completed successfully");

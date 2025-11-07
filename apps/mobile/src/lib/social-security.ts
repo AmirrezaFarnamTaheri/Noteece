@@ -157,7 +157,8 @@ export async function requiresSocialAuthentication(): Promise<boolean> {
     return !sessionUnlocked; // Requires auth if session not unlocked
   } catch (error) {
     console.error("[SocialSecurity] Failed to check auth requirement:", error);
-    return false; // Fail open (don't block access on error)
+    // SECURITY: Fail closed - require authentication on error to prevent bypass
+    return true;
   }
 }
 

@@ -36,11 +36,36 @@ export async function getSocialAccounts(
     [spaceId],
   );
 
-  return rows.map((row) => ({
-    ...row,
-    enabled: row.enabled === 1,
-    credentials_encrypted: new Uint8Array(row.credentials_encrypted),
-  }));
+  return rows.map((row) => {
+    // Safely normalize credentials_encrypted with robust type checking
+    let creds: Uint8Array;
+    const raw = row.credentials_encrypted;
+
+    if (raw instanceof Uint8Array) {
+      creds = raw;
+    } else if (raw && typeof raw.byteLength === "number") {
+      // ArrayBuffer or similar
+      creds = new Uint8Array(raw);
+    } else if (raw && typeof raw === "string") {
+      // Some SQLite drivers can yield base64 strings; best-effort decode
+      try {
+        const bin = atob(raw);
+        const arr = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        creds = arr;
+      } catch {
+        creds = new Uint8Array(0);
+      }
+    } else {
+      creds = new Uint8Array(0);
+    }
+
+    return {
+      ...row,
+      enabled: row.enabled === 1,
+      credentials_encrypted: creds,
+    };
+  });
 }
 
 export async function getSocialAccount(
@@ -102,8 +127,16 @@ export async function getTimelinePosts(
   }
 
   if (filters?.categories && filters.categories.length > 0) {
-    sql += ` AND c.id IN (${filters.categories.map(() => "?").join(",")})`;
-    params.push(...filters.categories);
+    // Use EXISTS subquery to avoid LEFT JOIN -> INNER JOIN conversion
+    sql += ` AND EXISTS (
+      SELECT 1
+      FROM social_post_category pc2
+      JOIN social_category c2 ON pc2.category_id = c2.id
+      WHERE pc2.post_id = p.id
+        AND c2.space_id = ?
+        AND c2.id IN (${filters.categories.map(() => "?").join(",")})
+    )`;
+    params.push(spaceId, ...filters.categories);
   }
 
   if (filters?.authors && filters.authors.length > 0) {
@@ -112,8 +145,12 @@ export async function getTimelinePosts(
   }
 
   if (filters?.search_query) {
-    sql += ` AND (p.content LIKE ? OR p.author LIKE ?)`;
-    const searchPattern = `%${filters.search_query}%`;
+    // Escape SQL LIKE wildcard characters to prevent unintended pattern matching
+    const escapeLike = (s: string) =>
+      s.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+    const escaped = escapeLike(filters.search_query);
+    sql += ` AND (p.content LIKE ? ESCAPE '\\' OR p.author LIKE ? ESCAPE '\\')`;
+    const searchPattern = `%${escaped}%`;
     params.push(searchPattern, searchPattern);
   }
 
@@ -159,10 +196,14 @@ export async function getTimelinePosts(
 function parseCategories(row: any): SocialCategory[] {
   if (!row.category_ids) return [];
 
-  const ids = row.category_ids.split(String.fromCharCode(31));
-  const names = row.category_names?.split(String.fromCharCode(31)) || [];
-  const colors = row.category_colors?.split(String.fromCharCode(31)) || [];
-  const icons = row.category_icons?.split(String.fromCharCode(31)) || [];
+  const sep = String.fromCharCode(31);
+  // Filter out empty IDs that can result from GROUP_CONCAT on posts with no categories
+  const ids = row.category_ids.split(sep).filter((id: string) => id && id.length > 0);
+  if (ids.length === 0) return [];
+
+  const names = row.category_names?.split(sep) || [];
+  const colors = row.category_colors?.split(sep) || [];
+  const icons = row.category_icons?.split(sep) || [];
 
   return ids.map((id: string, i: number) => ({
     id,
@@ -175,10 +216,56 @@ function parseCategories(row: any): SocialCategory[] {
 }
 
 export async function getPostById(postId: string): Promise<TimelinePost | null> {
-  const rows = await getTimelinePosts("", undefined, 1, 0);
-  // Note: This is a simplified implementation. In production,
-  // we'd want a more efficient single-post query
-  return rows.find((p) => p.id === postId) || null;
+  const sql = `
+    SELECT
+      p.id, p.account_id, p.platform, p.platform_post_id,
+      p.author, p.author_avatar, p.content, p.content_html,
+      p.url, p.media_urls,
+      p.engagement_likes, p.engagement_comments,
+      p.engagement_shares, p.engagement_views,
+      p.created_at, p.collected_at,
+      a.username as account_username,
+      a.display_name as account_display_name,
+      GROUP_CONCAT(c.id, char(31)) as category_ids,
+      GROUP_CONCAT(c.name, char(31)) as category_names,
+      GROUP_CONCAT(c.color, char(31)) as category_colors,
+      GROUP_CONCAT(c.icon, char(31)) as category_icons
+    FROM social_post p
+    JOIN social_account a ON p.account_id = a.id
+    LEFT JOIN social_post_category pc ON p.id = pc.post_id
+    LEFT JOIN social_category c ON pc.category_id = c.id
+    WHERE p.id = ?
+    GROUP BY p.id
+    LIMIT 1
+  `;
+
+  const rows = await dbQuery<any>(sql, [postId]);
+  if (rows.length === 0) return null;
+
+  const row = rows[0];
+  return {
+    id: row.id,
+    account_id: row.account_id,
+    platform: row.platform as Platform,
+    platform_post_id: row.platform_post_id,
+    author: row.author,
+    author_avatar: row.author_avatar,
+    content: row.content,
+    content_html: row.content_html,
+    url: row.url,
+    media_urls: row.media_urls ? JSON.parse(row.media_urls) : undefined,
+    engagement: {
+      likes: row.engagement_likes,
+      comments: row.engagement_comments,
+      shares: row.engagement_shares,
+      views: row.engagement_views,
+    },
+    created_at: row.created_at,
+    collected_at: row.collected_at,
+    account_username: row.account_username,
+    account_display_name: row.account_display_name,
+    categories: parseCategories(row),
+  };
 }
 
 // ===== Social Category Operations (Read-Write) =====
