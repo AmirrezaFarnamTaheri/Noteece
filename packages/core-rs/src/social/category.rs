@@ -239,20 +239,39 @@ pub fn assign_category(
         assigned_by
     );
 
-    let now = Utc::now().timestamp_millis();
+    // Verify space isolation: post.space_id == category.space_id
+    let post_space: Option<String> = conn.query_row(
+        "SELECT a.space_id
+         FROM social_post p
+         JOIN social_account a ON p.account_id = a.id
+         WHERE p.id = ?1",
+        params![post_id],
+        |row| row.get(0),
+    ).optional()?;
+    let cat_space: Option<String> = conn.query_row(
+        "SELECT space_id FROM social_category WHERE id = ?1",
+        params![category_id],
+        |row| row.get(0),
+    ).optional()?;
 
-    conn.execute(
-        "INSERT OR IGNORE INTO social_post_category (
-            post_id, category_id, assigned_at, assigned_by
-        ) VALUES (?1, ?2, ?3, ?4)",
-        params![post_id, category_id, now, assigned_by],
-    )
-    .map_err(|e| {
-        log::error!("[Social::Category] Failed to assign category: {}", e);
-        e
-    })?;
-
-    Ok(())
+    match (post_space, cat_space) {
+        (Some(ps), Some(cs)) if ps == cs => {
+            let now = Utc::now().timestamp_millis();
+            conn.execute(
+                "INSERT OR IGNORE INTO social_post_category (
+                    post_id, category_id, assigned_at, assigned_by
+                ) VALUES (?1, ?2, ?3, ?4)",
+                params![post_id, category_id, now, assigned_by],
+            )
+            .map_err(|e| {
+                log::error!("[Social::Category] Failed to assign category: {}", e);
+                e
+            })?;
+            Ok(())
+        }
+        (Some(_), Some(_)) => Err(SocialError::InvalidInput("Cross-space assignment denied".into())),
+        _ => Err(SocialError::NotFound("Post or category not found".into())),
+    }
 }
 
 /// Remove a category from a post
@@ -316,7 +335,21 @@ pub fn auto_categorize_posts(conn: &Connection, space_id: &str) -> Result<usize,
     let mut categorized = 0;
 
     for category in categories {
-        if let Some(filters) = category.filters {
+        if let Some(mut filters) = category.filters {
+            // Normalize filters to prevent unbounded clause growth
+            let normalize_list = |list: &mut Option<Vec<String>>, max_len: usize, min_item_len: usize| {
+                if let Some(v) = list.as_mut() {
+                    v.retain(|s| !s.trim().is_empty());
+                    for s in v.iter_mut() { *s = s.trim().to_string(); }
+                    v.dedup();
+                    v.retain(|s| s.len() >= min_item_len);
+                    if v.len() > max_len { v.truncate(max_len); }
+                    if v.is_empty() { *list = None; }
+                }
+            };
+            normalize_list(&mut filters.platforms, 50, 1);
+            normalize_list(&mut filters.keywords, 50, 2);
+
             // Get posts that match the filters and aren't already categorized
             let mut query = String::from(
                 "SELECT p.id FROM social_post p
@@ -335,32 +368,42 @@ pub fn auto_categorize_posts(conn: &Connection, space_id: &str) -> Result<usize,
 
             // Add filter conditions
             if let Some(platforms) = filters.platforms {
-                query.push_str(" AND p.platform IN (");
-                for (i, platform) in platforms.iter().enumerate() {
-                    if i > 0 {
-                        query.push_str(", ");
+                if !platforms.is_empty() {
+                    query.push_str(" AND p.platform IN (");
+                    for (i, platform) in platforms.iter().enumerate() {
+                        if i > 0 { query.push_str(", "); }
+                        query.push('?');
+                        params_vec.push(Box::new(platform.clone()));
                     }
-                    query.push('?');
-                    params_vec.push(Box::new(platform.clone()));
+                    query.push(')');
                 }
-                query.push(')');
             }
 
             if let Some(keywords) = filters.keywords {
-                query.push_str(" AND (");
-                for (i, keyword) in keywords.iter().enumerate() {
-                    if i > 0 {
-                        query.push_str(" OR ");
+                if !keywords.is_empty() {
+                    query.push_str(" AND (");
+                    let mut added = 0usize;
+                    for keyword in keywords {
+                        // Escape SQL LIKE specials
+                        let escaped_keyword = keyword
+                            .replace('\\', "\\\\")
+                            .replace('%', "\\%")
+                            .replace('_', "\\_");
+                        // Skip effectively empty after escaping
+                        if escaped_keyword.is_empty() {
+                            continue;
+                        }
+                        if added > 0 { query.push_str(" OR "); }
+                        query.push_str("p.content LIKE ? ESCAPE '\\'");
+                        params_vec.push(Box::new(format!("%{}%", escaped_keyword)));
+                        added += 1;
                     }
-                    query.push_str("p.content LIKE ? ESCAPE '\\'");
-                    // Escape SQL LIKE special characters % and _
-                    let escaped_keyword = keyword
-                        .replace('\\', "\\\\")
-                        .replace('%', "\\%")
-                        .replace('_', "\\_");
-                    params_vec.push(Box::new(format!("%{}%", escaped_keyword)));
+                    if added == 0 {
+                        // no valid keywords, skip adding the clause
+                    } else {
+                        query.push(')');
+                    }
                 }
-                query.push(')');
             }
 
             let mut stmt = conn.prepare(&query)?;

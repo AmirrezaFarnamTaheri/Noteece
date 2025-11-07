@@ -53,9 +53,8 @@ pub fn get_unified_timeline(
          FROM social_post p
          JOIN social_account a ON p.account_id = a.id
          LEFT JOIN social_post_category pc ON p.id = pc.post_id
-         LEFT JOIN social_category c ON pc.category_id = c.id
-         WHERE a.space_id = ?1 AND a.enabled = 1
-           AND (c.space_id IS NULL OR c.space_id = ?1)",
+         LEFT JOIN social_category c ON pc.category_id = c.id AND c.space_id = a.space_id
+         WHERE a.space_id = ?1 AND a.enabled = 1",
     );
 
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = vec![Box::new(space_id.to_string())];
@@ -77,16 +76,26 @@ pub fn get_unified_timeline(
 
     // Apply category filter
     if let Some(categories) = filters.categories {
-        if !categories.is_empty() {
-            query.push_str(" AND pc.category_id IN (");
-            for (i, category) in categories.iter().enumerate() {
+        let cats: Vec<String> = categories
+            .into_iter()
+            .filter(|c| !c.is_empty())
+            .collect();
+        if !cats.is_empty() {
+            // Constrain to space via EXISTS to avoid cross-space leakage and preserve LEFT JOIN semantics
+            query.push_str(" AND EXISTS ( \
+                SELECT 1 FROM social_post_category pc2 \
+                JOIN social_category c2 ON pc2.category_id = c2.id \
+                WHERE pc2.post_id = p.id AND c2.space_id = ?1 AND c2.id IN (");
+            for i in 0..cats.len() {
                 if i > 0 {
                     query.push_str(", ");
                 }
                 query.push('?');
-                params.push(Box::new(category.clone()));
             }
-            query.push(')');
+            query.push_str("))");
+            for c in cats {
+                params.push(Box::new(c));
+            }
         }
     }
 

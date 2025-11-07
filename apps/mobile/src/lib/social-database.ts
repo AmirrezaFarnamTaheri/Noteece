@@ -47,12 +47,22 @@ export async function getSocialAccounts(
       // ArrayBuffer or similar
       creds = new Uint8Array(raw);
     } else if (raw && typeof raw === "string") {
-      // Some SQLite drivers can yield base64 strings; best-effort decode
+      // Some SQLite drivers can yield base64 strings; safely decode without relying on atob in RN
       try {
-        const bin = atob(raw);
-        const arr = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-        creds = arr;
+        let bytes: Uint8Array;
+        if (typeof global !== "undefined" && typeof (global as any).atob === "function") {
+          const bin = (global as any).atob(raw);
+          const arr = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+          bytes = arr;
+        } else if (typeof Buffer !== "undefined") {
+          const buf = Buffer.from(raw, "base64");
+          bytes = new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+        } else {
+          // Fallback: invalid environment for base64 decoding
+          bytes = new Uint8Array(0);
+        }
+        creds = bytes;
       } catch {
         creds = new Uint8Array(0);
       }
@@ -151,36 +161,58 @@ export async function getTimelinePosts(
   }
 
   if (filters?.categories && filters.categories.length > 0) {
-    // Use EXISTS subquery to avoid LEFT JOIN -> INNER JOIN conversion
-    sql += ` AND EXISTS (
-      SELECT 1
-      FROM social_post_category pc2
-      JOIN social_category c2 ON pc2.category_id = c2.id
-      WHERE pc2.post_id = p.id
-        AND c2.space_id = ?
-        AND c2.id IN (${filters.categories.map(() => "?").join(",")})
-    )`;
-    params.push(spaceId, ...filters.categories);
+    // Normalize and validate category IDs
+    const catIds = Array.from(
+      new Set(
+        filters.categories
+          .map((c) => (typeof c === "string" ? c.trim() : ""))
+          .filter((c) => c.length > 0)
+      )
+    );
+
+    if (catIds.length > 0) {
+      // Use EXISTS subquery to avoid LEFT JOIN -> INNER JOIN conversion
+      sql += ` AND EXISTS (
+        SELECT 1
+        FROM social_post_category pc2
+        JOIN social_category c2 ON pc2.category_id = c2.id
+        WHERE pc2.post_id = p.id
+          AND c2.space_id = ?
+          AND c2.id IN (${catIds.map(() => "?").join(",")})
+      )`;
+      params.push(spaceId, ...catIds);
+    }
   }
 
   if (filters?.authors && filters.authors.length > 0) {
-    sql += ` AND p.author IN (${filters.authors.map(() => "?").join(",")})`;
-    params.push(...filters.authors);
+    const authors = Array.from(
+      new Set(
+        filters.authors
+          .map((a) => (typeof a === "string" ? a.trim() : ""))
+          .filter((a) => a.length > 0)
+      )
+    );
+    if (authors.length > 0) {
+      sql += ` AND p.author IN (${authors.map(() => "?").join(",")})`;
+      params.push(...authors);
+    }
   }
 
   if (filters?.search_query) {
-    // Limit search query length to prevent DoS via expensive full-scan queries
     const MAX_SEARCH_LENGTH = 200;
+    const MIN_SEARCH_LENGTH = 2;
     const sanitized = filters.search_query.trim().slice(0, MAX_SEARCH_LENGTH);
 
-    if (sanitized.length > 0) {
-      // Escape SQL LIKE wildcard characters to prevent unintended pattern matching
+    if (sanitized.length >= MIN_SEARCH_LENGTH) {
       const escapeLike = (s: string) =>
         s.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
       const escaped = escapeLike(sanitized);
-      sql += ` AND (p.content LIKE ? ESCAPE '\\' OR p.author LIKE ? ESCAPE '\\')`;
-      const searchPattern = `%${escaped}%`;
-      params.push(searchPattern, searchPattern);
+      // If after escaping the query is effectively empty, skip to avoid full scans
+      if (escaped.replace(/%|_/g, "").length > 0) {
+        sql += ` AND (COALESCE(p.content,'') LIKE ? ESCAPE '\\' OR COALESCE(p.author,'') LIKE ? ESCAPE '\\')`;
+        const searchPattern = `%${escaped}%`;
+        params.push(searchPattern, searchPattern);
+      }
     }
   }
 
@@ -212,10 +244,14 @@ export async function getTimelinePosts(
           mediaUrls = undefined;
         }
       } catch {
-        // Invalid JSON, skip media URLs rather than crash
         mediaUrls = undefined;
       }
     }
+
+    const nn = (v: any) => {
+      const n = Number(v);
+      return Number.isFinite(n) && n > 0 ? n : 0;
+    };
 
     return {
       id: row.id,
@@ -229,10 +265,10 @@ export async function getTimelinePosts(
       url: row.url,
       media_urls: mediaUrls,
       engagement: {
-        likes: row.engagement_likes,
-        comments: row.engagement_comments,
-        shares: row.engagement_shares,
-        views: row.engagement_views,
+        likes: nn(row.engagement_likes),
+        comments: nn(row.engagement_comments),
+        shares: nn(row.engagement_shares),
+        views: nn(row.engagement_views),
       },
       created_at: row.created_at,
       collected_at: row.collected_at,
@@ -397,13 +433,32 @@ export async function assignCategory(
 ): Promise<void> {
   const now = Date.now();
 
+  // Enforce space isolation: post's space must match category's space
+  const rows = await dbQuery<any>(
+    `
+    SELECT
+      (SELECT a.space_id
+         FROM social_post p
+         JOIN social_account a ON p.account_id = a.id
+        WHERE p.id = ?) AS post_space,
+      (SELECT c.space_id
+         FROM social_category c
+        WHERE c.id = ?) AS category_space
+    `,
+    [postId, categoryId]
+  );
+  const postSpace = rows?.[0]?.post_space;
+  const categorySpace = rows?.[0]?.category_space;
+  if (!postSpace || !categorySpace || postSpace !== categorySpace) {
+    throw new Error("Cross-space category assignment denied");
+  }
+
   await dbExecute(
     `INSERT OR IGNORE INTO social_post_category (post_id, category_id, assigned_at, assigned_by)
      VALUES (?, ?, ?, 'user')`,
     [postId, categoryId, now],
   );
 
-  // Queue for sync to desktop
   await queueSyncOperation("social_post_category", `${postId}-${categoryId}`, "assign", {
     post_id: postId,
     category_id: categoryId,

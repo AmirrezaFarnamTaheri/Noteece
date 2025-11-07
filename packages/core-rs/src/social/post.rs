@@ -78,10 +78,37 @@ pub fn store_social_posts(
             }
         }
 
-        // Cap raw JSON size
-        let raw_json = serde_json::to_string(&post)?;
+        // Cap raw JSON size using a sanitized snapshot that excludes internal fields
+        #[derive(Serialize)]
+        struct RawSnapshot<'a> {
+            platform: &'a str,
+            platform_post_id: &'a Option<String>,
+            author: &'a str,
+            author_handle: &'a Option<String>,
+            content: &'a Option<String>,
+            content_html: &'a Option<String>,
+            media_urls: &'a [String],
+            timestamp: i64,
+            engagement: &'a Engagement,
+            post_type: &'a Option<String>,
+            reply_to: &'a Option<String>,
+        }
+        let snapshot = RawSnapshot {
+            platform: &post.platform,
+            platform_post_id: &post.platform_post_id,
+            author: &post.author,
+            author_handle: &post.author_handle,
+            content: &post.content,
+            content_html: &post.content_html,
+            media_urls: &post.media_urls,
+            timestamp: post.timestamp,
+            engagement: &post.engagement,
+            post_type: &post.post_type,
+            reply_to: &post.reply_to,
+        };
+        let raw_json = serde_json::to_string(&snapshot)?;
         if raw_json.len() > MAX_RAW_JSON_SIZE {
-            log::warn!("Post raw JSON exceeds size limit, skipping");
+            log::warn!("[Social::Post] Post snapshot exceeds size limit, skipping");
             continue;
         }
 
