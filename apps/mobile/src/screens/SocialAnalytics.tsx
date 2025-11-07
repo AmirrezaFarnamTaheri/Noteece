@@ -1,0 +1,436 @@
+/**
+ * SocialAnalytics Screen
+ *
+ * Displays analytics and insights about social media usage:
+ * - Platform breakdown
+ * - Activity timeline
+ * - Category statistics
+ * - Engagement trends
+ */
+
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Dimensions,
+  RefreshControl,
+  ActivityIndicator,
+} from "react-native";
+import {
+  getPlatformStats,
+  getCategoryStats,
+  getTotalPostCount,
+} from "../lib/social-database";
+import type { PlatformStats, CategoryStats } from "../types/social";
+
+const { width } = Dimensions.get("window");
+
+export function SocialAnalytics() {
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [platformStats, setPlatformStats] = useState<PlatformStats[]>([]);
+  const [categoryStats, setCategoryStats] = useState<CategoryStats[]>([]);
+  const [totalPosts, setTotalPosts] = useState(0);
+
+  const spaceId = "default"; // TODO: Get from context/state
+
+  useEffect(() => {
+    loadAnalytics();
+  }, []);
+
+  const loadAnalytics = async () => {
+    try {
+      setLoading(true);
+      const [platforms, categories, total] = await Promise.all([
+        getPlatformStats(spaceId),
+        getCategoryStats(spaceId),
+        getTotalPostCount(spaceId),
+      ]);
+
+      setPlatformStats(platforms);
+      setCategoryStats(categories);
+      setTotalPosts(total);
+    } catch (error) {
+      console.error("Failed to load analytics:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadAnalytics();
+    setRefreshing(false);
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>Loading analytics...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+      }
+    >
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Social Analytics</Text>
+        <Text style={styles.headerSubtitle}>Your social media insights</Text>
+      </View>
+
+      {/* Total Posts Card */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Total Posts</Text>
+        <Text style={styles.totalPostsNumber}>{totalPosts.toLocaleString()}</Text>
+        <Text style={styles.cardSubtitle}>Aggregated from all platforms</Text>
+      </View>
+
+      {/* Platform Breakdown */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Platform Breakdown</Text>
+        {platformStats.length > 0 ? (
+          <>
+            {/* Bar Chart */}
+            <View style={styles.chartContainer}>
+              {platformStats.map((stat, index) => (
+                <View key={stat.platform} style={styles.barRow}>
+                  <View style={styles.barLabelContainer}>
+                    <Text style={styles.barLabel}>{stat.platform}</Text>
+                    <Text style={styles.barCount}>{stat.post_count}</Text>
+                  </View>
+                  <View style={styles.barContainer}>
+                    <View
+                      style={[
+                        styles.bar,
+                        {
+                          width: `${stat.percentage}%`,
+                          backgroundColor: stat.color,
+                        },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.barPercentage}>
+                    {stat.percentage.toFixed(1)}%
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Pie Chart Legend */}
+            <View style={styles.legendContainer}>
+              {platformStats.slice(0, 5).map((stat) => (
+                <View key={stat.platform} style={styles.legendItem}>
+                  <View
+                    style={[
+                      styles.legendDot,
+                      { backgroundColor: stat.color },
+                    ]}
+                  />
+                  <Text style={styles.legendText}>
+                    {stat.platform} ({stat.post_count})
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </>
+        ) : (
+          <Text style={styles.emptyText}>No platform data available</Text>
+        )}
+      </View>
+
+      {/* Category Statistics */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Top Categories</Text>
+        {categoryStats.length > 0 ? (
+          <View style={styles.categoryList}>
+            {categoryStats.slice(0, 10).map((stat, index) => (
+              <View key={stat.category_id} style={styles.categoryRow}>
+                <View style={styles.categoryRank}>
+                  <Text style={styles.categoryRankText}>{index + 1}</Text>
+                </View>
+                <View style={styles.categoryInfo}>
+                  {stat.color && (
+                    <View
+                      style={[
+                        styles.categoryColorDot,
+                        { backgroundColor: stat.color },
+                      ]}
+                    />
+                  )}
+                  <Text style={styles.categoryName}>{stat.category_name}</Text>
+                </View>
+                <Text style={styles.categoryCount}>
+                  {stat.post_count} posts
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.emptyText}>No categories assigned yet</Text>
+        )}
+      </View>
+
+      {/* Insights Summary */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Quick Insights</Text>
+        <View style={styles.insightsList}>
+          {platformStats.length > 0 && (
+            <View style={styles.insightItem}>
+              <Text style={styles.insightIcon}>📊</Text>
+              <Text style={styles.insightText}>
+                Most active platform: <Text style={styles.insightBold}>
+                  {platformStats[0]?.platform || "N/A"}
+                </Text> ({platformStats[0]?.post_count || 0} posts)
+              </Text>
+            </View>
+          )}
+
+          {categoryStats.length > 0 && (
+            <View style={styles.insightItem}>
+              <Text style={styles.insightIcon}>🏷️</Text>
+              <Text style={styles.insightText}>
+                Top category: <Text style={styles.insightBold}>
+                  {categoryStats[0]?.category_name || "N/A"}
+                </Text> ({categoryStats[0]?.post_count || 0} posts)
+              </Text>
+            </View>
+          )}
+
+          <View style={styles.insightItem}>
+            <Text style={styles.insightIcon}>📈</Text>
+            <Text style={styles.insightText}>
+              Average posts per platform: <Text style={styles.insightBold}>
+                {platformStats.length > 0
+                  ? Math.round(totalPosts / platformStats.length)
+                  : 0}
+              </Text>
+            </Text>
+          </View>
+
+          {totalPosts > 0 && (
+            <View style={styles.insightItem}>
+              <Text style={styles.insightIcon}>🎯</Text>
+              <Text style={styles.insightText}>
+                Categorization rate: <Text style={styles.insightBold}>
+                  {((categoryStats.reduce((sum, c) => sum + c.post_count, 0) / totalPosts) * 100).toFixed(1)}%
+                </Text>
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
+
+      {/* Bottom Padding */}
+      <View style={styles.bottomPadding} />
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F5F5F5",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#666",
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    backgroundColor: "#FFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#000",
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: "#666",
+  },
+  card: {
+    backgroundColor: "#FFF",
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#000",
+    marginBottom: 16,
+  },
+  cardSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 8,
+  },
+  totalPostsNumber: {
+    fontSize: 48,
+    fontWeight: "700",
+    color: "#007AFF",
+    textAlign: "center",
+    marginVertical: 8,
+  },
+  chartContainer: {
+    marginTop: 8,
+  },
+  barRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  barLabelContainer: {
+    width: 80,
+    marginRight: 12,
+  },
+  barLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#000",
+    textTransform: "capitalize",
+  },
+  barCount: {
+    fontSize: 12,
+    color: "#666",
+  },
+  barContainer: {
+    flex: 1,
+    height: 24,
+    backgroundColor: "#F0F0F0",
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  bar: {
+    height: "100%",
+    borderRadius: 12,
+  },
+  barPercentage: {
+    width: 50,
+    textAlign: "right",
+    fontSize: 12,
+    color: "#666",
+    fontWeight: "500",
+    marginLeft: 8,
+  },
+  legendContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 16,
+    gap: 12,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 16,
+  },
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 6,
+  },
+  legendText: {
+    fontSize: 12,
+    color: "#666",
+  },
+  categoryList: {
+    gap: 12,
+  },
+  categoryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  categoryRank: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#F0F0F0",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  categoryRankText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#666",
+  },
+  categoryInfo: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  categoryColorDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 8,
+  },
+  categoryName: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#000",
+  },
+  categoryCount: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "500",
+  },
+  insightsList: {
+    gap: 16,
+  },
+  insightItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  insightIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  insightText: {
+    flex: 1,
+    fontSize: 15,
+    color: "#333",
+    lineHeight: 22,
+  },
+  insightBold: {
+    fontWeight: "600",
+    color: "#000",
+  },
+  emptyText: {
+    textAlign: "center",
+    color: "#999",
+    fontSize: 15,
+    paddingVertical: 20,
+  },
+  bottomPadding: {
+    height: 40,
+  },
+});
