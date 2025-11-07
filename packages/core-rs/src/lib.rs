@@ -13,6 +13,7 @@ pub mod editor;
 pub mod foresight;
 pub mod form;
 pub mod import;
+pub mod llm;
 pub mod logger;
 pub mod meeting;
 pub mod mode;
