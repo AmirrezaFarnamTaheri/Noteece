@@ -20,6 +20,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
+import * as TaskManager from "expo-task-manager";
 import {
   isBiometricAvailable,
   isSocialBiometricEnabled,
@@ -27,6 +28,11 @@ import {
   disableSocialBiometric,
   getSupportedBiometricTypes,
 } from "../lib/social-security";
+import {
+  startBackgroundSync,
+  stopBackgroundSync,
+  triggerManualSync,
+} from "../lib/sync/background-sync";
 
 interface SettingsItem {
   key: string;
@@ -37,6 +43,29 @@ interface SettingsItem {
   icon?: keyof typeof Ionicons.glyphMap;
   onPress?: () => void;
   onChange?: (value: boolean) => void;
+}
+
+/**
+ * Format last sync time as relative time
+ */
+function formatLastSync(isoString: string): string {
+  try {
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`;
+    if (diffHours < 24)
+      return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+    return date.toLocaleDateString();
+  } catch {
+    return "Unknown";
+  }
 }
 
 export function SocialSettings() {
@@ -51,20 +80,93 @@ export function SocialSettings() {
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [biometricTypes, setBiometricTypes] = useState<string[]>([]);
 
-  // Load biometric status on mount
+  // Sync state
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
+
+  // Load settings on mount
   useEffect(() => {
-    async function loadBiometricStatus() {
-      const available = await isBiometricAvailable();
-      const enabled = await isSocialBiometricEnabled();
-      const types = await getSupportedBiometricTypes();
-
-      setBiometricAvailable(available);
-      setBiometricEnabled(enabled);
-      setBiometricTypes(types);
-    }
-
-    loadBiometricStatus();
+    loadSettings();
   }, []);
+
+  const loadSettings = async () => {
+    // Load biometric status
+    const bioAvailable = await isBiometricAvailable();
+    const bioEnabled = await isSocialBiometricEnabled();
+    const types = await getSupportedBiometricTypes();
+    setBiometricAvailable(bioAvailable);
+    setBiometricEnabled(bioEnabled);
+    setBiometricTypes(types);
+
+    // Load background sync status
+    const isRegistered = await TaskManager.isTaskRegisteredAsync(
+      "background-sync-task"
+    );
+    setBackgroundSync(isRegistered);
+
+    // Load last sync time
+    const lastSync = await AsyncStorage.getItem("social_last_sync");
+    if (lastSync) {
+      setLastSyncTime(lastSync);
+    }
+  };
+
+  const handleToggleBackgroundSync = async (value: boolean) => {
+    if (value) {
+      // Enable background sync
+      await startBackgroundSync();
+      setBackgroundSync(true);
+      Alert.alert(
+        "Background Sync Enabled",
+        "Social data will sync automatically every 15 minutes when connected to a desktop app.",
+        [{ text: "OK" }]
+      );
+    } else {
+      // Disable background sync
+      Alert.alert(
+        "Disable Background Sync?",
+        "Automatic syncing will be disabled. You can still sync manually.",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Disable",
+            onPress: async () => {
+              await stopBackgroundSync();
+              setBackgroundSync(false);
+            },
+          },
+        ]
+      );
+    }
+  };
+
+  const handleSyncNow = async () => {
+    if (isSyncing) return;
+
+    setIsSyncing(true);
+
+    try {
+      const success = await triggerManualSync();
+
+      if (success) {
+        const now = new Date().toISOString();
+        await AsyncStorage.setItem("social_last_sync", now);
+        setLastSyncTime(now);
+        Alert.alert("Sync Complete", "Social data has been synchronized successfully.");
+      } else {
+        Alert.alert(
+          "Sync Failed",
+          "Could not find a desktop app on the local network. Make sure your desktop app is running and connected to the same WiFi network.",
+          [{ text: "OK" }]
+        );
+      }
+    } catch (error) {
+      console.error("Sync error:", error);
+      Alert.alert("Sync Error", "Failed to synchronize. Please try again.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleToggleBiometric = async (value: boolean) => {
     if (!biometricAvailable) {
@@ -178,11 +280,11 @@ export function SocialSettings() {
     {
       key: "backgroundSync",
       title: "Background Sync",
-      subtitle: "Sync data in the background (battery impact)",
+      subtitle: "Sync data in the background every 15 minutes (battery impact)",
       type: "switch",
       icon: "refresh",
       value: backgroundSync,
-      onChange: setBackgroundSync,
+      onChange: handleToggleBackgroundSync,
     },
     {
       key: "notifications",
@@ -280,17 +382,31 @@ export function SocialSettings() {
       {/* Sync Status Card */}
       <View style={styles.card}>
         <View style={styles.statusHeader}>
-          <Ionicons name="cloud-done" size={24} color="#34C759" />
+          <Ionicons
+            name={isSyncing ? "sync" : "cloud-done"}
+            size={24}
+            color={isSyncing ? "#007AFF" : "#34C759"}
+          />
           <View style={styles.statusTextContainer}>
-            <Text style={styles.statusTitle}>Sync Status</Text>
+            <Text style={styles.statusTitle}>
+              {isSyncing ? "Syncing..." : "Sync Status"}
+            </Text>
             <Text style={styles.statusSubtitle}>
-              Last synced: 5 minutes ago
+              {lastSyncTime
+                ? `Last synced: ${formatLastSync(lastSyncTime)}`
+                : "Not synced yet"}
             </Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.syncButton}>
+        <TouchableOpacity
+          style={[styles.syncButton, isSyncing && styles.syncButtonDisabled]}
+          onPress={handleSyncNow}
+          disabled={isSyncing}
+        >
           <Ionicons name="sync" size={18} color="#FFF" />
-          <Text style={styles.syncButtonText}>Sync Now</Text>
+          <Text style={styles.syncButtonText}>
+            {isSyncing ? "Syncing..." : "Sync Now"}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -432,6 +548,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     gap: 8,
+  },
+  syncButtonDisabled: {
+    backgroundColor: "#9CA3AF",
+    opacity: 0.7,
   },
   syncButtonText: {
     fontSize: 16,
