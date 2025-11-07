@@ -49,7 +49,7 @@ pub fn get_unified_timeline(
         "SELECT p.id, p.platform, a.username, p.author, p.author_handle,
                 p.content, p.timestamp, p.likes, p.shares, p.comments, p.views,
                 p.media_urls_json, p.post_type,
-                GROUP_CONCAT(c.name, ',') as categories
+                GROUP_CONCAT(DISTINCT c.name, char(31)) as categories
          FROM social_post p
          JOIN social_account a ON p.account_id = a.id
          LEFT JOIN social_post_category pc ON p.id = pc.post_id
@@ -114,7 +114,7 @@ pub fn get_unified_timeline(
 
             let categories_str: Option<String> = row.get(13)?;
             let categories = categories_str
-                .map(|s| s.split(',').map(String::from).collect())
+                .map(|s| s.split(char::from(31)).map(String::from).collect())
                 .unwrap_or_default();
 
             Ok(TimelinePost {
@@ -164,7 +164,7 @@ pub fn get_category_timeline(
         "SELECT p.id, p.platform, a.username, p.author, p.author_handle,
                 p.content, p.timestamp, p.likes, p.shares, p.comments, p.views,
                 p.media_urls_json, p.post_type,
-                GROUP_CONCAT(c.name, ',') as categories
+                GROUP_CONCAT(DISTINCT c.name, char(31)) as categories
          FROM social_post p
          JOIN social_account a ON p.account_id = a.id
          JOIN social_post_category pc ON p.id = pc.post_id
@@ -183,7 +183,7 @@ pub fn get_category_timeline(
 
         let categories_str: Option<String> = row.get(13)?;
         let categories = categories_str
-            .map(|s| s.split(',').map(String::from).collect())
+            .map(|s| s.split(char::from(31)).map(String::from).collect())
             .unwrap_or_default();
 
         Ok(TimelinePost {
@@ -227,7 +227,7 @@ pub fn get_platform_timeline(
         "SELECT p.id, p.platform, a.username, p.author, p.author_handle,
                 p.content, p.timestamp, p.likes, p.shares, p.comments, p.views,
                 p.media_urls_json, p.post_type,
-                GROUP_CONCAT(c.name, ',') as categories
+                GROUP_CONCAT(DISTINCT c.name, char(31)) as categories
          FROM social_post p
          JOIN social_account a ON p.account_id = a.id
          LEFT JOIN social_post_category pc ON p.id = pc.post_id
@@ -246,7 +246,7 @@ pub fn get_platform_timeline(
 
         let categories_str: Option<String> = row.get(13)?;
         let categories = categories_str
-            .map(|s| s.split(',').map(String::from).collect())
+            .map(|s| s.split(char::from(31)).map(String::from).collect())
             .unwrap_or_default();
 
         Ok(TimelinePost {

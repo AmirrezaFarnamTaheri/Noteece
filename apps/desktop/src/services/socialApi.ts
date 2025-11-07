@@ -28,7 +28,7 @@ export async function addSocialAccount(
     spaceId,
     platform,
     username,
-    displayName,
+    display_name: displayName,
     credentials,
   });
 }
