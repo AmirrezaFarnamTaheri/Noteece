@@ -54,7 +54,8 @@ pub fn get_unified_timeline(
          JOIN social_account a ON p.account_id = a.id
          LEFT JOIN social_post_category pc ON p.id = pc.post_id
          LEFT JOIN social_category c ON pc.category_id = c.id
-         WHERE a.space_id = ?1 AND a.enabled = 1",
+         WHERE a.space_id = ?1 AND a.enabled = 1
+           AND (c.space_id IS NULL OR c.space_id = ?1)",
     );
 
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = vec![Box::new(space_id.to_string())];

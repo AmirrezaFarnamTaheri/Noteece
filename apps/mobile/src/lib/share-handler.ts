@@ -70,16 +70,45 @@ export async function processSharedItems(): Promise<number> {
 
     // Save to pending items for processing by SocialHub
     const pendingKey = "social_pending_items";
-    const existing = await AsyncStorage.getItem(pendingKey);
-    const pendingItems = existing ? JSON.parse(existing) : [];
+    const MAX_QUEUE_SIZE = 1000; // Prevent unbounded growth
+    const MAX_ITEM_SIZE = 100_000; // 100KB per item
 
-    // Add new items
+    const existing = await AsyncStorage.getItem(pendingKey);
+    let pendingItems: any[] = [];
+
+    // Safely parse existing items
+    if (existing) {
+      try {
+        const parsed = JSON.parse(existing);
+        if (Array.isArray(parsed)) {
+          pendingItems = parsed;
+        }
+      } catch {
+        // Corrupted storage; reset to empty array
+        console.warn("[ShareHandler] Corrupted pending items, resetting");
+        pendingItems = [];
+      }
+    }
+
+    // Add new items with size validation
     for (const item of items) {
+      const itemSize = JSON.stringify(item).length;
+      if (itemSize > MAX_ITEM_SIZE) {
+        console.warn(`[ShareHandler] Item exceeds size limit (${itemSize} > ${MAX_ITEM_SIZE}), skipping`);
+        continue;
+      }
+
       pendingItems.push({
         ...item,
         processedAt: null,
         savedAt: Date.now(),
       });
+    }
+
+    // Cap queue size (keep most recent items)
+    if (pendingItems.length > MAX_QUEUE_SIZE) {
+      pendingItems = pendingItems.slice(-MAX_QUEUE_SIZE);
+      console.warn(`[ShareHandler] Queue exceeded maximum size, keeping ${MAX_QUEUE_SIZE} most recent items`);
     }
 
     await AsyncStorage.setItem(pendingKey, JSON.stringify(pendingItems));

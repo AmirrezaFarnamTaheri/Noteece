@@ -169,13 +169,19 @@ export async function getTimelinePosts(
   }
 
   if (filters?.search_query) {
-    // Escape SQL LIKE wildcard characters to prevent unintended pattern matching
-    const escapeLike = (s: string) =>
-      s.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
-    const escaped = escapeLike(filters.search_query);
-    sql += ` AND (p.content LIKE ? ESCAPE '\\' OR p.author LIKE ? ESCAPE '\\')`;
-    const searchPattern = `%${escaped}%`;
-    params.push(searchPattern, searchPattern);
+    // Limit search query length to prevent DoS via expensive full-scan queries
+    const MAX_SEARCH_LENGTH = 200;
+    const sanitized = filters.search_query.trim().slice(0, MAX_SEARCH_LENGTH);
+
+    if (sanitized.length > 0) {
+      // Escape SQL LIKE wildcard characters to prevent unintended pattern matching
+      const escapeLike = (s: string) =>
+        s.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+      const escaped = escapeLike(sanitized);
+      sql += ` AND (p.content LIKE ? ESCAPE '\\' OR p.author LIKE ? ESCAPE '\\')`;
+      const searchPattern = `%${escaped}%`;
+      params.push(searchPattern, searchPattern);
+    }
   }
 
   if (filters?.time_range) {
@@ -443,6 +449,17 @@ export async function getPostCategories(
 
 // ===== Focus Mode Operations (Read-Only) =====
 
+// Helper to safely parse platform arrays from database
+function safeParsePlatformArray(val: any): Platform[] {
+  if (!val) return [];
+  try {
+    const parsed = typeof val === "string" ? JSON.parse(val) : val;
+    return Array.isArray(parsed) ? parsed.filter((p) => typeof p === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function getFocusModes(spaceId: string): Promise<FocusMode[]> {
   const rows = await dbQuery<any>(
     `SELECT id, space_id, name, description, icon, is_active,
@@ -456,8 +473,8 @@ export async function getFocusModes(spaceId: string): Promise<FocusMode[]> {
   return rows.map((row) => ({
     ...row,
     is_active: row.is_active === 1,
-    blocked_platforms: JSON.parse(row.blocked_platforms),
-    allowed_platforms: JSON.parse(row.allowed_platforms),
+    blocked_platforms: safeParsePlatformArray(row.blocked_platforms),
+    allowed_platforms: safeParsePlatformArray(row.allowed_platforms),
   }));
 }
 
@@ -479,8 +496,8 @@ export async function getActiveFocusMode(
   return {
     ...row,
     is_active: true,
-    blocked_platforms: JSON.parse(row.blocked_platforms),
-    allowed_platforms: JSON.parse(row.allowed_platforms),
+    blocked_platforms: safeParsePlatformArray(row.blocked_platforms),
+    allowed_platforms: safeParsePlatformArray(row.allowed_platforms),
   };
 }
 
@@ -546,8 +563,15 @@ export async function getTotalPostCount(spaceId: string): Promise<number> {
 // ===== Helper Functions =====
 
 function generateId(): string {
-  // Simple ID generation (in production, use a proper library like nanoid)
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  // Collision-resistant 128-bit random ID encoded as hex
+  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  }
+  // Fallback if crypto is unavailable (should not happen in React Native)
+  const rand = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER).toString(36);
+  return `${Date.now().toString(36)}-${rand}`;
 }
 
 async function queueSyncOperation(
