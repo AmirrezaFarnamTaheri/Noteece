@@ -17,6 +17,9 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { FadeIn, SlideIn, ScaleIn } from "@/components/animations";
+import { SkeletonBox, SkeletonCard } from "@/components/skeletons";
+import { haptics } from "@/lib/haptics";
 import type {
   HealthStats,
   HealthGoal,
@@ -125,8 +128,20 @@ export function HealthHub() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadHealthData();
-    setRefreshing(false);
+    haptics.light();
+    try {
+      await loadHealthData();
+      haptics.success();
+    } catch (error) {
+      haptics.error();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const handleViewChange = (view: "today" | "week" | "month") => {
+    haptics.selection();
+    setSelectedView(view);
   };
 
   const formatNumber = (num: number): string => {
@@ -141,17 +156,24 @@ export function HealthHub() {
     label: string,
     value: string | number,
     unit: string,
-    color: string
+    color: string,
+    index: number = 0
   ) => (
-    <View style={styles.metricCard}>
-      <View style={[styles.metricIcon, { backgroundColor: `${color}20` }]}>
-        <Ionicons name={icon} size={24} color={color} />
-      </View>
-      <Text style={styles.metricLabel}>{label}</Text>
-      <Text style={styles.metricValue}>
-        {value} <Text style={styles.metricUnit}>{unit}</Text>
-      </Text>
-    </View>
+    <ScaleIn delay={200 + index * 50} bounce initialScale={0.8}>
+      <TouchableOpacity
+        style={styles.metricCard}
+        onPress={() => haptics.light()}
+        activeOpacity={0.8}
+      >
+        <View style={[styles.metricIcon, { backgroundColor: `${color}20` }]}>
+          <Ionicons name={icon} size={24} color={color} />
+        </View>
+        <Text style={styles.metricLabel}>{label}</Text>
+        <Text style={styles.metricValue}>
+          {value} <Text style={styles.metricUnit}>{unit}</Text>
+        </Text>
+      </TouchableOpacity>
+    </ScaleIn>
   );
 
   const renderGoalProgress = (goal: any) => {
@@ -193,15 +215,7 @@ export function HealthHub() {
     );
   };
 
-  if (!stats) {
-    return (
-      <View style={styles.container}>
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
-
-  return (
+  const renderLoadingSkeleton = () => (
     <View style={styles.container}>
       {/* Header */}
       <LinearGradient
@@ -211,44 +225,92 @@ export function HealthHub() {
         end={{ x: 1, y: 1 }}
       >
         <Text style={styles.headerTitle}>Health</Text>
-        <TouchableOpacity style={styles.headerButton}>
-          <Ionicons name="add-circle-outline" size={24} color="#FFF" />
-        </TouchableOpacity>
       </LinearGradient>
 
-      {/* View Tabs */}
+      {/* Tabs Skeleton */}
       <View style={styles.tabs}>
-        <TouchableOpacity
-          style={[styles.tab, selectedView === "today" && styles.tabActive]}
-          onPress={() => setSelectedView("today")}
-        >
-          <Text
-            style={[styles.tabText, selectedView === "today" && styles.tabTextActive]}
-          >
-            Today
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, selectedView === "week" && styles.tabActive]}
-          onPress={() => setSelectedView("week")}
-        >
-          <Text
-            style={[styles.tabText, selectedView === "week" && styles.tabTextActive]}
-          >
-            Week
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, selectedView === "month" && styles.tabActive]}
-          onPress={() => setSelectedView("month")}
-        >
-          <Text
-            style={[styles.tabText, selectedView === "month" && styles.tabTextActive]}
-          >
-            Month
-          </Text>
-        </TouchableOpacity>
+        {[1, 2, 3].map((i) => (
+          <SkeletonBox key={i} width={80} height={36} borderRadius={8} />
+        ))}
       </View>
+
+      {/* Content Skeleton */}
+      <ScrollView style={styles.content}>
+        <View style={styles.section}>
+          <SkeletonBox width={150} height={20} style={{ marginBottom: 12 }} />
+          <View style={styles.metricsGrid}>
+            {[1, 2, 3, 4].map((i) => (
+              <View key={i} style={styles.metricCard}>
+                <SkeletonBox width={48} height={48} borderRadius={24} />
+                <SkeletonBox width={60} height={16} style={{ marginTop: 8 }} />
+                <SkeletonBox width={80} height={24} style={{ marginTop: 4 }} />
+              </View>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
+    </View>
+  );
+
+  if (loading || !stats) {
+    return renderLoadingSkeleton();
+  }
+
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <FadeIn>
+        <LinearGradient
+          colors={["#10B981", "#059669"]}
+          style={styles.header}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Text style={styles.headerTitle}>Health</Text>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => haptics.medium()}
+          >
+            <Ionicons name="add-circle-outline" size={24} color="#FFF" />
+          </TouchableOpacity>
+        </LinearGradient>
+      </FadeIn>
+
+      {/* View Tabs */}
+      <SlideIn direction="top" delay={100}>
+        <View style={styles.tabs}>
+          <TouchableOpacity
+            style={[styles.tab, selectedView === "today" && styles.tabActive]}
+            onPress={() => handleViewChange("today")}
+          >
+            <Text
+              style={[styles.tabText, selectedView === "today" && styles.tabTextActive]}
+            >
+              Today
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, selectedView === "week" && styles.tabActive]}
+            onPress={() => handleViewChange("week")}
+          >
+            <Text
+              style={[styles.tabText, selectedView === "week" && styles.tabTextActive]}
+            >
+              Week
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, selectedView === "month" && styles.tabActive]}
+            onPress={() => handleViewChange("month")}
+          >
+            <Text
+              style={[styles.tabText, selectedView === "month" && styles.tabTextActive]}
+            >
+              Month
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SlideIn>
 
       <ScrollView
         style={styles.content}
@@ -267,28 +329,32 @@ export function HealthHub() {
                   "Steps",
                   formatNumber(stats.today.steps),
                   "steps",
-                  "#6366F1"
+                  "#6366F1",
+                  0
                 )}
                 {renderMetricCard(
                   "navigate",
                   "Distance",
                   stats.today.distance.toFixed(1),
                   "km",
-                  "#8B5CF6"
+                  "#8B5CF6",
+                  1
                 )}
                 {renderMetricCard(
                   "flame",
                   "Calories",
                   formatNumber(stats.today.calories),
                   "kcal",
-                  "#EF4444"
+                  "#EF4444",
+                  2
                 )}
                 {renderMetricCard(
                   "timer",
                   "Active",
                   stats.today.activeMinutes,
                   "min",
-                  "#F59E0B"
+                  "#F59E0B",
+                  3
                 )}
               </View>
             </View>
@@ -301,21 +367,24 @@ export function HealthHub() {
                   "Water",
                   stats.today.water,
                   "glasses",
-                  "#3B82F6"
+                  "#3B82F6",
+                  4
                 )}
                 {renderMetricCard(
                   "moon",
                   "Sleep",
                   stats.today.sleep.toFixed(1),
                   "hours",
-                  "#8B5CF6"
+                  "#8B5CF6",
+                  5
                 )}
                 {renderMetricCard(
                   "happy",
                   "Mood",
                   stats.today.mood ? `${stats.today.mood}/5` : "N/A",
                   "",
-                  "#10B981"
+                  "#10B981",
+                  6
                 )}
               </View>
             </View>
