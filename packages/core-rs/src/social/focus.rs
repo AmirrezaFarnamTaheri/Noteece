@@ -69,6 +69,14 @@ pub fn create_focus_mode(
     blocked_platforms: Vec<String>,
     allowed_platforms: Vec<String>,
 ) -> Result<FocusMode, SocialError> {
+    log::debug!(
+        "[Social::Focus] Creating focus mode '{}' for space {} - blocked: {:?}, allowed: {:?}",
+        name,
+        space_id,
+        blocked_platforms,
+        allowed_platforms
+    );
+
     let id = ulid::Ulid::new().to_string();
     let now = Utc::now().timestamp_millis();
 
@@ -92,6 +100,12 @@ pub fn create_focus_mode(
         ],
     )?;
 
+    log::info!(
+        "[Social::Focus] Created focus mode '{}' with ID {}",
+        name,
+        id
+    );
+
     Ok(FocusMode {
         id,
         space_id: space_id.to_string(),
@@ -108,6 +122,8 @@ pub fn create_focus_mode(
 
 /// Get all focus modes for a space
 pub fn get_focus_modes(conn: &Connection, space_id: &str) -> Result<Vec<FocusMode>, SocialError> {
+    log::debug!("[Social::Focus] Getting focus modes for space {}", space_id);
+
     let mut stmt = conn.prepare(
         "SELECT id, space_id, name, description, icon, is_active,
                 blocked_platforms, allowed_platforms, created_at
@@ -137,6 +153,12 @@ pub fn get_focus_modes(conn: &Connection, space_id: &str) -> Result<Vec<FocusMod
         .filter_map(Result::ok)
         .collect();
 
+    log::info!(
+        "[Social::Focus] Retrieved {} focus modes for space {}",
+        modes.len(),
+        space_id
+    );
+
     Ok(modes)
 }
 
@@ -146,6 +168,12 @@ pub fn activate_focus_mode(
     focus_mode_id: &str,
     space_id: &str,
 ) -> Result<(), SocialError> {
+    log::debug!(
+        "[Social::Focus] Activating focus mode {} in space {}",
+        focus_mode_id,
+        space_id
+    );
+
     // Deactivate all focus modes in the space
     conn.execute(
         "UPDATE social_focus_mode SET is_active = 0 WHERE space_id = ?1",
@@ -158,15 +186,31 @@ pub fn activate_focus_mode(
         [focus_mode_id],
     )?;
 
+    log::info!(
+        "[Social::Focus] Activated focus mode {} in space {}",
+        focus_mode_id,
+        space_id
+    );
+
     Ok(())
 }
 
 /// Deactivate all focus modes
 pub fn deactivate_all_focus_modes(conn: &Connection, space_id: &str) -> Result<(), SocialError> {
+    log::debug!(
+        "[Social::Focus] Deactivating all focus modes in space {}",
+        space_id
+    );
+
     conn.execute(
         "UPDATE social_focus_mode SET is_active = 0 WHERE space_id = ?1",
         [space_id],
     )?;
+
+    log::info!(
+        "[Social::Focus] Deactivated all focus modes in space {}",
+        space_id
+    );
 
     Ok(())
 }
@@ -177,6 +221,12 @@ pub fn is_platform_blocked(
     space_id: &str,
     platform: &str,
 ) -> Result<bool, SocialError> {
+    log::debug!(
+        "[Social::Focus] Checking if platform {} is blocked in space {}",
+        platform,
+        space_id
+    );
+
     let mut stmt = conn.prepare(
         "SELECT blocked_platforms FROM social_focus_mode
          WHERE space_id = ?1 AND is_active = 1 LIMIT 1",
@@ -187,13 +237,22 @@ pub fn is_platform_blocked(
         Ok(blocked_json)
     });
 
-    match result {
+    let is_blocked = match result {
         Ok(blocked_json) => {
             let blocked: Vec<String> = serde_json::from_str(&blocked_json).unwrap_or_default();
-            Ok(blocked.contains(&platform.to_string()))
+            blocked.contains(&platform.to_string())
         }
-        Err(_) => Ok(false), // No active focus mode
-    }
+        Err(_) => false, // No active focus mode
+    };
+
+    log::debug!(
+        "[Social::Focus] Platform {} is {} in space {}",
+        platform,
+        if is_blocked { "blocked" } else { "allowed" },
+        space_id
+    );
+
+    Ok(is_blocked)
 }
 
 /// Create preset focus modes for a space
@@ -201,6 +260,11 @@ pub fn create_preset_focus_modes(
     conn: &Connection,
     space_id: &str,
 ) -> Result<Vec<FocusMode>, SocialError> {
+    log::debug!(
+        "[Social::Focus] Creating preset focus modes for space {}",
+        space_id
+    );
+
     let mut presets = Vec::new();
 
     // Deep Work Mode
@@ -269,6 +333,12 @@ pub fn create_preset_focus_modes(
         vec![],
     )?);
 
+    log::info!(
+        "[Social::Focus] Created {} preset focus modes for space {}",
+        presets.len(),
+        space_id
+    );
+
     Ok(presets)
 }
 
@@ -282,6 +352,16 @@ pub fn create_automation_rule(
     action_type: ActionType,
     action_value: &str,
 ) -> Result<String, SocialError> {
+    log::debug!(
+        "[Social::Focus] Creating automation rule '{}' for space {} - trigger: {:?}({}), action: {:?}({})",
+        name,
+        space_id,
+        trigger_type,
+        trigger_value,
+        action_type,
+        action_value
+    );
+
     let id = ulid::Ulid::new().to_string();
     let now = Utc::now().timestamp_millis();
 
@@ -316,6 +396,12 @@ pub fn create_automation_rule(
         ],
     )?;
 
+    log::info!(
+        "[Social::Focus] Created automation rule '{}' with ID {}",
+        name,
+        id
+    );
+
     Ok(id)
 }
 
@@ -324,6 +410,11 @@ pub fn get_automation_rules(
     conn: &Connection,
     space_id: &str,
 ) -> Result<Vec<AutomationRule>, SocialError> {
+    log::debug!(
+        "[Social::Focus] Getting automation rules for space {}",
+        space_id
+    );
+
     let mut stmt = conn.prepare(
         "SELECT id, space_id, name, trigger_type, trigger_value,
                 action_type, action_value, enabled, created_at
@@ -368,15 +459,26 @@ pub fn get_automation_rules(
         .filter_map(Result::ok)
         .collect();
 
+    log::info!(
+        "[Social::Focus] Retrieved {} automation rules for space {}",
+        rules.len(),
+        space_id
+    );
+
     Ok(rules)
 }
 
 /// Delete a focus mode
 pub fn delete_focus_mode(conn: &Connection, focus_mode_id: &str) -> Result<(), SocialError> {
+    log::debug!("[Social::Focus] Deleting focus mode {}", focus_mode_id);
+
     conn.execute(
         "DELETE FROM social_focus_mode WHERE id = ?1",
         [focus_mode_id],
     )?;
+
+    log::info!("[Social::Focus] Deleted focus mode {}", focus_mode_id);
+
     Ok(())
 }
 
@@ -386,9 +488,22 @@ pub fn toggle_automation_rule(
     rule_id: &str,
     enabled: bool,
 ) -> Result<(), SocialError> {
+    log::debug!(
+        "[Social::Focus] Toggling automation rule {} to {}",
+        rule_id,
+        if enabled { "enabled" } else { "disabled" }
+    );
+
     conn.execute(
         "UPDATE social_automation_rule SET enabled = ?1 WHERE id = ?2",
         params![if enabled { 1 } else { 0 }, rule_id],
     )?;
+
+    log::info!(
+        "[Social::Focus] Automation rule {} is now {}",
+        rule_id,
+        if enabled { "enabled" } else { "disabled" }
+    );
+
     Ok(())
 }
