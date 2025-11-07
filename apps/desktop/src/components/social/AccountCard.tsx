@@ -4,8 +4,9 @@
  * Displays a single social media account with actions
  */
 
-import { Card, Group, Text, Badge, ActionIcon, Switch, Menu } from '@mantine/core';
-import { IconDots, IconTrash, IconSettings } from '@tabler/icons-react';
+import { Card, Group, Text, Badge, ActionIcon, Switch, Menu, Button } from '@mantine/core';
+import { IconDots, IconTrash, IconSettings, IconExternalLink } from '@tabler/icons-react';
+import { invoke } from '@tauri-apps/api/tauri';
 import type { SocialAccount } from '@noteece/types';
 import { SUPPORTED_PLATFORMS } from '@noteece/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -59,8 +60,34 @@ export function AccountCard({ account }: AccountCardProps) {
     },
   });
 
+  const openWebViewMutation = useMutation({
+    mutationFn: async () => {
+      return await invoke<string>('open_social_webview', {
+        accountId: account.id,
+      });
+    },
+    onSuccess: (windowLabel) => {
+      notifications.show({
+        title: 'WebView Opened',
+        message: `${platform?.name || 'Social media'} window opened. Login and browse to extract content.`,
+        color: 'blue',
+      });
+    },
+    onError: (error) => {
+      notifications.show({
+        title: 'Error',
+        message: `Failed to open WebView: ${error}`,
+        color: 'red',
+      });
+    },
+  });
+
   const handleToggle = (checked: boolean) => {
     toggleMutation.mutate(checked);
+  };
+
+  const handleOpenWebView = () => {
+    openWebViewMutation.mutate();
   };
 
   const handleDelete = () => {
@@ -139,6 +166,21 @@ export function AccountCard({ account }: AccountCardProps) {
             Sync every {account.sync_frequency_minutes}min
           </Badge>
         )}
+      </Group>
+
+      <Group mt="md" justify="space-between">
+        <Button
+          leftSection={<IconExternalLink size={16} />}
+          onClick={handleOpenWebView}
+          loading={openWebViewMutation.isPending}
+          variant="light"
+          size="sm"
+        >
+          Open in WebView
+        </Button>
+        <Text size="xs" c="dimmed">
+          Login and browse to extract content automatically
+        </Text>
       </Group>
     </Card>
   );

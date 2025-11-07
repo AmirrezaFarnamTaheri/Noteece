@@ -23,7 +23,7 @@ use core_rs::personal_modes::{create_health_metric, get_health_metrics, create_h
 use core_rs::temporal_graph::{build_current_graph, save_graph_snapshot, get_graph_evolution, create_milestone, detect_major_notes, GraphSnapshot, GraphEvolution, GraphMilestone};
 use core_rs::sync_agent::{init_sync_tables, SyncAgent, DeviceInfo, DeviceType, SyncHistoryEntry, SyncConflict, ConflictType, ConflictResolution as SyncConflictResolution};
 use core_rs::collaboration::{init_rbac_tables, get_space_users, check_permission, invite_user, update_user_role, grant_permission, revoke_permission, suspend_user, activate_user, get_roles, add_user_to_space, remove_user_from_space, SpaceUser, Role, UserInvitation, CollaborationError};
-use core_rs::social::{add_social_account, get_social_accounts, get_social_account, update_social_account, delete_social_account, store_social_posts, get_unified_timeline, create_category, get_categories, assign_category, get_timeline_stats, SocialAccount, SocialPost, TimelinePost, TimelineFilters, SocialCategory, TimelineStats};
+use core_rs::social::{add_social_account, get_social_accounts, get_social_account, update_social_account, delete_social_account, store_social_posts, get_unified_timeline, create_category, get_categories, assign_category, get_timeline_stats, create_webview_session, get_webview_session, save_session_cookies, get_platform_url, get_platform_display_name, SocialAccount, SocialPost, TimelinePost, TimelineFilters, SocialCategory, TimelineStats, WebViewSession};
 use rusqlite::Connection;
 use std::sync::Mutex;
 use tauri::State;
@@ -1542,6 +1542,153 @@ fn get_timeline_stats_cmd(
     }
 }
 
+// ============================================================================
+// WEBVIEW & EXTRACTION COMMANDS
+// ============================================================================
+
+/// Open a social media account in an isolated WebView
+#[tauri::command]
+async fn open_social_webview(
+    app_handle: tauri::AppHandle,
+    account_id: String,
+    db: State<'_, DbConnection>,
+) -> Result<String, String> {
+    let conn = db.conn.lock().unwrap();
+    let dek = db.dek.lock().unwrap();
+
+    if let (Some(conn), Some(dek)) = (conn.as_ref(), dek.as_ref()) {
+        // Get account
+        let account = get_social_account(conn, &account_id)
+            .map_err(|e| e.to_string())?
+            .ok_or("Account not found")?;
+
+        // Create or get WebView session
+        let session = match get_webview_session(conn, &account_id).map_err(|e| e.to_string())? {
+            Some(s) => s,
+            None => create_webview_session(conn, &account_id, &account.platform, dek.as_slice())
+                .map_err(|e| e.to_string())?,
+        };
+
+        // Get platform URL and display name
+        let url = get_platform_url(&account.platform);
+        let display_name = get_platform_display_name(&account.platform);
+        let window_label = format!("social-{}-{}", account.platform, &account_id[..8]);
+
+        // Create WebView window
+        let window = tauri::WindowBuilder::new(
+            &app_handle,
+            window_label.clone(),
+            tauri::WindowUrl::External(url.parse().unwrap()),
+        )
+        .title(format!("{} - @{}", display_name, account.username))
+        .inner_size(1200.0, 800.0)
+        .build()
+        .map_err(|e| e.to_string())?;
+
+        // Read extraction scripts
+        let universal_script = include_str!("../js/extractors/universal.js");
+        let platform_script = match account.platform.as_str() {
+            "twitter" => include_str!("../js/extractors/twitter.js"),
+            _ => "",
+        };
+
+        // Inject config and extraction scripts after page loads
+        let account_id_clone = account_id.clone();
+        let platform_clone = account.platform.clone();
+
+        window.once("tauri://created", move |_| {
+            let config_script = format!(
+                r#"
+                window.__NOTEECE_CONFIG__ = {{
+                    accountId: '{}',
+                    platform: '{}',
+                    pollInterval: 5000,
+                    debug: true,
+                }};
+                "#,
+                account_id_clone, platform_clone
+            );
+
+            let full_script = format!("{}\n{}\n{}", config_script, universal_script, platform_script);
+
+            window
+                .eval(&full_script)
+                .expect("Failed to inject extraction script");
+        });
+
+        Ok(window_label)
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Handle extracted data from WebView
+#[tauri::command]
+fn handle_extracted_data(
+    account_id: String,
+    platform: String,
+    event_type: String,
+    data: String,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+
+    if let Some(conn) = conn.as_ref() {
+        match event_type.as_str() {
+            "posts_batch" => {
+                // Parse JSON array of posts
+                let posts: Vec<SocialPost> = serde_json::from_str(&data)
+                    .map_err(|e| format!("Failed to parse posts: {}", e))?;
+
+                // Store posts
+                let stored = store_social_posts(conn, &account_id, posts)
+                    .map_err(|e| e.to_string())?;
+
+                log::info!("[Social] Stored {} posts for account {}", stored, account_id);
+                Ok(())
+            }
+            _ => {
+                log::warn!("[Social] Unknown event type: {}", event_type);
+                Ok(())
+            }
+        }
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Save WebView cookies for persistence
+#[tauri::command]
+fn save_webview_cookies(
+    session_id: String,
+    cookies_json: String,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    let dek = db.dek.lock().unwrap();
+
+    if let (Some(conn), Some(dek)) = (conn.as_ref(), dek.as_ref()) {
+        save_session_cookies(conn, &session_id, &cookies_json, dek.as_slice())
+            .map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+/// Get WebView session for an account
+#[tauri::command]
+fn get_webview_session_cmd(
+    account_id: String,
+    db: State<DbConnection>,
+) -> Result<Option<WebViewSession>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_webview_session(conn, &account_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
 /// Explicit shutdown handler to clear the Data Encryption Key from memory
 #[tauri::command]
 fn shutdown_clear_keys_cmd(db: State<DbConnection>) -> Result<(), String> {
@@ -1694,7 +1841,12 @@ fn main() {
         create_social_category_cmd,
         get_social_categories_cmd,
         assign_social_category_cmd,
-        get_timeline_stats_cmd
+        get_timeline_stats_cmd,
+        // Social Media WebView commands
+        open_social_webview,
+        handle_extracted_data,
+        save_webview_cookies,
+        get_webview_session_cmd
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

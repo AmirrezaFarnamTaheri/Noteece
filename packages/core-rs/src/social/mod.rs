@@ -7,6 +7,7 @@ pub mod account;
 pub mod post;
 pub mod category;
 pub mod timeline;
+pub mod webview;
 
 // Re-export commonly used types
 pub use account::{
@@ -29,4 +30,11 @@ pub use category::{
 pub use timeline::{
     TimelinePost, TimelineFilters, TimelineStats, get_unified_timeline,
     get_category_timeline, get_platform_timeline, get_timeline_stats,
+};
+
+pub use webview::{
+    WebViewSession, create_webview_session, get_webview_session,
+    save_session_cookies, save_session_data, get_session_cookies,
+    get_session_data, update_session_last_used, delete_webview_session,
+    delete_account_sessions, get_platform_url, get_platform_display_name,
 };
