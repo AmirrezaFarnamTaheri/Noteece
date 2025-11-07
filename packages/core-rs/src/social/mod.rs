@@ -11,6 +11,7 @@ pub mod webview;
 pub mod sync;
 pub mod analytics;
 pub mod intelligence;
+pub mod focus;
 
 // Re-export commonly used types
 pub use account::{
@@ -56,4 +57,12 @@ pub use analytics::{
 pub use intelligence::{
     ContentInsight, Sentiment, AutoCategorizationRule, RuleType,
     analyze_post_content, auto_categorize_posts, create_auto_rule,
+};
+
+pub use focus::{
+    FocusMode, TimeLimit, AutomationRule, TriggerType, ActionType,
+    create_focus_mode, get_focus_modes, activate_focus_mode,
+    deactivate_all_focus_modes, is_platform_blocked, create_preset_focus_modes,
+    create_automation_rule, get_automation_rules, delete_focus_mode,
+    toggle_automation_rule,
 };

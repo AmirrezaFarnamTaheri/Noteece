@@ -336,6 +336,32 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
                 created_at INTEGER NOT NULL
             );
 
+            -- Focus modes
+            CREATE TABLE social_focus_mode (
+                id TEXT PRIMARY KEY,
+                space_id TEXT NOT NULL REFERENCES space(id) ON DELETE CASCADE,
+                name TEXT NOT NULL,
+                description TEXT,
+                icon TEXT,
+                is_active INTEGER NOT NULL DEFAULT 0,
+                blocked_platforms TEXT NOT NULL,
+                allowed_platforms TEXT NOT NULL,
+                created_at INTEGER NOT NULL
+            );
+
+            -- Automation rules
+            CREATE TABLE social_automation_rule (
+                id TEXT PRIMARY KEY,
+                space_id TEXT NOT NULL REFERENCES space(id) ON DELETE CASCADE,
+                name TEXT NOT NULL,
+                trigger_type TEXT NOT NULL CHECK(trigger_type IN('time_of_day', 'day_of_week', 'platform_open', 'category_post')),
+                trigger_value TEXT NOT NULL,
+                action_type TEXT NOT NULL CHECK(action_type IN('activate_focus_mode', 'disable_sync', 'send_notification', 'auto_categorize')),
+                action_value TEXT NOT NULL,
+                enabled INTEGER NOT NULL DEFAULT 1,
+                created_at INTEGER NOT NULL
+            );
+
             -- Indexes for performance
             CREATE INDEX idx_social_post_account ON social_post(account_id, timestamp DESC);
             CREATE INDEX idx_social_post_platform ON social_post(platform, timestamp DESC);
