@@ -113,9 +113,18 @@ pub fn get_unified_timeline(
                 .unwrap_or_default();
 
             let categories_str: Option<String> = row.get(13)?;
-            let categories = categories_str
-                .map(|s| s.split(char::from(31)).map(String::from).collect())
+            let mut categories: Vec<String> = categories_str
+                .map(|s| {
+                    s.split(char::from(31))
+                        .filter(|name| !name.is_empty())
+                        .map(String::from)
+                        .collect()
+                })
                 .unwrap_or_default();
+
+            // Deduplicate categories in case DB collation causes duplicates
+            categories.sort_unstable();
+            categories.dedup();
 
             Ok(TimelinePost {
                 id: row.get(0)?,
@@ -182,9 +191,18 @@ pub fn get_category_timeline(
             .unwrap_or_default();
 
         let categories_str: Option<String> = row.get(13)?;
-        let categories = categories_str
-            .map(|s| s.split(char::from(31)).map(String::from).collect())
+        let mut categories: Vec<String> = categories_str
+            .map(|s| {
+                s.split(char::from(31))
+                    .filter(|name| !name.is_empty())
+                    .map(String::from)
+                    .collect()
+            })
             .unwrap_or_default();
+
+        // Deduplicate categories
+        categories.sort_unstable();
+        categories.dedup();
 
         Ok(TimelinePost {
             id: row.get(0)?,
@@ -245,9 +263,18 @@ pub fn get_platform_timeline(
             .unwrap_or_default();
 
         let categories_str: Option<String> = row.get(13)?;
-        let categories = categories_str
-            .map(|s| s.split(char::from(31)).map(String::from).collect())
+        let mut categories: Vec<String> = categories_str
+            .map(|s| {
+                s.split(char::from(31))
+                    .filter(|name| !name.is_empty())
+                    .map(String::from)
+                    .collect()
+            })
             .unwrap_or_default();
+
+        // Deduplicate categories
+        categories.sort_unstable();
+        categories.dedup();
 
         Ok(TimelinePost {
             id: row.get(0)?,

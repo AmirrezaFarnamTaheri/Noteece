@@ -80,6 +80,26 @@ export async function storeSocialPosts(
   accountId: string,
   posts: SocialPost[]
 ): Promise<number> {
+  // Prevent overwhelming IPC/native layer with oversized batches
+  const MAX_POSTS = 1000;
+  const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
+
+  if (!Array.isArray(posts)) {
+    throw new Error('Invalid posts payload: must be an array');
+  }
+
+  if (posts.length > MAX_POSTS) {
+    throw new Error(`Too many posts in batch (${posts.length} > ${MAX_POSTS})`);
+  }
+
+  // Rough size check to prevent memory exhaustion
+  const approx = new Blob([JSON.stringify(posts)]).size;
+  if (approx > MAX_BYTES) {
+    throw new Error(
+      `Posts payload too large (${approx} bytes > ${MAX_BYTES} bytes)`
+    );
+  }
+
   return await invoke('store_social_posts_cmd', { accountId, posts });
 }
 

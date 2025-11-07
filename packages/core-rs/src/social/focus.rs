@@ -174,17 +174,30 @@ pub fn activate_focus_mode(
         space_id
     );
 
+    // Use transaction for atomic activation with validation
+    let tx = conn.transaction()?;
+
     // Deactivate all focus modes in the space
-    conn.execute(
+    tx.execute(
         "UPDATE social_focus_mode SET is_active = 0 WHERE space_id = ?1",
         [space_id],
     )?;
 
-    // Activate the requested mode
-    conn.execute(
-        "UPDATE social_focus_mode SET is_active = 1 WHERE id = ?1",
-        [focus_mode_id],
+    // Activate the requested mode and validate it belongs to the correct space
+    let rows = tx.execute(
+        "UPDATE social_focus_mode SET is_active = 1 WHERE id = ?1 AND space_id = ?2",
+        params![focus_mode_id, space_id],
     )?;
+
+    if rows == 0 {
+        tx.rollback()?;
+        return Err(SocialError::Platform(format!(
+            "Focus mode {} not found in space {}",
+            focus_mode_id, space_id
+        )));
+    }
+
+    tx.commit()?;
 
     log::info!(
         "[Social::Focus] Activated focus mode {} in space {}",

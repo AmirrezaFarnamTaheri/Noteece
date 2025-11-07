@@ -52,9 +52,9 @@ pub fn store_social_posts(
     let now = Utc::now().timestamp_millis();
     let mut stored = 0;
 
-    // Use transaction for atomicity
+    // Use safe transaction for atomicity with automatic rollback on error
     log::debug!("[Social::Post] Starting transaction for batch insert");
-    let tx = conn.unchecked_transaction().map_err(|e| {
+    let tx = conn.transaction().map_err(|e| {
         log::error!("[Social::Post] Failed to start transaction: {}", e);
         e
     })?;

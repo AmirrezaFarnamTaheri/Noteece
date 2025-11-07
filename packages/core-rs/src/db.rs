@@ -315,11 +315,9 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
             END;
 
             CREATE TRIGGER social_post_au AFTER UPDATE ON social_post BEGIN
-                UPDATE social_post_fts
-                SET content = COALESCE(new.content, ''),
-                    author = COALESCE(new.author, ''),
-                    post_id = new.id
-                WHERE rowid = old.rowid;
+                DELETE FROM social_post_fts WHERE rowid = old.rowid;
+                INSERT INTO social_post_fts(rowid, content, author, post_id)
+                VALUES (new.rowid, COALESCE(new.content, ''), COALESCE(new.author, ''), new.id);
             END;
 
             -- Sync history
