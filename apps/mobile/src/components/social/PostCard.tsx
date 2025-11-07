@@ -6,9 +6,11 @@
  * and category tags.
  */
 
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Image, Share, Alert } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { format } from "date-fns";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { TimelinePost, Platform } from "../../types/social";
 import { PLATFORM_CONFIGS } from "../../types/social";
 
@@ -17,6 +19,7 @@ interface PostCardProps {
   onPress?: () => void;
   onCategoryPress?: (categoryId: string) => void;
   onAssignCategory?: () => void;
+  onHide?: () => void;
 }
 
 export function PostCard({
@@ -24,8 +27,76 @@ export function PostCard({
   onPress,
   onCategoryPress,
   onAssignCategory,
+  onHide,
 }: PostCardProps) {
   const platformConfig = PLATFORM_CONFIGS[post.platform as Platform];
+  const [isBookmarked, setIsBookmarked] = useState(false);
+
+  // Load bookmark status
+  React.useEffect(() => {
+    loadBookmarkStatus();
+  }, [post.id]);
+
+  const loadBookmarkStatus = async () => {
+    try {
+      const bookmarks = await AsyncStorage.getItem("social_bookmarks");
+      if (bookmarks) {
+        const bookmarkedIds: string[] = JSON.parse(bookmarks);
+        setIsBookmarked(bookmarkedIds.includes(post.id));
+      }
+    } catch (error) {
+      console.error("Failed to load bookmark status:", error);
+    }
+  };
+
+  const handleBookmark = async () => {
+    try {
+      const bookmarks = await AsyncStorage.getItem("social_bookmarks");
+      let bookmarkedIds: string[] = bookmarks ? JSON.parse(bookmarks) : [];
+
+      if (isBookmarked) {
+        bookmarkedIds = bookmarkedIds.filter((id) => id !== post.id);
+      } else {
+        bookmarkedIds.push(post.id);
+      }
+
+      await AsyncStorage.setItem(
+        "social_bookmarks",
+        JSON.stringify(bookmarkedIds),
+      );
+      setIsBookmarked(!isBookmarked);
+    } catch (error) {
+      console.error("Failed to update bookmark:", error);
+      Alert.alert("Error", "Failed to update bookmark");
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      const message = `${post.author} on ${platformConfig.name}:\n\n${post.content || ""}\n\n${post.url || ""}`;
+      await Share.share({
+        message,
+        url: post.url,
+      });
+    } catch (error) {
+      console.error("Failed to share:", error);
+    }
+  };
+
+  const handleHide = () => {
+    Alert.alert(
+      "Hide Post",
+      "Hide this post from your timeline?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Hide",
+          style: "destructive",
+          onPress: () => onHide?.(),
+        },
+      ],
+    );
+  };
 
   return (
     <TouchableOpacity
@@ -126,6 +197,50 @@ export function PostCard({
           )}
         </View>
       )}
+
+      {/* Action Buttons */}
+      <View style={styles.actions}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={handleBookmark}
+        >
+          <Ionicons
+            name={isBookmarked ? "bookmark" : "bookmark-outline"}
+            size={20}
+            color={isBookmarked ? "#007AFF" : "#666"}
+          />
+          <Text style={[
+            styles.actionText,
+            isBookmarked && styles.actionTextActive
+          ]}>
+            {isBookmarked ? "Saved" : "Save"}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={handleShare}
+        >
+          <Ionicons
+            name="share-outline"
+            size={20}
+            color="#666"
+          />
+          <Text style={styles.actionText}>Share</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={handleHide}
+        >
+          <Ionicons
+            name="eye-off-outline"
+            size={20}
+            color="#666"
+          />
+          <Text style={styles.actionText}>Hide</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Category Tags */}
       <View style={styles.footer}>
@@ -322,5 +437,29 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#666",
     fontWeight: "500",
+  },
+  actions: {
+    flexDirection: "row",
+    borderTopWidth: 1,
+    borderTopColor: "#EEE",
+    paddingTop: 12,
+    marginTop: 12,
+    gap: 8,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 8,
+    gap: 6,
+  },
+  actionText: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "500",
+  },
+  actionTextActive: {
+    color: "#007AFF",
   },
 });
