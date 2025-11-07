@@ -294,16 +294,25 @@ impl CorrelationEngine {
                 // More than 10 hours logged
                 if let Some(task) = context.tasks.iter().find(|t| t.id == task_id) {
                     // Check if task is not completed and time exceeds estimate
-                    let estimated_hours = task.estimate_minutes.map(|m| m as f64 / 60.0).unwrap_or(8.0);
+                    let estimated_hours = task
+                        .estimate_minutes
+                        .map(|m| m as f64 / 60.0)
+                        .unwrap_or(8.0);
                     let time_ratio = hours / estimated_hours;
 
                     if time_ratio > 1.5 && task.completed_at.is_none() {
                         // Time exceeds estimate by 50%+
                         let mut metadata = HashMap::new();
                         metadata.insert("hours_logged".to_string(), serde_json::json!(hours));
-                        metadata.insert("estimated_hours".to_string(), serde_json::json!(estimated_hours));
+                        metadata.insert(
+                            "estimated_hours".to_string(),
+                            serde_json::json!(estimated_hours),
+                        );
                         metadata.insert("time_ratio".to_string(), serde_json::json!(time_ratio));
-                        metadata.insert("task_title".to_string(), serde_json::json!(task.title.clone()));
+                        metadata.insert(
+                            "task_title".to_string(),
+                            serde_json::json!(task.title.clone()),
+                        );
 
                         return Some(Correlation {
                             correlation_type: CorrelationType::TimeProductivity,
@@ -643,7 +652,7 @@ pub struct ScenarioAnalysis {
     pub scenario_id: String,
     pub predicted_workload_hours: f64,
     pub available_hours: f64,
-    pub burnout_risk: f64, // 0.0 - 1.0
+    pub burnout_risk: f64,  // 0.0 - 1.0
     pub deadline_risk: f64, // 0.0 - 1.0 (probability of missing deadlines)
     pub recommendations: Vec<String>,
     pub insights: Vec<Insight>,
@@ -813,7 +822,11 @@ impl CorrelationEngine {
 
         // Collect completed task durations for historical average
         for (task_id, hours) in &time_by_task {
-            if let Some(task) = context.tasks.iter().find(|t| t.id == *task_id && t.completed_at.is_some()) {
+            if let Some(task) = context
+                .tasks
+                .iter()
+                .find(|t| t.id == *task_id && t.completed_at.is_some())
+            {
                 completed_task_hours.push(*hours);
             }
         }
@@ -827,7 +840,8 @@ impl CorrelationEngine {
 
         for task in &context.tasks {
             // Use estimate_minutes if available, otherwise use historical average
-            let estimated_hours = task.estimate_minutes
+            let estimated_hours = task
+                .estimate_minutes
                 .map(|m| m as f64 / 60.0)
                 .unwrap_or(historical_avg);
 
@@ -849,7 +863,13 @@ impl CorrelationEngine {
         let total_work_hours: f64 = context
             .time_entries
             .iter()
-            .filter(|e| e.ended_at.is_some() && !e.description.as_ref().map_or(false, |d| d.starts_with("Calendar:")))
+            .filter(|e| {
+                e.ended_at.is_some()
+                    && !e
+                        .description
+                        .as_ref()
+                        .map_or(false, |d| d.starts_with("Calendar:"))
+            })
             .map(|e| (e.ended_at.unwrap() - e.started_at) as f64 / 3600.0)
             .sum();
 
@@ -866,7 +886,11 @@ impl CorrelationEngine {
         let committed_hours: f64 = context
             .time_entries
             .iter()
-            .filter(|e| e.description.as_ref().map_or(false, |d| d.starts_with("Calendar:")))
+            .filter(|e| {
+                e.description
+                    .as_ref()
+                    .map_or(false, |d| d.starts_with("Calendar:"))
+            })
             .map(|e| e.duration_seconds.unwrap_or(0) as f64 / 3600.0)
             .sum();
 
@@ -939,15 +963,16 @@ impl CorrelationEngine {
         }
 
         if burnout_risk > 0.8 {
-            recommendations.push(
-                "🛑 Critical burnout risk. Schedule recovery time immediately.".to_string(),
-            );
+            recommendations
+                .push("🛑 Critical burnout risk. Schedule recovery time immediately.".to_string());
         } else if burnout_risk > 0.5 {
-            recommendations.push("⚡ Moderate burnout risk. Plan lighter workweeks ahead.".to_string());
+            recommendations
+                .push("⚡ Moderate burnout risk. Plan lighter workweeks ahead.".to_string());
         }
 
         if workload < available * 0.5 {
-            recommendations.push("✅ Workload is manageable. Consider taking on new projects.".to_string());
+            recommendations
+                .push("✅ Workload is manageable. Consider taking on new projects.".to_string());
         }
 
         if recommendations.is_empty() {
@@ -1025,14 +1050,12 @@ impl CorrelationEngine {
                         "burnout_risk": burnout_risk,
                     }),
                 },
-                suggested_actions: vec![
-                    SuggestedAction {
-                        action_type: "add_recovery_time".to_string(),
-                        label: "Add recovery blocks".to_string(),
-                        description: "Schedule rest periods in this scenario".to_string(),
-                        parameters: serde_json::json!({ "scenario_id": scenario.id }),
-                    },
-                ],
+                suggested_actions: vec![SuggestedAction {
+                    action_type: "add_recovery_time".to_string(),
+                    label: "Add recovery blocks".to_string(),
+                    description: "Schedule rest periods in this scenario".to_string(),
+                    parameters: serde_json::json!({ "scenario_id": scenario.id }),
+                }],
                 created_at: now,
                 dismissed: false,
             });

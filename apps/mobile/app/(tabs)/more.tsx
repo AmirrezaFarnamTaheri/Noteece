@@ -14,6 +14,8 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, typography, spacing } from "@/lib/theme";
 import { useVaultStore } from "@/store/vault";
+import { useAppContext, useSettings, useUpdateSetting } from "@/store/app-context";
+import { haptics } from "@/lib/haptics";
 import {
   startBackgroundSync,
   stopBackgroundSync,
@@ -26,17 +28,21 @@ import { exportAllData, clearAllData, getDataStats } from "@/lib/data-utils";
 
 export default function MoreScreen() {
   const { lockVault } = useVaultStore();
+  const settings = useSettings();
+  const updateSetting = useUpdateSetting();
   const [backgroundSyncEnabled, setBackgroundSyncEnabled] = useState(false);
   const [nfcEnabled, setNfcEnabled] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
   const handleLockVault = () => {
+    haptics.warning();
     Alert.alert("Lock Vault", "Are you sure you want to lock the vault?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Lock",
         style: "destructive",
         onPress: () => {
+          haptics.heavy();
           lockVault();
           router.replace("/unlock");
         },
@@ -47,6 +53,7 @@ export default function MoreScreen() {
   const handleToggleBackgroundSync = async (value: boolean) => {
     const previous = backgroundSyncEnabled;
     try {
+      haptics.medium();
       // Perform async operations first
       if (value) {
         await startBackgroundSync();
@@ -59,6 +66,7 @@ export default function MoreScreen() {
       setBackgroundSyncEnabled(value);
     } catch (error) {
       console.error("Failed to toggle background sync:", error);
+      haptics.error();
       // Revert to previous state on failure
       setBackgroundSyncEnabled(previous);
       Alert.alert("Error", "Failed to update background sync setting");
@@ -70,6 +78,7 @@ export default function MoreScreen() {
       const available = await nfcTriggerManager.isAvailable();
 
       if (!available && value) {
+        haptics.error();
         Alert.alert(
           "NFC Not Available",
           "NFC is not available on this device or is disabled in settings",
@@ -77,6 +86,7 @@ export default function MoreScreen() {
         return;
       }
 
+      haptics.medium();
       // Persist to storage first
       await AsyncStorage.setItem("nfc_enabled", value.toString());
 
@@ -84,6 +94,7 @@ export default function MoreScreen() {
       setNfcEnabled(value);
 
       if (value) {
+        haptics.success();
         Alert.alert(
           "NFC Enabled",
           "You can now use NFC tags to trigger quick actions",
@@ -91,21 +102,26 @@ export default function MoreScreen() {
       }
     } catch (error) {
       console.error("Failed to toggle NFC:", error);
+      haptics.error();
       Alert.alert("Error", "Failed to update NFC setting");
     }
   };
 
   const handleManualSync = async () => {
     setSyncing(true);
+    haptics.light();
     try {
       const success = await triggerManualSync();
       if (success) {
+        haptics.success();
         Alert.alert("Success", "Sync completed successfully");
       } else {
+        haptics.warning();
         Alert.alert("No Devices", "No devices found to sync with");
       }
     } catch (error) {
       console.error("Failed to sync:", error);
+      haptics.error();
       Alert.alert("Error", "Sync failed. Please try again.");
     } finally {
       setSyncing(false);
@@ -224,6 +240,7 @@ export default function MoreScreen() {
       // Get stats first
       const stats = await getDataStats();
 
+      haptics.warning();
       Alert.alert(
         "⚠️ Export Data (Unencrypted)",
         `SECURITY WARNING: Exported data is UNENCRYPTED!\n\n` +
@@ -244,14 +261,17 @@ export default function MoreScreen() {
             text: "I Understand, Export",
             style: "destructive",
             onPress: async () => {
+              haptics.heavy();
               const result = await exportAllData();
               if (result.success) {
+                haptics.success();
                 Alert.alert(
                   "Export Complete",
                   "⚠️ REMINDER: This file contains UNENCRYPTED data.\n\nStore it securely and delete after use.",
                   [{ text: "OK" }],
                 );
               } else {
+                haptics.error();
                 Alert.alert("Error", result.error || "Failed to export data");
               }
             },
@@ -260,6 +280,7 @@ export default function MoreScreen() {
       );
     } catch (error) {
       console.error("Failed to export data:", error);
+      haptics.error();
       Alert.alert("Error", "Failed to export data. Please try again.");
     }
   };
@@ -269,6 +290,7 @@ export default function MoreScreen() {
       // Get stats first
       const stats = await getDataStats();
 
+      haptics.warning();
       Alert.alert(
         "Clear All Data",
         `This will permanently delete all your local data:\n\n` +
@@ -285,6 +307,7 @@ export default function MoreScreen() {
             text: "Delete Everything",
             style: "destructive",
             onPress: () => {
+              haptics.error();
               Alert.alert(
                 "Are You Sure?",
                 "This will delete EVERYTHING and you will be logged out. This cannot be undone!",
@@ -294,8 +317,10 @@ export default function MoreScreen() {
                     text: "Yes, Delete All",
                     style: "destructive",
                     onPress: async () => {
+                      haptics.heavy();
                       const result = await clearAllData();
                       if (result.success) {
+                        haptics.success();
                         Alert.alert(
                           "Data Cleared",
                           "All data has been deleted. You will now be returned to onboarding.",
@@ -310,6 +335,7 @@ export default function MoreScreen() {
                           ],
                         );
                       } else {
+                        haptics.error();
                         Alert.alert(
                           "Error",
                           result.error || "Failed to clear data",
@@ -325,11 +351,198 @@ export default function MoreScreen() {
       );
     } catch (error) {
       console.error("Failed to clear data:", error);
+      haptics.error();
       Alert.alert("Error", "Failed to clear data. Please try again.");
     }
   };
 
+  const handleThemeModeChange = () => {
+    haptics.light();
+    Alert.alert("Theme Mode", "Choose your preferred theme", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Light",
+        onPress: () => {
+          haptics.selection();
+          updateSetting("theme", { ...settings.theme, mode: "light" });
+        },
+      },
+      {
+        text: "Dark",
+        onPress: () => {
+          haptics.selection();
+          updateSetting("theme", { ...settings.theme, mode: "dark" });
+        },
+      },
+      {
+        text: "Auto (System)",
+        onPress: () => {
+          haptics.selection();
+          updateSetting("theme", { ...settings.theme, mode: "auto" });
+        },
+      },
+    ]);
+  };
+
+  const handleFontSizeChange = () => {
+    haptics.light();
+    Alert.alert("Font Size", "Choose your preferred font size", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Small",
+        onPress: () => {
+          haptics.selection();
+          updateSetting("theme", { ...settings.theme, fontSize: "small" });
+        },
+      },
+      {
+        text: "Medium",
+        onPress: () => {
+          haptics.selection();
+          updateSetting("theme", { ...settings.theme, fontSize: "medium" });
+        },
+      },
+      {
+        text: "Large",
+        onPress: () => {
+          haptics.selection();
+          updateSetting("theme", { ...settings.theme, fontSize: "large" });
+        },
+      },
+    ]);
+  };
+
+  const handleFontFamilyChange = () => {
+    haptics.light();
+    Alert.alert("Font Family", "Choose your preferred font", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Default",
+        onPress: () => {
+          haptics.selection();
+          updateSetting("theme", { ...settings.theme, fontFamily: "default" });
+        },
+      },
+      {
+        text: "Dyslexic-Friendly",
+        onPress: () => {
+          haptics.selection();
+          updateSetting("theme", { ...settings.theme, fontFamily: "dyslexic" });
+        },
+      },
+      {
+        text: "Monospace",
+        onPress: () => {
+          haptics.selection();
+          updateSetting("theme", { ...settings.theme, fontFamily: "monospace" });
+        },
+      },
+    ]);
+  };
+
+  const handleToggleNotifications = async (value: boolean) => {
+    try {
+      haptics.medium();
+      await updateSetting("notifications", value);
+    } catch (error) {
+      console.error("Failed to toggle notifications:", error);
+      haptics.error();
+      Alert.alert("Error", "Failed to update notification settings");
+    }
+  };
+
+  const handleToggleHaptics = async (value: boolean) => {
+    try {
+      // Provide immediate feedback before the setting takes effect
+      if (value) {
+        haptics.medium();
+      }
+      await updateSetting("haptics", value);
+    } catch (error) {
+      console.error("Failed to toggle haptics:", error);
+      haptics.error();
+      Alert.alert("Error", "Failed to update haptic settings");
+    }
+  };
+
+  const getThemeModeLabel = () => {
+    switch (settings.theme.mode) {
+      case "light":
+        return "Light";
+      case "dark":
+        return "Dark";
+      case "auto":
+        return "Auto (System)";
+      default:
+        return "Dark";
+    }
+  };
+
+  const getFontSizeLabel = () => {
+    return settings.theme.fontSize.charAt(0).toUpperCase() + settings.theme.fontSize.slice(1);
+  };
+
+  const getFontFamilyLabel = () => {
+    switch (settings.theme.fontFamily) {
+      case "default":
+        return "Default";
+      case "dyslexic":
+        return "Dyslexic-Friendly";
+      case "monospace":
+        return "Monospace";
+      default:
+        return "Default";
+    }
+  };
+
   const settingsSections = [
+    {
+      title: "General",
+      items: [
+        {
+          icon: "notifications-outline",
+          label: "Notifications",
+          subtitle: "Push notifications and alerts",
+          toggle: true,
+          value: settings.notifications,
+          onToggle: handleToggleNotifications,
+        },
+        {
+          icon: "phone-portrait-outline",
+          label: "Haptic Feedback",
+          subtitle: "Vibration on interactions",
+          toggle: true,
+          value: settings.haptics,
+          onToggle: handleToggleHaptics,
+        },
+      ],
+    },
+    {
+      title: "Appearance",
+      items: [
+        {
+          icon: "color-palette-outline",
+          label: "Theme Mode",
+          subtitle: getThemeModeLabel(),
+          onPress: handleThemeModeChange,
+          showChevron: true,
+        },
+        {
+          icon: "text-outline",
+          label: "Font Size",
+          subtitle: getFontSizeLabel(),
+          onPress: handleFontSizeChange,
+          showChevron: true,
+        },
+        {
+          icon: "list-outline",
+          label: "Font Family",
+          subtitle: getFontFamilyLabel(),
+          onPress: handleFontFamilyChange,
+          showChevron: true,
+        },
+      ],
+    },
     {
       title: "Sync & Backup",
       items: [

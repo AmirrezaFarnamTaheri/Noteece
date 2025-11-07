@@ -1,10 +1,10 @@
 // Comprehensive Sync Agent Tests
 // Tests Session 5 QA fixes: database schema, query optimizations, conflict resolution
 
-use core_rs::sync_agent::{
-    init_sync_tables, SyncAgent, DeviceType, ConflictResolution, ConflictType,
-};
 use core_rs::db;
+use core_rs::sync_agent::{
+    init_sync_tables, ConflictResolution, ConflictType, DeviceType, SyncAgent,
+};
 use rusqlite::Connection;
 use tempfile::{tempdir, TempDir};
 use ulid::Ulid;
@@ -81,12 +81,30 @@ fn test_entity_sync_log_schema() {
 
     let column_names: Vec<String> = schema.iter().map(|(name, _)| name.clone()).collect();
 
-    assert!(column_names.contains(&"id".to_string()), "Must have id column");
-    assert!(column_names.contains(&"entity_type".to_string()), "Must have entity_type");
-    assert!(column_names.contains(&"entity_id".to_string()), "Must have entity_id");
-    assert!(column_names.contains(&"synced_at".to_string()), "Must have synced_at");
-    assert!(column_names.contains(&"device_id".to_string()), "Must have device_id");
-    assert!(column_names.contains(&"operation".to_string()), "Must have operation");
+    assert!(
+        column_names.contains(&"id".to_string()),
+        "Must have id column"
+    );
+    assert!(
+        column_names.contains(&"entity_type".to_string()),
+        "Must have entity_type"
+    );
+    assert!(
+        column_names.contains(&"entity_id".to_string()),
+        "Must have entity_id"
+    );
+    assert!(
+        column_names.contains(&"synced_at".to_string()),
+        "Must have synced_at"
+    );
+    assert!(
+        column_names.contains(&"device_id".to_string()),
+        "Must have device_id"
+    );
+    assert!(
+        column_names.contains(&"operation".to_string()),
+        "Must have operation"
+    );
 }
 
 #[test]
@@ -394,7 +412,11 @@ fn test_get_last_sync_time_uses_sync_history() {
         )
         .expect("Failed to query last sync time");
 
-    assert_eq!(result, Some(sync_time), "Should return last sync time from sync_history");
+    assert_eq!(
+        result,
+        Some(sync_time),
+        "Should return last sync time from sync_history"
+    );
 }
 
 #[test]
@@ -426,20 +448,26 @@ fn test_vector_clock_from_sync_history() {
              GROUP BY device_id",
         )
         .unwrap()
-        .query_map([&space_id], |row| {
-            Ok((row.get(0)?, row.get(1)?))
-        })
+        .query_map([&space_id], |row| Ok((row.get(0)?, row.get(1)?)))
         .unwrap()
         .collect::<Result<Vec<_>, _>>()
         .expect("Failed to build vector clock");
 
-    assert_eq!(vector_clock.len(), 3, "Should have 3 devices in vector clock");
+    assert_eq!(
+        vector_clock.len(),
+        3,
+        "Should have 3 devices in vector clock"
+    );
 
     // Verify correct timestamps
     for (device_id, timestamp) in vector_clock {
         let device_num: i64 = device_id.replace("device_", "").parse().unwrap();
         let expected_time = 1000 + (device_num * 100);
-        assert_eq!(timestamp, expected_time, "Timestamp should match for {}", device_id);
+        assert_eq!(
+            timestamp, expected_time,
+            "Timestamp should match for {}",
+            device_id
+        );
     }
 }
 
@@ -503,7 +531,15 @@ fn test_entity_sync_log_all_fields() {
             "SELECT entity_type, entity_id, synced_at, device_id, operation
              FROM entity_sync_log WHERE id = ?1",
             [&log_id],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)),
+            |row| {
+                Ok((
+                    row.get(0)?,
+                    row.get(1)?,
+                    row.get(2)?,
+                    row.get(3)?,
+                    row.get(4)?,
+                ))
+            },
         )
         .expect("Failed to query log");
 
@@ -537,11 +573,7 @@ fn test_entity_sync_log_operation_types() {
     }
 
     let count: i64 = conn
-        .query_row(
-            "SELECT COUNT(*) FROM entity_sync_log",
-            [],
-            |row| row.get(0),
-        )
+        .query_row("SELECT COUNT(*) FROM entity_sync_log", [], |row| row.get(0))
         .expect("Failed to count");
 
     assert_eq!(count, 3, "Should have 3 log entries");

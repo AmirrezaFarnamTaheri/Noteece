@@ -5,8 +5,9 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ErrorBoundary } from "@/components/errors";
 import { useVaultStore } from "@/store/vault";
+import { useAppContext } from "@/store/app-context";
 import { initializeDatabase } from "@/lib/database";
 import { startBackgroundSync } from "@/lib/sync/background-sync";
 import { initSentry } from "@/lib/sentry";
@@ -18,6 +19,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const { isUnlocked } = useVaultStore();
+  const { initialize } = useAppContext();
   const [loaded, error] = useFonts({
     "Inter-Regular": require("../assets/fonts/Inter-Regular.ttf"),
     "Inter-Medium": require("../assets/fonts/Inter-Medium.ttf"),
@@ -34,6 +36,11 @@ export default function RootLayout() {
   }, [loaded, error]);
 
   useEffect(() => {
+    // Initialize app context
+    initialize().catch((err) => {
+      console.error("Failed to initialize app context:", err);
+    });
+
     // Initialize database on app start
     initializeDatabase().catch((err) => {
       console.error("Failed to initialize database:", err);
@@ -45,7 +52,7 @@ export default function RootLayout() {
         console.error("Failed to start background sync:", err);
       });
     }
-  }, [isUnlocked]);
+  }, [isUnlocked, initialize]);
 
   if (!loaded && !error) {
     return null;

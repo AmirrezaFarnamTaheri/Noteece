@@ -194,3 +194,6 @@ export interface TimeStats {
   entry_count: number;
   average_seconds: number;
 }
+
+// Social Media Suite types
+export * from './social';

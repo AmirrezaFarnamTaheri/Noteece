@@ -1,0 +1,110 @@
+/**
+ * useSharedContent Hook
+ *
+ * Monitors for content shared from other apps and processes it.
+ * Works with both iOS Share Extension and Android Share Target.
+ *
+ * Usage:
+ *   const { hasSharedContent, sharedItems, processItems } = useSharedContent();
+ */
+
+import { useEffect, useState } from "react";
+import { AppState, AppStateStatus, Platform } from "react-native";
+import * as Linking from "expo-linking";
+import {
+  processSharedItems,
+  getPendingItems,
+  markItemsProcessed,
+  cleanupProcessedItems,
+  SharedItem,
+} from "../lib/share-handler";
+
+interface PendingItem extends SharedItem {
+  savedAt: number;
+  processedAt: number | null;
+}
+
+export function useSharedContent() {
+  const [hasSharedContent, setHasSharedContent] = useState(false);
+  const [sharedItems, setSharedItems] = useState<PendingItem[]>([]);
+
+  // Check for shared content on mount and app state changes
+  useEffect(() => {
+    checkForSharedContent();
+
+    const subscription = AppState.addEventListener(
+      "change",
+      handleAppStateChange
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  // Listen for deep link events (share extension may use deep links)
+  useEffect(() => {
+    const handleUrl = async (event: { url: string }) => {
+      if (event.url.includes("shared_content=true")) {
+        await checkForSharedContent();
+      }
+    };
+
+    // Check initial URL
+    Linking.getInitialURL().then((url) => {
+      if (url && url.includes("shared_content=true")) {
+        checkForSharedContent();
+      }
+    });
+
+    // Listen for URL events
+    const subscription = Linking.addEventListener("url", handleUrl);
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  const handleAppStateChange = async (nextAppState: AppStateStatus) => {
+    if (nextAppState === "active") {
+      await checkForSharedContent();
+    }
+  };
+
+  const checkForSharedContent = async () => {
+    try {
+      // Process any items from native share extension
+      await processSharedItems();
+
+      // Get pending items
+      const items = await getPendingItems();
+
+      // Filter for unprocessed items
+      const unprocessed = items.filter((item) => !item.processedAt);
+
+      setSharedItems(unprocessed);
+      setHasSharedContent(unprocessed.length > 0);
+
+      // Cleanup old processed items
+      await cleanupProcessedItems();
+    } catch (error) {
+      console.error("[useSharedContent] Failed to check for shared content:", error);
+    }
+  };
+
+  const processItems = async (timestamps: number[]) => {
+    try {
+      await markItemsProcessed(timestamps);
+      await checkForSharedContent();
+    } catch (error) {
+      console.error("[useSharedContent] Failed to process items:", error);
+    }
+  };
+
+  return {
+    hasSharedContent,
+    sharedItems,
+    processItems,
+    refresh: checkForSharedContent,
+  };
+}

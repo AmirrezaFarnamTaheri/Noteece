@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 let db: SQLite.SQLiteDatabase | null = null;
 
 // Database version for migrations
-const CURRENT_DB_VERSION = 2;
+const CURRENT_DB_VERSION = 3;
 const DB_VERSION_KEY = "database_version";
 
 /**
@@ -75,8 +75,145 @@ async function runMigrations(currentVersion: number): Promise<void> {
     }
   }
 
+  // Migration from v2 to v3: Add social media suite tables
+  if (currentVersion < 3) {
+    console.log(
+      "Running migration v2 -> v3: Adding social media suite tables",
+    );
+
+    try {
+      await db.execAsync(`
+        -- Social Accounts
+        CREATE TABLE IF NOT EXISTS social_account (
+          id TEXT PRIMARY KEY,
+          space_id TEXT NOT NULL,
+          platform TEXT NOT NULL,
+          username TEXT NOT NULL,
+          display_name TEXT,
+          credentials_encrypted BLOB NOT NULL,
+          enabled INTEGER NOT NULL DEFAULT 1,
+          sync_frequency_minutes INTEGER NOT NULL DEFAULT 60,
+          last_sync INTEGER,
+          created_at INTEGER NOT NULL
+        );
+
+        -- Social Posts
+        CREATE TABLE IF NOT EXISTS social_post (
+          id TEXT PRIMARY KEY,
+          account_id TEXT NOT NULL,
+          platform TEXT NOT NULL,
+          platform_post_id TEXT,
+          author TEXT NOT NULL,
+          author_avatar TEXT,
+          content TEXT,
+          content_html TEXT,
+          url TEXT,
+          media_urls TEXT,
+          engagement_likes INTEGER,
+          engagement_comments INTEGER,
+          engagement_shares INTEGER,
+          engagement_views INTEGER,
+          created_at INTEGER NOT NULL,
+          collected_at INTEGER NOT NULL,
+          FOREIGN KEY (account_id) REFERENCES social_account(id) ON DELETE CASCADE
+        );
+
+        -- Social Categories
+        CREATE TABLE IF NOT EXISTS social_category (
+          id TEXT PRIMARY KEY,
+          space_id TEXT NOT NULL,
+          name TEXT NOT NULL,
+          color TEXT,
+          icon TEXT,
+          filters_json TEXT,
+          created_at INTEGER NOT NULL
+        );
+
+        -- Post-Category Junction
+        CREATE TABLE IF NOT EXISTS social_post_category (
+          post_id TEXT NOT NULL,
+          category_id TEXT NOT NULL,
+          assigned_at INTEGER NOT NULL,
+          assigned_by TEXT NOT NULL,
+          PRIMARY KEY (post_id, category_id),
+          FOREIGN KEY (post_id) REFERENCES social_post(id) ON DELETE CASCADE,
+          FOREIGN KEY (category_id) REFERENCES social_category(id) ON DELETE CASCADE
+        );
+
+        -- Focus Modes
+        CREATE TABLE IF NOT EXISTS social_focus_mode (
+          id TEXT PRIMARY KEY,
+          space_id TEXT NOT NULL,
+          name TEXT NOT NULL,
+          description TEXT,
+          icon TEXT,
+          is_active INTEGER NOT NULL DEFAULT 0,
+          blocked_platforms TEXT NOT NULL,
+          allowed_platforms TEXT NOT NULL,
+          created_at INTEGER NOT NULL
+        );
+
+        -- Automation Rules
+        CREATE TABLE IF NOT EXISTS social_automation_rule (
+          id TEXT PRIMARY KEY,
+          space_id TEXT NOT NULL,
+          name TEXT NOT NULL,
+          trigger_type TEXT NOT NULL,
+          trigger_value TEXT NOT NULL,
+          action_type TEXT NOT NULL,
+          action_value TEXT NOT NULL,
+          enabled INTEGER NOT NULL DEFAULT 1,
+          created_at INTEGER NOT NULL
+        );
+
+        -- Auto Categorization Rules
+        CREATE TABLE IF NOT EXISTS social_auto_rule (
+          id TEXT PRIMARY KEY,
+          category_id TEXT NOT NULL,
+          rule_type TEXT NOT NULL,
+          pattern TEXT NOT NULL,
+          priority INTEGER NOT NULL DEFAULT 0,
+          created_at INTEGER NOT NULL,
+          FOREIGN KEY (category_id) REFERENCES social_category(id) ON DELETE CASCADE
+        );
+
+        -- Sync History (read-only from desktop)
+        CREATE TABLE IF NOT EXISTS social_sync_history (
+          id TEXT PRIMARY KEY,
+          account_id TEXT NOT NULL,
+          sync_time INTEGER NOT NULL,
+          posts_synced INTEGER NOT NULL DEFAULT 0,
+          sync_duration_ms INTEGER NOT NULL DEFAULT 0,
+          status TEXT NOT NULL DEFAULT 'completed',
+          FOREIGN KEY (account_id) REFERENCES social_account(id) ON DELETE CASCADE
+        );
+
+        -- Indexes for performance
+        CREATE INDEX IF NOT EXISTS idx_social_post_account ON social_post(account_id);
+        CREATE INDEX IF NOT EXISTS idx_social_post_created ON social_post(created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_social_post_platform ON social_post(platform);
+        CREATE INDEX IF NOT EXISTS idx_social_post_author ON social_post(author);
+        CREATE INDEX IF NOT EXISTS idx_social_post_account_created ON social_post(account_id, created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_social_account_space ON social_account(space_id);
+        CREATE INDEX IF NOT EXISTS idx_social_category_space ON social_category(space_id);
+        CREATE INDEX IF NOT EXISTS idx_social_focus_active ON social_focus_mode(space_id, is_active);
+        CREATE INDEX IF NOT EXISTS idx_social_sync_history_account_time ON social_sync_history(account_id, sync_time DESC);
+
+        -- Unique index for post deduplication (prevents duplicate posts from same account)
+        CREATE UNIQUE INDEX IF NOT EXISTS ux_social_post_account_platform_post
+          ON social_post(account_id, platform_post_id)
+          WHERE platform_post_id IS NOT NULL;
+      `);
+
+      console.log("Migration v2 -> v3 completed successfully");
+    } catch (error) {
+      console.error("Migration v2 -> v3 failed:", error);
+      throw error;
+    }
+  }
+
   // Future migrations go here
-  // if (currentVersion < 3) { ... }
+  // if (currentVersion < 4) { ... }
 
   // Update database version
   await AsyncStorage.setItem(DB_VERSION_KEY, CURRENT_DB_VERSION.toString());
