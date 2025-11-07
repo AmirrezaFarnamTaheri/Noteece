@@ -34,6 +34,11 @@ pub fn get_accounts_needing_sync(
     conn: &Connection,
     space_id: &str,
 ) -> Result<Vec<SyncTask>, SocialError> {
+    log::debug!(
+        "[Social::Sync] Getting accounts needing sync for space {}",
+        space_id
+    );
+
     let now = Utc::now().timestamp_millis();
 
     let mut stmt = conn.prepare(
@@ -71,11 +76,22 @@ pub fn get_accounts_needing_sync(
         .filter(|task| task.next_sync <= now)
         .collect();
 
+    log::info!(
+        "[Social::Sync] Found {} accounts needing sync in space {}",
+        tasks.len(),
+        space_id
+    );
+
     Ok(tasks)
 }
 
 /// Get all accounts for a space regardless of sync status
 pub fn get_all_sync_tasks(conn: &Connection, space_id: &str) -> Result<Vec<SyncTask>, SocialError> {
+    log::debug!(
+        "[Social::Sync] Getting all sync tasks for space {}",
+        space_id
+    );
+
     let mut stmt = conn.prepare(
         "SELECT id, platform, username, last_sync, sync_frequency_minutes
          FROM social_account
@@ -109,11 +125,19 @@ pub fn get_all_sync_tasks(conn: &Connection, space_id: &str) -> Result<Vec<SyncT
         .filter_map(Result::ok)
         .collect();
 
+    log::info!(
+        "[Social::Sync] Retrieved {} sync tasks for space {}",
+        tasks.len(),
+        space_id
+    );
+
     Ok(tasks)
 }
 
 /// Record sync start
 pub fn start_sync(conn: &Connection, account_id: &str) -> Result<(), SocialError> {
+    log::debug!("[Social::Sync] Starting sync for account {}", account_id);
+
     let now = Utc::now().timestamp_millis();
 
     conn.execute(
@@ -122,6 +146,8 @@ pub fn start_sync(conn: &Connection, account_id: &str) -> Result<(), SocialError
         ) VALUES (?1, ?2, ?3, 0, 0, 'in_progress')",
         params![ulid::Ulid::new().to_string(), account_id, now,],
     )?;
+
+    log::info!("[Social::Sync] Sync started for account {}", account_id);
 
     Ok(())
 }
@@ -133,6 +159,13 @@ pub fn complete_sync(
     posts_synced: i64,
     duration_ms: i64,
 ) -> Result<(), SocialError> {
+    log::debug!(
+        "[Social::Sync] Completing sync for account {} - posts: {}, duration: {}ms",
+        account_id,
+        posts_synced,
+        duration_ms
+    );
+
     let now = Utc::now().timestamp_millis();
 
     // Update the most recent in_progress sync record
@@ -157,6 +190,13 @@ pub fn complete_sync(
         params![now, account_id],
     )?;
 
+    log::info!(
+        "[Social::Sync] Sync completed for account {} - synced {} posts in {}ms",
+        account_id,
+        posts_synced,
+        duration_ms
+    );
+
     Ok(())
 }
 
@@ -166,6 +206,12 @@ pub fn fail_sync(
     account_id: &str,
     error_message: &str,
 ) -> Result<(), SocialError> {
+    log::warn!(
+        "[Social::Sync] Sync failed for account {}: {}",
+        account_id,
+        error_message
+    );
+
     // Update the most recent in_progress sync record
     conn.execute(
         "UPDATE social_sync_history
@@ -180,6 +226,11 @@ pub fn fail_sync(
         params![account_id],
     )?;
 
+    log::error!(
+        "[Social::Sync] Recorded sync failure for account {}",
+        account_id
+    );
+
     Ok(())
 }
 
@@ -189,6 +240,12 @@ pub fn get_sync_history(
     account_id: &str,
     limit: i64,
 ) -> Result<Vec<SyncStatus>, SocialError> {
+    log::debug!(
+        "[Social::Sync] Getting sync history for account {} (limit: {})",
+        account_id,
+        limit
+    );
+
     let mut stmt = conn.prepare(
         "SELECT account_id, sync_time, posts_synced, sync_duration_ms, status
          FROM social_sync_history
@@ -221,6 +278,12 @@ pub fn get_sync_history(
         .filter_map(Result::ok)
         .collect();
 
+    log::info!(
+        "[Social::Sync] Retrieved {} sync history records for account {}",
+        history.len(),
+        account_id
+    );
+
     Ok(history)
 }
 
@@ -235,6 +298,8 @@ pub struct SyncStats {
 }
 
 pub fn get_sync_stats(conn: &Connection, space_id: &str) -> Result<SyncStats, SocialError> {
+    log::debug!("[Social::Sync] Getting sync stats for space {}", space_id);
+
     let now = Utc::now().timestamp_millis();
     let today_start = now - (now % 86400000); // Start of current day (milliseconds in a day)
 
@@ -286,6 +351,15 @@ pub fn get_sync_stats(conn: &Connection, space_id: &str) -> Result<SyncStats, So
             |row| row.get(0),
         )
         .ok();
+
+    log::info!(
+        "[Social::Sync] Sync stats for space {}: {} total accounts, {} synced today ({} syncs), avg {:.1} posts/sync",
+        space_id,
+        total_accounts,
+        accounts_synced_today,
+        total_syncs_today,
+        average_posts_per_sync
+    );
 
     Ok(SyncStats {
         total_accounts,
