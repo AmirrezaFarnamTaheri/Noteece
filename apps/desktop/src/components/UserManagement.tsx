@@ -40,6 +40,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notifications } from '@mantine/notifications';
 import { useStore } from '../store';
+import { authService } from '../services/auth';
 
 interface SpaceUser {
   user_id: string;
@@ -87,23 +88,14 @@ const statusColors: Record<string, string> = {
 
 /**
  * Get current user ID for audit logging
- * TODO: Replace with actual authentication system
- * This should retrieve the authenticated user's ID from:
- * - Auth context/provider
- * - JWT token
- * - Session storage
- * - Backend session API
- *
- * For now, returns a system user ID as a placeholder.
- * WARNING: In production, this MUST be replaced with real user authentication
- * to prevent security issues and ensure accurate audit trails.
+ * Retrieves the authenticated user's ID from the auth service
  */
 function getCurrentUserId(): string {
-  // TEMPORARY: Using system user until auth is implemented
-  // In production, this should be:
-  // const { user } = useAuth();
-  // return user.id;
-  return 'system_user'; // More descriptive than 'current_user'
+  const userId = authService.getCurrentUserId();
+  if (!userId) {
+    throw new Error('User not authenticated. Please log in first.');
+  }
+  return userId;
 }
 
 /**

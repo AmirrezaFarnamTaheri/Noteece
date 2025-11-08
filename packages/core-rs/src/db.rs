@@ -391,6 +391,46 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
             ",
         )?;
     }
+
+    if current_version < 7 {
+        log::info!("[db] Migrating to version 7 - Authentication System");
+        tx.execute_batch(
+            "
+            -- Users table for authentication
+            CREATE TABLE IF NOT EXISTS users (
+                id TEXT PRIMARY KEY,
+                username TEXT UNIQUE NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER,
+                last_login_at INTEGER
+            );
+
+            -- Create indexes for user lookup
+            CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+            CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+            -- Sessions table for session management
+            CREATE TABLE IF NOT EXISTS sessions (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                token TEXT UNIQUE NOT NULL,
+                expires_at INTEGER NOT NULL,
+                created_at INTEGER NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            -- Create indexes for session lookup
+            CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
+            CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
+            CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+
+            INSERT INTO schema_version (version) VALUES (7);
+            ",
+        )?;
+    }
+
     tx.commit()?;
     log::info!("[db] Migration finished");
     Ok(())
