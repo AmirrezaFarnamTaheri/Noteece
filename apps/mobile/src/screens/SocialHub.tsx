@@ -22,6 +22,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { PostCard } from "../components/social/PostCard";
+import { PostCardSkeleton } from "../components/social/PostCardSkeleton";
 import { CategoryPicker } from "../components/social/CategoryPicker";
 import { ErrorFallback } from "../components/errors";
 import { useSharedContent } from "../hooks/useSharedContent";
@@ -566,44 +567,50 @@ export function SocialHub() {
       )}
 
       {/* Timeline */}
-      <FlatList
-        data={posts}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <PostCard
-            post={item}
-            onAssignCategory={() => {
-              setSelectedPost(item);
-              setShowCategoryPicker(true);
-            }}
-            onCategoryPress={(categoryId) => {
-              // Navigate to category view
-              console.log("Category pressed:", categoryId);
-            }}
-          />
-        )}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>📭</Text>
-            <Text style={styles.emptyText}>No posts yet</Text>
-            <Text style={styles.emptySubtext}>
-              Pull down to refresh or add social accounts
-            </Text>
-          </View>
-        }
-        ListFooterComponent={
-          hasMore ? (
-            <View style={styles.footerLoader}>
-              <ActivityIndicator color="#007AFF" />
+      {loading && posts.length === 0 ? (
+        <View>
+          <PostCardSkeleton count={5} />
+        </View>
+      ) : (
+        <FlatList
+          data={posts}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <PostCard
+              post={item}
+              onAssignCategory={() => {
+                setSelectedPost(item);
+                setShowCategoryPicker(true);
+              }}
+              onCategoryPress={(categoryId) => {
+                // Navigate to category view
+                console.log("Category pressed:", categoryId);
+              }}
+            />
+          )}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyIcon}>📭</Text>
+              <Text style={styles.emptyText}>No posts yet</Text>
+              <Text style={styles.emptySubtext}>
+                Pull down to refresh or add social accounts
+              </Text>
             </View>
-          ) : null
-        }
-      />
+          }
+          ListFooterComponent={
+            hasMore ? (
+              <View style={styles.footerLoader}>
+                <ActivityIndicator color="#007AFF" />
+              </View>
+            ) : null
+          }
+        />
+      )}
 
       {/* Category Picker Modal */}
       <CategoryPicker
