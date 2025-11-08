@@ -119,15 +119,23 @@ fn detect_sentiment(content: &str) -> Sentiment {
         "frustrat",
     ];
 
-    let positive_count = positive_words
-        .iter()
-        .filter(|word| content_lower.contains(word))
-        .count();
+    // Tokenize into lowercase alphanumeric words
+    let tokens: Vec<String> = content_lower
+        .split(|c: char| !c.is_alphanumeric())
+        .filter(|t| !t.is_empty())
+        .map(|s| s.to_string())
+        .collect();
 
-    let negative_count = negative_words
-        .iter()
-        .filter(|word| content_lower.contains(word))
-        .count();
+    // Allow prefix matching for stemmed lists (e.g., "frustrat" -> "frustrating")
+    let has_prefix = |list: &[&str]| -> usize {
+        tokens
+            .iter()
+            .filter(|tok| list.iter().any(|w| tok.starts_with(w)))
+            .count()
+    };
+
+    let positive_count = has_prefix(&positive_words);
+    let negative_count = has_prefix(&negative_words);
 
     let sentiment = if positive_count > 0 && negative_count > 0 {
         Sentiment::Mixed

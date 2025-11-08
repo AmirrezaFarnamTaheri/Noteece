@@ -6,6 +6,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import { ErrorBoundary } from "@/components/errors";
+import { ThemeProvider, useThemeColors, useIsDark } from "@/contexts/ThemeContext";
 import { useVaultStore } from "@/store/vault";
 import { useAppContext } from "@/store/app-context";
 import { initializeDatabase } from "@/lib/database";
@@ -17,9 +18,11 @@ initSentry();
 
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+function AppContent() {
   const { isUnlocked } = useVaultStore();
   const { initialize } = useAppContext();
+  const colors = useThemeColors();
+  const isDark = useIsDark();
   const [loaded, error] = useFonts({
     "Inter-Regular": require("../assets/fonts/Inter-Regular.ttf"),
     "Inter-Medium": require("../assets/fonts/Inter-Medium.ttf"),
@@ -62,13 +65,13 @@ export default function RootLayout() {
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
-          <StatusBar style="light" />
+          <StatusBar style={isDark ? "light" : "dark"} />
           <Stack
             screenOptions={{
               headerShown: false,
               animation: "slide_from_right",
               gestureEnabled: true,
-              contentStyle: { backgroundColor: "#0A0E27" },
+              contentStyle: { backgroundColor: colors.background },
             }}
           >
             <Stack.Screen name="index" />
@@ -79,5 +82,13 @@ export default function RootLayout() {
         </SafeAreaProvider>
       </GestureHandlerRootView>
     </ErrorBoundary>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }

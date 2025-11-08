@@ -12,9 +12,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { colors, typography, spacing } from "@/lib/theme";
+import { typography, spacing } from "@/lib/theme";
 import { useVaultStore } from "@/store/vault";
 import { useAppContext, useSettings, useUpdateSetting } from "@/store/app-context";
+import { useTheme, useThemeColors } from "@/contexts/ThemeContext";
 import { haptics } from "@/lib/haptics";
 import {
   startBackgroundSync,
@@ -30,6 +31,8 @@ export default function MoreScreen() {
   const { lockVault } = useVaultStore();
   const settings = useSettings();
   const updateSetting = useUpdateSetting();
+  const { themeMode, setThemeMode } = useTheme();
+  const colors = useThemeColors();
   const [backgroundSyncEnabled, setBackgroundSyncEnabled] = useState(false);
   const [nfcEnabled, setNfcEnabled] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -364,21 +367,21 @@ export default function MoreScreen() {
         text: "Light",
         onPress: () => {
           haptics.selection();
-          updateSetting("theme", { ...settings.theme, mode: "light" });
+          setThemeMode("light");
         },
       },
       {
         text: "Dark",
         onPress: () => {
           haptics.selection();
-          updateSetting("theme", { ...settings.theme, mode: "dark" });
+          setThemeMode("dark");
         },
       },
       {
         text: "Auto (System)",
         onPress: () => {
           haptics.selection();
-          updateSetting("theme", { ...settings.theme, mode: "auto" });
+          setThemeMode("auto");
         },
       },
     ]);
@@ -466,7 +469,7 @@ export default function MoreScreen() {
   };
 
   const getThemeModeLabel = () => {
-    switch (settings.theme.mode) {
+    switch (themeMode) {
       case "light":
         return "Light";
       case "dark":
@@ -474,7 +477,7 @@ export default function MoreScreen() {
       case "auto":
         return "Auto (System)";
       default:
-        return "Dark";
+        return "Auto (System)";
     }
   };
 
@@ -646,6 +649,128 @@ export default function MoreScreen() {
     },
   ];
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+    },
+    headerTitle: {
+      fontSize: typography.fontSize["2xl"],
+      fontFamily: typography.fontFamily.bold,
+      color: colors.text,
+    },
+    content: {
+      flex: 1,
+    },
+    scrollContent: {
+      padding: spacing.lg,
+    },
+    userCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderRadius: 16,
+      padding: spacing.md,
+      marginBottom: spacing.xl,
+      gap: spacing.md,
+    },
+    userAvatar: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: `${colors.primary}20`,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    userInfo: {
+      flex: 1,
+    },
+    userName: {
+      fontSize: typography.fontSize.lg,
+      fontFamily: typography.fontFamily.semibold,
+      color: colors.text,
+    },
+    userEmail: {
+      fontSize: typography.fontSize.sm,
+      fontFamily: typography.fontFamily.regular,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    lockButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: `${colors.error}10`,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    section: {
+      marginBottom: spacing.xl,
+    },
+    sectionTitle: {
+      fontSize: typography.fontSize.sm,
+      fontFamily: typography.fontFamily.semibold,
+      color: colors.textTertiary,
+      marginBottom: spacing.sm,
+      paddingLeft: spacing.sm,
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+    },
+    sectionItems: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      overflow: "hidden",
+    },
+    settingItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: spacing.md,
+    },
+    settingItemBorder: {
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    settingItemLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      flex: 1,
+      gap: spacing.md,
+    },
+    settingIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: `${colors.primary}10`,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    settingIconDestructive: {
+      backgroundColor: `${colors.error}10`,
+    },
+    settingItemText: {
+      flex: 1,
+    },
+    settingLabel: {
+      fontSize: typography.fontSize.base,
+      fontFamily: typography.fontFamily.medium,
+      color: colors.text,
+    },
+    settingLabelDestructive: {
+      color: colors.error,
+    },
+    settingSubtitle: {
+      fontSize: typography.fontSize.sm,
+      fontFamily: typography.fontFamily.regular,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+  });
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
@@ -739,7 +864,7 @@ export default function MoreScreen() {
                         false: colors.surface,
                         true: colors.primary,
                       }}
-                      thumbColor={colors.textPrimary}
+                      thumbColor={colors.text}
                     />
                   ) : "showChevron" in item && item.showChevron ? (
                     <Ionicons
@@ -757,125 +882,3 @@ export default function MoreScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  headerTitle: {
-    fontSize: typography.fontSize["2xl"],
-    fontFamily: typography.fontFamily.bold,
-    color: colors.textPrimary,
-  },
-  content: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: spacing.lg,
-  },
-  userCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: spacing.md,
-    marginBottom: spacing.xl,
-    gap: spacing.md,
-  },
-  userAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: `${colors.primary}20`,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  userInfo: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: typography.fontSize.lg,
-    fontFamily: typography.fontFamily.semibold,
-    color: colors.textPrimary,
-  },
-  userEmail: {
-    fontSize: typography.fontSize.sm,
-    fontFamily: typography.fontFamily.regular,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  lockButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: `${colors.error}10`,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  section: {
-    marginBottom: spacing.xl,
-  },
-  sectionTitle: {
-    fontSize: typography.fontSize.sm,
-    fontFamily: typography.fontFamily.semibold,
-    color: colors.textTertiary,
-    marginBottom: spacing.sm,
-    paddingLeft: spacing.sm,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  sectionItems: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  settingItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: spacing.md,
-  },
-  settingItemBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  settingItemLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-    gap: spacing.md,
-  },
-  settingIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: `${colors.primary}10`,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  settingIconDestructive: {
-    backgroundColor: `${colors.error}10`,
-  },
-  settingItemText: {
-    flex: 1,
-  },
-  settingLabel: {
-    fontSize: typography.fontSize.base,
-    fontFamily: typography.fontFamily.medium,
-    color: colors.textPrimary,
-  },
-  settingLabelDestructive: {
-    color: colors.error,
-  },
-  settingSubtitle: {
-    fontSize: typography.fontSize.sm,
-    fontFamily: typography.fontFamily.regular,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-});

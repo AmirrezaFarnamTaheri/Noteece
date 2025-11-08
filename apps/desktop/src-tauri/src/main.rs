@@ -1,6 +1,9 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod config;
+
+use config::AppConfig;
 use core_rs::analytics::{get_analytics_data, AnalyticsData};
 use core_rs::caldav::{
     add_caldav_account, delete_caldav_account, get_caldav_account, get_caldav_accounts,
@@ -1106,7 +1109,7 @@ fn get_sync_devices_cmd(db: State<DbConnection>) -> Result<Vec<DeviceInfo>, Stri
         let agent = SyncAgent::new(
             get_local_device_id(),
             get_local_device_name(),
-            8765, // TODO: Make this configurable
+            AppConfig::server_port(),
         );
         agent.get_devices(conn).map_err(|e| e.to_string())
     } else {
@@ -1128,7 +1131,7 @@ fn register_sync_device_cmd(
         let agent = SyncAgent::new(
             get_local_device_id(),
             get_local_device_name(),
-            8765, // TODO: Make this configurable
+            AppConfig::server_port(),
         );
 
         let device_type_enum = match device_type.as_str() {
@@ -1171,7 +1174,7 @@ fn get_sync_history_for_space_cmd(
         let agent = SyncAgent::new(
             get_local_device_id(),
             get_local_device_name(),
-            8765, // TODO: Make this configurable
+            AppConfig::server_port(),
         );
         agent
             .get_sync_history(conn, &space_id, limit)
@@ -1188,7 +1191,7 @@ fn get_sync_conflicts_cmd(db: State<DbConnection>) -> Result<Vec<SyncConflict>, 
         let agent = SyncAgent::new(
             get_local_device_id(),
             get_local_device_name(),
-            8765, // TODO: Make this configurable
+            AppConfig::server_port(),
         );
         agent
             .get_unresolved_conflicts(conn)
@@ -1209,7 +1212,7 @@ fn resolve_sync_conflict_cmd(
         let agent = SyncAgent::new(
             get_local_device_id(),
             get_local_device_name(),
-            8765, // TODO: Make this configurable
+            AppConfig::server_port(),
         );
 
         // Get the conflict from database
@@ -1274,7 +1277,7 @@ fn record_sync_cmd(
         let agent = SyncAgent::new(
             get_local_device_id(),
             get_local_device_name(),
-            8765, // TODO: Make this configurable
+            AppConfig::server_port(),
         );
         agent
             .record_sync_history(
@@ -1681,14 +1684,24 @@ fn add_social_account_cmd(
     credentials: &str,
     db: State<DbConnection>,
 ) -> Result<SocialAccount, String> {
-    // Input validation
-    if space_id.len() > 100 || space_id.is_empty() {
+    // Normalize and validate inputs
+    let space_id = space_id.trim();
+    let platform = platform.trim();
+    let username = username.trim();
+    let display_name = display_name.map(|s| s.trim()).filter(|s| !s.is_empty());
+    if space_id.is_empty() || space_id.len() > 100 {
         return Err("Invalid space_id".to_string());
     }
-    if platform.len() > 50 || platform.is_empty() {
-        return Err("Invalid platform".to_string());
+    // Allowlist supported platforms
+    const ALLOWED_PLATFORMS: &[&str] = &[
+        "twitter","youtube","instagram","tiktok","pinterest","linkedin",
+        "discord","reddit","spotify","castbox","fotmob","sofascore","telegram",
+        "gmail","tinder","bumble","hinge",
+    ];
+    if !ALLOWED_PLATFORMS.contains(&platform) {
+        return Err("Unsupported platform".to_string());
     }
-    if username.len() > 200 || username.is_empty() {
+    if username.is_empty() || username.len() > 200 {
         return Err("Invalid username".to_string());
     }
     if let Some(name) = display_name {
@@ -1696,14 +1709,18 @@ fn add_social_account_cmd(
             return Err("Display name too long".to_string());
         }
     }
-    if credentials.len() > 50000 {
+    if credentials.len() > 50_000 {
         return Err("Credentials payload too large".to_string());
     }
 
-    let conn = db.conn.lock().unwrap();
-    let dek = db.dek.lock().unwrap();
+    // Acquire locks with error handling; avoid holding both long-term
+    let dek_bytes = {
+        let dek_guard = db.dek.lock().map_err(|_| "Vault lock error".to_string())?;
+        dek_guard.as_ref().map(|k| k.as_slice().to_vec())
+    };
+    let conn_guard = db.conn.lock().map_err(|_| "Database lock error".to_string())?;
 
-    if let (Some(conn), Some(dek)) = (conn.as_ref(), dek.as_ref()) {
+    if let (Some(conn), Some(dek)) = (conn_guard.as_ref(), dek_bytes.as_ref()) {
         add_social_account(
             conn,
             space_id,
@@ -1715,7 +1732,7 @@ fn add_social_account_cmd(
         )
         .map_err(|e| e.to_string())
     } else {
-        Err("Database connection not available".to_string())
+        Err("Database connection or vault not available".to_string())
     }
 }
 
@@ -1822,13 +1839,48 @@ fn create_social_category_cmd(
     keywords: Option<Vec<String>>,
     db: State<DbConnection>,
 ) -> Result<SocialCategory, String> {
-    let conn = db.conn.lock().unwrap();
-    if let Some(conn) = conn.as_ref() {
-        let filters = keywords.map(|kw| CategoryFilters {
+    // Basic input validation
+    if space_id.is_empty() || space_id.len() > 100 {
+        return Err("Invalid space_id".to_string());
+    }
+    if name.trim().is_empty() || name.len() > 100 {
+        return Err("Invalid category name".to_string());
+    }
+    if let Some(c) = color {
+        if c.len() > 20 {
+            return Err("Color too long".to_string());
+        }
+    }
+    if let Some(i) = icon {
+        if i.len() > 16 {
+            return Err("Icon too long".to_string());
+        }
+    }
+
+    // Sanitize keywords: trim, dedupe, remove empties, cap length and count
+    let filters = keywords.map(|kw| {
+        let mut cleaned: Vec<String> = kw
+            .into_iter()
+            .filter_map(|s| {
+                let t = s.trim().to_string();
+                if !t.is_empty() && t.len() <= 100 { Some(t) } else { None }
+            })
+            .collect();
+        cleaned.sort();
+        cleaned.dedup();
+        // Cap total keywords to avoid huge SQL clauses
+        if cleaned.len() > 100 {
+            cleaned.truncate(100);
+        }
+        CategoryFilters {
             platforms: None,
             authors: None,
-            keywords: Some(kw),
-        });
+            keywords: if cleaned.is_empty() { None } else { Some(cleaned) },
+        }
+    });
+
+    let conn = db.conn.lock().map_err(|_| "Database lock error".to_string())?;
+    if let Some(conn) = conn.as_ref() {
         create_category(conn, space_id, name, color, icon, filters).map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
@@ -1959,35 +2011,30 @@ async fn open_social_webview(
     account_id: String,
     db: State<'_, DbConnection>,
 ) -> Result<String, String> {
-    let conn = db.conn.lock().unwrap();
-    let dek = db.dek.lock().unwrap();
+    // Acquire DEK, clone bytes, then drop lock to avoid holding both locks
+    let dek_bytes = {
+        let dek_guard = db.dek.lock().map_err(|_| "DEK lock poisoned")?;
+        dek_guard.as_ref().map(|k| k.as_slice().to_vec())
+    };
 
-    if let (Some(conn), Some(dek)) = (conn.as_ref(), dek.as_ref()) {
-        // Get account
+    let conn_guard = db.conn.lock().map_err(|_| "DB lock poisoned")?;
+    if let (Some(conn), Some(dek)) = (conn_guard.as_ref(), dek_bytes.as_ref()) {
         let account = get_social_account(conn, &account_id)
             .map_err(|e| e.to_string())?
-            .ok_or("Account not found")?;
+            .ok_or_else(|| "Account not found".to_string())?;
 
-        // Create or get WebView session
-        let session = match get_webview_session(conn, &account_id).map_err(|e| e.to_string())? {
+        let _session = match get_webview_session(conn, &account_id).map_err(|e| e.to_string())? {
             Some(s) => s,
             None => create_webview_session(conn, &account_id, &account.platform, dek.as_slice())
                 .map_err(|e| e.to_string())?,
         };
 
-        // Get platform URL and display name
         let url = get_platform_url(&account.platform);
         let display_name = get_platform_display_name(&account.platform);
 
-        // Safe slice: handle account_id shorter than 8 chars
-        let id_suffix = if account_id.len() >= 8 {
-            &account_id[..8]
-        } else {
-            &account_id[..]
-        };
+        let id_suffix = if account_id.len() >= 8 { &account_id[..8] } else { &account_id[..] };
         let window_label = format!("social-{}-{}", account.platform, id_suffix);
 
-        // Create WebView window
         let parsed_url = url
             .parse()
             .map_err(|e: url::ParseError| format!("Invalid platform URL: {}", e))?;
@@ -2002,7 +2049,6 @@ async fn open_social_webview(
         .build()
         .map_err(|e| e.to_string())?;
 
-        // Read extraction scripts - validate platform support early
         let universal_script = include_str!("../js/extractors/universal.js");
         let platform_script = match account.platform.as_str() {
             "twitter" => include_str!("../js/extractors/twitter.js"),
@@ -2022,38 +2068,28 @@ async fn open_social_webview(
             "tinder" => include_str!("../js/extractors/tinder.js"),
             "bumble" => include_str!("../js/extractors/bumble.js"),
             "hinge" => include_str!("../js/extractors/hinge.js"),
-            _ => {
-                return Err(format!(
-                    "Unsupported platform: '{}'. No extractor script available.",
-                    account.platform
-                ))
-            }
+            _ => return Err(format!("Unsupported platform: '{}'. No extractor script available.", account.platform)),
         };
 
-        // Inject config and extraction scripts after page loads
         let account_id_clone = account_id.clone();
         let platform_clone = account.platform.clone();
+        let app_handle_clone = app_handle.clone();
 
-        window.once("tauri://created", move |_| {
-            // SECURITY: Use JSON serialization to prevent XSS injection
-            // DO NOT use format! with user-controlled data in JavaScript context
+        // Use a more reliable hook; handle errors without panicking
+        window.once("tauri://ready", move |_| {
             let config = serde_json::json!({
                 "accountId": account_id_clone,
                 "platform": platform_clone,
                 "pollInterval": 5000,
                 "debug": true,
             });
-
             let config_script = format!("window.__NOTEECE_CONFIG__ = {};", config.to_string());
+            let full_script = format!("{}\n{}\n{}", config_script, universal_script, platform_script);
 
-            let full_script = format!(
-                "{}\n{}\n{}",
-                config_script, universal_script, platform_script
-            );
-
-            window
-                .eval(&full_script)
-                .expect("Failed to inject extraction script");
+            if let Err(e) = window.eval(&full_script) {
+                let _ = app_handle_clone.emit_all("social:webview_injection_error", format!("{}", e));
+                log::error!("Failed to inject extraction script: {}", e);
+            }
         });
 
         Ok(window_label)
@@ -2071,54 +2107,72 @@ fn handle_extracted_data(
     data: String,
     db: State<DbConnection>,
 ) -> Result<(), String> {
-    // Input validation - protect against malicious/oversized payloads from compromised WebViews
     if account_id.len() > 100 || account_id.is_empty() {
         return Err("Invalid account_id".to_string());
     }
-    if platform.len() > 50 || platform.is_empty() {
+    // Enforce known platforms
+    const ALLOWED_PLATFORMS: &[&str] = &[
+        "twitter","youtube","instagram","tiktok","pinterest","linkedin",
+        "discord","reddit","spotify","castbox","fotmob","sofascore","telegram",
+        "gmail","tinder","bumble","hinge",
+    ];
+    if platform.is_empty() || !ALLOWED_PLATFORMS.contains(&platform.as_str()) {
         return Err("Invalid platform".to_string());
     }
     if event_type.len() > 100 {
         return Err("Invalid event_type".to_string());
     }
-    // Limit JSON payload size to prevent DoS (10MB limit)
     if data.len() > 10_000_000 {
         return Err("Data payload too large".to_string());
     }
 
-    let conn = db.conn.lock().unwrap();
+    let conn = db.conn.lock().map_err(|_| "DB lock poisoned".to_string())?;
 
     if let Some(conn) = conn.as_ref() {
         match event_type.as_str() {
             "posts_batch" => {
-                // Parse JSON array of posts with size limit
-                let posts: Vec<SocialPost> = serde_json::from_str(&data)
-                    .map_err(|e| format!("Failed to parse posts: {}", e))?;
-
-                // Validate number of posts in batch
-                if posts.len() > 1000 {
-                    return Err("Too many posts in batch (max 1000)".to_string());
-                }
-
-                // Validate that all posts belong to the specified account (prevent cross-account injection)
-                for post in &posts {
-                    if post.account_id != account_id {
-                        return Err(format!(
-                            "Post account_id mismatch: expected {}, got {}",
-                            account_id, post.account_id
-                        ));
+                // Use a fallible, limited JSON parsing path
+                // Bound: max 1000 items, with per-item size checks
+                let posts: Vec<SocialPost> = {
+                    let val: serde_json::Value = serde_json::from_str(&data)
+                        .map_err(|e| format!("Failed to parse posts: {}", e))?;
+                    let arr = val.as_array().ok_or_else(|| "Expected array".to_string())?;
+                    if arr.len() > 1000 {
+                        return Err("Too many posts in batch (max 1000)".to_string());
                     }
-                }
+                    let mut out = Vec::with_capacity(arr.len());
+                    for v in arr {
+                        // Reject huge objects early
+                        let sz = v.to_string().len();
+                        if sz > 200_000 {
+                            return Err("Post object too large".to_string());
+                        }
+                        let mut post: SocialPost = serde_json::from_value(v.clone())
+                            .map_err(|e| format!("Invalid post: {}", e))?;
+                        // Validate association and trim large fields
+                        if post.account_id != account_id {
+                            return Err(format!(
+                                "Post account_id mismatch: expected {}, got {}",
+                                account_id, post.account_id
+                            ));
+                        }
+                        if let Some(c) = post.content.as_mut() {
+                            if c.len() > 20_000 {
+                                c.truncate(20_000);
+                            }
+                        }
+                        if let Some(html) = post.content_html.as_mut() {
+                            if html.len() > 200_000 {
+                                html.truncate(200_000);
+                            }
+                        }
+                        out.push(post);
+                    }
+                    out
+                };
 
-                // Store posts
-                let stored =
-                    store_social_posts(conn, &account_id, posts).map_err(|e| e.to_string())?;
-
-                log::info!(
-                    "[Social] Stored {} posts for account {}",
-                    stored,
-                    account_id
-                );
+                let stored = store_social_posts(conn, &account_id, posts).map_err(|e| e.to_string())?;
+                log::info!("[Social] Stored {} posts for account {}", stored, account_id);
                 Ok(())
             }
             _ => {
@@ -2224,6 +2278,10 @@ fn shutdown_clear_keys_cmd(db: State<DbConnection>) -> Result<(), String> {
 }
 
 fn main() {
+    // Initialize configuration as early as possible to avoid race conditions
+    // where commands could access uninitialized configuration before setup completes
+    AppConfig::init();
+
     tauri::Builder::default()
         .manage(DbConnection {
             conn: Mutex::new(None),
@@ -2240,6 +2298,8 @@ fn main() {
             }
         })
         .setup(|app| {
+            // Config already initialized above
+
             // Register global exit handler to ensure DEK is reliably cleared
             let app_handle = app.handle();
             std::panic::set_hook(Box::new(move |_| {

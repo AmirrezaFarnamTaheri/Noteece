@@ -199,9 +199,9 @@ async function runMigrations(currentVersion: number): Promise<void> {
         CREATE INDEX IF NOT EXISTS idx_social_focus_active ON social_focus_mode(space_id, is_active);
         CREATE INDEX IF NOT EXISTS idx_social_sync_history_account_time ON social_sync_history(account_id, sync_time DESC);
 
-        -- Unique index for post deduplication (prevents duplicate posts from same account)
-        CREATE UNIQUE INDEX IF NOT EXISTS ux_social_post_account_platform_post
-          ON social_post(account_id, platform_post_id)
+        -- Unique index for post deduplication (per platform/account)
+        CREATE UNIQUE INDEX IF NOT EXISTS ux_social_post_platform_account_platform_post
+          ON social_post(platform, account_id, platform_post_id)
           WHERE platform_post_id IS NOT NULL;
       `);
 
