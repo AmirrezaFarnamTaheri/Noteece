@@ -593,20 +593,15 @@ impl SyncAgent {
         if let Some(data) = &delta.data {
             match delta.operation {
                 SyncOperation::Create | SyncOperation::Update => {
-                    // Validate and (re)encrypt note content using the provided DEK before writing.
-                    // Reject if data cannot be treated as valid ciphertext or re-encrypted safely.
-
-                    // Convert bytes to string for crypto operations
-                    let data_str = String::from_utf8_lossy(data).to_string();
-
+                    // Handle binary data without UTF-8 conversion to prevent data corruption
                     // Attempt to decrypt first; if it fails, assume plaintext and encrypt.
-                    let ciphertext: String = match crate::crypto::decrypt_string(&data_str, dek)
-                        .and_then(|plaintext| crate::crypto::encrypt_string(&plaintext, dek))
+                    let encrypted_data: Vec<u8> = match crate::crypto::decrypt_bytes(data, dek)
+                        .and_then(|plaintext| crate::crypto::encrypt_bytes(&plaintext, dek))
                     {
                         Ok(reenc) => reenc,
                         Err(_) => {
                             // Treat incoming as plaintext and encrypt with our DEK
-                            crate::crypto::encrypt_string(&data_str, dek)
+                            crate::crypto::encrypt_bytes(data, dek)
                                 .map_err(|e| SyncError::EncryptionError(e.to_string()))?
                         }
                     };
@@ -614,7 +609,7 @@ impl SyncAgent {
                     conn.execute(
                         "INSERT OR REPLACE INTO notes (id, encrypted_content, updated_at)
                          VALUES (?1, ?2, ?3)",
-                        rusqlite::params![&delta.entity_id, &ciphertext, delta.timestamp],
+                        rusqlite::params![&delta.entity_id, encrypted_data, delta.timestamp],
                     )?;
                 }
                 SyncOperation::Delete => {
