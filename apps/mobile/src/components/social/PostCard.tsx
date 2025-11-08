@@ -6,11 +6,13 @@
  * and category tags.
  */
 
-import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, Share, Alert } from "react-native";
+import React, { useState, useRef } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Image, Share, Alert, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Swipeable } from "react-native-gesture-handler";
 import { format } from "date-fns";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { haptics } from "../../lib/haptics";
 import type { TimelinePost, Platform } from "../../types/social";
 import { PLATFORM_CONFIGS } from "../../types/social";
 
@@ -31,6 +33,7 @@ export function PostCard({
 }: PostCardProps) {
   const platformConfig = PLATFORM_CONFIGS[post.platform as Platform];
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const swipeableRef = useRef<Swipeable>(null);
 
   // Load bookmark status
   React.useEffect(() => {
@@ -65,10 +68,27 @@ export function PostCard({
         JSON.stringify(bookmarkedIds),
       );
       setIsBookmarked(!isBookmarked);
+
+      // Close swipeable after action
+      swipeableRef.current?.close();
     } catch (error) {
       console.error("Failed to update bookmark:", error);
       Alert.alert("Error", "Failed to update bookmark");
     }
+  };
+
+  const handleSwipeBookmark = async () => {
+    haptics.light();
+    await handleBookmark();
+    haptics.success();
+  };
+
+  const handleSwipeHide = () => {
+    haptics.warning();
+    swipeableRef.current?.close();
+    setTimeout(() => {
+      handleHide();
+    }, 200);
   };
 
   const handleShare = async () => {
@@ -98,12 +118,74 @@ export function PostCard({
     );
   };
 
+  // Render right swipe action (Bookmark)
+  const renderRightActions = (
+    progress: Animated.AnimatedInterpolation<number>,
+    dragX: Animated.AnimatedInterpolation<number>
+  ) => {
+    const scale = dragX.interpolate({
+      inputRange: [-100, 0],
+      outputRange: [1, 0],
+      extrapolate: "clamp",
+    });
+
+    return (
+      <Animated.View style={[styles.swipeRightAction, { transform: [{ scale }] }]}>
+        <TouchableOpacity
+          style={styles.swipeActionButton}
+          onPress={handleSwipeBookmark}
+        >
+          <Ionicons
+            name={isBookmarked ? "bookmark" : "bookmark-outline"}
+            size={24}
+            color="#FFF"
+          />
+          <Text style={styles.swipeActionText}>
+            {isBookmarked ? "Unsave" : "Save"}
+          </Text>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
+  // Render left swipe action (Hide)
+  const renderLeftActions = (
+    progress: Animated.AnimatedInterpolation<number>,
+    dragX: Animated.AnimatedInterpolation<number>
+  ) => {
+    const scale = dragX.interpolate({
+      inputRange: [0, 100],
+      outputRange: [0, 1],
+      extrapolate: "clamp",
+    });
+
+    return (
+      <Animated.View style={[styles.swipeLeftAction, { transform: [{ scale }] }]}>
+        <TouchableOpacity
+          style={styles.swipeActionButton}
+          onPress={handleSwipeHide}
+        >
+          <Ionicons name="eye-off-outline" size={24} color="#FFF" />
+          <Text style={styles.swipeActionText}>Hide</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
   return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={onPress}
-      activeOpacity={0.7}
+    <Swipeable
+      ref={swipeableRef}
+      renderRightActions={renderRightActions}
+      renderLeftActions={renderLeftActions}
+      overshootRight={false}
+      overshootLeft={false}
+      friction={2}
     >
+      <TouchableOpacity
+        style={styles.card}
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
       {/* Header: Platform Badge + Author Info */}
       <View style={styles.header}>
         <View
@@ -283,6 +365,7 @@ export function PostCard({
         </View>
       </View>
     </TouchableOpacity>
+    </Swipeable>
   );
 }
 
@@ -461,5 +544,36 @@ const styles = StyleSheet.create({
   },
   actionTextActive: {
     color: "#007AFF",
+  },
+  swipeRightAction: {
+    backgroundColor: "#007AFF",
+    justifyContent: "center",
+    alignItems: "flex-end",
+    borderRadius: 12,
+    marginVertical: 8,
+    marginRight: 16,
+    paddingHorizontal: 20,
+    minWidth: 80,
+  },
+  swipeLeftAction: {
+    backgroundColor: "#FF3B30",
+    justifyContent: "center",
+    alignItems: "flex-start",
+    borderRadius: 12,
+    marginVertical: 8,
+    marginLeft: 16,
+    paddingHorizontal: 20,
+    minWidth: 80,
+  },
+  swipeActionButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 20,
+  },
+  swipeActionText: {
+    color: "#FFF",
+    fontSize: 14,
+    fontWeight: "600",
+    marginTop: 4,
   },
 });
