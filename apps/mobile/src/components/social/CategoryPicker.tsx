@@ -17,6 +17,10 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { ColorPicker } from "../pickers/ColorPicker";
+import { IconPicker } from "../pickers/IconPicker";
+import { haptics } from "../../lib/haptics";
 import type { SocialCategory } from "../../types/social";
 
 interface CategoryPickerProps {
@@ -41,7 +45,11 @@ export function CategoryPicker({
   );
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryColor, setNewCategoryColor] = useState("#007AFF");
+  const [newCategoryIcon, setNewCategoryIcon] = useState("📌");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showIconPicker, setShowIconPicker] = useState(false);
 
   const filteredCategories = categories.filter((cat) =>
     cat.name.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -64,25 +72,11 @@ export function CategoryPicker({
 
   const handleCreate = () => {
     if (newCategoryName.trim() && onCreateCategory) {
-      // Random color from preset palette
-      const colors = [
-        "#FF6B6B",
-        "#4ECDC4",
-        "#45B7D1",
-        "#FFA07A",
-        "#98D8C8",
-        "#F7DC6F",
-        "#BB8FCE",
-        "#85C1E2",
-      ];
-      const color = colors[Math.floor(Math.random() * colors.length)];
-
-      // Random icon from preset list
-      const icons = ["📌", "⭐", "💼", "🎯", "📚", "🎨", "🔥", "💡"];
-      const icon = icons[Math.floor(Math.random() * icons.length)];
-
-      onCreateCategory(newCategoryName.trim(), color, icon);
+      haptics.success();
+      onCreateCategory(newCategoryName.trim(), newCategoryColor, newCategoryIcon);
       setNewCategoryName("");
+      setNewCategoryColor("#007AFF");
+      setNewCategoryIcon("📌");
       setShowCreateForm(false);
     }
   };
@@ -181,12 +175,47 @@ export function CategoryPicker({
                 autoFocus
                 placeholderTextColor="#999"
               />
+
+              {/* Color and Icon Selection */}
+              <View style={styles.pickerRow}>
+                <TouchableOpacity
+                  style={styles.pickerButton}
+                  onPress={() => {
+                    haptics.light();
+                    setShowColorPicker(true);
+                  }}
+                >
+                  <View
+                    style={[
+                      styles.colorPreview,
+                      { backgroundColor: newCategoryColor },
+                    ]}
+                  />
+                  <Text style={styles.pickerButtonText}>Color</Text>
+                  <Ionicons name="chevron-down" size={16} color="#666" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.pickerButton}
+                  onPress={() => {
+                    haptics.light();
+                    setShowIconPicker(true);
+                  }}
+                >
+                  <Text style={styles.iconPreview}>{newCategoryIcon}</Text>
+                  <Text style={styles.pickerButtonText}>Icon</Text>
+                  <Ionicons name="chevron-down" size={16} color="#666" />
+                </TouchableOpacity>
+              </View>
+
               <View style={styles.createButtons}>
                 <TouchableOpacity
                   style={styles.createCancelButton}
                   onPress={() => {
                     setShowCreateForm(false);
                     setNewCategoryName("");
+                    setNewCategoryColor("#007AFF");
+                    setNewCategoryIcon("📌");
                   }}
                 >
                   <Text style={styles.createCancelText}>Cancel</Text>
@@ -227,6 +256,30 @@ export function CategoryPicker({
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Color Picker Modal */}
+        <ColorPicker
+          visible={showColorPicker}
+          selectedColor={newCategoryColor}
+          onSelectColor={(color) => {
+            setNewCategoryColor(color);
+            setShowColorPicker(false);
+          }}
+          onClose={() => setShowColorPicker(false)}
+          title="Select Category Color"
+        />
+
+        {/* Icon Picker Modal */}
+        <IconPicker
+          visible={showIconPicker}
+          selectedIcon={newCategoryIcon}
+          onSelectIcon={(icon) => {
+            setNewCategoryIcon(icon);
+            setShowIconPicker(false);
+          }}
+          onClose={() => setShowIconPicker(false)}
+          title="Select Category Icon"
+        />
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -355,6 +408,39 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E0E0E0",
     color: "#000",
+  },
+  pickerRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 12,
+  },
+  pickerButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    gap: 8,
+  },
+  colorPreview: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#DDD",
+  },
+  iconPreview: {
+    fontSize: 24,
+  },
+  pickerButtonText: {
+    fontSize: 15,
+    color: "#666",
+    fontWeight: "500",
   },
   createButtons: {
     flexDirection: "row",
