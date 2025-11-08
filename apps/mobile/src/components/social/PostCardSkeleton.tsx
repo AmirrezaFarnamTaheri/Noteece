@@ -16,7 +16,7 @@ function SkeletonItem() {
   const pulseAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.loop(
+    const loopAnim = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1,
@@ -28,8 +28,15 @@ function SkeletonItem() {
           duration: 1000,
           useNativeDriver: true,
         }),
-      ]),
-    ).start();
+      ])
+    );
+
+    loopAnim.start();
+
+    return () => {
+      loopAnim.stop();
+      pulseAnim.stopAnimation();
+    };
   }, [pulseAnim]);
 
   const opacity = pulseAnim.interpolate({

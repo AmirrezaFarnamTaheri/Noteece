@@ -30,7 +30,7 @@ export function Shake({
   useEffect(() => {
     if (!trigger) return;
 
-    const shakeAnimation = Animated.sequence([
+    const baseShake = Animated.sequence([
       Animated.timing(translateX, {
         toValue: intensity,
         duration: duration / 8,
@@ -58,11 +58,13 @@ export function Shake({
       }),
     ]);
 
-    if (repeat > 1) {
-      Animated.loop(shakeAnimation, { iterations: repeat }).start();
-    } else {
-      shakeAnimation.start();
-    }
+    const anim = repeat > 1 ? Animated.loop(baseShake, { iterations: repeat }) : baseShake;
+    anim.start();
+
+    return () => {
+      translateX.stopAnimation();
+      translateX.setValue(0);
+    };
   }, [translateX, duration, intensity, repeat, trigger]);
 
   return (

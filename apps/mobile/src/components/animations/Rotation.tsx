@@ -31,26 +31,24 @@ export function Rotation({
 
   useEffect(() => {
     const rotationAnimation = Animated.timing(rotateAnim, {
-      toValue: clockwise ? 1 : -1,
+      toValue: 1,
       duration,
       delay,
       useNativeDriver: true,
     });
 
-    if (loop) {
-      Animated.loop(rotationAnimation).start();
-    } else {
-      rotationAnimation.start();
-    }
+    const anim = loop ? Animated.loop(rotationAnimation) : rotationAnimation;
+    anim.start();
 
     return () => {
+      rotateAnim.stopAnimation();
       rotateAnim.setValue(0);
     };
   }, [rotateAnim, duration, delay, loop, clockwise]);
 
   const rotate = rotateAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ["0deg", `${degrees}deg`],
+    outputRange: clockwise ? ["0deg", `${degrees}deg`] : ["0deg", `-${degrees}deg`],
   });
 
   return (

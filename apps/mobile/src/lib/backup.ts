@@ -71,6 +71,7 @@ async function exportAccounts(spaceId: string): Promise<Omit<SocialAccount, "cre
 
 /**
  * Export social posts
+ * Scrubs raw_json field to prevent exposure of sensitive platform-derived data
  */
 async function exportPosts(spaceId: string): Promise<any[]> {
   const posts = await dbQuery<any>(
@@ -82,7 +83,39 @@ async function exportPosts(spaceId: string): Promise<any[]> {
     [spaceId]
   );
 
-  return posts;
+  // Scrub sensitive fields from raw_json to prevent exposure of tokens, credentials, etc.
+  return posts.map((post) => {
+    if (post.raw_json) {
+      try {
+        const rawData = JSON.parse(post.raw_json);
+        // Remove potentially sensitive fields that platforms might include
+        const scrubbed = {
+          ...rawData,
+          // Remove common sensitive field patterns
+          access_token: undefined,
+          accessToken: undefined,
+          token: undefined,
+          credentials: undefined,
+          auth: undefined,
+          authorization: undefined,
+          session: undefined,
+          cookie: undefined,
+          api_key: undefined,
+          apiKey: undefined,
+          secret: undefined,
+        };
+        // Filter out undefined values
+        Object.keys(scrubbed).forEach(
+          (key) => scrubbed[key] === undefined && delete scrubbed[key]
+        );
+        post.raw_json = JSON.stringify(scrubbed);
+      } catch (e) {
+        // If parsing fails, remove raw_json entirely for safety
+        post.raw_json = null;
+      }
+    }
+    return post;
+  });
 }
 
 /**
@@ -243,12 +276,16 @@ export async function importBackup(
       throw new Error("Invalid backup format: missing metadata");
     }
 
+    // Strict version format validation
+    const version = backupData?.metadata?.version;
+    if (typeof version !== "string" || !/^\d+\.\d+\.\d+$/.test(version)) {
+      throw new Error("Invalid backup format: bad version");
+    }
+
     // Version compatibility check
-    const [major] = backupData.metadata.version.split(".");
+    const [major] = version.split(".");
     if (major !== "1") {
-      throw new Error(
-        `Incompatible backup version: ${backupData.metadata.version}`
-      );
+      throw new Error(`Incompatible backup version: ${version}`);
     }
 
     if (validateOnly) {

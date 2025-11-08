@@ -2278,6 +2278,10 @@ fn shutdown_clear_keys_cmd(db: State<DbConnection>) -> Result<(), String> {
 }
 
 fn main() {
+    // Initialize configuration as early as possible to avoid race conditions
+    // where commands could access uninitialized configuration before setup completes
+    AppConfig::init();
+
     tauri::Builder::default()
         .manage(DbConnection {
             conn: Mutex::new(None),
@@ -2294,8 +2298,7 @@ fn main() {
             }
         })
         .setup(|app| {
-            // Initialize configuration
-            AppConfig::init();
+            // Config already initialized above
 
             // Register global exit handler to ensure DEK is reliably cleared
             let app_handle = app.handle();
