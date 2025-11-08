@@ -1,6 +1,9 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod config;
+
+use config::AppConfig;
 use core_rs::analytics::{get_analytics_data, AnalyticsData};
 use core_rs::caldav::{
     add_caldav_account, delete_caldav_account, get_caldav_account, get_caldav_accounts,
@@ -1106,7 +1109,7 @@ fn get_sync_devices_cmd(db: State<DbConnection>) -> Result<Vec<DeviceInfo>, Stri
         let agent = SyncAgent::new(
             get_local_device_id(),
             get_local_device_name(),
-            8765, // TODO: Make this configurable
+            AppConfig::server_port(),
         );
         agent.get_devices(conn).map_err(|e| e.to_string())
     } else {
@@ -1128,7 +1131,7 @@ fn register_sync_device_cmd(
         let agent = SyncAgent::new(
             get_local_device_id(),
             get_local_device_name(),
-            8765, // TODO: Make this configurable
+            AppConfig::server_port(),
         );
 
         let device_type_enum = match device_type.as_str() {
@@ -1171,7 +1174,7 @@ fn get_sync_history_for_space_cmd(
         let agent = SyncAgent::new(
             get_local_device_id(),
             get_local_device_name(),
-            8765, // TODO: Make this configurable
+            AppConfig::server_port(),
         );
         agent
             .get_sync_history(conn, &space_id, limit)
@@ -1188,7 +1191,7 @@ fn get_sync_conflicts_cmd(db: State<DbConnection>) -> Result<Vec<SyncConflict>, 
         let agent = SyncAgent::new(
             get_local_device_id(),
             get_local_device_name(),
-            8765, // TODO: Make this configurable
+            AppConfig::server_port(),
         );
         agent
             .get_unresolved_conflicts(conn)
@@ -1209,7 +1212,7 @@ fn resolve_sync_conflict_cmd(
         let agent = SyncAgent::new(
             get_local_device_id(),
             get_local_device_name(),
-            8765, // TODO: Make this configurable
+            AppConfig::server_port(),
         );
 
         // Get the conflict from database
@@ -1274,7 +1277,7 @@ fn record_sync_cmd(
         let agent = SyncAgent::new(
             get_local_device_id(),
             get_local_device_name(),
-            8765, // TODO: Make this configurable
+            AppConfig::server_port(),
         );
         agent
             .record_sync_history(
@@ -2291,6 +2294,9 @@ fn main() {
             }
         })
         .setup(|app| {
+            // Initialize configuration
+            AppConfig::init();
+
             // Register global exit handler to ensure DEK is reliably cleared
             let app_handle = app.handle();
             std::panic::set_hook(Box::new(move |_| {
