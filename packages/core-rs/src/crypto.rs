@@ -181,16 +181,27 @@ pub fn decrypt_bytes(encrypted: &[u8], dek: &[u8]) -> Result<Vec<u8>, CryptoErro
         )));
     }
 
-    // XChaCha20Poly1305 nonce is 24 bytes
+    // XChaCha20Poly1305 nonce is 24 bytes, authentication tag is 16 bytes
     const NONCE_LEN: usize = 24;
     const TAG_LEN: usize = 16;
-    if encrypted.len() < NONCE_LEN + TAG_LEN {
+    const MIN_CIPHERTEXT_LEN: usize = NONCE_LEN + TAG_LEN;
+
+    if encrypted.len() < MIN_CIPHERTEXT_LEN {
         return Err(CryptoError::AesKw(
             "Invalid encrypted data: too short for nonce + tag".to_string(),
         ));
     }
 
     let (nonce_bytes, ciphertext) = encrypted.split_at(NONCE_LEN);
+
+    // Defense-in-depth: Verify ciphertext is at least as long as auth tag
+    // This ensures the ciphertext contains at least the authentication tag
+    if ciphertext.len() < TAG_LEN {
+        return Err(CryptoError::AesKw(
+            "Invalid encrypted data: ciphertext shorter than authentication tag".to_string(),
+        ));
+    }
+
     let nonce = nonce_bytes.into();
 
     let cipher = XChaCha20Poly1305::new(dek.into());

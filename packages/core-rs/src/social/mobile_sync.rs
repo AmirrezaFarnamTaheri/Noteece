@@ -293,9 +293,14 @@ impl SyncProtocol {
     pub async fn pair_device(
         &mut self,
         pairing_request: PairingRequest,
+        expected_pairing_code: &str,
     ) -> Result<PairingResponse, SyncProtocolError> {
-        // Validate pairing code (should be shown on desktop)
-        if pairing_request.pairing_code.len() != 6 {
+        // Validate pairing code against the one shown on desktop
+        // Using constant-time comparison to prevent timing attacks
+        if !Self::constant_time_compare(
+            pairing_request.pairing_code.as_bytes(),
+            expected_pairing_code.as_bytes(),
+        ) {
             return Err(SyncProtocolError::AuthenticationFailed);
         }
 
@@ -381,6 +386,21 @@ impl SyncProtocol {
         self.paired_devices
             .iter()
             .any(|d| d.device_id == device_id && d.is_active)
+    }
+
+    /// Constant-time comparison to prevent timing attacks
+    /// Returns true only if both slices have equal length AND equal contents
+    fn constant_time_compare(a: &[u8], b: &[u8]) -> bool {
+        use subtle::ConstantTimeComparison;
+
+        // First check lengths in constant time (if available)
+        // If lengths differ, the comparison should fail without leaking info
+        if a.len() != b.len() {
+            return false;
+        }
+
+        // Compare contents in constant time
+        a.ct_eq(b).into()
     }
 }
 
@@ -477,10 +497,30 @@ mod tests {
         // This would normally be async
         let result = tokio::runtime::Runtime::new()
             .unwrap()
-            .block_on(protocol.pair_device(pairing_request));
+            .block_on(protocol.pair_device(pairing_request, "123456"));
 
         assert!(result.is_ok());
         assert_eq!(protocol.get_paired_devices().len(), 1);
+    }
+
+    #[test]
+    fn test_device_pairing_with_wrong_code() {
+        let mut protocol = SyncProtocol::new(create_test_device("Desktop"));
+        let mobile_device = create_test_device("Mobile");
+
+        let pairing_request = PairingRequest {
+            mobile_device: mobile_device.clone(),
+            pairing_code: "999999".to_string(),
+            timestamp: Utc::now(),
+        };
+
+        // This would normally be async
+        let result = tokio::runtime::Runtime::new()
+            .unwrap()
+            .block_on(protocol.pair_device(pairing_request, "123456")); // Different code
+
+        assert!(result.is_err());
+        assert_eq!(protocol.get_paired_devices().len(), 0);
     }
 
     #[test]

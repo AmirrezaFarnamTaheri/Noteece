@@ -88,14 +88,11 @@ const statusColors: Record<string, string> = {
 
 /**
  * Get current user ID for audit logging
- * Retrieves the authenticated user's ID from the auth service
+ * Returns null if user is not authenticated instead of throwing
+ * The caller is responsible for handling the null case
  */
-function getCurrentUserId(): string {
-  const userId = authService.getCurrentUserId();
-  if (!userId) {
-    throw new Error('User not authenticated. Please log in first.');
-  }
-  return userId;
+function getCurrentUserId(): string | null {
+  return authService.getCurrentUserId();
 }
 
 /**
@@ -141,12 +138,17 @@ const UserManagement: React.FC = () => {
     mutationFn: async (values: { email: string; roleId: string; customPermissions: string[] }) => {
       if (!activeSpaceId) throw new Error('No active space');
 
+      const currentUserId = getCurrentUserId();
+      if (!currentUserId) {
+        throw new Error('User not authenticated. Please log in first.');
+      }
+
       // Invite user
       const invitation = await invoke<UserInvitation>('invite_user_cmd', {
         space_id: activeSpaceId,
         email: values.email,
         roleId: values.roleId,
-        invitedBy: getCurrentUserId(),
+        invitedBy: currentUserId,
       });
 
       // If custom permissions are specified, grant them
@@ -182,12 +184,17 @@ const UserManagement: React.FC = () => {
     mutationFn: async (values: { userId: string; roleId: string; customPermissions: string[] }) => {
       if (!activeSpaceId) throw new Error('No active space');
 
+      const currentUserId = getCurrentUserId();
+      if (!currentUserId) {
+        throw new Error('User not authenticated. Please log in first.');
+      }
+
       // Update role
       await invoke('update_user_role_cmd', {
         space_id: activeSpaceId,
         userId: values.userId,
         newRoleId: values.roleId,
-        updatedBy: getCurrentUserId(),
+        updatedBy: currentUserId,
       });
 
       // Handle custom permissions

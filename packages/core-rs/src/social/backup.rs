@@ -176,11 +176,19 @@ impl BackupService {
         // Create backup of current database before restore
         let _pre_restore_backup = self.create_backup(conn, dek, Some("pre_restore_backup"))?;
 
-        // Clear current database (backup was created above)
-        self.clear_database(conn)?;
+        // Perform clear and restore in a single atomic transaction to prevent data loss
+        let tx = conn.transaction()
+            .map_err(|e| BackupError::RestoreFailed(format!("Failed to start transaction: {}", e)))?;
 
-        // Restore data from backup
-        self.import_database(conn, &backup_json)?;
+        // Clear current database (inside transaction)
+        self.clear_database_tx(&tx)?;
+
+        // Restore data from backup (inside transaction, without creating a nested tx)
+        self.import_database_tx(&tx, &backup_json)?;
+
+        // Commit the transaction atomically
+        tx.commit()
+            .map_err(|e| BackupError::RestoreFailed(format!("Failed to commit restore transaction: {}", e)))?;
 
         log::info!("[backup] Restored backup: {}", backup_id);
 
@@ -365,14 +373,74 @@ impl BackupService {
         Ok(())
     }
 
-    /// Calculate SHA256 checksum for integrity verification
-    fn calculate_checksum(&self, data: &[u8]) -> String {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
+    /// Clear all social-related tables within a transaction
+    fn clear_database_tx(&self, tx: &rusqlite::Transaction) -> Result<(), BackupError> {
+        let tables = vec![
+            "social_post_category", // Must delete junction table first
+            "social_auto_rule_action",
+            "social_auto_rule",
+            "social_post",
+            "social_category",
+            "social_focus_mode",
+            "social_sync_history",
+            "social_account",
+        ];
 
-        let mut hasher = DefaultHasher::new();
-        data.hash(&mut hasher);
-        format!("{:x}", hasher.finish())
+        for table in tables {
+            tx.execute(&format!("DELETE FROM {}", table), [])?;
+        }
+
+        Ok(())
+    }
+
+    /// Import database from JSON format within a transaction
+    fn import_database_tx(&self, tx: &rusqlite::Transaction, data: &serde_json::Value) -> Result<(), BackupError> {
+        let tables = data.get("tables").ok_or(BackupError::InvalidBackup("No tables found".to_string()))?;
+
+        // Import each table
+        for (table_name, rows) in tables.as_object().unwrap() {
+            let rows = rows.as_array().ok_or(BackupError::InvalidBackup("Invalid rows".to_string()))?;
+
+            for row in rows {
+                let obj = row.as_object().ok_or(BackupError::InvalidBackup("Invalid row object".to_string()))?;
+
+                let cols: Vec<&String> = obj.keys().collect();
+                let col_names = cols.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(",");
+                let placeholders = (0..cols.len()).map(|_| "?").collect::<Vec<_>>().join(",");
+
+                let query = format!("INSERT INTO {} ({}) VALUES ({})", table_name, col_names, placeholders);
+
+                let mut stmt = tx.prepare(&query)
+                    .map_err(|e| BackupError::RestoreFailed(e.to_string()))?;
+
+                let params: Vec<&dyn rusqlite::ToSql> = cols.iter()
+                    .map(|col| {
+                        let val = &obj[col];
+                        match val {
+                            serde_json::Value::String(s) => s as &dyn rusqlite::ToSql,
+                            serde_json::Value::Number(n) => &n.as_i64() as &dyn rusqlite::ToSql,
+                            _ => &serde_json::Value::Null as &dyn rusqlite::ToSql,
+                        }
+                    })
+                    .collect();
+
+                stmt.execute(rusqlite::params_from_iter(params.iter()))
+                    .map_err(|e| BackupError::RestoreFailed(e.to_string()))?;
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Calculate SHA256 checksum for integrity verification
+    /// Uses cryptographic SHA-256 hash instead of non-cryptographic hasher
+    /// to ensure backup integrity can be verified and tampering detected
+    fn calculate_checksum(&self, data: &[u8]) -> String {
+        use sha2::{Sha256, Digest};
+
+        let mut hasher = Sha256::new();
+        hasher.update(data);
+        format!("{:x}", hasher.finalize())
     }
 }
 
