@@ -79,6 +79,8 @@ use core_rs::time_tracking::{
 };
 use core_rs::vault::{create_vault, unlock_vault};
 use core_rs::weekly_review::generate_weekly_review;
+use core_rs::auth::{AuthService, User, Session, AuthError};
+use core_rs::social::backup::{BackupService, BackupMetadata};
 use rusqlite::Connection;
 use std::sync::Mutex;
 use tauri::State;
@@ -2282,6 +2284,195 @@ fn shutdown_clear_keys_cmd(db: State<DbConnection>) -> Result<(), String> {
     Ok(())
 }
 
+// ============================================================================
+// BACKUP/RESTORE COMMANDS
+// ============================================================================
+
+#[tauri::command]
+fn create_backup_cmd(
+    description: Option<String>,
+    db: State<DbConnection>,
+) -> Result<String, String> {
+    let conn_guard = db.conn.lock().map_err(|_| "Failed to lock connection".to_string())?;
+    let conn = conn_guard.as_ref().ok_or("Database connection not available".to_string())?;
+
+    let dek_guard = db.dek.lock().map_err(|_| "Failed to lock DEK".to_string())?;
+    let dek_bytes = dek_guard.as_ref()
+        .map(|d| d.as_slice())
+        .unwrap_or(&[]);
+
+    let backup_service = BackupService::new("./backups")
+        .map_err(|e| e.to_string())?;
+
+    backup_service.create_backup(conn, dek_bytes, description.as_deref())
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn restore_backup_cmd(
+    backup_id: String,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn_guard = db.conn.lock().map_err(|_| "Failed to lock connection".to_string())?;
+    let conn = conn_guard.as_ref().ok_or("Database connection not available".to_string())?;
+
+    let dek_guard = db.dek.lock().map_err(|_| "Failed to lock DEK".to_string())?;
+    let dek_bytes = dek_guard.as_ref()
+        .map(|d| d.as_slice())
+        .unwrap_or(&[]);
+
+    let backup_service = BackupService::new("./backups")
+        .map_err(|e| e.to_string())?;
+
+    backup_service.restore_backup(&backup_id, conn, dek_bytes)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn list_backups_cmd() -> Result<Vec<(String, BackupMetadata)>, String> {
+    let backup_service = BackupService::new("./backups")
+        .map_err(|e| e.to_string())?;
+    backup_service.list_backups().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn delete_backup_cmd(backup_id: String) -> Result<(), String> {
+    let backup_service = BackupService::new("./backups")
+        .map_err(|e| e.to_string())?;
+    backup_service.delete_backup(&backup_id).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_backup_details_cmd(backup_id: String) -> Result<BackupMetadata, String> {
+    let backup_service = BackupService::new("./backups")
+        .map_err(|e| e.to_string())?;
+    backup_service.get_backup_details(&backup_id).map_err(|e| e.to_string())
+}
+
+// ============================================================================
+// AUTHENTICATION COMMANDS
+// ============================================================================
+
+#[tauri::command]
+fn create_user_cmd(
+    username: String,
+    email: String,
+    password: String,
+    db: State<DbConnection>,
+) -> Result<User, String> {
+    let conn_guard = db.conn.lock().map_err(|_| "Failed to lock connection".to_string())?;
+    let conn = conn_guard.as_ref().ok_or("Database connection not available".to_string())?;
+
+    let auth_service = AuthService::new(std::sync::Arc::new(std::sync::Mutex::new(
+        conn.try_clone().map_err(|e| e.to_string())?
+    )));
+
+    auth_service.create_user(&username, &email, &password)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn authenticate_user_cmd(
+    username: String,
+    password: String,
+    db: State<DbConnection>,
+) -> Result<Session, String> {
+    let conn_guard = db.conn.lock().map_err(|_| "Failed to lock connection".to_string())?;
+    let conn = conn_guard.as_ref().ok_or("Database connection not available".to_string())?;
+
+    let auth_service = AuthService::new(std::sync::Arc::new(std::sync::Mutex::new(
+        conn.try_clone().map_err(|e| e.to_string())?
+    )));
+
+    auth_service.authenticate(&username, &password)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn validate_session_cmd(
+    token: String,
+    db: State<DbConnection>,
+) -> Result<String, String> {
+    let conn_guard = db.conn.lock().map_err(|_| "Failed to lock connection".to_string())?;
+    let conn = conn_guard.as_ref().ok_or("Database connection not available".to_string())?;
+
+    let auth_service = AuthService::new(std::sync::Arc::new(std::sync::Mutex::new(
+        conn.try_clone().map_err(|e| e.to_string())?
+    )));
+
+    auth_service.validate_session(&token)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn logout_user_cmd(
+    token: String,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn_guard = db.conn.lock().map_err(|_| "Failed to lock connection".to_string())?;
+    let conn = conn_guard.as_ref().ok_or("Database connection not available".to_string())?;
+
+    let auth_service = AuthService::new(std::sync::Arc::new(std::sync::Mutex::new(
+        conn.try_clone().map_err(|e| e.to_string())?
+    )));
+
+    auth_service.logout(&token)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_user_by_id_cmd(
+    user_id: String,
+    db: State<DbConnection>,
+) -> Result<User, String> {
+    let conn_guard = db.conn.lock().map_err(|_| "Failed to lock connection".to_string())?;
+    let conn = conn_guard.as_ref().ok_or("Database connection not available".to_string())?;
+
+    let auth_service = AuthService::new(std::sync::Arc::new(std::sync::Mutex::new(
+        conn.try_clone().map_err(|e| e.to_string())?
+    )));
+
+    auth_service.get_user(&user_id)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn change_password_cmd(
+    user_id: String,
+    old_password: String,
+    new_password: String,
+    db: State<DbConnection>,
+) -> Result<(), String> {
+    let conn_guard = db.conn.lock().map_err(|_| "Failed to lock connection".to_string())?;
+    let conn = conn_guard.as_ref().ok_or("Database connection not available".to_string())?;
+
+    let auth_service = AuthService::new(std::sync::Arc::new(std::sync::Mutex::new(
+        conn.try_clone().map_err(|e| e.to_string())?
+    )));
+
+    auth_service.change_password(&user_id, &old_password, &new_password)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_current_user_cmd(
+    token: String,
+    db: State<DbConnection>,
+) -> Result<User, String> {
+    let conn_guard = db.conn.lock().map_err(|_| "Failed to lock connection".to_string())?;
+    let conn = conn_guard.as_ref().ok_or("Database connection not available".to_string())?;
+
+    let auth_service = AuthService::new(std::sync::Arc::new(std::sync::Mutex::new(
+        conn.try_clone().map_err(|e| e.to_string())?
+    )));
+
+    let user_id = auth_service.validate_session(&token)
+        .map_err(|e| e.to_string())?;
+
+    auth_service.get_user(&user_id)
+        .map_err(|e| e.to_string())
+}
+
 fn main() {
     // Initialize configuration as early as possible to avoid race conditions
     // where commands could access uninitialized configuration before setup completes
@@ -2445,7 +2636,21 @@ fn main() {
             get_sync_tasks_cmd,
             get_all_sync_tasks_cmd,
             get_social_sync_history_cmd,
-            get_sync_stats_cmd
+            get_sync_stats_cmd,
+            // Backup/Restore commands
+            create_backup_cmd,
+            restore_backup_cmd,
+            list_backups_cmd,
+            delete_backup_cmd,
+            get_backup_details_cmd,
+            // Authentication commands
+            create_user_cmd,
+            authenticate_user_cmd,
+            validate_session_cmd,
+            logout_user_cmd,
+            get_user_by_id_cmd,
+            change_password_cmd,
+            get_current_user_cmd
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

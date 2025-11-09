@@ -1,0 +1,175 @@
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modalContent {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.body {
+  margin-bottom: 2rem;
+}
+
+.body p {
+  margin: 0.75rem 0;
+  color: #666;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.body strong {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.hint {
+  color: #999;
+  font-size: 0.85rem;
+  border-left: 3px solid #ffc107;
+  padding-left: 1rem;
+  margin-left: 0;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+button {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+button:hover {
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+.continueButton {
+  background-color: #28a745;
+  color: white;
+}
+
+.continueButton:hover {
+  background-color: #218838;
+  box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+}
+
+.logoutButton {
+  background-color: #f8f9fa;
+  color: #dc3545;
+  border: 2px solid #dc3545;
+}
+
+.logoutButton:hover {
+  background-color: #fff3cd;
+  box-shadow: 0 5px 15px rgba(220, 53, 69, 0.2);
+}
+
+.footer {
+  border-top: 1px solid #e0e0e0;
+  padding-top: 1rem;
+}
+
+.footer p {
+  margin: 0;
+  color: #999;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .modalContent {
+    padding: 1.5rem;
+  }
+
+  .header h2 {
+    font-size: 1.3rem;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  button {
+    width: 100%;
+  }
+}

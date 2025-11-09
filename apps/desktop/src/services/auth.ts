@@ -150,6 +150,24 @@ class AuthService {
   }
 
   /**
+   * Get current session object
+   */
+  getSession(): Session | null {
+    if (this.session) {
+      return this.session;
+    }
+    const sessionData = localStorage.getItem(SESSION_DATA_KEY);
+    if (sessionData) {
+      try {
+        return JSON.parse(sessionData);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Change password
    */
   async changePassword(
