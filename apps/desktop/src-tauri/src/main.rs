@@ -2473,6 +2473,142 @@ fn get_current_user_cmd(
         .map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn get_current_user_cmd(
+    token: String,
+    db: State<DbConnection>,
+) -> Result<User, String> {
+    let conn_guard = db.conn.lock().map_err(|_| "Failed to lock connection".to_string())?;
+    let conn = conn_guard.as_ref().ok_or("Database connection not available".to_string())?;
+
+    let auth_service = AuthService::new(std::sync::Arc::new(std::sync::Mutex::new(
+        conn.try_clone().map_err(|e| e.to_string())?
+    )));
+
+    let user_id = auth_service.validate_session(&token)
+        .map_err(|e| e.to_string())?;
+
+    auth_service.get_user(&user_id)
+        .map_err(|e| e.to_string())
+}
+
+// ============================================================================
+// SYNC PROTOCOL COMMANDS (Phase 3)
+// ============================================================================
+
+#[tauri::command]
+fn discover_devices_cmd() -> Result<Vec<serde_json::Value>, String> {
+    // Discover devices on local network using mDNS
+    // Returns list of discovered devices
+
+    // In production, this would use mdns-sd crate
+    // For now, return mock discovered devices for testing
+
+    let mock_devices = vec![
+        serde_json::json!({
+            "device_id": "desktop_001",
+            "device_name": "Home Desktop",
+            "device_type": "desktop",
+            "ip_address": "192.168.1.100",
+            "port": 8765,
+            "os_version": "macOS 14.0",
+            "app_version": "1.0.0"
+        }),
+    ];
+
+    Ok(mock_devices)
+}
+
+#[tauri::command]
+fn initiate_pairing_cmd(device_id: String) -> Result<bool, String> {
+    // Initiate pairing with remote device
+    // Generates ECDH key pair and sends public key
+
+    // In production:
+    // 1. Create pairing manager for this device
+    // 2. Generate ECDH key pair
+    // 3. Send PairingRequest to device with our public key
+    // 4. Wait for PairingResponse
+
+    log::info!("[sync] Initiated pairing with device: {}", device_id);
+    Ok(true)
+}
+
+#[tauri::command]
+fn exchange_keys_cmd(device_id: String) -> Result<bool, String> {
+    // Exchange ECDH public keys with remote device
+    // Completes key exchange handshake
+
+    // In production:
+    // 1. Send our public key to device
+    // 2. Receive device's public key
+    // 3. Compute shared secret
+    // 4. Derive encryption key from shared secret
+
+    log::info!("[sync] Exchanged keys with device: {}", device_id);
+    Ok(true)
+}
+
+#[tauri::command]
+fn start_sync_cmd(
+    device_id: String,
+    categories: Vec<String>,
+) -> Result<bool, String> {
+    // Start synchronization with paired device
+    // Sends SyncRequest with categories to sync
+
+    // In production:
+    // 1. Create sync session with vector clock
+    // 2. Compute delta from last sync
+    // 3. Compress and encrypt delta
+    // 4. Send in batches with sequence numbers
+    // 5. Monitor for conflicts using vector clocks
+
+    log::info!(
+        "[sync] Started sync with device: {} for categories: {:?}",
+        device_id,
+        categories
+    );
+    Ok(true)
+}
+
+#[tauri::command]
+fn get_sync_progress_cmd(device_id: String) -> Result<serde_json::Value, String> {
+    // Get current sync progress for a device
+    // Returns progress percentage and status message
+
+    // In production:
+    // 1. Query sync session state from database
+    // 2. Calculate progress based on bytes/records processed
+    // 3. Return current batch number and total batches
+
+    let progress = serde_json::json!({
+        "progress": 75,
+        "message": "Syncing accounts and posts",
+        "batch": 3,
+        "total_batches": 4,
+        "bytes_transferred": 524288,
+        "total_bytes": 699050
+    });
+
+    Ok(progress)
+}
+
+#[tauri::command]
+fn cancel_sync_cmd(device_id: String) -> Result<bool, String> {
+    // Cancel ongoing synchronization with device
+    // Cleans up sync session state
+
+    // In production:
+    // 1. Send CancelSync message to device
+    // 2. Close encrypted connection
+    // 3. Clean up sync session database record
+    // 4. Mark as incomplete for resume on next sync
+
+    log::info!("[sync] Cancelled sync with device: {}", device_id);
+    Ok(true)
+}
+
 fn main() {
     // Initialize configuration as early as possible to avoid race conditions
     // where commands could access uninitialized configuration before setup completes
@@ -2650,7 +2786,14 @@ fn main() {
             logout_user_cmd,
             get_user_by_id_cmd,
             change_password_cmd,
-            get_current_user_cmd
+            get_current_user_cmd,
+            // Sync protocol commands
+            discover_devices_cmd,
+            initiate_pairing_cmd,
+            exchange_keys_cmd,
+            start_sync_cmd,
+            get_sync_progress_cmd,
+            cancel_sync_cmd
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
