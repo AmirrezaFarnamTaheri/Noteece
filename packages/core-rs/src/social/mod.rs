@@ -5,9 +5,11 @@
 
 pub mod account;
 pub mod analytics;
+pub mod backup;
 pub mod category;
 pub mod focus;
 pub mod intelligence;
+pub mod mobile_sync;
 pub mod post;
 pub mod sync;
 pub mod timeline;
@@ -17,6 +19,13 @@ pub mod webview;
 pub use account::{
     add_social_account, delete_social_account, get_decrypted_credentials, get_social_account,
     get_social_accounts, update_last_sync, update_social_account, SocialAccount, SocialError,
+};
+
+pub use backup::{BackupService, BackupMetadata, Backup, BackupError};
+
+pub use mobile_sync::{
+    SyncProtocol, DeviceInfo, DeviceType, SyncState, SyncRequest, SyncResponse, SyncDelta,
+    SyncCategory, PairingRequest, PairingResponse, SyncProtocolError, SyncBatchProcessor,
 };
 
 pub use post::{
