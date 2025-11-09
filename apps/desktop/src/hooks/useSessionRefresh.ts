@@ -19,16 +19,14 @@ export const useSessionRefresh = (
       const isValid = await authService.refreshAuth();
 
       if (!isValid) {
-        // Session has expired
+        // Session has expired - do NOT clear the interval here
         setSessionWarning({ show: false, minutesLeft: 0 });
-        clearInterval(refreshIntervalRef.current!);
         onSessionExpired?.();
       }
     } catch (error) {
       console.error('Session check failed:', error);
-      // Treat error as expired session for safety
+      // Treat error as expired session for safety - but don't kill the interval
       setSessionWarning({ show: false, minutesLeft: 0 });
-      clearInterval(refreshIntervalRef.current!);
       onSessionExpired?.();
     }
   }, [onSessionExpired]);
@@ -39,8 +37,26 @@ export const useSessionRefresh = (
       return 0;
     }
 
-    const now = Math.floor(Date.now() / 1000);
-    const secondsLeft = session.expires_at - now;
+    // Handle various session.expires_at formats
+    let expiresAtSec: number | null = null;
+    const exp = (session as any).expires_at;
+
+    if (typeof exp === 'number' && Number.isFinite(exp)) {
+      // Heuristic: if value looks like milliseconds (far in the future), convert to seconds
+      expiresAtSec = exp > 1e12 ? Math.floor(exp / 1000) : exp;
+    } else if (typeof exp === 'string') {
+      const parsed = Date.parse(exp);
+      if (!Number.isNaN(parsed)) {
+        expiresAtSec = Math.floor(parsed / 1000);
+      }
+    }
+
+    if (expiresAtSec == null) {
+      return 0;
+    }
+
+    const nowSec = Math.floor(Date.now() / 1000);
+    const secondsLeft = expiresAtSec - nowSec;
 
     return Math.max(0, Math.floor(secondsLeft / 60)); // Convert to minutes
   }, []);
@@ -55,13 +71,19 @@ export const useSessionRefresh = (
 
       // Check if we should warn about expiry (5 minutes before expiry)
       const minutesLeft = getSessionTimeRemaining();
-      if (minutesLeft > 0 && minutesLeft <= 5 && !sessionWarning.show) {
-        setSessionWarning({ show: true, minutesLeft });
-        onWarning?.(minutesLeft);
-      } else if (minutesLeft > 5 && sessionWarning.show) {
-        // Clear warning if session has been refreshed
-        setSessionWarning({ show: false, minutesLeft: 0 });
-      }
+
+      // Use functional update to avoid dependency on sessionWarning
+      setSessionWarning((prev) => {
+        if (minutesLeft > 0 && minutesLeft <= 5 && !prev.show) {
+          onWarning?.(minutesLeft);
+          return { show: true, minutesLeft };
+        }
+        if (minutesLeft > 5 && prev.show) {
+          // Clear warning if session has been refreshed
+          return { show: false, minutesLeft: 0 };
+        }
+        return prev;
+      });
     }, 15 * 60 * 1000); // 15 minutes
 
     // Cleanup on unmount
@@ -73,7 +95,7 @@ export const useSessionRefresh = (
         clearTimeout(warningTimeoutRef.current);
       }
     };
-  }, [checkSession, getSessionTimeRemaining, onSessionExpired, onWarning, sessionWarning.show]);
+  }, [checkSession, getSessionTimeRemaining, onWarning]);
 
   const dismissWarning = useCallback(() => {
     setSessionWarning({ show: false, minutesLeft: 0 });

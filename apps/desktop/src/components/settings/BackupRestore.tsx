@@ -34,6 +34,8 @@ const BackupRestore: React.FC<BackupRestoreProps> = ({
   const [selectedBackupId, setSelectedBackupId] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'restore' | 'delete' | null>(null);
+  // Freeze backup ID during confirmation to prevent TOCTOU race conditions
+  const [confirmedBackupId, setConfirmedBackupId] = useState<string | null>(null);
 
   // Load backups on component mount
   useEffect(() => {
@@ -62,24 +64,21 @@ const BackupRestore: React.FC<BackupRestoreProps> = ({
   };
 
   const handleCreateBackup = async () => {
-    if (!description.trim()) {
-      setMessage('Please enter a description for the backup');
-      setMessageType('error');
-      return;
-    }
-
+    // Description is optional per the UI - don't force users to provide it
     try {
       setLoading(true);
       const backupId = await invoke<string>('create_backup_cmd', {
-        description: description || null,
+        description: description.trim() || null,
       });
-      setMessage(`Backup created successfully: ${backupId}`);
+      // Don't expose full backup ID for security - only show shortened version
+      const shortId = backupId?.slice(0, 12) || '';
+      setMessage(shortId ? `Backup created successfully (ID: ${shortId}...)` : 'Backup created successfully');
       setMessageType('success');
       setDescription('');
       await loadBackups();
       onBackupComplete?.();
     } catch (error) {
-      setMessage(`Error creating backup: ${String(error)}`);
+      setMessage('Failed to create backup');
       setMessageType('error');
     } finally {
       setLoading(false);
@@ -87,56 +86,67 @@ const BackupRestore: React.FC<BackupRestoreProps> = ({
   };
 
   const handleRestoreBackup = async () => {
-    if (!selectedBackupId) {
-      setMessage('Please select a backup to restore');
+    // Use the frozen backup ID to prevent TOCTOU race conditions
+    const targetId = confirmedBackupId;
+    if (!targetId) {
+      setMessage('No backup selected for restore');
       setMessageType('error');
       return;
     }
 
     try {
       setLoading(true);
-      await invoke('restore_backup_cmd', { backup_id: selectedBackupId });
+      await invoke('restore_backup_cmd', { backup_id: targetId });
       setMessage('Backup restored successfully');
       setMessageType('success');
       setShowConfirm(false);
       setConfirmAction(null);
+      setConfirmedBackupId(null);
       await loadBackups();
       onRestoreComplete?.();
     } catch (error) {
-      setMessage(`Error restoring backup: ${String(error)}`);
+      setMessage('Failed to restore backup');
       setMessageType('error');
       setShowConfirm(false);
+      setConfirmedBackupId(null);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteBackup = async () => {
-    if (!selectedBackupId) {
-      setMessage('Please select a backup to delete');
+    // Use the frozen backup ID to prevent TOCTOU race conditions
+    const targetId = confirmedBackupId;
+    if (!targetId) {
+      setMessage('No backup selected for deletion');
       setMessageType('error');
       return;
     }
 
     try {
       setLoading(true);
-      await invoke('delete_backup_cmd', { backup_id: selectedBackupId });
+      await invoke('delete_backup_cmd', { backup_id: targetId });
       setMessage('Backup deleted successfully');
       setMessageType('success');
-      setSelectedBackupId(null);
+      if (selectedBackupId === targetId) {
+        setSelectedBackupId(null);
+      }
       setShowConfirm(false);
       setConfirmAction(null);
+      setConfirmedBackupId(null);
       await loadBackups();
     } catch (error) {
-      setMessage(`Error deleting backup: ${String(error)}`);
+      setMessage('Failed to delete backup');
       setMessageType('error');
       setShowConfirm(false);
+      setConfirmedBackupId(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const confirmAction = () => {
+  // Handle confirmation - this function name doesn't shadow the state variable
+  const handleConfirmAction = () => {
     if (confirmAction === 'restore') {
       handleRestoreBackup();
     } else if (confirmAction === 'delete') {
@@ -240,6 +250,8 @@ const BackupRestore: React.FC<BackupRestoreProps> = ({
           <div className={styles.actions}>
             <button
               onClick={() => {
+                // Freeze the selected backup ID to prevent TOCTOU race conditions
+                setConfirmedBackupId(selectedBackupId);
                 setConfirmAction('restore');
                 setShowConfirm(true);
               }}
@@ -250,6 +262,8 @@ const BackupRestore: React.FC<BackupRestoreProps> = ({
             </button>
             <button
               onClick={() => {
+                // Freeze the selected backup ID to prevent TOCTOU race conditions
+                setConfirmedBackupId(selectedBackupId);
                 setConfirmAction('delete');
                 setShowConfirm(true);
               }}
@@ -282,6 +296,7 @@ const BackupRestore: React.FC<BackupRestoreProps> = ({
                 onClick={() => {
                   setShowConfirm(false);
                   setConfirmAction(null);
+                  setConfirmedBackupId(null);
                 }}
                 disabled={loading}
                 className={styles.secondaryButton}
@@ -289,7 +304,7 @@ const BackupRestore: React.FC<BackupRestoreProps> = ({
                 Cancel
               </button>
               <button
-                onClick={confirmAction}
+                onClick={handleConfirmAction}
                 disabled={loading}
                 className={confirmAction === 'delete' ? styles.dangerButton : styles.successButton}
               >

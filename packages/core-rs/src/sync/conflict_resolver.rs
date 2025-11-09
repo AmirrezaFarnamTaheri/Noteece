@@ -246,24 +246,56 @@ impl ConflictResolver {
     }
 }
 
-/// Merge two JSON objects by taking newer/non-null values
+/// Merge two JSON objects with deep-merge strategy
+/// Recursively merges nested objects and prefers remote values on conflict
+/// to avoid losing updates from concurrent devices
 fn merge_json_objects(
     local: &serde_json::Value,
     remote: &serde_json::Value,
 ) -> serde_json::Value {
+    use serde_json::Value::*;
+
     match (local, remote) {
-        (serde_json::Value::Object(local_obj), serde_json::Value::Object(remote_obj)) => {
+        // Both are objects: deep merge
+        (Object(local_obj), Object(remote_obj)) => {
             let mut merged = local_obj.clone();
+
             for (key, remote_val) in remote_obj.iter() {
-                if !merged.contains_key(key) {
-                    merged.insert(key.clone(), remote_val.clone());
+                match (merged.get(key), remote_val) {
+                    // Both have the key - recursively merge if both objects, otherwise prefer remote
+                    (Some(local_val), remote_val_ref) => {
+                        match (local_val, remote_val_ref) {
+                            // Both are objects: recurse
+                            (Object(_), Object(_)) => {
+                                merged.insert(
+                                    key.clone(),
+                                    merge_json_objects(local_val, remote_val_ref),
+                                );
+                            }
+                            // Both are arrays: prefer remote (avoid duplication)
+                            (Array(_), Array(_)) => {
+                                merged.insert(key.clone(), remote_val_ref.clone());
+                            }
+                            // Different types or scalars: prefer remote (assume newer)
+                            _ => {
+                                merged.insert(key.clone(), remote_val_ref.clone());
+                            }
+                        }
+                    }
+                    // Remote has key but local doesn't: add it
+                    (None, remote_val_ref) => {
+                        merged.insert(key.clone(), remote_val_ref.clone());
+                    }
                 }
             }
-            serde_json::Value::Object(merged)
+
+            Object(merged)
         }
-        (_, serde_json::Value::Null) => local.clone(),
-        (serde_json::Value::Null, _) => remote.clone(),
-        _ => local.clone(),
+        // Handle nulls
+        (_, Null) => local.clone(),
+        (Null, _) => remote.clone(),
+        // Different types or scalars: prefer remote (assume it's newer)
+        _ => remote.clone(),
     }
 }
 

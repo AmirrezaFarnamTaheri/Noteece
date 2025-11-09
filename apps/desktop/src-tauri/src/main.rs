@@ -2293,19 +2293,43 @@ fn create_backup_cmd(
     description: Option<String>,
     db: State<DbConnection>,
 ) -> Result<String, String> {
-    let conn_guard = db.conn.lock().map_err(|_| "Failed to lock connection".to_string())?;
-    let conn = conn_guard.as_ref().ok_or("Database connection not available".to_string())?;
+    // Validate and sanitize description
+    if let Some(ref desc) = description {
+        if desc.len() > 1000 {
+            return Err("Description too long".to_string());
+        }
+    }
 
-    let dek_guard = db.dek.lock().map_err(|_| "Failed to lock DEK".to_string())?;
-    let dek_bytes = dek_guard.as_ref()
-        .map(|d| d.as_slice())
-        .unwrap_or(&[]);
+    let conn_guard = db.conn.lock().map_err(|_| "Backup operation failed".to_string())?;
+    let conn = conn_guard.as_ref().ok_or("Backup operation failed".to_string())?;
 
-    let backup_service = BackupService::new("./backups")
-        .map_err(|e| e.to_string())?;
+    let dek_guard = db.dek.lock().map_err(|_| "Backup operation failed".to_string())?;
+
+    // CRITICAL: Enforce DEK presence - never allow unencrypted backups
+    let dek_bytes = match dek_guard.as_ref() {
+        Some(dek) if !dek.is_empty() => dek.as_slice(),
+        _ => {
+            // Log security event: backup attempted without encryption key
+            eprintln!("SECURITY: Backup creation attempted without encryption key");
+            return Err("Encryption key not available. Cannot create backup.".to_string());
+        }
+    };
+
+    // Use application-scoped backup directory
+    let backup_path = std::path::PathBuf::from(
+        std::env::var("NOTEECE_BACKUP_PATH")
+            .unwrap_or_else(|_| {
+                let mut home = dirs::home_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
+                home.push(".noteece/backups");
+                home.to_string_lossy().into_owned()
+            })
+    );
+
+    let backup_service = BackupService::new(backup_path.to_string_lossy().as_ref())
+        .map_err(|_| "Backup operation failed".to_string())?;
 
     backup_service.create_backup(conn, dek_bytes, description.as_deref())
-        .map_err(|e| e.to_string())
+        .map_err(|_| "Backup operation failed".to_string())
 }
 
 #[tauri::command]
@@ -2313,19 +2337,40 @@ fn restore_backup_cmd(
     backup_id: String,
     db: State<DbConnection>,
 ) -> Result<(), String> {
-    let conn_guard = db.conn.lock().map_err(|_| "Failed to lock connection".to_string())?;
-    let conn = conn_guard.as_ref().ok_or("Database connection not available".to_string())?;
+    // Validate backup ID format to prevent path traversal
+    if backup_id.is_empty() || backup_id.len() > 256
+        || backup_id.contains("..") || backup_id.contains("/") || backup_id.contains("\\") {
+        return Err("Invalid backup identifier".to_string());
+    }
 
-    let dek_guard = db.dek.lock().map_err(|_| "Failed to lock DEK".to_string())?;
-    let dek_bytes = dek_guard.as_ref()
-        .map(|d| d.as_slice())
-        .unwrap_or(&[]);
+    let conn_guard = db.conn.lock().map_err(|_| "Restore operation failed".to_string())?;
+    let conn = conn_guard.as_ref().ok_or("Restore operation failed".to_string())?;
 
-    let backup_service = BackupService::new("./backups")
-        .map_err(|e| e.to_string())?;
+    let dek_guard = db.dek.lock().map_err(|_| "Restore operation failed".to_string())?;
+
+    // CRITICAL: Enforce DEK presence - never allow unencrypted restore
+    let dek_bytes = match dek_guard.as_ref() {
+        Some(dek) if !dek.is_empty() => dek.as_slice(),
+        _ => {
+            eprintln!("SECURITY: Restore attempted without encryption key");
+            return Err("Encryption key not available. Cannot restore backup.".to_string());
+        }
+    };
+
+    let backup_path = std::path::PathBuf::from(
+        std::env::var("NOTEECE_BACKUP_PATH")
+            .unwrap_or_else(|_| {
+                let mut home = dirs::home_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
+                home.push(".noteece/backups");
+                home.to_string_lossy().into_owned()
+            })
+    );
+
+    let backup_service = BackupService::new(backup_path.to_string_lossy().as_ref())
+        .map_err(|_| "Restore operation failed".to_string())?;
 
     backup_service.restore_backup(&backup_id, conn, dek_bytes)
-        .map_err(|e| e.to_string())
+        .map_err(|_| "Restore operation failed".to_string())
 }
 
 #[tauri::command]
@@ -2459,37 +2504,23 @@ fn get_current_user_cmd(
     token: String,
     db: State<DbConnection>,
 ) -> Result<User, String> {
-    let conn_guard = db.conn.lock().map_err(|_| "Failed to lock connection".to_string())?;
-    let conn = conn_guard.as_ref().ok_or("Database connection not available".to_string())?;
+    // Validate token format to prevent injection attacks
+    if token.is_empty() || token.len() > 512 {
+        return Err("Invalid session token".to_string());
+    }
+
+    let conn_guard = db.conn.lock().map_err(|_| "Database unavailable".to_string())?;
+    let conn = conn_guard.as_ref().ok_or("Database unavailable".to_string())?;
 
     let auth_service = AuthService::new(std::sync::Arc::new(std::sync::Mutex::new(
-        conn.try_clone().map_err(|e| e.to_string())?
+        conn.try_clone().map_err(|_| "Database unavailable".to_string())?
     )));
 
     let user_id = auth_service.validate_session(&token)
-        .map_err(|e| e.to_string())?;
+        .map_err(|_| "Invalid or expired session".to_string())?;
 
     auth_service.get_user(&user_id)
-        .map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn get_current_user_cmd(
-    token: String,
-    db: State<DbConnection>,
-) -> Result<User, String> {
-    let conn_guard = db.conn.lock().map_err(|_| "Failed to lock connection".to_string())?;
-    let conn = conn_guard.as_ref().ok_or("Database connection not available".to_string())?;
-
-    let auth_service = AuthService::new(std::sync::Arc::new(std::sync::Mutex::new(
-        conn.try_clone().map_err(|e| e.to_string())?
-    )));
-
-    let user_id = auth_service.validate_session(&token)
-        .map_err(|e| e.to_string())?;
-
-    auth_service.get_user(&user_id)
-        .map_err(|e| e.to_string())
+        .map_err(|_| "User not found".to_string())
 }
 
 // ============================================================================

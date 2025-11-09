@@ -307,11 +307,11 @@ elif [ "$OS" = "linux" ]; then
     if [ "$DISTRO" = "ubuntu" ] || [ "$DISTRO" = "debian" ]; then
         sudo apt-get update
         sudo apt-get install -y build-essential pkg-config libssl-dev libsoup-2.4-dev \
-            libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev webkit2gtk-4.0
+            libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libwebkit2gtk-4.0-dev
         print_success "Linux build dependencies installed"
     elif [ "$DISTRO" = "fedora" ] || [ "$DISTRO" = "rhel" ]; then
         sudo dnf install -y gcc g++ make openssl-devel libsoup-devel gtk3-devel \
-            libayatana-appindicator-devel librsvg2-devel webkit2gtk3-devel
+            libayatana-appindicator-devel librsvg2-devel webkit2gtk4.0-devel
         print_success "Linux build dependencies installed"
     fi
 fi
@@ -356,7 +356,7 @@ print_header "Configuration Setup"
 
 print_step "Creating .env file if not exists..."
 if [ ! -f "$SCRIPT_DIR/.env" ]; then
-    cat > "$SCRIPT_DIR/.env" << 'EOF'
+    cat > "$SCRIPT_DIR/.env" << EOF
 # Noteece Configuration
 
 # Server Configuration
@@ -368,8 +368,8 @@ NOTEECE_SYNC_PORT=8443
 NOTEECE_SYNC_AUTO_INTERVAL=300
 
 # Database Configuration
-NOTEECE_DB_PATH=~/.noteece/data
-NOTEECE_BACKUP_PATH=~/.noteece/backups
+NOTEECE_DB_PATH=$HOME/.noteece/data
+NOTEECE_BACKUP_PATH=$HOME/.noteece/backups
 
 # Security Configuration
 NOTEECE_ENABLE_HTTPS=false
@@ -417,20 +417,38 @@ if [ "$SKIP_BUILD" = false ] && [ "$ONLY_SETUP" = false ]; then
         macos)
             if [ "$ARCH" = "x86_64" ]; then
                 print_step "Building macOS (Intel x86_64)..."
-                pnpm build -- --target x86_64-apple-darwin 2>&1 | tail -20
-                print_success "macOS Intel build complete"
+                if pnpm build -- --target x86_64-apple-darwin > "$SCRIPT_DIR/.build-output-x86_64.log" 2>&1; then
+                    tail -20 "$SCRIPT_DIR/.build-output-x86_64.log"
+                    print_success "macOS Intel build complete"
+                else
+                    print_error "macOS Intel build failed. See .build-output-x86_64.log for details."
+                    cat "$SCRIPT_DIR/.build-output-x86_64.log" | tail -50
+                    exit 1
+                fi
             fi
 
             if [ "$ARCH" = "arm64" ]; then
                 print_step "Building macOS (Apple Silicon arm64)..."
-                pnpm build -- --target aarch64-apple-darwin 2>&1 | tail -20
-                print_success "macOS Apple Silicon build complete"
+                if pnpm build -- --target aarch64-apple-darwin > "$SCRIPT_DIR/.build-output-arm64.log" 2>&1; then
+                    tail -20 "$SCRIPT_DIR/.build-output-arm64.log"
+                    print_success "macOS Apple Silicon build complete"
+                else
+                    print_error "macOS Apple Silicon build failed. See .build-output-arm64.log for details."
+                    cat "$SCRIPT_DIR/.build-output-arm64.log" | tail -50
+                    exit 1
+                fi
             fi
             ;;
         linux)
             print_step "Building Linux (x86_64)..."
-            pnpm build -- --target x86_64-unknown-linux-gnu 2>&1 | tail -20
-            print_success "Linux build complete"
+            if pnpm build -- --target x86_64-unknown-linux-gnu > "$SCRIPT_DIR/.build-output-linux.log" 2>&1; then
+                tail -20 "$SCRIPT_DIR/.build-output-linux.log"
+                print_success "Linux build complete"
+            else
+                print_error "Linux build failed. See .build-output-linux.log for details."
+                cat "$SCRIPT_DIR/.build-output-linux.log" | tail -50
+                exit 1
+            fi
             ;;
     esac
 

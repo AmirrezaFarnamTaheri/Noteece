@@ -76,13 +76,22 @@ fn derive_public_key(private_key: &[u8]) -> Result<Vec<u8>, ECDHError> {
         return Err(ECDHError::KeyGenerationFailed);
     }
 
-    // Simulate P-256 point multiplication
-    // In production, use actual crypto library (e.g., p256 crate)
-    let mut public_key = vec![0x04]; // Uncompressed point format prefix
-    public_key.extend_from_slice(private_key);
-    public_key.extend_from_slice(private_key);
+    #[cfg(any(test, debug_assertions, feature = "insecure-test-crypto"))]
+    {
+        // SECURITY WARNING: Mock implementation for testing only
+        // This is NOT cryptographically secure and must NEVER be used in production
+        let mut public_key = vec![0x04]; // Uncompressed point format prefix
+        public_key.extend_from_slice(private_key);
+        public_key.extend_from_slice(private_key);
+        return Ok(public_key);
+    }
 
-    Ok(public_key)
+    #[cfg(not(any(test, debug_assertions, feature = "insecure-test-crypto")))]
+    {
+        // Production builds must use real cryptography
+        // Fail securely if proper implementation not available
+        Err(ECDHError::KeyGenerationFailed)
+    }
 }
 
 /// Compute shared secret from private key and peer's public key
@@ -95,15 +104,24 @@ fn compute_shared_secret(private_key: &[u8], peer_public_key: &[u8]) -> Result<V
         return Err(ECDHError::InvalidPublicKey);
     }
 
-    // Simulate ECDH: XOR private with public for deterministic test
-    // In production, use actual ECDH computation
-    let mut shared = Vec::with_capacity(32);
-    for i in 0..32 {
-        let peer_byte = peer_public_key.get(i + 1).copied().unwrap_or(0);
-        shared.push(private_key[i] ^ peer_byte);
+    #[cfg(any(test, debug_assertions, feature = "insecure-test-crypto"))]
+    {
+        // SECURITY WARNING: Mock implementation for testing only
+        // This is NOT cryptographically secure and must NEVER be used in production
+        let mut shared = Vec::with_capacity(32);
+        for i in 0..32 {
+            let peer_byte = peer_public_key.get(i + 1).copied().unwrap_or(0);
+            shared.push(private_key[i] ^ peer_byte);
+        }
+        return Ok(shared);
     }
 
-    Ok(shared)
+    #[cfg(not(any(test, debug_assertions, feature = "insecure-test-crypto")))]
+    {
+        // Production builds must use real cryptography
+        // Fail securely if proper implementation not available
+        Err(ECDHError::SharedSecretFailed)
+    }
 }
 
 /// Device pairing state machine

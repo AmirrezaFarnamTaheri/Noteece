@@ -293,8 +293,8 @@ if not exist "%SCRIPT_DIR%.env" (
         echo NOTEECE_SYNC_AUTO_INTERVAL=300
         echo.
         echo # Database Configuration
-        echo NOTEECE_DB_PATH=%%USERPROFILE%%\.noteece\data
-        echo NOTEECE_BACKUP_PATH=%%USERPROFILE%%\.noteece\backups
+        echo NOTEECE_DB_PATH=%USERPROFILE%\.noteece\data
+        echo NOTEECE_BACKUP_PATH=%USERPROFILE%\.noteece\backups
         echo.
         echo # Security Configuration
         echo NOTEECE_ENABLE_HTTPS=false
