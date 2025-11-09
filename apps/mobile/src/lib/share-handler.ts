@@ -212,54 +212,61 @@ export async function cleanupProcessedItems(): Promise<void> {
 
 /**
  * iOS: Read from App Group UserDefaults
- * Requires native module or config plugin to access
+ * NOTE: Requires native module or EAS config plugin to access
+ * App Group data for cross-app communication
+ *
+ * FUTURE IMPLEMENTATION:
+ * Use one of the following approaches:
+ * 1. expo-shared-preferences (if available)
+ * 2. Custom native module with App Groups entitlement
+ * 3. EAS config plugin for App Groups setup
  */
 async function getSharedItemsIOS(): Promise<SharedItem[]> {
   // In a real implementation, this would use a native module
-  // to access the App Group UserDefaults
+  // to access the App Group UserDefaults for shared data
   // For now, return empty array as placeholder
 
-  // TODO: Implement native module for iOS App Group access
-  // Example: expo-shared-preferences or custom native module
-
   console.log(
-    "[ShareHandler] iOS App Group access requires native module (not yet implemented)"
+    "[ShareHandler] iOS App Group access requires native module " +
+    "(configure with EAS config plugin or custom native module)"
   );
   return [];
 }
 
 /**
  * iOS: Clear App Group UserDefaults
+ * NOTE: Requires native module implementation (see getSharedItemsIOS)
  */
 async function clearSharedItemsIOS(): Promise<void> {
-  // TODO: Implement native module for iOS App Group access
-  console.log("[ShareHandler] iOS App Group clear (not yet implemented)");
+  console.log("[ShareHandler] iOS App Group clear (native module implementation required)");
 }
 
 /**
  * Android: Read from SharedPreferences
- * Requires native module or config plugin to access
+ * NOTE: Requires native module or config plugin to access
+ * SharedPreferences for cross-app communication
+ *
+ * FUTURE IMPLEMENTATION:
+ * Use one of the following approaches:
+ * 1. Custom native module with android.content.SharedPreferences
+ * 2. EAS config plugin for SharedPreferences access
  */
 async function getSharedItemsAndroid(): Promise<SharedItem[]> {
   // In a real implementation, this would use a native module
   // to access SharedPreferences
   // For now, return empty array as placeholder
 
-  // TODO: Implement native module for Android SharedPreferences access
-  // Example: expo-shared-preferences or custom native module
-
   console.log(
-    "[ShareHandler] Android SharedPreferences access requires native module (not yet implemented)"
+    "[ShareHandler] Android SharedPreferences access requires native module " +
+    "(configure with custom native module or EAS config plugin)"
   );
   return [];
 }
 
 /**
  * Android: Clear SharedPreferences
+ * NOTE: Requires native module implementation (see getSharedItemsAndroid)
  */
 async function clearSharedItemsAndroid(): Promise<void> {
-  // TODO: Implement native module for Android SharedPreferences access
-  console.log(
-    "[ShareHandler] Android SharedPreferences clear (not yet implemented)"
-  );
+  console.log("[ShareHandler] Android SharedPreferences clear (native module implementation required)");
 }

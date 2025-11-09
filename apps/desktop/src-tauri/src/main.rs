@@ -1249,12 +1249,17 @@ fn resolve_sync_conflict_cmd(
             _ => return Err("Invalid resolution type".to_string()),
         };
 
-        // TODO: Replace with actual DEK from secure state management
-        // For now, using empty slice as encryption is not fully implemented
-        let dek: &[u8] = &[];
+        // Retrieve DEK from secure state management
+        // The DEK is stored in encrypted application state and derived from user password
+        let dek = crate::state::get_encryption_key()
+            .map_err(|e| format!("Failed to retrieve encryption key: {}", e))?;
+
+        if dek.is_empty() {
+            return Err("Encryption key not initialized. Please log in first.".to_string());
+        }
 
         agent
-            .resolve_conflict(conn, &conflict, resolution_type, dek)
+            .resolve_conflict(conn, &conflict, resolution_type, &dek)
             .map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())

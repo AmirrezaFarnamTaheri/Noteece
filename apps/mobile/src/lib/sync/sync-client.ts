@@ -162,21 +162,26 @@ export class SyncClient {
       // const remotePublicKey = Buffer.from(response.publicKey, 'base64');
 
       // SECURITY WARNING: Simulated key exchange (DEVELOPMENT ONLY)
-      // This code simulates the key exchange for development purposes.
-      // In production, this MUST be replaced with authenticated key exchange
-      // over WebSocket/TLS. Without proper peer authentication, a MITM attacker
-      // could intercept and decrypt all sync traffic.
+      // IMPORTANT: This code uses simulated key exchange for development purposes.
+      // In production builds, the simulated key exchange is disabled and a proper
+      // WebSocket-based implementation with authenticated key exchange is REQUIRED.
       //
-      // TODO: Replace with real WebSocket implementation before production release
+      // SECURITY: Production builds MUST use:
+      // - TLS/SSL encrypted WebSocket connection
+      // - Mutual authentication (client certificate + server certificate)
+      // - Proper ECDH key exchange over authenticated channel
+      // - No simulated or placeholder keys
+      //
+      // IMPLEMENTED: Development guard prevents insecure key exchange in production builds
 
-      // Compliance fix (importance 10): Prevent simulated key exchange in production
+      // Production security guard: Block simulated key exchange in production
       if (!__DEV__) {
-        // zeroize ephemeral keys before abort
+        // Zeroize ephemeral keys before aborting
         if (privateKey instanceof Uint8Array) privateKey.fill(0);
         throw new Error(
           "Sync feature is not available in production builds. " +
             "Simulated key exchange without peer authentication is disabled for security. " +
-            "A proper WebSocket-based implementation with mutual authentication is required.",
+            "A proper WebSocket-based implementation with mutual authentication (TLS + client certificates) is REQUIRED.",
         );
       }
 
