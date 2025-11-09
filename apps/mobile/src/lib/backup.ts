@@ -8,6 +8,8 @@
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { Alert } from "react-native";
+import * as SecureStore from "expo-secure-store";
+import { v4 as uuid } from "uuid";
 import { db Execute, dbQuery } from "./database";
 import type { SocialAccount, SocialPost, SocialCategory } from "../types/social";
 
@@ -40,6 +42,29 @@ function generateBackupFilename(): string {
  */
 function getBackupDirectory(): string {
   return `${FileSystem.documentDirectory}backups/`;
+}
+
+/**
+ * Get or create a unique device ID for this device
+ * Stores the ID in secure storage for persistence across app launches
+ */
+async function getOrCreateDeviceId(): Promise<string> {
+  try {
+    // Try to retrieve existing device ID from secure storage
+    const existingId = await SecureStore.getItemAsync("device_id");
+    if (existingId) {
+      return existingId;
+    }
+
+    // Generate a new unique device ID if not found
+    const newDeviceId = uuid();
+    await SecureStore.setItemAsync("device_id", newDeviceId);
+    return newDeviceId;
+  } catch (error) {
+    console.warn("Failed to access secure storage for device ID, using temporary UUID:", error);
+    // Fallback to a temporary UUID if secure storage fails
+    return uuid();
+  }
 }
 
 /**
@@ -133,6 +158,43 @@ async function exportCategories(spaceId: string): Promise<any[]> {
 }
 
 /**
+ * Export application settings
+ * Includes preferences, user settings, and app configuration
+ */
+async function exportAppSettings(): Promise<Record<string, any>> {
+  try {
+    const settings: Record<string, any> = {};
+
+    // Export theme and display preferences
+    const theme = await SecureStore.getItemAsync("theme_preference");
+    if (theme) settings.theme = theme;
+
+    const language = await SecureStore.getItemAsync("language");
+    if (language) settings.language = language;
+
+    const notificationsEnabled = await SecureStore.getItemAsync("notifications_enabled");
+    if (notificationsEnabled) settings.notificationsEnabled = notificationsEnabled === "true";
+
+    // Export sync preferences
+    const autoSync = await SecureStore.getItemAsync("auto_sync_enabled");
+    if (autoSync) settings.autoSyncEnabled = autoSync === "true";
+
+    const syncInterval = await SecureStore.getItemAsync("sync_interval_minutes");
+    if (syncInterval) settings.syncIntervalMinutes = parseInt(syncInterval, 10);
+
+    // Export privacy settings
+    const shareAnalytics = await SecureStore.getItemAsync("share_analytics");
+    if (shareAnalytics) settings.shareAnalytics = shareAnalytics === "true";
+
+    console.log("[Backup] Exported app settings:", Object.keys(settings));
+    return settings;
+  } catch (error) {
+    console.warn("[Backup] Failed to export app settings, returning empty object:", error);
+    return {};
+  }
+}
+
+/**
  * Create a complete backup of all user data
  */
 export async function createBackup(
@@ -154,10 +216,13 @@ export async function createBackup(
 
     await ensureBackupDirectory();
 
+    // Get actual device ID from device storage or generate a unique one
+    const deviceId = await getOrCreateDeviceId();
+
     const metadata: BackupMetadata = {
       version: "1.0.0",
       createdAt: new Date().toISOString(),
-      deviceId: "mobile", // TODO: Get actual device ID
+      deviceId: deviceId,
       platform: "mobile",
       dataTypes: [],
     };
@@ -184,8 +249,8 @@ export async function createBackup(
 
     // Export settings (if applicable)
     if (includeSettings) {
-      // TODO: Export app settings
-      backupData.settings = {};
+      // Export app settings from secure storage and app preferences
+      backupData.settings = await exportAppSettings();
       metadata.dataTypes.push("settings");
     }
 

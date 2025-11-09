@@ -4,7 +4,7 @@
  * Displays a single social media account with actions
  */
 
-import { Card, Group, Text, Badge, ActionIcon, Switch, Menu, Button } from '@mantine/core';
+import { Card, Group, Text, Badge, ActionIcon, Switch, Menu, Button, Modal, Select, NumberInput, Stack } from '@mantine/core';
 import { IconDots, IconTrash, IconSettings, IconExternalLink } from '@tabler/icons-react';
 import { invoke } from '@tauri-apps/api/tauri';
 import type { SocialAccount } from '@noteece/types';
@@ -12,6 +12,7 @@ import { SUPPORTED_PLATFORMS } from '@noteece/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateSocialAccount, deleteSocialAccount } from '../../services/socialApi';
 import { notifications } from '@mantine/notifications';
+import { useState } from 'react';
 
 interface AccountCardProps {
   account: SocialAccount;
@@ -20,6 +21,8 @@ interface AccountCardProps {
 export function AccountCard({ account }: AccountCardProps) {
   const queryClient = useQueryClient();
   const platform = SUPPORTED_PLATFORMS[account.platform as keyof typeof SUPPORTED_PLATFORMS];
+  const [settingsModalOpened, setSettingsModalOpened] = useState(false);
+  const [syncFrequency, setSyncFrequency] = useState<number | string>(account.sync_frequency_minutes || 60);
 
   const toggleMutation = useMutation({
     mutationFn: (enabled: boolean) =>
@@ -126,11 +129,8 @@ export function AccountCard({ account }: AccountCardProps) {
               <Menu.Item
                 leftSection={<IconSettings size={14} />}
                 onClick={() => {
-                  // TODO: Open settings modal
-                  notifications.show({
-                    message: 'Settings coming soon',
-                    color: 'blue',
-                  });
+                  // Open account settings modal
+                  setSettingsModalOpened(true);
                 }}
               >
                 Settings
@@ -182,6 +182,59 @@ export function AccountCard({ account }: AccountCardProps) {
           Login and browse to extract content automatically
         </Text>
       </Group>
+
+      {/* Settings Modal */}
+      <Modal
+        opened={settingsModalOpened}
+        onClose={() => setSettingsModalOpened(false)}
+        title={`${platform?.name || 'Account'} Settings`}
+      >
+        <Stack gap="md">
+          <NumberInput
+            label="Sync Frequency (minutes)"
+            description="How often to sync this account"
+            placeholder="Enter sync frequency"
+            value={syncFrequency}
+            onChange={setSyncFrequency}
+            min={5}
+            max={1440}
+          />
+          <Select
+            label="Extraction Mode"
+            description="How to extract content from this platform"
+            placeholder="Select extraction mode"
+            data={[
+              { value: 'webview', label: 'WebView (Manual)' },
+              { value: 'api', label: 'API (If Available)' },
+              { value: 'hybrid', label: 'Hybrid (WebView + API)' },
+            ]}
+            defaultValue={account.extraction_mode || 'webview'}
+          />
+          <Group justify="flex-end" mt="md">
+            <Button
+              variant="light"
+              onClick={() => setSettingsModalOpened(false)}
+            >
+              Close
+            </Button>
+            <Button
+              onClick={() => {
+                updateSocialAccount(account.id, {
+                  sync_frequency_minutes: Number(syncFrequency),
+                });
+                setSettingsModalOpened(false);
+                notifications.show({
+                  title: 'Success',
+                  message: 'Account settings updated',
+                  color: 'green',
+                });
+              }}
+            >
+              Save Settings
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Card>
   );
 }

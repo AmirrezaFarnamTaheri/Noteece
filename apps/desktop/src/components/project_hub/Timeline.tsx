@@ -1,7 +1,7 @@
 import React from 'react';
 import Timeline, { TimelineHeaders, SidebarHeader, DateHeader } from 'react-calendar-timeline';
-// TODO: Add Timeline.css when package is properly installed
-// import 'react-calendar-timeline/lib/Timeline.css';
+// Timeline CSS styling for calendar visualization
+import 'react-calendar-timeline/lib/Timeline.css';
 import moment from 'moment';
 import { useOutletContext } from 'react-router-dom';
 import { Task, ProjectMilestone } from '@noteece/types';

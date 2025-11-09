@@ -1,5 +1,6 @@
 use rusqlite::{Connection, Result};
 use thiserror::Error;
+use chrono;
 
 use serde_json;
 
@@ -11,6 +12,61 @@ pub enum DbError {
     Message(String),
     #[error("Serde JSON error: {0}")]
     SerdeJson(#[from] serde_json::Error),
+}
+
+/// Get a settings value by key
+pub fn get_setting(conn: &Connection, key: &str) -> Result<Option<String>, DbError> {
+    let result: Option<String> = conn
+        .query_row(
+            "SELECT value FROM settings WHERE key = ?1",
+            [key],
+            |row| row.get(0),
+        )
+        .optional()?;
+    Ok(result)
+}
+
+/// Get a settings value as an integer
+pub fn get_setting_int(conn: &Connection, key: &str, default: i64) -> Result<i64, DbError> {
+    match get_setting(conn, key)? {
+        Some(value) => {
+            value.parse::<i64>()
+                .map_err(|_| DbError::Message(format!("Invalid integer value for {}", key)))
+        }
+        None => Ok(default),
+    }
+}
+
+/// Set a settings value
+pub fn set_setting(conn: &Connection, key: &str, value: &str, description: Option<&str>) -> Result<(), DbError> {
+    let now = chrono::Utc::now().timestamp();
+    conn.execute(
+        "INSERT OR REPLACE INTO settings (key, value, description, updated_at, created_at)
+         VALUES (?1, ?2, ?3, ?4, COALESCE((SELECT created_at FROM settings WHERE key = ?1), ?4))",
+        rusqlite::params![key, value, description, now],
+    )?;
+    Ok(())
+}
+
+/// Get sync port setting (defaults to 8765)
+/// Validates port is within valid TCP range (1-65535)
+pub fn get_sync_port(conn: &Connection) -> Result<u16, DbError> {
+    let port = get_setting_int(conn, "sync_port", 8765)?;
+
+    // Validate port is within valid TCP range
+    if port < 1 || port > 65535 {
+        return Err(DbError::Message(format!(
+            "Invalid sync_port value: {} (must be between 1 and 65535)",
+            port
+        )));
+    }
+
+    Ok(port as u16)
+}
+
+/// Set sync port setting
+pub fn set_sync_port(conn: &Connection, port: u16) -> Result<(), DbError> {
+    set_setting(conn, "sync_port", &port.to_string(), Some("Port for device-to-device sync"))
 }
 
 pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
@@ -391,6 +447,72 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
             ",
         )?;
     }
+
+    if current_version < 7 {
+        log::info!("[db] Migrating to version 7 - Authentication System");
+        tx.execute_batch(
+            "
+            -- Users table for authentication
+            CREATE TABLE IF NOT EXISTS users (
+                id TEXT PRIMARY KEY,
+                username TEXT UNIQUE NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER,
+                last_login_at INTEGER
+            );
+
+            -- Create indexes for user lookup
+            CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+            CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+            -- Sessions table for session management
+            CREATE TABLE IF NOT EXISTS sessions (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                token TEXT UNIQUE NOT NULL,
+                expires_at INTEGER NOT NULL,
+                created_at INTEGER NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            -- Create indexes for session lookup
+            CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
+            CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
+            CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+
+            INSERT INTO schema_version (version) VALUES (7);
+            ",
+        )?;
+    }
+
+    if current_version < 8 {
+        log::info!("[db] Migrating to version 8 - Settings");
+        tx.execute_batch(
+            "
+            -- Application Settings
+            CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL,
+                description TEXT,
+                updated_at INTEGER NOT NULL,
+                created_at INTEGER NOT NULL
+            );
+
+            -- Create index for lookup
+            CREATE INDEX IF NOT EXISTS idx_settings_key ON settings(key);
+
+            -- Insert default sync port setting
+            INSERT OR IGNORE INTO settings (key, value, description, created_at, updated_at)
+            VALUES ('sync_port', '8765', 'Port for device-to-device sync',
+                    strftime('%s', 'now'), strftime('%s', 'now'));
+
+            INSERT INTO schema_version (version) VALUES (8);
+            ",
+        )?;
+    }
+
     tx.commit()?;
     log::info!("[db] Migration finished");
     Ok(())

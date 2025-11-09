@@ -40,6 +40,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notifications } from '@mantine/notifications';
 import { useStore } from '../store';
+import { authService } from '../services/auth';
 
 interface SpaceUser {
   user_id: string;
@@ -87,23 +88,17 @@ const statusColors: Record<string, string> = {
 
 /**
  * Get current user ID for audit logging
- * TODO: Replace with actual authentication system
- * This should retrieve the authenticated user's ID from:
- * - Auth context/provider
- * - JWT token
- * - Session storage
- * - Backend session API
- *
- * For now, returns a system user ID as a placeholder.
- * WARNING: In production, this MUST be replaced with real user authentication
- * to prevent security issues and ensure accurate audit trails.
+ * Returns null if user is not authenticated or on error
+ * Wraps call in try-catch to handle runtime errors gracefully
  */
-function getCurrentUserId(): string {
-  // TEMPORARY: Using system user until auth is implemented
-  // In production, this should be:
-  // const { user } = useAuth();
-  // return user.id;
-  return 'system_user'; // More descriptive than 'current_user'
+function getCurrentUserId(): string | null {
+  try {
+    return authService.getCurrentUserId();
+  } catch (error) {
+    // Log error for debugging but return null instead of crashing
+    console.error('Failed to get current user ID:', error);
+    return null;
+  }
 }
 
 /**
@@ -149,12 +144,17 @@ const UserManagement: React.FC = () => {
     mutationFn: async (values: { email: string; roleId: string; customPermissions: string[] }) => {
       if (!activeSpaceId) throw new Error('No active space');
 
+      const currentUserId = getCurrentUserId();
+      if (!currentUserId) {
+        throw new Error('User not authenticated. Please log in first.');
+      }
+
       // Invite user
       const invitation = await invoke<UserInvitation>('invite_user_cmd', {
         space_id: activeSpaceId,
         email: values.email,
         roleId: values.roleId,
-        invitedBy: getCurrentUserId(),
+        invitedBy: currentUserId,
       });
 
       // If custom permissions are specified, grant them
@@ -177,11 +177,13 @@ const UserManagement: React.FC = () => {
       inviteForm.reset();
     },
     onError: (error) => {
+      // Avoid leaking PII (email addresses) in error messages
       notifications.show({
         title: 'Failed to invite user',
-        message: String(error),
+        message: 'Could not send invitation. Please try again or contact support.',
         color: 'red',
       });
+      console.error('Invite error (not shown to user):', error);
     },
   });
 
@@ -190,12 +192,22 @@ const UserManagement: React.FC = () => {
     mutationFn: async (values: { userId: string; roleId: string; customPermissions: string[] }) => {
       if (!activeSpaceId) throw new Error('No active space');
 
+      const currentUserId = getCurrentUserId();
+      if (!currentUserId) {
+        throw new Error('User not authenticated. Please log in first.');
+      }
+
+      // Prevent users from modifying their own role
+      if (values.userId === currentUserId) {
+        throw new Error('You cannot modify your own role. Contact an administrator.');
+      }
+
       // Update role
       await invoke('update_user_role_cmd', {
         space_id: activeSpaceId,
         userId: values.userId,
         newRoleId: values.roleId,
-        updatedBy: getCurrentUserId(),
+        updatedBy: currentUserId,
       });
 
       // Handle custom permissions
@@ -238,11 +250,13 @@ const UserManagement: React.FC = () => {
       setSelectedUser(null);
     },
     onError: (error) => {
+      // Avoid leaking PII in error messages
       notifications.show({
         title: 'Failed to update user',
-        message: String(error),
+        message: 'Could not update user role. Please try again or contact support.',
         color: 'red',
       });
+      console.error('Update role error (not shown to user):', error);
     },
   });
 

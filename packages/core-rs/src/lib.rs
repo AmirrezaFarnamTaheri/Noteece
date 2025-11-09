@@ -1,4 +1,5 @@
 pub mod analytics;
+pub mod auth;
 pub mod backlink;
 pub mod backup;
 pub mod blob;
