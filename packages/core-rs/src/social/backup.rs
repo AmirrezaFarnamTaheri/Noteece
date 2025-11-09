@@ -394,12 +394,17 @@ impl BackupService {
     }
 
     /// Import database from JSON format within a transaction
+    /// CRITICAL: Uses owned rusqlite::types::Value to avoid dangling references
     fn import_database_tx(&self, tx: &rusqlite::Transaction, data: &serde_json::Value) -> Result<(), BackupError> {
+        use rusqlite::types::Value as SqlValue;
+
         let tables = data.get("tables").ok_or(BackupError::InvalidBackup("No tables found".to_string()))?;
 
+        let tables_obj = tables.as_object().ok_or(BackupError::InvalidBackup("Invalid tables object".to_string()))?;
+
         // Import each table
-        for (table_name, rows) in tables.as_object().unwrap() {
-            let rows = rows.as_array().ok_or(BackupError::InvalidBackup("Invalid rows".to_string()))?;
+        for (table_name, rows_val) in tables_obj {
+            let rows = rows_val.as_array().ok_or(BackupError::InvalidBackup("Invalid rows".to_string()))?;
 
             for row in rows {
                 let obj = row.as_object().ok_or(BackupError::InvalidBackup("Invalid row object".to_string()))?;
@@ -413,18 +418,38 @@ impl BackupService {
                 let mut stmt = tx.prepare(&query)
                     .map_err(|e| BackupError::RestoreFailed(e.to_string()))?;
 
-                let params: Vec<&dyn rusqlite::ToSql> = cols.iter()
-                    .map(|col| {
-                        let val = &obj[col];
-                        match val {
-                            serde_json::Value::String(s) => s as &dyn rusqlite::ToSql,
-                            serde_json::Value::Number(n) => &n.as_i64() as &dyn rusqlite::ToSql,
-                            _ => &serde_json::Value::Null as &dyn rusqlite::ToSql,
+                // Build owned SQLite values to ensure lifetimes are valid and no dangling references
+                let mut values: Vec<SqlValue> = Vec::with_capacity(cols.len());
+                for col in &cols {
+                    let val = &obj[*col];
+                    let sql_val = match val {
+                        serde_json::Value::String(s) => SqlValue::from(s.clone()),
+                        serde_json::Value::Number(n) => {
+                            // Preserve numeric type precision
+                            if let Some(i) = n.as_i64() {
+                                SqlValue::from(i)
+                            } else if let Some(f) = n.as_f64() {
+                                SqlValue::from(f)
+                            } else if let Some(u) = n.as_u64() {
+                                // Coerce u64 to i64 if within range; otherwise, store as text
+                                if u <= i64::MAX as u64 {
+                                    SqlValue::from(u as i64)
+                                } else {
+                                    SqlValue::from(u.to_string())
+                                }
+                            } else {
+                                SqlValue::Null
+                            }
                         }
-                    })
-                    .collect();
+                        serde_json::Value::Bool(b) => SqlValue::from(if *b { 1i64 } else { 0i64 }),
+                        serde_json::Value::Null => SqlValue::Null,
+                        // For arrays/objects, store JSON string representation
+                        other => SqlValue::from(other.to_string()),
+                    };
+                    values.push(sql_val);
+                }
 
-                stmt.execute(rusqlite::params_from_iter(params.iter()))
+                stmt.execute(rusqlite::params_from_iter(values.iter()))
                     .map_err(|e| BackupError::RestoreFailed(e.to_string()))?;
             }
         }

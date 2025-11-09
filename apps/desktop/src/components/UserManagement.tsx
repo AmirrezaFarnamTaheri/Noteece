@@ -88,11 +88,17 @@ const statusColors: Record<string, string> = {
 
 /**
  * Get current user ID for audit logging
- * Returns null if user is not authenticated instead of throwing
- * The caller is responsible for handling the null case
+ * Returns null if user is not authenticated or on error
+ * Wraps call in try-catch to handle runtime errors gracefully
  */
 function getCurrentUserId(): string | null {
-  return authService.getCurrentUserId();
+  try {
+    return authService.getCurrentUserId();
+  } catch (error) {
+    // Log error for debugging but return null instead of crashing
+    console.error('Failed to get current user ID:', error);
+    return null;
+  }
 }
 
 /**
@@ -171,11 +177,13 @@ const UserManagement: React.FC = () => {
       inviteForm.reset();
     },
     onError: (error) => {
+      // Avoid leaking PII (email addresses) in error messages
       notifications.show({
         title: 'Failed to invite user',
-        message: String(error),
+        message: 'Could not send invitation. Please try again or contact support.',
         color: 'red',
       });
+      console.error('Invite error (not shown to user):', error);
     },
   });
 
@@ -187,6 +195,11 @@ const UserManagement: React.FC = () => {
       const currentUserId = getCurrentUserId();
       if (!currentUserId) {
         throw new Error('User not authenticated. Please log in first.');
+      }
+
+      // Prevent users from modifying their own role
+      if (values.userId === currentUserId) {
+        throw new Error('You cannot modify your own role. Contact an administrator.');
       }
 
       // Update role
@@ -237,11 +250,13 @@ const UserManagement: React.FC = () => {
       setSelectedUser(null);
     },
     onError: (error) => {
+      // Avoid leaking PII in error messages
       notifications.show({
         title: 'Failed to update user',
-        message: String(error),
+        message: 'Could not update user role. Please try again or contact support.',
         color: 'red',
       });
+      console.error('Update role error (not shown to user):', error);
     },
   });
 

@@ -326,14 +326,35 @@ impl SyncProtocol {
     }
 
     /// Start sync with paired device
+    /// Enforces valid state transitions - sync can only start from Idle or Connected states
     pub async fn start_sync(
         &mut self,
         device_id: &str,
         categories: Vec<SyncCategory>,
     ) -> Result<(), SyncProtocolError> {
-        // Verify device is paired
-        if !self.paired_devices.iter().any(|d| d.device_id == device_id) {
-            return Err(SyncProtocolError::DeviceNotFound);
+        // Verify device is paired and active
+        let device = self.paired_devices
+            .iter()
+            .find(|d| d.device_id == device_id)
+            .ok_or(SyncProtocolError::DeviceNotFound)?;
+
+        if !device.is_active {
+            return Err(SyncProtocolError::InvalidState(
+                "Device is not currently active".to_string(),
+            ));
+        }
+
+        // Enforce valid state transitions - only start sync from Idle or Connected states
+        match self.sync_state {
+            SyncState::Idle | SyncState::Connected => {
+                // Valid starting states
+            }
+            _ => {
+                return Err(SyncProtocolError::InvalidState(format!(
+                    "Cannot start sync from state: {:?}",
+                    self.sync_state
+                )));
+            }
         }
 
         self.sync_state = SyncState::Connecting;

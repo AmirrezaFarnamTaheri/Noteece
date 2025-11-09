@@ -49,8 +49,18 @@ pub fn set_setting(conn: &Connection, key: &str, value: &str, description: Optio
 }
 
 /// Get sync port setting (defaults to 8765)
+/// Validates port is within valid TCP range (1-65535)
 pub fn get_sync_port(conn: &Connection) -> Result<u16, DbError> {
     let port = get_setting_int(conn, "sync_port", 8765)?;
+
+    // Validate port is within valid TCP range
+    if port < 1 || port > 65535 {
+        return Err(DbError::Message(format!(
+            "Invalid sync_port value: {} (must be between 1 and 65535)",
+            port
+        )));
+    }
+
     Ok(port as u16)
 }
 
