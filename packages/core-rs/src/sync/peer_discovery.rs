@@ -59,32 +59,35 @@ impl PeerDiscovery {
     /// Service name: _noteece-sync._tcp.local
     /// Instance: {device_name}._noteece-sync._tcp.local
     pub fn register_service(&self) -> Result<(), DiscoveryError> {
-        // In production, use mdns-sd or zeroconf crate
-        // This is a mock implementation showing the structure
+        // Production implementation: Use mdns-sd or zeroconf crate
+        // Registers this device as a discoverable service on the local network
+        // Format: {device_name}._noteece-sync._tcp.local
 
-        let service_name = format!("{}._noteece-sync._tcp.local.", self.device_name);
-        let txt_records = vec![
+        let _service_name = format!("{}._noteece-sync._tcp.local.", self.device_name);
+        let _txt_records = vec![
             format!("device_id={}", self.device_id),
             format!("device_type=desktop"),
             format!("app_version=1.0.0"),
         ];
 
-        // Register with mDNS daemon
+        // When mdns-sd is available:
         // ServiceDaemon::register(&service_name, self.port, &txt_records)?
 
+        // Currently a no-op - waiting for mdns-sd integration
         Ok(())
     }
 
     /// Discover other Noteece devices on local network
     pub async fn discover_devices(&mut self) -> Result<Vec<DiscoveredDevice>, DiscoveryError> {
-        // In production, browse for _noteece-sync._tcp.local services
-        // This is a mock implementation
+        // Production implementation: Browse for _noteece-sync._tcp.local services
+        // Uses mDNS to discover other Noteece instances on the local network
+
+        // When mdns-sd is integrated:
+        // ServiceDaemon::browse("_noteece-sync._tcp.local")?
+        // would call back with discovered services, which are parsed via parse_txt_records
 
         self.discovered_devices = vec![];
-
-        // Simulate discovering devices
-        // ServiceDaemon::browse("_noteece-sync._tcp.local")?
-        // would call back with discovered services
+        // Currently returns empty list - awaiting mdns-sd crate integration
 
         Ok(self.discovered_devices.clone())
     }

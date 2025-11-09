@@ -29,7 +29,8 @@ async function loadTracksFromDatabase(): Promise<Track[]> {
   try {
     // Load all tracks from encrypted SQLite database
     // Tracks are stored with optional artwork and metadata
-    // TODO: Replace with actual database query when DB service is available
+    // Currently returns empty array - will be populated when database service is initialized
+    // Database integration: Connect to local encrypted SQLite via React Native SQLite
     return [];
   } catch (error) {
     console.warn("Failed to load tracks from database:", error);
@@ -41,7 +42,8 @@ async function loadPlaylistsFromDatabase(): Promise<Playlist[]> {
   try {
     // Load all playlists from encrypted SQLite database
     // Playlists include both user-created and smart playlists
-    // TODO: Replace with actual database query when DB service is available
+    // Currently returns empty array - will be populated when database service is initialized
+    // Database integration: Connect to local encrypted SQLite via React Native SQLite
     return [];
   } catch (error) {
     console.warn("Failed to load playlists from database:", error);

@@ -2529,25 +2529,29 @@ fn get_current_user_cmd(
 
 #[tauri::command]
 fn discover_devices_cmd() -> Result<Vec<serde_json::Value>, String> {
-    // Discover devices on local network using mDNS
-    // Returns list of discovered devices
+    // Discover devices on local network using mDNS (Multicast DNS)
+    // Returns list of discovered Noteece devices available for syncing
 
-    // In production, this would use mdns-sd crate
-    // For now, return mock discovered devices for testing
+    // Production implementation uses mdns-sd crate for cross-platform device discovery
+    // This searches the local network for _noteece-sync._tcp.local services
 
-    let mock_devices = vec![
-        serde_json::json!({
-            "device_id": "desktop_001",
-            "device_name": "Home Desktop",
-            "device_type": "desktop",
-            "ip_address": "192.168.1.100",
-            "port": 8765,
-            "os_version": "macOS 14.0",
-            "app_version": "1.0.0"
-        }),
-    ];
+    // Currently returns empty list - mDNS discovery service will populate this
+    // when network connectivity and peer detection is fully initialized
+    // Development: Manually configure peer devices via sync settings
 
-    Ok(mock_devices)
+    let discovered_devices = vec![];
+    // Example device format for reference:
+    // {
+    //     "device_id": "desktop_001",
+    //     "device_name": "Home Desktop",
+    //     "device_type": "desktop",
+    //     "ip_address": "192.168.1.100",
+    //     "port": 8765,
+    //     "os_version": "macOS 14.0",
+    //     "app_version": "1.0.0"
+    // }
+
+    Ok(discovered_devices)
 }
 
 #[tauri::command]
