@@ -366,6 +366,7 @@ Update in `app.json`:
 ```
 
 **Important**:
+
 - iOS `buildNumber`: Increment for every build
 - Android `versionCode`: Must always increase
 - `version`: User-facing version string
@@ -384,7 +385,7 @@ on:
     branches:
       - main
     paths:
-      - 'apps/mobile/**'
+      - "apps/mobile/**"
 
 jobs:
   build:
@@ -396,7 +397,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Setup Expo
         uses: expo/expo-github-action@v8
@@ -438,12 +439,14 @@ Add to GitHub repository secrets:
 Before releasing a new version:
 
 ### Code Quality
+
 - [ ] All tests passing
 - [ ] No TypeScript errors
 - [ ] Linting passing
 - [ ] Code reviewed
 
 ### Testing
+
 - [ ] Tested on iOS device
 - [ ] Tested on Android device
 - [ ] All features work
@@ -451,6 +454,7 @@ Before releasing a new version:
 - [ ] Performance acceptable
 
 ### Configuration
+
 - [ ] Version bumped in app.json
 - [ ] Build numbers incremented
 - [ ] Changelog updated
@@ -458,12 +462,14 @@ Before releasing a new version:
 - [ ] Environment variables set
 
 ### Assets
+
 - [ ] App icons updated
 - [ ] Screenshots prepared
 - [ ] Feature graphics ready
 - [ ] Privacy policy updated
 
 ### Build & Deploy
+
 - [ ] Production build successful
 - [ ] Submitted to App Store
 - [ ] Submitted to Google Play
@@ -480,6 +486,7 @@ https://sentry.io/organizations/your-org/projects/noteece-mobile
 ```
 
 Check for:
+
 - New errors
 - Crash rate
 - User feedback
@@ -491,6 +498,7 @@ Check for:
 - **Google Play Console**: Android metrics
 
 Monitor:
+
 - Downloads
 - Active users
 - Ratings/reviews
@@ -520,6 +528,7 @@ eas update rollback
 **Problem**: Build fails with dependency errors
 
 **Solution**:
+
 ```bash
 rm -rf node_modules package-lock.json
 npm install --legacy-peer-deps
@@ -530,6 +539,7 @@ npm install --legacy-peer-deps
 **Problem**: iOS build fails with code signing
 
 **Solution**:
+
 ```bash
 eas credentials
 # Regenerate certificates

@@ -65,8 +65,8 @@ const RecipeMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
         alert('Please provide a recipe name.');
         return;
       }
-      const servingsNum = Number(formServings);
-      if (!Number.isFinite(servingsNum) || servingsNum < 1 || !Number.isInteger(servingsNum)) {
+      const servingsNumber = Number(formServings);
+      if (!Number.isFinite(servingsNumber) || servingsNumber < 1 || !Number.isInteger(servingsNumber)) {
         alert('Servings must be a positive integer.');
         return;
       }
@@ -75,7 +75,7 @@ const RecipeMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       const noteId = await invoke<string>('create_note_for_recipe_cmd', {
         spaceId,
         title: formName,
-        metadata: { servings: servingsNum, difficulty: formDifficulty },
+        metadata: { servings: servingsNumber, difficulty: formDifficulty },
       });
       if (!noteId) {
         alert('Failed to create note for the recipe.');
@@ -86,7 +86,7 @@ const RecipeMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
         spaceId,
         noteId,
         name: formName,
-        servings: servingsNum,
+        servings: servingsNumber,
         difficulty: formDifficulty,
       });
 

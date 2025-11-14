@@ -84,11 +84,13 @@ Compress-Archive -Path dist\windows\* -DestinationPath noteece-windows-x64.zip
 ### Setup
 
 1. **Install EAS CLI:**
+
    ```bash
    npm install -g eas-cli
    ```
 
 2. **Login to Expo:**
+
    ```bash
    eas login
    ```
@@ -178,12 +180,14 @@ File: `.github/workflows/build-binaries.yml`
 #### Build Matrix
 
 The workflow builds for:
+
 - **Desktop**: Linux (ubuntu-latest), macOS (macos-latest), Windows (windows-latest)
 - **Mobile**: iOS and Android via EAS Build
 
 #### Artifacts
 
 Built binaries are uploaded as GitHub Actions artifacts:
+
 - `noteece-linux-x64.tar.gz`
 - `noteece-macos-x64.tar.gz`
 - `noteece-windows-x64.zip`
@@ -222,6 +226,7 @@ git push origin v1.0.0
 ### 3. Automatic Build & Release
 
 The GitHub Actions workflow will:
+
 1. Build all desktop platforms
 2. Build mobile apps via EAS
 3. Create a GitHub Release with binaries attached
@@ -259,6 +264,7 @@ npm run submit:android
 #### Error: "Cannot find Rust compiler"
 
 **Solution:** Install Rust toolchain:
+
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
@@ -266,11 +272,13 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 #### Error: "Missing platform dependencies"
 
 **Linux:**
+
 ```bash
 sudo apt-get install build-essential libgtk-3-dev libwebkit2gtk-4.0-dev
 ```
 
 **macOS:**
+
 ```bash
 xcode-select --install
 ```
@@ -278,6 +286,7 @@ xcode-select --install
 #### Error: "pnpm: command not found"
 
 **Solution:**
+
 ```bash
 npm install -g pnpm@8
 ```
@@ -287,6 +296,7 @@ npm install -g pnpm@8
 #### Error: "Not logged in to Expo"
 
 **Solution:**
+
 ```bash
 eas login
 ```
@@ -294,6 +304,7 @@ eas login
 #### Error: "Build failed: signing credentials"
 
 **Solution:**
+
 1. Run `eas credentials` to configure signing
 2. For iOS: Provide Apple Developer credentials
 3. For Android: Generate or upload keystore
@@ -301,6 +312,7 @@ eas login
 #### Error: "Project ID not configured"
 
 **Solution:** Update `apps/mobile/app.json`:
+
 ```json
 {
   "expo": {
@@ -370,6 +382,7 @@ eas login
 ### Binary Size Optimization
 
 1. **Rust optimizations** (in `Cargo.toml`):
+
    ```toml
    [profile.release]
    opt-level = "z"

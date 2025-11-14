@@ -8,7 +8,12 @@
 export { FadeIn, SlideIn, ScaleIn, Pulse } from "./animations";
 
 // Skeletons
-export { SkeletonBox, SkeletonCard, SkeletonList, SkeletonListItem } from "./skeletons";
+export {
+  SkeletonBox,
+  SkeletonCard,
+  SkeletonList,
+  SkeletonListItem,
+} from "./skeletons";
 
 // Errors
 export { ErrorBoundary, ErrorFallback } from "./errors";

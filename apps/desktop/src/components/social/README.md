@@ -51,15 +51,18 @@ SocialHub (Main Container)
 ## Component Details
 
 ### 1. SocialHub.tsx
+
 **Purpose:** Main container and navigation hub for the entire social media suite.
 
 **Features:**
+
 - Tab-based navigation (Timeline, Accounts, Categories, Analytics, Search)
 - Responsive layout with Mantine AppShell
 - Space-aware routing
 - Global state management setup
 
 **Props:**
+
 ```typescript
 interface SocialHubProps {
   spaceId: string;
@@ -68,15 +71,18 @@ interface SocialHubProps {
 ```
 
 **State Management:**
+
 ```typescript
 const [activeTab, setActiveTab] = useState<'timeline' | 'accounts' | 'categories' | 'analytics' | 'search'>('timeline');
 ```
 
 **Hooks Used:**
+
 - `useState` - Tab state
 - `useEffect` - Initialization
 
 **Key Sections:**
+
 ```tsx
 <Tabs value={activeTab} onChange={setActiveTab}>
   <Tabs.List>
@@ -95,6 +101,7 @@ const [activeTab, setActiveTab] = useState<'timeline' | 'accounts' | 'categories
 ```
 
 **Styling:**
+
 - Uses Mantine theme
 - Responsive breakpoints
 - Consistent spacing
@@ -102,9 +109,11 @@ const [activeTab, setActiveTab] = useState<'timeline' | 'accounts' | 'categories
 ---
 
 ### 2. SocialTimeline.tsx
+
 **Purpose:** Displays unified timeline of posts from all connected accounts.
 
 **Features:**
+
 - Infinite scroll with virtualization
 - Real-time filtering
 - Platform icons and colors
@@ -113,6 +122,7 @@ const [activeTab, setActiveTab] = useState<'timeline' | 'accounts' | 'categories
 - Pull-to-refresh
 
 **Props:**
+
 ```typescript
 interface SocialTimelineProps {
   spaceId: string;
@@ -121,6 +131,7 @@ interface SocialTimelineProps {
 ```
 
 **State Management:**
+
 ```typescript
 const [filters, setFilters] = useState<TimelineFilters>({
   platforms: [],
@@ -130,7 +141,12 @@ const [filters, setFilters] = useState<TimelineFilters>({
   searchQuery: '',
 });
 
-const { data: posts, isLoading, fetchNextPage, hasNextPage } = useInfiniteQuery({
+const {
+  data: posts,
+  isLoading,
+  fetchNextPage,
+  hasNextPage,
+} = useInfiniteQuery({
   queryKey: ['timeline', spaceId, filters],
   queryFn: ({ pageParam = 0 }) => getUnifiedTimeline(spaceId, { ...filters, offset: pageParam }),
   getNextPageParam: (lastPage, pages) => {
@@ -140,22 +156,24 @@ const { data: posts, isLoading, fetchNextPage, hasNextPage } = useInfiniteQuery(
 ```
 
 **Hooks Used:**
+
 - `useInfiniteQuery` - Paginated timeline data
 - `useIntersectionObserver` - Infinite scroll trigger
 - `useState` - Filter state
 - `useMemo` - Flattened posts array
 
 **Key Features:**
+
 ```tsx
 // Infinite scroll
 useEffect(() => {
   const observer = new IntersectionObserver(
-    entries => {
+    (entries) => {
       if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
         fetchNextPage();
       }
     },
-    { threshold: 0.5 }
+    { threshold: 0.5 },
   );
 
   if (sentinelRef.current) {
@@ -167,6 +185,7 @@ useEffect(() => {
 ```
 
 **Performance:**
+
 - Virtualized list rendering
 - Debounced filter updates
 - Memoized post components
@@ -175,9 +194,11 @@ useEffect(() => {
 ---
 
 ### 3. TimelinePost.tsx
+
 **Purpose:** Individual post card component with media, content, and engagement.
 
 **Features:**
+
 - Platform-specific styling
 - Media gallery (images/videos)
 - Expandable content (read more)
@@ -189,6 +210,7 @@ useEffect(() => {
 - Open original post
 
 **Props:**
+
 ```typescript
 interface TimelinePostProps {
   post: TimelinePost;
@@ -214,6 +236,7 @@ interface TimelinePost {
 ```
 
 **State:**
+
 ```typescript
 const [isExpanded, setIsExpanded] = useState(false);
 const [showAllMedia, setShowAllMedia] = useState(false);
@@ -221,6 +244,7 @@ const [imageError, setImageError] = useState<Set<number>>(new Set());
 ```
 
 **Platform Styling:**
+
 ```typescript
 const platformColors: Record<string, string> = {
   twitter: '#1DA1F2',
@@ -243,6 +267,7 @@ const platformIcons: Record<string, string> = {
 ```
 
 **Content Rendering:**
+
 ```tsx
 // Link detection
 const renderContent = (text: string) => {
@@ -251,19 +276,23 @@ const renderContent = (text: string) => {
 
   return parts.map((part, i) => {
     if (part.match(urlRegex)) {
-      return <Anchor key={i} href={part} target="_blank">{part}</Anchor>;
+      return (
+        <Anchor key={i} href={part} target="_blank">
+          {part}
+        </Anchor>
+      );
     }
     return part;
   });
 };
 
 // Truncation
-const displayContent = isExpanded || content.length <= MAX_CONTENT_LENGTH
-  ? content
-  : content.substring(0, MAX_CONTENT_LENGTH) + '...';
+const displayContent =
+  isExpanded || content.length <= MAX_CONTENT_LENGTH ? content : content.substring(0, MAX_CONTENT_LENGTH) + '...';
 ```
 
 **Media Gallery:**
+
 ```tsx
 <SimpleGrid cols={media_urls.length === 1 ? 1 : 2} spacing="xs">
   {visibleMedia.map((url, index) => (
@@ -285,6 +314,7 @@ const displayContent = isExpanded || content.length <= MAX_CONTENT_LENGTH
 ```
 
 **Engagement Display:**
+
 ```tsx
 <Group spacing="md" mt="sm">
   <Text size="sm" color="dimmed">
@@ -302,9 +332,11 @@ const displayContent = isExpanded || content.length <= MAX_CONTENT_LENGTH
 ---
 
 ### 4. TimelineFilters.tsx
+
 **Purpose:** Advanced filtering controls for timeline view.
 
 **Features:**
+
 - Multi-platform selection
 - Category filtering
 - Date range picker
@@ -313,6 +345,7 @@ const displayContent = isExpanded || content.length <= MAX_CONTENT_LENGTH
 - Clear all filters
 
 **Props:**
+
 ```typescript
 interface TimelineFiltersProps {
   filters: TimelineFilters;
@@ -323,6 +356,7 @@ interface TimelineFiltersProps {
 ```
 
 **Components:**
+
 ```tsx
 <Stack spacing="md">
   {/* Platform filter */}
@@ -331,7 +365,7 @@ interface TimelineFiltersProps {
     placeholder="All platforms"
     data={platformOptions}
     value={filters.platforms}
-    onChange={platforms => onChange({ ...filters, platforms })}
+    onChange={(platforms) => onChange({ ...filters, platforms })}
     searchable
     clearable
   />
@@ -342,7 +376,7 @@ interface TimelineFiltersProps {
     placeholder="All categories"
     data={categoryOptions}
     value={filters.categories}
-    onChange={categories => onChange({ ...filters, categories })}
+    onChange={(categories) => onChange({ ...filters, categories })}
     searchable
     clearable
   />
@@ -361,36 +395,44 @@ interface TimelineFiltersProps {
     label="Search"
     placeholder="Search in posts..."
     value={filters.searchQuery}
-    onChange={e => onChange({ ...filters, searchQuery: e.target.value })}
+    onChange={(e) => onChange({ ...filters, searchQuery: e.target.value })}
     icon={<IconSearch size={16} />}
   />
 
   {/* Quick presets */}
   <Group spacing="xs">
-    <Button size="xs" variant="light" onClick={() => setPreset('today')}>Today</Button>
-    <Button size="xs" variant="light" onClick={() => setPreset('week')}>This Week</Button>
-    <Button size="xs" variant="light" onClick={() => setPreset('month')}>This Month</Button>
+    <Button size="xs" variant="light" onClick={() => setPreset('today')}>
+      Today
+    </Button>
+    <Button size="xs" variant="light" onClick={() => setPreset('week')}>
+      This Week
+    </Button>
+    <Button size="xs" variant="light" onClick={() => setPreset('month')}>
+      This Month
+    </Button>
   </Group>
 
   {/* Clear */}
-  <Button variant="subtle" onClick={() => onChange({})}>Clear All Filters</Button>
+  <Button variant="subtle" onClick={() => onChange({})}>
+    Clear All Filters
+  </Button>
 </Stack>
 ```
 
 **Debouncing:**
+
 ```typescript
-const debouncedOnChange = useMemo(
-  () => debounce(onChange, 300),
-  [onChange]
-);
+const debouncedOnChange = useMemo(() => debounce(onChange, 300), [onChange]);
 ```
 
 ---
 
 ### 5. SocialAccountList.tsx
+
 **Purpose:** Manage connected social media accounts.
 
 **Features:**
+
 - List all accounts with status
 - Add new account button
 - Enable/disable accounts
@@ -400,6 +442,7 @@ const debouncedOnChange = useMemo(
 - Platform icons and colors
 
 **Props:**
+
 ```typescript
 interface SocialAccountListProps {
   spaceId: string;
@@ -407,8 +450,13 @@ interface SocialAccountListProps {
 ```
 
 **State:**
+
 ```typescript
-const { data: accounts, isLoading, refetch } = useQuery({
+const {
+  data: accounts,
+  isLoading,
+  refetch,
+} = useQuery({
   queryKey: ['socialAccounts', spaceId],
   queryFn: () => getSocialAccounts(spaceId),
 });
@@ -418,10 +466,10 @@ const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 ```
 
 **Mutations:**
+
 ```typescript
 const updateMutation = useMutation({
-  mutationFn: ({ accountId, enabled, syncFreq }: UpdateParams) =>
-    updateSocialAccount(accountId, enabled, syncFreq),
+  mutationFn: ({ accountId, enabled, syncFreq }: UpdateParams) => updateSocialAccount(accountId, enabled, syncFreq),
   onSuccess: () => {
     refetch();
     showNotification({ title: 'Updated', message: 'Account updated successfully', color: 'green' });
@@ -442,6 +490,7 @@ const deleteMutation = useMutation({
 ```
 
 **Rendering:**
+
 ```tsx
 <Stack spacing="md">
   <Group position="apart">
@@ -451,7 +500,7 @@ const deleteMutation = useMutation({
     </Button>
   </Group>
 
-  {accounts?.map(account => (
+  {accounts?.map((account) => (
     <AccountCard
       key={account.id}
       account={account}
@@ -460,18 +509,15 @@ const deleteMutation = useMutation({
     />
   ))}
 
-  <AddAccountModal
-    spaceId={spaceId}
-    opened={addModalOpen}
-    onClose={() => setAddModalOpen(false)}
-    onSuccess={refetch}
-  />
+  <AddAccountModal spaceId={spaceId} opened={addModalOpen} onClose={() => setAddModalOpen(false)} onSuccess={refetch} />
 
   {/* Delete confirmation modal */}
   <Modal opened={deleteConfirm !== null} onClose={() => setDeleteConfirm(null)}>
     <Text>Are you sure you want to delete this account?</Text>
     <Group position="right" mt="md">
-      <Button variant="subtle" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
+      <Button variant="subtle" onClick={() => setDeleteConfirm(null)}>
+        Cancel
+      </Button>
       <Button color="red" onClick={() => deleteConfirm && deleteMutation.mutate(deleteConfirm)}>
         Delete
       </Button>
@@ -483,9 +529,11 @@ const deleteMutation = useMutation({
 ---
 
 ### 6. AccountCard.tsx
+
 **Purpose:** Display and manage individual social media account.
 
 **Features:**
+
 - Platform badge with icon
 - Username display
 - Enable/disable toggle
@@ -495,6 +543,7 @@ const deleteMutation = useMutation({
 - Quick actions (sync now, delete)
 
 **Props:**
+
 ```typescript
 interface AccountCardProps {
   account: SocialAccount;
@@ -514,12 +563,14 @@ interface SocialAccount {
 ```
 
 **State:**
+
 ```typescript
 const [enabled, setEnabled] = useState(account.enabled);
 const [syncFreq, setSyncFreq] = useState(account.sync_frequency_minutes);
 ```
 
 **Rendering:**
+
 ```tsx
 <Card shadow="sm" padding="lg" radius="md" withBorder>
   <Group position="apart">
@@ -531,7 +582,7 @@ const [syncFreq, setSyncFreq] = useState(account.sync_frequency_minutes);
     {/* Enabled toggle */}
     <Switch
       checked={enabled}
-      onChange={e => {
+      onChange={(e) => {
         setEnabled(e.currentTarget.checked);
         onUpdate(e.currentTarget.checked, syncFreq);
       }}
@@ -539,13 +590,15 @@ const [syncFreq, setSyncFreq] = useState(account.sync_frequency_minutes);
     />
   </Group>
 
-  <Text size="xl" weight={500} mt="md">@{account.username}</Text>
+  <Text size="xl" weight={500} mt="md">
+    @{account.username}
+  </Text>
 
   {/* Sync frequency */}
   <Select
     label="Sync frequency"
     value={syncFreq.toString()}
-    onChange={val => {
+    onChange={(val) => {
       const freq = parseInt(val || '60', 10);
       setSyncFreq(freq);
       onUpdate(enabled, freq);
@@ -568,7 +621,9 @@ const [syncFreq, setSyncFreq] = useState(account.sync_frequency_minutes);
 
   {/* Actions */}
   <Group position="apart" mt="md">
-    <Button variant="light" size="xs">Sync Now</Button>
+    <Button variant="light" size="xs">
+      Sync Now
+    </Button>
     <ActionIcon color="red" onClick={onDelete}>
       <IconTrash size={16} />
     </ActionIcon>
@@ -579,9 +634,11 @@ const [syncFreq, setSyncFreq] = useState(account.sync_frequency_minutes);
 ---
 
 ### 7. AddAccountModal.tsx
+
 **Purpose:** Modal for adding new social media accounts.
 
 **Features:**
+
 - Platform selection dropdown
 - Username input with validation
 - Credential input (encrypted)
@@ -591,6 +648,7 @@ const [syncFreq, setSyncFreq] = useState(account.sync_frequency_minutes);
 - Error handling
 
 **Props:**
+
 ```typescript
 interface AddAccountModalProps {
   spaceId: string;
@@ -601,6 +659,7 @@ interface AddAccountModalProps {
 ```
 
 **State:**
+
 ```typescript
 const [platform, setPlatform] = useState('');
 const [username, setUsername] = useState('');
@@ -609,11 +668,13 @@ const [syncFreq, setSyncFreq] = useState(60);
 ```
 
 **Form Validation:**
+
 ```typescript
 const isValid = platform && username.trim().length > 0 && credentials.trim().length > 0;
 ```
 
 **Mutation:**
+
 ```typescript
 const addMutation = useMutation({
   mutationFn: () => addSocialAccount(spaceId, platform, username, credentials, syncFreq),
@@ -630,6 +691,7 @@ const addMutation = useMutation({
 ```
 
 **Rendering:**
+
 ```tsx
 <Modal opened={opened} onClose={onClose} title="Add Social Media Account">
   <Stack spacing="md">
@@ -637,7 +699,7 @@ const addMutation = useMutation({
       label="Platform"
       placeholder="Select platform"
       value={platform}
-      onChange={val => setPlatform(val || '')}
+      onChange={(val) => setPlatform(val || '')}
       data={[
         { value: 'twitter', label: 'Twitter/X' },
         { value: 'instagram', label: 'Instagram' },
@@ -651,7 +713,7 @@ const addMutation = useMutation({
       label="Username"
       placeholder="your_username"
       value={username}
-      onChange={e => setUsername(e.target.value)}
+      onChange={(e) => setUsername(e.target.value)}
       required
     />
 
@@ -659,7 +721,7 @@ const addMutation = useMutation({
       label="Credentials (Session Token)"
       placeholder="Your session token or API key"
       value={credentials}
-      onChange={e => setCredentials(e.target.value)}
+      onChange={(e) => setCredentials(e.target.value)}
       required
       description="Encrypted and stored securely"
     />
@@ -667,7 +729,7 @@ const addMutation = useMutation({
     <Select
       label="Sync frequency"
       value={syncFreq.toString()}
-      onChange={val => setSyncFreq(parseInt(val || '60', 10))}
+      onChange={(val) => setSyncFreq(parseInt(val || '60', 10))}
       data={[
         { value: '15', label: 'Every 15 minutes' },
         { value: '30', label: 'Every 30 minutes' },
@@ -678,12 +740,10 @@ const addMutation = useMutation({
     />
 
     <Group position="right" mt="md">
-      <Button variant="subtle" onClick={onClose}>Cancel</Button>
-      <Button
-        onClick={() => addMutation.mutate()}
-        loading={addMutation.isLoading}
-        disabled={!isValid}
-      >
+      <Button variant="subtle" onClick={onClose}>
+        Cancel
+      </Button>
+      <Button onClick={() => addMutation.mutate()} loading={addMutation.isLoading} disabled={!isValid}>
         Add Account
       </Button>
     </Group>
@@ -694,9 +754,11 @@ const addMutation = useMutation({
 ---
 
 ### 8. SyncStatusPanel.tsx
+
 **Purpose:** Display real-time sync status and history.
 
 **Features:**
+
 - Current sync progress
 - Sync history table
 - Status indicators (pending, in_progress, completed, failed)
@@ -706,6 +768,7 @@ const addMutation = useMutation({
 - Refresh button
 
 **Props:**
+
 ```typescript
 interface SyncStatusPanelProps {
   accountId: string;
@@ -713,8 +776,13 @@ interface SyncStatusPanelProps {
 ```
 
 **State:**
+
 ```typescript
-const { data: syncHistory, isLoading, refetch } = useQuery({
+const {
+  data: syncHistory,
+  isLoading,
+  refetch,
+} = useQuery({
   queryKey: ['syncHistory', accountId],
   queryFn: () => getSyncHistory(accountId),
   refetchInterval: 5000, // Poll every 5 seconds
@@ -722,6 +790,7 @@ const { data: syncHistory, isLoading, refetch } = useQuery({
 ```
 
 **Status Colors:**
+
 ```typescript
 const statusColors: Record<string, string> = {
   pending: 'gray',
@@ -732,6 +801,7 @@ const statusColors: Record<string, string> = {
 ```
 
 **Rendering:**
+
 ```tsx
 <Card shadow="sm" padding="md">
   <Group position="apart" mb="md">
@@ -751,13 +821,11 @@ const statusColors: Record<string, string> = {
       </tr>
     </thead>
     <tbody>
-      {syncHistory?.map(sync => (
+      {syncHistory?.map((sync) => (
         <tr key={sync.id}>
           <td>{formatTimestamp(sync.started_at)}</td>
           <td>
-            <Badge color={statusColors[sync.status]}>
-              {sync.status}
-            </Badge>
+            <Badge color={statusColors[sync.status]}>{sync.status}</Badge>
           </td>
           <td>{sync.posts_fetched || 0}</td>
           <td>{sync.duration_ms ? `${sync.duration_ms}ms` : '-'}</td>
@@ -766,9 +834,9 @@ const statusColors: Record<string, string> = {
     </tbody>
   </Table>
 
-  {syncHistory?.some(s => s.status === 'failed') && (
+  {syncHistory?.some((s) => s.status === 'failed') && (
     <Alert color="red" mt="md">
-      <Text size="sm">{syncHistory.find(s => s.status === 'failed')?.error_message}</Text>
+      <Text size="sm">{syncHistory.find((s) => s.status === 'failed')?.error_message}</Text>
     </Alert>
   )}
 </Card>
@@ -777,9 +845,11 @@ const statusColors: Record<string, string> = {
 ---
 
 ### 9. CategoryManager.tsx
+
 **Purpose:** Create, update, and delete categories; assign posts to categories.
 
 **Features:**
+
 - Category list with colors and icons
 - Create new category
 - Edit category (name, color, icon)
@@ -789,6 +859,7 @@ const statusColors: Record<string, string> = {
 - Auto-categorization rule setup
 
 **Props:**
+
 ```typescript
 interface CategoryManagerProps {
   spaceId: string;
@@ -796,6 +867,7 @@ interface CategoryManagerProps {
 ```
 
 **State:**
+
 ```typescript
 const { data: categories, refetch } = useQuery({
   queryKey: ['categories', spaceId],
@@ -807,6 +879,7 @@ const [newCategory, setNewCategory] = useState({ name: '', color: '#000000', ico
 ```
 
 **Mutations:**
+
 ```typescript
 const createMutation = useMutation({
   mutationFn: () => createCategory(spaceId, newCategory.name, newCategory.color, newCategory.icon),
@@ -836,6 +909,7 @@ const deleteMutation = useMutation({
 ```
 
 **Rendering:**
+
 ```tsx
 <Stack spacing="md">
   <Title order={2}>Categories</Title>
@@ -846,17 +920,14 @@ const deleteMutation = useMutation({
       <TextInput
         placeholder="Category name"
         value={newCategory.name}
-        onChange={e => setNewCategory({ ...newCategory, name: e.target.value })}
+        onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
       />
       <Group>
-        <ColorInput
-          value={newCategory.color}
-          onChange={color => setNewCategory({ ...newCategory, color })}
-        />
+        <ColorInput value={newCategory.color} onChange={(color) => setNewCategory({ ...newCategory, color })} />
         <TextInput
           placeholder="Icon (emoji)"
           value={newCategory.icon}
-          onChange={e => setNewCategory({ ...newCategory, icon: e.target.value })}
+          onChange={(e) => setNewCategory({ ...newCategory, icon: e.target.value })}
           maxLength={2}
         />
         <Button onClick={() => createMutation.mutate()} disabled={!newCategory.name}>
@@ -867,13 +938,15 @@ const deleteMutation = useMutation({
   </Card>
 
   {/* Category list */}
-  {categories?.map(category => (
+  {categories?.map((category) => (
     <Card key={category.id} withBorder>
       <Group position="apart">
         <Group>
           <Text size="lg">{category.icon}</Text>
           <Badge color={category.color}>{category.name}</Badge>
-          <Text size="sm" color="dimmed">({category.post_count} posts)</Text>
+          <Text size="sm" color="dimmed">
+            ({category.post_count} posts)
+          </Text>
         </Group>
         <Group>
           <ActionIcon onClick={() => setEditingCategory(category)}>
@@ -892,9 +965,11 @@ const deleteMutation = useMutation({
 ---
 
 ### 10. SocialAnalytics.tsx
+
 **Purpose:** Display analytics and insights about social media activity.
 
 **Features:**
+
 - Total post count by platform
 - Engagement rate charts
 - Time series activity graph
@@ -904,6 +979,7 @@ const deleteMutation = useMutation({
 - Export data button
 
 **Props:**
+
 ```typescript
 interface SocialAnalyticsProps {
   spaceId: string;
@@ -911,6 +987,7 @@ interface SocialAnalyticsProps {
 ```
 
 **State:**
+
 ```typescript
 const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
   new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
@@ -924,12 +1001,15 @@ const { data: analytics, isLoading } = useQuery({
 ```
 
 **Charts:**
+
 ```tsx
-{/* Platform breakdown */}
+{
+  /* Platform breakdown */
+}
 <Card>
   <Title order={4}>Posts by Platform</Title>
   <BarChart
-    data={analytics?.platform_stats.map(p => ({
+    data={analytics?.platform_stats.map((p) => ({
       platform: p.platform,
       posts: p.total_posts,
       engagement: p.avg_engagement,
@@ -937,35 +1017,37 @@ const { data: analytics, isLoading } = useQuery({
     xField="platform"
     yField="posts"
   />
-</Card>
+</Card>;
 
-{/* Time series */}
+{
+  /* Time series */
+}
 <Card>
   <Title order={4}>Activity Over Time</Title>
-  <LineChart
-    data={analytics?.time_series}
-    xField="date"
-    yField="post_count"
-  />
-</Card>
+  <LineChart data={analytics?.time_series} xField="date" yField="post_count" />
+</Card>;
 
-{/* Top posts */}
+{
+  /* Top posts */
+}
 <Card>
   <Title order={4}>Top Posts by Engagement</Title>
   <Stack>
-    {analytics?.top_posts.map(post => (
+    {analytics?.top_posts.map((post) => (
       <TimelinePost key={post.id} post={post} />
     ))}
   </Stack>
-</Card>
+</Card>;
 ```
 
 ---
 
 ### 11. SocialSearch.tsx
+
 **Purpose:** Full-text search across all posts with advanced filters.
 
 **Features:**
+
 - Real-time search with debouncing
 - FTS5 full-text search
 - Highlight matches in results
@@ -975,6 +1057,7 @@ const { data: analytics, isLoading } = useQuery({
 - Recent searches
 
 **Props:**
+
 ```typescript
 interface SocialSearchProps {
   spaceId: string;
@@ -982,6 +1065,7 @@ interface SocialSearchProps {
 ```
 
 **State:**
+
 ```typescript
 const [query, setQuery] = useState('');
 const [filters, setFilters] = useState<SearchFilters>({});
@@ -997,12 +1081,13 @@ const { data: results, isLoading } = useQuery({
 ```
 
 **Rendering:**
+
 ```tsx
 <Stack spacing="md">
   <TextInput
     placeholder="Search posts..."
     value={query}
-    onChange={e => setQuery(e.target.value)}
+    onChange={(e) => setQuery(e.target.value)}
     icon={<IconSearch size={16} />}
     size="lg"
     rightSection={isLoading && <Loader size="xs" />}
@@ -1012,13 +1097,13 @@ const { data: results, isLoading } = useQuery({
     <Select
       placeholder="Platform"
       data={platformOptions}
-      onChange={val => setFilters({ ...filters, platform: val })}
+      onChange={(val) => setFilters({ ...filters, platform: val })}
       clearable
     />
     <Select
       placeholder="Sort by"
       value={sortBy}
-      onChange={val => setSortBy(val as 'relevance' | 'date')}
+      onChange={(val) => setSortBy(val as 'relevance' | 'date')}
       data={[
         { value: 'relevance', label: 'Relevance' },
         { value: 'date', label: 'Most Recent' },
@@ -1028,14 +1113,18 @@ const { data: results, isLoading } = useQuery({
 
   {results && results.length > 0 ? (
     <Stack>
-      {results.map(post => (
+      {results.map((post) => (
         <TimelinePost key={post.id} post={post} highlightQuery={debouncedQuery} />
       ))}
     </Stack>
   ) : debouncedQuery.length >= 3 ? (
-    <Text color="dimmed" align="center">No results found</Text>
+    <Text color="dimmed" align="center">
+      No results found
+    </Text>
   ) : (
-    <Text color="dimmed" align="center">Enter at least 3 characters to search</Text>
+    <Text color="dimmed" align="center">
+      Enter at least 3 characters to search
+    </Text>
   )}
 </Stack>
 ```
@@ -1045,6 +1134,7 @@ const { data: results, isLoading } = useQuery({
 ## State Management
 
 ### React Query Setup
+
 ```typescript
 // In App.tsx or root
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -1066,13 +1156,11 @@ const queryClient = new QueryClient({
 ```
 
 ### Query Keys
+
 ```typescript
-['timeline', spaceId, filters]           // Timeline posts
-['socialAccounts', spaceId]              // Account list
-['categories', spaceId]                  // Categories
-['analytics', spaceId, dateRange]        // Analytics
-['search', spaceId, query, filters]      // Search results
-['syncHistory', accountId]               // Sync status
+['timeline', spaceId, filters][('socialAccounts', spaceId)][('categories', spaceId)][('analytics', spaceId, dateRange)][ // Timeline posts // Account list // Categories // Analytics
+  ('search', spaceId, query, filters)
+][('syncHistory', accountId)]; // Search results // Sync status
 ```
 
 ---
@@ -1080,6 +1168,7 @@ const queryClient = new QueryClient({
 ## Styling and Theming
 
 ### Mantine Theme
+
 ```typescript
 <MantineProvider theme={{
   colorScheme: 'light',
@@ -1091,6 +1180,7 @@ const queryClient = new QueryClient({
 ```
 
 ### Platform Colors
+
 ```typescript
 export const platformColors: Record<string, string> = {
   twitter: '#1DA1F2',
@@ -1121,6 +1211,7 @@ export const platformColors: Record<string, string> = {
 ## Performance Optimizations
 
 ### 1. Virtualization
+
 ```typescript
 import { useVirtual } from '@tanstack/react-virtual';
 
@@ -1135,27 +1226,21 @@ const rowVirtualizer = useVirtual({
 ```
 
 ### 2. Memoization
-```typescript
-const flatPosts = useMemo(
-  () => data?.pages.flatMap(page => page) || [],
-  [data]
-);
 
-const filteredPosts = useMemo(
-  () => flatPosts.filter(post => matchesFilters(post, filters)),
-  [flatPosts, filters]
-);
+```typescript
+const flatPosts = useMemo(() => data?.pages.flatMap((page) => page) || [], [data]);
+
+const filteredPosts = useMemo(() => flatPosts.filter((post) => matchesFilters(post, filters)), [flatPosts, filters]);
 ```
 
 ### 3. Debouncing
+
 ```typescript
-const debouncedSearch = useMemo(
-  () => debounce((query: string) => setSearchQuery(query), 300),
-  []
-);
+const debouncedSearch = useMemo(() => debounce((query: string) => setSearchQuery(query), 300), []);
 ```
 
 ### 4. Lazy Loading
+
 ```typescript
 const LazyAnalytics = lazy(() => import('./SocialAnalytics'));
 
@@ -1169,6 +1254,7 @@ const LazyAnalytics = lazy(() => import('./SocialAnalytics'));
 ## Error Handling
 
 ### Query Errors
+
 ```typescript
 const { data, error, isError } = useQuery({
   queryKey: ['timeline', spaceId],
@@ -1188,6 +1274,7 @@ if (isError) {
 ```
 
 ### Mutation Errors
+
 ```typescript
 const mutation = useMutation({
   mutationFn: addSocialAccount,
@@ -1220,6 +1307,7 @@ All components follow accessibility best practices:
 ## Testing
 
 ### Unit Tests
+
 ```typescript
 // TimelinePost.test.tsx
 describe('TimelinePost', () => {
@@ -1236,6 +1324,7 @@ describe('TimelinePost', () => {
 ```
 
 ### Integration Tests
+
 ```typescript
 // SocialTimeline.test.tsx
 describe('SocialTimeline', () => {
@@ -1263,6 +1352,7 @@ describe('SocialTimeline', () => {
 ## Common Patterns
 
 ### Loading States
+
 ```tsx
 if (isLoading) {
   return <Loader />;
@@ -1270,6 +1360,7 @@ if (isLoading) {
 ```
 
 ### Empty States
+
 ```tsx
 if (!data || data.length === 0) {
   return <Text color="dimmed">No posts yet</Text>;
@@ -1277,6 +1368,7 @@ if (!data || data.length === 0) {
 ```
 
 ### Error States
+
 ```tsx
 if (isError) {
   return <Alert color="red">{error.message}</Alert>;
@@ -1288,6 +1380,7 @@ if (isError) {
 ## Contributing
 
 ### Adding New Components
+
 1. Create `.tsx` file in `components/social/`
 2. Define Props interface
 3. Use TypeScript strict mode
@@ -1297,6 +1390,7 @@ if (isError) {
 7. Update this README
 
 ### Code Style
+
 - Use functional components with hooks
 - TypeScript strict mode
 - Mantine components for UI
@@ -1312,6 +1406,6 @@ See main project LICENSE file.
 
 ---
 
-*For backend API, see `apps/desktop/src/services/socialApi.ts`*
-*For core logic, see `packages/core-rs/src/social/`*
-*For extractors, see `apps/desktop/src-tauri/js/extractors/`*
+_For backend API, see `apps/desktop/src/services/socialApi.ts`_
+_For core logic, see `packages/core-rs/src/social/`_
+_For extractors, see `apps/desktop/src-tauri/js/extractors/`_

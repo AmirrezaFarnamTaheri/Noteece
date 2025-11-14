@@ -1,19 +1,14 @@
 import React from 'react';
 import styles from './SessionWarningModal.module.css';
 
-interface SessionWarningModalProps {
+interface SessionWarningModalProperties {
   show: boolean;
   minutesLeft: number;
   onDismiss: () => void;
   onLogout: () => void;
 }
 
-const SessionWarningModal: React.FC<SessionWarningModalProps> = ({
-  show,
-  minutesLeft,
-  onDismiss,
-  onLogout,
-}) => {
+const SessionWarningModal: React.FC<SessionWarningModalProperties> = ({ show, minutesLeft, onDismiss, onLogout }) => {
   if (!show) {
     return null;
   }
@@ -28,7 +23,11 @@ const SessionWarningModal: React.FC<SessionWarningModalProps> = ({
 
         <div className={styles.body}>
           <p>
-            Your session will expire in <strong>{minutesLeft} minute{minutesLeft !== 1 ? 's' : ''}</strong>.
+            Your session will expire in{' '}
+            <strong>
+              {minutesLeft} minute{minutesLeft === 1 ? '' : 's'}
+            </strong>
+            .
           </p>
           <p className={styles.hint}>
             You will be automatically logged out for security purposes. Continue working or logout manually.
@@ -45,9 +44,7 @@ const SessionWarningModal: React.FC<SessionWarningModalProps> = ({
         </div>
 
         <div className={styles.footer}>
-          <p>
-            Sessions automatically expire after 24 hours of inactivity to protect your account.
-          </p>
+          <p>Sessions automatically expire after 24 hours of inactivity to protect your account.</p>
         </div>
       </div>
     </div>

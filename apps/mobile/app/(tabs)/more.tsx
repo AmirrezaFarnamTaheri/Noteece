@@ -14,7 +14,11 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { typography, spacing } from "@/lib/theme";
 import { useVaultStore } from "@/store/vault";
-import { useAppContext, useSettings, useUpdateSetting } from "@/store/app-context";
+import {
+  useAppContext,
+  useSettings,
+  useUpdateSetting,
+} from "@/store/app-context";
 import { useTheme, useThemeColors } from "@/contexts/ThemeContext";
 import { haptics } from "@/lib/haptics";
 import {
@@ -437,7 +441,10 @@ export default function MoreScreen() {
         text: "Monospace",
         onPress: () => {
           haptics.selection();
-          updateSetting("theme", { ...settings.theme, fontFamily: "monospace" });
+          updateSetting("theme", {
+            ...settings.theme,
+            fontFamily: "monospace",
+          });
         },
       },
     ]);
@@ -482,7 +489,10 @@ export default function MoreScreen() {
   };
 
   const getFontSizeLabel = () => {
-    return settings.theme.fontSize.charAt(0).toUpperCase() + settings.theme.fontSize.slice(1);
+    return (
+      settings.theme.fontSize.charAt(0).toUpperCase() +
+      settings.theme.fontSize.slice(1)
+    );
   };
 
   const getFontFamilyLabel = () => {

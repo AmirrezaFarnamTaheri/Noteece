@@ -1,6 +1,7 @@
 # Security Audit Checklist - Noteece
 
 ## Overview
+
 This document tracks security improvements, compliance findings, and remaining work for the Noteece application.
 
 **Last Updated:** 2025-11-07
@@ -11,6 +12,7 @@ This document tracks security improvements, compliance findings, and remaining w
 ## ✅ Completed Security Fixes
 
 ### 1. XSS Vulnerability in WebView Script Injection (HIGH SEVERITY)
+
 **Status:** ✅ FIXED
 **Commit:** `539b501`
 **Files:** `apps/desktop/src-tauri/src/main.rs:2026-2048`
@@ -20,12 +22,14 @@ This document tracks security improvements, compliance findings, and remaining w
 **Fix:** Replaced string formatting with `serde_json::json!()` which properly escapes all special characters, preventing XSS attacks.
 
 **Attack Prevention:**
+
 - Malicious account_id like `test'; alert('XSS'); '123` can no longer execute arbitrary JavaScript
 - All user-controlled data is now JSON-serialized before injection
 
 ---
 
 ### 2. LLM Cache Key Collision (MEDIUM SEVERITY)
+
 **Status:** ✅ FIXED
 **Commit:** `539b501`
 **Files:** `packages/core-rs/src/llm/types.rs:98-140`
@@ -33,6 +37,7 @@ This document tracks security improvements, compliance findings, and remaining w
 **Issue:** Cache key only included model, messages, and temperature, but ignored max_tokens, top_p, and stop_sequences. This could cause requests with different parameters to incorrectly share cached responses.
 
 **Fix:** Extended cache key computation to include ALL request parameters:
+
 - Added `max_tokens` to prevent truncated responses from matching full ones
 - Added `top_p` to account for different sampling parameters
 - Added `stop_sequences` to ensure correct termination points
@@ -42,6 +47,7 @@ This document tracks security improvements, compliance findings, and remaining w
 ---
 
 ### 3. Slice Panic Prevention (HIGH PRIORITY)
+
 **Status:** ✅ FIXED
 **Commit:** `4e819b1`
 **Files:** `apps/desktop/src-tauri/src/main.rs:1978-1988`
@@ -49,6 +55,7 @@ This document tracks security improvements, compliance findings, and remaining w
 **Issue:** Code used `&account_id[..8]` without checking length, causing panic if account_id < 8 characters.
 
 **Fix:** Added length check before slicing:
+
 ```rust
 let id_suffix = if account_id.len() >= 8 {
     &account_id[..8]
@@ -60,6 +67,7 @@ let id_suffix = if account_id.len() >= 8 {
 ---
 
 ### 4. Unsupported Platform Validation (HIGH PRIORITY)
+
 **Status:** ✅ FIXED
 **Commit:** `4e819b1`
 **Files:** `apps/desktop/src-tauri/src/main.rs:2025-2030`
@@ -67,6 +75,7 @@ let id_suffix = if account_id.len() >= 8 {
 **Issue:** Unsupported platforms returned empty string for extractor script, causing silent failures.
 
 **Fix:** Now explicitly returns error for unsupported platforms:
+
 ```rust
 _ => {
     return Err(format!(
@@ -79,6 +88,7 @@ _ => {
 ---
 
 ### 5. Timestamp Calculation Bug (MEDIUM PRIORITY)
+
 **Status:** ✅ FIXED
 **Commit:** `4e819b1`
 **Files:** `packages/core-rs/src/social/sync.rs:262-271`
@@ -86,6 +96,7 @@ _ => {
 **Issue:** Completion timestamp incorrectly divided sync_duration_ms by 1000, despite both values being in milliseconds.
 
 **Fix:** Removed incorrect division:
+
 ```rust
 completed_at: if status == "completed" {
     Some(sync_time + sync_duration_ms)  // Both already in milliseconds
@@ -97,6 +108,7 @@ completed_at: if status == "completed" {
 ---
 
 ### 6. TypeScript-Rust Parameter Mismatch (HIGH PRIORITY)
+
 **Status:** ✅ FIXED
 **Commit:** `4e819b1`
 **Files:** `apps/desktop/src/services/socialApi.ts:64-65`
@@ -104,12 +116,14 @@ completed_at: if status == "completed" {
 **Issue:** TypeScript used camelCase but Rust backend expected snake_case, causing silent API failures.
 
 **Fix:** Updated parameter names:
+
 - `syncFrequencyMinutes` → `sync_frequency_minutes`
 - `displayName` → `display_name`
 
 ---
 
 ### 7. OpenAI Role Mapping Robustness (MEDIUM PRIORITY)
+
 **Status:** ✅ FIXED
 **Commit:** `4e819b1`
 **Files:** `packages/core-rs/src/llm/providers/openai.rs:8-14, 57`
@@ -117,6 +131,7 @@ completed_at: if status == "completed" {
 **Issue:** Used fragile Debug-format-based role conversion: `format!("{:?}", m.role).to_lowercase()`
 
 **Fix:** Explicit role mapping function:
+
 ```rust
 fn role_to_openai_string(role: &Role) -> &'static str {
     match role {
@@ -132,12 +147,14 @@ fn role_to_openai_string(role: &Role) -> &'static str {
 ## ⏳ Remaining Security Recommendations
 
 ### 1. Credential Handling Risk (MEDIUM SEVERITY)
+
 **Status:** ⏳ PENDING
 **Reference:** Compliance report - "Credential handling risk"
 
 **Issue:** Social account creation passes raw credential payloads without explicit zeroization on error/panic paths.
 
 **Recommendation:**
+
 - Wrap credentials in `Zeroizing<String>` from the `zeroize` crate
 - Ensure credentials are wiped from memory on error paths
 - Add explicit redaction in error logs
@@ -148,12 +165,14 @@ fn role_to_openai_string(role: &Role) -> &'static str {
 ---
 
 ### 2. Cookie Persistence Validation (MEDIUM SEVERITY)
+
 **Status:** ⏳ PENDING
 **Reference:** Compliance report - "Cookie persistence exposure"
 
 **Issue:** `save_webview_cookies` accepts any cookie JSON without format validation or caller origin restriction.
 
 **Recommendation:**
+
 - Add JSON schema validation for cookie format
 - Verify session_id belongs to authenticated user
 - Add size limits for cookie payloads
@@ -165,12 +184,14 @@ fn role_to_openai_string(role: &Role) -> &'static str {
 ---
 
 ### 3. Category Aggregation Parsing (MEDIUM PRIORITY)
+
 **Status:** ⏳ PENDING
 **Reference:** Compliance suggestion - Importance 8
 
 **Issue:** Using comma delimiter in `GROUP_CONCAT` can fail if category names contain commas.
 
 **Recommendation:**
+
 ```sql
 -- Change from:
 GROUP_CONCAT(c.name, ',')
@@ -188,12 +209,14 @@ GROUP_CONCAT(DISTINCT c.name, char(31))  -- Use ASCII unit separator
 ---
 
 ### 4. Database Schema Improvements (MEDIUM PRIORITY)
+
 **Status:** ⏳ PENDING
 **Reference:** Compliance suggestion - Importance 7
 
 **Issue:** `social_post.platform_post_id` is nullable and unique constraint is per-account instead of per-platform.
 
 **Recommendation:**
+
 ```sql
 -- Change to:
 platform_post_id TEXT NOT NULL,
@@ -207,12 +230,14 @@ UNIQUE(platform, platform_post_id)
 ---
 
 ### 5. ULID Validation for IDs (LOW-MEDIUM PRIORITY)
+
 **Status:** ⏳ PENDING
 **Reference:** Compliance suggestion - Importance 6
 
 **Issue:** Many commands accept string IDs without validating they're well-formed ULIDs.
 
 **Recommendation:**
+
 ```rust
 // Add ULID validation:
 let _space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
@@ -225,12 +250,14 @@ let _space_ulid = Ulid::from_string(space_id).map_err(|e| e.to_string())?;
 ---
 
 ### 6. DST-Safe Time Handling (LOW PRIORITY)
+
 **Status:** ⏳ PENDING
 **Reference:** Compliance suggestion - Importance 5
 
 **Issue:** Using `unwrap()` on `and_hms_opt()` can panic during DST transitions.
 
 **Recommendation:**
+
 ```rust
 let today_start = today_naive
     .and_hms_opt(0, 0, 0)
@@ -248,6 +275,7 @@ let today_start = today_naive
 ## 🔒 OWASP Top 10 Compliance
 
 ### A01:2021 - Broken Access Control
+
 **Status:** ✅ PARTIALLY ADDRESSED
 
 - ✅ All Tauri commands check database connection (vault must be unlocked)
@@ -256,6 +284,7 @@ let today_start = today_naive
 - ⏳ Cookie session validation pending
 
 ### A02:2021 - Cryptographic Failures
+
 **Status:** ✅ WELL ADDRESSED
 
 - ✅ XChaCha20-Poly1305 AEAD encryption for sensitive data
@@ -266,6 +295,7 @@ let today_start = today_naive
 - ⏳ Could improve: Explicit credential zeroization in error paths
 
 ### A03:2021 - Injection
+
 **Status:** ✅ ADDRESSED
 
 - ✅ XSS vulnerability in WebView script injection FIXED
@@ -274,6 +304,7 @@ let today_start = today_naive
 - ✅ JSON deserialization with size limits (10MB max)
 
 ### A04:2021 - Insecure Design
+
 **Status:** ✅ GOOD
 
 - ✅ Local-first architecture minimizes attack surface
@@ -282,6 +313,7 @@ let today_start = today_naive
 - ✅ Focus modes and automation for user control
 
 ### A05:2021 - Security Misconfiguration
+
 **Status:** ✅ GOOD
 
 - ✅ Tauri security features enabled
@@ -290,6 +322,7 @@ let today_start = today_naive
 - ✅ No debug/sensitive info in production logs
 
 ### A06:2021 - Vulnerable and Outdated Components
+
 **Status:** ⏳ PENDING VERIFICATION
 
 - ⏳ Need to run `cargo audit` to check for known vulnerabilities
@@ -297,6 +330,7 @@ let today_start = today_naive
 - ⏳ Should establish regular dependency update schedule
 
 ### A07:2021 - Identification and Authentication Failures
+
 **Status:** ✅ GOOD
 
 - ✅ Strong password-based vault encryption
@@ -305,6 +339,7 @@ let today_start = today_naive
 - ⏳ Could add: Rate limiting for vault unlock attempts
 
 ### A08:2021 - Software and Data Integrity Failures
+
 **Status:** ✅ GOOD
 
 - ✅ Code signing available via Tauri
@@ -313,6 +348,7 @@ let today_start = today_naive
 - ⏳ Should enable: Automated dependency vulnerability scanning
 
 ### A09:2021 - Security Logging and Monitoring Failures
+
 **Status:** ✅ EXCELLENT
 
 - ✅ Comprehensive logging added to all 9 social modules
@@ -321,6 +357,7 @@ let today_start = today_naive
 - ✅ Debug/info/warn/error levels used appropriately
 
 ### A10:2021 - Server-Side Request Forgery (SSRF)
+
 **Status:** ✅ GOOD
 
 - ✅ Platform URLs are hardcoded, not user-controllable
@@ -403,6 +440,7 @@ let today_start = today_naive
 ## 📝 Changelog
 
 ### 2025-11-07
+
 - ✅ Fixed XSS vulnerability in WebView script injection
 - ✅ Fixed LLM cache key collision issue
 - ✅ Fixed slice panic prevention

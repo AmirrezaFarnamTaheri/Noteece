@@ -1,12 +1,25 @@
-import React, { useState } from 'react';
-import { Card, Group, Text, Stack, UnstyledButton, Badge, Tooltip, ActionIcon } from '@mantine/core';
-import { IconChevronLeft, IconChevronRight, IconCircleFilled } from '@tabler/icons-react';
+import React, { useState } from "react";
+import {
+  Card,
+  Group,
+  Text,
+  Stack,
+  UnstyledButton,
+  Badge,
+  Tooltip,
+  ActionIcon,
+} from "@mantine/core";
+import {
+  IconChevronLeft,
+  IconChevronRight,
+  IconCircleFilled,
+} from "@tabler/icons-react";
 
 export interface CalendarEvent {
   id: string;
   title: string;
   date: number; // Unix timestamp
-  type: 'task' | 'event' | 'deadline' | 'habit';
+  type: "task" | "event" | "deadline" | "habit";
   color?: string;
   completed?: boolean;
 }
@@ -17,7 +30,11 @@ export interface MiniCalendarProps {
   onEventClick?: (event: CalendarEvent) => void;
 }
 
-export function MiniCalendar({ events, onDateSelect, onEventClick }: MiniCalendarProps) {
+export function MiniCalendar({
+  events,
+  onDateSelect,
+  onEventClick,
+}: MiniCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   // Precompute event map by local date key once per render
@@ -26,8 +43,8 @@ export function MiniCalendar({ events, onDateSelect, onEventClick }: MiniCalenda
     // Normalize to local midnight to avoid timezone drift across boundaries
     d.setHours(0, 0, 0, 0);
     const y = d.getFullYear();
-    const m = (d.getMonth() + 1).toString().padStart(2, '0');
-    const day = d.getDate().toString().padStart(2, '0');
+    const m = (d.getMonth() + 1).toString().padStart(2, "0");
+    const day = d.getDate().toString().padStart(2, "0");
     return `${y}-${m}-${day}`;
   };
 
@@ -36,7 +53,8 @@ export function MiniCalendar({ events, onDateSelect, onEventClick }: MiniCalenda
     for (const ev of events) {
       const k = toKey(ev.date);
       const arr = map.get(k);
-      if (arr) arr.push(ev); else map.set(k, [ev]);
+      if (arr) arr.push(ev);
+      else map.set(k, [ev]);
     }
     return map;
   }, [events]);
@@ -64,8 +82,8 @@ export function MiniCalendar({ events, onDateSelect, onEventClick }: MiniCalenda
 
   const getEventsForDate = (date: Date): CalendarEvent[] => {
     const y = date.getFullYear();
-    const m = (date.getMonth() + 1).toString().padStart(2, '0');
-    const d = date.getDate().toString().padStart(2, '0');
+    const m = (date.getMonth() + 1).toString().padStart(2, "0");
+    const d = date.getDate().toString().padStart(2, "0");
     return eventsByDay.get(`${y}-${m}-${d}`) ?? [];
   };
 
@@ -83,15 +101,19 @@ export function MiniCalendar({ events, onDateSelect, onEventClick }: MiniCalenda
   };
 
   const previousMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+    setCurrentMonth(
+      new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1),
+    );
   };
 
   const nextMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+    setCurrentMonth(
+      new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1),
+    );
   };
 
   const days = getDaysInMonth(currentMonth);
-  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
     <Card shadow="sm" padding="lg" radius="md" withBorder>
@@ -99,7 +121,10 @@ export function MiniCalendar({ events, onDateSelect, onEventClick }: MiniCalenda
         {/* Header */}
         <Group justify="space-between" align="center">
           <Text size="lg" fw={600}>
-            {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            {currentMonth.toLocaleDateString("en-US", {
+              month: "long",
+              year: "numeric",
+            })}
           </Text>
           <Group gap={4}>
             <ActionIcon variant="subtle" onClick={previousMonth}>
@@ -116,8 +141,8 @@ export function MiniCalendar({ events, onDateSelect, onEventClick }: MiniCalenda
           {/* Week day headers */}
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(7, 1fr)',
+              display: "grid",
+              gridTemplateColumns: "repeat(7, 1fr)",
               gap: 4,
               marginBottom: 4,
             }}
@@ -132,8 +157,8 @@ export function MiniCalendar({ events, onDateSelect, onEventClick }: MiniCalenda
           {/* Days grid */}
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(7, 1fr)',
+              display: "grid",
+              gridTemplateColumns: "repeat(7, 1fr)",
               gap: 4,
             }}
           >
@@ -162,38 +187,47 @@ export function MiniCalendar({ events, onDateSelect, onEventClick }: MiniCalenda
                   <UnstyledButton
                     onClick={() => onDateSelect?.(day)}
                     style={{
-                      width: '100%',
-                      aspectRatio: '1',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      width: "100%",
+                      aspectRatio: "1",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
                       borderRadius: 4,
-                      backgroundColor: today ? 'var(--mantine-color-blue-1)' : 'transparent',
-                      border: today ? '2px solid var(--mantine-color-blue-6)' : '1px solid transparent',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
+                      backgroundColor: today
+                        ? "var(--mantine-color-blue-1)"
+                        : "transparent",
+                      border: today
+                        ? "2px solid var(--mantine-color-blue-6)"
+                        : "1px solid transparent",
+                      cursor: "pointer",
+                      transition: "all 0.2s",
                       opacity: currentMonthDay ? 1 : 0.3,
-                      position: 'relative',
+                      position: "relative",
                     }}
                   >
                     <Text
                       size="sm"
                       fw={today ? 700 : 500}
-                      c={today ? 'blue' : currentMonthDay ? undefined : 'dimmed'}
+                      c={
+                        today ? "blue" : currentMonthDay ? undefined : "dimmed"
+                      }
                     >
                       {day.getDate()}
                     </Text>
                     {hasEvents && (
-                      <Group gap={2} style={{ position: 'absolute', bottom: 2 }}>
+                      <Group
+                        gap={2}
+                        style={{ position: "absolute", bottom: 2 }}
+                      >
                         {dayEvents.slice(0, 3).map((event, eventIdx) => (
                           <div
                             key={eventIdx}
                             style={{
                               width: 4,
                               height: 4,
-                              borderRadius: '50%',
-                              backgroundColor: `var(--mantine-color-${event.color || 'blue'}-6)`,
+                              borderRadius: "50%",
+                              backgroundColor: `var(--mantine-color-${event.color || "blue"}-6)`,
                             }}
                           />
                         ))}
@@ -221,31 +255,38 @@ export function MiniCalendar({ events, onDateSelect, onEventClick }: MiniCalenda
                   key={event.id}
                   onClick={() => onEventClick?.(event)}
                   style={{
-                    padding: '8px',
+                    padding: "8px",
                     borderRadius: 4,
-                    backgroundColor: 'var(--mantine-color-gray-0)',
-                    border: '1px solid var(--mantine-color-gray-3)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
+                    backgroundColor: "var(--mantine-color-gray-0)",
+                    border: "1px solid var(--mantine-color-gray-3)",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
                   }}
                 >
                   <Group justify="space-between" align="center">
                     <Group gap="xs">
-                      <IconCircleFilled size={8} color={`var(--mantine-color-${event.color || 'blue'}-6)`} />
+                      <IconCircleFilled
+                        size={8}
+                        color={`var(--mantine-color-${event.color || "blue"}-6)`}
+                      />
                       <Text size="sm" fw={500} lineClamp={1}>
                         {event.title}
                       </Text>
                     </Group>
-                    <Badge size="xs" variant="light" color={event.color || 'blue'}>
+                    <Badge
+                      size="xs"
+                      variant="light"
+                      color={event.color || "blue"}
+                    >
                       {event.type}
                     </Badge>
                   </Group>
                   <Text size="xs" c="dimmed" ml={16}>
-                    {new Date(event.date * 1000).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: 'numeric',
-                      minute: '2-digit',
+                    {new Date(event.date * 1000).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
                     })}
                   </Text>
                 </UnstyledButton>
@@ -258,7 +299,10 @@ export function MiniCalendar({ events, onDateSelect, onEventClick }: MiniCalenda
 }
 
 // Compact month view (no event list)
-export function CompactCalendar({ events, onDateSelect }: Pick<MiniCalendarProps, 'events' | 'onDateSelect'>) {
+export function CompactCalendar({
+  events,
+  onDateSelect,
+}: Pick<MiniCalendarProps, "events" | "onDateSelect">) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const getDaysInMonth = (date: Date): Date[] => {
@@ -303,26 +347,45 @@ export function CompactCalendar({ events, onDateSelect }: Pick<MiniCalendarProps
   };
 
   const days = getDaysInMonth(currentMonth);
-  const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const weekDays = ["S", "M", "T", "W", "T", "F", "S"];
 
   return (
     <Stack gap="sm">
       <Group justify="space-between" align="center">
         <Text size="md" fw={600}>
-          {currentMonth.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+          {currentMonth.toLocaleDateString("en-US", {
+            month: "short",
+            year: "numeric",
+          })}
         </Text>
         <Group gap={4}>
           <ActionIcon
             size="sm"
             variant="subtle"
-            onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}
+            onClick={() =>
+              setCurrentMonth(
+                new Date(
+                  currentMonth.getFullYear(),
+                  currentMonth.getMonth() - 1,
+                  1,
+                ),
+              )
+            }
           >
             <IconChevronLeft size={14} />
           </ActionIcon>
           <ActionIcon
             size="sm"
             variant="subtle"
-            onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}
+            onClick={() =>
+              setCurrentMonth(
+                new Date(
+                  currentMonth.getFullYear(),
+                  currentMonth.getMonth() + 1,
+                  1,
+                ),
+              )
+            }
           >
             <IconChevronRight size={14} />
           </ActionIcon>
@@ -330,7 +393,14 @@ export function CompactCalendar({ events, onDateSelect }: Pick<MiniCalendarProps
       </Group>
 
       <div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 2 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(7, 1fr)",
+            gap: 2,
+            marginBottom: 2,
+          }}
+        >
           {weekDays.map((day) => (
             <Text key={day} size="xs" c="dimmed" ta="center" fw={600}>
               {day}
@@ -338,7 +408,13 @@ export function CompactCalendar({ events, onDateSelect }: Pick<MiniCalendarProps
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(7, 1fr)",
+            gap: 2,
+          }}
+        >
           {days.map((day, idx) => {
             const hasEvents = getEventsForDate(day).length > 0;
             const today = isToday(day);
@@ -348,18 +424,28 @@ export function CompactCalendar({ events, onDateSelect }: Pick<MiniCalendarProps
                 key={idx}
                 onClick={() => onDateSelect?.(day)}
                 style={{
-                  width: '100%',
-                  aspectRatio: '1',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  width: "100%",
+                  aspectRatio: "1",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   borderRadius: 4,
-                  backgroundColor: today ? 'var(--mantine-color-blue-1)' : hasEvents ? 'var(--mantine-color-gray-1)' : 'transparent',
-                  border: today ? '1px solid var(--mantine-color-blue-6)' : '1px solid transparent',
-                  cursor: 'pointer',
+                  backgroundColor: today
+                    ? "var(--mantine-color-blue-1)"
+                    : hasEvents
+                      ? "var(--mantine-color-gray-1)"
+                      : "transparent",
+                  border: today
+                    ? "1px solid var(--mantine-color-blue-6)"
+                    : "1px solid transparent",
+                  cursor: "pointer",
                 }}
               >
-                <Text size="xs" fw={today ? 700 : 500} c={today ? 'blue' : undefined}>
+                <Text
+                  size="xs"
+                  fw={today ? 700 : 500}
+                  c={today ? "blue" : undefined}
+                >
                   {day.getDate()}
                 </Text>
               </UnstyledButton>

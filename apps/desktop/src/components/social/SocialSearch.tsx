@@ -31,11 +31,11 @@ interface SearchResult {
   categories: string[];
 }
 
-interface SocialSearchProps {
+interface SocialSearchProperties {
   spaceId: string;
 }
 
-export function SocialSearch({ spaceId }: SocialSearchProps) {
+export function SocialSearch({ spaceId }: SocialSearchProperties) {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
 
@@ -101,13 +101,9 @@ export function SocialSearch({ spaceId }: SocialSearchProps) {
             <>
               <Group>
                 <Text size="sm" fw={500}>
-                  Found {results.length} result{results.length !== 1 ? 's' : ''}
+                  Found {results.length} result{results.length === 1 ? '' : 's'}
                 </Text>
-                {debouncedQuery && (
-                  <Pill size="sm">
-                    Searching for: "{debouncedQuery}"
-                  </Pill>
-                )}
+                {debouncedQuery && <Pill size="sm">Searching for: "{debouncedQuery}"</Pill>}
               </Group>
 
               <Stack gap="md">

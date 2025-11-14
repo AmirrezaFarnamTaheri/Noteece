@@ -6,12 +6,9 @@ interface SessionWarning {
   minutesLeft: number;
 }
 
-export const useSessionRefresh = (
-  onSessionExpired?: () => void,
-  onWarning?: (minutesLeft: number) => void
-) => {
-  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+export const useSessionRefresh = (onSessionExpired?: () => void, onWarning?: (minutesLeft: number) => void) => {
+  const refreshIntervalReference = useRef<NodeJS.Timeout | null>(null);
+  const warningTimeoutReference = useRef<NodeJS.Timeout | null>(null);
   const [sessionWarning, setSessionWarning] = useState<SessionWarning>({ show: false, minutesLeft: 0 });
 
   const checkSession = useCallback(async () => {
@@ -66,33 +63,36 @@ export const useSessionRefresh = (
     checkSession();
 
     // Set up periodic session refresh (every 15 minutes)
-    refreshIntervalRef.current = setInterval(() => {
-      checkSession();
+    refreshIntervalReference.current = setInterval(
+      () => {
+        checkSession();
 
-      // Check if we should warn about expiry (5 minutes before expiry)
-      const minutesLeft = getSessionTimeRemaining();
+        // Check if we should warn about expiry (5 minutes before expiry)
+        const minutesLeft = getSessionTimeRemaining();
 
-      // Use functional update to avoid dependency on sessionWarning
-      setSessionWarning((prev) => {
-        if (minutesLeft > 0 && minutesLeft <= 5 && !prev.show) {
-          onWarning?.(minutesLeft);
-          return { show: true, minutesLeft };
-        }
-        if (minutesLeft > 5 && prev.show) {
-          // Clear warning if session has been refreshed
-          return { show: false, minutesLeft: 0 };
-        }
-        return prev;
-      });
-    }, 15 * 60 * 1000); // 15 minutes
+        // Use functional update to avoid dependency on sessionWarning
+        setSessionWarning((previous) => {
+          if (minutesLeft > 0 && minutesLeft <= 5 && !previous.show) {
+            onWarning?.(minutesLeft);
+            return { show: true, minutesLeft };
+          }
+          if (minutesLeft > 5 && previous.show) {
+            // Clear warning if session has been refreshed
+            return { show: false, minutesLeft: 0 };
+          }
+          return previous;
+        });
+      },
+      15 * 60 * 1000,
+    ); // 15 minutes
 
     // Cleanup on unmount
     return () => {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
+      if (refreshIntervalReference.current) {
+        clearInterval(refreshIntervalReference.current);
       }
-      if (warningTimeoutRef.current) {
-        clearTimeout(warningTimeoutRef.current);
+      if (warningTimeoutReference.current) {
+        clearTimeout(warningTimeoutReference.current);
       }
     };
   }, [checkSession, getSessionTimeRemaining, onWarning]);

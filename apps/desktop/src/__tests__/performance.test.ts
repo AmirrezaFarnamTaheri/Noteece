@@ -30,7 +30,7 @@ describe('Performance Benchmarks', () => {
       const passwordChangeData = {
         old_password: 'OldPassword123!',
         new_password: 'NewPassword456!',
-        iterations: 65536,
+        iterations: 65_536,
       };
 
       await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -82,7 +82,7 @@ describe('Performance Benchmarks', () => {
       const endTime = performance.now();
       const duration = endTime - startTime;
 
-      expect(duration).toBeLessThan(30000);
+      expect(duration).toBeLessThan(30_000);
     });
 
     test('restore backup of 100MB completes within 20 seconds', async () => {
@@ -97,19 +97,21 @@ describe('Performance Benchmarks', () => {
       const endTime = performance.now();
       const duration = endTime - startTime;
 
-      expect(duration).toBeLessThan(20000);
+      expect(duration).toBeLessThan(20_000);
     });
 
     test('list backups with 50 backups returns within 500ms', async () => {
       const startTime = performance.now();
 
       // Create mock backup list
-      const backups = Array(50).fill(null).map((_, i) => ({
-        id: `backup_${i}`,
-        created_at: new Date(Date.now() - i * 24 * 60 * 60 * 1000),
-        size_bytes: (i + 1) * 1024 * 1024,
-        description: `Backup ${i}`,
-      }));
+      const backups = Array.from({ length: 50 })
+        .fill(null)
+        .map((_, index) => ({
+          id: `backup_${index}`,
+          created_at: new Date(Date.now() - index * 24 * 60 * 60 * 1000),
+          size_bytes: (index + 1) * 1024 * 1024,
+          description: `Backup ${index}`,
+        }));
 
       // Sort by date
       backups.sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
@@ -142,13 +144,15 @@ describe('Performance Benchmarks', () => {
     test('load social feed with 100 posts within 1 second', async () => {
       const startTime = performance.now();
 
-      const posts = Array(100).fill(null).map((_, i) => ({
-        id: `post_${i}`,
-        platform: ['twitter', 'instagram', 'facebook'][i % 3],
-        content: 'Post content ' + i,
-        author: `User ${i}`,
-        timestamp: new Date(Date.now() - i * 60 * 60 * 1000),
-      }));
+      const posts = Array.from({ length: 100 })
+        .fill(null)
+        .map((_, index) => ({
+          id: `post_${index}`,
+          platform: ['twitter', 'instagram', 'facebook'][index % 3],
+          content: 'Post content ' + index,
+          author: `User ${index}`,
+          timestamp: new Date(Date.now() - index * 60 * 60 * 1000),
+        }));
 
       const endTime = performance.now();
       const duration = endTime - startTime;
@@ -160,15 +164,15 @@ describe('Performance Benchmarks', () => {
     test('search 1000 posts completes within 500ms', async () => {
       const startTime = performance.now();
 
-      const posts = Array(1000).fill(null).map((_, i) => ({
-        id: `post_${i}`,
-        content: `Post content ${i} with test keywords`,
-      }));
+      const posts = Array.from({ length: 1000 })
+        .fill(null)
+        .map((_, index) => ({
+          id: `post_${index}`,
+          content: `Post content ${index} with test keywords`,
+        }));
 
       const searchQuery = 'test';
-      const results = posts.filter((p) =>
-        p.content.toLowerCase().includes(searchQuery)
-      );
+      const results = posts.filter((p) => p.content.toLowerCase().includes(searchQuery));
 
       const endTime = performance.now();
       const duration = endTime - startTime;
@@ -180,10 +184,12 @@ describe('Performance Benchmarks', () => {
     test('filter posts by platform within 300ms', async () => {
       const startTime = performance.now();
 
-      const posts = Array(500).fill(null).map((_, i) => ({
-        id: `post_${i}`,
-        platform: ['twitter', 'instagram', 'facebook', 'linkedin'][i % 4],
-      }));
+      const posts = Array.from({ length: 500 })
+        .fill(null)
+        .map((_, index) => ({
+          id: `post_${index}`,
+          platform: ['twitter', 'instagram', 'facebook', 'linkedin'][index % 4],
+        }));
 
       const platform = 'twitter';
       const filtered = posts.filter((p) => p.platform === platform);
@@ -234,16 +240,18 @@ describe('Performance Benchmarks', () => {
       const endTime = performance.now();
       const duration = endTime - startTime;
 
-      expect(duration).toBeLessThan(60000);
+      expect(duration).toBeLessThan(60_000);
     });
 
     test('batch extract 50 posts completes within 5 seconds', async () => {
       const startTime = performance.now();
 
-      const posts = Array(50).fill(null).map((_, i) => ({
-        id: `post_${i}`,
-        html: '<div class="post">' + 'x'.repeat(1000) + '</div>',
-      }));
+      const posts = Array.from({ length: 50 })
+        .fill(null)
+        .map((_, index) => ({
+          id: `post_${index}`,
+          html: '<div class="post">' + 'x'.repeat(1000) + '</div>',
+        }));
 
       const extracted = posts.map((post) => ({
         ...post,
@@ -263,11 +271,13 @@ describe('Performance Benchmarks', () => {
       const startTime = performance.now();
 
       // Simulate large dataset
-      const posts = Array(10000).fill(null).map((_, i) => ({
-        id: i,
-        platform: ['twitter', 'instagram', 'facebook'][i % 3],
-        created_at: new Date(Date.now() - (i % 365) * 24 * 60 * 60 * 1000),
-      }));
+      const posts = Array.from({ length: 10_000 })
+        .fill(null)
+        .map((_, index) => ({
+          id: index,
+          platform: ['twitter', 'instagram', 'facebook'][index % 3],
+          created_at: new Date(Date.now() - (index % 365) * 24 * 60 * 60 * 1000),
+        }));
 
       // Filter operation
       const platform = 'twitter';
@@ -283,11 +293,13 @@ describe('Performance Benchmarks', () => {
     test('insert 1000 records within 2 seconds', async () => {
       const startTime = performance.now();
 
-      const records = Array(1000).fill(null).map((_, i) => ({
-        id: `record_${i}`,
-        data: `Data ${i}`,
-        timestamp: new Date(),
-      }));
+      const records = Array.from({ length: 1000 })
+        .fill(null)
+        .map((_, index) => ({
+          id: `record_${index}`,
+          data: `Data ${index}`,
+          timestamp: new Date(),
+        }));
 
       // Simulated insertion
       const inserted = records.map((r) => ({ ...r, inserted: true }));
@@ -302,10 +314,12 @@ describe('Performance Benchmarks', () => {
     test('update 500 records within 1 second', async () => {
       const startTime = performance.now();
 
-      const records = Array(500).fill(null).map((_, i) => ({
-        id: `record_${i}`,
-        status: 'pending',
-      }));
+      const records = Array.from({ length: 500 })
+        .fill(null)
+        .map((_, index) => ({
+          id: `record_${index}`,
+          status: 'pending',
+        }));
 
       // Batch update
       const updated = records.map((r) => ({
@@ -323,9 +337,11 @@ describe('Performance Benchmarks', () => {
     test('delete 100 records within 500ms', async () => {
       const startTime = performance.now();
 
-      const records = Array(100).fill(null).map((_, i) => ({
-        id: `record_${i}`,
-      }));
+      const records = Array.from({ length: 100 })
+        .fill(null)
+        .map((_, index) => ({
+          id: `record_${index}`,
+        }));
 
       const toDelete = records.slice(0, 50);
       const remaining = records.filter((r) => !toDelete.find((d) => d.id === r.id));
@@ -345,10 +361,12 @@ describe('Performance Benchmarks', () => {
       // Simulate component rendering
       const settingsPage = {
         title: 'Settings',
-        sections: Array(10).fill(null).map((_, i) => ({
-          name: `Section ${i}`,
-          visible: true,
-        })),
+        sections: Array.from({ length: 10 })
+          .fill(null)
+          .map((_, index) => ({
+            name: `Section ${index}`,
+            visible: true,
+          })),
       };
 
       const endTime = performance.now();
@@ -384,10 +402,7 @@ describe('Performance Benchmarks', () => {
       };
 
       // Validate form
-      const isValid =
-        formData.username &&
-        formData.email.includes('@') &&
-        formData.password.length >= 8;
+      const isValid = formData.username && formData.email.includes('@') && formData.password.length >= 8;
 
       const endTime = performance.now();
       const duration = endTime - startTime;
@@ -399,13 +414,15 @@ describe('Performance Benchmarks', () => {
 
   describe('Memory Usage', () => {
     test('loading 1000 social posts uses reasonable memory', () => {
-      const posts = Array(1000).fill(null).map((_, i) => ({
-        id: `post_${i}`,
-        author: `Author ${i}`,
-        content: 'Content ' + i,
-        timestamp: new Date(),
-        platform: 'twitter',
-      }));
+      const posts = Array.from({ length: 1000 })
+        .fill(null)
+        .map((_, index) => ({
+          id: `post_${index}`,
+          author: `Author ${index}`,
+          content: 'Content ' + index,
+          timestamp: new Date(),
+          platform: 'twitter',
+        }));
 
       // Estimate memory: ~200 bytes per post
       const estimatedMemory = 1000 * 200; // 200KB
@@ -436,13 +453,16 @@ describe('Performance Benchmarks', () => {
     test('handle 5 simultaneous backup operations', async () => {
       const startTime = performance.now();
 
-      const backups = Array(5).fill(null).map((_, i) =>
-        new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({ id: `backup_${i}`, status: 'complete' });
-          }, 1000);
-        })
-      );
+      const backups = Array.from({ length: 5 })
+        .fill(null)
+        .map(
+          (_, index) =>
+            new Promise((resolve) => {
+              setTimeout(() => {
+                resolve({ id: `backup_${index}`, status: 'complete' });
+              }, 1000);
+            }),
+        );
 
       const results = await Promise.all(backups);
 
@@ -456,13 +476,16 @@ describe('Performance Benchmarks', () => {
     test('handle 10 simultaneous social syncs', async () => {
       const startTime = performance.now();
 
-      const syncs = Array(10).fill(null).map((_, i) =>
-        new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({ platform: `platform_${i}`, posts: 50 });
-          }, 500);
-        })
-      );
+      const syncs = Array.from({ length: 10 })
+        .fill(null)
+        .map(
+          (_, index) =>
+            new Promise((resolve) => {
+              setTimeout(() => {
+                resolve({ platform: `platform_${index}`, posts: 50 });
+              }, 500);
+            }),
+        );
 
       const results = await Promise.all(syncs);
 

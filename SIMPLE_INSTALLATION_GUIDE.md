@@ -120,6 +120,7 @@ npm run tauri dev
 **Problem**: You don't have Node.js or npm installed
 
 **Solution**:
+
 ```bash
 # Install Node.js (this also installs npm)
 # On Mac:
@@ -137,6 +138,7 @@ sudo apt install nodejs npm
 **Problem**: Expo CLI not installed
 
 **Solution**:
+
 ```bash
 npm install -g expo-cli
 ```
@@ -146,6 +148,7 @@ npm install -g expo-cli
 **Problem**: Dependencies missing
 
 **Solution**:
+
 ```bash
 # Delete and reinstall
 rm -rf node_modules package-lock.json
@@ -157,6 +160,7 @@ npm install --legacy-peer-deps
 **Problem**: Can't unlock vault
 
 **Solution**: Unfortunately, we can't recover passwords (that's what makes it secure!). You'll need to:
+
 1. Reset the app
 2. Lose your data
 3. Create a new vault
@@ -214,6 +218,7 @@ npm install --legacy-peer-deps
 ### Can You See My Data?
 
 **No.** Even if we wanted to (we don't), we can't because:
+
 - Data never leaves your device
 - Only you have the encryption key
 - We don't have servers to store anything
@@ -313,13 +318,16 @@ npm run tauri build
 ### Desktop App
 
 **Windows**:
+
 - Settings → Apps → Noteece → Uninstall
 
 **Mac**:
+
 - Drag app to Trash
 - Empty Trash
 
 **Linux**:
+
 ```bash
 sudo apt remove noteece
 ```
@@ -357,6 +365,7 @@ del /F /S /Q %APPDATA%\noteece  # Windows
 ### Contribute
 
 Love Noteece? Help make it better:
+
 - Report bugs
 - Suggest features
 - Improve documentation

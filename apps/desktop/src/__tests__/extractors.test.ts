@@ -234,7 +234,7 @@ const mockExtractorData = {
 
 describe('Social Media Extractors', () => {
   describe('Data Extraction', () => {
-    Object.entries(mockExtractorData).forEach(([platform, testData]) => {
+    for (const [platform, testData] of Object.entries(mockExtractorData)) {
       describe(`${platform.charAt(0).toUpperCase() + platform.slice(1)} Extractor`, () => {
         test('extracts all required fields', () => {
           // Verify that all expected fields are present in test data
@@ -275,36 +275,24 @@ describe('Social Media Extractors', () => {
           expect(emptyData.author).toBe('');
         });
       });
-    });
+    }
   });
 
   describe('Selector Resilience', () => {
     test('provides fallback selectors for major platforms', () => {
       const fallbackSelectors = {
-        twitter: [
-          '[data-testid="tweet"]',
-          'article[role="article"]',
-          'div[data-tweet-id]',
-        ],
-        instagram: [
-          'article.x1iyjqo2',
-          'article[role="presentation"]',
-          'div[data-id]',
-        ],
-        facebook: [
-          'div.x1yztbdb',
-          'div[role="article"]',
-          '[data-testid="post"]',
-        ],
+        twitter: ['[data-testid="tweet"]', 'article[role="article"]', 'div[data-tweet-id]'],
+        instagram: ['article.x1iyjqo2', 'article[role="presentation"]', 'div[data-id]'],
+        facebook: ['div.x1yztbdb', 'div[role="article"]', '[data-testid="post"]'],
       };
 
-      Object.entries(fallbackSelectors).forEach(([platform, selectors]) => {
+      for (const [platform, selectors] of Object.entries(fallbackSelectors)) {
         expect(selectors).toBeDefined();
         expect(selectors.length).toBeGreaterThanOrEqual(2);
-        selectors.forEach((selector) => {
+        for (const selector of selectors) {
           expect(selector).toBeTruthy();
-        });
-      });
+        }
+      }
     });
 
     test('detects DOM changes and adjusts selectors', () => {
@@ -337,8 +325,8 @@ describe('Social Media Extractors', () => {
       const corruptHtml = '<div><article data-broken';
 
       try {
-        const doc = new DOMParser().parseFromString(corruptHtml, 'text/html');
-        expect(doc).toBeDefined();
+        const document_ = new DOMParser().parseFromString(corruptHtml, 'text/html');
+        expect(document_).toBeDefined();
       } catch (error) {
         // Should handle gracefully
         expect(error).toBeDefined();
@@ -363,13 +351,13 @@ describe('Social Media Extractors', () => {
   describe('Performance', () => {
     test('extracts data from large posts efficiently', () => {
       const largePost = {
-        html: '<div>' + 'x'.repeat(10000) + '</div>',
+        html: '<div>' + 'x'.repeat(10_000) + '</div>',
         timestamp: Date.now(),
       };
 
       const startTime = performance.now();
       // Simulate extraction
-      const extracted = largePost.html.substring(0, 100);
+      const extracted = largePost.html.slice(0, 100);
       const endTime = performance.now();
 
       expect(endTime - startTime).toBeLessThan(100); // Should complete in < 100ms
@@ -377,16 +365,18 @@ describe('Social Media Extractors', () => {
     });
 
     test('handles batch extraction without memory leaks', () => {
-      const posts = Array(100).fill(null).map((_, i) => ({
-        id: `post-${i}`,
-        content: `Content ${i}`,
-      }));
+      const posts = Array.from({ length: 100 })
+        .fill(null)
+        .map((_, index) => ({
+          id: `post-${index}`,
+          content: `Content ${index}`,
+        }));
 
       expect(posts.length).toBe(100);
-      posts.forEach((post) => {
+      for (const post of posts) {
         expect(post.id).toBeTruthy();
         expect(post.content).toBeTruthy();
-      });
+      }
     });
 
     test('processes multiple platforms sequentially', async () => {
@@ -401,9 +391,9 @@ describe('Social Media Extractors', () => {
       }
 
       expect(results.length).toBe(5);
-      results.forEach((result) => {
+      for (const result of results) {
         expect(result.status).toBe('extracted');
-      });
+      }
     });
   });
 
@@ -418,19 +408,19 @@ describe('Social Media Extractors', () => {
     test('normalizes author names (trim, remove @ symbols)', () => {
       const names = ['  @testuser  ', '@testuser', 'testuser', '  testuser  '];
 
-      names.forEach((name) => {
+      for (const name of names) {
         const normalized = name.replace(/^\s*@?\s*/, '').replace(/\s*$/, '');
         expect(normalized).toBe('testuser');
-      });
+      }
     });
 
     test('standardizes content encoding', () => {
       const content = 'Test & content with <tags> and "quotes"';
       const decoded = content
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"');
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"');
 
       expect(decoded).toContain('&');
       expect(decoded).toContain('<tags>');
@@ -501,9 +491,9 @@ describe('Social Media Extractors', () => {
         'bereal',
       ];
 
-      platforms.forEach((platform) => {
+      for (const platform of platforms) {
         expect(mockExtractorData[platform as keyof typeof mockExtractorData]).toBeDefined();
-      });
+      }
     });
   });
 });

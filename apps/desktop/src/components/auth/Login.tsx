@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { authService } from '../../services/auth';
 import styles from './Auth.module.css';
 
-interface LoginProps {
+interface LoginProperties {
   onSuccess: () => void;
   onSwitchToRegister: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onSuccess, onSwitchToRegister }) => {
+const Login: React.FC<LoginProperties> = ({ onSuccess, onSwitchToRegister }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,8 +34,8 @@ const Login: React.FC<LoginProps> = ({ onSuccess, onSwitchToRegister }) => {
       setUsername('');
       setPassword('');
       onSuccess();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+    } catch (error_) {
+      setError(error_ instanceof Error ? error_.message : 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -91,11 +91,7 @@ const Login: React.FC<LoginProps> = ({ onSuccess, onSwitchToRegister }) => {
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading || !username.trim() || !password}
-            className={styles.primaryButton}
-          >
+          <button type="submit" disabled={loading || !username.trim() || !password} className={styles.primaryButton}>
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
@@ -104,11 +100,7 @@ const Login: React.FC<LoginProps> = ({ onSuccess, onSwitchToRegister }) => {
 
         <p className={styles.switchText}>
           Don't have an account?{' '}
-          <button
-            onClick={onSwitchToRegister}
-            className={styles.switchLink}
-            disabled={loading}
-          >
+          <button onClick={onSwitchToRegister} className={styles.switchLink} disabled={loading}>
             Create one
           </button>
         </p>

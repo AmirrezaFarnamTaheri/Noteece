@@ -61,24 +61,28 @@ This document outlines the architectural design for extending the Noteece Social
 ### Design Principles
 
 **1. Desktop-Centric**
+
 - Desktop is the **source of truth**
 - Mobile is a **read-mostly replica**
 - Extractors run on desktop only (WebView complexity)
 - Mobile syncs from desktop, doesn't scrape platforms directly
 
 **2. Local-First Sync**
+
 - Sync over local network (WiFi)
 - No cloud intermediary
 - Optional cloud sync (user-controlled, encrypted)
 - Offline-first mobile app
 
 **3. Security Parity**
+
 - Same encryption (SQLCipher + AEAD)
 - Same master password
 - Same privacy protections
 - Biometric unlock (mobile convenience)
 
 **4. Native Integration**
+
 - iOS: Share Sheet, Notifications, Widgets
 - Android: Share Target, Notifications, Widgets, Background Services
 - Platform-specific features (Siri Shortcuts, Google Assistant)
@@ -90,6 +94,7 @@ This document outlines the architectural design for extending the Noteece Social
 ### Mobile Framework: React Native
 
 **Why React Native?**
+
 - ✅ Cross-platform (iOS + Android from one codebase)
 - ✅ TypeScript support (matches desktop frontend)
 - ✅ Large ecosystem (libraries for everything)
@@ -98,6 +103,7 @@ This document outlines the architectural design for extending the Noteece Social
 - ❌ Not Rust (but can bridge to Rust via FFI)
 
 **Alternatives Considered:**
+
 - **Flutter**: Good, but different language (Dart)
 - **Swift + Kotlin**: Native but 2× development work
 - **Capacitor**: Similar to React Native, less mature
@@ -106,6 +112,7 @@ This document outlines the architectural design for extending the Noteece Social
 ### Core Technologies
 
 **React Native Stack:**
+
 ```typescript
 {
   "framework": "React Native 0.73+",
@@ -121,6 +128,7 @@ This document outlines the architectural design for extending the Noteece Social
 ```
 
 **Native Modules (iOS):**
+
 - Share Extension (Swift)
 - Background Sync (BackgroundTasks API)
 - Keychain (for master password)
@@ -128,6 +136,7 @@ This document outlines the architectural design for extending the Noteece Social
 - Widgets (SwiftUI)
 
 **Native Modules (Android):**
+
 - Share Target (Kotlin)
 - Background Service (WorkManager)
 - Keystore (for master password)
@@ -137,12 +146,14 @@ This document outlines the architectural design for extending the Noteece Social
 ### Rust Integration (Optional)
 
 **Why Rust on Mobile?**
+
 - Reuse core logic (social module)
 - Consistent encryption (same code as desktop)
 - Performance-critical operations
 - Trust existing, audited code
 
 **How:**
+
 ```
 Rust Core (packages/core-rs)
          ↓
@@ -156,11 +167,13 @@ Rust Core (packages/core-rs)
 ```
 
 **Tools:**
+
 - `cargo-ndk` (Android builds)
 - `cargo-lipo` (iOS universal binary)
 - `react-native-rust-bridge` or custom FFI
 
 **Challenges:**
+
 - Complex build setup
 - Debugging across language boundaries
 - Binary size (+5-10MB per architecture)
@@ -192,6 +205,7 @@ Desktop (Primary)            Mobile (Replica)
 **Option 1: Local Network Sync (Recommended)**
 
 **How it Works:**
+
 ```
 1. Desktop runs sync server (HTTP REST API)
    - Listens on local WiFi (e.g., 192.168.1.100:8080)
@@ -216,18 +230,20 @@ Desktop (Primary)            Mobile (Replica)
 ```
 
 **API Endpoints:**
+
 ```typescript
-POST   /api/v1/auth           // Authenticate mobile client
-GET    /api/v1/sync/status    // Get sync status
-POST   /api/v1/sync/pull      // Pull changes from desktop
-POST   /api/v1/sync/push      // Push changes to desktop
-GET    /api/v1/accounts       // List accounts
-GET    /api/v1/posts          // List posts (paginated)
-GET    /api/v1/categories     // List categories
-POST   /api/v1/category       // Create category (mobile → desktop)
+POST / api / v1 / auth; // Authenticate mobile client
+GET / api / v1 / sync / status; // Get sync status
+POST / api / v1 / sync / pull; // Pull changes from desktop
+POST / api / v1 / sync / push; // Push changes to desktop
+GET / api / v1 / accounts; // List accounts
+GET / api / v1 / posts; // List posts (paginated)
+GET / api / v1 / categories; // List categories
+POST / api / v1 / category; // Create category (mobile → desktop)
 ```
 
 **Security:**
+
 ```
 • TLS 1.3 (self-signed cert)
 • Certificate pinning on mobile
@@ -237,12 +253,14 @@ POST   /api/v1/category       // Create category (mobile → desktop)
 ```
 
 **Pros:**
+
 - ✅ Fast (local network)
 - ✅ Private (no cloud)
 - ✅ No infrastructure cost
 - ✅ Works offline (after initial sync)
 
 **Cons:**
+
 - ❌ Requires same WiFi network
 - ❌ Desktop must be running
 - ❌ No sync when traveling
@@ -252,6 +270,7 @@ POST   /api/v1/category       // Create category (mobile → desktop)
 **Option 2: Cloud Sync (Optional, Future)**
 
 **How it Works:**
+
 ```
 1. Desktop encrypts database
    - SQLCipher DB → Export → Encrypt with user key
@@ -267,16 +286,19 @@ POST   /api/v1/category       // Create category (mobile → desktop)
 ```
 
 **User-Controlled Cloud:**
+
 - User provides their own cloud storage
 - Noteece never sees unencrypted data
 - User pays for storage (if applicable)
 
 **Pros:**
+
 - ✅ Sync anywhere
 - ✅ No desktop running required
 - ✅ Backup included
 
 **Cons:**
+
 - ❌ Cloud cost (user pays)
 - ❌ Slower than local
 - ❌ Requires trust in cloud provider
@@ -287,16 +309,19 @@ POST   /api/v1/category       // Create category (mobile → desktop)
 **Option 3: Peer-to-Peer Sync (Future)**
 
 **How it Works:**
+
 - Desktop and mobile establish P2P connection
 - Use libp2p or WebRTC Data Channels
 - Sync over internet (NAT traversal)
 - No cloud intermediary
 
 **Pros:**
+
 - ✅ No cloud
 - ✅ Sync anywhere (not just local network)
 
 **Cons:**
+
 - ❌ Complex (NAT traversal, signaling)
 - ❌ May require STUN/TURN servers (cost)
 - ❌ Battery drain on mobile
@@ -306,6 +331,7 @@ POST   /api/v1/category       // Create category (mobile → desktop)
 ### Sync Data Model
 
 **Tables to Sync:**
+
 ```typescript
 // Full sync
 - social_account (read-only on mobile)
@@ -325,6 +351,7 @@ POST   /api/v1/category       // Create category (mobile → desktop)
 ```
 
 **Sync Manifest:**
+
 ```json
 {
   "last_sync": "2025-01-07T14:30:00Z",
@@ -351,6 +378,7 @@ POST   /api/v1/category       // Create category (mobile → desktop)
 ### React Native UI Components
 
 **1. SocialHub.tsx** (Main Screen)
+
 ```typescript
 /**
  * Main social feed screen
@@ -373,6 +401,7 @@ Features:
 ```
 
 **2. PostCard.tsx** (Post Display)
+
 ```typescript
 /**
  * Individual post card in timeline
@@ -396,6 +425,7 @@ Features:
 ```
 
 **3. AccountList.tsx** (Account Management)
+
 ```typescript
 /**
  * List of connected accounts
@@ -415,6 +445,7 @@ Features:
 ```
 
 **4. CategoryPicker.tsx** (Category Assignment)
+
 ```typescript
 /**
  * Bottom sheet for assigning categories
@@ -434,6 +465,7 @@ Features:
 ```
 
 **5. SearchScreen.tsx** (Search Interface)
+
 ```typescript
 /**
  * Full-text search across synced posts
@@ -451,6 +483,7 @@ Features:
 ```
 
 **6. AnalyticsScreen.tsx** (Insights)
+
 ```typescript
 /**
  * Usage analytics and insights
@@ -470,6 +503,7 @@ Features:
 ```
 
 **7. SettingsScreen.tsx** (App Settings)
+
 ```typescript
 /**
  * App settings and sync config
@@ -511,6 +545,7 @@ Features:
 **Feature:** Share posts from Twitter, Instagram, etc. → Noteece
 
 **How it Works:**
+
 ```
 User in Twitter app
    ↓
@@ -532,6 +567,7 @@ Background sync sends to desktop
 ```
 
 **Implementation:**
+
 ```swift
 // ShareExtension.swift
 class ShareViewController: UIViewController {
@@ -560,6 +596,7 @@ class ShareViewController: UIViewController {
 ```
 
 **Platforms Supported:**
+
 - Twitter: twitter.com/user/status/ID
 - Instagram: instagram.com/p/POST_ID
 - YouTube: youtube.com/watch?v=VIDEO_ID
@@ -569,6 +606,7 @@ class ShareViewController: UIViewController {
 - Pinterest: pinterest.com/pin/ID
 
 **User Experience:**
+
 ```
 1. User browsing Twitter
 2. Sees interesting post
@@ -584,6 +622,7 @@ class ShareViewController: UIViewController {
 **Feature:** Same as iOS Share Extension
 
 **Implementation:**
+
 ```kotlin
 // ShareActivity.kt
 class ShareActivity : AppCompatActivity() {
@@ -605,6 +644,7 @@ class ShareActivity : AppCompatActivity() {
 ```
 
 **Manifest:**
+
 ```xml
 <activity android:name=".ShareActivity">
     <intent-filter>
@@ -620,6 +660,7 @@ class ShareActivity : AppCompatActivity() {
 ### Background Sync
 
 **iOS: BackgroundTasks API**
+
 ```swift
 import BackgroundTasks
 
@@ -642,11 +683,13 @@ func handleAppRefresh(task: BGAppRefreshTask) {
 ```
 
 **Limitations:**
+
 - iOS limits background execution (15-30s)
 - Only works on WiFi (by default)
 - Battery considerations
 
 **Android: WorkManager**
+
 ```kotlin
 class SyncWorker(appContext: Context, workerParams: WorkerParameters)
     : Worker(appContext, workerParams) {
@@ -679,26 +722,29 @@ WorkManager.getInstance(context).enqueue(syncRequest)
 ### Notifications
 
 **Use Cases:**
+
 1. **New Posts Synced**: "42 new posts from 3 platforms"
 2. **Focus Mode Reminder**: "Deep Work mode is active"
 3. **Sync Complete**: "Synced with desktop"
 4. **Sync Error**: "Can't connect to desktop"
 
 **Implementation:**
+
 ```typescript
 // React Native Push Notification
-import PushNotification from 'react-native-push-notification';
+import PushNotification from "react-native-push-notification";
 
 PushNotification.localNotification({
-  channelId: 'noteece-sync',
-  title: 'Sync Complete',
-  message: '42 new posts from 3 platforms',
+  channelId: "noteece-sync",
+  title: "Sync Complete",
+  message: "42 new posts from 3 platforms",
   playSound: true,
-  soundName: 'default',
+  soundName: "default",
 });
 ```
 
 **Android Channels:**
+
 ```
 - noteece-sync: Sync notifications
 - noteece-focus: Focus mode reminders
@@ -706,6 +752,7 @@ PushNotification.localNotification({
 ```
 
 **iOS Categories:**
+
 ```
 - NoteeceSync
 - NoteeceFocus
@@ -717,6 +764,7 @@ PushNotification.localNotification({
 ### Widgets
 
 **iOS Widget (SwiftUI)**
+
 ```swift
 struct SocialTimelineWidget: Widget {
     var body: some WidgetConfiguration {
@@ -750,6 +798,7 @@ struct SocialTimelineWidgetView: View {
 ```
 
 **Android Widget (Jetpack Compose)**
+
 ```kotlin
 @Composable
 fun SocialTimelineWidget() {
@@ -774,6 +823,7 @@ fun SocialTimelineWidget() {
 ```
 
 **Widget Sizes:**
+
 - Small: Post count per platform
 - Medium: 3-5 recent posts
 - Large: 10 recent posts + mini analytics
@@ -785,11 +835,13 @@ fun SocialTimelineWidget() {
 ### Encryption
 
 **Same as Desktop:**
+
 - SQLCipher database encryption
 - XChaCha20-Poly1305 for credentials
 - Argon2 password hashing
 
 **Mobile-Specific:**
+
 - Biometric unlock (optional convenience)
 - Secure Enclave / Keystore for master password
 - App sandbox (iOS/Android enforced)
@@ -797,11 +849,13 @@ fun SocialTimelineWidget() {
 ### Master Password Storage
 
 **Option 1: Never Store (Most Secure)**
+
 - User enters password on every app launch
 - Annoying but most secure
 - Lost password = no recovery
 
 **Option 2: Biometric Unlock (Recommended)**
+
 ```
 First time:
 → User enters master password
@@ -821,6 +875,7 @@ Security:
 ```
 
 **iOS Keychain:**
+
 ```swift
 // Store encrypted DEK
 let query: [String: Any] = [
@@ -846,6 +901,7 @@ let status = SecItemCopyMatching(query as CFDictionary, &item)
 ```
 
 **Android Keystore:**
+
 ```kotlin
 // Generate biometric key
 val keyGenerator = KeyGenerator.getInstance(
@@ -876,6 +932,7 @@ val encryptedDEK = cipher.doFinal(dek)
 ### Network Security
 
 **TLS Configuration:**
+
 ```typescript
 // Certificate pinning
 const pinnedCert = `
@@ -884,7 +941,7 @@ const pinnedCert = `
 -----END CERTIFICATE-----
 `;
 
-axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
+axios.get("https://192.168.1.100:8080/api/v1/sync/status", {
   httpsAgent: new https.Agent({
     ca: pinnedCert,
     rejectUnauthorized: true,
@@ -893,6 +950,7 @@ axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
 ```
 
 **mDNS Security:**
+
 - mDNS traffic not encrypted (discovery only)
 - Actual sync over TLS
 - Authenticate before sync (password check)
@@ -904,6 +962,7 @@ axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
 ### Phase 1: Foundation (4 weeks)
 
 **Week 1: Project Setup**
+
 - [ ] Initialize React Native project
 - [ ] Configure TypeScript
 - [ ] Set up navigation (React Navigation)
@@ -911,6 +970,7 @@ axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
 - [ ] Set up dev environment (iOS + Android)
 
 **Week 2: Database & Sync**
+
 - [ ] Port database schema to mobile SQLCipher
 - [ ] Implement data models (TypeScript)
 - [ ] Create sync protocol client
@@ -918,6 +978,7 @@ axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
 - [ ] Basic sync (pull only)
 
 **Week 3: UI Components**
+
 - [ ] Create SocialHub (timeline)
 - [ ] Create PostCard component
 - [ ] Create AccountList
@@ -925,6 +986,7 @@ axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
 - [ ] Implement pull-to-refresh
 
 **Week 4: Core Features**
+
 - [ ] Full-text search (FTS5)
 - [ ] Filtering (platform, category, time)
 - [ ] Infinite scroll
@@ -934,6 +996,7 @@ axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
 ### Phase 2: Native Integration (4 weeks)
 
 **Week 5: Share Extensions**
+
 - [ ] iOS Share Extension
 - [ ] Android Share Target
 - [ ] URL detection & parsing
@@ -941,6 +1004,7 @@ axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
 - [ ] Sync queued shares to desktop
 
 **Week 6: Background Sync**
+
 - [ ] iOS BackgroundTasks integration
 - [ ] Android WorkManager integration
 - [ ] WiFi-only constraint
@@ -948,6 +1012,7 @@ axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
 - [ ] Error handling & retry
 
 **Week 7: Notifications**
+
 - [ ] Push notification setup
 - [ ] Notification channels (Android)
 - [ ] Notification categories (iOS)
@@ -956,6 +1021,7 @@ axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
 - [ ] Sync status notifications
 
 **Week 8: Widgets**
+
 - [ ] iOS Widget (SwiftUI)
 - [ ] Android Widget (Jetpack Compose)
 - [ ] Timeline preview
@@ -965,6 +1031,7 @@ axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
 ### Phase 3: Polish & Release (4 weeks)
 
 **Week 9: Biometric Auth**
+
 - [ ] iOS Face ID / Touch ID
 - [ ] Android Biometric Prompt
 - [ ] Keychain / Keystore integration
@@ -972,6 +1039,7 @@ axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
 - [ ] Security settings
 
 **Week 10: Analytics**
+
 - [ ] Port analytics dashboard to mobile
 - [ ] Charts (react-native-charts)
 - [ ] Platform breakdown
@@ -979,6 +1047,7 @@ axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
 - [ ] Category stats
 
 **Week 11: Testing**
+
 - [ ] Unit tests (Jest)
 - [ ] Integration tests
 - [ ] E2E tests (Detox)
@@ -986,6 +1055,7 @@ axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
 - [ ] Performance profiling
 
 **Week 12: Release**
+
 - [ ] App Store submission (iOS)
 - [ ] Play Store submission (Android)
 - [ ] Documentation
@@ -1003,6 +1073,7 @@ axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
 **Challenge:** SQLCipher requires native compilation, complex on React Native
 
 **Solutions:**
+
 - Use `react-native-sqlcipher-storage` (maintained fork)
 - Or `@journeyapps/react-native-quick-sqlite` + SQLCipher patch
 - Pre-compiled binaries for common architectures
@@ -1017,11 +1088,13 @@ axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
 **Challenge:** mDNS not natively supported in React Native
 
 **Solutions:**
+
 - iOS: Use NWBrowser (Network framework) via native module
 - Android: Use NsdManager via native module
 - Fallback: Manual IP entry
 
 **Libraries:**
+
 - `react-native-zeroconf`
 - Custom native module (preferred)
 
@@ -1032,6 +1105,7 @@ axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
 **Challenge:** iOS severely limits background execution
 
 **Solutions:**
+
 - Use BackgroundTasks API (30s max)
 - Optimize sync (incremental, only new data)
 - User expectation: Not real-time, syncs periodically
@@ -1046,6 +1120,7 @@ axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
 **Challenge:** 10,000+ posts = large database, slow queries
 
 **Solutions:**
+
 - Limit mobile replica (e.g., last 30 days only)
 - Lazy loading (fetch older posts on demand)
 - Optimize indexes for mobile queries
@@ -1058,6 +1133,7 @@ axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
 **Challenge:** User edits category on mobile, edits same category on desktop
 
 **Solutions:**
+
 - Last-write-wins (simple, may lose data)
 - CRDTs (complex, correct)
 - Timestamp + user prompt (manual resolution)
@@ -1071,12 +1147,14 @@ axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
 **Challenge:** React Native + SQLCipher + native libs = large app
 
 **Solutions:**
+
 - Enable Hermes (JS engine, smaller)
 - ProGuard / R8 (Android minification)
 - Remove unused dependencies
 - Split APKs by architecture (Android)
 
 **Expected Size:**
+
 - iOS: 40-60 MB
 - Android: 30-50 MB (split APKs)
 
@@ -1095,6 +1173,7 @@ The mobile implementation extends Noteece's local-first social media suite to iO
 **Team Size:** 1-2 mobile developers
 
 **Next Steps:**
+
 1. Finalize sync protocol specification
 2. Build desktop sync server (HTTP REST API)
 3. Prototype React Native app with basic sync
@@ -1104,6 +1183,6 @@ The mobile implementation extends Noteece's local-first social media suite to iO
 
 ---
 
-*Noteece Social Media Suite - Mobile Architecture*
-*Version 1.0 - January 2025*
-*Design Document - Not Yet Implemented*
+_Noteece Social Media Suite - Mobile Architecture_
+_Version 1.0 - January 2025_
+_Design Document - Not Yet Implemented_

@@ -11,7 +11,7 @@ import { useState, useEffect, useRef } from 'react';
 import { TimelinePost } from './TimelinePost';
 import { TimelineFilters, TimelineFilterValues } from './TimelineFilters';
 
-interface SocialTimelineProps {
+interface SocialTimelineProperties {
   spaceId: string;
 }
 
@@ -21,7 +21,7 @@ interface TimelineResponse {
   total_count: number;
 }
 
-export function SocialTimeline({ spaceId }: SocialTimelineProps) {
+export function SocialTimeline({ spaceId }: SocialTimelineProperties) {
   const [filters, setFilters] = useState<TimelineFilterValues>({
     platforms: [],
     searchQuery: '',
@@ -31,17 +31,9 @@ export function SocialTimeline({ spaceId }: SocialTimelineProps) {
 
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    error,
-    refetch,
-  } = useInfiniteQuery({
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, error, refetch } = useInfiniteQuery({
     queryKey: ['timeline', spaceId, filters],
-    queryFn: async ({ pageParam = 0 }) => {
+    queryFn: async ({ pageParam: pageParameter = 0 }) => {
       // Convert filters to timeline filters format
       const timelineFilters = {
         platforms: filters.platforms.length > 0 ? filters.platforms : null,
@@ -49,7 +41,7 @@ export function SocialTimeline({ spaceId }: SocialTimelineProps) {
         start_time: getStartTime(filters.timeRange),
         end_time: null,
         limit: 20,
-        offset: pageParam,
+        offset: pageParameter,
       };
 
       const result = await invoke<any[]>('get_unified_timeline_cmd', {
@@ -70,7 +62,7 @@ export function SocialTimeline({ spaceId }: SocialTimelineProps) {
         const currentOffset = allPages.reduce((sum, page) => sum + page.posts.length, 0);
         return currentOffset;
       }
-      return undefined;
+      return;
     },
     initialPageParam: 0,
   });
@@ -83,7 +75,7 @@ export function SocialTimeline({ spaceId }: SocialTimelineProps) {
           fetchNextPage();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     const target = observerTarget.current;
@@ -102,16 +94,21 @@ export function SocialTimeline({ spaceId }: SocialTimelineProps) {
   function getStartTime(timeRange: string): number | null {
     const now = Date.now(); // Already in milliseconds
     switch (timeRange) {
-      case 'today':
-        return now - 86400000; // 24 hours
-      case 'week':
-        return now - 604800000; // 7 days
-      case 'month':
-        return now - 2592000000; // 30 days
-      case 'year':
-        return now - 31536000000; // 365 days
-      default:
+      case 'today': {
+        return now - 86_400_000;
+      } // 24 hours
+      case 'week': {
+        return now - 604_800_000;
+      } // 7 days
+      case 'month': {
+        return now - 2_592_000_000;
+      } // 30 days
+      case 'year': {
+        return now - 31_536_000_000;
+      } // 365 days
+      default: {
         return null;
+      }
     }
   }
 
@@ -119,15 +116,19 @@ export function SocialTimeline({ spaceId }: SocialTimelineProps) {
   const sortPosts = (posts: any[]) => {
     const sorted = [...posts];
     switch (filters.sortBy) {
-      case 'oldest':
+      case 'oldest': {
         return sorted.sort((a, b) => a.timestamp - b.timestamp);
-      case 'most_liked':
+      }
+      case 'most_liked': {
         return sorted.sort((a, b) => (b.likes || 0) - (a.likes || 0));
-      case 'most_commented':
+      }
+      case 'most_commented': {
         return sorted.sort((a, b) => (b.comments || 0) - (a.comments || 0));
+      }
       case 'newest':
-      default:
+      default: {
         return sorted.sort((a, b) => b.timestamp - a.timestamp);
+      }
     }
   };
 

@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { authService, User } from '../../services/auth';
 import styles from './Auth.module.css';
 
-interface AccountSettingsProps {
+interface AccountSettingsProperties {
   onLogout: () => void;
 }
 
-const AccountSettings: React.FC<AccountSettingsProps> = ({ onLogout }) => {
+const AccountSettings: React.FC<AccountSettingsProperties> = ({ onLogout }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -72,8 +72,8 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ onLogout }) => {
       setConfirmPassword('');
       setShowPasswordChange(false);
       setTimeout(() => setMessage(''), 5000);
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Failed to change password');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Failed to change password');
       setMessageType('error');
     } finally {
       setLoading(false);
@@ -87,8 +87,8 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ onLogout }) => {
       setMessage('Logged out successfully');
       setMessageType('success');
       setTimeout(() => onLogout(), 1500);
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Logout failed');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Logout failed');
       setMessageType('error');
     } finally {
       setLoading(false);
@@ -122,11 +122,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ onLogout }) => {
           <p>Manage your Noteece account</p>
         </div>
 
-        {message && (
-          <div className={`${styles.message} ${styles[messageType]}`}>
-            {message}
-          </div>
-        )}
+        {message && <div className={`${styles.message} ${styles[messageType]}`}>{message}</div>}
 
         <section className={styles.section}>
           <h3>Profile Information</h3>
@@ -152,15 +148,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ onLogout }) => {
 
         <section className={styles.section}>
           <h3>Security</h3>
-          {!showPasswordChange ? (
-            <button
-              onClick={() => setShowPasswordChange(true)}
-              className={styles.secondaryButton}
-              disabled={loading}
-            >
-              Change Password
-            </button>
-          ) : (
+          {showPasswordChange ? (
             <form onSubmit={handleChangePassword} className={styles.form}>
               <div className={styles.formGroup}>
                 <label htmlFor="oldPassword">Current Password</label>
@@ -247,6 +235,10 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ onLogout }) => {
                 </button>
               </div>
             </form>
+          ) : (
+            <button onClick={() => setShowPasswordChange(true)} className={styles.secondaryButton} disabled={loading}>
+              Change Password
+            </button>
           )}
         </section>
 
@@ -255,11 +247,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ onLogout }) => {
           <p className={styles.description}>
             Your session will automatically expire after 24 hours of inactivity for security purposes.
           </p>
-          <button
-            onClick={handleLogout}
-            disabled={loading}
-            className={styles.dangerButton}
-          >
+          <button onClick={handleLogout} disabled={loading} className={styles.dangerButton}>
             {loading ? 'Logging out...' : 'Logout'}
           </button>
         </section>

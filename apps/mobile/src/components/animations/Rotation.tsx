@@ -48,7 +48,9 @@ export function Rotation({
 
   const rotate = rotateAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: clockwise ? ["0deg", `${degrees}deg`] : ["0deg", `-${degrees}deg`],
+    outputRange: clockwise
+      ? ["0deg", `${degrees}deg`]
+      : ["0deg", `-${degrees}deg`],
   });
 
   return (

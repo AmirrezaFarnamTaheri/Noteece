@@ -94,7 +94,7 @@ const SyncStatus: React.FC = () => {
   const { data: devices = [], isLoading: devicesLoading } = useQuery({
     queryKey: ['syncDevices'],
     queryFn: () => invoke<SyncDevice[]>('get_sync_devices_cmd'),
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 30_000, // Refetch every 30 seconds
     onError: (error) => {
       notifications.show({
         title: 'Failed to load devices',
@@ -108,7 +108,7 @@ const SyncStatus: React.FC = () => {
   const { data: conflicts = [], isLoading: conflictsLoading } = useQuery({
     queryKey: ['syncConflicts'],
     queryFn: () => invoke<SyncConflict[]>('get_sync_conflicts_cmd'),
-    refetchInterval: 15000, // Refetch every 15 seconds
+    refetchInterval: 15_000, // Refetch every 15 seconds
     onError: (error) => {
       notifications.show({
         title: 'Failed to load conflicts',
@@ -161,7 +161,7 @@ const SyncStatus: React.FC = () => {
       // Simulate progress for now (in real implementation, this would track actual sync progress)
       let cleared = false;
       const progressInterval = setInterval(() => {
-        setSyncProgress((prev) => Math.min(prev + 10, 90));
+        setSyncProgress((previous) => Math.min(previous + 10, 90));
       }, 200);
 
       const clearProgress = () => {
@@ -443,7 +443,7 @@ const SyncStatus: React.FC = () => {
                     <Stack gap="xs">
                       <Group gap="xs">
                         <Text size="sm" fw={600}>
-                          {conflict.entity_type}: {conflict.entity_id.substring(0, 8)}...
+                          {conflict.entity_type}: {conflict.entity_id.slice(0, 8)}...
                         </Text>
                         <Badge color="yellow" size="xs" leftSection={<IconAlertCircle size={12} />}>
                           Pending
@@ -574,12 +574,13 @@ const SyncStatus: React.FC = () => {
         {selectedConflict && (
           <Stack gap="md">
             <Alert icon={<IconAlertCircle size={16} />} title="Conflict Detected" color="yellow">
-              This {selectedConflict.entity_type} was modified on two different devices. Choose which version to keep, or merge them manually.
+              This {selectedConflict.entity_type} was modified on two different devices. Choose which version to keep,
+              or merge them manually.
             </Alert>
 
             <Stack gap="xs">
               <Text size="sm" fw={600}>
-                {selectedConflict.entity_type}: {selectedConflict.entity_id.substring(0, 12)}...
+                {selectedConflict.entity_type}: {selectedConflict.entity_id.slice(0, 12)}...
               </Text>
               <Text size="xs" c="dimmed">
                 Conflict Type: {selectedConflict.conflict_type}

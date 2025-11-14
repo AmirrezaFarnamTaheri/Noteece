@@ -4,7 +4,20 @@
  * Displays a single social media account with actions
  */
 
-import { Card, Group, Text, Badge, ActionIcon, Switch, Menu, Button, Modal, Select, NumberInput, Stack } from '@mantine/core';
+import {
+  Card,
+  Group,
+  Text,
+  Badge,
+  ActionIcon,
+  Switch,
+  Menu,
+  Button,
+  Modal,
+  Select,
+  NumberInput,
+  Stack,
+} from '@mantine/core';
 import { IconDots, IconTrash, IconSettings, IconExternalLink } from '@tabler/icons-react';
 import { invoke } from '@tauri-apps/api/tauri';
 import type { SocialAccount } from '@noteece/types';
@@ -14,19 +27,18 @@ import { updateSocialAccount, deleteSocialAccount } from '../../services/socialA
 import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
 
-interface AccountCardProps {
+interface AccountCardProperties {
   account: SocialAccount;
 }
 
-export function AccountCard({ account }: AccountCardProps) {
+export function AccountCard({ account }: AccountCardProperties) {
   const queryClient = useQueryClient();
   const platform = SUPPORTED_PLATFORMS[account.platform as keyof typeof SUPPORTED_PLATFORMS];
   const [settingsModalOpened, setSettingsModalOpened] = useState(false);
   const [syncFrequency, setSyncFrequency] = useState<number | string>(account.sync_frequency_minutes || 60);
 
   const toggleMutation = useMutation({
-    mutationFn: (enabled: boolean) =>
-      updateSocialAccount(account.id, { enabled }),
+    mutationFn: (enabled: boolean) => updateSocialAccount(account.id, { enabled }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['socialAccounts'] });
       notifications.show({
@@ -105,9 +117,7 @@ export function AccountCard({ account }: AccountCardProps) {
         <Group>
           <Text size="xl">{platform?.icon || '📱'}</Text>
           <div>
-            <Text weight={500}>
-              {account.display_name || account.username}
-            </Text>
+            <Text weight={500}>{account.display_name || account.username}</Text>
             <Text size="sm" c="dimmed">
               @{account.username}
             </Text>
@@ -136,11 +146,7 @@ export function AccountCard({ account }: AccountCardProps) {
                 Settings
               </Menu.Item>
               <Menu.Divider />
-              <Menu.Item
-                color="red"
-                leftSection={<IconTrash size={14} />}
-                onClick={handleDelete}
-              >
+              <Menu.Item color="red" leftSection={<IconTrash size={14} />} onClick={handleDelete}>
                 Delete Account
               </Menu.Item>
             </Menu.Dropdown>
@@ -162,9 +168,7 @@ export function AccountCard({ account }: AccountCardProps) {
           </Badge>
         )}
         {account.sync_frequency_minutes && (
-          <Badge variant="outline">
-            Sync every {account.sync_frequency_minutes}min
-          </Badge>
+          <Badge variant="outline">Sync every {account.sync_frequency_minutes}min</Badge>
         )}
       </Group>
 
@@ -211,10 +215,7 @@ export function AccountCard({ account }: AccountCardProps) {
             defaultValue={account.extraction_mode || 'webview'}
           />
           <Group justify="flex-end" mt="md">
-            <Button
-              variant="light"
-              onClick={() => setSettingsModalOpened(false)}
-            >
+            <Button variant="light" onClick={() => setSettingsModalOpened(false)}>
               Close
             </Button>
             <Button

@@ -7,7 +7,16 @@
  */
 
 import React, { useState, useRef } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, Share, Alert, Animated } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Share,
+  Alert,
+  Animated,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Swipeable } from "react-native-gesture-handler";
 import { format } from "date-fns";
@@ -104,24 +113,20 @@ export function PostCard({
   };
 
   const handleHide = () => {
-    Alert.alert(
-      "Hide Post",
-      "Hide this post from your timeline?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Hide",
-          style: "destructive",
-          onPress: () => onHide?.(),
-        },
-      ],
-    );
+    Alert.alert("Hide Post", "Hide this post from your timeline?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Hide",
+        style: "destructive",
+        onPress: () => onHide?.(),
+      },
+    ]);
   };
 
   // Render right swipe action (Bookmark)
   const renderRightActions = (
     progress: Animated.AnimatedInterpolation<number>,
-    dragX: Animated.AnimatedInterpolation<number>
+    dragX: Animated.AnimatedInterpolation<number>,
   ) => {
     const scale = dragX.interpolate({
       inputRange: [-100, 0],
@@ -130,7 +135,9 @@ export function PostCard({
     });
 
     return (
-      <Animated.View style={[styles.swipeRightAction, { transform: [{ scale }] }]}>
+      <Animated.View
+        style={[styles.swipeRightAction, { transform: [{ scale }] }]}
+      >
         <TouchableOpacity
           style={styles.swipeActionButton}
           onPress={handleSwipeBookmark}
@@ -151,7 +158,7 @@ export function PostCard({
   // Render left swipe action (Hide)
   const renderLeftActions = (
     progress: Animated.AnimatedInterpolation<number>,
-    dragX: Animated.AnimatedInterpolation<number>
+    dragX: Animated.AnimatedInterpolation<number>,
   ) => {
     const scale = dragX.interpolate({
       inputRange: [0, 100],
@@ -160,7 +167,9 @@ export function PostCard({
     });
 
     return (
-      <Animated.View style={[styles.swipeLeftAction, { transform: [{ scale }] }]}>
+      <Animated.View
+        style={[styles.swipeLeftAction, { transform: [{ scale }] }]}
+      >
         <TouchableOpacity
           style={styles.swipeActionButton}
           onPress={handleSwipeHide}
@@ -186,185 +195,173 @@ export function PostCard({
         onPress={onPress}
         activeOpacity={0.7}
       >
-      {/* Header: Platform Badge + Author Info */}
-      <View style={styles.header}>
-        <View
-          style={[
-            styles.platformBadge,
-            { backgroundColor: platformConfig.color },
-          ]}
-        >
-          <Text style={styles.platformIcon}>{platformConfig.icon}</Text>
+        {/* Header: Platform Badge + Author Info */}
+        <View style={styles.header}>
+          <View
+            style={[
+              styles.platformBadge,
+              { backgroundColor: platformConfig.color },
+            ]}
+          >
+            <Text style={styles.platformIcon}>{platformConfig.icon}</Text>
+          </View>
+
+          <View style={styles.authorInfo}>
+            <View style={styles.authorNameRow}>
+              <Text style={styles.authorName}>{post.author}</Text>
+              {post.account_display_name && (
+                <Text style={styles.accountName}>@{post.account_username}</Text>
+              )}
+            </View>
+            <Text style={styles.timestamp}>
+              {format(new Date(post.created_at), "MMM d, h:mm a")}
+            </Text>
+          </View>
         </View>
 
-        <View style={styles.authorInfo}>
-          <View style={styles.authorNameRow}>
-            <Text style={styles.authorName}>{post.author}</Text>
-            {post.account_display_name && (
-              <Text style={styles.accountName}>
-                @{post.account_username}
-              </Text>
+        {/* Content */}
+        {post.content && (
+          <Text style={styles.content} numberOfLines={10}>
+            {post.content}
+          </Text>
+        )}
+
+        {/* Media Preview */}
+        {post.media_urls && post.media_urls.length > 0 && (
+          <View style={styles.mediaContainer}>
+            {post.media_urls.slice(0, 4).map((url, index) => (
+              <Image
+                key={index}
+                source={{ uri: url }}
+                style={styles.mediaThumbnail}
+                resizeMode="cover"
+              />
+            ))}
+            {post.media_urls.length > 4 && (
+              <View style={styles.mediaOverlay}>
+                <Text style={styles.mediaOverlayText}>
+                  +{post.media_urls.length - 4}
+                </Text>
+              </View>
             )}
           </View>
-          <Text style={styles.timestamp}>
-            {format(new Date(post.created_at), "MMM d, h:mm a")}
-          </Text>
-        </View>
-      </View>
+        )}
 
-      {/* Content */}
-      {post.content && (
-        <Text style={styles.content} numberOfLines={10}>
-          {post.content}
-        </Text>
-      )}
-
-      {/* Media Preview */}
-      {post.media_urls && post.media_urls.length > 0 && (
-        <View style={styles.mediaContainer}>
-          {post.media_urls.slice(0, 4).map((url, index) => (
-            <Image
-              key={index}
-              source={{ uri: url }}
-              style={styles.mediaThumbnail}
-              resizeMode="cover"
-            />
-          ))}
-          {post.media_urls.length > 4 && (
-            <View style={styles.mediaOverlay}>
-              <Text style={styles.mediaOverlayText}>
-                +{post.media_urls.length - 4}
-              </Text>
-            </View>
-          )}
-        </View>
-      )}
-
-      {/* Engagement Metrics */}
-      {post.engagement && (
-        <View style={styles.engagement}>
-          {post.engagement.likes !== undefined && post.engagement.likes > 0 && (
-            <View style={styles.engagementItem}>
-              <Text style={styles.engagementIcon}>❤️</Text>
-              <Text style={styles.engagementText}>
-                {formatNumber(post.engagement.likes)}
-              </Text>
-            </View>
-          )}
-          {post.engagement.comments !== undefined &&
-            post.engagement.comments > 0 && (
-              <View style={styles.engagementItem}>
-                <Text style={styles.engagementIcon}>💬</Text>
-                <Text style={styles.engagementText}>
-                  {formatNumber(post.engagement.comments)}
-                </Text>
-              </View>
-            )}
-          {post.engagement.shares !== undefined &&
-            post.engagement.shares > 0 && (
-              <View style={styles.engagementItem}>
-                <Text style={styles.engagementIcon}>🔄</Text>
-                <Text style={styles.engagementText}>
-                  {formatNumber(post.engagement.shares)}
-                </Text>
-              </View>
-            )}
-          {post.engagement.views !== undefined && post.engagement.views > 0 && (
-            <View style={styles.engagementItem}>
-              <Text style={styles.engagementIcon}>👁️</Text>
-              <Text style={styles.engagementText}>
-                {formatNumber(post.engagement.views)}
-              </Text>
-            </View>
-          )}
-        </View>
-      )}
-
-      {/* Action Buttons */}
-      <View style={styles.actions}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={handleBookmark}
-        >
-          <Ionicons
-            name={isBookmarked ? "bookmark" : "bookmark-outline"}
-            size={20}
-            color={isBookmarked ? "#007AFF" : "#666"}
-          />
-          <Text style={[
-            styles.actionText,
-            isBookmarked && styles.actionTextActive
-          ]}>
-            {isBookmarked ? "Saved" : "Save"}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={handleShare}
-        >
-          <Ionicons
-            name="share-outline"
-            size={20}
-            color="#666"
-          />
-          <Text style={styles.actionText}>Share</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={handleHide}
-        >
-          <Ionicons
-            name="eye-off-outline"
-            size={20}
-            color="#666"
-          />
-          <Text style={styles.actionText}>Hide</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Category Tags */}
-      <View style={styles.footer}>
-        <View style={styles.categories}>
-          {post.categories.map((category) => (
-            <TouchableOpacity
-              key={category.id}
-              style={[
-                styles.categoryTag,
-                {
-                  backgroundColor: category.color
-                    ? `${category.color}20`
-                    : "#E0E0E0",
-                  borderColor: category.color || "#999",
-                },
-              ]}
-              onPress={() => onCategoryPress?.(category.id)}
-            >
-              {category.icon && (
-                <Text style={styles.categoryIcon}>{category.icon}</Text>
+        {/* Engagement Metrics */}
+        {post.engagement && (
+          <View style={styles.engagement}>
+            {post.engagement.likes !== undefined &&
+              post.engagement.likes > 0 && (
+                <View style={styles.engagementItem}>
+                  <Text style={styles.engagementIcon}>❤️</Text>
+                  <Text style={styles.engagementText}>
+                    {formatNumber(post.engagement.likes)}
+                  </Text>
+                </View>
               )}
-              <Text
-                style={[
-                  styles.categoryText,
-                  { color: category.color || "#666" },
-                ]}
-              >
-                {category.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
+            {post.engagement.comments !== undefined &&
+              post.engagement.comments > 0 && (
+                <View style={styles.engagementItem}>
+                  <Text style={styles.engagementIcon}>💬</Text>
+                  <Text style={styles.engagementText}>
+                    {formatNumber(post.engagement.comments)}
+                  </Text>
+                </View>
+              )}
+            {post.engagement.shares !== undefined &&
+              post.engagement.shares > 0 && (
+                <View style={styles.engagementItem}>
+                  <Text style={styles.engagementIcon}>🔄</Text>
+                  <Text style={styles.engagementText}>
+                    {formatNumber(post.engagement.shares)}
+                  </Text>
+                </View>
+              )}
+            {post.engagement.views !== undefined &&
+              post.engagement.views > 0 && (
+                <View style={styles.engagementItem}>
+                  <Text style={styles.engagementIcon}>👁️</Text>
+                  <Text style={styles.engagementText}>
+                    {formatNumber(post.engagement.views)}
+                  </Text>
+                </View>
+              )}
+          </View>
+        )}
 
-          {/* Add Category Button */}
+        {/* Action Buttons */}
+        <View style={styles.actions}>
           <TouchableOpacity
-            style={styles.addCategoryButton}
-            onPress={onAssignCategory}
+            style={styles.actionButton}
+            onPress={handleBookmark}
           >
-            <Text style={styles.addCategoryText}>+ Category</Text>
+            <Ionicons
+              name={isBookmarked ? "bookmark" : "bookmark-outline"}
+              size={20}
+              color={isBookmarked ? "#007AFF" : "#666"}
+            />
+            <Text
+              style={[
+                styles.actionText,
+                isBookmarked && styles.actionTextActive,
+              ]}
+            >
+              {isBookmarked ? "Saved" : "Save"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
+            <Ionicons name="share-outline" size={20} color="#666" />
+            <Text style={styles.actionText}>Share</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionButton} onPress={handleHide}>
+            <Ionicons name="eye-off-outline" size={20} color="#666" />
+            <Text style={styles.actionText}>Hide</Text>
           </TouchableOpacity>
         </View>
-      </View>
-    </TouchableOpacity>
+
+        {/* Category Tags */}
+        <View style={styles.footer}>
+          <View style={styles.categories}>
+            {post.categories.map((category) => (
+              <TouchableOpacity
+                key={category.id}
+                style={[
+                  styles.categoryTag,
+                  {
+                    backgroundColor: category.color
+                      ? `${category.color}20`
+                      : "#E0E0E0",
+                    borderColor: category.color || "#999",
+                  },
+                ]}
+                onPress={() => onCategoryPress?.(category.id)}
+              >
+                {category.icon && (
+                  <Text style={styles.categoryIcon}>{category.icon}</Text>
+                )}
+                <Text
+                  style={[
+                    styles.categoryText,
+                    { color: category.color || "#666" },
+                  ]}
+                >
+                  {category.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+
+            {/* Add Category Button */}
+            <TouchableOpacity
+              style={styles.addCategoryButton}
+              onPress={onAssignCategory}
+            >
+              <Text style={styles.addCategoryText}>+ Category</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </TouchableOpacity>
     </Swipeable>
   );
 }

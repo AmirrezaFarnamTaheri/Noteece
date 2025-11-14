@@ -142,7 +142,8 @@ export function SocialHub() {
     try {
       const filters: TimelineFilters = {
         platforms: filter.platforms.length > 0 ? filter.platforms : undefined,
-        categories: filter.categories.length > 0 ? filter.categories : undefined,
+        categories:
+          filter.categories.length > 0 ? filter.categories : undefined,
       };
       const newPosts = await getTimelinePosts(spaceId, filters, 50, 0);
       setPosts(newPosts);
@@ -188,7 +189,8 @@ export function SocialHub() {
   const loadPosts = async () => {
     const filters: TimelineFilters = {
       platforms: selectedPlatforms.length > 0 ? selectedPlatforms : undefined,
-      categories: selectedCategories.length > 0 ? selectedCategories : undefined,
+      categories:
+        selectedCategories.length > 0 ? selectedCategories : undefined,
       search_query: searchQuery || undefined,
     };
 
@@ -259,7 +261,9 @@ export function SocialHub() {
       const currentCategoryIds = post.categories.map((c) => c.id);
 
       // Find categories to add and remove
-      const toAdd = categoryIds.filter((id) => !currentCategoryIds.includes(id));
+      const toAdd = categoryIds.filter(
+        (id) => !currentCategoryIds.includes(id),
+      );
       const toRemove = currentCategoryIds.filter(
         (id) => !categoryIds.includes(id),
       );
@@ -323,7 +327,7 @@ export function SocialHub() {
             Alert.alert("Success", "Shared content has been processed");
           },
         },
-      ]
+      ],
     );
   };
 
@@ -396,18 +400,14 @@ export function SocialHub() {
                 style={styles.savedFilterChip}
                 onPress={() => applySavedFilter(filter)}
                 onLongPress={() =>
-                  Alert.alert(
-                    "Delete Filter",
-                    `Delete "${filter.name}"?`,
-                    [
-                      { text: "Cancel", style: "cancel" },
-                      {
-                        text: "Delete",
-                        style: "destructive",
-                        onPress: () => deleteSavedFilter(filter.id),
-                      },
-                    ],
-                  )
+                  Alert.alert("Delete Filter", `Delete "${filter.name}"?`, [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                      text: "Delete",
+                      style: "destructive",
+                      onPress: () => deleteSavedFilter(filter.id),
+                    },
+                  ])
                 }
               >
                 <Text style={styles.savedFilterIcon}>{filter.icon}</Text>
@@ -550,8 +550,8 @@ export function SocialHub() {
                     item.type === "url"
                       ? "link"
                       : item.type === "image"
-                      ? "image"
-                      : "text"
+                        ? "image"
+                        : "text"
                   }
                   size={24}
                   color="#007AFF"
@@ -616,9 +616,7 @@ export function SocialHub() {
       <CategoryPicker
         visible={showCategoryPicker}
         categories={categories}
-        selectedCategoryIds={
-          selectedPost?.categories.map((c) => c.id) || []
-        }
+        selectedCategoryIds={selectedPost?.categories.map((c) => c.id) || []}
         onClose={() => {
           setShowCategoryPicker(false);
           setSelectedPost(null);
@@ -644,9 +642,7 @@ export function SocialHub() {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Save Filter Preset</Text>
-              <TouchableOpacity
-                onPress={() => setShowSaveFilterModal(false)}
-              >
+              <TouchableOpacity onPress={() => setShowSaveFilterModal(false)}>
                 <Ionicons name="close" size={24} color="#666" />
               </TouchableOpacity>
             </View>

@@ -1,6 +1,7 @@
 # Binary Data Encryption Fix - Sync Agent
 
 ## Critical Issue
+
 **Location**: `packages/core-rs/src/sync_agent.rs`
 
 The sync agent incorrectly treats ciphertext as UTF-8 strings instead of opaque binary data. This can cause data corruption when syncing encrypted content.
@@ -19,6 +20,7 @@ let ciphertext: String = crate::crypto::encrypt_string(&data_str, dek)?;
 ## Recommended Solution
 
 ### 1. Update Database Schema
+
 Change TEXT columns to BLOB for encrypted data:
 
 ```sql
@@ -41,7 +43,7 @@ CREATE TABLE sync_deltas (
 );
 
 -- Copy data (decrypt, then re-encrypt properly)
-INSERT INTO sync_deltas 
+INSERT INTO sync_deltas
 SELECT id, space_id, entity_type, entity_id, operation,
        NULL as data,  -- Will re-encrypt
        NULL as encrypted_data,  -- Will re-encrypt
@@ -67,25 +69,25 @@ pub fn encrypt_bytes(data: &[u8], dek: &[u8]) -> Result<Vec<u8>, CryptoError> {
     if dek.len() != 32 {
         return Err(CryptoError::InvalidKeyLength);
     }
-    
+
     // Generate random nonce
     let mut nonce = [0u8; 24];
     OsRng.fill_bytes(&mut nonce);
-    
+
     // Create cipher
     let key = Key::from_slice(dek);
     let cipher = XChaCha20Poly1305::new(key);
     let nonce_obj = XNonce::from_slice(&nonce);
-    
+
     // Encrypt
     let ciphertext = cipher.encrypt(nonce_obj, data)
         .map_err(|_| CryptoError::EncryptionFailed)?;
-    
+
     // Prepend nonce to ciphertext
     let mut result = Vec::with_capacity(24 + ciphertext.len());
     result.extend_from_slice(&nonce);
     result.extend_from_slice(&ciphertext);
-    
+
     Ok(result)
 }
 
@@ -94,23 +96,23 @@ pub fn decrypt_bytes(encrypted: &[u8], dek: &[u8]) -> Result<Vec<u8>, CryptoErro
     if dek.len() != 32 {
         return Err(CryptoError::InvalidKeyLength);
     }
-    
+
     if encrypted.len() < 24 {
         return Err(CryptoError::InvalidCiphertext);
     }
-    
+
     // Extract nonce and ciphertext
     let (nonce, ciphertext) = encrypted.split_at(24);
-    
+
     // Create cipher
     let key = Key::from_slice(dek);
     let cipher = XChaCha20Poly1305::new(key);
     let nonce_obj = XNonce::from_slice(nonce);
-    
+
     // Decrypt
     let plaintext = cipher.decrypt(nonce_obj, ciphertext)
         .map_err(|_| CryptoError::DecryptionFailed)?;
-    
+
     Ok(plaintext)
 }
 
@@ -143,7 +145,7 @@ impl SyncAgent {
         let delta_id = Ulid::new().to_string();
         let device_id = self.device_id.clone();
         let timestamp = chrono::Utc::now().timestamp();
-        
+
         // Encrypt data as binary
         let encrypted_data = if !data.is_empty() {
             let dek = self.get_dek(conn)?;
@@ -151,12 +153,12 @@ impl SyncAgent {
         } else {
             None
         };
-        
+
         // Update vector clock
         let mut clock = self.get_vector_clock(conn, &space_id)?;
         *clock.entry(device_id.clone()).or_insert(0) += 1;
         let clock_json = serde_json::to_string(&clock)?;
-        
+
         // Insert with BLOB data
         conn.execute(
             "INSERT INTO sync_deltas (
@@ -175,7 +177,7 @@ impl SyncAgent {
                 device_id
             ],
         )?;
-        
+
         Ok(SyncDelta {
             id: delta_id,
             space_id,
@@ -189,7 +191,7 @@ impl SyncAgent {
             device_id,
         })
     }
-    
+
     pub fn get_pending_deltas(&self, conn: &Connection) -> Result<Vec<SyncDelta>, SyncError> {
         let mut stmt = conn.prepare(
             "SELECT id, space_id, entity_type, entity_id, operation,
@@ -198,14 +200,14 @@ impl SyncAgent {
              WHERE space_id = ?1 AND synced = 0
              ORDER BY timestamp ASC"
         )?;
-        
+
         let space_id_str = self.space_id.to_string();
         let deltas = stmt.query_map(params![space_id_str], |row| {
             let encrypted_data: Option<Vec<u8>> = row.get(5)?;  // BLOB returns Vec<u8>
             let vector_clock_json: String = row.get(6)?;
-            let vector_clock: HashMap<String, i64> = 
+            let vector_clock: HashMap<String, i64> =
                 serde_json::from_str(&vector_clock_json).unwrap_or_default();
-            
+
             // Decrypt data
             let data = if let Some(ref enc) = encrypted_data {
                 let dek = self.get_dek(conn)?;
@@ -213,7 +215,7 @@ impl SyncAgent {
             } else {
                 None
             };
-            
+
             Ok(SyncDelta {
                 id: row.get(0)?,
                 space_id: row.get(1)?,
@@ -227,7 +229,7 @@ impl SyncAgent {
                 device_id: row.get(8)?,
             })
         })?;
-        
+
         deltas.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 }
@@ -255,7 +257,7 @@ pub fn sync_note_create(&self, note: &Note) -> Result<(), SyncError> {
 pub fn apply_note_delta(&self, delta: &SyncDelta) -> Result<(), SyncError> {
     let data = delta.data.as_ref().ok_or(SyncError::MissingData)?;
     let note: Note = serde_json::from_slice(data)?;  // from_slice instead of from_str
-    
+
     // Apply note to database
     // ...
     Ok(())
@@ -268,36 +270,36 @@ pub fn apply_note_delta(&self, delta: &SyncDelta) -> Result<(), SyncError> {
 #[cfg(test)]
 mod binary_encryption_tests {
     use super::*;
-    
+
     #[test]
     fn test_encrypt_decrypt_binary_data() {
         let dek = generate_dek();
         let data = vec![0u8, 255, 128, 42, 0, 0, 255];  // Binary data with nulls
-        
+
         let encrypted = encrypt_bytes(&data, &dek).unwrap();
         let decrypted = decrypt_bytes(&encrypted, &dek).unwrap();
-        
+
         assert_eq!(data, decrypted);
     }
-    
+
     #[test]
     fn test_encrypt_invalid_utf8() {
         let dek = generate_dek();
         // Invalid UTF-8 sequence
         let data = vec![0xFF, 0xFE, 0xFD];
-        
+
         let encrypted = encrypt_bytes(&data, &dek).unwrap();
         let decrypted = decrypt_bytes(&encrypted, &dek).unwrap();
-        
+
         assert_eq!(data, decrypted);
         // Should NOT lose data like from_utf8_lossy would
     }
-    
+
     #[test]
     fn test_sync_binary_note_content() {
         let sync_agent = create_test_sync_agent();
         let note_data = b"Note with \xFF\xFE binary content";
-        
+
         let delta = sync_agent.create_delta(
             &conn,
             "note",
@@ -305,7 +307,7 @@ mod binary_encryption_tests {
             SyncOperation::Create,
             note_data,
         ).unwrap();
-        
+
         // Retrieve and verify
         let retrieved = sync_agent.get_pending_deltas(&conn).unwrap();
         assert_eq!(retrieved[0].data.as_ref().unwrap(), note_data);
@@ -324,11 +326,13 @@ mod binary_encryption_tests {
 ## Performance Impact
 
 ✅ **Positive:**
+
 - Eliminates UTF-8 validation overhead
 - Reduces data corruption risk
 - Proper binary handling is more efficient
 
 ⚠️ **Neutral:**
+
 - Database size unchanged (BLOB vs TEXT storage similar)
 - No significant performance difference
 
@@ -339,6 +343,7 @@ mod binary_encryption_tests {
 ✅ **No data loss from encoding conversion**
 
 ## Estimated Effort
+
 - **Development**: 1-2 days
 - **Testing**: 1 day
 - **Migration Script**: 1 day

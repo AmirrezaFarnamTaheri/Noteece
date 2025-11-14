@@ -397,6 +397,7 @@ For more details, see the [Security Architecture](DEVELOPER_GUIDE.md#security-ar
 ### Completed in November 2025 🎉
 
 **Session 1: CalDAV Commands & OCR UI**
+
 - ✅ **OCR Integration (100%)** - Complete text extraction system
   - Full frontend UI (OcrManager.tsx - 362 lines)
   - Image upload and text extraction via Tesseract
@@ -411,6 +412,7 @@ For more details, see the [Security Architecture](DEVELOPER_GUIDE.md#security-ar
   - Fixed enum type mappings (SyncDirection, ConflictResolution)
 
 **Session 2: Sync Status & User Management Backend**
+
 - ✅ **Sync Status Backend** - Complete database and operations
   - 4 database tables (sync_state, sync_history, sync_conflict, sync_vector_clock)
   - Device discovery and registration
@@ -433,6 +435,7 @@ For more details, see the [Security Architecture](DEVELOPER_GUIDE.md#security-ar
   - Suspend/activate functionality
 
 **Session 3: User Management UI Integration**
+
 - ✅ **User Management Frontend (100%)** - Complete RBAC UI
   - 12 Tauri commands exposing full RBAC
   - Complete UI rewrite with React Query (752 lines)
@@ -444,6 +447,7 @@ For more details, see the [Security Architecture](DEVELOPER_GUIDE.md#security-ar
   - Success/error notifications
 
 **Session 4: CalDAV WebDAV Protocol**
+
 - ✅ **CalDAV Integration (100%)** - Full CalDAV/WebDAV protocol
   - Real HTTP operations (REPORT, PUT, DELETE)
   - iCalendar parsing via ical crate
@@ -458,6 +462,7 @@ For more details, see the [Security Architecture](DEVELOPER_GUIDE.md#security-ar
 ### Future Enhancements 📋
 
 **Automation DSL (2-3 weeks)**
+
 - JavaScript-based automation system with QuickJS runtime
 - Trigger system (cron scheduling, event hooks, manual triggers)
 - API bindings for notes, tasks, templates, calendar
@@ -465,12 +470,14 @@ For more details, see the [Security Architecture](DEVELOPER_GUIDE.md#security-ar
 - Sandboxed execution with permission system
 
 **Additional CalDAV Features**
+
 - Recurring events support (RRULE parsing)
 - Push sync for local changes (bidirectional completion)
 - VTODO support for task synchronization
 - Incremental sync with sync-token
 
 **Quality of Life**
+
 - Comprehensive automated test suite
 - Performance optimization passes
 - Additional import/export formats
@@ -506,6 +513,7 @@ With all core features 100% complete, the next steps are:
    - User feedback integration
    - Additional integrations
    - Performance improvements
+
 - Plugin system
 - Apple Watch companion app
 - Voice command integration (Siri Shortcuts, Google Assistant)

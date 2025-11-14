@@ -8,7 +8,18 @@ import { useStore } from '../store';
 import { IconPlus, IconGripVertical, IconCalendar, IconFlag } from '@tabler/icons-react';
 
 // Whitelist of safe Mantine color tokens to prevent CSS injection
-const SAFE_COLORS = new Set(['gray', 'blue', 'yellow', 'green', 'red', 'orange', 'cyan', 'teal', 'pink', 'purple'] as const);
+const SAFE_COLORS = new Set([
+  'gray',
+  'blue',
+  'yellow',
+  'green',
+  'red',
+  'orange',
+  'cyan',
+  'teal',
+  'pink',
+  'purple',
+] as const);
 
 type SafeColor = 'gray' | 'blue' | 'yellow' | 'green' | 'red' | 'orange' | 'cyan' | 'teal' | 'pink' | 'purple';
 type ColumnKey = 'inbox' | 'todo' | 'in_progress' | 'done';

@@ -36,6 +36,7 @@ npm install
 ### Running the App
 
 **Development Build:**
+
 ```bash
 # iOS Simulator
 npx expo start --ios
@@ -48,6 +49,7 @@ npx expo start
 ```
 
 **Production-like Build:**
+
 ```bash
 # iOS
 eas build --platform ios --profile preview
@@ -67,6 +69,7 @@ adb install path/to/app.apk
 **Objective**: Verify complete onboarding flow for new users
 
 **Steps**:
+
 1. ✅ **Fresh Install**: Delete app if installed, then reinstall
 2. ✅ **Launch App**: Open from home screen
 3. ✅ **Verify Loading**: Check splash screen displays correctly
@@ -83,6 +86,7 @@ adb install path/to/app.apk
 **Steps**:
 
 **Step 1 - Personal Intelligence Vault**:
+
 1. ✅ Verify shield icon displays
 2. ✅ Read title: "Your Personal Intelligence Vault"
 3. ✅ Verify 3 feature bullets with checkmarks:
@@ -93,6 +97,7 @@ adb install path/to/app.apk
 5. ✅ Tap "Next" button
 
 **Step 2 - Foresight 3.0 Intelligence**:
+
 1. ✅ Verify lightning icon displays
 2. ✅ Read title: "Foresight 3.0 Intelligence"
 3. ✅ Verify 3 feature bullets:
@@ -104,6 +109,7 @@ adb install path/to/app.apk
 6. ✅ Tap "Next" to proceed
 
 **Step 3 - Seamless Local Sync**:
+
 1. ✅ Verify network icon displays
 2. ✅ Read title: "Seamless Local Sync"
 3. ✅ Verify 3 feature bullets:
@@ -114,6 +120,7 @@ adb install path/to/app.apk
 5. ✅ Tap "Next"
 
 **Step 4 - Physical-Digital Bridge**:
+
 1. ✅ Verify rocket icon displays
 2. ✅ Read title: "Physical-Digital Bridge"
 3. ✅ Verify 3 feature bullets:
@@ -125,6 +132,7 @@ adb install path/to/app.apk
 6. ✅ Tap "Get Started"
 
 **Step 5 - Password Creation**:
+
 1. ✅ Verify key icon displays
 2. ✅ Read title: "Create Your Vault"
 3. ✅ Verify description about strong password
@@ -175,6 +183,7 @@ adb install path/to/app.apk
 **Objective**: Test show/hide password functionality
 
 **Steps**:
+
 1. ✅ Enter password: "TestPassword123"
 2. ✅ Verify password is hidden (dots/asterisks)
 3. ✅ Tap eye icon
@@ -191,6 +200,7 @@ adb install path/to/app.apk
 **Objective**: Verify user sees password recovery warning
 
 **Steps**:
+
 1. ✅ On password creation screen
 2. ✅ Locate security notice with warning icon
 3. ✅ Read: "This password cannot be recovered. Store it safely."
@@ -207,6 +217,7 @@ adb install path/to/app.apk
 **Objective**: Verify app locks when backgrounded
 
 **Steps**:
+
 1. ✅ Complete onboarding and create vault
 2. ✅ Navigate to Today screen
 3. ✅ Put app in background (home button/swipe up)
@@ -223,6 +234,7 @@ adb install path/to/app.apk
 **Objective**: Test successful unlock
 
 **Steps**:
+
 1. ✅ On unlock screen
 2. ✅ Enter correct password: "MySecurePass123"
 3. ✅ Tap "Unlock Vault" button
@@ -239,6 +251,7 @@ adb install path/to/app.apk
 **Objective**: Test failed unlock attempt
 
 **Steps**:
+
 1. ✅ On unlock screen
 2. ✅ Enter wrong password: "WrongPassword"
 3. ✅ Tap "Unlock Vault"
@@ -257,6 +270,7 @@ adb install path/to/app.apk
 **Objective**: Verify all unlock screen elements
 
 **Visual Checks**:
+
 1. ✅ Gradient background (dark blue/purple)
 2. ✅ Animated lock icon in gradient circle
 3. ✅ "Noteece" title in large font
@@ -278,6 +292,7 @@ adb install path/to/app.apk
 **Objective**: Test biometric button behavior
 
 **Steps**:
+
 1. ✅ Tap "Use Biometrics" button
 2. ✅ Verify alert: "Biometric Unlock" / "...will be available in a future update"
 3. ✅ Dismiss alert
@@ -291,6 +306,7 @@ adb install path/to/app.apk
 **Objective**: Test forgot password warning
 
 **Steps**:
+
 1. ✅ Tap "Forgot password?" link
 2. ✅ Read alert message about password recovery
 3. ✅ Verify warns about data loss
@@ -308,6 +324,7 @@ adb install path/to/app.apk
 **Objective**: Test main timeline view
 
 **Steps**:
+
 1. ✅ Navigate to Today tab
 2. ✅ Verify daily brief card displays (if any)
 3. ✅ Verify timeline items show:
@@ -326,6 +343,7 @@ adb install path/to/app.apk
 **Objective**: Test task management
 
 **Steps**:
+
 1. ✅ Navigate to Tasks tab
 2. ✅ Test filters: All, Today, Upcoming, Completed
 3. ✅ Tap "+" button
@@ -346,6 +364,7 @@ adb install path/to/app.apk
 **Objective**: Test quick capture functionality
 
 **Steps**:
+
 1. ✅ Navigate to Capture tab (center button)
 2. ✅ Verify type selector shows: Note, Task, Voice, Photo
 3. ✅ Select "Note"
@@ -365,6 +384,7 @@ adb install path/to/app.apk
 **Objective**: Test insights display
 
 **Steps**:
+
 1. ✅ Navigate to Insights tab
 2. ✅ Verify filter buttons: All, High, Medium, Low
 3. ✅ If insights exist:
@@ -384,6 +404,7 @@ adb install path/to/app.apk
 **Objective**: Test settings and actions
 
 **Steps**:
+
 1. ✅ Navigate to More tab
 2. ✅ Verify user card displays
 3. ✅ Test sections expand:
@@ -409,6 +430,7 @@ adb install path/to/app.apk
 **Objective**: Test error boundary catches crashes
 
 **Steps** (requires dev mode):
+
 1. ✅ Modify code to throw intentional error
 2. ✅ Trigger error in component
 3. ✅ Verify error boundary catches error
@@ -429,6 +451,7 @@ adb install path/to/app.apk
 **Objective**: Test sync failure handling
 
 **Steps**:
+
 1. ✅ Enable airplane mode
 2. ✅ Navigate to More > Sync & Backup
 3. ✅ Tap "Manual Sync"
@@ -446,6 +469,7 @@ adb install path/to/app.apk
 **Objective**: Test database error handling
 
 **Steps** (requires dev tools):
+
 1. ✅ Corrupt database file (in dev)
 2. ✅ Launch app
 3. ✅ Verify app detects corruption
@@ -462,6 +486,7 @@ adb install path/to/app.apk
 **Objective**: Measure app launch time
 
 **Steps**:
+
 1. ✅ Kill app completely
 2. ✅ Launch from home screen
 3. ✅ Time from tap to Today screen
@@ -476,6 +501,7 @@ adb install path/to/app.apk
 **Objective**: Test smooth transitions
 
 **Steps**:
+
 1. ✅ Rapidly switch between tabs
 2. ✅ Verify no lag or stutter
 3. ✅ Open/close capture screen repeatedly
@@ -490,6 +516,7 @@ adb install path/to/app.apk
 **Objective**: Test with many items
 
 **Steps**:
+
 1. ✅ Create 100+ tasks
 2. ✅ Create 100+ notes
 3. ✅ Navigate to Tasks screen
@@ -508,6 +535,7 @@ adb install path/to/app.apk
 **Objective**: Verify data is encrypted at rest
 
 **Steps** (requires file system access):
+
 1. ✅ Create vault with password
 2. ✅ Add sensitive data
 3. ✅ Close app
@@ -524,6 +552,7 @@ adb install path/to/app.apk
 **Objective**: Verify password is never stored plainly
 
 **Steps** (requires dev tools):
+
 1. ✅ Search entire codebase for password storage
 2. ✅ Verify only key derivation used
 3. ✅ Check AsyncStorage
@@ -538,6 +567,7 @@ adb install path/to/app.apk
 **Objective**: Test automatic locking
 
 **Steps**:
+
 1. ✅ Unlock vault
 2. ✅ Put app in background
 3. ✅ Wait 1 minute
@@ -593,6 +623,7 @@ npm test -- --watch
 ```
 
 **Test Files to Run**:
+
 - `src/__tests__/sync-client.test.ts`
 - `src/__tests__/database.test.ts`
 - `src/__tests__/components/DailyBrief.test.tsx`
@@ -615,6 +646,7 @@ detox test --configuration ios.sim.debug
 ```
 
 **E2E Test Scenarios**:
+
 1. Complete onboarding flow
 2. Create and complete a task
 3. Lock and unlock vault
@@ -636,17 +668,17 @@ Use this template to document test results:
 
 ### Results
 
-| Test Case | Status | Notes |
-|-----------|--------|-------|
-| TC1: First-Time User | ✅ PASS | |
-| TC2: Onboarding Steps | ✅ PASS | |
-| TC3: Password Validation | ✅ PASS | |
-| TC4: Password Toggle | ✅ PASS | |
-| TC5: Security Warning | ✅ PASS | |
-| TC6: App Lock | ✅ PASS | |
-| TC7: Correct Password | ✅ PASS | |
-| TC8: Wrong Password | ⚠️ FAIL | Shake animation not smooth |
-| ... | | |
+| Test Case                | Status  | Notes                      |
+| ------------------------ | ------- | -------------------------- |
+| TC1: First-Time User     | ✅ PASS |                            |
+| TC2: Onboarding Steps    | ✅ PASS |                            |
+| TC3: Password Validation | ✅ PASS |                            |
+| TC4: Password Toggle     | ✅ PASS |                            |
+| TC5: Security Warning    | ✅ PASS |                            |
+| TC6: App Lock            | ✅ PASS |                            |
+| TC7: Correct Password    | ✅ PASS |                            |
+| TC8: Wrong Password      | ⚠️ FAIL | Shake animation not smooth |
+| ...                      |         |                            |
 
 ### Issues Found
 
@@ -681,6 +713,7 @@ Use this checklist before submitting to app stores:
 ### Pre-Release Checklist
 
 **Functionality**:
+
 - [ ] All onboarding steps work
 - [ ] Password creation and validation work
 - [ ] Unlock flow works reliably
@@ -689,6 +722,7 @@ Use this checklist before submitting to app stores:
 - [ ] Sync works (if enabled)
 
 **UI/UX**:
+
 - [ ] No visual glitches
 - [ ] Animations are smooth
 - [ ] Text is readable on all screen sizes
@@ -697,6 +731,7 @@ Use this checklist before submitting to app stores:
 - [ ] Error messages are clear
 
 **Security**:
+
 - [ ] Data is encrypted at rest
 - [ ] Password is not stored plainly
 - [ ] Auto-lock works
@@ -704,6 +739,7 @@ Use this checklist before submitting to app stores:
 - [ ] Permissions are properly requested
 
 **Performance**:
+
 - [ ] Cold start < 3s
 - [ ] Hot start < 1s
 - [ ] No memory leaks
@@ -711,6 +747,7 @@ Use this checklist before submitting to app stores:
 - [ ] Works with large datasets (1000+ items)
 
 **Testing**:
+
 - [ ] All test cases pass
 - [ ] Tested on multiple devices
 - [ ] Tested on iOS and Android
@@ -718,12 +755,14 @@ Use this checklist before submitting to app stores:
 - [ ] Unit tests pass with > 70% coverage
 
 **Legal/Compliance**:
+
 - [ ] Privacy policy accessible
 - [ ] Terms of service accessible
 - [ ] GPL v3 license included
 - [ ] All permissions explained
 
 **App Store Requirements**:
+
 - [ ] Screenshots captured (5 per platform)
 - [ ] App icon generated (1024x1024)
 - [ ] Splash screen looks good
@@ -775,12 +814,14 @@ When you find a bug, report it with:
    - Any error messages
 
 **Example**:
+
 ```markdown
 **Title**: Shake animation stutters on iPhone 8
 
 **Description**: When entering an incorrect password on the unlock screen, the shake animation drops frames and looks choppy.
 
 **Steps**:
+
 1. Lock the vault
 2. Open app to unlock screen
 3. Enter wrong password: "wrong123"
@@ -791,6 +832,7 @@ When you find a bug, report it with:
 **Actual**: Animation stutters, appears to be ~30fps
 
 **Environment**:
+
 - App: 1.0.0 (1)
 - Device: iPhone 8
 - iOS: 15.7
@@ -801,15 +843,18 @@ When you find a bug, report it with:
 ## Test Automation Roadmap
 
 **Phase 1** (Current):
+
 - ✅ Manual testing with checklist
 - ✅ Unit tests for critical components
 
 **Phase 2** (Next):
+
 - [ ] Integration tests for database operations
 - [ ] Component tests for all screens
 - [ ] Mock data generators
 
 **Phase 3** (Future):
+
 - [ ] E2E tests with Detox/Maestro
 - [ ] Visual regression tests
 - [ ] Performance benchmarks

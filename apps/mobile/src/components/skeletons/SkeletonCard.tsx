@@ -14,7 +14,10 @@ interface SkeletonCardProps {
   lines?: number;
 }
 
-export function SkeletonCard({ showImage = true, lines = 3 }: SkeletonCardProps) {
+export function SkeletonCard({
+  showImage = true,
+  lines = 3,
+}: SkeletonCardProps) {
   return (
     <View style={styles.card}>
       {showImage && (

@@ -84,7 +84,7 @@ export default function TabLayout() {
         name="health"
         options={{
           title: "Health",
-          tabBarIcon: ({ color, size}) => (
+          tabBarIcon: ({ color, size }) => (
             <Ionicons name="fitness-outline" size={size} color={color} />
           ),
         }}

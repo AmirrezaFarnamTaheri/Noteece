@@ -22,7 +22,7 @@ import {
   extractTinderPosts,
   extractBumblePosts,
   extractHingePosts,
-} from './extractors/universal';
+} from "./extractors/universal";
 
 /**
  * Mock WebView Page object for testing
@@ -35,7 +35,7 @@ class MockPage {
   }
 
   async evaluate(fn: (document: Document) => any) {
-    const dom = new DOMParser().parseFromString(this.content, 'text/html');
+    const dom = new DOMParser().parseFromString(this.content, "text/html");
     return fn(dom as any);
   }
 
@@ -44,10 +44,10 @@ class MockPage {
   }
 }
 
-describe('Social Media Extractors', () => {
+describe("Social Media Extractors", () => {
   // ==================== TWITTER TESTS ====================
-  describe('Twitter Extractor', () => {
-    test('should extract posts from timeline', async () => {
+  describe("Twitter Extractor", () => {
+    test("should extract posts from timeline", async () => {
       const html = `
         <article data-testid="tweet">
           <div><span>@user</span></div>
@@ -63,7 +63,7 @@ describe('Social Media Extractors', () => {
       expect(posts.length).toBeGreaterThan(0);
     });
 
-    test('should handle missing engagement metrics', async () => {
+    test("should handle missing engagement metrics", async () => {
       const html = `
         <article data-testid="tweet">
           <div><span>@user</span></div>
@@ -78,7 +78,7 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should extract retweets', async () => {
+    test("should extract retweets", async () => {
       const html = `
         <article data-testid="tweet" class="retweet">
           <div><span>Retweeted by @user</span></div>
@@ -92,7 +92,7 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should handle replies', async () => {
+    test("should handle replies", async () => {
       const html = `
         <article data-testid="tweet" class="reply">
           <div><span>Replying to @original</span></div>
@@ -106,7 +106,7 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should extract media URLs', async () => {
+    test("should extract media URLs", async () => {
       const html = `
         <article data-testid="tweet">
           <div><span>@user</span></div>
@@ -124,8 +124,8 @@ describe('Social Media Extractors', () => {
   });
 
   // ==================== INSTAGRAM TESTS ====================
-  describe('Instagram Extractor', () => {
-    test('should extract posts from feed', async () => {
+  describe("Instagram Extractor", () => {
+    test("should extract posts from feed", async () => {
       const html = `
         <article>
           <img src="https://instagram.com/image.jpg" />
@@ -141,7 +141,7 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should extract stories', async () => {
+    test("should extract stories", async () => {
       const html = `
         <div class="story-item">
           <img src="https://instagram.com/story.jpg" />
@@ -155,7 +155,7 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should handle carousel posts', async () => {
+    test("should handle carousel posts", async () => {
       const html = `
         <article>
           <div class="carousel">
@@ -172,7 +172,7 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should extract video posts', async () => {
+    test("should extract video posts", async () => {
       const html = `
         <article>
           <video src="https://instagram.com/video.mp4"></video>
@@ -188,8 +188,8 @@ describe('Social Media Extractors', () => {
   });
 
   // ==================== YOUTUBE TESTS ====================
-  describe('YouTube Extractor', () => {
-    test('should extract videos from subscription feed', async () => {
+  describe("YouTube Extractor", () => {
+    test("should extract videos from subscription feed", async () => {
       const html = `
         <ytd-grid-video-renderer>
           <a href="https://youtube.com/watch?v=xxxxx">Video Title</a>
@@ -205,7 +205,7 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should extract channel information', async () => {
+    test("should extract channel information", async () => {
       const html = `
         <div>
           <h1>Channel Name</h1>
@@ -220,7 +220,7 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should extract video duration', async () => {
+    test("should extract video duration", async () => {
       const html = `
         <ytd-grid-video-renderer>
           <a href="https://youtube.com/watch?v=xxxxx">Video</a>
@@ -234,7 +234,7 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should handle live streams', async () => {
+    test("should handle live streams", async () => {
       const html = `
         <ytd-grid-video-renderer class="live">
           <a href="https://youtube.com/watch?v=xxxxx">Live Stream</a>
@@ -250,8 +250,8 @@ describe('Social Media Extractors', () => {
   });
 
   // ==================== LINKEDIN TESTS ====================
-  describe('LinkedIn Extractor', () => {
-    test('should extract feed posts', async () => {
+  describe("LinkedIn Extractor", () => {
+    test("should extract feed posts", async () => {
       const html = `
         <div class="update-component">
           <div>Posted by John Doe</div>
@@ -267,7 +267,7 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should extract job postings', async () => {
+    test("should extract job postings", async () => {
       const html = `
         <div class="job-card">
           <h3>Senior Developer</h3>
@@ -282,7 +282,7 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should extract article shares', async () => {
+    test("should extract article shares", async () => {
       const html = `
         <div class="update-component">
           <div>Shared an article</div>
@@ -298,8 +298,8 @@ describe('Social Media Extractors', () => {
   });
 
   // ==================== REDDIT TESTS ====================
-  describe('Reddit Extractor', () => {
-    test('should extract posts from subreddit', async () => {
+  describe("Reddit Extractor", () => {
+    test("should extract posts from subreddit", async () => {
       const html = `
         <div class="Post">
           <h3>Post Title</h3>
@@ -315,7 +315,7 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should extract comments', async () => {
+    test("should extract comments", async () => {
       const html = `
         <div class="Comment">
           <span>u/commenter</span>
@@ -330,7 +330,7 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should handle gilded posts', async () => {
+    test("should handle gilded posts", async () => {
       const html = `
         <div class="Post gilded">
           <h3>Popular Post</h3>
@@ -346,8 +346,8 @@ describe('Social Media Extractors', () => {
   });
 
   // ==================== DISCORD TESTS ====================
-  describe('Discord Extractor', () => {
-    test('should extract messages from channel', async () => {
+  describe("Discord Extractor", () => {
+    test("should extract messages from channel", async () => {
       const html = `
         <div class="message">
           <span>@username</span>
@@ -362,7 +362,7 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should extract reactions', async () => {
+    test("should extract reactions", async () => {
       const html = `
         <div class="message">
           <p>Message</p>
@@ -377,7 +377,7 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should extract threaded messages', async () => {
+    test("should extract threaded messages", async () => {
       const html = `
         <div class="thread-message">
           <span>@user in #channel</span>
@@ -394,9 +394,9 @@ describe('Social Media Extractors', () => {
   });
 
   // ==================== GENERIC RESILIENCE TESTS ====================
-  describe('Extractor Resilience', () => {
-    test('should handle empty pages gracefully', async () => {
-      const page = new MockPage('<html><body></body></html>');
+  describe("Extractor Resilience", () => {
+    test("should handle empty pages gracefully", async () => {
+      const page = new MockPage("<html><body></body></html>");
 
       const extractors = [
         extractTwitterPosts,
@@ -413,7 +413,7 @@ describe('Social Media Extractors', () => {
       }
     });
 
-    test('should handle malformed HTML', async () => {
+    test("should handle malformed HTML", async () => {
       const malformedHtml = `
         <article>
           <div>Unclosed tags
@@ -427,12 +427,12 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should handle very large pages', async () => {
-      let largeHtml = '<html><body>';
+    test("should handle very large pages", async () => {
+      let largeHtml = "<html><body>";
       for (let i = 0; i < 1000; i++) {
         largeHtml += `<article data-testid="tweet"><div>Post ${i}</div></article>`;
       }
-      largeHtml += '</body></html>';
+      largeHtml += "</body></html>";
 
       const page = new MockPage(largeHtml);
       const posts = await extractTwitterPosts(page as any);
@@ -440,7 +440,7 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should handle special characters in content', async () => {
+    test("should handle special characters in content", async () => {
       const html = `
         <article>
           <div>Post with special chars: © ® ™ € £ ¥</div>
@@ -455,8 +455,10 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should timeout gracefully on slow pages', async () => {
-      const page = new MockPage('<html><body><script>while(true){}</script></body></html>');
+    test("should timeout gracefully on slow pages", async () => {
+      const page = new MockPage(
+        "<html><body><script>while(true){}</script></body></html>",
+      );
 
       const timeoutPromise = new Promise((resolve) => {
         setTimeout(() => resolve(null), 5000);
@@ -468,7 +470,7 @@ describe('Social Media Extractors', () => {
       expect(result).toBeDefined();
     });
 
-    test('should handle CSS selector changes', async () => {
+    test("should handle CSS selector changes", async () => {
       // Old selector
       let html = `<article data-testid="tweet"><div>Post content</div></article>`;
       let page = new MockPage(html);
@@ -484,13 +486,13 @@ describe('Social Media Extractors', () => {
   });
 
   // ==================== PERFORMANCE TESTS ====================
-  describe('Extractor Performance', () => {
-    test('should extract 1000 posts within 1 second', async () => {
-      let html = '<html><body>';
+  describe("Extractor Performance", () => {
+    test("should extract 1000 posts within 1 second", async () => {
+      let html = "<html><body>";
       for (let i = 0; i < 1000; i++) {
         html += `<article data-testid="tweet"><div>Post ${i}</div></article>`;
       }
-      html += '</body></html>';
+      html += "</body></html>";
 
       const page = new MockPage(html);
       const startTime = Date.now();
@@ -502,7 +504,7 @@ describe('Social Media Extractors', () => {
       expect(posts.length).toBeGreaterThan(0);
     });
 
-    test('should extract posts with minimal memory overhead', async () => {
+    test("should extract posts with minimal memory overhead", async () => {
       const html = `
         <article><div>Post 1</div></article>
         <article><div>Post 2</div></article>
@@ -518,8 +520,8 @@ describe('Social Media Extractors', () => {
   });
 
   // ==================== SECURITY TESTS ====================
-  describe('Extractor Security', () => {
-    test('should sanitize XSS attempts in content', async () => {
+  describe("Extractor Security", () => {
+    test("should sanitize XSS attempts in content", async () => {
       const html = `
         <article>
           <div><img src=x onerror="alert('xss')" /></div>
@@ -534,7 +536,7 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should handle HTML injection', async () => {
+    test("should handle HTML injection", async () => {
       const html = `
         <article>
           <div><iframe src="http://malicious.com"></iframe></div>
@@ -547,7 +549,7 @@ describe('Social Media Extractors', () => {
       expect(posts).toBeDefined();
     });
 
-    test('should not leak credentials in URLs', async () => {
+    test("should not leak credentials in URLs", async () => {
       const html = `
         <article>
           <a href="https://site.com?token=SECRET123&pwd=password">Link</a>
@@ -564,8 +566,8 @@ describe('Social Media Extractors', () => {
 });
 
 // ==================== INTEGRATION TESTS ====================
-describe('Extractor Integration', () => {
-  test('should handle switching between platforms', async () => {
+describe("Extractor Integration", () => {
+  test("should handle switching between platforms", async () => {
     const htmlTwitter = `<article data-testid="tweet"><div>Tweet</div></article>`;
     const htmlInstagram = `<article><img src="https://instagram.com/img.jpg" /></article>`;
 
@@ -579,7 +581,7 @@ describe('Extractor Integration', () => {
     expect(instaPosts).toBeDefined();
   });
 
-  test('should handle rapid consecutive extractions', async () => {
+  test("should handle rapid consecutive extractions", async () => {
     const html = `<article data-testid="tweet"><div>Post</div></article>`;
     const page = new MockPage(html);
 

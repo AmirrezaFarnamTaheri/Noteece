@@ -35,6 +35,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Account Setup
 
 **Step 1: Add Account in Noteece**
+
 1. Open Social Hub
 2. Click "Add Account"
 3. Select "Twitter" from platform dropdown
@@ -42,12 +43,14 @@ This guide provides platform-specific setup instructions for connecting your acc
 5. Click "Connect"
 
 **Step 2: Authenticate**
+
 1. A WebView window opens to twitter.com
 2. Log in with your credentials
 3. If prompted, complete 2FA verification
 4. Wait for timeline to load
 
 **Step 3: Verify Syncing**
+
 - Check that posts appear in Noteece timeline
 - Look for sync status: 🟢 Active
 - Posts sync every 60 minutes by default
@@ -55,6 +58,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### What Gets Synced
 
 ✅ **Included:**
+
 - Timeline tweets (your follows)
 - Retweets and quote tweets
 - Replies in timeline
@@ -63,6 +67,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 - Author information
 
 ❌ **Not Included:**
+
 - Direct messages (private)
 - Drafts
 - Bookmarks
@@ -78,13 +83,16 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Troubleshooting
 
 **Problem: No tweets appearing**
+
 - Solution: Make sure timeline is visible, scroll to load posts
 - Check that account isn't private/protected
 
 **Problem: Sync fails with 🔴 error**
+
 - Solution: Re-authenticate by clicking account → "Reconnect"
 
 **Problem: Old tweets missing**
+
 - Solution: Twitter API limits - only recent tweets synced
 
 ---
@@ -94,6 +102,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Account Setup
 
 **Step 1: Add Account in Noteece**
+
 1. Open Social Hub
 2. Click "Add Account"
 3. Select "Instagram" from platform dropdown
@@ -101,12 +110,14 @@ This guide provides platform-specific setup instructions for connecting your acc
 5. Click "Connect"
 
 **Step 2: Authenticate**
+
 1. A WebView window opens to instagram.com
 2. Log in with credentials or Facebook
 3. Complete any security checks
 4. Navigate to Home feed
 
 **Step 3: Verify Syncing**
+
 - Scroll through feed to load posts
 - Check Noteece timeline for Instagram posts
 - Status should show 🟢 Active
@@ -114,6 +125,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### What Gets Synced
 
 ✅ **Included:**
+
 - Feed posts
 - Reels
 - Stories (while active)
@@ -122,6 +134,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 - Images and videos
 
 ❌ **Not Included:**
+
 - Direct messages
 - Saved posts
 - Your own posts (use profile view)
@@ -136,14 +149,17 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Troubleshooting
 
 **Problem: Login issues**
+
 - Solution: Use Instagram's "Log in with Facebook" if having trouble
 - Clear cookies and try again
 
 **Problem: Stories not syncing**
+
 - Solution: Click on stories in WebView to load them
 - Stories only sync while visible
 
 **Problem: Feed not loading**
+
 - Solution: Scroll manually to trigger loading
 - Instagram lazy-loads content
 
@@ -154,6 +170,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Account Setup
 
 **Step 1: Add Account in Noteece**
+
 1. Open Social Hub
 2. Click "Add Account"
 3. Select "YouTube"
@@ -161,11 +178,13 @@ This guide provides platform-specific setup instructions for connecting your acc
 5. Click "Connect"
 
 **Step 2: Authenticate**
+
 1. WebView opens to youtube.com
 2. Log in with Google account
 3. Navigate to Home or Subscriptions feed
 
 **Step 3: Verify Syncing**
+
 - Videos appear in Noteece timeline
 - Thumbnails display correctly
 - View counts and metadata captured
@@ -173,6 +192,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### What Gets Synced
 
 ✅ **Included:**
+
 - Home feed recommendations
 - Subscription uploads
 - Shorts
@@ -181,6 +201,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 - Thumbnails
 
 ❌ **Not Included:**
+
 - Private/unlisted videos
 - Comments you make
 - Playlists (separate feature)
@@ -195,10 +216,12 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Troubleshooting
 
 **Problem: Video thumbnails missing**
+
 - Solution: Extractor falls back to standard YouTube URLs
 - Check internet connection
 
 **Problem: Shorts not recognized**
+
 - Solution: Ensure you're viewing Shorts feed in WebView
 
 ---
@@ -208,6 +231,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Account Setup
 
 **Step 1: Add Account in Noteece**
+
 1. Open Social Hub
 2. Click "Add Account"
 3. Select "TikTok"
@@ -215,11 +239,13 @@ This guide provides platform-specific setup instructions for connecting your acc
 5. Click "Connect"
 
 **Step 2: Authenticate**
+
 1. WebView opens to tiktok.com
 2. Log in (email, phone, or social)
 3. Browse For You or Following feed
 
 **Step 3: Verify Syncing**
+
 - TikToks appear with video URLs
 - Engagement metrics captured
 - Author and sound info extracted
@@ -227,6 +253,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### What Gets Synced
 
 ✅ **Included:**
+
 - For You feed
 - Following feed
 - Video captions
@@ -235,6 +262,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 - Sound/music info
 
 ❌ **Not Included:**
+
 - Direct messages
 - Drafts
 - Private videos
@@ -250,10 +278,12 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Troubleshooting
 
 **Problem: Videos not loading**
+
 - Solution: TikTok may block automated access - use normal browsing
 - Refresh page and retry
 
 **Problem: Old videos missing**
+
 - Solution: TikTok's infinite scroll - only visible videos synced
 
 ---
@@ -263,6 +293,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Account Setup
 
 **Step 1: Add Account in Noteece**
+
 1. Open Social Hub
 2. Click "Add Account"
 3. Select "LinkedIn"
@@ -270,12 +301,14 @@ This guide provides platform-specific setup instructions for connecting your acc
 5. Click "Connect"
 
 **Step 2: Authenticate**
+
 1. WebView opens to linkedin.com
 2. Log in with credentials
 3. Navigate to Home feed
 4. May require email verification
 
 **Step 3: Verify Syncing**
+
 - Professional posts appear in timeline
 - Article links captured
 - Job posts included
@@ -283,6 +316,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### What Gets Synced
 
 ✅ **Included:**
+
 - Feed posts (your connections)
 - Articles shared
 - Job postings
@@ -291,6 +325,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 - Author profiles
 
 ❌ **Not Included:**
+
 - InMail messages
 - Private connection requests
 - Your profile updates
@@ -305,10 +340,12 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Troubleshooting
 
 **Problem: Login requires verification**
+
 - Solution: Check email and verify, then reconnect
 - LinkedIn has strict security
 
 **Problem: Few posts syncing**
+
 - Solution: Scroll feed to load more content
 - LinkedIn shows limited posts per session
 
@@ -319,6 +356,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Account Setup
 
 **Step 1: Add Account in Noteece**
+
 1. Open Social Hub
 2. Click "Add Account"
 3. Select "Discord"
@@ -326,11 +364,13 @@ This guide provides platform-specific setup instructions for connecting your acc
 5. Click "Connect"
 
 **Step 2: Authenticate**
+
 1. WebView opens to discord.com
 2. Log in (may require 2FA)
 3. Navigate to servers/channels you want to sync
 
 **Step 3: Verify Syncing**
+
 - Messages appear in timeline
 - Embeds and reactions captured
 - Channel names included
@@ -338,6 +378,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### What Gets Synced
 
 ✅ **Included:**
+
 - Channel messages
 - Server announcements
 - Embeds and rich content
@@ -346,6 +387,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 - Author names and avatars
 
 ❌ **Not Included:**
+
 - Direct messages (privacy)
 - Voice chat transcripts
 - Screen shares
@@ -361,10 +403,12 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Troubleshooting
 
 **Problem: Messages not appearing**
+
 - Solution: Click into channels to load messages
 - Discord loads lazily
 
 **Problem: Media not loading**
+
 - Solution: Extractor checks multiple sources (data-fullsize, srcset, href)
 - May need to click images to load high-res
 
@@ -375,6 +419,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Account Setup
 
 **Step 1: Add Account in Noteece**
+
 1. Open Social Hub
 2. Click "Add Account"
 3. Select "Reddit"
@@ -382,11 +427,13 @@ This guide provides platform-specific setup instructions for connecting your acc
 5. Click "Connect"
 
 **Step 2: Authenticate**
+
 1. WebView opens to reddit.com
 2. Log in with credentials
 3. Browse Home or Popular feed
 
 **Step 3: Verify Syncing**
+
 - Posts and comments captured
 - Subreddit names included
 - Vote counts tracked
@@ -394,6 +441,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### What Gets Synced
 
 ✅ **Included:**
+
 - Home feed posts
 - Subreddit posts
 - Comments (top-level)
@@ -402,6 +450,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 - Author usernames
 
 ❌ **Not Included:**
+
 - Private messages
 - Drafts
 - Saved posts
@@ -417,10 +466,12 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Troubleshooting
 
 **Problem: Old Reddit vs New Reddit**
+
 - Solution: Works with both versions
 - New Reddit recommended
 
 **Problem: Images not loading**
+
 - Solution: Reddit uses complex media hosting
 - Click to view full images in WebView
 
@@ -431,6 +482,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Account Setup
 
 **Step 1: Add Account in Noteece**
+
 1. Open Social Hub
 2. Click "Add Account"
 3. Select "Spotify"
@@ -438,11 +490,13 @@ This guide provides platform-specific setup instructions for connecting your acc
 5. Click "Connect"
 
 **Step 2: Authenticate**
+
 1. WebView opens to open.spotify.com
 2. Log in with Spotify or Facebook
 3. Navigate to Home or Recently Played
 
 **Step 3: Verify Syncing**
+
 - Tracks appear as "posts"
 - Album art captured
 - Artist and album info included
@@ -450,6 +504,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### What Gets Synced
 
 ✅ **Included:**
+
 - Recently played tracks
 - Playlists (public)
 - Artist and album metadata
@@ -457,6 +512,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 - Play counts
 
 ❌ **Not Included:**
+
 - Private playlists
 - Listening history details
 - Podcasts (limited support)
@@ -471,6 +527,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Troubleshooting
 
 **Problem: No tracks appearing**
+
 - Solution: Play some music, then refresh
 - Recently played loads tracks
 
@@ -481,6 +538,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Account Setup
 
 **Step 1: Add Account in Noteece**
+
 1. Open Social Hub
 2. Click "Add Account"
 3. Select "Pinterest"
@@ -488,11 +546,13 @@ This guide provides platform-specific setup instructions for connecting your acc
 5. Click "Connect"
 
 **Step 2: Authenticate**
+
 1. WebView opens to pinterest.com
 2. Log in with email or social
 3. Browse Home feed
 
 **Step 3: Verify Syncing**
+
 - Pins appear with images
 - Board names captured
 - Pin metadata extracted
@@ -500,6 +560,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### What Gets Synced
 
 ✅ **Included:**
+
 - Home feed pins
 - Board pins
 - Collections
@@ -508,6 +569,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 - Pin IDs (alphanumeric supported)
 
 ❌ **Not Included:**
+
 - Private boards
 - Messages
 - Saved pins (configurable)
@@ -522,10 +584,12 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Troubleshooting
 
 **Problem: Pins not syncing**
+
 - Solution: Scroll feed to load pins
 - Pinterest uses infinite scroll
 
 **Problem: Images low quality**
+
 - Solution: Extractor captures highest available resolution
 
 ---
@@ -535,6 +599,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Account Setup
 
 **Step 1: Add Account in Noteece**
+
 1. Open Social Hub
 2. Click "Add Account"
 3. Select "Facebook"
@@ -542,12 +607,14 @@ This guide provides platform-specific setup instructions for connecting your acc
 5. Click "Connect"
 
 **Step 2: Authenticate**
+
 1. WebView opens to facebook.com
 2. Log in with credentials
 3. May require 2FA or security check
 4. Navigate to News Feed
 
 **Step 3: Verify Syncing**
+
 - Posts appear in timeline
 - Reactions (likes, love, etc.) captured
 - Friend names included
@@ -555,6 +622,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### What Gets Synced
 
 ✅ **Included:**
+
 - News Feed posts
 - Reactions (like, love, haha, etc.)
 - Comments count
@@ -563,6 +631,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 - Friend posts
 
 ❌ **Not Included:**
+
 - Messenger messages
 - Private messages
 - Events
@@ -578,10 +647,12 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Troubleshooting
 
 **Problem: Login blocked**
+
 - Solution: Facebook has strict automated access policies
 - Use sparingly, manual browsing recommended
 
 **Problem: Posts missing**
+
 - Solution: Facebook's algorithm limits feed
 - Scroll manually to load more
 
@@ -592,6 +663,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Account Setup
 
 **Step 1: Add Account in Noteece**
+
 1. Open Social Hub
 2. Click "Add Account"
 3. Select "Threads"
@@ -599,11 +671,13 @@ This guide provides platform-specific setup instructions for connecting your acc
 5. Click "Connect"
 
 **Step 2: Authenticate**
+
 1. WebView opens to threads.net
 2. Log in with Instagram credentials
 3. Browse Home feed
 
 **Step 3: Verify Syncing**
+
 - Threads posts appear
 - Replies captured
 - Instagram integration works
@@ -611,6 +685,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### What Gets Synced
 
 ✅ **Included:**
+
 - Feed threads
 - Replies
 - Likes, shares
@@ -618,6 +693,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 - Images and videos
 
 ❌ **Not Included:**
+
 - Direct messages (if added)
 - Drafts
 
@@ -634,6 +710,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Account Setup
 
 **Step 1: Add Account in Noteece**
+
 1. Open Social Hub
 2. Click "Add Account"
 3. Select "Bluesky"
@@ -641,11 +718,13 @@ This guide provides platform-specific setup instructions for connecting your acc
 5. Click "Connect"
 
 **Step 2: Authenticate**
+
 1. WebView opens to bsky.app
 2. Log in with handle and password
 3. Browse timeline
 
 **Step 3: Verify Syncing**
+
 - Posts (skeets) appear
 - Thread structure captured
 - Federation info included
@@ -653,6 +732,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### What Gets Synced
 
 ✅ **Included:**
+
 - Timeline posts
 - Threads (replies)
 - Likes, reposts
@@ -660,6 +740,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 - Images and media
 
 ❌ **Not Included:**
+
 - Direct messages (when feature launches)
 - Custom feeds (configurable)
 
@@ -677,6 +758,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Account Setup
 
 **Step 1: Add Account in Noteece**
+
 1. Open Social Hub
 2. Click "Add Account"
 3. Select "Mastodon"
@@ -684,11 +766,13 @@ This guide provides platform-specific setup instructions for connecting your acc
 5. Click "Connect"
 
 **Step 2: Authenticate**
+
 1. WebView opens to your Mastodon instance
 2. Log in with credentials
 3. Browse Home timeline
 
 **Step 3: Verify Syncing**
+
 - Toots appear in timeline
 - Boosts (retoots) captured
 - Federated timeline supported
@@ -696,6 +780,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### What Gets Synced
 
 ✅ **Included:**
+
 - Home timeline toots
 - Boosts
 - Favorites, replies
@@ -704,6 +789,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 - Content warnings
 
 ❌ **Not Included:**
+
 - Direct messages
 - Local-only posts
 - Followers-only posts
@@ -718,9 +804,11 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Troubleshooting
 
 **Problem: Instance not found**
+
 - Solution: Enter full instance URL (e.g., mastodon.social)
 
 **Problem: Federated posts missing**
+
 - Solution: Only Home timeline synced by default
 
 ---
@@ -730,6 +818,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Account Setup
 
 **Step 1: Add Account in Noteece**
+
 1. Open Social Hub
 2. Click "Add Account"
 3. Select "Snapchat"
@@ -737,11 +826,13 @@ This guide provides platform-specific setup instructions for connecting your acc
 5. Click "Connect"
 
 **Step 2: Authenticate**
+
 1. WebView opens to web.snapchat.com
 2. Log in with credentials
 3. May require phone verification
 
 **Step 3: Verify Syncing**
+
 - Stories captured (while available)
 - Snaps from friends synced
 - Limited web interface support
@@ -749,11 +840,13 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### What Gets Synced
 
 ✅ **Included:**
+
 - Public stories
 - Friend snaps (if visible on web)
 - Discover content
 
 ❌ **Not Included:**
+
 - Private snaps (ephemeral)
 - Messages (disappear)
 - Memories
@@ -768,6 +861,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Troubleshooting
 
 **Problem: Web interface limited**
+
 - Solution: Snapchat prioritizes mobile app
 - Use sparingly
 
@@ -778,6 +872,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Account Setup
 
 **Step 1: Add Account in Noteece**
+
 1. Open Social Hub
 2. Click "Add Account"
 3. Select "Telegram"
@@ -785,12 +880,14 @@ This guide provides platform-specific setup instructions for connecting your acc
 5. Click "Connect"
 
 **Step 2: Authenticate**
+
 1. WebView opens to web.telegram.org
 2. Enter phone number
 3. Enter verification code from mobile app
 4. Browse chats/channels
 
 **Step 3: Verify Syncing**
+
 - Messages appear with timestamps
 - Channel names included
 - Media attachments captured
@@ -798,6 +895,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### What Gets Synced
 
 ✅ **Included:**
+
 - Channel messages
 - Group messages (public)
 - Media (photos, videos, files)
@@ -805,6 +903,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 - Channel names for context
 
 ❌ **Not Included:**
+
 - Private chats (privacy)
 - Secret chats (encrypted)
 - Self-destructing messages
@@ -819,10 +918,12 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Troubleshooting
 
 **Problem: Verification code not received**
+
 - Solution: Check your Telegram mobile app
 - Code sent to active Telegram sessions
 
 **Problem: Old messages missing**
+
 - Solution: Telegram loads recent messages only
 - Scroll up to load history
 
@@ -833,6 +934,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Account Setup
 
 **Step 1: Add Account in Noteece**
+
 1. Open Social Hub
 2. Click "Add Account"
 3. Select "Gmail"
@@ -840,11 +942,13 @@ This guide provides platform-specific setup instructions for connecting your acc
 5. Click "Connect"
 
 **Step 2: Authenticate**
+
 1. WebView opens to mail.google.com
 2. Log in with Google account
 3. Navigate to Inbox or Primary
 
 **Step 3: Verify Syncing**
+
 - Emails appear as "posts"
 - Sender and subject captured
 - Labels/categories respected
@@ -852,6 +956,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### What Gets Synced
 
 ✅ **Included:**
+
 - Inbox emails
 - Primary tab
 - Sender names (sanitized)
@@ -859,6 +964,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 - Email metadata
 
 ❌ **Not Included:**
+
 - Email body content (privacy)
 - Spam folder
 - Drafts
@@ -874,10 +980,12 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Troubleshooting
 
 **Problem: Login requires 2FA**
+
 - Solution: Complete 2FA verification
 - Google has strong security
 
 **Problem: Emails not syncing**
+
 - Solution: Make sure Primary tab is active
 - Click into Inbox to load emails
 
@@ -888,6 +996,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### ⚠️ Privacy Warning
 
 **IMPORTANT:** Dating apps contain highly sensitive personal information. Before syncing:
+
 - Consider privacy implications carefully
 - Only sync if you have a secure device
 - Don't sync if sharing device with others
@@ -896,6 +1005,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Account Setup (General)
 
 **Step 1: Add Account in Noteece**
+
 1. Open Social Hub
 2. Click "Add Account"
 3. Select "Tinder", "Bumble", or "Hinge"
@@ -904,11 +1014,13 @@ This guide provides platform-specific setup instructions for connecting your acc
 6. Click "Connect"
 
 **Step 2: Authenticate**
+
 1. WebView opens to app.tinder.com (or equivalent)
 2. Log in with credentials or social login
 3. Browse matches/conversations
 
 **Step 3: Verify Syncing**
+
 - Matches appear (first names only)
 - Conversation previews captured
 - Sensitive metadata tagged
@@ -916,12 +1028,14 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### What Gets Synced
 
 ✅ **Included:**
+
 - Match names (FIRST NAMES ONLY)
 - Conversation previews
 - Match timestamps
 - Profile photos (limited)
 
 ❌ **Not Included:**
+
 - Full names (privacy)
 - Phone numbers
 - Addresses
@@ -931,6 +1045,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Privacy Protections
 
 **Built-in Safeguards:**
+
 - 🔒 Only first names stored
 - 🔒 Tagged as "sensitive" metadata
 - 🔒 Less frequent syncing (60 min default)
@@ -948,10 +1063,12 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### Troubleshooting
 
 **Problem: Don't want dating apps synced anymore**
+
 - Solution: Delete account → This removes ALL associated data
 - Or disable account to pause syncing
 
 **Problem: Privacy concerns**
+
 - Solution: Export data, delete account, keep exported backup
 - Consider not syncing dating apps at all
 
@@ -962,6 +1079,7 @@ This guide provides platform-specific setup instructions for connecting your acc
 ### General Issues
 
 **Problem: WebView won't load**
+
 ```
 Solutions:
 1. Check internet connection
@@ -971,6 +1089,7 @@ Solutions:
 ```
 
 **Problem: Sync status shows 🔴 Error**
+
 ```
 Solutions:
 1. Click account → "Reconnect"
@@ -980,6 +1099,7 @@ Solutions:
 ```
 
 **Problem: Posts not appearing in timeline**
+
 ```
 Solutions:
 1. Check platform filter (might be hidden)
@@ -989,6 +1109,7 @@ Solutions:
 ```
 
 **Problem: Slow performance**
+
 ```
 Solutions:
 1. Close unused WebView windows
@@ -1000,31 +1121,38 @@ Solutions:
 ### Platform-Specific Issues
 
 **Twitter: Can't log in**
+
 - Solution: Twitter blocks automated access - use normal browsing behavior
 - Complete 2FA if required
 
 **Instagram: Feed not loading**
+
 - Solution: Instagram lazy-loads - scroll manually to trigger
 
 **LinkedIn: Verification required**
+
 - Solution: Check email, verify, then reconnect
 - LinkedIn has strict security
 
 **Discord: Messages missing**
+
 - Solution: Click into channels to load messages
 - Discord doesn't load all channels automatically
 
 **Facebook: Access denied**
+
 - Solution: Facebook has aggressive bot detection
 - Use sparingly, prefer manual browsing
 
 **Telegram: Code not received**
+
 - Solution: Code sent to active Telegram sessions
 - Check your mobile Telegram app
 
 ### Getting Help
 
 **Still having issues?**
+
 1. Check User Guide for detailed instructions
 2. Review this Platform Setup guide
 3. Check GitHub Issues for known problems
@@ -1038,6 +1166,6 @@ Solutions:
 
 ---
 
-*Noteece Social Media Suite - Platform Setup Guide*
-*Last Updated: January 2025*
-*For support: See GitHub Issues*
+_Noteece Social Media Suite - Platform Setup Guide_
+_Last Updated: January 2025_
+_For support: See GitHub Issues_

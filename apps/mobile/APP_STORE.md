@@ -52,21 +52,25 @@ Complete guide for submitting Noteece to iOS App Store and Google Play Store.
 #### Primary Information
 
 **Name** (30 characters max):
+
 ```
 Noteece
 ```
 
 **Subtitle** (30 characters max):
+
 ```
 Personal Intelligence Vault
 ```
 
 **Promotional Text** (170 characters, updatable):
+
 ```
 Zero-knowledge encrypted note-taking with AI-powered insights. Your data stays on your device. Local-first, offline-capable, open source.
 ```
 
 **Description** (4000 characters max):
+
 ```
 NOTEECE - YOUR PERSONAL INTELLIGENCE VAULT
 
@@ -145,11 +149,13 @@ License: GNU GPL v3.0
 ```
 
 **Keywords** (100 characters max, comma-separated):
+
 ```
 notes,privacy,encrypted,tasks,offline,open source,productivity,vault,secure,knowledge
 ```
 
 **What's New in This Version**:
+
 ```
 🎉 Initial Release - Noteece 1.0
 
@@ -191,6 +197,7 @@ We'd love your feedback! Report issues or suggest features on GitHub.
 **Age Rating**: 4+ (No objectionable content)
 
 Questionnaire Answers:
+
 - Unrestricted Web Access: No
 - Gambling: No
 - Contests: No
@@ -204,6 +211,7 @@ Questionnaire Answers:
 #### App Review Information
 
 **Notes**:
+
 ```
 Thank you for reviewing Noteece!
 
@@ -234,6 +242,7 @@ Contact: [your-email]
 #### App Privacy
 
 **Data Not Collected**:
+
 - Contact Info: Not collected
 - Health & Fitness: Not collected
 - Financial Info: Not collected
@@ -250,6 +259,7 @@ Contact: [your-email]
 - Other Data: Not collected
 
 **Privacy Statement**:
+
 ```
 Noteece does not collect any data. All information you create in the app is stored encrypted on your device and never transmitted to us or any third party. We have no servers, no analytics, and no tracking. Your data is yours alone.
 
@@ -267,16 +277,19 @@ For complete details, see our Privacy Policy: github.com/[your-username]/Noteece
 #### Store Listing
 
 **App Name** (50 characters max):
+
 ```
 Noteece - Personal Intelligence Vault
 ```
 
 **Short Description** (80 characters max):
+
 ```
 Encrypted notes & tasks with AI insights. Privacy-first, offline, open source.
 ```
 
 **Full Description** (4000 characters max):
+
 ```
 NOTEECE - YOUR PERSONAL INTELLIGENCE VAULT
 
@@ -359,21 +372,25 @@ Download now and experience privacy-first productivity!
 ```
 
 **App Category**:
+
 ```
 Productivity
 ```
 
 **Tags**:
+
 ```
 Productivity, Notes, Tasks, Privacy, Encryption, Offline, Open Source, Secure
 ```
 
 **Contact Details**:
+
 - **Email**: [your-support-email]
 - **Phone**: [optional]
 - **Website**: https://noteece.app
 
 **Privacy Policy URL**:
+
 ```
 https://github.com/[your-username]/Noteece/blob/main/PRIVACY.md
 ```
@@ -381,6 +398,7 @@ https://github.com/[your-username]/Noteece/blob/main/PRIVACY.md
 #### Content Rating
 
 **Questionnaire** (Brazil, ESRB, PEGI, etc.):
+
 - Violence: No
 - Sexual Content: No
 - Profanity: No
@@ -399,6 +417,7 @@ https://github.com/[your-username]/Noteece/blob/main/PRIVACY.md
 **Data Sharing**: Select "No" for all categories
 
 **Data Security**:
+
 ```
 ✓ Data is encrypted in transit
 ✓ Data is encrypted at rest
@@ -409,6 +428,7 @@ https://github.com/[your-username]/Noteece/blob/main/PRIVACY.md
 ```
 
 **Data Safety Summary**:
+
 ```
 Noteece does not collect, transmit, or have access to any user data. All information is stored encrypted on your device. Optional local network sync is peer-to-peer encrypted with no cloud servers involved.
 
@@ -422,56 +442,68 @@ For details: github.com/[your-username]/Noteece/blob/main/PRIVACY.md
 ### iOS Screenshots (Required Sizes)
 
 **6.7" Display** (iPhone 14 Pro Max, iPhone 15 Pro Max):
+
 - Size: 1290 x 2796 pixels
 - Count: 3-10 screenshots (5 recommended)
 
 **6.5" Display** (iPhone 14 Plus, iPhone 13 Pro Max):
+
 - Size: 1284 x 2778 pixels
 - Count: 3-10 screenshots (5 recommended)
 
 **5.5" Display** (iPhone 8 Plus):
+
 - Size: 1242 x 2208 pixels
 - Count: 3-10 screenshots (5 recommended)
 
 **iPad Pro (12.9-inch)** (optional):
+
 - Size: 2048 x 2732 pixels
 - Count: 3-10 screenshots (5 recommended)
 
 ### Android Screenshots (Required Sizes)
 
 **Phone**:
+
 - Size: 1080 x 1920 pixels minimum
 - Count: 2-8 screenshots (5 recommended)
 
 **7" Tablet** (optional):
+
 - Size: 1200 x 1920 pixels
 
 **10" Tablet** (optional):
+
 - Size: 1600 x 2560 pixels
 
 ### Screenshot Content (Same for Both Platforms)
 
 **Screenshot 1: Today View**
+
 - Title: "Your Day, Unified"
 - Shows: Timeline with tasks, events, daily brief
 - Highlight: "Foresight AI synthesizes your data"
 
 **Screenshot 2: Onboarding**
+
 - Title: "Privacy-First by Design"
 - Shows: Onboarding screen with encryption explanation
 - Highlight: "Zero-knowledge architecture"
 
 **Screenshot 3: Tasks**
+
 - Title: "Powerful Task Management"
 - Shows: Task list with filters and priorities
 - Highlight: "Organize your work efficiently"
 
 **Screenshot 4: Insights**
+
 - Title: "AI-Powered Insights"
 - Shows: Foresight insights with suggestions
 - Highlight: "Personalized recommendations"
 
 **Screenshot 5: Security**
+
 - Title: "Your Data, Your Control"
 - Shows: Unlock screen or More settings
 - Highlight: "End-to-end encrypted, open source"
@@ -485,6 +517,7 @@ For details: github.com/[your-username]/Noteece/blob/main/PRIVACY.md
 5. **Call to Action**: Last screenshot can have CTA
 
 Tools:
+
 - **Previewed.app**: Professional screenshot mockups
 - **Screenshot.rocks**: Free mockup generator
 - **Figma**: Custom designs with device frames
@@ -507,6 +540,7 @@ Location: `apps/mobile/assets/icon.png`
 **Content**: Noteece logo + tagline + key features
 
 **Example Design**:
+
 ```
 [Left: Noteece Logo]
 [Center: "Your Personal Intelligence Vault"]
@@ -520,6 +554,7 @@ Location: `apps/mobile/assets/icon.png`
 **Resolution**: 1080p minimum
 
 **Script Example**:
+
 ```
 [0-5s] Lock icon animation + "Your data deserves privacy"
 [5-10s] Show app interface + "Noteece keeps everything encrypted"
@@ -536,6 +571,7 @@ Location: `apps/mobile/assets/icon.png`
 ### Keywords Strategy
 
 **High Priority** (High volume, high relevance):
+
 - notes
 - tasks
 - encrypted
@@ -547,6 +583,7 @@ Location: `apps/mobile/assets/icon.png`
 - password protected notes
 
 **Medium Priority** (Medium volume, relevant):
+
 - personal knowledge management
 - pkm
 - local first
@@ -559,6 +596,7 @@ Location: `apps/mobile/assets/icon.png`
 - diary
 
 **Long Tail** (Low volume, very specific):
+
 - encrypted note app
 - offline note taking
 - privacy focused productivity
@@ -579,11 +617,13 @@ Location: `apps/mobile/assets/icon.png`
 ### App Name Variations (Test with ASO tools)
 
 **iOS**:
+
 - Noteece - Private Notes & Tasks
 - Noteece: Encrypted Notes App
 - Noteece - Offline Notes Vault
 
 **Android**:
+
 - Noteece - Encrypted Notes & Tasks
 - Noteece: Privacy-First Productivity
 - Noteece - Secure Offline Notes
@@ -691,12 +731,14 @@ Location: `apps/mobile/assets/icon.png`
 ### Monitoring
 
 **First Week**:
+
 - [ ] Monitor crash reports (none expected, but check)
 - [ ] Read user reviews daily
 - [ ] Respond to feedback within 24 hours
 - [ ] Check store metrics (downloads, ratings)
 
 **Ongoing**:
+
 - [ ] Weekly review monitoring
 - [ ] Monthly analytics review
 - [ ] Quarterly ASO optimization
@@ -724,16 +766,19 @@ Location: `apps/mobile/assets/icon.png`
 ### Update Strategy
 
 **Version 1.1** (1 month after launch):
+
 - Bug fixes from user feedback
 - Performance improvements
 - Minor UI tweaks
 
 **Version 1.2** (2 months):
+
 - First new feature (voice capture or NFC)
 - More languages
 - Accessibility improvements
 
 **Version 2.0** (6 months):
+
 - Major new features
 - UI refresh
 - Platform-specific enhancements
@@ -744,22 +789,22 @@ Location: `apps/mobile/assets/icon.png`
 
 ### One-Time Costs
 
-| Item | Cost |
-|------|------|
-| Apple Developer Account | $99/year |
+| Item                          | Cost         |
+| ----------------------------- | ------------ |
+| Apple Developer Account       | $99/year     |
 | Google Play Developer Account | $25 one-time |
-| Domain (noteece.app) | $10-50/year |
-| **Total First Year** | **$134-174** |
+| Domain (noteece.app)          | $10-50/year  |
+| **Total First Year**          | **$134-174** |
 
 ### Optional Costs
 
-| Item | Cost |
-|------|------|
-| Professional Screenshots | $50-200 |
-| Promo Video | $100-500 |
-| ASO Tool Subscription | $50-200/month |
-| App Store Optimization Service | $500-2000 |
-| Legal Review | $500-1500 |
+| Item                           | Cost          |
+| ------------------------------ | ------------- |
+| Professional Screenshots       | $50-200       |
+| Promo Video                    | $100-500      |
+| ASO Tool Subscription          | $50-200/month |
+| App Store Optimization Service | $500-2000     |
+| Legal Review                   | $500-1500     |
 
 ### Free Alternatives
 
@@ -808,6 +853,7 @@ Location: `apps/mobile/assets/icon.png`
 ## Final Notes
 
 **Remember**:
+
 1. Be honest in your descriptions
 2. Highlight privacy and open source as key differentiators
 3. Respond to all reviews (especially negative ones)
@@ -815,6 +861,7 @@ Location: `apps/mobile/assets/icon.png`
 5. Listen to user feedback
 
 **Key Selling Points**:
+
 1. 🔐 Zero-knowledge encryption
 2. 📱 Offline-first, no cloud
 3. 💎 100% open source (GPL v3)
@@ -822,6 +869,7 @@ Location: `apps/mobile/assets/icon.png`
 5. 🆓 Free forever
 
 **Unique Value Proposition**:
+
 > "Unlike Notion, Evernote, or OneNote, Noteece is the only note-taking app that cannot access your data—even if we wanted to. Privacy isn't a feature; it's our foundation."
 
 ---
@@ -829,8 +877,9 @@ Location: `apps/mobile/assets/icon.png`
 **Good luck with your launch! 🚀**
 
 For questions or updates to this guide:
+
 - GitHub Issues: https://github.com/[your-username]/Noteece/issues
 - Email: [your-email]
 
-*Last Updated*: November 6, 2025
-*Version*: 1.0
+_Last Updated_: November 6, 2025
+_Version_: 1.0

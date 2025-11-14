@@ -8,6 +8,7 @@
 **Last Updated:** 2025-01-07
 
 ### Recent Milestones ✅
+
 - ✅ Week 16 Complete (2025-01-07): Comprehensive documentation suite
 - ✅ Week 15 Complete (2025-01-07): Mobile architecture specification
 - ✅ Week 14 Complete (2025-01-07): Focus modes & automation rules
@@ -19,19 +20,24 @@
 - ✅ Automation rules for productivity
 
 ### Desktop Implementation COMPLETE 🎉
+
 All core features for the desktop application are now fully implemented:
+
 - ✅ Foundation (Weeks 1-3): Database, accounts, WebView framework
 - ✅ Platform Extractors (Weeks 4-7): 18 platform extractors
 - ✅ Unified Experience (Weeks 8-12): Timeline, categories, analytics, search
 - ✅ Intelligence & Automation (Weeks 13-14): AI categorization, focus modes
 
 ### Documentation Complete 📚
+
 All comprehensive documentation has been created:
+
 - ✅ Week 15: Mobile architecture specification (React Native design)
 - ✅ Week 16: User Guide, Platform Setup, Security, Troubleshooting
 - ✅ PR Feedback: All security and robustness issues addressed
 
 ### Future Work (Post-16 Weeks) 🚀
+
 - 📱 Mobile Implementation: Build React Native app per architecture spec
 - 🔄 Mobile Sync: Implement desktop-mobile sync protocol
 - 🎨 UI Polish: Additional animations, dark mode, themes
@@ -59,12 +65,14 @@ A local-first social media aggregation suite that enables multi-account manageme
 **Status:** ✅ Complete (2025-01-07)
 
 **Deliverables:**
+
 - [x] Database migration v6 with social tables
 - [x] Rust types for social accounts, posts, categories
 - [x] SQLCipher encrypted credential storage
 - [x] Full-text search tables
 
 **Files Created:**
+
 ```
 packages/core-rs/src/
 ├── social.rs (mod declaration)
@@ -77,6 +85,7 @@ packages/core-rs/src/
 ```
 
 **Database Tables:**
+
 - `social_account` - Multi-account storage with encrypted credentials
 - `social_post` - Unified post storage across platforms
 - `social_category` - User-defined cross-platform categories
@@ -90,6 +99,7 @@ packages/core-rs/src/
 **Status:** ✅ Complete (2025-01-07)
 
 **Deliverables:**
+
 - [x] Add/edit/delete social accounts (Rust functions complete)
 - [x] Credential encryption using existing crypto (implemented)
 - [x] Account enable/disable toggle (implemented)
@@ -99,6 +109,7 @@ packages/core-rs/src/
 - [x] End-to-end account creation flow (fully functional)
 
 **Rust Functions:**
+
 ```rust
 - add_social_account(conn, space_id, platform, username, credentials, dek)
 - get_social_accounts(conn, space_id)
@@ -109,10 +120,9 @@ packages/core-rs/src/
 ```
 
 **React Components:**
+
 ```typescript
-- SocialAccountList.tsx
-- AddAccountModal.tsx
-- AccountCard.tsx
+-SocialAccountList.tsx - AddAccountModal.tsx - AccountCard.tsx;
 ```
 
 ### Week 3: Tauri WebView Manager ✅ COMPLETE
@@ -120,6 +130,7 @@ packages/core-rs/src/
 **Status:** ✅ Complete (2025-01-07)
 
 **Deliverables:**
+
 - [x] WebView session manager in Rust with encrypted persistence
 - [x] Open isolated WebView per account
 - [x] Cookie/session persistence with XChaCha20-Poly1305 encryption
@@ -129,6 +140,7 @@ packages/core-rs/src/
 - [x] UI integration with "Open in WebView" button
 
 **Files Created:**
+
 ```
 packages/core-rs/src/social/webview.rs
 apps/desktop/src-tauri/js/extractors/
@@ -137,6 +149,7 @@ apps/desktop/src-tauri/js/extractors/
 ```
 
 **Tauri Commands:**
+
 ```rust
 - open_social_webview(app_handle, account_id) -> window_label
 - handle_extracted_data(account_id, platform, event_type, data)
@@ -145,11 +158,13 @@ apps/desktop/src-tauri/js/extractors/
 ```
 
 **React Updates:**
+
 ```typescript
 AccountCard.tsx: Added "Open in WebView" button with mutation
 ```
 
 **Architecture:**
+
 - WebView windows created with isolated context per account
 - JavaScript injection via include_str! and window.eval()
 - Automatic content detection with MutationObserver
@@ -163,6 +178,7 @@ AccountCard.tsx: Added "Open in WebView" button with mutation
 **Status:** ✅ Complete (2025-01-07)
 
 **Deliverables:**
+
 - [x] Twitter/X extractor with timeline, tweets, engagement (completed Week 3)
 - [x] YouTube extractor with subscriptions, watch history, recommendations
 - [x] Background sync scheduler in Rust
@@ -170,6 +186,7 @@ AccountCard.tsx: Added "Open in WebView" button with mutation
 - [x] Rate limiting and error handling built into extractors
 
 **Files Created:**
+
 ```javascript
 apps/desktop/src-tauri/js/extractors/
 ├── youtube.js (NEW)
@@ -179,6 +196,7 @@ packages/core-rs/src/social/
 ```
 
 **Tauri Commands:**
+
 ```rust
 - get_sync_tasks_cmd(space_id) -> Vec<SyncTask>
 - get_all_sync_tasks_cmd(space_id) -> Vec<SyncTask>
@@ -187,6 +205,7 @@ packages/core-rs/src/social/
 ```
 
 **Architecture:**
+
 - Sync scheduler checks accounts needing sync based on frequency
 - Sync history tracking with timestamps and post counts
 - Statistics aggregation for monitoring dashboard
@@ -196,6 +215,7 @@ packages/core-rs/src/social/
 **Status:** ✅ Complete (2025-01-07)
 
 **Deliverables:**
+
 - [x] Instagram posts, stories, reels extractor
 - [x] TikTok For You and Following feed extractor
 - [x] Pinterest boards and pins extractor
@@ -203,6 +223,7 @@ packages/core-rs/src/social/
 - [x] SyncStatusPanel UI component
 
 **Files Created:**
+
 ```javascript
 apps/desktop/src-tauri/js/extractors/
 ├── instagram.js (NEW)
@@ -214,6 +235,7 @@ apps/desktop/src/components/social/
 ```
 
 **Updated Files:**
+
 ```typescript
 apps/desktop/src-tauri/src/main.rs:
 - Added platform extractors for youtube, instagram, tiktok, pinterest
@@ -225,6 +247,7 @@ apps/desktop/src/components/social/SocialHub.tsx:
 ```
 
 **Features:**
+
 - Instagram: Posts, reels, video posts with engagement metrics
 - TikTok: For You feed, Following feed, music/sound info
 - Pinterest: Pins, boards, high-quality image URLs
@@ -235,10 +258,12 @@ apps/desktop/src/components/social/SocialHub.tsx:
 **Status:** ✅ Complete (2025-01-07)
 
 **Deliverables:**
+
 - [x] LinkedIn feed and connections extractor
 - [x] Discord servers and channels (web client) extractor
 
 **Files Created:**
+
 ```javascript
 apps/desktop/src-tauri/js/extractors/
 ├── linkedin.js (NEW - posts, feed, engagement, articles)
@@ -246,6 +271,7 @@ apps/desktop/src-tauri/js/extractors/
 ```
 
 **Features:**
+
 - LinkedIn: Feed posts, shared articles, engagement metrics, author profiles
 - Discord: Messages, embeds, attachments, reactions, channel context
 
@@ -254,11 +280,13 @@ apps/desktop/src-tauri/js/extractors/
 **Status:** ✅ Complete (2025-01-07)
 
 **Deliverables:**
+
 - [x] Spotify playlists and recently played tracks
 - [x] Reddit multi-subreddit aggregation
 - [x] Castbox podcast episodes (NEW - user requested)
 
 **Files Created:**
+
 ```javascript
 apps/desktop/src-tauri/js/extractors/
 ├── spotify.js (NEW - tracks, playlists, recently played)
@@ -267,6 +295,7 @@ apps/desktop/src-tauri/js/extractors/
 ```
 
 **Features:**
+
 - Spotify: Track extraction, album covers, playlists, recently played cards
 - Reddit: Posts with scores, comments, subreddit context, link posts
 - Castbox: Podcast episodes with duration parsing, publish dates, thumbnails
@@ -278,6 +307,7 @@ apps/desktop/src-tauri/js/extractors/
 **Status:** ✅ Complete (2025-01-07)
 
 **Deliverables:**
+
 - [x] Cross-platform timeline query
 - [x] Timeline filters (platform, date, sort order)
 - [x] Engagement metrics aggregation
@@ -285,6 +315,7 @@ apps/desktop/src-tauri/js/extractors/
 - [x] Timeline refresh and real-time updates
 
 **Files Created:**
+
 ```typescript
 apps/desktop/src/components/social/
 ├── SocialTimeline.tsx (NEW - main timeline with infinite scroll)
@@ -293,11 +324,13 @@ apps/desktop/src/components/social/
 ```
 
 **React Components:**
+
 - **SocialTimeline.tsx**: Main timeline container with infinite scroll using IntersectionObserver
 - **TimelinePost.tsx**: Individual post card with media, engagement, platform badges
 - **TimelineFilters.tsx**: Multi-select platforms, time ranges, sort order, search query
 
 **Updated Files:**
+
 ```typescript
 apps/desktop/src-tauri/src/main.rs:
 - Added 5 new platform extractors (linkedin, discord, reddit, spotify, castbox)
@@ -309,6 +342,7 @@ apps/desktop/src/components/social/SocialHub.tsx:
 ```
 
 **Features:**
+
 - Infinite scroll pagination with 20 posts per page
 - Filter by platforms (multi-select)
 - Filter by time range (today, week, month, year, all)
@@ -324,6 +358,7 @@ apps/desktop/src/components/social/SocialHub.tsx:
 **Status:** ✅ Complete (2025-01-07)
 
 **Deliverables:**
+
 - [x] Create/edit/delete categories
 - [x] Manual post categorization
 - [x] Rule-based auto-categorization
@@ -331,12 +366,14 @@ apps/desktop/src/components/social/SocialHub.tsx:
 - [x] Category analytics
 
 **Features:**
+
 - Tag posts as Work, Personal, Entertainment, News, etc.
 - Cross-platform: "Work" includes LinkedIn posts + Slack messages + Work Twitter
 - Color coding and icons
 - Smart rules: "Posts from @work_account → Work category"
 
 **Files Created:**
+
 ```rust
 packages/core-rs/src/social/category.rs - Full category system implementation
 ```
@@ -346,6 +383,7 @@ packages/core-rs/src/social/category.rs - Full category system implementation
 **Status:** ✅ Complete (2025-01-07)
 
 **Deliverables:**
+
 - [x] Platform breakdown with stats
 - [x] Time series activity tracking
 - [x] Category statistics
@@ -353,6 +391,7 @@ packages/core-rs/src/social/category.rs - Full category system implementation
 - [x] Top performing posts ranking
 
 **Files Created:**
+
 ```rust
 packages/core-rs/src/social/analytics.rs - Analytics engine
 apps/desktop/src/components/social/SocialAnalytics.tsx - Dashboard UI
@@ -363,17 +402,20 @@ apps/desktop/src/components/social/SocialAnalytics.tsx - Dashboard UI
 **Status:** ✅ Complete (2025-01-07)
 
 **Deliverables:**
+
 - [x] Full-text search across all posts with FTS5
 - [x] Search by content and author
 - [x] Debounced search input (300ms)
 - [x] Result limiting and pagination
 
 **Files Created:**
+
 ```typescript
 apps/desktop/src/components/social/SocialSearch.tsx - Search UI component
 ```
 
 **Rust Functions:**
+
 ```rust
 - search_social_posts(conn, space_id, query, limit) ✅
 ```
@@ -383,6 +425,7 @@ apps/desktop/src/components/social/SocialSearch.tsx - Search UI component
 **Status:** ✅ Complete (2025-01-07)
 
 **Deliverables:**
+
 - [x] Tinder match and message extractor
 - [x] Bumble connections extractor
 - [x] Hinge matches with prompts extractor
@@ -390,6 +433,7 @@ apps/desktop/src/components/social/SocialSearch.tsx - Search UI component
 - [x] Integration into unified timeline
 
 **Files Created:**
+
 ```javascript
 apps/desktop/src-tauri/js/extractors/
 ├── tinder.js (NEW - privacy-first match tracking)
@@ -398,6 +442,7 @@ apps/desktop/src-tauri/js/extractors/
 ```
 
 **Features:**
+
 - Explicit privacy notices in all dating extractors
 - Only first name display for privacy
 - Less frequent polling (60s vs 15-30s)
@@ -408,6 +453,7 @@ apps/desktop/src-tauri/js/extractors/
 ### Week 11: Mobile Foundation
 
 **Deliverables:**
+
 - [ ] Mobile database sync with desktop
 - [ ] Social timeline on mobile
 - [ ] Account management on mobile
@@ -415,6 +461,7 @@ apps/desktop/src-tauri/js/extractors/
 - [ ] Pull-to-refresh
 
 **React Native Components:**
+
 ```typescript
 apps/mobile/src/features/social/
 ├── SocialHub.tsx
@@ -426,6 +473,7 @@ apps/mobile/src/features/social/
 ### Week 12: Mobile-Specific Features
 
 **Deliverables:**
+
 - [ ] Share target integration (iOS/Android)
 - [ ] Quick capture from mobile apps
 - [ ] Background sync (every 30 min)
@@ -433,6 +481,7 @@ apps/mobile/src/features/social/
 - [ ] Widgets (timeline preview)
 
 **Share Sheet:**
+
 - Share from Twitter → Noteece (saved automatically)
 - Share from Instagram → categorized and stored
 - Share URLs → platform detected, content extracted
@@ -444,6 +493,7 @@ apps/mobile/src/features/social/
 **Status:** ✅ Complete (2025-01-07)
 
 **Deliverables:**
+
 - [x] Rule-based intelligent categorization system
 - [x] Automatic post categorization with topic matching
 - [x] Sentiment analysis (Positive, Negative, Neutral, Mixed)
@@ -452,11 +502,13 @@ apps/mobile/src/features/social/
 - [x] Auto-categorization rules with priority system
 
 **Files Created:**
+
 ```rust
 packages/core-rs/src/social/intelligence.rs - Intelligence engine
 ```
 
 **Features Implemented:**
+
 - Sentiment detection with positive/negative indicators
 - Topic extraction using keyword matching
 - Platform-based smart categorization (e.g., LinkedIn → Work)
@@ -471,6 +523,7 @@ packages/core-rs/src/social/intelligence.rs - Intelligence engine
 **Status:** ✅ Complete (2025-01-07)
 
 **Deliverables:**
+
 - [x] Focus mode preset system (4 built-in modes)
 - [x] Platform blocklists per focus mode
 - [x] Platform allow lists per focus mode
@@ -479,17 +532,20 @@ packages/core-rs/src/social/intelligence.rs - Intelligence engine
 - [x] Rule enable/disable toggles
 
 **Files Created:**
+
 ```rust
 packages/core-rs/src/social/focus.rs - Focus modes and automation
 ```
 
 **Preset Focus Modes Implemented:**
+
 - **Deep Work 🧠**: Blocks social, allows LinkedIn/Slack
 - **Social Time 👥**: Limited social platform access
 - **Learning 📚**: YouTube educational, Reddit
 - **Detox 🌿**: Blocks all social media platforms
 
 **Automation System:**
+
 - 4 Trigger Types: time_of_day, day_of_week, platform_open, category_post
 - 4 Action Types: activate_focus_mode, disable_sync, send_notification, auto_categorize
 - Priority-based execution
@@ -500,6 +556,7 @@ packages/core-rs/src/social/focus.rs - Focus modes and automation
 ### Week 15: Analytics Dashboard
 
 **Deliverables:**
+
 - [ ] Screen time by platform
 - [ ] Engagement given vs. received
 - [ ] Content consumption trends
@@ -507,6 +564,7 @@ packages/core-rs/src/social/focus.rs - Focus modes and automation
 - [ ] Weekly/monthly reports
 
 **Charts:**
+
 - Daily screen time heatmap
 - Platform usage pie chart
 - Engagement over time line graph
@@ -516,6 +574,7 @@ packages/core-rs/src/social/focus.rs - Focus modes and automation
 ### Week 16: Polish & Documentation
 
 **Deliverables:**
+
 - [ ] User documentation
 - [ ] Video tutorials
 - [ ] Migration guide
@@ -528,6 +587,7 @@ packages/core-rs/src/social/focus.rs - Focus modes and automation
 ## Mode Architecture
 
 ### Light Mode (RSS Only)
+
 - **Platforms**: 5 max
 - **Collection**: RSS feeds only (Nitter, Invidious, Reddit RSS)
 - **Storage**: Last 7 days
@@ -537,6 +597,7 @@ packages/core-rs/src/social/focus.rs - Focus modes and automation
 - **Best For**: Casual users, low-power devices
 
 ### Medium Mode (WebView Scraping)
+
 - **Platforms**: 20 max
 - **Collection**: WebView extraction + RSS
 - **Storage**: Last 30 days
@@ -546,6 +607,7 @@ packages/core-rs/src/social/focus.rs - Focus modes and automation
 - **Best For**: Power users, daily usage
 
 ### Heavy Mode (Full Automation)
+
 - **Platforms**: Unlimited
 - **Collection**: All methods (WebView, API, RSS, email parsing)
 - **Storage**: Unlimited with archival
@@ -557,21 +619,25 @@ packages/core-rs/src/social/focus.rs - Focus modes and automation
 ## Success Metrics
 
 **Week 4 Milestone:**
+
 - ✅ 2 platforms working (Twitter + YouTube)
 - ✅ 100+ posts extracted
 - ✅ Basic timeline rendering
 
 **Week 8 Milestone:**
+
 - ✅ 5+ platforms working
 - ✅ Categories functional
 - ✅ Search working
 
 **Week 12 Milestone:**
+
 - ✅ Mobile app functional
 - ✅ Desktop-mobile sync working
 - ✅ 10+ platforms supported
 
 **Week 16 Final:**
+
 - ✅ 15+ platforms
 - ✅ All three modes implemented
 - ✅ Local AI working
@@ -581,32 +647,35 @@ packages/core-rs/src/social/focus.rs - Focus modes and automation
 ## Risk Mitigation
 
 ### Technical Risks
+
 1. **Platform Changes**: Scrapers break when platforms update
-   - *Mitigation*: Modular extractor design, easy to update
-   - *Fallback*: RSS feeds always available
+   - _Mitigation_: Modular extractor design, easy to update
+   - _Fallback_: RSS feeds always available
 
 2. **Rate Limiting**: Platforms detect and ban
-   - *Mitigation*: Exponential backoff, reasonable sync intervals
-   - *Mitigation*: User-initiated sync only
+   - _Mitigation_: Exponential backoff, reasonable sync intervals
+   - _Mitigation_: User-initiated sync only
 
 3. **Browser Detection**: Platforms block automated WebViews
-   - *Mitigation*: Use real browser user agents
-   - *Mitigation*: Cookie/session persistence
-   - *Mitigation*: Manual login flow
+   - _Mitigation_: Use real browser user agents
+   - _Mitigation_: Cookie/session persistence
+   - _Mitigation_: Manual login flow
 
 ### Legal Risks
+
 1. **Terms of Service**: Scraping may violate ToS
-   - *Mitigation*: Users explicitly authorize access to their own accounts
-   - *Mitigation*: Only scrape public data user has access to
-   - *Mitigation*: Respect robots.txt
+   - _Mitigation_: Users explicitly authorize access to their own accounts
+   - _Mitigation_: Only scrape public data user has access to
+   - _Mitigation_: Respect robots.txt
 
 2. **API Terms**: Using unofficial methods
-   - *Mitigation*: Use official APIs where available
-   - *Mitigation*: Clear disclaimers in documentation
+   - _Mitigation_: Use official APIs where available
+   - _Mitigation_: Clear disclaimers in documentation
 
 ## Dependencies
 
 ### Rust Crates
+
 ```toml
 [dependencies]
 # Already in project:
@@ -626,13 +695,14 @@ regex = "1.10"           # Pattern matching
 ```
 
 ### JavaScript Libraries
+
 ```json
 {
-  "@mlc-ai/web-llm": "^0.2.0",        // Local AI
-  "onnxruntime-web": "^1.17.0",       // ML inference
-  "@tauri-apps/api": "^2.0.0",        // Tauri bindings
-  "react-query": "^5.0.0",            // Data fetching
-  "mantine": "^7.0.0"                 // UI components (already used)
+  "@mlc-ai/web-llm": "^0.2.0", // Local AI
+  "onnxruntime-web": "^1.17.0", // ML inference
+  "@tauri-apps/api": "^2.0.0", // Tauri bindings
+  "react-query": "^5.0.0", // Data fetching
+  "mantine": "^7.0.0" // UI components (already used)
 }
 ```
 

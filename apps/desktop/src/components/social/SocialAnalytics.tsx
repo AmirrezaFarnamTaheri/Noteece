@@ -267,7 +267,7 @@ export function SocialAnalytics({ spaceId }: SocialAnalyticsProps) {
 
       {/* Top Posts */}
       {analytics.top_posts.length > 0 && (
-        <Card shadow="sm" padding="lg" radius="md" withBorder">
+        <Card shadow="sm" padding="lg" radius="md" withBorder>
           <Title order={3} mb="md">🔥 Top Performing Posts</Title>
           <Stack gap="md">
             {analytics.top_posts.map((post, index) => {

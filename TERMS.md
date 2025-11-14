@@ -26,6 +26,7 @@ Noteece is a local-first, encrypted personal knowledge management application th
 Noteece is licensed under the **GNU General Public License v3.0**. This means:
 
 ✅ **You are free to:**
+
 - Use the app for any purpose
 - Study how the app works
 - Modify the app to suit your needs
@@ -33,6 +34,7 @@ Noteece is licensed under the **GNU General Public License v3.0**. This means:
 - Distribute modified versions
 
 ❗ **Under these conditions:**
+
 - If you distribute the app (modified or not), you must make the source code available
 - Any modifications must also be licensed under GPL v3
 - You must preserve copyright notices and license information
@@ -65,6 +67,7 @@ See our [Privacy Policy](PRIVACY.md) for complete details.
 ### Your Vault Password
 
 You are responsible for:
+
 - **Choosing a strong password** for your vault
 - **Keeping your password secure** and confidential
 - **Backing up your password** (we recommend a password manager)
@@ -75,11 +78,13 @@ You are responsible for:
 ### Backup Your Data
 
 You should:
+
 - Regularly export your data using the built-in export feature
 - Store backups in a secure location
 - Test your backups to ensure they work
 
 We are not responsible for data loss due to:
+
 - Lost or forgotten passwords
 - Device failure or loss
 - Software bugs or crashes
@@ -88,6 +93,7 @@ We are not responsible for data loss due to:
 ### Lawful Use
 
 You agree to:
+
 - Use the app only for lawful purposes
 - Not use the app to store illegal content
 - Not attempt to break or circumvent security measures
@@ -97,6 +103,7 @@ You agree to:
 ### Prohibited Uses
 
 You may **not** use Noteece to:
+
 - Store child sexual abuse material (CSAM) or illegal content
 - Plan or coordinate illegal activities
 - Violate intellectual property rights of others
@@ -110,6 +117,7 @@ You may **not** use Noteece to:
 ### Noteece Code
 
 The Noteece application code is:
+
 - Copyright © 2025 Noteece Contributors
 - Licensed under GNU GPL v3
 - Available on GitHub at https://github.com/[your-username]/Noteece
@@ -117,6 +125,7 @@ The Noteece application code is:
 ### Third-Party Libraries
 
 Noteece uses various open source libraries:
+
 - React Native / Expo (MIT License)
 - SQLite (Public Domain)
 - And others (see `package.json` and licenses in the repository)
@@ -126,6 +135,7 @@ We comply with all third-party licenses and acknowledge their creators.
 ### Trademarks
 
 "Noteece" and the Noteece logo are trademarks. Under GPL v3, you may use the app freely, but:
+
 - You should rename your fork if you distribute a modified version
 - Don't imply official endorsement without permission
 
@@ -134,6 +144,7 @@ We comply with all third-party licenses and acknowledge their creators.
 ### No Warranties
 
 THE APP IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:
+
 - MERCHANTABILITY
 - FITNESS FOR A PARTICULAR PURPOSE
 - NON-INFRINGEMENT
@@ -144,6 +155,7 @@ THE APP IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, IN
 ### Use at Your Own Risk
 
 You understand and agree that:
+
 - Software may contain bugs
 - Data loss is possible (back up regularly!)
 - Encryption, while strong, is not 100% infallible
@@ -155,6 +167,7 @@ You understand and agree that:
 TO THE MAXIMUM EXTENT PERMITTED BY LAW:
 
 **We are NOT liable for:**
+
 - Data loss or corruption
 - Lost profits or business interruption
 - Personal injury (except where law prohibits this disclaimer)
@@ -166,6 +179,7 @@ This applies even if we've been advised of the possibility of such damages.
 ### No Guarantee of Sync
 
 The optional local network sync feature:
+
 - Is provided "as is"
 - May fail to sync data
 - May cause conflicts or data inconsistencies
@@ -178,6 +192,7 @@ Always maintain separate backups of important data.
 ### Source Code Availability
 
 As required by GPL v3:
+
 - The complete source code is available on GitHub
 - You can build the app yourself from source
 - You can verify the app does what we claim
@@ -185,6 +200,7 @@ As required by GPL v3:
 ### Modifications
 
 If you modify and distribute Noteece:
+
 - You must make your source code available
 - You must license it under GPL v3
 - You must document your changes
@@ -199,6 +215,7 @@ Under GPL v3, we cannot impose additional restrictions on your rights. These Ter
 ### iOS (Apple)
 
 If using Noteece on iOS:
+
 - You must comply with Apple's App Store terms
 - Apple has no obligation to provide support
 - Apple is not responsible for the app
@@ -207,6 +224,7 @@ If using Noteece on iOS:
 ### Android (Google)
 
 If using Noteece on Android:
+
 - You must comply with Google Play's terms (if downloaded from Play Store)
 - Or you can sideload the app (it's FOSS!)
 - Google has no obligation regarding the app
@@ -216,6 +234,7 @@ If using Noteece on Android:
 ### App Updates
 
 We may release updates that:
+
 - Add new features
 - Fix bugs
 - Improve security
@@ -226,6 +245,7 @@ Updates are optional, but recommended for security.
 ### Terms Updates
 
 We may update these Terms:
+
 - Changes will be posted with a new "Last Updated" date
 - Material changes will be announced in the app
 - Continued use after changes means you accept the new Terms
@@ -236,6 +256,7 @@ We may update these Terms:
 ### By You
 
 You can stop using Noteece at any time:
+
 - Simply delete the app from your device
 - All local data will be removed
 - No account to delete (we don't have accounts)
@@ -243,6 +264,7 @@ You can stop using Noteece at any time:
 ### By Us
 
 We cannot "terminate" your access because:
+
 - The app runs locally on your device
 - We don't have servers to shut off
 - It's open source (you could fork it)
@@ -258,6 +280,7 @@ These Terms are governed by the laws of [Your Jurisdiction - Update This], witho
 ### Informal Resolution
 
 Before filing a legal claim:
+
 - Contact us to resolve the issue informally
 - Email: legal@noteece.app (fictional - update with real contact)
 - GitHub Issues: https://github.com/[your-username]/Noteece/issues
@@ -273,6 +296,7 @@ To the extent permitted by law, you agree to resolve disputes individually, not 
 ## Severability
 
 If any provision of these Terms is found unenforceable:
+
 - That provision is severed
 - The remaining Terms remain in effect
 - The unenforceable provision is reformed to be enforceable while preserving intent
@@ -280,6 +304,7 @@ If any provision of these Terms is found unenforceable:
 ## Entire Agreement
 
 These Terms, along with:
+
 - The Privacy Policy
 - The GNU GPL v3 License
 
@@ -298,6 +323,7 @@ For questions about these Terms:
 ### For Developers
 
 If you fork or contribute to Noteece:
+
 - Contributions are assumed to be under GPL v3
 - We may include your contributions in the main app
 - You retain copyright to your contributions
@@ -306,11 +332,13 @@ If you fork or contribute to Noteece:
 ### For Enterprise Users
 
 Noteece is free software. If you want to:
+
 - Use it in your organization
 - Modify it for internal use
 - Deploy it to employees
 
 You may do so under GPL v3, but note:
+
 - We provide no warranties
 - We provide no enterprise support (it's a community project)
 - You may want to fork and maintain your own version
@@ -318,6 +346,7 @@ You may do so under GPL v3, but note:
 ### For Security Researchers
 
 If you find a security vulnerability:
+
 - Report it responsibly to security@noteece.app (fictional - update)
 - Give us time to fix it before public disclosure
 - We appreciate responsible disclosure
@@ -326,6 +355,7 @@ If you find a security vulnerability:
 ## Acknowledgments
 
 Noteece is built with the help of:
+
 - Open source contributors
 - The React Native / Expo community
 - Various open source libraries (see package.json)

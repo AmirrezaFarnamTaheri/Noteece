@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { authService } from '../../services/auth';
 import styles from './Auth.module.css';
 
-interface RegisterProps {
+interface RegisterProperties {
   onSuccess: () => void;
   onSwitchToLogin: () => void;
 }
 
-const Register: React.FC<RegisterProps> = ({ onSuccess, onSwitchToLogin }) => {
+const Register: React.FC<RegisterProperties> = ({ onSuccess, onSwitchToLogin }) => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -77,8 +77,8 @@ const Register: React.FC<RegisterProps> = ({ onSuccess, onSwitchToLogin }) => {
       setPassword('');
       setConfirmPassword('');
       onSuccess();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
+    } catch (error_) {
+      setError(error_ instanceof Error ? error_.message : 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -90,8 +90,8 @@ const Register: React.FC<RegisterProps> = ({ onSuccess, onSwitchToLogin }) => {
     if (password.length >= 8) strength++;
     if (password.length >= 12) strength++;
     if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
-    if (/[0-9]/.test(password)) strength++;
-    if (/[^a-zA-Z0-9]/.test(password)) strength++;
+    if (/\d/.test(password)) strength++;
+    if (/[^\dA-Za-z]/.test(password)) strength++;
 
     if (strength <= 2) return 'weak';
     if (strength === 3) return 'medium';
@@ -121,9 +121,7 @@ const Register: React.FC<RegisterProps> = ({ onSuccess, onSwitchToLogin }) => {
               className={styles.input}
               autoComplete="username"
             />
-            {username && username.length < 3 && (
-              <span className={styles.hint}>At least 3 characters required</span>
-            )}
+            {username && username.length < 3 && <span className={styles.hint}>At least 3 characters required</span>}
           </div>
 
           <div className={styles.formGroup}>
@@ -216,11 +214,7 @@ const Register: React.FC<RegisterProps> = ({ onSuccess, onSwitchToLogin }) => {
 
         <p className={styles.switchText}>
           Already have an account?{' '}
-          <button
-            onClick={onSwitchToLogin}
-            className={styles.switchLink}
-            disabled={loading}
-          >
+          <button onClick={onSwitchToLogin} className={styles.switchLink} disabled={loading}>
             Sign in
           </button>
         </p>

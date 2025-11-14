@@ -1,9 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Alert } from 'react-native';
-import { invoke } from '@tauri-apps/api/core';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  ScrollView,
+  Alert,
+} from "react-native";
+import { invoke } from "@tauri-apps/api/core";
 
 interface SyncStatus {
-  status: 'idle' | 'discovering' | 'connecting' | 'syncing' | 'complete' | 'error';
+  status:
+    | "idle"
+    | "discovering"
+    | "connecting"
+    | "syncing"
+    | "complete"
+    | "error";
   message: string;
   progress: number;
   connected_device?: string;
@@ -21,11 +35,13 @@ interface DiscoveredDevice {
 
 const SyncManager: React.FC = () => {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
-    status: 'idle',
-    message: 'Ready to sync',
+    status: "idle",
+    message: "Ready to sync",
     progress: 0,
   });
-  const [discoveredDevices, setDiscoveredDevices] = useState<DiscoveredDevice[]>([]);
+  const [discoveredDevices, setDiscoveredDevices] = useState<
+    DiscoveredDevice[]
+  >([]);
   const [isScanning, setIsScanning] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
 
@@ -38,28 +54,29 @@ const SyncManager: React.FC = () => {
     try {
       setIsScanning(true);
       setSyncStatus({
-        status: 'discovering',
-        message: 'Discovering nearby devices...',
+        status: "discovering",
+        message: "Discovering nearby devices...",
         progress: 0,
       });
 
       // Call Tauri command to discover devices
-      const devices = await invoke<DiscoveredDevice[]>('discover_devices_cmd');
+      const devices = await invoke<DiscoveredDevice[]>("discover_devices_cmd");
 
       setDiscoveredDevices(devices || []);
       setSyncStatus({
-        status: 'idle',
-        message: devices && devices.length > 0
-          ? `Found ${devices.length} device(s)`
-          : 'No devices found',
+        status: "idle",
+        message:
+          devices && devices.length > 0
+            ? `Found ${devices.length} device(s)`
+            : "No devices found",
         progress: 0,
       });
     } catch (error) {
       setSyncStatus({
-        status: 'error',
-        message: 'Discovery failed',
+        status: "error",
+        message: "Discovery failed",
         progress: 0,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
     } finally {
       setIsScanning(false);
@@ -70,73 +87,76 @@ const SyncManager: React.FC = () => {
     try {
       setSelectedDevice(deviceId);
       setSyncStatus({
-        status: 'connecting',
-        message: 'Connecting to device...',
+        status: "connecting",
+        message: "Connecting to device...",
         progress: 10,
       });
 
       // Step 1: Initiate pairing
-      const pairingInitiated = await invoke<boolean>('initiate_pairing_cmd', {
+      const pairingInitiated = await invoke<boolean>("initiate_pairing_cmd", {
         device_id: deviceId,
       });
 
       if (!pairingInitiated) {
-        throw new Error('Failed to initiate pairing');
+        throw new Error("Failed to initiate pairing");
       }
 
       setSyncStatus({
-        status: 'connecting',
-        message: 'Exchanging keys...',
+        status: "connecting",
+        message: "Exchanging keys...",
         progress: 30,
       });
 
       // Step 2: Exchange keys (ECDH)
-      const keysExchanged = await invoke<boolean>('exchange_keys_cmd', {
+      const keysExchanged = await invoke<boolean>("exchange_keys_cmd", {
         device_id: deviceId,
       });
 
       if (!keysExchanged) {
-        throw new Error('Key exchange failed');
+        throw new Error("Key exchange failed");
       }
 
       setSyncStatus({
-        status: 'syncing',
-        message: 'Syncing data...',
+        status: "syncing",
+        message: "Syncing data...",
         progress: 50,
         connected_device: deviceId,
       });
 
       // Step 3: Start sync
-      const syncStarted = await invoke<boolean>('start_sync_cmd', {
+      const syncStarted = await invoke<boolean>("start_sync_cmd", {
         device_id: deviceId,
-        categories: ['posts', 'accounts', 'categories'],
+        categories: ["posts", "accounts", "categories"],
       });
 
       if (!syncStarted) {
-        throw new Error('Failed to start sync');
+        throw new Error("Failed to start sync");
       }
 
       // Monitor sync progress
       await monitorSyncProgress(deviceId);
 
       setSyncStatus({
-        status: 'complete',
-        message: 'Sync completed successfully',
+        status: "complete",
+        message: "Sync completed successfully",
         progress: 100,
         last_sync: new Date().toISOString(),
         connected_device: deviceId,
       });
 
-      Alert.alert('Success', 'Data synchronized successfully');
+      Alert.alert("Success", "Data synchronized successfully");
     } catch (error) {
       setSyncStatus({
-        status: 'error',
-        message: 'Sync failed',
+        status: "error",
+        message: "Sync failed",
         progress: 0,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
 
-      Alert.alert('Sync Error', error instanceof Error ? error.message : 'Sync failed');
+      Alert.alert(
+        "Sync Error",
+        error instanceof Error ? error.message : "Sync failed",
+      );
     }
   };
 
@@ -148,13 +168,13 @@ const SyncManager: React.FC = () => {
     while (attempts < maxAttempts) {
       try {
         const progress = await invoke<{ progress: number; message: string }>(
-          'get_sync_progress_cmd',
-          { device_id: deviceId }
+          "get_sync_progress_cmd",
+          { device_id: deviceId },
         );
 
         setSyncStatus((prev) => ({
           ...prev,
-          progress: 50 + (progress.progress * 0.5), // Scale from 50-100
+          progress: 50 + progress.progress * 0.5, // Scale from 50-100
           message: progress.message,
         }));
 
@@ -166,7 +186,7 @@ const SyncManager: React.FC = () => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         attempts++;
       } catch (error) {
-        console.error('Error monitoring sync progress:', error);
+        console.error("Error monitoring sync progress:", error);
         break;
       }
     }
@@ -175,16 +195,16 @@ const SyncManager: React.FC = () => {
   const cancelSync = async () => {
     try {
       if (selectedDevice) {
-        await invoke('cancel_sync_cmd', { device_id: selectedDevice });
+        await invoke("cancel_sync_cmd", { device_id: selectedDevice });
       }
       setSyncStatus({
-        status: 'idle',
-        message: 'Sync cancelled',
+        status: "idle",
+        message: "Sync cancelled",
         progress: 0,
       });
       setSelectedDevice(null);
     } catch (error) {
-      console.error('Error cancelling sync:', error);
+      console.error("Error cancelling sync:", error);
     }
   };
 
@@ -198,7 +218,9 @@ const SyncManager: React.FC = () => {
       <View style={styles.statusCard}>
         <View style={styles.statusHeader}>
           <Text style={styles.statusTitle}>Sync Status</Text>
-          <Text style={[styles.statusBadge, styles[`badge_${syncStatus.status}`]]}>
+          <Text
+            style={[styles.statusBadge, styles[`badge_${syncStatus.status}`]]}
+          >
             {syncStatus.status.toUpperCase()}
           </Text>
         </View>
@@ -216,12 +238,16 @@ const SyncManager: React.FC = () => {
         )}
 
         {/* Progress Bar */}
-        {syncStatus.status !== 'idle' && (
+        {syncStatus.status !== "idle" && (
           <View style={styles.progressContainer}>
-            <View style={[styles.progressBar, { width: `${syncStatus.progress}%` }]} />
+            <View
+              style={[styles.progressBar, { width: `${syncStatus.progress}%` }]}
+            />
           </View>
         )}
-        <Text style={styles.progressText}>{syncStatus.progress.toFixed(0)}%</Text>
+        <Text style={styles.progressText}>
+          {syncStatus.progress.toFixed(0)}%
+        </Text>
       </View>
 
       {/* Discovery Controls */}
@@ -229,18 +255,18 @@ const SyncManager: React.FC = () => {
         <TouchableOpacity
           style={[styles.button, styles.primaryButton]}
           onPress={discoverDevices}
-          disabled={isScanning || syncStatus.status !== 'idle'}
+          disabled={isScanning || syncStatus.status !== "idle"}
         >
           {isScanning ? (
             <ActivityIndicator color="#FFF" />
           ) : (
             <Text style={styles.buttonText}>
-              {discoveredDevices.length > 0 ? 'Re-scan' : 'Scan'} Devices
+              {discoveredDevices.length > 0 ? "Re-scan" : "Scan"} Devices
             </Text>
           )}
         </TouchableOpacity>
 
-        {syncStatus.status === 'syncing' && (
+        {syncStatus.status === "syncing" && (
           <TouchableOpacity
             style={[styles.button, styles.dangerButton]}
             onPress={cancelSync}
@@ -253,17 +279,20 @@ const SyncManager: React.FC = () => {
       {/* Available Devices */}
       {discoveredDevices.length > 0 ? (
         <View style={styles.devicesCard}>
-          <Text style={styles.sectionTitle}>Available Devices ({discoveredDevices.length})</Text>
+          <Text style={styles.sectionTitle}>
+            Available Devices ({discoveredDevices.length})
+          </Text>
 
           {discoveredDevices.map((device) => (
             <TouchableOpacity
               key={device.device_id}
               style={[
                 styles.deviceItem,
-                selectedDevice === device.device_id && styles.deviceItemSelected,
+                selectedDevice === device.device_id &&
+                  styles.deviceItemSelected,
               ]}
               onPress={() => initiateSync(device.device_id)}
-              disabled={syncStatus.status !== 'idle'}
+              disabled={syncStatus.status !== "idle"}
             >
               <View style={styles.deviceInfo}>
                 <Text style={styles.deviceName}>{device.device_name}</Text>
@@ -272,9 +301,10 @@ const SyncManager: React.FC = () => {
                 </Text>
               </View>
               <View style={styles.deviceStatus}>
-                {selectedDevice === device.device_id && syncStatus.status !== 'idle' && (
-                  <ActivityIndicator color="#667eea" size="small" />
-                )}
+                {selectedDevice === device.device_id &&
+                  syncStatus.status !== "idle" && (
+                    <ActivityIndicator color="#667eea" size="small" />
+                  )}
                 <Text style={styles.syncChevron}>›</Text>
               </View>
             </TouchableOpacity>
@@ -329,174 +359,174 @@ const SyncManager: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
     padding: 12,
   },
   statusCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   statusHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 12,
   },
   statusTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
   },
   statusBadge: {
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 6,
     fontSize: 12,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: "600",
+    color: "#fff",
   },
-  badge_idle: { backgroundColor: '#999' },
-  badge_discovering: { backgroundColor: '#2196F3' },
-  badge_connecting: { backgroundColor: '#FF9800' },
-  badge_syncing: { backgroundColor: '#4CAF50' },
-  badge_complete: { backgroundColor: '#4CAF50' },
-  badge_error: { backgroundColor: '#F44336' },
+  badge_idle: { backgroundColor: "#999" },
+  badge_discovering: { backgroundColor: "#2196F3" },
+  badge_connecting: { backgroundColor: "#FF9800" },
+  badge_syncing: { backgroundColor: "#4CAF50" },
+  badge_complete: { backgroundColor: "#4CAF50" },
+  badge_error: { backgroundColor: "#F44336" },
   statusMessage: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 8,
   },
   errorText: {
     fontSize: 13,
-    color: '#F44336',
+    color: "#F44336",
     marginBottom: 8,
   },
   lastSyncText: {
     fontSize: 12,
-    color: '#999',
+    color: "#999",
     marginBottom: 12,
   },
   progressContainer: {
     height: 6,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: "#e0e0e0",
     borderRadius: 3,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: 8,
   },
   progressBar: {
-    height: '100%',
-    backgroundColor: '#667eea',
+    height: "100%",
+    backgroundColor: "#667eea",
   },
   progressText: {
     fontSize: 12,
-    color: '#666',
-    textAlign: 'right',
+    color: "#666",
+    textAlign: "right",
   },
   controlsCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
   },
   button: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   primaryButton: {
-    backgroundColor: '#667eea',
+    backgroundColor: "#667eea",
   },
   secondaryButton: {
-    backgroundColor: '#e0e0e0',
+    backgroundColor: "#e0e0e0",
   },
   dangerButton: {
-    backgroundColor: '#F44336',
+    backgroundColor: "#F44336",
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: "#fff",
+    fontWeight: "600",
     fontSize: 14,
   },
   devicesCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 12,
   },
   deviceItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 12,
     paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   deviceItemSelected: {
-    backgroundColor: '#f9f9ff',
+    backgroundColor: "#f9f9ff",
   },
   deviceInfo: {
     flex: 1,
   },
   deviceName: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 4,
   },
   deviceSubtext: {
     fontSize: 12,
-    color: '#999',
+    color: "#999",
   },
   deviceStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   syncChevron: {
     fontSize: 18,
-    color: '#ccc',
+    color: "#ccc",
   },
   emptyState: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 32,
     marginBottom: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   emptyStateText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
+    fontWeight: "600",
+    color: "#666",
     marginTop: 12,
-    textAlign: 'center',
+    textAlign: "center",
   },
   emptyStateSubtext: {
     fontSize: 13,
-    color: '#999',
+    color: "#999",
     marginTop: 8,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 16,
   },
   infoCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
   },
@@ -505,13 +535,13 @@ const styles = StyleSheet.create({
   },
   infoBullet: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#667eea',
+    fontWeight: "600",
+    color: "#667eea",
     marginBottom: 4,
   },
   infoText: {
     fontSize: 13,
-    color: '#666',
+    color: "#666",
     lineHeight: 20,
   },
 });

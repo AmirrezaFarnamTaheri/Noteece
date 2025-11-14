@@ -212,13 +212,11 @@ const UserManagement: React.FC = () => {
 
       // Handle custom permissions
       // Get the role's default permissions
-      const role = roles.find(r => r.id === values.roleId);
+      const role = roles.find((r) => r.id === values.roleId);
       const rolePermissions = role?.permissions || [];
 
       // Grant custom permissions not in the role
-      const permissionsToGrant = values.customPermissions.filter(
-        p => !rolePermissions.includes(p)
-      );
+      const permissionsToGrant = values.customPermissions.filter((p) => !rolePermissions.includes(p));
       for (const permission of permissionsToGrant) {
         await invoke('grant_permission_cmd', {
           space_id: activeSpaceId,
@@ -228,9 +226,7 @@ const UserManagement: React.FC = () => {
       }
 
       // Revoke role permissions not in custom permissions
-      const permissionsToRevoke = rolePermissions.filter(
-        p => !values.customPermissions.includes(p)
-      );
+      const permissionsToRevoke = rolePermissions.filter((p) => !values.customPermissions.includes(p));
       for (const permission of permissionsToRevoke) {
         await invoke('revoke_permission_cmd', {
           space_id: activeSpaceId,
@@ -265,17 +261,15 @@ const UserManagement: React.FC = () => {
     mutationFn: async (values: { userId: string; currentStatus: string }) => {
       if (!activeSpaceId) throw new Error('No active space');
 
-      if (values.currentStatus === 'suspended') {
-        await invoke('activate_user_cmd', {
-          space_id: activeSpaceId,
-          userId: values.userId,
-        });
-      } else {
-        await invoke('suspend_user_cmd', {
-          space_id: activeSpaceId,
-          userId: values.userId,
-        });
-      }
+      await (values.currentStatus === 'suspended'
+        ? invoke('activate_user_cmd', {
+            space_id: activeSpaceId,
+            userId: values.userId,
+          })
+        : invoke('suspend_user_cmd', {
+            space_id: activeSpaceId,
+            userId: values.userId,
+          }));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['spaceUsers', activeSpaceId] });
@@ -597,7 +591,7 @@ const UserManagement: React.FC = () => {
         <Tabs.Panel value="roles" pt="md">
           <Stack gap="md">
             {roles.map((role) => {
-              const userCount = users.filter(u => u.role === role.id).length;
+              const userCount = users.filter((u) => u.role === role.id).length;
               return (
                 <Card key={role.id} p="lg" radius="md" withBorder>
                   <Group justify="space-between">

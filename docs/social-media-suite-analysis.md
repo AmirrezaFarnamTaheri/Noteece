@@ -8,20 +8,22 @@ Your social media suite plan is comprehensive and well-thought-out, but needs si
 
 ### Critical Architecture Differences
 
-| Your Plan Assumes | Noteece Actually Uses | Impact |
-|-------------------|----------------------|---------|
-| Electron + Node.js | **Tauri v2 + Rust** | ✅ Better security, smaller footprint |
-| Browser Extension | **Tauri WebView** | ⚠️ Different approach needed |
-| JavaScript backend | **Rust core** | ✅ Better performance, type safety |
-| Standard SQLite | **SQLCipher (encrypted)** | ✅ Built-in encryption! |
-| Basic encryption | **Production-grade crypto** | ✅ Already implemented! |
+| Your Plan Assumes  | Noteece Actually Uses       | Impact                                |
+| ------------------ | --------------------------- | ------------------------------------- |
+| Electron + Node.js | **Tauri v2 + Rust**         | ✅ Better security, smaller footprint |
+| Browser Extension  | **Tauri WebView**           | ⚠️ Different approach needed          |
+| JavaScript backend | **Rust core**               | ✅ Better performance, type safety    |
+| Standard SQLite    | **SQLCipher (encrypted)**   | ✅ Built-in encryption!               |
+| Basic encryption   | **Production-grade crypto** | ✅ Already implemented!               |
 
 ## Part 1: What Works Perfectly ✅
 
 ### 1.1 Zero Infrastructure Budget
+
 **Status: PERFECT MATCH**
 
 Noteece is built for exactly this:
+
 - ✅ Local-first architecture (no servers needed)
 - ✅ SQLCipher encrypted database
 - ✅ All data stored locally
@@ -29,9 +31,11 @@ Noteece is built for exactly this:
 - ✅ Mobile app with offline-first design
 
 ### 1.2 Multi-Account Support
+
 **Status: EXCELLENT FIT**
 
 Existing patterns you can follow:
+
 ```rust
 // Already implemented in caldav.rs:
 pub struct CalDavAccount {
@@ -44,6 +48,7 @@ pub struct CalDavAccount {
 ```
 
 Same pattern works for social accounts:
+
 ```rust
 pub struct SocialAccount {
     pub id: String,
@@ -56,9 +61,11 @@ pub struct SocialAccount {
 ```
 
 ### 1.3 Encrypted Credential Storage
+
 **Status: ALREADY BUILT**
 
 You have production-ready encryption:
+
 ```rust
 // packages/core-rs/src/crypto.rs
 pub fn encrypt_string(plaintext: &str, dek: &[u8]) -> Result<String, CryptoError>
@@ -67,9 +74,11 @@ pub fn decrypt_string(encrypted: &str, dek: &[u8]) -> Result<String, CryptoError
 ```
 
 ### 1.4 Database Schema & Migrations
+
 **Status: PERFECT PATTERN**
 
 Follow existing migration system in `db.rs`:
+
 ```rust
 pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
     if current_version < 6 {
@@ -84,9 +93,11 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
 ```
 
 ### 1.5 Mobile Feature Parity
+
 **Status: ACHIEVABLE**
 
 Mobile app already has:
+
 - ✅ React Native + Expo
 - ✅ SQLite local storage
 - ✅ Background sync every 15 minutes
@@ -96,7 +107,9 @@ Mobile app already has:
 ## Part 2: What Needs Major Adaptation ⚠️
 
 ### 2.1 Browser Extension Approach
+
 **Your Plan:**
+
 ```typescript
 apps/desktop/src/social-suite/extension/
 ├── manifest.json
@@ -107,6 +120,7 @@ apps/desktop/src/social-suite/extension/
 **Problem:** Tauri doesn't support Chrome extensions like Electron does.
 
 **Solution:** Use Tauri's WebView with custom injection:
+
 ```rust
 // In Tauri, use WebView with custom protocol handlers
 use tauri::Manager;
@@ -141,6 +155,7 @@ fn create_social_webview(
 ```
 
 ### 2.2 Multi-WebView Architecture
+
 **Adapted Approach:**
 
 ```rust
@@ -259,6 +274,7 @@ const INJECTION_SCRIPT = r#"
 ### Phase 1: Core Infrastructure (Weeks 1-3)
 
 #### Week 1: Database Schema & Rust Modules
+
 ```rust
 // packages/core-rs/src/social.rs
 pub mod account;
@@ -318,6 +334,7 @@ pub struct Engagement {
 ```
 
 **Database Schema (Version 6):**
+
 ```sql
 -- Social Accounts
 CREATE TABLE social_account (
@@ -436,6 +453,7 @@ CREATE INDEX idx_social_sync_history ON social_sync_history(account_id, sync_tim
 ```
 
 #### Week 2: Account Management & Authentication
+
 ```rust
 // packages/core-rs/src/social/account.rs
 use rusqlite::{Connection, params};
@@ -524,6 +542,7 @@ pub fn get_social_accounts(
 ```
 
 #### Week 3: Tauri WebView Manager
+
 ```rust
 // packages/core-rs/src/social/webview_manager.rs
 
@@ -621,135 +640,143 @@ fn get_platform_injection_script(platform: &str) -> String {
 
 ```javascript
 // apps/desktop/src-tauri/js/extractors/twitter.js
-(async function() {
-    const POLL_INTERVAL = 5000; // Check every 5 seconds
-    let lastExtractedIds = new Set();
+(async function () {
+  const POLL_INTERVAL = 5000; // Check every 5 seconds
+  let lastExtractedIds = new Set();
 
-    async function extractTweets() {
-        const tweets = document.querySelectorAll('article[data-testid="tweet"]');
-        const extracted = [];
+  async function extractTweets() {
+    const tweets = document.querySelectorAll('article[data-testid="tweet"]');
+    const extracted = [];
 
-        for (const tweet of tweets) {
-            try {
-                const tweetId = tweet.querySelector('a[href*="/status/"]')
-                    ?.href.match(/status\/(\d+)/)?.[1];
+    for (const tweet of tweets) {
+      try {
+        const tweetId = tweet
+          .querySelector('a[href*="/status/"]')
+          ?.href.match(/status\/(\d+)/)?.[1];
 
-                if (!tweetId || lastExtractedIds.has(tweetId)) continue;
+        if (!tweetId || lastExtractedIds.has(tweetId)) continue;
 
-                const data = {
-                    id: tweetId,
-                    author: tweet.querySelector('[data-testid="User-Name"]')?.textContent?.trim(),
-                    handle: tweet.querySelector('[data-testid="User-Name"] a')?.textContent?.trim(),
-                    content: tweet.querySelector('[data-testid="tweetText"]')?.textContent,
-                    timestamp: new Date(tweet.querySelector('time')?.dateTime).getTime() / 1000,
-                    likes: parseStat(tweet, 'like'),
-                    retweets: parseStat(tweet, 'retweet'),
-                    replies: parseStat(tweet, 'reply'),
-                    media: extractMedia(tweet),
-                    isRetweet: !!tweet.querySelector('[data-testid="socialContext"]'),
-                    isReply: !!tweet.querySelector('[data-testid="inReplyTo"]'),
-                };
-
-                extracted.push(data);
-                lastExtractedIds.add(tweetId);
-            } catch (e) {
-                console.error('Failed to extract tweet:', e);
-            }
-        }
-
-        if (extracted.length > 0) {
-            // Send to Rust backend via Tauri
-            await window.__TAURI__.invoke('store_social_posts', {
-                platform: 'twitter',
-                accountId: window.__NOTEECE_ACCOUNT_ID__,
-                posts: extracted
-            });
-        }
-    }
-
-    function parseStat(tweet, type) {
-        const button = tweet.querySelector(`[data-testid="${type}"]`);
-        const text = button?.getAttribute('aria-label') || '';
-        const match = text.match(/(\d+)/);
-        return match ? parseInt(match[1]) : 0;
-    }
-
-    function extractMedia(tweet) {
-        const images = tweet.querySelectorAll('img[src*="media"]');
-        const videos = tweet.querySelectorAll('video');
-
-        return {
-            images: Array.from(images).map(img => img.src),
-            videos: Array.from(videos).map(v => v.src),
+        const data = {
+          id: tweetId,
+          author: tweet
+            .querySelector('[data-testid="User-Name"]')
+            ?.textContent?.trim(),
+          handle: tweet
+            .querySelector('[data-testid="User-Name"] a')
+            ?.textContent?.trim(),
+          content: tweet.querySelector('[data-testid="tweetText"]')
+            ?.textContent,
+          timestamp:
+            new Date(tweet.querySelector("time")?.dateTime).getTime() / 1000,
+          likes: parseStat(tweet, "like"),
+          retweets: parseStat(tweet, "retweet"),
+          replies: parseStat(tweet, "reply"),
+          media: extractMedia(tweet),
+          isRetweet: !!tweet.querySelector('[data-testid="socialContext"]'),
+          isReply: !!tweet.querySelector('[data-testid="inReplyTo"]'),
         };
+
+        extracted.push(data);
+        lastExtractedIds.add(tweetId);
+      } catch (e) {
+        console.error("Failed to extract tweet:", e);
+      }
     }
 
-    // Start polling
-    setInterval(extractTweets, POLL_INTERVAL);
-    extractTweets(); // Initial extraction
+    if (extracted.length > 0) {
+      // Send to Rust backend via Tauri
+      await window.__TAURI__.invoke("store_social_posts", {
+        platform: "twitter",
+        accountId: window.__NOTEECE_ACCOUNT_ID__,
+        posts: extracted,
+      });
+    }
+  }
+
+  function parseStat(tweet, type) {
+    const button = tweet.querySelector(`[data-testid="${type}"]`);
+    const text = button?.getAttribute("aria-label") || "";
+    const match = text.match(/(\d+)/);
+    return match ? parseInt(match[1]) : 0;
+  }
+
+  function extractMedia(tweet) {
+    const images = tweet.querySelectorAll('img[src*="media"]');
+    const videos = tweet.querySelectorAll("video");
+
+    return {
+      images: Array.from(images).map((img) => img.src),
+      videos: Array.from(videos).map((v) => v.src),
+    };
+  }
+
+  // Start polling
+  setInterval(extractTweets, POLL_INTERVAL);
+  extractTweets(); // Initial extraction
 })();
 ```
 
 ```javascript
 // apps/desktop/src-tauri/js/extractors/instagram.js
-(async function() {
-    const POLL_INTERVAL = 5000;
-    let lastExtractedIds = new Set();
+(async function () {
+  const POLL_INTERVAL = 5000;
+  let lastExtractedIds = new Set();
 
-    async function extractPosts() {
-        const posts = document.querySelectorAll('article');
-        const extracted = [];
+  async function extractPosts() {
+    const posts = document.querySelectorAll("article");
+    const extracted = [];
 
-        for (const post of posts) {
-            try {
-                // Instagram uses React, so we need to be careful
-                const link = post.querySelector('a[href*="/p/"]');
-                const postId = link?.href.match(/\/p\/([^/]+)/)?.[1];
+    for (const post of posts) {
+      try {
+        // Instagram uses React, so we need to be careful
+        const link = post.querySelector('a[href*="/p/"]');
+        const postId = link?.href.match(/\/p\/([^/]+)/)?.[1];
 
-                if (!postId || lastExtractedIds.has(postId)) continue;
+        if (!postId || lastExtractedIds.has(postId)) continue;
 
-                const data = {
-                    id: postId,
-                    author: post.querySelector('a[title]')?.title,
-                    handle: post.querySelector('a[role="link"]')?.textContent?.trim(),
-                    caption: post.querySelector('span[dir="auto"]')?.textContent,
-                    timestamp: new Date(post.querySelector('time')?.dateTime).getTime() / 1000,
-                    likes: extractLikes(post),
-                    media: extractMediaUrls(post),
-                    isVideo: !!post.querySelector('video'),
-                    isCarousel: !!post.querySelector('[aria-label*="carousel"]'),
-                };
+        const data = {
+          id: postId,
+          author: post.querySelector("a[title]")?.title,
+          handle: post.querySelector('a[role="link"]')?.textContent?.trim(),
+          caption: post.querySelector('span[dir="auto"]')?.textContent,
+          timestamp:
+            new Date(post.querySelector("time")?.dateTime).getTime() / 1000,
+          likes: extractLikes(post),
+          media: extractMediaUrls(post),
+          isVideo: !!post.querySelector("video"),
+          isCarousel: !!post.querySelector('[aria-label*="carousel"]'),
+        };
 
-                extracted.push(data);
-                lastExtractedIds.add(postId);
-            } catch (e) {
-                console.error('Failed to extract Instagram post:', e);
-            }
-        }
-
-        if (extracted.length > 0) {
-            await window.__TAURI__.invoke('store_social_posts', {
-                platform: 'instagram',
-                accountId: window.__NOTEECE_ACCOUNT_ID__,
-                posts: extracted
-            });
-        }
+        extracted.push(data);
+        lastExtractedIds.add(postId);
+      } catch (e) {
+        console.error("Failed to extract Instagram post:", e);
+      }
     }
 
-    function extractLikes(post) {
-        const likeText = post.querySelector('[role="button"] span')?.textContent;
-        return likeText ? parseInt(likeText.replace(/,/g, '')) : 0;
+    if (extracted.length > 0) {
+      await window.__TAURI__.invoke("store_social_posts", {
+        platform: "instagram",
+        accountId: window.__NOTEECE_ACCOUNT_ID__,
+        posts: extracted,
+      });
     }
+  }
 
-    function extractMediaUrls(post) {
-        const images = post.querySelectorAll('img[src*="instagram"]');
-        return Array.from(images)
-            .map(img => img.src)
-            .filter(src => !src.includes('profile'));
-    }
+  function extractLikes(post) {
+    const likeText = post.querySelector('[role="button"] span')?.textContent;
+    return likeText ? parseInt(likeText.replace(/,/g, "")) : 0;
+  }
 
-    setInterval(extractPosts, POLL_INTERVAL);
-    extractPosts();
+  function extractMediaUrls(post) {
+    const images = post.querySelectorAll('img[src*="instagram"]');
+    return Array.from(images)
+      .map((img) => img.src)
+      .filter((src) => !src.includes("profile"));
+  }
+
+  setInterval(extractPosts, POLL_INTERVAL);
+  extractPosts();
 })();
 ```
 
@@ -1097,6 +1124,7 @@ export function SocialHub() {
 ```
 
 **Share Target (already supported by Expo):**
+
 ```typescript
 // apps/mobile/app.json
 {
@@ -1181,14 +1209,16 @@ For zero-budget AI, use WebLLM or ONNX Runtime Web:
 
 ```typescript
 // apps/desktop/src/services/ai.ts
-import { WebLLM } from '@mlc-ai/web-llm';
+import { WebLLM } from "@mlc-ai/web-llm";
 
 class LocalAI {
   private engine: WebLLM.MLCEngine;
 
   async initialize() {
     // Load small quantized model (~50MB for Medium mode)
-    this.engine = await WebLLM.CreateMLCEngine('Phi-3-mini-4k-instruct-q4f16_1');
+    this.engine = await WebLLM.CreateMLCEngine(
+      "Phi-3-mini-4k-instruct-q4f16_1",
+    );
   }
 
   async categorizePost(post: { content: string; author: string }) {
@@ -1200,7 +1230,7 @@ Author: ${post.author}
 Category:`;
 
     const response = await this.engine.chat.completions.create({
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: "user", content: prompt }],
       max_tokens: 10,
     });
 
@@ -1214,6 +1244,7 @@ Category:`;
 Your alternatives are great! Here's how they map to Tauri:
 
 ### Alternative 1: RSS Aggregator (Light Mode)
+
 **Perfect for Tauri** - use existing HTTP client:
 
 ```rust
@@ -1244,6 +1275,7 @@ pub fn fetch_rss_feed(url: &str) -> Result<Vec<RssPost>, SocialError> {
 ```
 
 ### Alternative 2: Email Digest Pipeline
+
 **Works with Tauri:**
 
 ```rust
@@ -1298,12 +1330,14 @@ Week 16:     Testing, documentation, polish
 Your plan is good, but leverage Noteece's existing security:
 
 ✅ **Already Implemented:**
+
 - XChaCha20-Poly1305 encryption for credentials
 - SQLCipher encrypted database
 - PBKDF2 key derivation (256k iterations)
 - SecureDek wrapper with auto-zeroing
 
 ⚠️ **Additional Considerations:**
+
 - Sanitize all scraped content (XSS prevention)
 - Validate URLs before opening WebViews
 - Rate-limit API calls to avoid platform bans
@@ -1313,6 +1347,7 @@ Your plan is good, but leverage Noteece's existing security:
 ## Part 10: Final Recommendations
 
 ### ✅ DO THIS
+
 1. **Start with RSS/API aggregation (Light Mode)**
    - Lowest friction, works immediately
    - Many platforms have RSS feeds (YouTube, Reddit, Medium)
@@ -1337,6 +1372,7 @@ Your plan is good, but leverage Noteece's existing security:
    - Easy quick win
 
 ### ⚠️ DON'T DO THIS (YET)
+
 1. **Don't start with browser extension**
    - Won't work with Tauri
    - Use WebView injection instead
@@ -1365,6 +1401,7 @@ Your plan is **ambitious and well-thought-out**, but needs adaptation for Tauri'
 - ✅ Mobile parity (React Native with same patterns)
 
 **Next Steps:**
+
 1. Review this analysis
 2. Decide on Light/Medium/Heavy priority
 3. Start with Week 1 tasks (database schema)

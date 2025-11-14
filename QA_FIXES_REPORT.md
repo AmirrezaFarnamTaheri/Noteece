@@ -46,6 +46,7 @@ let token: String = rand::thread_rng()
 ```
 
 **Impact:**
+
 - Token entropy increased from ~128 bits to ~384 bits
 - Eliminates brute-force attack vector
 - Complies with security best practices
@@ -96,6 +97,7 @@ let agent = SyncAgent::new(
 ```
 
 **Impact:**
+
 - Each installation has unique device identity
 - Prevents device impersonation
 - Enables proper sync conflict resolution
@@ -137,6 +139,7 @@ invitedBy: getCurrentUserId(),
 ```
 
 **Impact:**
+
 - Clear documentation of temporary state
 - Migration path defined
 - Prevents confusion about authentication status
@@ -155,17 +158,18 @@ OCR processing checked `selectedFile` state that was never set, making OCR compl
 const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
 const handleProcessOcr = async () => {
-  if (!selectedFile) {  // This always fails!
+  if (!selectedFile) {
+    // This always fails!
     notifications.show({
-      title: 'No file selected',
-      message: 'Please select an image file',
-      color: 'yellow',
+      title: "No file selected",
+      message: "Please select an image file",
+      color: "yellow",
     });
-    return;  // OCR never executes
+    return; // OCR never executes
   }
   // ... rest of code never reached
   const blobId = `blob_${Date.now()}`; // Also: insufficient uniqueness
-}
+};
 ```
 
 **Fix:**
@@ -199,6 +203,7 @@ const handleProcessOcr = async () => {
 ```
 
 **Impact:**
+
 - OCR feature now functional
 - Improved blob ID uniqueness (race condition protection)
 - Removed 10 lines of dead code
@@ -275,6 +280,7 @@ pub fn get_space_users(...) -> Result<Vec<SpaceUser>, ...> {
 ```
 
 **Impact:**
+
 - Reduced queries from N+1 to 2 (constant)
 - Improves performance with many users (e.g., 100 users: 101 queries → 2 queries)
 - Reduces database load by 98%+ in typical scenarios
@@ -291,7 +297,9 @@ Condition prevented permission revocation when resetting to role defaults.
 ```typescript
 // BEFORE (BROKEN):
 const permissionsToRevoke = rolePermissions.filter(
-  p => values.customPermissions.length > 0 && !values.customPermissions.includes(p)
+  (p) =>
+    values.customPermissions.length > 0 &&
+    !values.customPermissions.includes(p),
   // ^^^ BUG: When customPermissions is empty (reset to defaults),
   //     this condition is false, so nothing gets revoked
 );
@@ -303,11 +311,12 @@ Removed incorrect length check.
 ```typescript
 // AFTER (FIXED):
 const permissionsToRevoke = rolePermissions.filter(
-  p => !values.customPermissions.includes(p)
+  (p) => !values.customPermissions.includes(p),
 );
 ```
 
 **Impact:**
+
 - Users can now properly reset permissions to role defaults
 - Permission revocation works correctly in all scenarios
 
@@ -353,6 +362,7 @@ Removed extra closing brackets and fixed indentation.
 ```
 
 **Impact:**
+
 - Component now compiles
 - Fixed JSX syntax error
 
@@ -364,6 +374,7 @@ Removed extra closing brackets and fixed indentation.
 
 **Issue:**
 Queries referenced non-existent columns and tables:
+
 - `sync_state` table missing `space_id` and `last_sync_at` columns
 - `entity_sync_log` table not created
 
@@ -431,6 +442,7 @@ fn log_entity_sync(&self, conn: &Connection, delta: &SyncDelta) -> Result<(), Sy
 ```
 
 **Impact:**
+
 - Sync system now functional
 - Database schema consistent with queries
 - Proper use of audit log table
@@ -524,6 +536,7 @@ fn resolve_sync_conflict_cmd(
 ```
 
 **Impact:**
+
 - Conflict resolution now functional
 - Proper type safety maintained
 - Clear TODO for DEK implementation
@@ -533,6 +546,7 @@ fn resolve_sync_conflict_cmd(
 ## Security Improvements Summary
 
 ### Before QA:
+
 - ❌ Predictable invitation tokens (brute-forceable)
 - ❌ Hard-coded device identifiers (impersonation risk)
 - ❌ Invalid audit logs (compliance risk)
@@ -542,6 +556,7 @@ fn resolve_sync_conflict_cmd(
 - ❌ Multiple compilation blockers
 
 ### After QA:
+
 - ✅ Cryptographically secure tokens (384-bit entropy)
 - ✅ Dynamic device identification (secure)
 - ✅ Documented audit placeholders (clear migration path)
@@ -591,8 +606,8 @@ fn resolve_sync_conflict_cmd(
 ### Automated Testing Required:
 
 ```typescript
-describe('QA Fixes', () => {
-  test('invitation tokens are cryptographically secure', () => {
+describe("QA Fixes", () => {
+  test("invitation tokens are cryptographically secure", () => {
     const token1 = generateInvitationToken();
     const token2 = generateInvitationToken();
     expect(token1).toHaveLength(64);
@@ -601,25 +616,25 @@ describe('QA Fixes', () => {
     expect(token1).toMatch(/^[a-zA-Z0-9]{64}$/);
   });
 
-  test('device ID is unique per installation', () => {
+  test("device ID is unique per installation", () => {
     const deviceId = getLocalDeviceId();
     expect(deviceId).toBeTruthy();
-    expect(deviceId).not.toBe('desktop_main');
+    expect(deviceId).not.toBe("desktop_main");
   });
 
-  test('permission revocation works with empty custom permissions', () => {
+  test("permission revocation works with empty custom permissions", () => {
     // Setup user with custom permissions
     // Reset to role defaults (empty array)
     // Verify all custom permissions revoked
   });
 
-  test('OCR blob IDs are unique', () => {
+  test("OCR blob IDs are unique", () => {
     const id1 = generateBlobId();
     const id2 = generateBlobId();
     expect(id1).not.toBe(id2);
   });
 
-  test('get_space_users executes exactly 2 queries', () => {
+  test("get_space_users executes exactly 2 queries", () => {
     const queryCount = mockDatabase.getQueryCount();
     const users = getSpaceUsers(spaceId);
     expect(mockDatabase.getQueryCount() - queryCount).toBe(2);
@@ -632,6 +647,7 @@ describe('QA Fixes', () => {
 ## Code Quality Metrics
 
 ### Lines Changed:
+
 - **collaboration.rs**: +45 lines (bulk permission fetch)
 - **main.rs**: +68 lines (device helpers, conflict query)
 - **sync_agent.rs**: +15 lines (schema, queries)
@@ -641,10 +657,12 @@ describe('QA Fixes', () => {
 - **Total**: ~131 lines net change
 
 ### Security Score:
+
 - **Before**: 6/10 (multiple P0/P1 vulnerabilities)
 - **After**: 9.5/10 (all critical issues resolved, minor TODOs remain)
 
 ### Code Coverage:
+
 - **Critical paths**: 100% addressed
 - **Compilation blockers**: 100% fixed
 - **Security vulnerabilities**: 100% fixed
@@ -687,7 +705,7 @@ All **9 critical issues** identified in QA review have been successfully resolve
 
 ---
 
-*Report Generated: November 6, 2025*
-*Total Issues Fixed: 9*
-*Total Lines Changed: ~131*
-*Security Score: 9.5/10*
+_Report Generated: November 6, 2025_
+_Total Issues Fixed: 9_
+_Total Lines Changed: ~131_
+_Security Score: 9.5/10_

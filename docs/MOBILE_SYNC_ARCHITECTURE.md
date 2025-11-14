@@ -39,12 +39,14 @@ The mobile sync system enables **offline-first, end-to-end encrypted synchroniza
 ### 1. Connection Methods
 
 #### A. Local Network Sync (Primary)
+
 - Uses **mDNS/Bonjour** for device discovery
 - Direct WebSocket connection over local WiFi
 - Zero latency, maximum bandwidth
 - No internet required
 
 #### B. Relay Sync (Fallback)
+
 - Optional self-hosted relay server
 - Uses **WebRTC** for P2P connection through relay
 - Relay cannot decrypt data
@@ -91,6 +93,7 @@ Mobile                          Desktop
 ### 3. Data Structures
 
 #### Sync Manifest
+
 ```rust
 pub struct SyncManifest {
     pub device_id: String,
@@ -125,6 +128,7 @@ pub enum Operation {
 ```
 
 #### Sync Delta (Encrypted)
+
 ```rust
 pub struct SyncDelta {
     pub change_id: String,
@@ -157,11 +161,13 @@ pub struct ConflictOption {
 ```
 
 **Auto-Merge Rules:**
+
 - **Last-Write-Wins**: For scalar fields (title, status, priority)
 - **Set Union**: For tags, links
 - **Operational Transform**: For rich text content (Lexical state)
 
 **User Resolution Required:**
+
 - Conflicting structural changes (e.g., task moved to different projects)
 - Large text divergences (> 30% diff)
 
@@ -181,6 +187,7 @@ pub struct SyncEncryption {
 ```
 
 **Encryption Flow:**
+
 1. Each device derives `device_sync_key` from vault KEK
 2. Devices exchange public keys (ECDH) to create `session_key`
 3. All sync deltas encrypted with `session_key` (ChaCha20-Poly1305)
@@ -204,6 +211,7 @@ pub struct SyncEncryption {
 ```
 
 **Data Sources:**
+
 - CalDAV events (synced from `caldav_event_mapping` table)
 - Task due dates (from `task` table)
 - SRS due cards (from `knowledge_card` table)
@@ -229,6 +237,7 @@ pub enum CaptureType {
 ```
 
 **Implementation:**
+
 - iOS: Share Extension + Siri Shortcuts
 - Android: Quick Tile + Voice Assistant integration
 - Offline captures queued, synced when connection available
@@ -250,6 +259,7 @@ CREATE TABLE location_trigger (
 ```
 
 **Geofencing:**
+
 - Uses native iOS/Android geofencing APIs
 - Triggers local notification when entering/exiting radius
 - Works offline (no server required)
@@ -267,6 +277,7 @@ CREATE TABLE nfc_trigger (
 ```
 
 **Use Cases:**
+
 - Tap NFC tag on desk → Start "Deep Work" time entry
 - Tap NFC at gym → Log workout (open HealthMode)
 - Scan QR on whiteboard → Capture photo → OCR → Create note
@@ -318,6 +329,7 @@ CREATE TABLE sync_conflict (
 ## Implementation Phases
 
 ### Phase 1: Foundation (High Priority)
+
 1. **Sync Agent Module**
    - Create `packages/core-rs/src/sync_agent.rs`
    - Implement connection manager (mDNS + WebSocket)
@@ -334,6 +346,7 @@ CREATE TABLE sync_conflict (
    - mDNS advertisement
 
 ### Phase 2: Mobile App Core (High Priority)
+
 1. **React Native Setup**
    - Initialize `apps/mobile` with Expo
    - Add SQLite (expo-sqlite)
@@ -350,6 +363,7 @@ CREATE TABLE sync_conflict (
    - Add task/SRS card display
 
 ### Phase 3: Advanced Mobile Features (Medium Priority)
+
 1. **Quick Capture**
    - iOS Share Extension
    - Android Quick Tile
@@ -366,6 +380,7 @@ CREATE TABLE sync_conflict (
    - Action execution engine
 
 ### Phase 4: Relay Server (Low Priority)
+
 1. **Optional Self-Hosted Relay**
    - Rust WebSocket relay server
    - WebRTC signaling
@@ -429,6 +444,7 @@ CREATE TABLE sync_conflict (
 ## User Experience
 
 ### First-Time Setup
+
 ```
 1. Install mobile app
 2. Create/unlock vault (same password as desktop)
@@ -439,6 +455,7 @@ CREATE TABLE sync_conflict (
 ```
 
 ### Daily Usage
+
 ```
 - Open app → See today's fused timeline
 - Add quick capture → Syncs in background
@@ -451,6 +468,7 @@ CREATE TABLE sync_conflict (
 ---
 
 **Next Steps:**
+
 1. Create `sync_agent.rs` module structure
 2. Implement mDNS device discovery
 3. Build sync protocol state machine

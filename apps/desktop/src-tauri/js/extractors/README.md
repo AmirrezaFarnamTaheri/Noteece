@@ -42,12 +42,15 @@ extractors/
 All extractors follow a consistent pattern:
 
 ### 1. Initialization
+
 ```javascript
-(function() {
+(function () {
   'use strict';
 
   const PLATFORM = 'platform_name';
-  const SELECTORS = { /* CSS selectors */ };
+  const SELECTORS = {
+    /* CSS selectors */
+  };
   const utils = window.SocialExtractorUtils;
 
   // Platform-specific initialization
@@ -57,10 +60,11 @@ All extractors follow a consistent pattern:
 ### 2. Core Components
 
 #### A. DOM Observation
+
 ```javascript
 const observer = new MutationObserver((mutations) => {
-  mutations.forEach(mutation => {
-    mutation.addedNodes.forEach(node => {
+  mutations.forEach((mutation) => {
+    mutation.addedNodes.forEach((node) => {
       if (node.nodeType === Node.ELEMENT_NODE) {
         processElement(node);
       }
@@ -70,6 +74,7 @@ const observer = new MutationObserver((mutations) => {
 ```
 
 #### B. Element Processing
+
 ```javascript
 function processElement(element) {
   if (!isValidPostElement(element)) return;
@@ -83,6 +88,7 @@ function processElement(element) {
 ```
 
 #### C. Data Extraction
+
 ```javascript
 function extractPostData(element) {
   return {
@@ -98,11 +104,12 @@ function extractPostData(element) {
 ```
 
 #### D. Backend Communication
+
 ```javascript
 function sendToBackend(post) {
   window.__TAURI_INTERNALS__.postMessage({
     cmd: 'storeSocialPost',
-    data: { post, platform: PLATFORM }
+    data: { post, platform: PLATFORM },
   });
 }
 ```
@@ -110,8 +117,10 @@ function sendToBackend(post) {
 ## Platform-Specific Details
 
 ### 1. Twitter/X (`twitter.js`)
+
 **Complexity:** High
 **Features:**
+
 - Tweet extraction from timeline, profile, search
 - Retweet vs original tweet detection
 - Quote tweet handling
@@ -120,6 +129,7 @@ function sendToBackend(post) {
 - Engagement metrics (likes, retweets, replies)
 
 **Selectors:**
+
 ```javascript
 const SELECTORS = {
   tweet: '[data-testid="tweet"]',
@@ -134,14 +144,17 @@ const SELECTORS = {
 **ID Strategy:** Uses `data-tweet-id` attribute or URL-based extraction
 
 **Known Issues:**
+
 - Infinite scroll requires continuous observation
 - Retweet detection can be fragile with UI changes
 
 ---
 
 ### 2. YouTube (`youtube.js`)
+
 **Complexity:** High
 **Features:**
+
 - Video metadata extraction (title, channel, views, upload date)
 - Comment extraction with threading
 - Live stream detection
@@ -150,6 +163,7 @@ const SELECTORS = {
 - Engagement metrics (likes, views, subscriber count)
 
 **Selectors:**
+
 ```javascript
 const SELECTORS = {
   video: 'ytd-video-renderer, ytd-grid-video-renderer',
@@ -167,8 +181,10 @@ const SELECTORS = {
 ---
 
 ### 3. Instagram (`instagram.js`)
+
 **Complexity:** Very High
 **Features:**
+
 - Feed post extraction (photos, videos, carousels)
 - Story detection (ephemeral)
 - Reel extraction
@@ -177,6 +193,7 @@ const SELECTORS = {
 - Multi-image carousel handling
 
 **Selectors:**
+
 ```javascript
 const SELECTORS = {
   post: 'article[role="presentation"]',
@@ -191,14 +208,17 @@ const SELECTORS = {
 **ID Strategy:** Extracts from URL `/p/{post_id}/` or generates fallback
 
 **Known Issues:**
+
 - Heavy obfuscation in CSS classes
 - Frequent UI updates break selectors
 
 ---
 
 ### 4. TikTok (`tiktok.js`)
+
 **Complexity:** Very High
 **Features:**
+
 - Video feed extraction
 - For You Page (FYP) content
 - Creator profile videos
@@ -207,6 +227,7 @@ const SELECTORS = {
 - View count and engagement
 
 **Selectors:**
+
 ```javascript
 const SELECTORS = {
   video: '[data-e2e="recommend-list-item-container"]',
@@ -224,8 +245,10 @@ const SELECTORS = {
 ---
 
 ### 5. LinkedIn (`linkedin.js`)
+
 **Complexity:** High
 **Features:**
+
 - Feed post extraction (text, articles, videos)
 - Job posting detection
 - Sponsored content filtering
@@ -234,6 +257,7 @@ const SELECTORS = {
 - Engagement metrics (reactions, comments, shares)
 
 **Selectors:**
+
 ```javascript
 const SELECTORS = {
   post: '[data-id^="urn:li:activity"]',
@@ -249,8 +273,10 @@ const SELECTORS = {
 ---
 
 ### 6. Discord (`discord.js`)
+
 **Complexity:** Medium
 **Features:**
+
 - Message extraction from channels
 - Thread message support
 - Attachment URLs (images, files)
@@ -259,6 +285,7 @@ const SELECTORS = {
 - Channel context
 
 **Selectors:**
+
 ```javascript
 const SELECTORS = {
   message: '[id^="chat-messages-"]',
@@ -271,18 +298,22 @@ const SELECTORS = {
 ```
 
 **ID Strategy:**
+
 - Primary: `chat-messages-{snowflake_id}` from element ID
 - Fallback: Composite of `channel_author_timestamp_contentprefix_random`
 
 **Known Issues:**
+
 - Rapid scrolling can overwhelm observer
 - DM vs server channel detection fragile
 
 ---
 
 ### 7. Reddit (`reddit.js`)
+
 **Complexity:** Medium
 **Features:**
+
 - Post extraction (text, link, image, video)
 - Comment extraction with threading
 - Subreddit context
@@ -291,6 +322,7 @@ const SELECTORS = {
 - Flair extraction
 
 **Selectors:**
+
 ```javascript
 const SELECTORS = {
   post: '[data-testid^="post-container-"]',
@@ -307,8 +339,10 @@ const SELECTORS = {
 ---
 
 ### 8. Spotify (`spotify.js`)
+
 **Complexity:** Medium
 **Features:**
+
 - Track metadata (title, artist, album)
 - Playlist extraction
 - Podcast episode detection
@@ -317,6 +351,7 @@ const SELECTORS = {
 - Album artwork URLs
 
 **Selectors:**
+
 ```javascript
 const SELECTORS = {
   track: '[data-testid="tracklist-row"]',
@@ -332,8 +367,10 @@ const SELECTORS = {
 ---
 
 ### 9. Pinterest (`pinterest.js`)
+
 **Complexity:** Medium
 **Features:**
+
 - Pin extraction (images, videos)
 - Board context
 - Description and title
@@ -342,6 +379,7 @@ const SELECTORS = {
 - Creator information
 
 **Selectors:**
+
 ```javascript
 const SELECTORS = {
   pin: '[data-test-id="pin"]',
@@ -353,6 +391,7 @@ const SELECTORS = {
 ```
 
 **ID Strategy:**
+
 - Extracts from URL `/pin/{id}/`
 - Normalizes to 18-digit numeric ID
 - Validates format before use
@@ -360,8 +399,10 @@ const SELECTORS = {
 ---
 
 ### 10. Facebook (`facebook.js`)
+
 **Complexity:** Very High
 **Features:**
+
 - Feed post extraction (text, photo, video, link)
 - Story detection
 - Group post extraction
@@ -371,6 +412,7 @@ const SELECTORS = {
 - Event detection
 
 **Selectors:**
+
 ```javascript
 const SELECTORS = {
   post: '[role="article"]',
@@ -385,6 +427,7 @@ const SELECTORS = {
 **ID Strategy:** Extracts from `data-ft` JSON attribute or permalink
 
 **Known Issues:**
+
 - Extremely aggressive obfuscation
 - Frequent A/B testing breaks selectors
 - Heavy dynamic loading
@@ -392,8 +435,10 @@ const SELECTORS = {
 ---
 
 ### 11. Threads (`threads.js`)
+
 **Complexity:** Medium
 **Features:**
+
 - Thread post extraction
 - Reply chain detection
 - Quote post handling
@@ -402,6 +447,7 @@ const SELECTORS = {
 - Media extraction
 
 **Selectors:**
+
 ```javascript
 const SELECTORS = {
   post: '[role="article"]',
@@ -417,8 +463,10 @@ const SELECTORS = {
 ---
 
 ### 12. Bluesky (`bluesky.js`)
+
 **Complexity:** Low-Medium
 **Features:**
+
 - Post extraction (skeets)
 - Reply thread detection
 - Repost vs original
@@ -427,6 +475,7 @@ const SELECTORS = {
 - Handle and DID extraction
 
 **Selectors:**
+
 ```javascript
 const SELECTORS = {
   post: '[data-testid="feedItem"]',
@@ -442,8 +491,10 @@ const SELECTORS = {
 ---
 
 ### 13. Mastodon (`mastodon.js`)
+
 **Complexity:** Medium
 **Features:**
+
 - Toot extraction
 - Boost vs original detection
 - Content warning (CW) handling
@@ -452,6 +503,7 @@ const SELECTORS = {
 - Instance-agnostic selectors
 
 **Selectors:**
+
 ```javascript
 const SELECTORS = {
   status: '.status',
@@ -468,8 +520,10 @@ const SELECTORS = {
 ---
 
 ### 14. Snapchat (`snapchat.js`)
+
 **Complexity:** High
 **Features:**
+
 - Story extraction (when available)
 - Spotlight content
 - Message metadata (limited)
@@ -477,6 +531,7 @@ const SELECTORS = {
 - Friend context
 
 **Selectors:**
+
 ```javascript
 const SELECTORS = {
   story: '[data-testid="story-item"]',
@@ -489,14 +544,17 @@ const SELECTORS = {
 **ID Strategy:** Generates composite ID from user + timestamp
 
 **Known Issues:**
+
 - Ephemeral content difficult to track
 - Limited DOM access in web version
 
 ---
 
 ### 15. Telegram Web (`telegram.js`)
+
 **Complexity:** Medium
 **Features:**
+
 - Message extraction from chats
 - Channel post extraction
 - Media attachment URLs
@@ -505,6 +563,7 @@ const SELECTORS = {
 - Sticker detection
 
 **Selectors:**
+
 ```javascript
 const SELECTORS = {
   message: '.message',
@@ -517,14 +576,17 @@ const SELECTORS = {
 ```
 
 **ID Strategy:**
+
 - Extracts from `data-mid` attribute
 - Fallback: `tg_{channelId}_{timestamp}_{random}`
 
 ---
 
 ### 16. Gmail (`gmail.js`)
+
 **Complexity:** Medium
 **Features:**
+
 - Email subject and body extraction
 - Sender information
 - Label detection
@@ -533,6 +595,7 @@ const SELECTORS = {
 - Read/unread status
 
 **Selectors:**
+
 ```javascript
 const SELECTORS = {
   email: '[role="main"] [data-message-id]',
@@ -551,8 +614,10 @@ const SELECTORS = {
 ---
 
 ### 17-19. Dating Apps (`tinder.js`, `bumble.js`, `hinge.js`)
+
 **Complexity:** Medium
 **Features:**
+
 - Profile card extraction
 - Match information
 - Message metadata
@@ -560,12 +625,14 @@ const SELECTORS = {
 - Photo URLs (limited)
 
 **Privacy Warning:**
+
 - Requires explicit user consent
 - Limited extraction to protect privacy
 - No photo storage by default
 - Encrypted storage mandatory
 
 **Common Selectors Pattern:**
+
 ```javascript
 const SELECTORS = {
   profile: '[data-profile-id], .profile-card',
@@ -580,8 +647,10 @@ const SELECTORS = {
 ---
 
 ### 20. Castbox (`castbox.js`)
+
 **Complexity:** Low
 **Features:**
+
 - Podcast episode extraction
 - Show metadata
 - Duration parsing with validation
@@ -590,6 +659,7 @@ const SELECTORS = {
 - Episode artwork
 
 **Selectors:**
+
 ```javascript
 const SELECTORS = {
   episode: '.episode-item',
@@ -612,57 +682,71 @@ const SELECTORS = {
 Shared functions used by all extractors:
 
 ### Text Extraction
+
 ```javascript
-safeText(element, selector = null)
+safeText(element, (selector = null));
 ```
+
 - Safely extracts text content
 - Trims whitespace
 - Returns null on error
 
 ### Timestamp Parsing
+
 ```javascript
-parseTimestamp(element, selector = null)
+parseTimestamp(element, (selector = null));
 ```
+
 - Supports multiple formats: ISO8601, relative ("2h ago"), unix timestamps
 - Returns epoch milliseconds
 - Validates against NaN
 
 ### Engagement Parsing
+
 ```javascript
-parseEngagement(text)
+parseEngagement(text);
 ```
+
 - Parses "1.2K", "3.5M" format
 - Validates numeric result
 - Returns null if invalid or NaN
 
 ### Deduplication
+
 ```javascript
-isDuplicate(id)
+isDuplicate(id);
 ```
+
 - Checks if ID already processed in session
 - Prevents duplicate sends
 - Uses Set for O(1) lookup
 
 ### Element Marking
+
 ```javascript
-markAsProcessed(element)
+markAsProcessed(element);
 ```
+
 - Adds `data-extracted="true"` attribute
 - Prevents reprocessing same element
 
 ### Media URL Extraction
+
 ```javascript
-extractMediaUrls(element, selectors)
+extractMediaUrls(element, selectors);
 ```
+
 - Extracts image/video URLs
 - Filters out tracking pixels
 - Validates URL format (rejects blob:, data:)
 - Returns array of validated URLs
 
 ### Safe Attribute Access
+
 ```javascript
-safeAttr(element, attribute, selector = null)
+safeAttr(element, attribute, (selector = null));
 ```
+
 - Safely retrieves attribute values
 - Returns null on error
 - Optional selector for nested elements
@@ -672,7 +756,9 @@ safeAttr(element, attribute, selector = null)
 ## Security Features
 
 ### 1. Input Validation
+
 All extractors validate:
+
 - **ID format:** Platform-specific regex patterns
 - **URL format:** Reject `blob:`, `data:`, `javascript:` schemes
 - **Numeric values:** Check for `NaN`, `Infinity`, negative values
@@ -680,24 +766,28 @@ All extractors validate:
 - **Timestamp validity:** Reject future dates, NaN values
 
 ### 2. XSS Prevention
+
 - No `innerHTML` usage
 - All text extracted via `textContent`
 - URL validation before storage
 - No `eval()` or dynamic code execution
 
 ### 3. Content Security
+
 - Runs in isolated WebView context
 - No access to parent window
 - Sandboxed from other extractors
 - Communication only via Tauri IPC
 
 ### 4. Privacy Protection
+
 - No automatic screenshot capture
 - No credential extraction
 - Optional mode for sensitive platforms
 - User consent required for dating apps
 
 ### 5. Error Handling
+
 ```javascript
 try {
   const post = extractPostData(element);
@@ -713,6 +803,7 @@ try {
 ## Performance Optimizations
 
 ### 1. Debouncing
+
 ```javascript
 let debounceTimer;
 function debouncedProcess(element) {
@@ -722,17 +813,22 @@ function debouncedProcess(element) {
 ```
 
 ### 2. Lazy Observation
+
 ```javascript
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      processElement(entry.target);
-    }
-  });
-}, { rootMargin: '100px' });
+const observer = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        processElement(entry.target);
+      }
+    });
+  },
+  { rootMargin: '100px' },
+);
 ```
 
 ### 3. Batch Processing
+
 ```javascript
 const batch = [];
 function addToBatch(post) {
@@ -744,11 +840,12 @@ function addToBatch(post) {
 ```
 
 ### 4. Memory Management
+
 ```javascript
 // Clear old processed IDs (keep last 1000)
 if (processedIds.size > 1000) {
   const toDelete = Array.from(processedIds).slice(0, 500);
-  toDelete.forEach(id => processedIds.delete(id));
+  toDelete.forEach((id) => processedIds.delete(id));
 }
 ```
 
@@ -757,6 +854,7 @@ if (processedIds.size > 1000) {
 ## Error Handling Patterns
 
 ### Platform-Specific Errors
+
 ```javascript
 function extractWithFallback(element) {
   let id = extractPrimaryId(element);
@@ -769,6 +867,7 @@ function extractWithFallback(element) {
 ```
 
 ### Graceful Degradation
+
 ```javascript
 function extractEngagement(element) {
   try {
@@ -789,6 +888,7 @@ function extractEngagement(element) {
 ## Testing Extractors
 
 ### Manual Testing
+
 ```javascript
 // In browser console:
 window.__testExtractor = () => {
@@ -801,6 +901,7 @@ window.__testExtractor = () => {
 ```
 
 ### Automated Testing
+
 ```bash
 # Run integration tests
 cargo test --test social_integration -- --test-threads=1
@@ -810,6 +911,7 @@ cargo test test_twitter_extractor
 ```
 
 ### Validation Checklist
+
 - [ ] IDs are unique and stable
 - [ ] Timestamps are valid (not NaN, not future)
 - [ ] Engagement metrics are non-negative
@@ -826,30 +928,35 @@ cargo test test_twitter_extractor
 ## Troubleshooting
 
 ### Extractor Not Running
+
 1. Check WebView session is active
 2. Verify script injection in Rust code
 3. Check browser console for errors
 4. Ensure platform URL matches injection rules
 
 ### Duplicate Posts
+
 1. Verify ID extraction is stable
 2. Check `markAsProcessed()` is called
 3. Inspect `processedIds` Set size
 4. Review fallback ID generation logic
 
 ### Missing Data
+
 1. Inspect actual DOM structure
 2. Update selectors to match current UI
 3. Add fallback selectors
 4. Check for lazy-loaded content
 
 ### Performance Issues
+
 1. Add debouncing to processElement
 2. Increase IntersectionObserver rootMargin
 3. Batch backend communications
 4. Limit processed ID cache size
 
 ### Platform UI Changed
+
 1. Open browser DevTools
 2. Inspect new DOM structure
 3. Update SELECTORS object
@@ -861,13 +968,15 @@ cargo test test_twitter_extractor
 ## Adding New Extractors
 
 ### 1. Create File
+
 ```bash
 touch apps/desktop/src-tauri/js/extractors/newplatform.js
 ```
 
 ### 2. Template Structure
+
 ```javascript
-(function() {
+(function () {
   'use strict';
 
   const PLATFORM = 'newplatform';
@@ -905,14 +1014,14 @@ touch apps/desktop/src-tauri/js/extractors/newplatform.js
   function sendToBackend(post) {
     window.__TAURI_INTERNALS__.postMessage({
       cmd: 'storeSocialPost',
-      data: { post, platform: PLATFORM }
+      data: { post, platform: PLATFORM },
     });
   }
 
   // Start observation
   const observer = new MutationObserver((mutations) => {
-    mutations.forEach(mutation => {
-      mutation.addedNodes.forEach(node => {
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
         if (node.nodeType === Node.ELEMENT_NODE) {
           processElement(node);
         }
@@ -922,7 +1031,7 @@ touch apps/desktop/src-tauri/js/extractors/newplatform.js
 
   observer.observe(document.body, {
     childList: true,
-    subtree: true
+    subtree: true,
   });
 
   // Process existing elements
@@ -933,12 +1042,15 @@ touch apps/desktop/src-tauri/js/extractors/newplatform.js
 ```
 
 ### 3. Register in Rust
+
 Edit `apps/desktop/src-tauri/src/main.rs`:
+
 ```rust
 let newplatform_script = include_str!("../js/extractors/newplatform.js");
 ```
 
 ### 4. Add URL Pattern
+
 ```rust
 if url.contains("newplatform.com") {
     webview.evaluate_script(newplatform_script)?;
@@ -946,6 +1058,7 @@ if url.contains("newplatform.com") {
 ```
 
 ### 5. Test
+
 1. Run app: `cargo tauri dev`
 2. Navigate to platform
 3. Check console for initialization message
@@ -955,30 +1068,31 @@ if url.contains("newplatform.com") {
 
 ## Platform Support Matrix
 
-| Platform | Status | Features | Complexity | Notes |
-|----------|--------|----------|------------|-------|
-| Twitter | ✅ Production | Full | High | Stable IDs, good selectors |
-| YouTube | ✅ Production | Full | High | Video ID validation added |
-| Instagram | ✅ Production | Full | Very High | Fragile selectors |
-| TikTok | ✅ Production | Full | Very High | URL validation added |
-| LinkedIn | ✅ Production | Full | High | URN-based IDs |
-| Discord | ✅ Production | Full | Medium | Improved ID generation |
-| Reddit | ✅ Production | Full | Medium | Stable t3_ IDs |
-| Spotify | ✅ Production | Full | Medium | URI-based extraction |
-| Pinterest | ✅ Production | Full | Medium | ID normalization added |
-| Facebook | ⚠️ Beta | Partial | Very High | Frequent breaking changes |
-| Threads | ✅ Production | Full | Medium | Similar to Instagram |
-| Bluesky | ✅ Production | Full | Low-Med | AT Protocol URIs |
-| Mastodon | ✅ Production | Full | Medium | Instance-agnostic |
-| Snapchat | ⚠️ Beta | Limited | High | Ephemeral content |
-| Telegram | ✅ Production | Full | Medium | Improved fallback IDs |
-| Gmail | ✅ Production | Full | Medium | Privacy-conscious |
-| Tinder | ⚠️ Beta | Limited | Medium | Requires consent |
-| Bumble | ⚠️ Beta | Limited | Medium | Requires consent |
-| Hinge | ⚠️ Beta | Limited | Medium | Requires consent |
-| Castbox | ✅ Production | Full | Low | Duration validation added |
+| Platform  | Status        | Features | Complexity | Notes                      |
+| --------- | ------------- | -------- | ---------- | -------------------------- |
+| Twitter   | ✅ Production | Full     | High       | Stable IDs, good selectors |
+| YouTube   | ✅ Production | Full     | High       | Video ID validation added  |
+| Instagram | ✅ Production | Full     | Very High  | Fragile selectors          |
+| TikTok    | ✅ Production | Full     | Very High  | URL validation added       |
+| LinkedIn  | ✅ Production | Full     | High       | URN-based IDs              |
+| Discord   | ✅ Production | Full     | Medium     | Improved ID generation     |
+| Reddit    | ✅ Production | Full     | Medium     | Stable t3\_ IDs            |
+| Spotify   | ✅ Production | Full     | Medium     | URI-based extraction       |
+| Pinterest | ✅ Production | Full     | Medium     | ID normalization added     |
+| Facebook  | ⚠️ Beta       | Partial  | Very High  | Frequent breaking changes  |
+| Threads   | ✅ Production | Full     | Medium     | Similar to Instagram       |
+| Bluesky   | ✅ Production | Full     | Low-Med    | AT Protocol URIs           |
+| Mastodon  | ✅ Production | Full     | Medium     | Instance-agnostic          |
+| Snapchat  | ⚠️ Beta       | Limited  | High       | Ephemeral content          |
+| Telegram  | ✅ Production | Full     | Medium     | Improved fallback IDs      |
+| Gmail     | ✅ Production | Full     | Medium     | Privacy-conscious          |
+| Tinder    | ⚠️ Beta       | Limited  | Medium     | Requires consent           |
+| Bumble    | ⚠️ Beta       | Limited  | Medium     | Requires consent           |
+| Hinge     | ⚠️ Beta       | Limited  | Medium     | Requires consent           |
+| Castbox   | ✅ Production | Full     | Low        | Duration validation added  |
 
 **Legend:**
+
 - ✅ Production: Stable, tested, reliable
 - ⚠️ Beta: Works but may have issues
 - ❌ Experimental: Under development
@@ -989,15 +1103,15 @@ if url.contains("newplatform.com") {
 
 Based on testing with 50,000+ posts:
 
-| Metric | Value |
-|--------|-------|
-| Avg extraction time per post | 5-15ms |
-| Memory overhead per extractor | ~2-5MB |
-| Deduplication lookup time | O(1) / <1ms |
-| Observer processing time | <50ms per mutation |
-| Batch send latency | ~10ms for 10 posts |
-| CPU usage (idle) | <1% |
-| CPU usage (active scrolling) | 5-15% |
+| Metric                        | Value              |
+| ----------------------------- | ------------------ |
+| Avg extraction time per post  | 5-15ms             |
+| Memory overhead per extractor | ~2-5MB             |
+| Deduplication lookup time     | O(1) / <1ms        |
+| Observer processing time      | <50ms per mutation |
+| Batch send latency            | ~10ms for 10 posts |
+| CPU usage (idle)              | <1%                |
+| CPU usage (active scrolling)  | 5-15%              |
 
 ---
 
@@ -1015,6 +1129,7 @@ Based on testing with 50,000+ posts:
 ## Contributing
 
 ### Adding Features
+
 1. Identify missing data point (e.g., poll data)
 2. Inspect DOM to find selectors
 3. Add extraction logic with fallbacks
@@ -1023,6 +1138,7 @@ Based on testing with 50,000+ posts:
 6. Update this README
 
 ### Fixing Selectors
+
 1. Open platform in DevTools
 2. Identify new selectors
 3. Update SELECTORS object
@@ -1030,6 +1146,7 @@ Based on testing with 50,000+ posts:
 5. Add fallback for graceful degradation
 
 ### Code Style
+
 - Use `const` for immutable values
 - Use descriptive variable names
 - Add comments for complex logic
@@ -1041,6 +1158,7 @@ Based on testing with 50,000+ posts:
 ## Security Guidelines
 
 **NEVER:**
+
 - Execute arbitrary code from extracted content
 - Store raw credentials or tokens
 - Access browser storage without permission
@@ -1048,6 +1166,7 @@ Based on testing with 50,000+ posts:
 - Bypass CORS or CSP protections
 
 **ALWAYS:**
+
 - Validate all extracted data
 - Sanitize text content
 - Check URL schemes before storage
@@ -1062,6 +1181,6 @@ See main project LICENSE file.
 
 ---
 
-*For detailed implementation of each extractor, see individual .js files*
-*For backend integration, see `apps/desktop/src-tauri/src/main.rs`*
-*For data schema, see `packages/core-rs/src/social/post.rs`*
+_For detailed implementation of each extractor, see individual .js files_
+_For backend integration, see `apps/desktop/src-tauri/src/main.rs`_
+_For data schema, see `packages/core-rs/src/social/post.rs`_

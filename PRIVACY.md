@@ -32,6 +32,7 @@ Noteece does **NOT** collect, transmit, or have access to:
 ### Local Storage
 
 All data is stored encrypted on your device using:
+
 - **Encryption**: Industry-standard encryption (ChaCha20-Poly1305)
 - **Local Database**: SQLite with SQLCipher encryption
 - **Master Password**: Only you know your vault password
@@ -50,6 +51,7 @@ If you choose to enable sync between your devices:
 ### Background Processing
 
 Noteece may perform background operations on your device:
+
 - **Background Sync**: Periodic sync with other devices on your network (if enabled)
 - **Insight Generation**: Foresight correlation engine runs locally to generate insights
 - **All Local**: These operations occur entirely on your device
@@ -57,6 +59,7 @@ Noteece may perform background operations on your device:
 ## Third-Party Services
 
 Noteece does **NOT** use:
+
 - Analytics services (no Google Analytics, Mixpanel, etc.)
 - Crash reporting services (no Sentry, Crashlytics, etc.)
 - Advertising networks
@@ -64,6 +67,7 @@ Noteece does **NOT** use:
 - Authentication services
 
 The only external libraries used are:
+
 - **React Native/Expo**: Mobile framework (open source)
 - **SQLite**: Local database (open source)
 - **Cryptography Libraries**: Standard encryption libraries (open source)
@@ -115,6 +119,7 @@ Noteece does not collect any personal information from anyone, including childre
 ## Changes to This Policy
 
 If we update this Privacy Policy, we will:
+
 1. Update the "Last Updated" date at the top
 2. Include changes in the app release notes
 3. Notify users through an in-app message
@@ -124,6 +129,7 @@ Material changes will require your acceptance before continuing to use the app.
 ## Open Source
 
 Noteece is open source software licensed under GNU GPL v3. You can:
+
 - Review the source code on GitHub
 - Verify that we do what we say in this policy
 - Audit the encryption implementation
@@ -154,6 +160,7 @@ For privacy questions or concerns:
 ### GDPR (EU)
 
 While we don't collect personal data, Noteece is designed to comply with GDPR principles:
+
 - **Data Minimization**: We collect zero data
 - **Purpose Limitation**: Not applicable (no data collection)
 - **Storage Limitation**: All data stored locally, you control retention

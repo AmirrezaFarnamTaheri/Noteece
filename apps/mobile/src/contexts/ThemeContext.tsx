@@ -5,7 +5,13 @@
  * Includes automatic theme switching based on system preferences.
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 import { useColorScheme } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -168,7 +174,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const loadThemePreference = async () => {
     try {
       const saved = await AsyncStorage.getItem(THEME_STORAGE_KEY);
-      if (saved && (saved === "light" || saved === "dark" || saved === "auto")) {
+      if (
+        saved &&
+        (saved === "light" || saved === "dark" || saved === "auto")
+      ) {
         setThemeModeState(saved as ThemeMode);
       }
     } catch (error) {
@@ -200,20 +209,28 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   if (isLoading) {
     // Return a default theme while loading
-    return <ThemeContext.Provider value={{
-      theme: {
-        mode: "dark",
-        colors: darkColors,
-        isDark: true,
-      },
-      themeMode: "auto",
-      setThemeMode: () => {},
-      toggleTheme: () => {},
-    }}>{children}</ThemeContext.Provider>;
+    return (
+      <ThemeContext.Provider
+        value={{
+          theme: {
+            mode: "dark",
+            colors: darkColors,
+            isDark: true,
+          },
+          themeMode: "auto",
+          setThemeMode: () => {},
+          toggleTheme: () => {},
+        }}
+      >
+        {children}
+      </ThemeContext.Provider>
+    );
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, themeMode, setThemeMode, toggleTheme }}>
+    <ThemeContext.Provider
+      value={{ theme, themeMode, setThemeMode, toggleTheme }}
+    >
       {children}
     </ThemeContext.Provider>
   );

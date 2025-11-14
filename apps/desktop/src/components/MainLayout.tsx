@@ -133,9 +133,7 @@ const MainLayout: React.FC = () => {
                     <NavLink
                       to={link.to}
                       key={link.label}
-                      className={({ isActive }) =>
-                        `${classes.navLink} ${isActive ? classes.navLinkActive : ''}`
-                      }
+                      className={({ isActive }) => `${classes.navLink} ${isActive ? classes.navLinkActive : ''}`}
                     >
                       <Group gap="xs">
                         <link.icon size={18} />

@@ -87,16 +87,18 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
   const addTransaction = async () => {
     try {
       // Validate amount
-      const amountNum = Number(formAmount);
-      if (!Number.isFinite(amountNum) || amountNum <= 0) {
+      const amountNumber = Number(formAmount);
+      if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
         alert('Please enter a valid amount greater than 0.');
         return;
       }
       // Convert to integer cents (minor units) to avoid float precision errors
-      const amountInCents = Math.round(amountNum * 100);
+      const amountInCents = Math.round(amountNumber * 100);
 
       // Validate and normalize string fields to prevent empty or invalid data
-      const currency = String(formCurrency || '').trim().toUpperCase();
+      const currency = String(formCurrency || '')
+        .trim()
+        .toUpperCase();
       const category = String(formCategory || '').trim();
       const account = String(formAccount || '').trim();
 

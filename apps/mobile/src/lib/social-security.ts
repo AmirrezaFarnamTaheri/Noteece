@@ -27,7 +27,10 @@ export async function isBiometricAvailable(): Promise<boolean> {
     const enrolled = await LocalAuthentication.isEnrolledAsync();
     return compatible && enrolled;
   } catch (error) {
-    console.error("[SocialSecurity] Failed to check biometric availability:", error);
+    console.error(
+      "[SocialSecurity] Failed to check biometric availability:",
+      error,
+    );
     return false;
   }
 }

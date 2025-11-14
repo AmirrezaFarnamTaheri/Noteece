@@ -9,7 +9,7 @@ import { IconSearch, IconFilter, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
 import { SUPPORTED_PLATFORMS } from '@noteece/types';
 
-interface TimelineFiltersProps {
+interface TimelineFiltersProperties {
   onFilterChange: (filters: TimelineFilterValues) => void;
 }
 
@@ -20,7 +20,7 @@ export interface TimelineFilterValues {
   timeRange: string;
 }
 
-export function TimelineFilters({ onFilterChange }: TimelineFiltersProps) {
+export function TimelineFilters({ onFilterChange }: TimelineFiltersProperties) {
   const [filters, setFilters] = useState<TimelineFilterValues>({
     platforms: [],
     searchQuery: '',
@@ -65,10 +65,11 @@ export function TimelineFilters({ onFilterChange }: TimelineFiltersProps) {
     onFilterChange(defaultFilters);
   };
 
-  const hasActiveFilters = filters.platforms.length > 0 ||
-                          filters.searchQuery.length > 0 ||
-                          filters.sortBy !== 'newest' ||
-                          filters.timeRange !== 'all';
+  const hasActiveFilters =
+    filters.platforms.length > 0 ||
+    filters.searchQuery.length > 0 ||
+    filters.sortBy !== 'newest' ||
+    filters.timeRange !== 'all';
 
   return (
     <Card shadow="sm" padding="lg" radius="md" withBorder>
@@ -79,12 +80,7 @@ export function TimelineFilters({ onFilterChange }: TimelineFiltersProps) {
             <span style={{ fontWeight: 500 }}>Filters</span>
           </Group>
           {hasActiveFilters && (
-            <Button
-              variant="subtle"
-              size="xs"
-              leftSection={<IconX size={14} />}
-              onClick={handleClearFilters}
-            >
+            <Button variant="subtle" size="xs" leftSection={<IconX size={14} />} onClick={handleClearFilters}>
               Clear All
             </Button>
           )}

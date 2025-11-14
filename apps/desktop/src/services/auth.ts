@@ -42,11 +42,7 @@ class AuthService {
   /**
    * Register a new user
    */
-  async register(
-    username: string,
-    email: string,
-    password: string
-  ): Promise<User> {
+  async register(username: string, email: string, password: string): Promise<User> {
     try {
       const user = await invoke<User>('create_user_cmd', {
         username,
@@ -112,7 +108,7 @@ class AuthService {
 
       const userId = await invoke<string>('validate_session_cmd', { token });
       return userId;
-    } catch (error) {
+    } catch {
       this.clearSessionStorage();
       return null;
     }
@@ -170,10 +166,7 @@ class AuthService {
   /**
    * Change password
    */
-  async changePassword(
-    oldPassword: string,
-    newPassword: string
-  ): Promise<void> {
+  async changePassword(oldPassword: string, newPassword: string): Promise<void> {
     try {
       if (!this.currentUser) {
         throw new Error('Not authenticated');
@@ -206,7 +199,7 @@ class AuthService {
         this.clearSessionStorage();
         return false;
       }
-    } catch (error) {
+    } catch {
       // Clear both storage and in-memory state for consistency on error
       this.session = null;
       this.currentUser = null;

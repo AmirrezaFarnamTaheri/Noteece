@@ -11,13 +11,13 @@ import { addSocialAccount } from '../../services/socialApi';
 import { notifications } from '@mantine/notifications';
 import { SUPPORTED_PLATFORMS, type Platform } from '@noteece/types';
 
-interface AddAccountModalProps {
+interface AddAccountModalProperties {
   opened: boolean;
   onClose: () => void;
   spaceId: string;
 }
 
-export function AddAccountModal({ opened, onClose, spaceId }: AddAccountModalProps) {
+export function AddAccountModal({ opened, onClose, spaceId }: AddAccountModalProperties) {
   const queryClient = useQueryClient();
 
   const form = useForm({
@@ -36,13 +36,7 @@ export function AddAccountModal({ opened, onClose, spaceId }: AddAccountModalPro
 
   const addMutation = useMutation({
     mutationFn: (values: typeof form.values) =>
-      addSocialAccount(
-        spaceId,
-        values.platform,
-        values.username,
-        values.displayName || null,
-        values.credentials
-      ),
+      addSocialAccount(spaceId, values.platform, values.username, values.displayName || null, values.credentials),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['socialAccounts'] });
       notifications.show({
@@ -71,17 +65,10 @@ export function AddAccountModal({ opened, onClose, spaceId }: AddAccountModalPro
     label: `${platform.icon} ${platform.name}`,
   }));
 
-  const selectedPlatform = form.values.platform
-    ? SUPPORTED_PLATFORMS[form.values.platform]
-    : null;
+  const selectedPlatform = form.values.platform ? SUPPORTED_PLATFORMS[form.values.platform] : null;
 
   return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      title="Add Social Media Account"
-      size="md"
-    >
+    <Modal opened={opened} onClose={onClose} title="Add Social Media Account" size="md">
       <form onSubmit={handleSubmit}>
         <Stack>
           <Select
@@ -93,12 +80,7 @@ export function AddAccountModal({ opened, onClose, spaceId }: AddAccountModalPro
             {...form.getInputProps('platform')}
           />
 
-          <TextInput
-            label="Username"
-            placeholder="@username"
-            required
-            {...form.getInputProps('username')}
-          />
+          <TextInput label="Username" placeholder="@username" required {...form.getInputProps('username')} />
 
           <TextInput
             label="Display Name (optional)"
@@ -112,10 +94,10 @@ export function AddAccountModal({ opened, onClose, spaceId }: AddAccountModalPro
               selectedPlatform?.authMethod === 'oauth'
                 ? 'OAuth token'
                 : selectedPlatform?.authMethod === 'password'
-                ? 'Password'
-                : selectedPlatform?.authMethod === 'token'
-                ? 'API token'
-                : 'Session cookies (JSON)'
+                  ? 'Password'
+                  : selectedPlatform?.authMethod === 'token'
+                    ? 'API token'
+                    : 'Session cookies (JSON)'
             }
             type="password"
             required

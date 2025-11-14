@@ -58,7 +58,8 @@ export function Shake({
       }),
     ]);
 
-    const anim = repeat > 1 ? Animated.loop(baseShake, { iterations: repeat }) : baseShake;
+    const anim =
+      repeat > 1 ? Animated.loop(baseShake, { iterations: repeat }) : baseShake;
     anim.start();
 
     return () => {

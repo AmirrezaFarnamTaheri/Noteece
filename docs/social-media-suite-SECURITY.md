@@ -54,11 +54,13 @@ The Noteece Social Media Suite follows a **defense-in-depth** security model wit
 ### Security Certifications
 
 **Cryptography:**
+
 - ✅ SQLCipher: 256-bit AES encryption (FIPS 140-2 compliant)
 - ✅ XChaCha20-Poly1305: IETF RFC 8439 standard
 - ✅ Argon2: Winner of Password Hashing Competition
 
 **Language:**
+
 - ✅ Rust: Memory-safe by design
 - ✅ No unsafe{} blocks in social media module
 - ✅ No C FFI in critical paths
@@ -92,28 +94,34 @@ The Noteece Social Media Suite follows a **defense-in-depth** security model wit
 ### Threat Actors
 
 **1. Malicious Insider (Low Risk)**
+
 - Risk: Someone with physical access to device
 - Mitigation: Full disk encryption + strong master password + OS lockscreen
 
 **2. Malware/Trojans (Medium Risk)**
+
 - Risk: Malware on same system reading memory/disk
 - Mitigation: OS process isolation + encrypted storage + antivirus required
 
 **3. Network Attackers (Low Risk)**
+
 - Risk: MITM attacks on social media sites
 - Mitigation: HTTPS only + certificate pinning (future) + no Noteece servers
 
 **4. Supply Chain Attacks (Low Risk)**
+
 - Risk: Compromised dependencies
 - Mitigation: Rust crates audited + minimal dependencies + cargo audit
 
 **5. Physical Device Theft (Medium Risk)**
+
 - Risk: Stolen laptop/device
 - Mitigation: Full disk encryption + strong password + remote wipe capability
 
 ### Attack Vectors
 
 **✅ Mitigated:**
+
 - SQL injection → Parameterized queries
 - XSS in WebView → Content Security Policy
 - Path traversal → Input validation
@@ -121,12 +129,14 @@ The Noteece Social Media Suite follows a **defense-in-depth** security model wit
 - Credential leakage → Encrypted with AEAD
 
 **⚠️ Partially Mitigated:**
+
 - Phishing (user education required)
 - Weak passwords (enforcement recommended)
 - Physical access (OS-level protection)
 - Malware (antivirus required)
 
 **❌ Not Mitigated:**
+
 - User shares master password
 - Device left unlocked
 - Compromised social media accounts
@@ -143,6 +153,7 @@ The Noteece Social Media Suite follows a **defense-in-depth** security model wit
 **Iterations:** 256,000 (default)
 
 **How it Works:**
+
 ```
 User Password
      ↓
@@ -156,6 +167,7 @@ Encrypted Database File (*.db)
 ```
 
 **Stored Encrypted:**
+
 - social_account table (including encrypted_credentials)
 - social_post table
 - social_category table
@@ -164,6 +176,7 @@ Encrypted Database File (*.db)
 - All other social tables
 
 **Key Derivation Parameters:**
+
 ```rust
 Argon2 Config:
 - Variant: Argon2id (recommended)
@@ -180,6 +193,7 @@ Argon2 Config:
 **Key:** Derived from DEK (256-bit)
 
 **How it Works:**
+
 ```
 Platform Credentials (JSON)
      ↓
@@ -191,11 +205,13 @@ Stored in social_account.encrypted_credentials
 ```
 
 **AEAD Properties:**
+
 - **Confidentiality**: Encrypted with XChaCha20
 - **Authenticity**: HMAC-like authentication tag
 - **Integrity**: Detects tampering
 
 **Per-Account Security:**
+
 ```sql
 CREATE TABLE social_account (
     id TEXT PRIMARY KEY,
@@ -208,12 +224,14 @@ CREATE TABLE social_account (
 ### Key Management
 
 **Data Encryption Key (DEK):**
+
 - Derived from user password on vault unlock
 - Stored in memory only (never on disk)
 - Zeroed on application exit (Zeroize trait)
 - Used for both SQLCipher and XChaCha20
 
 **Password Requirements (Recommended):**
+
 ```
 Minimum Length: 12 characters
 Complexity: Mix of upper, lower, digits, symbols
@@ -222,6 +240,7 @@ Patterns: No common patterns (password, 123456, etc.)
 ```
 
 **Key Rotation:**
+
 - Change master password: Re-encrypts entire database
 - Change platform credentials: Re-encrypts specific account
 - Lost password: No recovery (by design)
@@ -233,18 +252,21 @@ Patterns: No common patterns (password, 123456, etc.)
 ### Platform Authentication
 
 **WebView-Based Login:**
+
 ```
 User → WebView (platform.com) → User Logs In →
 Session Cookies Captured → Encrypted → Stored
 ```
 
 **Security Measures:**
+
 - No password interception (user types directly in WebView)
 - No credential storage in plaintext
 - No automated login (user must authenticate manually)
 - Session cookies encrypted with AEAD
 
 **OAuth Support:**
+
 - Platforms using OAuth (Google, Facebook) handled natively
 - Redirect URLs captured securely
 - Access tokens encrypted
@@ -252,12 +274,14 @@ Session Cookies Captured → Encrypted → Stored
 ### Noteece Authorization
 
 **No Remote Authentication:**
+
 - No Noteece servers = no Noteece accounts
 - No API keys
 - No OAuth with Noteece
 - All authentication is local (vault password)
 
 **Access Control:**
+
 - Vault-level: Master password required
 - Space-level: Collaboration RBAC (separate feature)
 - Account-level: No per-account passwords (by design)
@@ -269,17 +293,20 @@ Session Cookies Captured → Encrypted → Stored
 ### Database Schema Security
 
 **Foreign Key Constraints:**
+
 ```sql
 CREATE TABLE social_post (
     account_id TEXT NOT NULL REFERENCES social_account(id) ON DELETE CASCADE,
     ...
 );
 ```
+
 - Prevents orphaned data
 - Cascading deletes ensure cleanup
 - Referential integrity maintained
 
 **Input Constraints:**
+
 ```sql
 CREATE TABLE social_sync_history (
     status TEXT NOT NULL DEFAULT 'pending'
@@ -287,22 +314,26 @@ CREATE TABLE social_sync_history (
     ...
 );
 ```
+
 - CHECK constraints prevent invalid data
 - DEFAULT values ensure safe states
 - NOT NULL prevents null pointer issues
 
 **Unique Constraints:**
+
 ```sql
 CREATE TABLE social_account (
     UNIQUE(space_id, platform, username)
 );
 ```
+
 - Prevents duplicate accounts
 - Enforces business logic at DB level
 
 ### Index Security
 
 **No Sensitive Data in Indexes:**
+
 ```sql
 -- ✅ Safe: Index on non-sensitive columns
 CREATE INDEX idx_social_post_timestamp ON social_post(timestamp DESC);
@@ -315,6 +346,7 @@ CREATE INDEX idx_social_post_timestamp ON social_post(timestamp DESC);
 ### FTS Security
 
 **Full-Text Search (FTS5):**
+
 ```sql
 CREATE VIRTUAL TABLE social_post_fts USING fts5(
     content,
@@ -324,6 +356,7 @@ CREATE VIRTUAL TABLE social_post_fts USING fts5(
 ```
 
 **Security Considerations:**
+
 - FTS index is also encrypted (part of SQLCipher database)
 - Content tokenized but encrypted at rest
 - No plaintext leakage
@@ -335,6 +368,7 @@ CREATE VIRTUAL TABLE social_post_fts USING fts5(
 ### Validation Strategy
 
 **Defense in Depth:**
+
 ```
 User Input → Frontend Validation → IPC Boundary → Backend Validation → Database
 ```
@@ -344,6 +378,7 @@ User Input → Frontend Validation → IPC Boundary → Backend Validation → D
 ### Tauri Command Validation
 
 **Length Validation:**
+
 ```rust
 fn handle_extracted_data(
     account_id: String,      // Max 100 chars
@@ -365,18 +400,19 @@ fn handle_extracted_data(
 
 **Implemented Validations:**
 
-| Input | Max Length | Additional Checks |
-|-------|------------|-------------------|
-| space_id | 100 chars | Non-empty |
-| platform | 50 chars | Non-empty |
-| username | 200 chars | Non-empty |
-| credentials | 50 KB | Valid JSON |
-| JSON payload | 10 MB | Valid JSON, max 1000 items |
-| search query | 1000 chars | No SQL injection |
-| batch size | 1000 posts | Integer range check |
-| limit | 1-1000 | Integer range check |
+| Input        | Max Length | Additional Checks          |
+| ------------ | ---------- | -------------------------- |
+| space_id     | 100 chars  | Non-empty                  |
+| platform     | 50 chars   | Non-empty                  |
+| username     | 200 chars  | Non-empty                  |
+| credentials  | 50 KB      | Valid JSON                 |
+| JSON payload | 10 MB      | Valid JSON, max 1000 items |
+| search query | 1000 chars | No SQL injection           |
+| batch size   | 1000 posts | Integer range check        |
+| limit        | 1-1000     | Integer range check        |
 
 **Account ID Consistency Validation:**
+
 ```rust
 // NEW: Prevents cross-account data injection
 for post in &posts {
@@ -392,21 +428,23 @@ for post in &posts {
 ### JavaScript Extractor Validation
 
 **Timestamp Validation:**
+
 ```javascript
 const timestamp = new Date(datetime).getTime();
 // NEW: Validate result
 if (Number.isFinite(timestamp) && !Number.isNaN(timestamp)) {
-    return timestamp;
+  return timestamp;
 }
 // Fallback to safe value
 return Date.now();
 ```
 
 **URL Validation:**
+
 ```javascript
 // NEW: Reject non-persistent URLs
-if (src && src.startsWith('https://')) {
-    return src;  // Valid HTTPS URL
+if (src && src.startsWith("https://")) {
+  return src; // Valid HTTPS URL
 }
 // Reject blob:, data:, relative URLs
 return null;
@@ -415,6 +453,7 @@ return null;
 ### SQL Injection Prevention
 
 **Parameterized Queries:**
+
 ```rust
 // ✅ Safe: Parameterized
 conn.execute(
@@ -435,12 +474,14 @@ conn.execute(
 ### Rust Memory Safety
 
 **Guaranteed by Rust:**
+
 - No buffer overflows
 - No use-after-free
 - No null pointer dereferences
 - No data races (in safe Rust)
 
 **No unsafe{} in Social Module:**
+
 ```bash
 $ rg "unsafe" packages/core-rs/src/social/
 # No results - all safe Rust
@@ -449,6 +490,7 @@ $ rg "unsafe" packages/core-rs/src/social/
 ### Secure Memory Zeroing
 
 **DEK Protection:**
+
 ```rust
 use zeroize::{Zeroize, Zeroizing};
 
@@ -462,11 +504,13 @@ impl Drop for SecureDek {
 ```
 
 **When DEK is Zeroed:**
+
 - Application exit (normal shutdown)
 - Vault lock
 - Panic/crash (best effort by Zeroizing)
 
 **Limitations:**
+
 - Core dumps may contain DEK (disable core dumps in production)
 - Swap file may contain DEK (use encrypted swap)
 - Memory dumps (malware) can read DEK while app running
@@ -474,6 +518,7 @@ impl Drop for SecureDek {
 ### Memory Lifetime
 
 **DEK Lifetime:**
+
 ```
 Vault Unlock → DEK derived from password → Stored in Mutex<Option<SecureDek>>
                                                ↓
@@ -483,6 +528,7 @@ Vault Lock / App Exit → SecureDek dropped → Memory zeroed
 ```
 
 **Session Lifetime:**
+
 - WebView sessions persist until closed
 - Cookies encrypted, stored in database
 - Session data cleared on logout (optional)
@@ -494,6 +540,7 @@ Vault Lock / App Exit → SecureDek dropped → Memory zeroed
 ### No Noteece Servers
 
 **Zero Network Attack Surface:**
+
 - No Noteece API servers
 - No cloud sync endpoints
 - No telemetry/analytics sent to Noteece
@@ -504,18 +551,23 @@ Vault Lock / App Exit → SecureDek dropped → Memory zeroed
 ### WebView Security
 
 **Content Security Policy:**
+
 ```html
-<meta http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'unsafe-eval'">
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'self'; script-src 'unsafe-eval'"
+/>
 ```
 
 **JavaScript Injection:**
+
 - Scripts injected via `window.eval()`
 - Isolated execution context
 - No access to Noteece API directly
 - Communicates via `window.__NOTEECE__` bridge
 
 **WebView Isolation:**
+
 ```rust
 let window = tauri::WindowBuilder::new(
     &app_handle,
@@ -524,6 +576,7 @@ let window = tauri::WindowBuilder::new(
 )
 .build()?;
 ```
+
 - Each account gets separate WebView window
 - Separate cookie jars per account
 - No cross-account data leakage
@@ -531,6 +584,7 @@ let window = tauri::WindowBuilder::new(
 ### HTTPS Enforcement
 
 **All platform URLs use HTTPS:**
+
 ```rust
 let parsed_url = url.parse()
     .map_err(|e: url::ParseError| format!("Invalid platform URL: {}", e))?;
@@ -547,11 +601,13 @@ let parsed_url = url.parse()
 ### Data Minimization
 
 **What We Collect:**
+
 - Social media posts (only what user syncs)
 - Platform metadata (author, timestamp, engagement)
 - Session cookies (encrypted)
 
 **What We Don't Collect:**
+
 - User master password (never stored)
 - Full conversation histories (preview only)
 - Private messages (user's choice)
@@ -561,6 +617,7 @@ let parsed_url = url.parse()
 ### Privacy for Sensitive Content
 
 **Dating Apps:**
+
 ```rust
 // Explicit privacy notice
 if platform == "tinder" || platform == "bumble" || platform == "hinge" {
@@ -574,6 +631,7 @@ if platform == "tinder" || platform == "bumble" || platform == "hinge" {
 ```
 
 **Protections:**
+
 - First names only
 - Sensitive metadata flag
 - Less frequent sync (60 min default)
@@ -583,14 +641,14 @@ if platform == "tinder" || platform == "bumble" || platform == "hinge" {
 
 **Data Subject Rights:**
 
-| Right | Implementation |
-|-------|----------------|
-| Right to Access | Full database access via SQL/UI |
-| Right to Rectification | Edit/update any data |
-| Right to Erasure | Delete account/posts/all data |
-| Right to Portability | Export as JSON/CSV (future) |
-| Right to Restrict Processing | Disable sync per account |
-| Right to Object | Don't connect platform |
+| Right                        | Implementation                  |
+| ---------------------------- | ------------------------------- |
+| Right to Access              | Full database access via SQL/UI |
+| Right to Rectification       | Edit/update any data            |
+| Right to Erasure             | Delete account/posts/all data   |
+| Right to Portability         | Export as JSON/CSV (future)     |
+| Right to Restrict Processing | Disable sync per account        |
+| Right to Object              | Don't connect platform          |
 
 **Data Controller:** User (you)
 **Data Processor:** Noteece (local app)
@@ -603,6 +661,7 @@ if platform == "tinder" || platform == "bumble" || platform == "hinge" {
 ### For Users
 
 **1. Strong Master Password**
+
 ```
 ✅ Do: Use 15+ character passphrase
 ✅ Do: Use password manager
@@ -611,6 +670,7 @@ if platform == "tinder" || platform == "bumble" || platform == "hinge" {
 ```
 
 **2. Device Security**
+
 ```
 ✅ Do: Enable full disk encryption
 ✅ Do: Lock screen when away (timeout)
@@ -621,6 +681,7 @@ if platform == "tinder" || platform == "bumble" || platform == "hinge" {
 ```
 
 **3. Backup Strategy**
+
 ```
 ✅ Do: Regular encrypted backups
 ✅ Do: Store backups offline
@@ -630,6 +691,7 @@ if platform == "tinder" || platform == "bumble" || platform == "hinge" {
 ```
 
 **4. Platform Account Security**
+
 ```
 ✅ Do: Enable 2FA on all platforms
 ✅ Do: Use unique passwords per platform
@@ -642,6 +704,7 @@ if platform == "tinder" || platform == "bumble" || platform == "hinge" {
 ### For Developers
 
 **1. Code Security**
+
 ```
 ✅ Do: Run cargo audit regularly
 ✅ Do: Review all dependencies
@@ -652,6 +715,7 @@ if platform == "tinder" || platform == "bumble" || platform == "hinge" {
 ```
 
 **2. Cryptography**
+
 ```
 ✅ Do: Use audited libraries (ring, sodiumoxide)
 ✅ Do: Use high-level APIs (AEAD)
@@ -662,6 +726,7 @@ if platform == "tinder" || platform == "bumble" || platform == "hinge" {
 ```
 
 **3. Error Handling**
+
 ```
 ✅ Do: Use Result<T, E> for all fallible operations
 ✅ Do: Log errors (without sensitive data)
@@ -678,6 +743,7 @@ if platform == "tinder" || platform == "bumble" || platform == "hinge" {
 ### Vulnerability Disclosure
 
 **Reporting Security Issues:**
+
 1. **Do NOT** open public GitHub issue
 2. Email: [security contact - see GitHub]
 3. Include:
@@ -687,6 +753,7 @@ if platform == "tinder" || platform == "bumble" || platform == "hinge" {
    - Suggested fix (if any)
 
 **Response Timeline:**
+
 - Acknowledge: Within 48 hours
 - Initial assessment: Within 7 days
 - Fix development: Depends on severity
@@ -697,6 +764,7 @@ if platform == "tinder" || platform == "bumble" || platform == "hinge" {
 **If Your Device is Compromised:**
 
 **Immediate Actions:**
+
 1. **Disconnect from internet** (prevent data exfiltration)
 2. **Change all passwords** on a clean device:
    - Vault master password (re-encrypts database)
@@ -708,6 +776,7 @@ if platform == "tinder" || platform == "bumble" || platform == "hinge" {
 4. **Scan for malware** with reputable tool
 
 **Recovery Steps:**
+
 1. **Back up** Noteece vault (if safe)
 2. **Reinstall OS** (clean slate)
 3. **Restore vault** from encrypted backup
@@ -715,6 +784,7 @@ if platform == "tinder" || platform == "bumble" || platform == "hinge" {
 5. **Monitor accounts** for unauthorized access
 
 **If Master Password is Compromised:**
+
 1. **Immediately change password** (Settings → Change Password)
    - This re-encrypts the entire database with new key
 2. **Verify all social media accounts** for unauthorized access
@@ -737,6 +807,7 @@ if platform == "tinder" || platform == "bumble" || platform == "hinge" {
 ### Compliance Frameworks
 
 **OWASP Top 10 (2021):**
+
 - ✅ A01: Broken Access Control → Vault-level auth, input validation
 - ✅ A02: Cryptographic Failures → SQLCipher + AEAD
 - ✅ A03: Injection → Parameterized queries
@@ -749,6 +820,7 @@ if platform == "tinder" || platform == "bumble" || platform == "hinge" {
 - ✅ A10: SSRF → No server-side requests (local-first)
 
 **GDPR Compliance:**
+
 - ✅ Article 5: Data minimization
 - ✅ Article 15: Right to access
 - ✅ Article 16: Right to rectification
@@ -760,12 +832,14 @@ if platform == "tinder" || platform == "bumble" || platform == "hinge" {
 ### Security Audits
 
 **Recommended Audits:**
+
 - **Crypto Audit**: Review key management, algorithm usage
 - **Code Audit**: Static analysis (cargo clippy, cargo audit)
 - **Penetration Testing**: Attempt to break encryption/auth
 - **Dependency Audit**: Review all crate dependencies
 
 **Continuous Monitoring:**
+
 ```bash
 # Run before each release
 cargo audit
@@ -827,11 +901,12 @@ The Noteece Social Media Suite is designed with **security and privacy as top pr
 ---
 
 **For security questions or to report vulnerabilities:**
+
 - GitHub Issues: https://github.com/AmirrezaFarnamTaheri/Noteece/issues
 - Security Email: [See repository]
 
 ---
 
-*Noteece Social Media Suite - Security Documentation*
-*Version 1.0 - January 2025*
-*Built with Rust, Tauri, and Paranoia ❤️*
+_Noteece Social Media Suite - Security Documentation_
+_Version 1.0 - January 2025_
+_Built with Rust, Tauri, and Paranoia ❤️_

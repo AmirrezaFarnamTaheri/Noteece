@@ -107,10 +107,12 @@ export function OcrManager() {
       const filePath = await open({
         title: 'Select Image for OCR',
         multiple: false,
-        filters: [{
-          name: 'Images',
-          extensions: ['png', 'jpg', 'jpeg', 'tiff', 'bmp']
-        }]
+        filters: [
+          {
+            name: 'Images',
+            extensions: ['png', 'jpg', 'jpeg', 'tiff', 'bmp'],
+          },
+        ],
       });
 
       if (!filePath) {
@@ -119,7 +121,7 @@ export function OcrManager() {
       }
 
       // Generate a unique blob ID
-      const blobId = `blob_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const blobId = `blob_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
       const result = await invoke<string>('process_ocr_cmd', {
         blobId,
@@ -207,19 +209,16 @@ export function OcrManager() {
               Extract text from images using Tesseract OCR
             </Text>
           </Box>
-          <Button
-            leftSection={<IconUpload size={16} />}
-            onClick={() => setUploadModalOpen(true)}
-          >
+          <Button leftSection={<IconUpload size={16} />} onClick={() => setUploadModalOpen(true)}>
             Process Image
           </Button>
         </Group>
 
         {/* Info Alert */}
         <Alert color="blue" title="About OCR">
-          OCR (Optical Character Recognition) extracts text from images. Upload images containing text
-          (documents, screenshots, photos) to make them searchable. Supported formats: PNG, JPG, TIFF, BMP.
-          Requires Tesseract to be installed on your system.
+          OCR (Optical Character Recognition) extracts text from images. Upload images containing text (documents,
+          screenshots, photos) to make them searchable. Supported formats: PNG, JPG, TIFF, BMP. Requires Tesseract to be
+          installed on your system.
         </Alert>
 
         {/* Current Status */}
@@ -283,7 +282,7 @@ export function OcrManager() {
             {searchResults.length > 0 && (
               <Box>
                 <Text size="sm" c="dimmed" mb="sm">
-                  Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
+                  Found {searchResults.length} result{searchResults.length === 1 ? '' : 's'}
                 </Text>
                 <Table striped highlightOnHover>
                   <Table.Thead>
@@ -302,22 +301,18 @@ export function OcrManager() {
                         <Table.Td>{getStatusBadge(result.status)}</Table.Td>
                         <Table.Td>
                           <Text size="xs" style={{ fontFamily: 'monospace' }}>
-                            {result.blob_id.substring(0, 12)}...
+                            {result.blob_id.slice(0, 12)}...
                           </Text>
                         </Table.Td>
                         <Table.Td>{result.language || 'N/A'}</Table.Td>
-                        <Table.Td>
-                          {result.confidence ? `${(result.confidence * 100).toFixed(1)}%` : 'N/A'}
-                        </Table.Td>
+                        <Table.Td>{result.confidence ? `${(result.confidence * 100).toFixed(1)}%` : 'N/A'}</Table.Td>
                         <Table.Td>
                           <Text size="sm" lineClamp={2}>
-                            {result.text ? result.text.substring(0, 100) + '...' : 'No text'}
+                            {result.text ? result.text.slice(0, 100) + '...' : 'No text'}
                           </Text>
                         </Table.Td>
                         <Table.Td>
-                          {result.processed_at
-                            ? new Date(result.processed_at * 1000).toLocaleString()
-                            : 'Pending'}
+                          {result.processed_at ? new Date(result.processed_at * 1000).toLocaleString() : 'Pending'}
                         </Table.Td>
                       </Table.Tr>
                     ))}
@@ -360,11 +355,7 @@ export function OcrManager() {
               <Button variant="default" onClick={() => setUploadModalOpen(false)}>
                 Cancel
               </Button>
-              <Button
-                onClick={handleProcessOcr}
-                loading={isUploading}
-                leftSection={<IconUpload size={16} />}
-              >
+              <Button onClick={handleProcessOcr} loading={isUploading} leftSection={<IconUpload size={16} />}>
                 Process Image
               </Button>
             </Group>

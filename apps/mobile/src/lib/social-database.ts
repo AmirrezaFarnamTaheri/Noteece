@@ -50,7 +50,10 @@ export async function getSocialAccounts(
       // Some SQLite drivers can yield base64 strings; safely decode without relying on atob in RN
       try {
         let bytes: Uint8Array;
-        if (typeof global !== "undefined" && typeof (global as any).atob === "function") {
+        if (
+          typeof global !== "undefined" &&
+          typeof (global as any).atob === "function"
+        ) {
           const bin = (global as any).atob(raw);
           const arr = new Uint8Array(bin.length);
           for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
@@ -166,8 +169,8 @@ export async function getTimelinePosts(
       new Set(
         filters.categories
           .map((c) => (typeof c === "string" ? c.trim() : ""))
-          .filter((c) => c.length > 0)
-      )
+          .filter((c) => c.length > 0),
+      ),
     );
 
     if (catIds.length > 0) {
@@ -189,8 +192,8 @@ export async function getTimelinePosts(
       new Set(
         filters.authors
           .map((a) => (typeof a === "string" ? a.trim() : ""))
-          .filter((a) => a.length > 0)
-      )
+          .filter((a) => a.length > 0),
+      ),
     );
     if (authors.length > 0) {
       sql += ` AND p.author IN (${authors.map(() => "?").join(",")})`;
@@ -235,9 +238,10 @@ export async function getTimelinePosts(
     let mediaUrls: string[] | undefined;
     if (row.media_urls != null) {
       try {
-        const parsed = typeof row.media_urls === "string"
-          ? JSON.parse(row.media_urls)
-          : row.media_urls;
+        const parsed =
+          typeof row.media_urls === "string"
+            ? JSON.parse(row.media_urls)
+            : row.media_urls;
         if (Array.isArray(parsed)) {
           mediaUrls = parsed.filter((u) => typeof u === "string");
         } else {
@@ -284,7 +288,9 @@ function parseCategories(row: any): SocialCategory[] {
 
   const sep = String.fromCharCode(31);
   // Filter out empty IDs that can result from GROUP_CONCAT on posts with no categories
-  const ids = row.category_ids.split(sep).filter((id: string) => id && id.length > 0);
+  const ids = row.category_ids
+    .split(sep)
+    .filter((id: string) => id && id.length > 0);
   if (ids.length === 0) return [];
 
   const names = row.category_names?.split(sep) || [];
@@ -301,7 +307,9 @@ function parseCategories(row: any): SocialCategory[] {
   }));
 }
 
-export async function getPostById(postId: string): Promise<TimelinePost | null> {
+export async function getPostById(
+  postId: string,
+): Promise<TimelinePost | null> {
   const sql = `
     SELECT
       p.id, p.account_id, p.platform, p.platform_post_id,
@@ -334,9 +342,10 @@ export async function getPostById(postId: string): Promise<TimelinePost | null> 
   let mediaUrls: string[] | undefined;
   if (row.media_urls != null) {
     try {
-      const parsed = typeof row.media_urls === "string"
-        ? JSON.parse(row.media_urls)
-        : row.media_urls;
+      const parsed =
+        typeof row.media_urls === "string"
+          ? JSON.parse(row.media_urls)
+          : row.media_urls;
       if (Array.isArray(parsed)) {
         mediaUrls = parsed.filter((u) => typeof u === "string");
       } else {
@@ -445,7 +454,7 @@ export async function assignCategory(
          FROM social_category c
         WHERE c.id = ?) AS category_space
     `,
-    [postId, categoryId]
+    [postId, categoryId],
   );
   const postSpace = rows?.[0]?.post_space;
   const categorySpace = rows?.[0]?.category_space;
@@ -459,12 +468,17 @@ export async function assignCategory(
     [postId, categoryId, now],
   );
 
-  await queueSyncOperation("social_post_category", `${postId}-${categoryId}`, "assign", {
-    post_id: postId,
-    category_id: categoryId,
-    assigned_at: now,
-    assigned_by: "user",
-  });
+  await queueSyncOperation(
+    "social_post_category",
+    `${postId}-${categoryId}`,
+    "assign",
+    {
+      post_id: postId,
+      category_id: categoryId,
+      assigned_at: now,
+      assigned_by: "user",
+    },
+  );
 }
 
 export async function removeCategory(
@@ -478,10 +492,15 @@ export async function removeCategory(
   );
 
   // Queue for sync to desktop
-  await queueSyncOperation("social_post_category", `${postId}-${categoryId}`, "remove", {
-    post_id: postId,
-    category_id: categoryId,
-  });
+  await queueSyncOperation(
+    "social_post_category",
+    `${postId}-${categoryId}`,
+    "remove",
+    {
+      post_id: postId,
+      category_id: categoryId,
+    },
+  );
 }
 
 export async function getPostCategories(
@@ -509,7 +528,9 @@ function safeParsePlatformArray(val: any): Platform[] {
   if (!val) return [];
   try {
     const parsed = typeof val === "string" ? JSON.parse(val) : val;
-    return Array.isArray(parsed) ? parsed.filter((p) => typeof p === "string") : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((p) => typeof p === "string")
+      : [];
   } catch {
     return [];
   }
@@ -619,7 +640,10 @@ export async function getTotalPostCount(spaceId: string): Promise<number> {
 
 function generateId(): string {
   // Collision-resistant 128-bit random ID encoded as hex
-  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.getRandomValues === "function"
+  ) {
     const bytes = new Uint8Array(16);
     crypto.getRandomValues(bytes);
     return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");

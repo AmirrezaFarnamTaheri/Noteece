@@ -10,8 +10,12 @@ import * as Sharing from "expo-sharing";
 import { Alert } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { v4 as uuid } from "uuid";
-import { db Execute, dbQuery } from "./database";
-import type { SocialAccount, SocialPost, SocialCategory } from "../types/social";
+import { dbExecute, dbQuery } from "./database";
+import type {
+  SocialAccount,
+  SocialPost,
+  SocialCategory,
+} from "../types/social";
 
 export interface BackupMetadata {
   version: string;
@@ -61,7 +65,10 @@ async function getOrCreateDeviceId(): Promise<string> {
     await SecureStore.setItemAsync("device_id", newDeviceId);
     return newDeviceId;
   } catch (error) {
-    console.warn("Failed to access secure storage for device ID, using temporary UUID:", error);
+    console.warn(
+      "Failed to access secure storage for device ID, using temporary UUID:",
+      error,
+    );
     // Fallback to a temporary UUID if secure storage fails
     return uuid();
   }
@@ -82,13 +89,15 @@ async function ensureBackupDirectory(): Promise<void> {
 /**
  * Export social accounts (without credentials for security)
  */
-async function exportAccounts(spaceId: string): Promise<Omit<SocialAccount, "credentials_encrypted">[]> {
+async function exportAccounts(
+  spaceId: string,
+): Promise<Omit<SocialAccount, "credentials_encrypted">[]> {
   const accounts = await dbQuery<any>(
     `SELECT id, space_id, platform, username, display_name,
             enabled, sync_frequency_minutes, last_sync_time, created_at
      FROM social_account
      WHERE space_id = ?`,
-    [spaceId]
+    [spaceId],
   );
 
   return accounts;
@@ -105,7 +114,7 @@ async function exportPosts(spaceId: string): Promise<any[]> {
      JOIN social_account a ON p.account_id = a.id
      WHERE a.space_id = ?
      ORDER BY p.created_at DESC`,
-    [spaceId]
+    [spaceId],
   );
 
   // Scrub sensitive fields from raw_json to prevent exposure of tokens, credentials, etc.
@@ -131,7 +140,7 @@ async function exportPosts(spaceId: string): Promise<any[]> {
         };
         // Filter out undefined values
         Object.keys(scrubbed).forEach(
-          (key) => scrubbed[key] === undefined && delete scrubbed[key]
+          (key) => scrubbed[key] === undefined && delete scrubbed[key],
         );
         post.raw_json = JSON.stringify(scrubbed);
       } catch (e) {
@@ -151,7 +160,7 @@ async function exportCategories(spaceId: string): Promise<any[]> {
     `SELECT id, space_id, name, color, icon, filters_json, created_at
      FROM social_category
      WHERE space_id = ?`,
-    [spaceId]
+    [spaceId],
   );
 
   return categories;
@@ -172,14 +181,19 @@ async function exportAppSettings(): Promise<Record<string, any>> {
     const language = await SecureStore.getItemAsync("language");
     if (language) settings.language = language;
 
-    const notificationsEnabled = await SecureStore.getItemAsync("notifications_enabled");
-    if (notificationsEnabled) settings.notificationsEnabled = notificationsEnabled === "true";
+    const notificationsEnabled = await SecureStore.getItemAsync(
+      "notifications_enabled",
+    );
+    if (notificationsEnabled)
+      settings.notificationsEnabled = notificationsEnabled === "true";
 
     // Export sync preferences
     const autoSync = await SecureStore.getItemAsync("auto_sync_enabled");
     if (autoSync) settings.autoSyncEnabled = autoSync === "true";
 
-    const syncInterval = await SecureStore.getItemAsync("sync_interval_minutes");
+    const syncInterval = await SecureStore.getItemAsync(
+      "sync_interval_minutes",
+    );
     if (syncInterval) settings.syncIntervalMinutes = parseInt(syncInterval, 10);
 
     // Export privacy settings
@@ -189,7 +203,10 @@ async function exportAppSettings(): Promise<Record<string, any>> {
     console.log("[Backup] Exported app settings:", Object.keys(settings));
     return settings;
   } catch (error) {
-    console.warn("[Backup] Failed to export app settings, returning empty object:", error);
+    console.warn(
+      "[Backup] Failed to export app settings, returning empty object:",
+      error,
+    );
     return {};
   }
 }
@@ -204,7 +221,7 @@ export async function createBackup(
     includePosts?: boolean;
     includeCategories?: boolean;
     includeSettings?: boolean;
-  } = {}
+  } = {},
 ): Promise<{ success: boolean; filePath?: string; error?: string }> {
   try {
     const {
@@ -263,7 +280,9 @@ export async function createBackup(
       encoding: FileSystem.EncodingType.UTF8,
     });
 
-    console.log(`[Backup] Created backup: ${filePath} (${backupJson.length} bytes)`);
+    console.log(
+      `[Backup] Created backup: ${filePath} (${backupJson.length} bytes)`,
+    );
 
     return { success: true, filePath };
   } catch (error) {
@@ -292,7 +311,7 @@ export async function exportAndShare(spaceId: string): Promise<void> {
     if (!isAvailable) {
       Alert.alert(
         "Sharing Not Available",
-        `Backup saved to: ${result.filePath}\n\nPlease copy this file manually.`
+        `Backup saved to: ${result.filePath}\n\nPlease copy this file manually.`,
       );
       return;
     }
@@ -307,7 +326,7 @@ export async function exportAndShare(spaceId: string): Promise<void> {
     console.error("[Backup] Export failed:", error);
     Alert.alert(
       "Export Failed",
-      error instanceof Error ? error.message : "Unknown error"
+      error instanceof Error ? error.message : "Unknown error",
     );
   }
 }
@@ -320,7 +339,7 @@ export async function importBackup(
   options: {
     mergeStrategy?: "replace" | "merge" | "skip";
     validateOnly?: boolean;
-  } = {}
+  } = {},
 ): Promise<{
   success: boolean;
   imported?: {
@@ -386,12 +405,15 @@ export async function importBackup(
               category.icon,
               category.filters_json,
               category.created_at,
-            ]
+            ],
           );
 
           imported.categories++;
         } catch (error) {
-          console.error(`[Backup] Failed to import category ${category.id}:`, error);
+          console.error(
+            `[Backup] Failed to import category ${category.id}:`,
+            error,
+          );
         }
       }
     }
@@ -422,12 +444,15 @@ export async function importBackup(
               account.sync_frequency_minutes,
               account.last_sync_time,
               account.created_at,
-            ]
+            ],
           );
 
           imported.accounts++;
         } catch (error) {
-          console.error(`[Backup] Failed to import account ${account.id}:`, error);
+          console.error(
+            `[Backup] Failed to import account ${account.id}:`,
+            error,
+          );
         }
       }
     }
@@ -467,7 +492,7 @@ export async function importBackup(
               post.post_type,
               post.reply_to,
               post.raw_json,
-            ]
+            ],
           );
 
           imported.posts++;
@@ -493,7 +518,7 @@ export async function importBackup(
  * List all available backups
  */
 export async function listBackups(): Promise<
-  Array<{ filename: string; size: number; createdAt: Date }>
+  { filename: string; size: number; createdAt: Date }[]
 > {
   try {
     await ensureBackupDirectory();
@@ -510,15 +535,16 @@ export async function listBackups(): Promise<
           return {
             filename,
             size: info.exists && "size" in info ? info.size : 0,
-            createdAt: info.exists && "modificationTime" in info
-              ? new Date(info.modificationTime * 1000)
-              : new Date(),
+            createdAt:
+              info.exists && "modificationTime" in info
+                ? new Date(info.modificationTime * 1000)
+                : new Date(),
           };
-        })
+        }),
     );
 
     return backups.sort(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
     );
   } catch (error) {
     console.error("[Backup] Failed to list backups:", error);
@@ -544,7 +570,9 @@ export async function deleteBackup(filename: string): Promise<boolean> {
 /**
  * Clean up old backups, keeping only the most recent N backups
  */
-export async function cleanupOldBackups(keepCount: number = 5): Promise<number> {
+export async function cleanupOldBackups(
+  keepCount: number = 5,
+): Promise<number> {
   try {
     const backups = await listBackups();
 

@@ -26,27 +26,32 @@ llm/
 ## Features
 
 ✅ **Multi-Provider Support**
+
 - Local: Ollama (Llama 3, Mistral, Code Llama, etc.)
 - Cloud: OpenAI (GPT-4, GPT-3.5-turbo)
 - Coming Soon: Claude (Anthropic), Gemini (Google)
 
 ✅ **Intelligent Fallback**
+
 - Automatic failover to backup providers
 - Configurable fallback chains
 - Health checking
 
 ✅ **Response Caching**
+
 - SQLite-based persistent cache
 - Automatic cache key generation
 - Configurable TTL and cleanup
 - Cache statistics
 
 ✅ **Hybrid Routing**
+
 - Privacy-first (local-only)
 - Cloud-first with local fallback
 - Balanced hybrid mode
 
 ✅ **Production-Ready**
+
 - Comprehensive error handling
 - Structured logging
 - Type-safe API
@@ -187,10 +192,12 @@ let response = client.complete(request).await?;
 ### Ollama (Local)
 
 **Requirements:**
+
 - Ollama installed and running
 - Models pulled: `ollama pull llama3`
 
 **Supported Models:**
+
 - Llama 3 (8B, 70B)
 - Mistral (7B)
 - Code Llama
@@ -198,6 +205,7 @@ let response = client.complete(request).await?;
 - Custom fine-tuned models
 
 **Advantages:**
+
 - ✅ Free (no API costs)
 - ✅ Private (data never leaves your machine)
 - ✅ Fast (local inference)
@@ -205,6 +213,7 @@ let response = client.complete(request).await?;
 - ✅ No rate limits
 
 **Configuration:**
+
 ```rust
 let config = LLMConfig {
     ollama_base_url: "http://localhost:11434".to_string(),
@@ -215,26 +224,31 @@ let config = LLMConfig {
 ### OpenAI (Cloud)
 
 **Requirements:**
+
 - OpenAI API key
 
 **Supported Models:**
+
 - GPT-4
 - GPT-4 Turbo
 - GPT-3.5 Turbo
 
 **Advantages:**
+
 - ✅ State-of-the-art performance
 - ✅ Large context windows
 - ✅ No local setup required
 - ✅ Always up-to-date
 
 **Considerations:**
+
 - ⚠️ API costs (pay per token)
 - ⚠️ Data sent to OpenAI servers
 - ⚠️ Rate limits apply
 - ⚠️ Requires internet connection
 
 **Configuration:**
+
 ```rust
 let config = LLMConfig {
     openai_api_key: Some("sk-...".to_string()),
@@ -383,18 +397,21 @@ All operations are logged with structured logging:
 ## Performance Considerations
 
 ### Local (Ollama)
+
 - **Latency:** 1-5 seconds for small models (8B parameters)
 - **Throughput:** Depends on hardware (GPU recommended)
 - **Cost:** Free
 - **Scaling:** Limited by local hardware
 
 ### Cloud (OpenAI)
+
 - **Latency:** 2-8 seconds (network dependent)
 - **Throughput:** High (OpenAI infrastructure)
 - **Cost:** ~$0.01-0.06 per 1K tokens
 - **Scaling:** Unlimited (subject to rate limits)
 
 ### Caching Impact
+
 - **Cache hit latency:** <10ms
 - **Cost savings:** 100% for cached responses
 - **Hit rate:** Typically 20-40% in practice
@@ -404,18 +421,21 @@ All operations are logged with structured logging:
 ### Strategies
 
 1. **Use Local Models for Simple Tasks**
+
    ```rust
    // Simple tasks (categorization, extraction)
    let request = request.model("llama3");  // Free
    ```
 
 2. **Use Cloud for Complex Tasks**
+
    ```rust
    // Complex reasoning, long-form generation
    let request = request.model("gpt-4");  // High quality
    ```
 
 3. **Enable Caching**
+
    ```rust
    let config = LLMConfig {
        use_cache: true,  // 100% savings on repeated requests
@@ -424,6 +444,7 @@ All operations are logged with structured logging:
    ```
 
 4. **Set Token Limits**
+
    ```rust
    let request = request.max_tokens(500);  // Prevent excessive costs
    ```
@@ -548,6 +569,6 @@ See main project LICENSE file.
 
 ---
 
-*For integration examples, see `/docs/llm-integration-examples.md`*
-*For API reference, see inline documentation*
-*For troubleshooting, see above section or GitHub issues*
+_For integration examples, see `/docs/llm-integration-examples.md`_
+_For API reference, see inline documentation_
+_For troubleshooting, see above section or GitHub issues_
