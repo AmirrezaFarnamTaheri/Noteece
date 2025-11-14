@@ -320,11 +320,11 @@ impl SyncProtocol {
                                 device_id: info.get_fullname().to_string(),
                                 device_name: info.get_properties()
                                     .get("name")
-                                    .map(|v| String::from_utf8_lossy(v.val()).to_string())
+                                    .and_then(|v| v.val().map(|bytes| String::from_utf8_lossy(bytes).to_string()))
                                     .unwrap_or_else(|| "Unknown Device".to_string()),
                                 device_type: match info.get_properties()
                                     .get("type")
-                                    .map(|v| String::from_utf8_lossy(v.val()).to_string()) {
+                                    .and_then(|v| v.val().map(|bytes| String::from_utf8_lossy(bytes).to_string())) {
                                     Some(t) if t == "desktop" => DeviceType::Desktop,
                                     _ => DeviceType::Mobile,
                                 },
@@ -332,11 +332,11 @@ impl SyncProtocol {
                                 sync_port: info.get_port(),
                                 public_key: info.get_properties()
                                     .get("pubkey")
-                                    .map(|v| v.val().to_vec())
+                                    .and_then(|v| v.val().map(|bytes| bytes.to_vec()))
                                     .unwrap_or_default(),
                                 os_version: info.get_properties()
                                     .get("os")
-                                    .map(|v| String::from_utf8_lossy(v.val()).to_string())
+                                    .and_then(|v| v.val().map(|bytes| String::from_utf8_lossy(bytes).to_string()))
                                     .unwrap_or_else(|| "Unknown".to_string()),
                                 last_seen: chrono::Utc::now(),
                                 is_active: true,

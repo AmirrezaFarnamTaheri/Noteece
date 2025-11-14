@@ -592,7 +592,7 @@ impl CorrelationEngine {
         since: i64,
     ) -> Result<Vec<Transaction>, CorrelationError> {
         let mut stmt = conn.prepare(
-            "SELECT id, space_id, transaction_type, amount, currency, category, account, description, date, recurring, created_at
+            "SELECT id, space_id, note_id, transaction_type, amount, currency, category, account, description, date, recurring, recurring_frequency, blob_id, created_at
              FROM transaction
              WHERE space_id = ?1 AND date >= ?2
              ORDER BY date DESC",
@@ -603,15 +603,18 @@ impl CorrelationEngine {
                 Ok(Transaction {
                     id: row.get(0)?,
                     space_id: row.get(1)?,
-                    transaction_type: row.get(2)?,
-                    amount: row.get(3)?,
-                    currency: row.get(4)?,
-                    category: row.get(5)?,
-                    account: row.get(6)?,
-                    description: row.get(7)?,
-                    date: row.get(8)?,
-                    recurring: row.get(9)?,
-                    created_at: row.get(10)?,
+                    note_id: row.get(2)?,
+                    transaction_type: row.get(3)?,
+                    amount: row.get(4)?,
+                    currency: row.get(5)?,
+                    category: row.get(6)?,
+                    account: row.get(7)?,
+                    description: row.get(8)?,
+                    date: row.get(9)?,
+                    recurring: row.get(10)?,
+                    recurring_frequency: row.get(11)?,
+                    blob_id: row.get(12)?,
+                    created_at: row.get(13)?,
                 })
             })?
             .collect::<Result<Vec<_>, _>>()?;

@@ -12,6 +12,8 @@ pub enum ForesightError {
     Database(#[from] rusqlite::Error),
     #[error("Insight generation error: {0}")]
     Generation(String),
+    #[error("Analysis error: {0}")]
+    Analysis(String),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -295,9 +297,10 @@ pub fn generate_daily_brief(conn: &Connection, space_id: Ulid) -> Result<Insight
     }
 
     // Build the brief description
-    let greeting = if now.hour() < 12 {
+    use chrono::Timelike;
+    let greeting = if now.time().hour() < 12 {
         "Good morning"
-    } else if now.hour() < 18 {
+    } else if now.time().hour() < 18 {
         "Good afternoon"
     } else {
         "Good evening"
@@ -705,6 +708,7 @@ fn detect_weekly_review_need(
     })?;
 
     // If it's Friday or later and no review this week
+    use chrono::Datelike;
     let weekday = now.weekday().num_days_from_monday();
     if weekday >= 4 && count == 0 {
         let insight = Insight {

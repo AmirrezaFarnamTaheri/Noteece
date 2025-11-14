@@ -73,7 +73,7 @@ pub fn unwrap_dek(wrapped_dek: &[u8], kek: &[u8]) -> Result<[u8; 32], CryptoErro
 /// Encrypt a string using the DEK (for sensitive data like passwords)
 pub fn encrypt_string(plaintext: &str, dek: &[u8]) -> Result<String, CryptoError> {
     use chacha20poly1305::{
-        aead::{Aead, KeyInit, OsRng},
+        aead::{Aead, AeadCore, KeyInit, OsRng},
         XChaCha20Poly1305,
     };
 
@@ -125,7 +125,7 @@ pub fn decrypt_string(encrypted: &str, dek: &[u8]) -> Result<String, CryptoError
     }
 
     let (nonce_bytes, ciphertext) = combined.split_at(NONCE_LEN);
-    let nonce = nonce_bytes.into();
+    let nonce = chacha20poly1305::XNonce::from_slice(nonce_bytes);
 
     let cipher = XChaCha20Poly1305::new(dek.into());
     let plaintext = cipher
@@ -140,7 +140,7 @@ pub fn decrypt_string(encrypted: &str, dek: &[u8]) -> Result<String, CryptoError
 /// Handles arbitrary binary data without UTF-8 assumptions
 pub fn encrypt_bytes(data: &[u8], dek: &[u8]) -> Result<Vec<u8>, CryptoError> {
     use chacha20poly1305::{
-        aead::{Aead, KeyInit, OsRng},
+        aead::{Aead, AeadCore, KeyInit, OsRng},
         XChaCha20Poly1305,
     };
 
@@ -202,7 +202,7 @@ pub fn decrypt_bytes(encrypted: &[u8], dek: &[u8]) -> Result<Vec<u8>, CryptoErro
         ));
     }
 
-    let nonce = nonce_bytes.into();
+    let nonce = chacha20poly1305::XNonce::from_slice(nonce_bytes);
 
     let cipher = XChaCha20Poly1305::new(dek.into());
     let plaintext = cipher
