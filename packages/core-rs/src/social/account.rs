@@ -18,6 +18,10 @@ pub enum SocialError {
     Serialization(#[from] serde_json::Error),
     #[error("Sync already in progress for account: {0}")]
     SyncInProgress(String),
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
+    #[error("Not found: {0}")]
+    NotFound(String),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
