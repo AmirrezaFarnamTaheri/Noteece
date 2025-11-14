@@ -555,12 +555,18 @@ impl CorrelationEngine {
 
         let tasks = stmt
             .query_map([space_id.to_string()], |row| {
+                let id_str: String = row.get(0)?;
+                let space_id_str: String = row.get(1)?;
+                let note_id_str: Option<String> = row.get(2)?;
+                let project_id_str: Option<String> = row.get(3)?;
+                let parent_task_id_str: Option<String> = row.get(4)?;
+
                 Ok(Task {
-                    id: row.get(0)?,
-                    space_id: row.get(1)?,
-                    note_id: row.get(2)?,
-                    project_id: row.get(3)?,
-                    parent_task_id: row.get(4)?,
+                    id: Ulid::from_string(&id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
+                    space_id: Ulid::from_string(&space_id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(1, rusqlite::types::Type::Text, Box::new(e)))?,
+                    note_id: note_id_str.and_then(|s| Ulid::from_string(&s).ok()),
+                    project_id: project_id_str.and_then(|s| Ulid::from_string(&s).ok()),
+                    parent_task_id: parent_task_id_str.and_then(|s| Ulid::from_string(&s).ok()),
                     title: row.get(5)?,
                     description: row.get(6)?,
                     status: row.get(7)?,

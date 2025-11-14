@@ -19,6 +19,8 @@ pub enum ImportError {
     UnsupportedFormat,
     #[error("Database error: {0}")]
     Db(#[from] crate::db::DbError),
+    #[error("SQLite error: {0}")]
+    Sqlite(#[from] rusqlite::Error),
     #[error("Zip error: {0}")]
     Zip(#[from] zip::result::ZipError),
     #[error("Gray Matter parse error: {0}")]
