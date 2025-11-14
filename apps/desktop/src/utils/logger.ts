@@ -1,26 +1,98 @@
 /**
  * Desktop Application Logger
  *
- * Wraps the core logger with desktop-specific functionality
+ * Simple logger for desktop app
  */
 
-import { logger as coreLogger, LogLevel, LogEntry } from '@noteece/core-rs/src/logger';
+export enum LogLevel {
+  DEBUG = 0,
+  INFO = 1,
+  WARN = 2,
+  ERROR = 3,
+}
+
+export interface LogEntry {
+  level: LogLevel;
+  message: string;
+  timestamp: number;
+  context?: Record<string, unknown>;
+  error?: Error;
+}
+
+type LogListener = (entry: LogEntry) => void | Promise<void>;
+
+class Logger {
+  private level: LogLevel = LogLevel.INFO;
+  private context: Record<string, unknown> = {};
+  private listeners: LogListener[] = [];
+
+  setLevel(level: LogLevel): void {
+    this.level = level;
+  }
+
+  setContext(ctx: Record<string, unknown>): void {
+    this.context = { ...this.context, ...ctx };
+  }
+
+  addListener(listener: LogListener): void {
+    this.listeners.push(listener);
+  }
+
+  private log(level: LogLevel, message: string, error?: Error): void {
+    if (level < this.level) return;
+
+    const entry: LogEntry = {
+      level,
+      message,
+      timestamp: Date.now(),
+      context: this.context,
+      error,
+    };
+
+    // Console output
+    const levelStr = LogLevel[level];
+    console.log(`[${levelStr}] ${message}`, error || '');
+
+    // Notify listeners
+    this.listeners.forEach((listener) => {
+      void listener(entry);
+    });
+  }
+
+  debug(message: string): void {
+    this.log(LogLevel.DEBUG, message);
+  }
+
+  info(message: string): void {
+    this.log(LogLevel.INFO, message);
+  }
+
+  warn(message: string): void {
+    this.log(LogLevel.WARN, message);
+  }
+
+  error(message: string, error?: Error): void {
+    this.log(LogLevel.ERROR, message, error);
+  }
+}
+
+export const logger = new Logger();
 
 // Configure logger for desktop app
 if (import.meta.env.DEV) {
-  coreLogger.setLevel(LogLevel.DEBUG);
+  logger.setLevel(LogLevel.DEBUG);
 } else {
-  coreLogger.setLevel(LogLevel.INFO);
+  logger.setLevel(LogLevel.INFO);
 }
 
 // Add desktop-specific context
-coreLogger.setContext({
+logger.setContext({
   platform: 'desktop',
   env: import.meta.env.MODE,
 });
 
 // Persist critical logs to storage
-coreLogger.addListener(async (entry: LogEntry) => {
+logger.addListener((entry: LogEntry) => {
   if (entry.level >= LogLevel.ERROR) {
     try {
       // Store critical logs for debugging
@@ -47,6 +119,4 @@ coreLogger.addListener(async (entry: LogEntry) => {
   }
 });
 
-export * from '@noteece/core-rs/src/logger';
-
-export { logger, logger as default } from '@noteece/core-rs/src/logger';
+export default logger;
