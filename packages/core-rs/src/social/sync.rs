@@ -53,7 +53,7 @@ pub fn get_accounts_needing_sync(
          ORDER BY (sa.last_sync IS NOT NULL), sa.last_sync ASC",
     )?;
 
-    let tasks = stmt
+    let tasks: Vec<SyncTask> = stmt
         .query_map([space_id], |row| {
             let account_id: String = row.get(0)?;
             let platform: String = row.get(1)?;
@@ -104,7 +104,7 @@ pub fn get_all_sync_tasks(conn: &Connection, space_id: &str) -> Result<Vec<SyncT
          ORDER BY platform, username",
     )?;
 
-    let tasks = stmt
+    let tasks: Vec<SyncTask> = stmt
         .query_map([space_id], |row| {
             let account_id: String = row.get(0)?;
             let platform: String = row.get(1)?;
@@ -275,7 +275,7 @@ pub fn get_sync_history(
          LIMIT ?2",
     )?;
 
-    let history = stmt
+    let history: Vec<SyncStatus> = stmt
         .query_map(params![account_id, limit], |row| {
             let account_id: String = row.get(0)?;
             let sync_time: i64 = row.get(1)?;
@@ -285,7 +285,7 @@ pub fn get_sync_history(
 
             Ok(SyncStatus {
                 account_id,
-                status,
+                status: status.clone(),
                 started_at: Some(sync_time),
                 completed_at: if status == "completed" {
                     // Both sync_time and sync_duration_ms are in milliseconds

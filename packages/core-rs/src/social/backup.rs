@@ -308,7 +308,7 @@ impl BackupService {
     }
 
     /// Import database from JSON format
-    fn import_database(&self, conn: &Connection, data: &serde_json::Value) -> Result<(), BackupError> {
+    fn import_database(&self, conn: &mut Connection, data: &serde_json::Value) -> Result<(), BackupError> {
         let tables = data.get("tables").ok_or(BackupError::InvalidBackup("No tables found".to_string()))?;
 
         // Start transaction
@@ -331,15 +331,29 @@ impl BackupService {
                 let mut stmt = tx.prepare(&query)
                     .map_err(|e| BackupError::RestoreFailed(e.to_string()))?;
 
-                let params: Vec<&dyn rusqlite::ToSql> = cols.iter()
+                let param_values: Vec<Box<dyn rusqlite::ToSql>> = cols.iter()
                     .map(|col| {
-                        let val = &obj[col];
+                        let val = &obj[col.as_str()];
                         match val {
-                            serde_json::Value::String(s) => s as &dyn rusqlite::ToSql,
-                            serde_json::Value::Number(n) => &n.as_i64() as &dyn rusqlite::ToSql,
-                            _ => &serde_json::Value::Null as &dyn rusqlite::ToSql,
+                            serde_json::Value::String(s) => Box::new(s.clone()) as Box<dyn rusqlite::ToSql>,
+                            serde_json::Value::Number(n) => {
+                                if let Some(i) = n.as_i64() {
+                                    Box::new(i) as Box<dyn rusqlite::ToSql>
+                                } else if let Some(f) = n.as_f64() {
+                                    Box::new(f) as Box<dyn rusqlite::ToSql>
+                                } else {
+                                    Box::new(rusqlite::types::Null) as Box<dyn rusqlite::ToSql>
+                                }
+                            }
+                            serde_json::Value::Bool(b) => Box::new(*b) as Box<dyn rusqlite::ToSql>,
+                            serde_json::Value::Null => Box::new(rusqlite::types::Null) as Box<dyn rusqlite::ToSql>,
+                            _ => Box::new(val.to_string()) as Box<dyn rusqlite::ToSql>,
                         }
                     })
+                    .collect();
+
+                let params: Vec<&dyn rusqlite::ToSql> = param_values.iter()
+                    .map(|p| p.as_ref())
                     .collect();
 
                 stmt.execute(rusqlite::params_from_iter(params.iter()))

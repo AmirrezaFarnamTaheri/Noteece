@@ -345,7 +345,7 @@ impl SyncProtocol {
                         }
                     }
                 }
-                Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
+                Err(flume::RecvTimeoutError::Timeout) => {
                     attempts += 1;
                     // Continue searching
                 }
@@ -459,7 +459,7 @@ impl SyncProtocol {
             std::time::Duration::from_secs(5)
         ) {
             self.sync_state = SyncState::Idle;
-            return Err(SyncProtocolError::ConnectionFailed);
+            return Err(SyncProtocolError::ConnectionFailed("Failed to establish connection".to_string()));
         }
 
         // Create sync session with device
