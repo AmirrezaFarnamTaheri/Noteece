@@ -34,6 +34,15 @@ pub enum SyncProtocolError {
     #[error("Device already exists")]
     DuplicateDevice,
 
+    #[error("Discovery failed: {0}")]
+    DiscoveryFailed(String),
+
+    #[error("Key exchange failed")]
+    KeyExchangeFailed,
+
+    #[error("Connection failed: {0}")]
+    ConnectionFailed(String),
+
     #[error("Serialization error: {0}")]
     Serialization(#[from] serde_json::Error),
 }
@@ -306,32 +315,28 @@ impl SyncProtocol {
                 Ok(event) => {
                     if let mdns_sd::ServiceEvent::ServiceResolved(info) = event {
                         // Extract device information from mDNS record
-                        if let Some(address) = info.get_addresses().next() {
+                        if let Some(address) = info.get_addresses().iter().next() {
                             let device = DeviceInfo {
                                 device_id: info.get_fullname().to_string(),
                                 device_name: info.get_properties()
                                     .get("name")
-                                    .and_then(|v| v.first())
-                                    .map(|s| String::from_utf8_lossy(s).to_string())
+                                    .map(|v| String::from_utf8_lossy(v.val()).to_string())
                                     .unwrap_or_else(|| "Unknown Device".to_string()),
                                 device_type: match info.get_properties()
                                     .get("type")
-                                    .and_then(|v| v.first())
-                                    .map(|v| String::from_utf8_lossy(v).to_string()) {
+                                    .map(|v| String::from_utf8_lossy(v.val()).to_string()) {
                                     Some(t) if t == "desktop" => DeviceType::Desktop,
                                     _ => DeviceType::Mobile,
                                 },
-                                ip_address: *address,
+                                ip_address: std::net::IpAddr::V4(*address),
                                 sync_port: info.get_port(),
                                 public_key: info.get_properties()
                                     .get("pubkey")
-                                    .and_then(|v| v.first())
-                                    .map(|v| v.to_vec())
+                                    .map(|v| v.val().to_vec())
                                     .unwrap_or_default(),
                                 os_version: info.get_properties()
                                     .get("os")
-                                    .and_then(|v| v.first())
-                                    .map(|s| String::from_utf8_lossy(s).to_string())
+                                    .map(|v| String::from_utf8_lossy(v.val()).to_string())
                                     .unwrap_or_else(|| "Unknown".to_string()),
                                 last_seen: chrono::Utc::now(),
                                 is_active: true,
@@ -372,11 +377,11 @@ impl SyncProtocol {
         }
 
         // Perform ECDH key exchange using X25519
-        use x25519_dalek::{PublicKey, StaticSecret};
+        use x25519_dalek::{PublicKey, EphemeralSecret};
         use rand::rngs::OsRng;
 
         // Generate ephemeral key pair for this session
-        let ephemeral_secret = StaticSecret::random_from_rng(OsRng);
+        let ephemeral_secret = EphemeralSecret::random_from_rng(OsRng);
         let ephemeral_public = PublicKey::from(&ephemeral_secret);
 
         // Attempt to parse the mobile device's public key from pairing request
@@ -524,7 +529,7 @@ impl SyncProtocol {
     /// Constant-time comparison to prevent timing attacks
     /// Returns true only if both slices have equal length AND equal contents
     fn constant_time_compare(a: &[u8], b: &[u8]) -> bool {
-        use subtle::ConstantTimeComparison;
+        use subtle::ConstantTimeEq;
 
         // First check lengths in constant time (if available)
         // If lengths differ, the comparison should fail without leaking info

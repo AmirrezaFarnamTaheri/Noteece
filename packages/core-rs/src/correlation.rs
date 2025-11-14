@@ -258,7 +258,7 @@ impl CorrelationEngine {
             Some(Correlation {
                 correlation_type: CorrelationType::FinanceTasks,
                 strength: budget_pressure,
-                entities: spending_tasks.iter().map(|t| t.id.clone()).collect(),
+                entities: spending_tasks.iter().map(|t| t.id.to_string()).collect(),
                 pattern_description: format!(
                     "Budget at {}% with {} pending purchase tasks",
                     (budget_pressure * 100.0).round(),
@@ -509,7 +509,7 @@ impl CorrelationEngine {
         since: i64,
     ) -> Result<Vec<TimeEntry>, CorrelationError> {
         let mut stmt = conn.prepare(
-            "SELECT id, space_id, task_id, project_id, note_id, description, started_at, ended_at, duration_seconds, created_at
+            "SELECT id, space_id, task_id, project_id, note_id, description, started_at, ended_at, duration_seconds, is_running
              FROM time_entry
              WHERE space_id = ?1 AND started_at >= ?2
              ORDER BY started_at DESC",
@@ -517,17 +517,23 @@ impl CorrelationEngine {
 
         let entries = stmt
             .query_map(params![space_id.to_string(), since], |row| {
+                let id_str: String = row.get(0)?;
+                let space_id_str: String = row.get(1)?;
+                let task_id_str: Option<String> = row.get(2)?;
+                let project_id_str: Option<String> = row.get(3)?;
+                let note_id_str: Option<String> = row.get(4)?;
+
                 Ok(TimeEntry {
-                    id: row.get(0)?,
-                    space_id: row.get(1)?,
-                    task_id: row.get(2)?,
-                    project_id: row.get(3)?,
-                    note_id: row.get(4)?,
+                    id: Ulid::from_string(&id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
+                    space_id: Ulid::from_string(&space_id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(1, rusqlite::types::Type::Text, Box::new(e)))?,
+                    task_id: task_id_str.and_then(|s| Ulid::from_string(&s).ok()),
+                    project_id: project_id_str.and_then(|s| Ulid::from_string(&s).ok()),
+                    note_id: note_id_str.and_then(|s| Ulid::from_string(&s).ok()),
                     description: row.get(5)?,
                     started_at: row.get(6)?,
                     ended_at: row.get(7)?,
                     duration_seconds: row.get(8)?,
-                    created_at: row.get(9)?,
+                    is_running: row.get(9)?,
                 })
             })?
             .collect::<Result<Vec<_>, _>>()?;
