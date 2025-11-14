@@ -286,12 +286,12 @@ mod tests {
         assert!(device.port > 0);
     }
 
-    #[test]
-    fn test_network_validator() {
-        let port_check = NetworkValidator::check_port_open(8765);
+    #[tokio::test]
+    async fn test_network_validator() {
+        let port_check = NetworkValidator::check_port_open(8765).await;
         assert!(port_check.is_ok());
 
-        let invalid_port = NetworkValidator::check_port_open(100);
+        let invalid_port = NetworkValidator::check_port_open(100).await;
         assert!(invalid_port.is_ok());
     }
 }

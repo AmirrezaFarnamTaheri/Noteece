@@ -56,7 +56,7 @@ interface TopPost {
   timestamp: number;
 }
 
-interface SocialAnalyticsProps {
+interface SocialAnalyticsProperties {
   spaceId: string;
 }
 
@@ -67,7 +67,7 @@ const TIME_RANGES = [
   { value: '365', label: 'Last year' },
 ];
 
-export function SocialAnalytics({ spaceId }: SocialAnalyticsProps) {
+export function SocialAnalytics({ spaceId }: SocialAnalyticsProperties) {
   const [timeRange, setTimeRange] = useState('30');
 
   const { data: analytics, isLoading } = useQuery({
@@ -75,10 +75,10 @@ export function SocialAnalytics({ spaceId }: SocialAnalyticsProps) {
     queryFn: async () => {
       return await invoke<AnalyticsOverview>('get_analytics_overview_cmd', {
         spaceId,
-        days: parseInt(timeRange),
+        days: Number.parseInt(timeRange),
       });
     },
-    refetchInterval: 60000, // Refresh every minute
+    refetchInterval: 60_000, // Refresh every minute
   });
 
   if (isLoading) {
@@ -97,10 +97,10 @@ export function SocialAnalytics({ spaceId }: SocialAnalyticsProps) {
     );
   }
 
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
+  const formatNumber = (number_: number) => {
+    if (number_ >= 1_000_000) return `${(number_ / 1_000_000).toFixed(1)}M`;
+    if (number_ >= 1000) return `${(number_ / 1000).toFixed(1)}K`;
+    return number_.toString();
   };
 
   return (
@@ -113,12 +113,7 @@ export function SocialAnalytics({ spaceId }: SocialAnalyticsProps) {
             Insights from your social media activity
           </Text>
         </div>
-        <Select
-          data={TIME_RANGES}
-          value={timeRange}
-          onChange={(value) => setTimeRange(value || '30')}
-          w={180}
-        />
+        <Select data={TIME_RANGES} value={timeRange} onChange={(value) => setTimeRange(value || '30')} w={180} />
       </Group>
 
       {/* Engagement Overview */}
@@ -182,7 +177,9 @@ export function SocialAnalytics({ spaceId }: SocialAnalyticsProps) {
 
       {/* Platform Breakdown */}
       <Card shadow="sm" padding="lg" radius="md" withBorder>
-        <Title order={3} mb="md">Platform Breakdown</Title>
+        <Title order={3} mb="md">
+          Platform Breakdown
+        </Title>
         <Stack gap="md">
           {analytics.platform_stats.map((stat) => {
             const platform = SUPPORTED_PLATFORMS[stat.platform as keyof typeof SUPPORTED_PLATFORMS];
@@ -194,18 +191,15 @@ export function SocialAnalytics({ spaceId }: SocialAnalyticsProps) {
                 <Group justify="space-between" mb="xs">
                   <Group gap="xs">
                     <Text size="lg">{platform?.icon || '📱'}</Text>
-                    <Text size="sm" fw={500}>{platform?.name || stat.platform}</Text>
+                    <Text size="sm" fw={500}>
+                      {platform?.name || stat.platform}
+                    </Text>
                   </Group>
                   <Text size="sm" c="dimmed">
                     {stat.post_count} posts ({percentage.toFixed(1)}%)
                   </Text>
                 </Group>
-                <Progress
-                  value={percentage}
-                  color={platform?.color || 'blue'}
-                  size="sm"
-                  radius="xl"
-                />
+                <Progress value={percentage} color={platform?.color || 'blue'} size="sm" radius="xl" />
                 <Group gap="lg" mt="xs">
                   <Text size="xs" c="dimmed">
                     ❤️ {formatNumber(stat.total_likes)}
@@ -227,7 +221,9 @@ export function SocialAnalytics({ spaceId }: SocialAnalyticsProps) {
         {/* Category Stats */}
         {analytics.category_stats.length > 0 && (
           <Card shadow="sm" padding="lg" radius="md" withBorder>
-            <Title order={3} mb="md">Top Categories</Title>
+            <Title order={3} mb="md">
+              Top Categories
+            </Title>
             <Stack gap="sm">
               {analytics.category_stats.map((stat) => (
                 <Group key={stat.category_name} justify="space-between">
@@ -248,7 +244,9 @@ export function SocialAnalytics({ spaceId }: SocialAnalyticsProps) {
 
         {/* Engagement Rate */}
         <Card shadow="sm" padding="lg" radius="md" withBorder>
-          <Title order={3} mb="md">Engagement Rate</Title>
+          <Title order={3} mb="md">
+            Engagement Rate
+          </Title>
           <Center h={150}>
             <div style={{ textAlign: 'center' }}>
               <Text size={48} fw={700} c="violet">
@@ -268,7 +266,9 @@ export function SocialAnalytics({ spaceId }: SocialAnalyticsProps) {
       {/* Top Posts */}
       {analytics.top_posts.length > 0 && (
         <Card shadow="sm" padding="lg" radius="md" withBorder>
-          <Title order={3} mb="md">🔥 Top Performing Posts</Title>
+          <Title order={3} mb="md">
+            🔥 Top Performing Posts
+          </Title>
           <Stack gap="md">
             {analytics.top_posts.map((post, index) => {
               const platform = SUPPORTED_PLATFORMS[post.platform as keyof typeof SUPPORTED_PLATFORMS];
@@ -306,10 +306,12 @@ export function SocialAnalytics({ spaceId }: SocialAnalyticsProps) {
       {/* Activity Timeline */}
       {analytics.time_series.length > 0 && (
         <Card shadow="sm" padding="lg" radius="md" withBorder>
-          <Title order={3} mb="md">📈 Activity Timeline</Title>
+          <Title order={3} mb="md">
+            📈 Activity Timeline
+          </Title>
           <Stack gap="xs">
             {analytics.time_series.slice(-14).map((point) => {
-              const maxCount = Math.max(...analytics.time_series.map(p => p.count));
+              const maxCount = Math.max(...analytics.time_series.map((p) => p.count));
               const width = (point.count / maxCount) * 100;
 
               return (

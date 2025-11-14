@@ -27,10 +27,12 @@ coreLogger.addListener(async (entry: LogEntry) => {
       const logs = JSON.parse(localStorage.getItem('noteece_error_logs') || '[]');
       logs.push({
         ...entry,
-        error: entry.error ? {
-          message: entry.error.message,
-          stack: entry.error.stack,
-        } : undefined,
+        error: entry.error
+          ? {
+              message: entry.error.message,
+              stack: entry.error.stack,
+            }
+          : undefined,
       });
 
       // Keep only last 100 error logs
@@ -39,12 +41,12 @@ coreLogger.addListener(async (entry: LogEntry) => {
       }
 
       localStorage.setItem('noteece_error_logs', JSON.stringify(logs));
-    } catch (err) {
-      console.error('Failed to persist error log:', err);
+    } catch (error) {
+      console.error('Failed to persist error log:', error);
     }
   }
 });
 
 export * from '@noteece/core-rs/src/logger';
-export { coreLogger as logger };
-export default coreLogger;
+
+export { logger, logger as default } from '@noteece/core-rs/src/logger';

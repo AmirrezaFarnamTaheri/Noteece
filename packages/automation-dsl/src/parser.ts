@@ -137,11 +137,12 @@ export class AutomationParser {
         return { type: 'TaskCompleted' };
       case 'TagAdded':
         return { type: 'TagAdded' };
-      case 'Schedule':
+      case 'Schedule': {
         this.consume('(', 'Expected (');
         const cronStr = this.advance().value.replace(/['"]/g, '');
         this.consume(')', 'Expected )');
         return { type: 'Schedule', cron: cronStr };
+      }
       case 'Manual':
         return { type: 'Manual' };
       default:

@@ -426,7 +426,7 @@ mod tests {
 
     #[test]
     fn test_add_and_get_account() {
-        let conn = Connection::open_in_memory().unwrap();
+        let mut conn = Connection::open_in_memory().unwrap();
         crate::db::migrate(&mut conn).unwrap();
 
         // Create a test space

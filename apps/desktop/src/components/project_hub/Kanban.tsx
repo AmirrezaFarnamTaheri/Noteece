@@ -99,8 +99,8 @@ const Kanban: React.FC = () => {
     const destinationColumn = destination.droppableId;
 
     const updatedTasks = [...tasks];
-    const [removed] = updatedTasks.splice(source.index as number, 1);
-    updatedTasks.splice(destination.index as number, 0, { ...removed, status: destinationColumn });
+    const [removed] = updatedTasks.splice(source.index, 1);
+    updatedTasks.splice(destination.index, 0, { ...removed, status: destinationColumn });
 
     setTasks(updatedTasks);
   };

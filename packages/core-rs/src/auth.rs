@@ -471,7 +471,7 @@ mod tests {
     #[test]
     fn test_session_expiration() {
         let (conn, _dir) = setup_auth_db();
-        let auth = AuthService::new(conn);
+        let auth = AuthService::new(conn.clone());
 
         auth.create_user("testuser", "test@example.com", "password123")
             .unwrap();
