@@ -1,4 +1,40 @@
 {
-  "name": "automation-dsl",
-  "version": "0.0.1"
+  "name": "@noteece/automation-dsl",
+  "version": "1.0.0",
+  "description": "Domain-Specific Language for Noteece automation and workflows",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "lint": "eslint src --ext .ts"
+  },
+  "keywords": [
+    "automation",
+    "dsl",
+    "workflow",
+    "noteece"
+  ],
+  "author": "Noteece Team",
+  "license": "GPL-3.0",
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "chevrotain": "^11.0.3"
+  }
 }

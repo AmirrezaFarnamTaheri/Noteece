@@ -7,7 +7,7 @@
 import { Stack, Group, Card, Text, Title, Select, SimpleGrid, Badge, Progress, Center, Loader } from '@mantine/core';
 import { IconTrendingUp, IconUsers, IconHeart, IconMessageCircle, IconEye } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import { useState } from 'react';
 import { SUPPORTED_PLATFORMS } from '@noteece/types';
 

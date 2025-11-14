@@ -19,7 +19,7 @@ import {
   Stack,
 } from '@mantine/core';
 import { IconDots, IconTrash, IconSettings, IconExternalLink } from '@tabler/icons-react';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import type { SocialAccount } from '@noteece/types';
 import { SUPPORTED_PLATFORMS } from '@noteece/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';

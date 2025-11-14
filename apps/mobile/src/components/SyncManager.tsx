@@ -209,7 +209,7 @@ const SyncManager: React.FC = () => {
   };
 
   const retryDiscovery = () => {
-    discoveryDevices();
+    discoverDevices();
   };
 
   return (

@@ -7,7 +7,7 @@
 import { Card, Group, Text, Badge, Stack, Button, Progress, Title } from '@mantine/core';
 import { IconRefresh, IconClock, IconCheck, IconAlertCircle } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 
 interface SyncStats {
   total_accounts: number;

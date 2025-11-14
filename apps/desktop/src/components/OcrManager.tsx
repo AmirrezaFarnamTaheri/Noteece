@@ -19,8 +19,7 @@ import {
   FileButton,
 } from '@mantine/core';
 import { invoke } from '@tauri-apps/api/core';
-import { open } from '@tauri-apps/plugin-dialog';
-import { IconUpload, IconSearch, IconCheck, IconX, IconClock, IconFile, IconTrash } from '@tabler/icons-react';
+import { IconUpload, IconSearch, IconCheck, IconX, IconClock, IconFile } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 
 interface OcrResult {
