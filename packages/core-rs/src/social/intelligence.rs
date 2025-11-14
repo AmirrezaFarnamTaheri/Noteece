@@ -266,7 +266,7 @@ fn extract_topics(content: &str) -> Vec<String> {
     for (topic, keywords) in topic_keywords.iter() {
         let matches = keywords
             .iter()
-            .filter(|keyword| content_lower.contains(keyword))
+            .filter(|keyword| content_lower.contains(*keyword))
             .count();
 
         if matches >= MIN_KEYWORD_MATCHES {
