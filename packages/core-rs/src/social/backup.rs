@@ -145,7 +145,7 @@ impl BackupService {
     pub fn restore_backup(
         &self,
         backup_id: &str,
-        conn: &Connection,
+        conn: &mut Connection,
         dek: &[u8],
     ) -> Result<(), BackupError> {
         let backup_path = self.backup_dir.join(format!("{}.json.enc", backup_id));

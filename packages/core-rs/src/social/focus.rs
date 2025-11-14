@@ -164,7 +164,7 @@ pub fn get_focus_modes(conn: &Connection, space_id: &str) -> Result<Vec<FocusMod
 
 /// Activate a focus mode (deactivates all others)
 pub fn activate_focus_mode(
-    conn: &Connection,
+    conn: &mut Connection,
     focus_mode_id: &str,
     space_id: &str,
 ) -> Result<(), SocialError> {

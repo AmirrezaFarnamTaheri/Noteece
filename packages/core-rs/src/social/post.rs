@@ -36,16 +36,17 @@ pub struct Engagement {
 /// This function handles batch insertion of posts with deduplication.
 /// Posts with the same (account_id, platform_post_id) are skipped.
 pub fn store_social_posts(
-    conn: &Connection,
+    conn: &mut Connection,
     account_id: &str,
     posts: Vec<SocialPost>,
 ) -> Result<usize, SocialError> {
     const MAX_MEDIA_JSON_SIZE: usize = 100_000; // 100KB limit
     const MAX_RAW_JSON_SIZE: usize = 500_000; // 500KB limit
 
+    let total_posts = posts.len();
     log::debug!(
         "[Social::Post] Storing {} posts for account {}",
-        posts.len(),
+        total_posts,
         account_id
     );
 
@@ -207,7 +208,7 @@ pub fn store_social_posts(
     log::info!(
         "[Social::Post] Successfully stored {} out of {} posts for account {}",
         stored,
-        posts.len(),
+        total_posts,
         account_id
     );
 
