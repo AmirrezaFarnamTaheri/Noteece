@@ -6,7 +6,7 @@ import { useStore } from '../store';
 import { useNotes, useFormTemplates } from '../hooks/useQueries';
 import LexicalEditor from './LexicalEditor';
 import classes from './NoteEditor.module.css';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 const NoteEditor: React.FC = () => {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);

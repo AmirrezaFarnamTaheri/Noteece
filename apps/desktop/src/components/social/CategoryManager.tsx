@@ -68,7 +68,7 @@ export function CategoryManager({ spaceId }: CategoryManagerProperties) {
     onError: (error) => {
       notifications.show({
         title: 'Error',
-        message: `Failed to create category: ${error}`,
+        message: `Failed to create category: ${String(error)}`,
         color: 'red',
       });
     },
@@ -87,7 +87,7 @@ export function CategoryManager({ spaceId }: CategoryManagerProperties) {
     onError: (error) => {
       notifications.show({
         title: 'Error',
-        message: `Failed to delete category: ${error}`,
+        message: `Failed to delete category: ${String(error)}`,
         color: 'red',
       });
     },

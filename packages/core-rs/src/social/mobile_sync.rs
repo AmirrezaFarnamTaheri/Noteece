@@ -469,14 +469,23 @@ impl SyncProtocol {
 
         // Establish encrypted connection with paired device
         // Verify device is reachable at its IP address and port
-        if let Err(_) = std::net::TcpStream::connect_timeout(
+        match std::net::TcpStream::connect_timeout(
             &std::net::SocketAddr::new(device.ip_address, device.sync_port),
             std::time::Duration::from_secs(5),
         ) {
-            self.sync_state = SyncState::Idle;
-            return Err(SyncProtocolError::ConnectionFailed(
-                "Failed to establish connection".to_string(),
-            ));
+            Ok(stream) => {
+                // Ensure the health-check connection does not linger
+                let _ = stream.set_nodelay(true);
+                // Explicitly drop to close the socket immediately
+                drop(stream);
+            }
+            Err(e) => {
+                self.sync_state = SyncState::Idle;
+                return Err(SyncProtocolError::ConnectionFailed(format!(
+                    "Failed to establish connection: {}",
+                    e
+                )));
+            }
         }
 
         // Create sync session with device

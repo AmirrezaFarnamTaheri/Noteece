@@ -91,6 +91,7 @@ export function SocialTimeline({ spaceId }: SocialTimelineProperties) {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Helper function to get start time based on time range (in milliseconds)
+  // eslint-disable-next-line unicorn/consistent-function-scoping
   function getStartTime(timeRange: string): number | null {
     const now = Date.now(); // Already in milliseconds
     switch (timeRange) {

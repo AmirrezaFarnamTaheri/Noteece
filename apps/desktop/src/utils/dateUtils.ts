@@ -1,5 +1,5 @@
 // Date utility functions for safe and consistent date handling
-import logger from './logger';
+import { logger } from './logger';
 
 /**
  * Formats a Unix timestamp (in seconds) to a localized date string

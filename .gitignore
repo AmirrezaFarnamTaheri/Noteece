@@ -4,3 +4,5 @@ target/
 dist/
 build/
 *.log
+coverage/
+.coverage/

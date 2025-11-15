@@ -236,7 +236,6 @@ describe('AutomationRuntimeImpl', () => {
   describe('Integration Tests', () => {
     it('should execute complete automation workflow', async () => {
       const createSpy = jest.spyOn(mockAPI, 'createNote');
-      const tagSpy = jest.spyOn(mockAPI, 'addTag');
       const notifySpy = jest.spyOn(mockAPI, 'sendNotification');
 
       const script = `

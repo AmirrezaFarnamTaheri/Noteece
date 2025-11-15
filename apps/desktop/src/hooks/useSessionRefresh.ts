@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { authService } from '../services/auth';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 interface SessionWarning {
   show: boolean;

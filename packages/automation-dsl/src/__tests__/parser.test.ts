@@ -3,7 +3,7 @@
  */
 
 import { AutomationParser } from '../parser';
-import { ParseError } from '../types';
+import { ParseError, LiteralNode, FunctionCallNode, TriggerEvent } from '../types';
 
 describe('AutomationParser', () => {
   let parser: AutomationParser;
@@ -51,7 +51,8 @@ describe('AutomationParser', () => {
       `;
       const result = parser.parse(script);
       expect(result.triggers[0].event.type).toBe('Schedule');
-      expect((result.triggers[0].event as any).cron).toBe('0 9 * * *');
+      const scheduleEvent = result.triggers[0].event as TriggerEvent & { type: 'Schedule' };
+      expect(scheduleEvent.cron).toBe('0 9 * * *');
     });
   });
 
@@ -92,7 +93,7 @@ describe('AutomationParser', () => {
       const result = parser.parse(script);
       const expr = result.triggers[0].actions[0].parameters.message;
       expect(expr.type).toBe('Literal');
-      expect((expr as any).value).toBe('test');
+      expect((expr as LiteralNode).value).toBe('test');
     });
 
     it('should parse arithmetic expressions', () => {
@@ -117,7 +118,7 @@ describe('AutomationParser', () => {
       const result = parser.parse(script);
       const expr = result.triggers[0].actions[0].parameters.message;
       expect(expr.type).toBe('FunctionCall');
-      expect((expr as any).name).toBe('concat');
+      expect((expr as FunctionCallNode).name).toBe('concat');
     });
   });
 

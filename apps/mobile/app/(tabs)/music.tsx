@@ -16,8 +16,6 @@ import {
   MUSIC_LIBRARY,
   Track,
   getTracksByGenre,
-  getAllGenres,
-  getLibraryStats,
 } from "@/lib/music-service";
 import { isValidMusicUrl } from "@/lib/music-security";
 
@@ -40,7 +38,6 @@ export default function MusicLabScreen() {
   const [filter, setFilter] = useState<GenreFilter>("all");
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [showAllGenres, setShowAllGenres] = useState(false);
 
   // Initialize audio mode
   useEffect(() => {
@@ -64,7 +61,7 @@ export default function MusicLabScreen() {
         sound.unloadAsync();
       }
     };
-  }, []);
+  }, [sound]);
 
   // Update playback status
   useEffect(() => {
@@ -85,7 +82,8 @@ export default function MusicLabScreen() {
 
     const interval = setInterval(updateStatus, 1000);
     return () => clearInterval(interval);
-  }, [sound, currentTrack]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sound]);
 
   const playTrack = async (track: Track) => {
     try {

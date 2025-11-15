@@ -6,7 +6,7 @@ import { getAllProjectsInSpace } from '../../services/api';
 import { useActiveSpace } from '../../hooks/useActiveSpace';
 import { formatTimestamp } from '../../utils/dateUtils';
 import classes from '../Dashboard.module.css';
-import logger from '../../utils/logger';
+import { logger } from '../../utils/logger';
 
 const getStatusColor = (status: string) => {
   switch (status) {

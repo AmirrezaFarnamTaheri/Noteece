@@ -9,8 +9,6 @@
  */
 
 const {
-  withXcodeProject,
-  withInfoPlist,
   withEntitlementsPlist,
   withAndroidManifest,
   withDangerousMod,

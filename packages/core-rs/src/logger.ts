@@ -185,9 +185,14 @@ class Logger {
 
   private logToConsole(entry: LogEntry): void {
     const levelStr = LogLevel[entry.level];
-    const contextStr = entry.context && Object.keys(entry.context).length > 0
-      ? JSON.stringify(entry.context)
-      : '';
+    let contextStr = '';
+    if (entry.context && Object.keys(entry.context).length > 0) {
+      try {
+        contextStr = JSON.stringify(entry.context);
+      } catch {
+        contextStr = '[unserializable context]';
+      }
+    }
 
     const parts = [
       `[${entry.timestamp}]`,

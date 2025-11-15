@@ -16,7 +16,7 @@ import {
   Paper,
 } from '@mantine/core';
 import { IconPlayerPlay, IconPlayerPause, IconRefresh, IconZoomIn, IconZoomOut } from '@tabler/icons-react';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 interface GraphNode {
   id: string;
@@ -77,6 +77,7 @@ const TemporalGraph: React.FC<{ spaceId: string }> = ({ spaceId }) => {
 
   useEffect(() => {
     void loadGraph();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaceId]);
 
   useEffect(() => {

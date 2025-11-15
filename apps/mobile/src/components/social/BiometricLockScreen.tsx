@@ -43,6 +43,7 @@ export function BiometricLockScreen({
 
     // Start pulse animation
     startPulseAnimation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadBiometricTypes = async () => {

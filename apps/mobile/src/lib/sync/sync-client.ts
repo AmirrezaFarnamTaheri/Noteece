@@ -38,7 +38,6 @@ import * as Crypto from "expo-crypto";
 import { dbQuery, dbExecute } from "@/lib/database";
 import { chacha20poly1305 } from "@noble/ciphers/chacha";
 import { p256 } from "@noble/curves/p256";
-import { hkdf } from "@noble/hashes/hkdf";
 import { sha256 } from "@noble/hashes/sha256";
 import { hmac } from "@noble/hashes/hmac";
 
@@ -146,7 +145,7 @@ export class SyncClient {
     try {
       // STEP 1: Generate ephemeral ECDH key pair (P-256)
       const privateKey = p256.utils.randomPrivateKey();
-      const publicKey = p256.getPublicKey(privateKey);
+      const _publicKey = p256.getPublicKey(privateKey);
 
       // STEP 2: Exchange public keys via WebSocket
       // IMPLEMENTATION NOTE: WebSocket handshake integration point

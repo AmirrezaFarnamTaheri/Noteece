@@ -33,6 +33,7 @@ interface TimelinePostProperties {
 export function TimelinePost({ post }: TimelinePostProperties) {
   const platform = SUPPORTED_PLATFORMS[post.platform as keyof typeof SUPPORTED_PLATFORMS];
 
+  // eslint-disable-next-line unicorn/consistent-function-scoping
   const formatTimestamp = (timestamp: number) => {
     const date = new Date(timestamp * 1000);
     const now = Date.now();
@@ -49,6 +50,7 @@ export function TimelinePost({ post }: TimelinePostProperties) {
     return date.toLocaleDateString();
   };
 
+  // eslint-disable-next-line unicorn/consistent-function-scoping
   const formatNumber = (number_?: number) => {
     if (!number_) return '0';
     if (number_ >= 1_000_000) return `${(number_ / 1_000_000).toFixed(1)}M`;

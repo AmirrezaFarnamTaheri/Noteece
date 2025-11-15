@@ -1,7 +1,7 @@
 // Notification utilities for user feedback
 import { notifications } from '@mantine/notifications';
 import { IconCheck, IconX, IconAlertTriangle, IconInfoCircle } from '@tabler/icons-react';
-import logger from './logger';
+import { logger } from './logger';
 
 export interface NotificationOptions {
   title?: string;

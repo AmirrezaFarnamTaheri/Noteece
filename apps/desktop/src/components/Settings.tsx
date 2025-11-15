@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import { Mode } from './types';
 import { useStore } from '../store';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 const availableModes: Mode[] = [
   { id: 'meeting-notes', name: 'Meeting Notes', category: 'productivity' },

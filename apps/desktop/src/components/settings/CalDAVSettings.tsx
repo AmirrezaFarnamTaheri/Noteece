@@ -22,7 +22,7 @@ import {
   Table,
 } from '@mantine/core';
 import { IconPlus, IconRefresh, IconTrash, IconCheck, IconAlertCircle, IconClock } from '@tabler/icons-react';
-import logger from '../../utils/logger';
+import { logger } from '../../utils/logger';
 
 interface CalDavAccount {
   id: string;
@@ -57,6 +57,7 @@ const CalDAVSettings: React.FC = () => {
   const syncingMapReference = React.useRef<Set<string>>(new Set());
 
   // Safe number parser to prevent NaN in UI
+  // eslint-disable-next-line unicorn/consistent-function-scoping
   const safeNumber = (v: unknown): number => {
     const n = typeof v === 'number' ? v : Number(v);
     return Number.isFinite(n) && n >= 0 ? n : 0;

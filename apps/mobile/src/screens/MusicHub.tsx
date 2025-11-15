@@ -13,16 +13,11 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
-  ScrollView,
   RefreshControl,
-  TextInput,
-  Dimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import type { Track, Playlist, MusicStats } from "../types/music";
-
-const { width, height } = Dimensions.get("window");
 
 // Database helper functions for loading music data
 async function loadTracksFromDatabase(): Promise<Track[]> {
@@ -57,10 +52,10 @@ export function MusicHub() {
   );
   const [tracks, setTracks] = useState<Track[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [stats, setStats] = useState<MusicStats | null>(null);
+  const [_stats, setStats] = useState<MusicStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [_searchQuery, setSearchQuery] = useState("");
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 

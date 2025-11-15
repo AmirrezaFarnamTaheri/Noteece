@@ -4,7 +4,7 @@
  */
 
 import { invoke } from '@tauri-apps/api/tauri';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 export interface Session {
   id: string;
