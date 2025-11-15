@@ -50,7 +50,7 @@ export function AccountCard({ account }: AccountCardProperties) {
     onError: (error) => {
       notifications.show({
         title: 'Error',
-        message: `Failed to update account: ${error}`,
+        message: `Failed to update account: ${String(error)}`,
         color: 'red',
       });
     },
@@ -69,7 +69,7 @@ export function AccountCard({ account }: AccountCardProperties) {
     onError: (error) => {
       notifications.show({
         title: 'Error',
-        message: `Failed to delete account: ${error}`,
+        message: `Failed to delete account: ${String(error)}`,
         color: 'red',
       });
     },
@@ -91,7 +91,7 @@ export function AccountCard({ account }: AccountCardProperties) {
     onError: (error) => {
       notifications.show({
         title: 'Error',
-        message: `Failed to open WebView: ${error}`,
+        message: `Failed to open WebView: ${String(error)}`,
         color: 'red',
       });
     },

@@ -358,6 +358,7 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  // eslint-disable-next-line unicorn/consistent-function-scoping
   const getRelativeTime = (timestamp: number | null): string => {
     if (!timestamp || timestamp === 0) return 'Never';
     const diff = Date.now() - timestamp * 1000; // Convert from seconds to milliseconds

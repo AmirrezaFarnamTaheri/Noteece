@@ -47,6 +47,7 @@ export function SyncStatusPanel({ spaceId }: SyncStatusPanelProperties) {
     refetchInterval: 30_000,
   });
 
+  // eslint-disable-next-line unicorn/consistent-function-scoping
   const formatLastSync = (timestamp: number | null) => {
     if (!timestamp) return 'Never';
 

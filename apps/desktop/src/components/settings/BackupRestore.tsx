@@ -153,6 +153,7 @@ const BackupRestore: React.FC<BackupRestoreProperties> = ({ onBackupComplete, on
     }
   };
 
+  // eslint-disable-next-line unicorn/consistent-function-scoping
   const formatDateLocal = (dateString: string) => {
     try {
       return new Date(dateString).toLocaleString();
@@ -161,6 +162,7 @@ const BackupRestore: React.FC<BackupRestoreProperties> = ({ onBackupComplete, on
     }
   };
 
+  // eslint-disable-next-line unicorn/consistent-function-scoping
   const formatBytesLocal = (bytes: number) => {
     if (!Number.isFinite(bytes) || bytes <= 0) return '0 Bytes';
     const k = 1024;
