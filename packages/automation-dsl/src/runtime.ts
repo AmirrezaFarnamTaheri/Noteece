@@ -111,6 +111,9 @@ export class AutomationRuntimeImpl implements AutomationRuntime {
         if (!isNumber(left) || !isNumber(right)) {
           throw new RuntimeError(`Operator '${operator}' requires numeric operands`);
         }
+        if ((operator === '/' || operator === '%') && right === 0) {
+          throw new RuntimeError('Division by zero');
+        }
         switch (operator) {
           case '+': return left + right;
           case '-': return left - right;

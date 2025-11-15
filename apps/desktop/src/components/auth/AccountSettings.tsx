@@ -95,7 +95,7 @@ const AccountSettings: React.FC<AccountSettingsProperties> = ({ onLogout }) => {
     }
   };
 
-  const formatDate = (timestamp: number | undefined | null) => {
+  export const formatDate = (timestamp: number | undefined | null) => {
     if (!timestamp) return 'Never';
     try {
       return new Date(timestamp * 1000).toLocaleString();

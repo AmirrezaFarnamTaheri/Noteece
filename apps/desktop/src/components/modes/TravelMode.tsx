@@ -18,7 +18,7 @@ import {
 } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
 import { IconPlus, IconPlane, IconMapPin, IconCalendar } from '@tabler/icons-react';
-import logger from '../../utils/logger';
+import { logger } from '../../utils/logger';
 
 interface Trip {
   id: string;

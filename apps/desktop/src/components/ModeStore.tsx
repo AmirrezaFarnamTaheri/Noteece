@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import { Card, Switch, Group, Text } from '@mantine/core';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 interface Mode {
   id: string;

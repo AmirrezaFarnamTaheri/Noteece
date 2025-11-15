@@ -18,7 +18,7 @@ import {
   Loader,
 } from '@mantine/core';
 import { IconPlus, IconClock, IconUsers, IconChefHat } from '@tabler/icons-react';
-import logger from '../../utils/logger';
+import { logger } from '../../utils/logger';
 
 interface Recipe {
   id: string;

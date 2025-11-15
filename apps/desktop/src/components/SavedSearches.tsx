@@ -3,7 +3,7 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { Card, Button, Modal, TextInput, Select, List, ThemeIcon, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconSearch } from '@tabler/icons-react';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 interface SavedSearch {
   id: string;

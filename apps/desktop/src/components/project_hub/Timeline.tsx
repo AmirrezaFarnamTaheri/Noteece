@@ -6,7 +6,7 @@ import moment from 'moment';
 import { useOutletContext } from 'react-router-dom';
 import { Task, ProjectMilestone } from '@noteece/types';
 import { getProjectMilestones } from '@/services/api';
-import logger from '../../utils/logger';
+import { logger } from '../../utils/logger';
 
 interface TimelineContext {
   tasks: Task[];

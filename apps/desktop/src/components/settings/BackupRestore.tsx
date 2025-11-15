@@ -153,7 +153,7 @@ const BackupRestore: React.FC<BackupRestoreProperties> = ({ onBackupComplete, on
     }
   };
 
-  const formatDate = (dateString: string) => {
+  export const formatDate = (dateString: string) => {
     try {
       return new Date(dateString).toLocaleString();
     } catch {
@@ -161,7 +161,7 @@ const BackupRestore: React.FC<BackupRestoreProperties> = ({ onBackupComplete, on
     }
   };
 
-  const formatBytes = (bytes: number) => {
+  export const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];

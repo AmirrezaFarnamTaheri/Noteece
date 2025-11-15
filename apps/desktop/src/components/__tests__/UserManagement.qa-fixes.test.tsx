@@ -151,8 +151,8 @@ describe('UserManagement QA Fixes (Session 5)', () => {
 
       // Save
       const saveButton = screen.getByRole('button', { name: /save/i });
-      mockInvoke.mockResolvedValueOnce(undefined); // update_user_role_cmd
-      mockInvoke.mockResolvedValueOnce(undefined); // revoke_permission_cmd
+      mockInvoke.mockResolvedValueOnce(); // update_user_role_cmd
+      mockInvoke.mockResolvedValueOnce(); // revoke_permission_cmd
       fireEvent.click(saveButton);
 
       await waitFor(() => {
@@ -188,7 +188,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
       });
 
       const saveButton = screen.getByRole('button', { name: /save/i });
-      mockInvoke.mockResolvedValue(undefined);
+      mockInvoke.mockResolvedValue();
       fireEvent.click(saveButton);
 
       await waitFor(() => {
@@ -218,7 +218,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
       }
 
       const saveButton = screen.getByRole('button', { name: /save/i });
-      mockInvoke.mockResolvedValue(undefined);
+      mockInvoke.mockResolvedValue();
       fireEvent.click(saveButton);
 
       await waitFor(() => {

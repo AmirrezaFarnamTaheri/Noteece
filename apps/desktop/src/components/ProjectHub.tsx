@@ -6,7 +6,7 @@ import { Tabs, List, ThemeIcon } from '@mantine/core';
 import { IconCircleDashed } from '@tabler/icons-react';
 import { useStore } from '../store';
 import { getAllProjectsInSpace } from '@/services/api';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 const ProjectHub: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);

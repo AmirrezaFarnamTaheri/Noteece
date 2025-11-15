@@ -24,7 +24,7 @@ import { ThemeToggle } from './ThemeToggle';
 import { getOrCreateDailyNote } from '@/services/api';
 import classes from './MainLayout.module.css';
 import { useStore } from '../store';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 const navLinkGroups = [
   {

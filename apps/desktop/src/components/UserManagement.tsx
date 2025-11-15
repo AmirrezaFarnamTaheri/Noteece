@@ -41,7 +41,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notifications } from '@mantine/notifications';
 import { useStore } from '../store';
 import { authService } from '../services/auth';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 interface SpaceUser {
   user_id: string;

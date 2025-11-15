@@ -5,7 +5,7 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { Task } from '@noteece/types';
 import { useActiveSpace } from '../../hooks/useActiveSpace';
 import classes from '../Dashboard.module.css';
-import logger from '../../utils/logger';
+import { logger } from '../../utils/logger';
 
 interface PriorityStats {
   priority: number;

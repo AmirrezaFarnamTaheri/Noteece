@@ -89,7 +89,7 @@ export function CalendarWidget() {
           }
         },
         getDayProps: getDayProperties as any,
-        size: "sm",
+        size: 'sm',
       })}
 
       <Stack gap="sm" mt="md">

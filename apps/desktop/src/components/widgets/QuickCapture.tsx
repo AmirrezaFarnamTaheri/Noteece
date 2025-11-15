@@ -5,7 +5,7 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { useActiveSpace } from '../../hooks/useActiveSpace';
 import { showSuccess, showError } from '../../utils/notifications';
 import classes from '../Dashboard.module.css';
-import logger from '../../utils/logger';
+import { logger } from '../../utils/logger';
 
 export const QuickCapture: React.FC = () => {
   const [note, setNote] = useState('');

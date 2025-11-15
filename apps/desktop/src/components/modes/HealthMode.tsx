@@ -20,7 +20,7 @@ import {
 import { DateTimePicker } from '@mantine/dates';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { IconPlus, IconTarget, IconTrendingUp, IconActivity } from '@tabler/icons-react';
-import logger from '../../utils/logger';
+import { logger } from '../../utils/logger';
 
 interface HealthMetric {
   id: string;

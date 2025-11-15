@@ -6,7 +6,7 @@ import { Card, Grid, Timeline, Text, Badge, Table, Group, Alert, Loader, Stack }
 import { IconInfoCircle, IconCheck, IconX, IconClock, IconPlayerPlay } from '@tabler/icons-react';
 import { formatTimestamp } from '../../utils/dateUtils';
 import { getProjectTimeStats } from '../../services/api';
-import logger from '../../utils/logger';
+import { logger } from '../../utils/logger';
 
 interface OverviewContext {
   projectId: string;

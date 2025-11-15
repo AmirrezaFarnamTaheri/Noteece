@@ -21,7 +21,7 @@ import { $convertFromMarkdownString, $convertToMarkdownString, TRANSFORMERS } fr
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { Paper } from '@mantine/core';
 import classes from './LexicalEditor.module.css';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 interface LexicalEditorProperties {
   initialContent?: string;

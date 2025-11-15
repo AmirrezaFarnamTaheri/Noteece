@@ -149,10 +149,13 @@ logger.addListener((entry: LogEntry) => {
       timestamp: entry.timestamp,
       context: entry.context ? safeStringify(entry.context) : undefined,
       error: entry.error
-        ? {
-            message: entry.error.message,
-            stack: entry.error.stack?.slice(0, 5000),
-          }
+        ? entry.error instanceof Error
+          ? {
+              message: entry.error.message,
+              stack: entry.error.stack?.slice(0, 5000),
+              name: entry.error.name,
+            }
+          : safeStringify(entry.error)
         : undefined,
     };
 
@@ -160,8 +163,8 @@ logger.addListener((entry: LogEntry) => {
     while (logs.length > 100) logs.shift();
 
     localStorage.setItem('noteece_error_logs', JSON.stringify(logs));
-  } catch (e) {
-    console.error('Failed to persist error log:', e);
+  } catch (error) {
+    console.error('Failed to persist error log:', error);
   }
 });
 

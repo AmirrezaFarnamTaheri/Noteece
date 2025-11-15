@@ -16,7 +16,7 @@ import {
   Paper,
 } from '@mantine/core';
 import { IconPlayerPlay, IconPlayerPause, IconRefresh, IconZoomIn, IconZoomOut } from '@tabler/icons-react';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 interface GraphNode {
   id: string;
