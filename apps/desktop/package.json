@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "dev:tauri": "tauri dev",
     "build:tauri": "tauri build",
-    "test": "jest --preset ts-jest"
+    "test": "jest --preset ts-jest",
+    "test:coverage": "jest --preset ts-jest --coverage"
   },
   "dependencies": {
     "@lexical/clipboard": "^0.38.2",

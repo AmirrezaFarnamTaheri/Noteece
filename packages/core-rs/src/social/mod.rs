@@ -21,11 +21,11 @@ pub use account::{
     get_social_accounts, update_last_sync, update_social_account, SocialAccount, SocialError,
 };
 
-pub use backup::{BackupService, BackupMetadata, Backup, BackupError};
+pub use backup::{Backup, BackupError, BackupMetadata, BackupService};
 
 pub use mobile_sync::{
-    SyncProtocol, DeviceInfo, DeviceType, SyncState, SyncRequest, SyncResponse, SyncDelta,
-    SyncCategory, PairingRequest, PairingResponse, SyncProtocolError, SyncBatchProcessor,
+    DeviceInfo, DeviceType, PairingRequest, PairingResponse, SyncBatchProcessor, SyncCategory,
+    SyncDelta, SyncProtocol, SyncProtocolError, SyncRequest, SyncResponse, SyncState,
 };
 
 pub use post::{

@@ -524,8 +524,20 @@ impl CorrelationEngine {
                 let note_id_str: Option<String> = row.get(4)?;
 
                 Ok(TimeEntry {
-                    id: Ulid::from_string(&id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
-                    space_id: Ulid::from_string(&space_id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(1, rusqlite::types::Type::Text, Box::new(e)))?,
+                    id: Ulid::from_string(&id_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    space_id: Ulid::from_string(&space_id_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            1,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
                     task_id: task_id_str.and_then(|s| Ulid::from_string(&s).ok()),
                     project_id: project_id_str.and_then(|s| Ulid::from_string(&s).ok()),
                     note_id: note_id_str.and_then(|s| Ulid::from_string(&s).ok()),
@@ -562,8 +574,20 @@ impl CorrelationEngine {
                 let parent_task_id_str: Option<String> = row.get(4)?;
 
                 Ok(Task {
-                    id: Ulid::from_string(&id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
-                    space_id: Ulid::from_string(&space_id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(1, rusqlite::types::Type::Text, Box::new(e)))?,
+                    id: Ulid::from_string(&id_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    space_id: Ulid::from_string(&space_id_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            1,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
                     note_id: note_id_str.and_then(|s| Ulid::from_string(&s).ok()),
                     project_id: project_id_str.and_then(|s| Ulid::from_string(&s).ok()),
                     parent_task_id: parent_task_id_str.and_then(|s| Ulid::from_string(&s).ok()),

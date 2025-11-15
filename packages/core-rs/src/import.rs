@@ -185,7 +185,8 @@ pub fn export_to_zip(
 ) -> Result<(), ImportError> {
     let file = fs::File::create(output_path)?;
     let mut zip = ZipWriter::new(file);
-    let options: FileOptions<()> = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+    let options: FileOptions<()> =
+        FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
 
     // Create dedicated notes directory in the archive
     zip.add_directory("notes/", options)?;

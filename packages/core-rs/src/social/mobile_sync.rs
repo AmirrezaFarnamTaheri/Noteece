@@ -1,12 +1,11 @@
+use chrono::{DateTime, Utc};
 /// Desktop-Mobile Sync Protocol for SocialHub
 /// Enables synchronization of social media data between desktop and mobile devices
 /// Uses encrypted protocol with local network discovery
-
 use serde::{Deserialize, Serialize};
-use std::net::{SocketAddr, IpAddr};
+use std::net::{IpAddr, SocketAddr};
 use std::sync::Arc;
 use thiserror::Error;
-use chrono::{DateTime, Utc};
 
 #[derive(Error, Debug)]
 pub enum SyncProtocolError {
@@ -298,11 +297,12 @@ impl SyncProtocol {
         use std::net::IpAddr;
 
         // Create mDNS service daemon
-        let mdns = ServiceDaemon::new()
-            .map_err(|e| SyncProtocolError::DiscoveryFailed(e.to_string()))?;
+        let mdns =
+            ServiceDaemon::new().map_err(|e| SyncProtocolError::DiscoveryFailed(e.to_string()))?;
 
         // Browse for socialhub sync services
-        let receiver = mdns.browse("_socialhub-sync._tcp.local.")
+        let receiver = mdns
+            .browse("_socialhub-sync._tcp.local.")
             .map_err(|e| SyncProtocolError::DiscoveryFailed(e.to_string()))?;
 
         let mut discovered_devices = Vec::new();
@@ -318,25 +318,35 @@ impl SyncProtocol {
                         if let Some(address) = info.get_addresses().iter().next() {
                             let device = DeviceInfo {
                                 device_id: info.get_fullname().to_string(),
-                                device_name: info.get_properties()
+                                device_name: info
+                                    .get_properties()
                                     .get("name")
-                                    .and_then(|v| v.val().map(|bytes| String::from_utf8_lossy(bytes).to_string()))
+                                    .and_then(|v| {
+                                        v.val()
+                                            .map(|bytes| String::from_utf8_lossy(bytes).to_string())
+                                    })
                                     .unwrap_or_else(|| "Unknown Device".to_string()),
-                                device_type: match info.get_properties()
-                                    .get("type")
-                                    .and_then(|v| v.val().map(|bytes| String::from_utf8_lossy(bytes).to_string())) {
+                                device_type: match info.get_properties().get("type").and_then(|v| {
+                                    v.val()
+                                        .map(|bytes| String::from_utf8_lossy(bytes).to_string())
+                                }) {
                                     Some(t) if t == "desktop" => DeviceType::Desktop,
                                     _ => DeviceType::Mobile,
                                 },
                                 ip_address: std::net::IpAddr::V4(*address),
                                 sync_port: info.get_port(),
-                                public_key: info.get_properties()
+                                public_key: info
+                                    .get_properties()
                                     .get("pubkey")
                                     .and_then(|v| v.val().map(|bytes| bytes.to_vec()))
                                     .unwrap_or_default(),
-                                os_version: info.get_properties()
+                                os_version: info
+                                    .get_properties()
                                     .get("os")
-                                    .and_then(|v| v.val().map(|bytes| String::from_utf8_lossy(bytes).to_string()))
+                                    .and_then(|v| {
+                                        v.val()
+                                            .map(|bytes| String::from_utf8_lossy(bytes).to_string())
+                                    })
                                     .unwrap_or_else(|| "Unknown".to_string()),
                                 last_seen: chrono::Utc::now(),
                                 is_active: true,
@@ -372,13 +382,17 @@ impl SyncProtocol {
         }
 
         // Check for duplicate
-        if self.paired_devices.iter().any(|d| d.device_id == pairing_request.mobile_device.device_id) {
+        if self
+            .paired_devices
+            .iter()
+            .any(|d| d.device_id == pairing_request.mobile_device.device_id)
+        {
             return Err(SyncProtocolError::DuplicateDevice);
         }
 
         // Perform ECDH key exchange using X25519
-        use x25519_dalek::{PublicKey, EphemeralSecret};
         use rand::rngs::OsRng;
+        use x25519_dalek::{EphemeralSecret, PublicKey};
 
         // Generate ephemeral key pair for this session
         let ephemeral_secret = EphemeralSecret::random_from_rng(OsRng);
@@ -392,7 +406,7 @@ impl SyncProtocol {
             // Perform ECDH with mobile device's public key
             let mobile_public = PublicKey::from(
                 <[u8; 32]>::try_from(&pairing_request.mobile_device.public_key[..])
-                    .map_err(|_| SyncProtocolError::KeyExchangeFailed)?
+                    .map_err(|_| SyncProtocolError::KeyExchangeFailed)?,
             );
 
             // Compute shared secret: ephemeral_secret * mobile_public
@@ -426,7 +440,8 @@ impl SyncProtocol {
         categories: Vec<SyncCategory>,
     ) -> Result<(), SyncProtocolError> {
         // Verify device is paired and active
-        let device = self.paired_devices
+        let device = self
+            .paired_devices
             .iter()
             .find(|d| d.device_id == device_id)
             .ok_or(SyncProtocolError::DeviceNotFound)?;
@@ -456,10 +471,12 @@ impl SyncProtocol {
         // Verify device is reachable at its IP address and port
         if let Err(_) = std::net::TcpStream::connect_timeout(
             &std::net::SocketAddr::new(device.ip_address, device.sync_port),
-            std::time::Duration::from_secs(5)
+            std::time::Duration::from_secs(5),
         ) {
             self.sync_state = SyncState::Idle;
-            return Err(SyncProtocolError::ConnectionFailed("Failed to establish connection".to_string()));
+            return Err(SyncProtocolError::ConnectionFailed(
+                "Failed to establish connection".to_string(),
+            ));
         }
 
         // Create sync session with device

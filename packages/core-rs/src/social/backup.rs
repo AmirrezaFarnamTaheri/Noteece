@@ -1,12 +1,11 @@
+use chrono;
 /// Backup and Restore Module for SocialHub
 /// Provides encrypted backup and restore functionality to prevent data loss
-
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
+use std::fs;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
-use chrono;
-use std::fs;
 
 #[derive(Error, Debug)]
 pub enum BackupError {
@@ -93,11 +92,11 @@ impl BackupService {
         description: Option<&str>,
     ) -> Result<String, BackupError> {
         // Get database version
-        let schema_version: i64 = conn.query_row(
-            "SELECT MAX(version) FROM schema_version",
-            [],
-            |row| row.get(0),
-        ).unwrap_or(0);
+        let schema_version: i64 = conn
+            .query_row("SELECT MAX(version) FROM schema_version", [], |row| {
+                row.get(0)
+            })
+            .unwrap_or(0);
 
         // Create timestamp for backup filename
         let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S").to_string();
@@ -136,7 +135,11 @@ impl BackupService {
         // Write to disk
         fs::write(&backup_path, serde_json::to_vec(&backup)?)?;
 
-        log::info!("[backup] Created backup: {} ({} bytes)", backup_id, backup.metadata.size_bytes);
+        log::info!(
+            "[backup] Created backup: {} ({} bytes)",
+            backup_id,
+            backup.metadata.size_bytes
+        );
 
         Ok(backup_id)
     }
@@ -157,8 +160,8 @@ impl BackupService {
 
         // Read backup file
         let backup_bytes = fs::read(&backup_path)?;
-        let backup: Backup = serde_json::from_slice(&backup_bytes)
-            .map_err(|_| BackupError::BackupCorrupted)?;
+        let backup: Backup =
+            serde_json::from_slice(&backup_bytes).map_err(|_| BackupError::BackupCorrupted)?;
 
         // Verify checksum
         let calculated_checksum = self.calculate_checksum(&backup.data);
@@ -177,8 +180,9 @@ impl BackupService {
         let _pre_restore_backup = self.create_backup(conn, dek, Some("pre_restore_backup"))?;
 
         // Perform clear and restore in a single atomic transaction to prevent data loss
-        let tx = conn.transaction()
-            .map_err(|e| BackupError::RestoreFailed(format!("Failed to start transaction: {}", e)))?;
+        let tx = conn.transaction().map_err(|e| {
+            BackupError::RestoreFailed(format!("Failed to start transaction: {}", e))
+        })?;
 
         // Clear current database (inside transaction)
         self.clear_database_tx(&tx)?;
@@ -187,8 +191,9 @@ impl BackupService {
         self.import_database_tx(&tx, &backup_json)?;
 
         // Commit the transaction atomically
-        tx.commit()
-            .map_err(|e| BackupError::RestoreFailed(format!("Failed to commit restore transaction: {}", e)))?;
+        tx.commit().map_err(|e| {
+            BackupError::RestoreFailed(format!("Failed to commit restore transaction: {}", e))
+        })?;
 
         log::info!("[backup] Restored backup: {}", backup_id);
 
@@ -308,34 +313,56 @@ impl BackupService {
     }
 
     /// Import database from JSON format
-    fn import_database(&self, conn: &mut Connection, data: &serde_json::Value) -> Result<(), BackupError> {
-        let tables = data.get("tables").ok_or(BackupError::InvalidBackup("No tables found".to_string()))?;
+    fn import_database(
+        &self,
+        conn: &mut Connection,
+        data: &serde_json::Value,
+    ) -> Result<(), BackupError> {
+        let tables = data
+            .get("tables")
+            .ok_or(BackupError::InvalidBackup("No tables found".to_string()))?;
 
         // Start transaction
-        let tx = conn.transaction()
+        let tx = conn
+            .transaction()
             .map_err(|e| BackupError::RestoreFailed(e.to_string()))?;
 
         // Import each table
         for (table_name, rows) in tables.as_object().unwrap() {
-            let rows = rows.as_array().ok_or(BackupError::InvalidBackup("Invalid rows".to_string()))?;
+            let rows = rows
+                .as_array()
+                .ok_or(BackupError::InvalidBackup("Invalid rows".to_string()))?;
 
             for row in rows {
-                let obj = row.as_object().ok_or(BackupError::InvalidBackup("Invalid row object".to_string()))?;
+                let obj = row
+                    .as_object()
+                    .ok_or(BackupError::InvalidBackup("Invalid row object".to_string()))?;
 
                 let cols: Vec<&String> = obj.keys().collect();
-                let col_names = cols.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(",");
+                let col_names = cols
+                    .iter()
+                    .map(|s| s.as_str())
+                    .collect::<Vec<_>>()
+                    .join(",");
                 let placeholders = (0..cols.len()).map(|_| "?").collect::<Vec<_>>().join(",");
 
-                let query = format!("INSERT INTO {} ({}) VALUES ({})", table_name, col_names, placeholders);
+                let query = format!(
+                    "INSERT INTO {} ({}) VALUES ({})",
+                    table_name, col_names, placeholders
+                );
 
-                let mut stmt = tx.prepare(&query)
+                let mut stmt = tx
+                    .prepare(&query)
                     .map_err(|e| BackupError::RestoreFailed(e.to_string()))?;
 
-                let param_values: Vec<Box<dyn rusqlite::ToSql>> = cols.iter()
+                let param_values: Vec<Box<dyn rusqlite::ToSql>> = cols
+                    .iter()
                     .map(|col| {
                         let val = &obj[col.as_str()];
                         match val {
-                            serde_json::Value::String(s) => Box::new(s.clone()) as Box<dyn rusqlite::ToSql>,
+                            serde_json::Value::String(s) => {
+                                Box::new(s.clone()) as Box<dyn rusqlite::ToSql>
+                            }
                             serde_json::Value::Number(n) => {
                                 if let Some(i) = n.as_i64() {
                                     Box::new(i) as Box<dyn rusqlite::ToSql>
@@ -346,15 +373,16 @@ impl BackupService {
                                 }
                             }
                             serde_json::Value::Bool(b) => Box::new(*b) as Box<dyn rusqlite::ToSql>,
-                            serde_json::Value::Null => Box::new(rusqlite::types::Null) as Box<dyn rusqlite::ToSql>,
+                            serde_json::Value::Null => {
+                                Box::new(rusqlite::types::Null) as Box<dyn rusqlite::ToSql>
+                            }
                             _ => Box::new(val.to_string()) as Box<dyn rusqlite::ToSql>,
                         }
                     })
                     .collect();
 
-                let params: Vec<&dyn rusqlite::ToSql> = param_values.iter()
-                    .map(|p| p.as_ref())
-                    .collect();
+                let params: Vec<&dyn rusqlite::ToSql> =
+                    param_values.iter().map(|p| p.as_ref()).collect();
 
                 stmt.execute(rusqlite::params_from_iter(params.iter()))
                     .map_err(|e| BackupError::RestoreFailed(e.to_string()))?;
@@ -409,27 +437,47 @@ impl BackupService {
 
     /// Import database from JSON format within a transaction
     /// CRITICAL: Uses owned rusqlite::types::Value to avoid dangling references
-    fn import_database_tx(&self, tx: &rusqlite::Transaction, data: &serde_json::Value) -> Result<(), BackupError> {
+    fn import_database_tx(
+        &self,
+        tx: &rusqlite::Transaction,
+        data: &serde_json::Value,
+    ) -> Result<(), BackupError> {
         use rusqlite::types::Value as SqlValue;
 
-        let tables = data.get("tables").ok_or(BackupError::InvalidBackup("No tables found".to_string()))?;
+        let tables = data
+            .get("tables")
+            .ok_or(BackupError::InvalidBackup("No tables found".to_string()))?;
 
-        let tables_obj = tables.as_object().ok_or(BackupError::InvalidBackup("Invalid tables object".to_string()))?;
+        let tables_obj = tables.as_object().ok_or(BackupError::InvalidBackup(
+            "Invalid tables object".to_string(),
+        ))?;
 
         // Import each table
         for (table_name, rows_val) in tables_obj {
-            let rows = rows_val.as_array().ok_or(BackupError::InvalidBackup("Invalid rows".to_string()))?;
+            let rows = rows_val
+                .as_array()
+                .ok_or(BackupError::InvalidBackup("Invalid rows".to_string()))?;
 
             for row in rows {
-                let obj = row.as_object().ok_or(BackupError::InvalidBackup("Invalid row object".to_string()))?;
+                let obj = row
+                    .as_object()
+                    .ok_or(BackupError::InvalidBackup("Invalid row object".to_string()))?;
 
                 let cols: Vec<&String> = obj.keys().collect();
-                let col_names = cols.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(",");
+                let col_names = cols
+                    .iter()
+                    .map(|s| s.as_str())
+                    .collect::<Vec<_>>()
+                    .join(",");
                 let placeholders = (0..cols.len()).map(|_| "?").collect::<Vec<_>>().join(",");
 
-                let query = format!("INSERT INTO {} ({}) VALUES ({})", table_name, col_names, placeholders);
+                let query = format!(
+                    "INSERT INTO {} ({}) VALUES ({})",
+                    table_name, col_names, placeholders
+                );
 
-                let mut stmt = tx.prepare(&query)
+                let mut stmt = tx
+                    .prepare(&query)
                     .map_err(|e| BackupError::RestoreFailed(e.to_string()))?;
 
                 // Build owned SQLite values to ensure lifetimes are valid and no dangling references
@@ -475,7 +523,7 @@ impl BackupService {
     /// Uses cryptographic SHA-256 hash instead of non-cryptographic hasher
     /// to ensure backup integrity can be verified and tampering detected
     fn calculate_checksum(&self, data: &[u8]) -> String {
-        use sha2::{Sha256, Digest};
+        use sha2::{Digest, Sha256};
 
         let mut hasher = Sha256::new();
         hasher.update(data);

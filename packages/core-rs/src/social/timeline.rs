@@ -76,16 +76,15 @@ pub fn get_unified_timeline(
 
     // Apply category filter
     if let Some(categories) = filters.categories {
-        let cats: Vec<String> = categories
-            .into_iter()
-            .filter(|c| !c.is_empty())
-            .collect();
+        let cats: Vec<String> = categories.into_iter().filter(|c| !c.is_empty()).collect();
         if !cats.is_empty() {
             // Constrain to space via EXISTS to avoid cross-space leakage and preserve LEFT JOIN semantics
-            query.push_str(" AND EXISTS ( \
+            query.push_str(
+                " AND EXISTS ( \
                 SELECT 1 FROM social_post_category pc2 \
                 JOIN social_category c2 ON pc2.category_id = c2.id \
-                WHERE pc2.post_id = p.id AND c2.space_id = ?1 AND c2.id IN (");
+                WHERE pc2.post_id = p.id AND c2.space_id = ?1 AND c2.id IN (",
+            );
             for i in 0..cats.len() {
                 if i > 0 {
                     query.push_str(", ");

@@ -1,3 +1,6 @@
+pub mod conflict_resolver;
+pub mod ecdh;
+pub mod peer_discovery;
 /// Distributed Sync Module
 /// Handles desktop-mobile synchronization with:
 /// - Vector clocks for causal ordering
@@ -5,13 +8,11 @@
 /// - Conflict resolution with multiple strategies
 /// - mDNS-based peer discovery
 /// - Delta sync with compression
-
 pub mod vector_clock;
-pub mod ecdh;
-pub mod conflict_resolver;
-pub mod peer_discovery;
 
+pub use conflict_resolver::{
+    ConflictResolution, ConflictResolver, ResolutionStrategy, VersionedEntity,
+};
+pub use ecdh::{KeyPair, PairingManager, PairingState, PrivateKey, PublicKey};
+pub use peer_discovery::{DiscoveredDevice, DiscoveryEvent, NetworkValidator, PeerDiscovery};
 pub use vector_clock::VectorClock;
-pub use ecdh::{PublicKey, PrivateKey, KeyPair, PairingManager, PairingState};
-pub use conflict_resolver::{ConflictResolver, ConflictResolution, ResolutionStrategy, VersionedEntity};
-pub use peer_discovery::{PeerDiscovery, DiscoveredDevice, DiscoveryEvent, NetworkValidator};

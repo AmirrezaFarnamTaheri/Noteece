@@ -240,19 +240,23 @@ pub fn assign_category(
     );
 
     // Verify space isolation: post.space_id == category.space_id
-    let post_space: Option<String> = conn.query_row(
-        "SELECT a.space_id
+    let post_space: Option<String> = conn
+        .query_row(
+            "SELECT a.space_id
          FROM social_post p
          JOIN social_account a ON p.account_id = a.id
          WHERE p.id = ?1",
-        params![post_id],
-        |row| row.get(0),
-    ).optional()?;
-    let cat_space: Option<String> = conn.query_row(
-        "SELECT space_id FROM social_category WHERE id = ?1",
-        params![category_id],
-        |row| row.get(0),
-    ).optional()?;
+            params![post_id],
+            |row| row.get(0),
+        )
+        .optional()?;
+    let cat_space: Option<String> = conn
+        .query_row(
+            "SELECT space_id FROM social_category WHERE id = ?1",
+            params![category_id],
+            |row| row.get(0),
+        )
+        .optional()?;
 
     match (post_space, cat_space) {
         (Some(ps), Some(cs)) if ps == cs => {
@@ -269,7 +273,9 @@ pub fn assign_category(
             })?;
             Ok(())
         }
-        (Some(_), Some(_)) => Err(SocialError::InvalidInput("Cross-space assignment denied".into())),
+        (Some(_), Some(_)) => Err(SocialError::InvalidInput(
+            "Cross-space assignment denied".into(),
+        )),
         _ => Err(SocialError::NotFound("Post or category not found".into())),
     }
 }
@@ -337,16 +343,23 @@ pub fn auto_categorize_posts(conn: &Connection, space_id: &str) -> Result<usize,
     for category in categories {
         if let Some(mut filters) = category.filters {
             // Normalize filters to prevent unbounded clause growth
-            let normalize_list = |list: &mut Option<Vec<String>>, max_len: usize, min_item_len: usize| {
-                if let Some(v) = list.as_mut() {
-                    v.retain(|s| !s.trim().is_empty());
-                    for s in v.iter_mut() { *s = s.trim().to_string(); }
-                    v.dedup();
-                    v.retain(|s| s.len() >= min_item_len);
-                    if v.len() > max_len { v.truncate(max_len); }
-                    if v.is_empty() { *list = None; }
-                }
-            };
+            let normalize_list =
+                |list: &mut Option<Vec<String>>, max_len: usize, min_item_len: usize| {
+                    if let Some(v) = list.as_mut() {
+                        v.retain(|s| !s.trim().is_empty());
+                        for s in v.iter_mut() {
+                            *s = s.trim().to_string();
+                        }
+                        v.dedup();
+                        v.retain(|s| s.len() >= min_item_len);
+                        if v.len() > max_len {
+                            v.truncate(max_len);
+                        }
+                        if v.is_empty() {
+                            *list = None;
+                        }
+                    }
+                };
             normalize_list(&mut filters.platforms, 50, 1);
             normalize_list(&mut filters.keywords, 50, 2);
 
@@ -371,7 +384,9 @@ pub fn auto_categorize_posts(conn: &Connection, space_id: &str) -> Result<usize,
                 if !platforms.is_empty() {
                     query.push_str(" AND p.platform IN (");
                     for (i, platform) in platforms.iter().enumerate() {
-                        if i > 0 { query.push_str(", "); }
+                        if i > 0 {
+                            query.push_str(", ");
+                        }
                         query.push('?');
                         params_vec.push(Box::new(platform.clone()));
                     }
@@ -393,7 +408,9 @@ pub fn auto_categorize_posts(conn: &Connection, space_id: &str) -> Result<usize,
                         if escaped_keyword.is_empty() {
                             continue;
                         }
-                        if added > 0 { query.push_str(" OR "); }
+                        if added > 0 {
+                            query.push_str(" OR ");
+                        }
                         query.push_str("p.content LIKE ? ESCAPE '\\'");
                         params_vec.push(Box::new(format!("%{}%", escaped_keyword)));
                         added += 1;

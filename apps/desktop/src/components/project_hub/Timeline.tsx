@@ -1,7 +1,7 @@
 import React from 'react';
 import Timeline, { TimelineHeaders, SidebarHeader, DateHeader } from 'react-calendar-timeline';
-// Timeline CSS styling for calendar visualization
-import 'react-calendar-timeline/lib/Timeline.css';
+// Note: CSS import removed as react-calendar-timeline@0.30.0-beta.4 doesn't include pre-built CSS
+// Custom styling should be added via Mantine or inline styles if needed
 import moment from 'moment';
 import { useOutletContext } from 'react-router-dom';
 import { Task, ProjectMilestone } from '@noteece/types';
