@@ -133,7 +133,7 @@ const Overview: React.FC = () => {
             {updates.map((update, index) => (
               <Timeline.Item
                 key={update.id}
-                bullet={update.health === 'on_track' ? <IconCheck size={12} /> : <IconX size={12} />}
+                bullet={update.health === 'green' ? <IconCheck size={12} /> : <IconX size={12} />}
                 title={`Update ${index + 1}`}
               >
                 <Text c="dimmed" size="xs">

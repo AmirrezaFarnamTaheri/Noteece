@@ -33,8 +33,8 @@ interface Achievement {
  * - Celebrates user accomplishments
  */
 export function AchievementBadgesWidget() {
-  const { data: notes, isLoading: notesLoading } = useNotes();
-  const { data: tasks, isLoading: tasksLoading } = useTasks();
+  const { data: notes, isLoading: notesLoading } = useNotes('', false);
+  const { data: tasks, isLoading: tasksLoading } = useTasks('', false);
 
   if (notesLoading || tasksLoading) {
     return <LoadingCard lines={4} />;

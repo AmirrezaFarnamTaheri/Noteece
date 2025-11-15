@@ -15,9 +15,9 @@ import { LoadingCard } from '@noteece/ui';
  */
 export function BookmarksWidget() {
   const navigate = useNavigate();
-  const { data: notes, isLoading: notesLoading } = useNotes();
-  const { data: tasks, isLoading: tasksLoading } = useTasks();
-  const { data: projects, isLoading: projectsLoading } = useProjects();
+  const { data: notes, isLoading: notesLoading } = useNotes('', false);
+  const { data: tasks, isLoading: tasksLoading } = useTasks('', false);
+  const { data: projects, isLoading: projectsLoading } = useProjects('', false);
 
   // In a real implementation, starred items would be stored in the database
   // For now, we'll use local state as a demonstration

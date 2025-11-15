@@ -28,7 +28,7 @@ const VaultManagement: React.FC = () => {
 
   return (
     <Container size="xs" my={40}>
-      <Title align="center" sx={(theme) => ({ fontFamily: `Greycliff CF, ${theme.fontFamily}`, fontWeight: 900 })}>
+      <Title ta="center" fw={900}>
         Vault Management
       </Title>
 

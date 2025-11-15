@@ -19,6 +19,8 @@ import {
   FileButton,
 } from '@mantine/core';
 import { invoke } from '@tauri-apps/api/core';
+// @ts-expect-error - Tauri dialog module may not have type definitions
+import { open } from '@tauri-apps/api/dialog';
 import { IconUpload, IconSearch, IconCheck, IconX, IconClock, IconFile } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 

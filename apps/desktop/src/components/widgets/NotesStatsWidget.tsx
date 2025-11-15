@@ -14,7 +14,7 @@ import { LoadingCard } from '@noteece/ui';
  * - Writing streak
  */
 export function NotesStatsWidget() {
-  const { data: notes, isLoading } = useNotes();
+  const { data: notes, isLoading } = useNotes('', false);
 
   if (isLoading) {
     return <LoadingCard lines={4} />;

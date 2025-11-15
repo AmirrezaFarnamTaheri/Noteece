@@ -224,7 +224,7 @@ export default function InsightsWidget() {
     }
 
     // Priority task insight
-    const highPriorityTasks = tasks.filter((t) => t.priority === 'high' || t.priority === 'urgent');
+    const highPriorityTasks = tasks.filter((t) => t.priority === 1 || t.priority === 2);
     const highPriorityPending = highPriorityTasks.filter((t) => t.status !== 'done').length;
 
     if (highPriorityPending > 3) {

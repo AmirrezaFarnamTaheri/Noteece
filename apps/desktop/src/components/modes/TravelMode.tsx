@@ -215,11 +215,13 @@ const TravelMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
             placeholder="Paris, France"
             required
           />
-          <DatePicker label="Start Date" value={formStartDate} onChange={(value) => value && setFormStartDate(value)} />
           <DatePicker
-            label="End Date"
             value={formEndDate}
-            onChange={(value) => value && setFormEndDate(value)}
+            onChange={(value) => {
+              if (value) {
+                setFormEndDate(value as unknown as Date);
+              }
+            }}
             minDate={formStartDate}
           />
           <Group justify="flex-end" mt="md">

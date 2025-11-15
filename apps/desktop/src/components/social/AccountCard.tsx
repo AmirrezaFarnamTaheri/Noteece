@@ -117,7 +117,7 @@ export function AccountCard({ account }: AccountCardProperties) {
         <Group>
           <Text size="xl">{platform?.icon || '📱'}</Text>
           <div>
-            <Text weight={500}>{account.display_name || account.username}</Text>
+            <Text fw={700}>{account.display_name || account.username}</Text>
             <Text size="sm" c="dimmed">
               @{account.username}
             </Text>
@@ -212,7 +212,7 @@ export function AccountCard({ account }: AccountCardProperties) {
               { value: 'api', label: 'API (If Available)' },
               { value: 'hybrid', label: 'Hybrid (WebView + API)' },
             ]}
-            defaultValue={account.extraction_mode || 'webview'}
+            defaultValue="webview"
           />
           <Group justify="flex-end" mt="md">
             <Button variant="light" onClick={() => setSettingsModalOpened(false)}>
@@ -221,7 +221,7 @@ export function AccountCard({ account }: AccountCardProperties) {
             <Button
               onClick={() => {
                 updateSocialAccount(account.id, {
-                  sync_frequency_minutes: Number(syncFrequency),
+                  syncFrequencyMinutes: Number(syncFrequency),
                 });
                 setSettingsModalOpened(false);
                 notifications.show({

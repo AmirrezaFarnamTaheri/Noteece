@@ -194,9 +194,9 @@ const TaskBoard: React.FC = () => {
                                         {task.description}
                                       </Text>
                                     )}
-                                    {(task.deadline || task.priority) && (
+                                    {(task.due_date || task.priority) && (
                                       <Group gap="xs" mt={4}>
-                                        {task.deadline && (
+                                        {task.due_date && (
                                           <Tooltip label="Deadline">
                                             <Badge
                                               variant="light"
@@ -204,7 +204,7 @@ const TaskBoard: React.FC = () => {
                                               size="xs"
                                               leftSection={<IconCalendar size={10} />}
                                             >
-                                              {new Date(task.deadline * 1000).toLocaleDateString()}
+                                              {new Date(task.due_date * 1000).toLocaleDateString()}
                                             </Badge>
                                           </Tooltip>
                                         )}

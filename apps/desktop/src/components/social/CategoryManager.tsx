@@ -22,22 +22,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { notifications } from '@mantine/notifications';
 import { getSocialCategories, createSocialCategory, deleteSocialCategory } from '../../services/socialApi';
-
-interface CategoryFilters {
-  platforms?: string[] | null;
-  authors?: string[] | null;
-  keywords?: string[] | null;
-}
-
-interface Category {
-  id: string;
-  space_id: string;
-  name: string;
-  color: string | null;
-  icon: string | null;
-  filters: CategoryFilters | null;
-  created_at: number;
-}
+import type { SocialCategory } from '@noteece/types';
 
 interface CategoryManagerProperties {
   spaceId: string;
@@ -45,7 +30,7 @@ interface CategoryManagerProperties {
 
 export function CategoryManager({ spaceId }: CategoryManagerProperties) {
   const [modalOpened, setModalOpened] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editingCategory, setEditingCategory] = useState<SocialCategory | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     color: '#3b82f6',
@@ -108,14 +93,14 @@ export function CategoryManager({ spaceId }: CategoryManagerProperties) {
     },
   });
 
-  const handleOpenModal = (category?: Category) => {
+  const handleOpenModal = (category?: SocialCategory) => {
     if (category) {
       setEditingCategory(category);
       setFormData({
         name: category.name,
         color: category.color || '#3b82f6',
         icon: category.icon || '📁',
-        keywords: category.filters?.keywords?.join(', ') || '',
+        keywords: '',
       });
     } else {
       setEditingCategory(null);
@@ -200,18 +185,6 @@ export function CategoryManager({ spaceId }: CategoryManagerProperties) {
                           </Badge>
                         )}
                       </Group>
-                      {category.filters?.keywords && category.filters.keywords.length > 0 && (
-                        <Group gap="xs" mt="xs">
-                          <Text size="xs" c="dimmed">
-                            Keywords:
-                          </Text>
-                          {category.filters.keywords.map((keyword, index) => (
-                            <Badge key={index} size="sm" variant="outline">
-                              {keyword}
-                            </Badge>
-                          ))}
-                        </Group>
-                      )}
                     </div>
                   </Group>
                   <Group>

@@ -17,17 +17,17 @@ interface SearchResult {
   platform: string;
   account_username: string;
   author: string;
-  author_handle: string | null;
-  content: string | null;
+  author_handle: string | undefined;
+  content: string | undefined;
   timestamp: number;
   engagement: {
-    likes: number | null;
-    shares: number | null;
-    comments: number | null;
-    views: number | null;
+    likes: number | undefined;
+    shares: number | undefined;
+    comments: number | undefined;
+    views: number | undefined;
   };
   media_urls: string[];
-  post_type: string | null;
+  post_type: string | undefined;
   categories: string[];
 }
 

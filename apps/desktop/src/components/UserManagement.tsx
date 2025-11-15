@@ -485,7 +485,7 @@ const UserManagement: React.FC = () => {
               <EmptyState
                 title="No users yet"
                 description="Invite users to collaborate in this space"
-                icon={IconUsers}
+                icon={<IconUsers />}
               />
             ) : (
               <ScrollArea>

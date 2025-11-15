@@ -13,9 +13,9 @@ import { LoadingCard } from '@noteece/ui';
  * - Today's activity
  */
 export function QuickStatsWidget() {
-  const { data: notes, isLoading: notesLoading } = useNotes();
-  const { data: tasks, isLoading: tasksLoading } = useTasks();
-  const { data: projects, isLoading: projectsLoading } = useProjects();
+  const { data: notes, isLoading: notesLoading } = useNotes('', false);
+  const { data: tasks, isLoading: tasksLoading } = useTasks('', false);
+  const { data: projects, isLoading: projectsLoading } = useProjects('', false);
 
   if (notesLoading || tasksLoading || projectsLoading) {
     return <LoadingCard lines={4} />;

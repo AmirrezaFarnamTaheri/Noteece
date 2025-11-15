@@ -100,7 +100,7 @@ const Kanban: React.FC = () => {
 
     const updatedTasks = [...tasks];
     const [removed] = updatedTasks.splice(source.index, 1);
-    updatedTasks.splice(destination.index, 0, { ...removed, status: destinationColumn });
+    updatedTasks.splice(destination.index, 0, { ...removed, status: destinationColumn as Task['status'] });
 
     setTasks(updatedTasks);
   };

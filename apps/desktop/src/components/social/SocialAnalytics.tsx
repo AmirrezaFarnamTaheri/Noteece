@@ -249,7 +249,7 @@ export function SocialAnalytics({ spaceId }: SocialAnalyticsProperties) {
           </Title>
           <Center h={150}>
             <div style={{ textAlign: 'center' }}>
-              <Text size={48} fw={700} c="violet">
+              <Text size="xl" fw={700} c="violet" style={{ fontSize: '48px' }}>
                 {analytics.engagement.avg_engagement_rate.toFixed(2)}%
               </Text>
               <Text size="sm" c="dimmed" mt="xs">

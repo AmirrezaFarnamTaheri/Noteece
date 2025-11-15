@@ -330,7 +330,6 @@ const HealthMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
             onChange={(value) => setFormValue(Number(value))}
             min={0}
             step={0.1}
-            precision={1}
             required
           />
 
@@ -354,7 +353,7 @@ const HealthMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
           <DateTimePicker
             label="Recorded At"
             value={formRecordedAt}
-            onChange={(value) => value && setFormRecordedAt(value)}
+            onChange={(value) => value && setFormRecordedAt(typeof value === 'string' ? new Date(value) : value)}
           />
 
           <Group justify="flex-end" mt="md">

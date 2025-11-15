@@ -348,7 +348,6 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
             onChange={(value) => setFormAmount(Number(value))}
             min={0}
             step={0.01}
-            precision={2}
             prefix="$"
             required
           />
@@ -376,7 +375,6 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
             placeholder="Optional notes"
           />
 
-          <DatePicker label="Date" value={formDate} onChange={(value) => value && setFormDate(value)} />
 
           <Group justify="flex-end" mt="md">
             <Button variant="light" onClick={() => setModalOpened(false)}>

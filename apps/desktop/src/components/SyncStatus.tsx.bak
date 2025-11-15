@@ -91,17 +91,31 @@ const SyncStatus: React.FC = () => {
   const [selectedConflict, setSelectedConflict] = useState<SyncConflict | null>(null);
 
   // Fetch sync devices from backend
-  const { data: devices = [], isLoading: devicesLoading } = useQuery<SyncDevice[]>({
+  const { data: devices = [], isLoading: devicesLoading } = useQuery({
     queryKey: ['syncDevices'],
     queryFn: () => invoke<SyncDevice[]>('get_sync_devices_cmd'),
     refetchInterval: 30_000, // Refetch every 30 seconds
+    onError: (error) => {
+      notifications.show({
+        title: 'Failed to load devices',
+        message: String(error),
+        color: 'red',
+      });
+    },
   });
 
   // Fetch sync conflicts
-  const { data: conflicts = [], isLoading: conflictsLoading } = useQuery<SyncConflict[]>({
+  const { data: conflicts = [], isLoading: conflictsLoading } = useQuery({
     queryKey: ['syncConflicts'],
     queryFn: () => invoke<SyncConflict[]>('get_sync_conflicts_cmd'),
     refetchInterval: 15_000, // Refetch every 15 seconds
+    onError: (error) => {
+      notifications.show({
+        title: 'Failed to load conflicts',
+        message: String(error),
+        color: 'red',
+      });
+    },
   });
 
   // Fetch sync history
