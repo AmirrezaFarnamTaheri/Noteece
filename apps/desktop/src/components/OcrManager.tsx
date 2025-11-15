@@ -19,8 +19,6 @@ import {
   FileButton,
 } from '@mantine/core';
 import { invoke } from '@tauri-apps/api/core';
-// @ts-expect-error - Tauri dialog module may not have type definitions
-import { open } from '@tauri-apps/api/dialog';
 import { IconUpload, IconSearch, IconCheck, IconX, IconClock, IconFile } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 
@@ -103,8 +101,17 @@ export function OcrManager() {
   const handleProcessOcr = async () => {
     setIsUploading(true);
     try {
-      // For Tauri, we need to get the file path
-      // Open file dialog to select image
+      // TODO: Implement file dialog using FileButton component or Tauri dialog plugin
+      // For now, users need to provide the file path directly
+      notifications.show({
+        title: 'Feature Not Implemented',
+        message: 'File selection dialog is not yet implemented. Please use the Tauri invoke command directly.',
+        color: 'yellow',
+      });
+      setIsUploading(false);
+      return;
+
+      /* Commented out until dialog plugin is properly configured
       const filePath = await open({
         title: 'Select Image for OCR',
         multiple: false,
@@ -120,6 +127,9 @@ export function OcrManager() {
         setIsUploading(false);
         return;
       }
+      */
+
+      const filePath = ''; // Placeholder
 
       // Generate a unique blob ID
       const blobId = `blob_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
