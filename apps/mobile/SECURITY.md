@@ -17,14 +17,15 @@ This document details the security architecture, threat model, and security fixe
 - Migration v1→v2 adds: `space_id`, `all_day`, `recurrence_rule`, `created_at`, `updated_at` to `calendar_event`
 
 **Code Changes**:
+
 ```typescript
 // Database version tracking
 const CURRENT_DB_VERSION = 2;
-const DB_VERSION_KEY = 'database_version';
+const DB_VERSION_KEY = "database_version";
 
 // Safe column addition with existence check
-if (!columnNames.includes('space_id')) {
-  await db.execAsync('ALTER TABLE calendar_event ADD COLUMN space_id TEXT');
+if (!columnNames.includes("space_id")) {
+  await db.execAsync("ALTER TABLE calendar_event ADD COLUMN space_id TEXT");
 }
 ```
 
@@ -45,18 +46,19 @@ if (!columnNames.includes('space_id')) {
 - Integrated validation into `music.tsx` before playing tracks
 
 **Code Changes**:
+
 ```typescript
 // Allowed domains for music streaming
 const ALLOWED_MUSIC_DOMAINS = [
-  'incompetech.com',
-  'bensound.com',
-  'freemusicarchive.org',
+  "incompetech.com",
+  "bensound.com",
+  "freemusicarchive.org",
   // ...
 ];
 
 // Validate before playing
 if (!isValidMusicUrl(track.url)) {
-  Alert.alert('Security Error', 'Track from untrusted source blocked');
+  Alert.alert("Security Error", "Track from untrusted source blocked");
   return;
 }
 ```
@@ -74,22 +76,26 @@ if (!isValidMusicUrl(track.url)) {
 **Documentation Added** to `src/lib/sync/sync-client.ts`:
 
 **Current Implementation**:
+
 - ✅ ECDH key exchange (P-256 curve)
 - ✅ HKDF session key derivation
 - ✅ ChaCha20-Poly1305 authenticated encryption
 - ⚠️ Peer authentication (simulated)
 
 **Security Limitations**:
+
 - Mobile app cannot verify it's connecting to actual desktop app
 - MITM attacker on local network could intercept key exchange
 
 **Required for Production**:
+
 1. WebSocket transport layer with TLS/SSL
 2. Certificate pinning for desktop app
 3. Mutual authentication with vault-derived signing keys
 4. Replay attack protection with nonces/timestamps
 
 **Current Mitigations**:
+
 - Sync only works on local trusted networks (WiFi)
 - End-to-end encryption protects data confidentiality
 - User can verify sync success by checking data consistency
@@ -119,21 +125,23 @@ DEK (Data Encryption Key)
 
 **Storage Locations**:
 
-| Data | Storage | Protection |
-|------|---------|------------|
-| Vault metadata | AsyncStorage | Encrypted DEK, salts, hashes |
-| DEK (biometric) | SecureStore | iOS Keychain / Android Keystore |
-| Unlocked DEK | Memory | Cleared on lock/exit |
+| Data            | Storage      | Protection                      |
+| --------------- | ------------ | ------------------------------- |
+| Vault metadata  | AsyncStorage | Encrypted DEK, salts, hashes    |
+| DEK (biometric) | SecureStore  | iOS Keychain / Android Keystore |
+| Unlocked DEK    | Memory       | Cleared on lock/exit            |
 
 **Device-Level Protection**:
 
 **iOS**:
+
 - Stored in iOS Keychain with `kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly`
 - Protected by Secure Enclave (hardware security module)
 - Requires Face ID / Touch ID authentication
 - Not backed up to iCloud
 
 **Android**:
+
 - Stored in Android Keystore with hardware-backed keys
 - Protected by StrongBox or TEE (Trusted Execution Environment)
 - Requires Fingerprint / Face authentication
@@ -149,6 +157,7 @@ DEK (Data Encryption Key)
 **Threat Model**:
 
 Protects Against:
+
 - ✅ Lost/stolen device (device locked)
 - ✅ Physical access to unlocked device (vault locked)
 - ✅ Malware attempting to read vault data
@@ -156,11 +165,13 @@ Protects Against:
 - ✅ Password brute-force (Argon2id with high cost)
 
 Does NOT Protect Against:
+
 - ❌ Device with no passcode/biometrics (user responsibility)
 - ❌ Advanced malware with biometric bypass (requires device compromise)
 - ❌ State-level attacks with physical device access (forensic extraction)
 
 **Compliance**:
+
 - NIST SP 800-63B: Password-based authentication
 - OWASP Mobile Security: Secure data storage
 - iOS Security Guide: Keychain best practices
@@ -172,15 +183,16 @@ Does NOT Protect Against:
 
 ### Cryptographic Primitives
 
-| Component | Algorithm | Purpose |
-|-----------|-----------|---------|
-| Password hashing | Argon2id | KDF for password → KEK |
-| Key derivation | HKDF-SHA256 | Session key derivation |
-| Encryption | ChaCha20-Poly1305 | AEAD for DEK & data |
-| Key exchange | ECDH (P-256) | Sync session keys |
-| Signatures | HMAC-SHA256 | Data integrity |
+| Component        | Algorithm         | Purpose                |
+| ---------------- | ----------------- | ---------------------- |
+| Password hashing | Argon2id          | KDF for password → KEK |
+| Key derivation   | HKDF-SHA256       | Session key derivation |
+| Encryption       | ChaCha20-Poly1305 | AEAD for DEK & data    |
+| Key exchange     | ECDH (P-256)      | Sync session keys      |
+| Signatures       | HMAC-SHA256       | Data integrity         |
 
 All cryptographic primitives are from the `@noble` suite, which is:
+
 - Audited by multiple security researchers
 - Side-channel resistant
 - TypeScript-native with no C dependencies
@@ -216,12 +228,14 @@ All cryptographic primitives are from the `@noble` suite, which is:
 ## Security Disclosure
 
 If you discover a security vulnerability, please email security@noteece.com with:
+
 - Description of the vulnerability
 - Steps to reproduce
 - Potential impact
 - Suggested fix (if any)
 
 We follow responsible disclosure and will:
+
 - Acknowledge receipt within 24 hours
 - Provide a fix timeline within 72 hours
 - Credit you in the security advisory (unless you prefer anonymity)
@@ -231,6 +245,7 @@ We follow responsible disclosure and will:
 ## Changelog
 
 ### 2025-11-06
+
 - ✅ Fixed calendar_event migration issue (P1)
 - ✅ Added music URL domain allowlisting
 - ✅ Documented sync peer authentication limitation

@@ -44,6 +44,7 @@ pub struct CorrelationContext {
 ### 3. Correlation Types
 
 #### A. Health × Workload Correlation
+
 Detect when mood/energy dips correlate with overwork:
 
 ```rust
@@ -55,9 +56,11 @@ pub fn correlate_health_workload(
 ```
 
 **Example Insight:**
+
 > "Your mood has been 'low' for 3 days. During this period, you logged 36 hours on [[Project Phoenix]]. Your calendar shows no breaks scheduled. **Shall I block 90 minutes of recovery time tomorrow morning?**"
 
 #### B. Finance × Task Correlation
+
 Link spending patterns to task priorities:
 
 ```rust
@@ -68,9 +71,11 @@ pub fn correlate_finance_tasks(
 ```
 
 **Example Insight:**
+
 > "Your 'Discretionary' budget is at 15% remaining, but you have a task 'Buy new headphones' tagged #shopping. **Shall I snooze this task until next month's budget reset?**"
 
 #### C. Calendar × Project Correlation
+
 Detect when external commitments conflict with internal project work:
 
 ```rust
@@ -81,9 +86,11 @@ pub fn correlate_calendar_projects(
 ```
 
 **Example Insight:**
+
 > "This week you have 18 hours of CalDAV events, but [[Project Alpha]] has 3 tasks due. Your time tracking shows you only average 5 hours/week on this project. **Shall I find time blocks for focused work?**"
 
 #### D. Time × Productivity Correlation
+
 Identify when time spent doesn't match task progress:
 
 ```rust
@@ -94,6 +101,7 @@ pub fn correlate_time_productivity(
 ```
 
 **Example Insight:**
+
 > "You've logged 12 hours on 'Refactor API', but the task is still at 20% progress. **This suggests possible blockers. Would you like to create a breakdown or flag this task?**"
 
 ## Implementation Plan
@@ -101,6 +109,7 @@ pub fn correlate_time_productivity(
 ### Phase 1: Correlation Infrastructure (Priority: High)
 
 1. **Create `correlation.rs` module**
+
    ```rust
    // packages/core-rs/src/correlation.rs
    pub struct CorrelationEngine { ... }
@@ -112,6 +121,7 @@ pub fn correlate_time_productivity(
    ```
 
 2. **Define correlation types**
+
    ```rust
    pub struct Correlation {
        pub correlation_type: CorrelationType,
@@ -129,6 +139,7 @@ pub fn correlate_time_productivity(
    ```
 
 3. **Integrate with Foresight**
+
    ```rust
    // In foresight.rs
    pub fn generate_insights(
@@ -281,6 +292,7 @@ pub enum SuggestionOutcome {
 ---
 
 **Next Steps:**
+
 1. Implement `correlation.rs` module structure
 2. Add health-workload correlation detector
 3. Wire into existing `foresight.rs`

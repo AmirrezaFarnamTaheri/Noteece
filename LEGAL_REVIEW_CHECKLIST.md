@@ -31,6 +31,7 @@ Use this checklist for initial self-review before engaging a lawyer.
 - [ ] **Open Source**: Link to GitHub repository included?
 
 **Notes**:
+
 ```
 [Add any concerns or questions here]
 ```
@@ -52,6 +53,7 @@ Use this checklist for initial self-review before engaging a lawyer.
 - [ ] **Contact Information**: Valid contact method for legal issues?
 
 **Notes**:
+
 ```
 [Add any concerns or questions here]
 ```
@@ -70,6 +72,7 @@ Use this checklist for initial self-review before engaging a lawyer.
 - [ ] **Distribution Terms**: How others can distribute explained?
 
 **Notes**:
+
 ```
 [Add any concerns or questions here]
 ```
@@ -181,11 +184,13 @@ These sections have placeholders that **must** be updated:
 ### 1. Contact Information
 
 **Files to Update**:
+
 - `PRIVACY.md`: Update `privacy@noteece.app` with real email
 - `TERMS.md`: Update `legal@noteece.app` with real email
 - `LICENSE_REVIEW.md`: Update `legal@noteece.app` with real email
 
 **Action**:
+
 ```bash
 # Find all placeholder emails
 grep -r "noteece.app" PRIVACY.md TERMS.md LICENSE_REVIEW.md
@@ -197,11 +202,13 @@ grep -r "noteece.app" PRIVACY.md TERMS.md LICENSE_REVIEW.md
 ### 2. GitHub Repository
 
 **Files to Update**:
+
 - `PRIVACY.md`: Update `https://github.com/[your-username]/Noteece`
 - `TERMS.md`: Update GitHub links
 - `LICENSE_REVIEW.md`: Update GitHub links
 
 **Action**:
+
 ```bash
 # Find all placeholder GitHub links
 grep -r "github.com/\[your-username\]" *.md
@@ -217,6 +224,7 @@ grep -r "github.com/\[your-username\]" *.md
 **Current**: `[Your Jurisdiction - Update This]`
 
 **Action**: Replace with actual jurisdiction, for example:
+
 - "the State of California, United States"
 - "England and Wales"
 - "Ontario, Canada"
@@ -235,13 +243,13 @@ grep -r "github.com/\[your-username\]" *.md
 
 Estimated costs for professional legal review:
 
-| Service | Low End | High End | Priority |
-|---------|---------|----------|----------|
-| Privacy Policy Review | $200 | $800 | 🔴 Critical |
-| Terms of Service Review | $200 | $600 | 🔴 Critical |
-| GPL v3 Compliance | $150 | $400 | 🟡 Important |
-| Trademark Search | $100 | $300 | 🟢 Optional |
-| Full Package Deal | $500 | $1,500 | 🔴 Recommended |
+| Service                 | Low End | High End | Priority       |
+| ----------------------- | ------- | -------- | -------------- |
+| Privacy Policy Review   | $200    | $800     | 🔴 Critical    |
+| Terms of Service Review | $200    | $600     | 🔴 Critical    |
+| GPL v3 Compliance       | $150    | $400     | 🟡 Important   |
+| Trademark Search        | $100    | $300     | 🟢 Optional    |
+| Full Package Deal       | $500    | $1,500   | 🔴 Recommended |
 
 **Note**: Prices vary by region and lawyer experience. Online legal services (LegalZoom, Rocket Lawyer) may be cheaper but less thorough.
 
@@ -388,6 +396,7 @@ Once legal review is complete, document it:
 **Jurisdiction**: [Lawyer's jurisdiction]
 
 **Documents Reviewed**:
+
 - ✅ PRIVACY.md
 - ✅ TERMS.md
 - ✅ LICENSE
@@ -401,8 +410,8 @@ Once legal review is complete, document it:
 
 **Next Review Due**: [Date - typically 1 year later]
 
-**Signature**: ________________
-**Date**: ________________
+**Signature**: ******\_\_\_\_******
+**Date**: ******\_\_\_\_******
 ```
 
 ---
@@ -414,6 +423,7 @@ Once legal review is complete, document it:
 While we've done our best to create comprehensive, compliant legal documents for Noteece, every situation is unique. Laws vary by jurisdiction and change over time.
 
 **We strongly recommend**:
+
 1. Engaging a qualified attorney
 2. Not relying solely on these documents without review
 3. Updating documents as laws change
@@ -426,10 +436,12 @@ While we've done our best to create comprehensive, compliant legal documents for
 ## Contact for This Checklist
 
 Questions about this checklist (not legal advice):
+
 - GitHub Issues: https://github.com/[your-username]/Noteece/issues
 - Documentation: See other .md files in repository
 
 For legal advice about YOUR specific situation:
+
 - Contact a licensed attorney in your jurisdiction
 - Do not rely on online forums or AI for legal decisions
 - When in doubt, ask a lawyer
@@ -438,6 +450,6 @@ For legal advice about YOUR specific situation:
 
 **Good luck with your legal review! ⚖️**
 
-*Last Updated*: November 6, 2025
-*Version*: 1.0
-*Status*: Initial Release
+_Last Updated_: November 6, 2025
+_Version_: 1.0
+_Status_: Initial Release

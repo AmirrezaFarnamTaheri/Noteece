@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import styles from './BackupRestore.module.css';
 
 interface BackupMetadata {
@@ -17,15 +17,12 @@ interface Backup {
   metadata: BackupMetadata;
 }
 
-interface BackupRestoreProps {
+interface BackupRestoreProperties {
   onBackupComplete?: () => void;
   onRestoreComplete?: () => void;
 }
 
-const BackupRestore: React.FC<BackupRestoreProps> = ({
-  onBackupComplete,
-  onRestoreComplete,
-}) => {
+const BackupRestore: React.FC<BackupRestoreProperties> = ({ onBackupComplete, onRestoreComplete }) => {
   const [backups, setBackups] = useState<Backup[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -50,9 +47,11 @@ const BackupRestore: React.FC<BackupRestoreProps> = ({
         id,
         metadata,
       }));
-      setBackups(formattedBackups.sort((a, b) =>
-        new Date(b.metadata.created_at).getTime() - new Date(a.metadata.created_at).getTime()
-      ));
+      setBackups(
+        formattedBackups.sort(
+          (a, b) => new Date(b.metadata.created_at).getTime() - new Date(a.metadata.created_at).getTime(),
+        ),
+      );
       setMessage('Backups loaded successfully');
       setMessageType('success');
     } catch (error) {
@@ -77,7 +76,7 @@ const BackupRestore: React.FC<BackupRestoreProps> = ({
       setDescription('');
       await loadBackups();
       onBackupComplete?.();
-    } catch (error) {
+    } catch {
       setMessage('Failed to create backup');
       setMessageType('error');
     } finally {
@@ -104,7 +103,7 @@ const BackupRestore: React.FC<BackupRestoreProps> = ({
       setConfirmedBackupId(null);
       await loadBackups();
       onRestoreComplete?.();
-    } catch (error) {
+    } catch {
       setMessage('Failed to restore backup');
       setMessageType('error');
       setShowConfirm(false);
@@ -135,7 +134,7 @@ const BackupRestore: React.FC<BackupRestoreProps> = ({
       setConfirmAction(null);
       setConfirmedBackupId(null);
       await loadBackups();
-    } catch (error) {
+    } catch {
       setMessage('Failed to delete backup');
       setMessageType('error');
       setShowConfirm(false);
@@ -166,8 +165,8 @@ const BackupRestore: React.FC<BackupRestoreProps> = ({
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+    const index = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, index)) * 100) / 100 + ' ' + sizes[index];
   };
 
   return (
@@ -199,11 +198,7 @@ const BackupRestore: React.FC<BackupRestoreProps> = ({
           />
         </div>
 
-        <button
-          onClick={handleCreateBackup}
-          disabled={loading}
-          className={styles.primaryButton}
-        >
+        <button onClick={handleCreateBackup} disabled={loading} className={styles.primaryButton}>
           {loading ? 'Creating backup...' : 'Create Backup Now'}
         </button>
       </section>
@@ -239,7 +234,7 @@ const BackupRestore: React.FC<BackupRestoreProps> = ({
                   </span>
                 </div>
                 <div className={styles.backupId}>
-                  <code>{backup.id.substring(0, 12)}...</code>
+                  <code>{backup.id.slice(0, 12)}...</code>
                 </div>
               </div>
             ))}
@@ -282,14 +277,12 @@ const BackupRestore: React.FC<BackupRestoreProps> = ({
             <h3>Confirm Action</h3>
             {confirmAction === 'restore' && (
               <p>
-                This will restore your vault from the selected backup. Current data will be overwritten.
-                This action cannot be undone.
+                This will restore your vault from the selected backup. Current data will be overwritten. This action
+                cannot be undone.
               </p>
             )}
             {confirmAction === 'delete' && (
-              <p>
-                This will permanently delete the selected backup. This action cannot be undone.
-              </p>
+              <p>This will permanently delete the selected backup. This action cannot be undone.</p>
             )}
             <div className={styles.modalActions}>
               <button

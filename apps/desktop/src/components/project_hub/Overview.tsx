@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { Project, ProjectMilestone, ProjectRisk, ProjectUpdate, TimeStats } from '@noteece/types';
 import { Card, Grid, Timeline, Text, Badge, Table, Group, Alert, Loader, Stack } from '@mantine/core';
 import { IconInfoCircle, IconCheck, IconX, IconClock, IconPlayerPlay } from '@tabler/icons-react';
 import { formatTimestamp } from '../../utils/dateUtils';
 import { getProjectTimeStats } from '../../services/api';
+import logger from '../../utils/logger';
 
 interface OverviewContext {
   projectId: string;
@@ -66,14 +67,14 @@ const Overview: React.FC = () => {
             if (!isActive) return;
             setTimeStats(timeStatsData);
           } catch (timeError) {
-            console.error('Failed to fetch time stats:', timeError);
+            logger.error('Failed to fetch time stats:', timeError as Error);
             // Don't fail the whole page if time stats fail
           }
         }
       } catch (error_) {
         if (isActive) {
           setError('Failed to fetch project data. Please try again later.');
-          console.error(error_);
+          logger.error('Failed to fetch project data:', error_ as Error);
         }
       } finally {
         if (isActive) {
@@ -133,7 +134,7 @@ const Overview: React.FC = () => {
             {updates.map((update, index) => (
               <Timeline.Item
                 key={update.id}
-                bullet={update.health === 'on_track' ? <IconCheck size={12} /> : <IconX size={12} />}
+                bullet={update.health === 'green' ? <IconCheck size={12} /> : <IconX size={12} />}
                 title={`Update ${index + 1}`}
               >
                 <Text c="dimmed" size="xs">

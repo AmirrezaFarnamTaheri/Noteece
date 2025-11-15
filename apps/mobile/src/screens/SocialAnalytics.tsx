@@ -177,10 +177,7 @@ export function SocialAnalytics() {
           <Text style={styles.headerTitle}>Social Analytics</Text>
           <Text style={styles.headerSubtitle}>Your social media insights</Text>
         </View>
-        <TouchableOpacity
-          style={styles.exportButton}
-          onPress={handleExport}
-        >
+        <TouchableOpacity style={styles.exportButton} onPress={handleExport}>
           <Ionicons name="download-outline" size={20} color="#007AFF" />
           <Text style={styles.exportButtonText}>Export</Text>
         </TouchableOpacity>
@@ -189,7 +186,9 @@ export function SocialAnalytics() {
       {/* Total Posts Card */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Total Posts</Text>
-        <Text style={styles.totalPostsNumber}>{totalPosts.toLocaleString()}</Text>
+        <Text style={styles.totalPostsNumber}>
+          {totalPosts.toLocaleString()}
+        </Text>
         <Text style={styles.cardSubtitle}>Aggregated from all platforms</Text>
       </View>
 
@@ -229,10 +228,7 @@ export function SocialAnalytics() {
               {platformStats.slice(0, 5).map((stat) => (
                 <View key={stat.platform} style={styles.legendItem}>
                   <View
-                    style={[
-                      styles.legendDot,
-                      { backgroundColor: stat.color },
-                    ]}
+                    style={[styles.legendDot, { backgroundColor: stat.color }]}
                   />
                   <Text style={styles.legendText}>
                     {stat.platform} ({stat.post_count})
@@ -286,9 +282,11 @@ export function SocialAnalytics() {
             <View style={styles.insightItem}>
               <Text style={styles.insightIcon}>📊</Text>
               <Text style={styles.insightText}>
-                Most active platform: <Text style={styles.insightBold}>
+                Most active platform:{" "}
+                <Text style={styles.insightBold}>
                   {platformStats[0]?.platform || "N/A"}
-                </Text> ({platformStats[0]?.post_count || 0} posts)
+                </Text>{" "}
+                ({platformStats[0]?.post_count || 0} posts)
               </Text>
             </View>
           )}
@@ -297,9 +295,11 @@ export function SocialAnalytics() {
             <View style={styles.insightItem}>
               <Text style={styles.insightIcon}>🏷️</Text>
               <Text style={styles.insightText}>
-                Top category: <Text style={styles.insightBold}>
+                Top category:{" "}
+                <Text style={styles.insightBold}>
                   {categoryStats[0]?.category_name || "N/A"}
-                </Text> ({categoryStats[0]?.post_count || 0} posts)
+                </Text>{" "}
+                ({categoryStats[0]?.post_count || 0} posts)
               </Text>
             </View>
           )}
@@ -307,7 +307,8 @@ export function SocialAnalytics() {
           <View style={styles.insightItem}>
             <Text style={styles.insightIcon}>📈</Text>
             <Text style={styles.insightText}>
-              Average posts per platform: <Text style={styles.insightBold}>
+              Average posts per platform:{" "}
+              <Text style={styles.insightBold}>
                 {platformStats.length > 0
                   ? Math.round(totalPosts / platformStats.length)
                   : 0}
@@ -319,8 +320,14 @@ export function SocialAnalytics() {
             <View style={styles.insightItem}>
               <Text style={styles.insightIcon}>🎯</Text>
               <Text style={styles.insightText}>
-                Categorization rate: <Text style={styles.insightBold}>
-                  {((categoryStats.reduce((sum, c) => sum + c.post_count, 0) / totalPosts) * 100).toFixed(1)}%
+                Categorization rate:{" "}
+                <Text style={styles.insightBold}>
+                  {(
+                    (categoryStats.reduce((sum, c) => sum + c.post_count, 0) /
+                      totalPosts) *
+                    100
+                  ).toFixed(1)}
+                  %
                 </Text>
               </Text>
             </View>

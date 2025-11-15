@@ -4,6 +4,25 @@ module.exports = {
   rules: {
     "prettier/prettier": "warn",
     "@typescript-eslint/no-unused-vars": "warn",
+    "@typescript-eslint/no-empty-object-type": "off",
+    "@typescript-eslint/no-wrapper-object-types": "off",
     "no-console": "off",
+    "no-undef": "off",
+    "import/no-unresolved": [
+      "error",
+      {
+        ignore: [
+          "^@expo/vector-icons",
+          "^expo-",
+          "^@testing-library/",
+          "^@tauri-apps/",
+          "^i18next$",
+          "^react-i18next$",
+          "^uuid$",
+        ],
+      },
+    ],
+    "import/namespace": "off",
+    "react-hooks/exhaustive-deps": "warn",
   },
 };

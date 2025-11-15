@@ -1,12 +1,21 @@
-import React, { useState } from 'react';
-import { Card, Group, Text, Stack, UnstyledButton, Badge, Tooltip, Progress } from '@mantine/core';
-import { IconFlame, IconCheck, IconX } from '@tabler/icons-react';
+import React, { useState } from "react";
+import {
+  Card,
+  Group,
+  Text,
+  Stack,
+  UnstyledButton,
+  Badge,
+  Tooltip,
+  Progress,
+} from "@mantine/core";
+import { IconFlame, IconCheck, IconX } from "@tabler/icons-react";
 
 export interface HabitEntry {
   id: string;
   name: string;
   description?: string;
-  frequency: 'daily' | 'weekly';
+  frequency: "daily" | "weekly";
   currentStreak: number;
   longestStreak: number;
   completedDates: number[]; // Unix timestamps
@@ -19,7 +28,11 @@ export interface HabitTrackerProps {
   daysToShow?: number;
 }
 
-export function HabitTracker({ habits, onToggleDay, daysToShow = 7 }: HabitTrackerProps) {
+export function HabitTracker({
+  habits,
+  onToggleDay,
+  daysToShow = 7,
+}: HabitTrackerProps) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -28,7 +41,7 @@ export function HabitTracker({ habits, onToggleDay, daysToShow = 7 }: HabitTrack
     for (let i = daysToShow - 1; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      labels.push(date.toLocaleDateString('en-US', { weekday: 'short' }));
+      labels.push(date.toLocaleDateString("en-US", { weekday: "short" }));
     }
     return labels;
   };
@@ -57,7 +70,9 @@ export function HabitTracker({ habits, onToggleDay, daysToShow = 7 }: HabitTrack
   };
 
   const calculateCompletionRate = (habit: HabitEntry): number => {
-    const completed = dayTimestamps.filter((ts) => isDateCompleted(habit, ts)).length;
+    const completed = dayTimestamps.filter((ts) =>
+      isDateCompleted(habit, ts),
+    ).length;
     return (completed / daysToShow) * 100;
   };
 
@@ -80,7 +95,7 @@ export function HabitTracker({ habits, onToggleDay, daysToShow = 7 }: HabitTrack
             Habit Tracker
           </Text>
           <Badge variant="light" color="orange">
-            {habits.length} habit{habits.length !== 1 ? 's' : ''}
+            {habits.length} habit{habits.length !== 1 ? "s" : ""}
           </Badge>
         </Group>
 
@@ -127,23 +142,26 @@ export function HabitTracker({ habits, onToggleDay, daysToShow = 7 }: HabitTrack
                           width: 32,
                           height: 32,
                           borderRadius: 4,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                           backgroundColor: completed
-                            ? `var(--mantine-color-${habit.color || 'blue'}-1)`
-                            : 'var(--mantine-color-gray-1)',
+                            ? `var(--mantine-color-${habit.color || "blue"}-1)`
+                            : "var(--mantine-color-gray-1)",
                           border: `1px solid ${
                             completed
-                              ? `var(--mantine-color-${habit.color || 'blue'}-4)`
-                              : 'var(--mantine-color-gray-3)'
+                              ? `var(--mantine-color-${habit.color || "blue"}-4)`
+                              : "var(--mantine-color-gray-3)"
                           }`,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
+                          cursor: "pointer",
+                          transition: "all 0.2s",
                         }}
                       >
                         {completed ? (
-                          <IconCheck size={16} color={`var(--mantine-color-${habit.color || 'blue'}-6)`} />
+                          <IconCheck
+                            size={16}
+                            color={`var(--mantine-color-${habit.color || "blue"}-6)`}
+                          />
                         ) : (
                           <Text size="xs" c="dimmed">
                             {dayLabels[idx][0]}
@@ -157,7 +175,7 @@ export function HabitTracker({ habits, onToggleDay, daysToShow = 7 }: HabitTrack
 
               <Progress
                 value={calculateCompletionRate(habit)}
-                color={habit.color || 'blue'}
+                color={habit.color || "blue"}
                 size="xs"
                 radius="xl"
               />
@@ -170,7 +188,13 @@ export function HabitTracker({ habits, onToggleDay, daysToShow = 7 }: HabitTrack
 }
 
 // Compact variant for dashboard
-export function CompactHabitList({ habits, maxItems = 3 }: { habits: HabitEntry[]; maxItems?: number }) {
+export function CompactHabitList({
+  habits,
+  maxItems = 3,
+}: {
+  habits: HabitEntry[];
+  maxItems?: number;
+}) {
   const topHabits = habits
     .sort((a, b) => b.currentStreak - a.currentStreak)
     .slice(0, maxItems);
@@ -178,14 +202,19 @@ export function CompactHabitList({ habits, maxItems = 3 }: { habits: HabitEntry[
   return (
     <Stack gap="xs">
       {topHabits.map((habit) => (
-        <Group key={habit.id} justify="space-between" p="xs" style={{ borderRadius: 4 }}>
+        <Group
+          key={habit.id}
+          justify="space-between"
+          p="xs"
+          style={{ borderRadius: 4 }}
+        >
           <Group gap="xs">
             <div
               style={{
                 width: 8,
                 height: 8,
-                borderRadius: '50%',
-                backgroundColor: `var(--mantine-color-${habit.color || 'blue'}-6)`,
+                borderRadius: "50%",
+                backgroundColor: `var(--mantine-color-${habit.color || "blue"}-6)`,
               }}
             />
             <Text size="sm" fw={500} lineClamp={1}>
@@ -205,7 +234,13 @@ export function CompactHabitList({ habits, maxItems = 3 }: { habits: HabitEntry[
 }
 
 // Single habit card
-export function HabitCard({ habit, onToggleToday }: { habit: HabitEntry; onToggleToday?: () => void }) {
+export function HabitCard({
+  habit,
+  onToggleToday,
+}: {
+  habit: HabitEntry;
+  onToggleToday?: () => void;
+}) {
   const today = Math.floor(new Date().setHours(0, 0, 0, 0) / 1000);
   const completedToday = habit.completedDates.some((ts) => {
     const date1 = new Date(ts * 1000);
@@ -235,24 +270,27 @@ export function HabitCard({ habit, onToggleToday }: { habit: HabitEntry; onToggl
             style={{
               width: 40,
               height: 40,
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               backgroundColor: completedToday
-                ? `var(--mantine-color-${habit.color || 'blue'}-1)`
-                : 'var(--mantine-color-gray-1)',
+                ? `var(--mantine-color-${habit.color || "blue"}-1)`
+                : "var(--mantine-color-gray-1)",
               border: `2px solid ${
                 completedToday
-                  ? `var(--mantine-color-${habit.color || 'blue'}-6)`
-                  : 'var(--mantine-color-gray-3)'
+                  ? `var(--mantine-color-${habit.color || "blue"}-6)`
+                  : "var(--mantine-color-gray-3)"
               }`,
-              cursor: 'pointer',
-              transition: 'all 0.2s',
+              cursor: "pointer",
+              transition: "all 0.2s",
             }}
           >
             {completedToday ? (
-              <IconCheck size={20} color={`var(--mantine-color-${habit.color || 'blue'}-6)`} />
+              <IconCheck
+                size={20}
+                color={`var(--mantine-color-${habit.color || "blue"}-6)`}
+              />
             ) : (
               <IconX size={20} color="var(--mantine-color-gray-5)" />
             )}

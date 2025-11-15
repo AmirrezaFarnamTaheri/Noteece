@@ -456,15 +456,18 @@ pub fn get_health_metrics(
     metric_type: Option<&str>,
     limit: u32,
 ) -> Result<Vec<HealthMetric>, PersonalModeError> {
-    let metrics = if let Some(mt) = metric_type {
-        let sid = space_id.to_string();
-        let lim = limit as i64;
+    let sid = space_id.to_string();
+    let lim = limit as i64;
+
+    let mut result = Vec::new();
+
+    if let Some(mt) = metric_type {
         let mut stmt = conn.prepare(
             "SELECT id, space_id, note_id, metric_type, value, unit, notes, recorded_at, created_at
              FROM health_metric WHERE space_id = ?1 AND metric_type = ?2
              ORDER BY recorded_at DESC LIMIT ?3",
         )?;
-        stmt.query_map(params![sid, mt, lim], |row| {
+        let metrics = stmt.query_map(params![sid, mt, lim], |row| {
             Ok(HealthMetric {
                 id: row.get(0)?,
                 space_id: row.get(1)?,
@@ -476,16 +479,17 @@ pub fn get_health_metrics(
                 recorded_at: row.get(7)?,
                 created_at: row.get(8)?,
             })
-        })?
+        })?;
+        for metric in metrics {
+            result.push(metric?);
+        }
     } else {
-        let sid = space_id.to_string();
-        let lim = limit as i64;
         let mut stmt = conn.prepare(
             "SELECT id, space_id, note_id, metric_type, value, unit, notes, recorded_at, created_at
              FROM health_metric WHERE space_id = ?1
              ORDER BY recorded_at DESC LIMIT ?2",
         )?;
-        stmt.query_map(params![sid, lim], |row| {
+        let metrics = stmt.query_map(params![sid, lim], |row| {
             Ok(HealthMetric {
                 id: row.get(0)?,
                 space_id: row.get(1)?,
@@ -497,13 +501,12 @@ pub fn get_health_metrics(
                 recorded_at: row.get(7)?,
                 created_at: row.get(8)?,
             })
-        })?
-    };
-
-    let mut result = Vec::new();
-    for metric in metrics {
-        result.push(metric?);
+        })?;
+        for metric in metrics {
+            result.push(metric?);
+        }
     }
+
     Ok(result)
 }
 

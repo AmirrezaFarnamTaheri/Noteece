@@ -12,14 +12,18 @@ import { getSocialAccounts } from '../../services/socialApi';
 import { AccountCard } from './AccountCard';
 import { AddAccountModal } from './AddAccountModal';
 
-interface SocialAccountListProps {
+interface SocialAccountListProperties {
   spaceId: string;
 }
 
-export function SocialAccountList({ spaceId }: SocialAccountListProps) {
+export function SocialAccountList({ spaceId }: SocialAccountListProperties) {
   const [addModalOpened, setAddModalOpened] = useState(false);
 
-  const { data: accounts, isLoading, error } = useQuery({
+  const {
+    data: accounts,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['socialAccounts', spaceId],
     queryFn: () => getSocialAccounts(spaceId),
   });
@@ -47,13 +51,10 @@ export function SocialAccountList({ spaceId }: SocialAccountListProps) {
           <div>
             <Title order={2}>Social Accounts</Title>
             <Text size="sm" c="dimmed">
-              {accounts?.length || 0} account{accounts?.length !== 1 ? 's' : ''} connected
+              {accounts?.length || 0} account{accounts?.length === 1 ? '' : 's'} connected
             </Text>
           </div>
-          <Button
-            leftSection={<IconPlus size={16} />}
-            onClick={() => setAddModalOpened(true)}
-          >
+          <Button leftSection={<IconPlus size={16} />} onClick={() => setAddModalOpened(true)}>
             Add Account
           </Button>
         </Group>
@@ -74,11 +75,7 @@ export function SocialAccountList({ spaceId }: SocialAccountListProps) {
               <Text size="sm" c="dimmed" ta="center">
                 Add your first social media account to start aggregating your feeds
               </Text>
-              <Button
-                leftSection={<IconPlus size={16} />}
-                onClick={() => setAddModalOpened(true)}
-                mt="md"
-              >
+              <Button leftSection={<IconPlus size={16} />} onClick={() => setAddModalOpened(true)} mt="md">
                 Add Your First Account
               </Button>
             </Stack>
@@ -86,11 +83,7 @@ export function SocialAccountList({ spaceId }: SocialAccountListProps) {
         )}
       </Stack>
 
-      <AddAccountModal
-        opened={addModalOpened}
-        onClose={() => setAddModalOpened(false)}
-        spaceId={spaceId}
-      />
+      <AddAccountModal opened={addModalOpened} onClose={() => setAddModalOpened(false)} spaceId={spaceId} />
     </>
   );
 }

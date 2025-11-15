@@ -1,7 +1,6 @@
 /// ECDH (Elliptic Curve Diffie-Hellman) Key Exchange
 /// Enables secure key establishment between desktop and mobile devices
 /// Uses P-256 curve for compatibility and security
-
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -176,7 +175,10 @@ impl PairingManager {
 
     /// Complete pairing: derive shared secret
     pub fn complete_pairing(&mut self) -> Result<Vec<u8>, ECDHError> {
-        let key_pair = self.key_pair.as_ref().ok_or(ECDHError::KeyGenerationFailed)?;
+        let key_pair = self
+            .key_pair
+            .as_ref()
+            .ok_or(ECDHError::KeyGenerationFailed)?;
         let peer_public_key = self
             .peer_public_key
             .as_ref()

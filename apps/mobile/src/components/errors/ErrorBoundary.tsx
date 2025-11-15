@@ -82,13 +82,16 @@ export class ErrorBoundary extends Component<Props, State> {
 
             <Text style={styles.title}>Something went wrong</Text>
             <Text style={styles.message}>
-              We encountered an unexpected error. Don't worry, your data is safe.
+              We encountered an unexpected error. Don't worry, your data is
+              safe.
             </Text>
 
             {__DEV__ && this.state.error && (
               <ScrollView style={styles.errorDetails}>
                 <Text style={styles.errorTitle}>Error Details (Dev Only):</Text>
-                <Text style={styles.errorText}>{this.state.error.toString()}</Text>
+                <Text style={styles.errorText}>
+                  {this.state.error.toString()}
+                </Text>
                 {this.state.errorInfo && (
                   <Text style={styles.errorStack}>
                     {this.state.errorInfo.componentStack}

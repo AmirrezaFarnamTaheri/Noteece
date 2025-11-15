@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "dev:tauri": "tauri dev",
     "build:tauri": "tauri build",
-    "test": "jest --preset ts-jest"
+    "test": "jest --preset ts-jest",
+    "test:coverage": "jest --preset ts-jest --coverage"
   },
   "dependencies": {
     "@lexical/clipboard": "^0.38.2",
@@ -31,7 +32,7 @@
     "@mantine/notifications": "^8.3.6",
     "@tanstack/react-query": "^5.90.7",
     "@tanstack/react-query-devtools": "^5.90.2",
-    "@tauri-apps/api": "^2.9.0",
+    "@tauri-apps/api": "^1.5.6",
     "@types/react-calendar-timeline": "^0.28.6",
     "lexical": "^0.38.2",
     "moment": "^2.30.1",
@@ -52,6 +53,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^20.8.10",
     "@types/react": "^18.2.34",
+    "@types/react-beautiful-dnd": "^13.1.8",
     "@types/react-dom": "^18.2.14",
     "@typescript-eslint/eslint-plugin": "^6.9.1",
     "@typescript-eslint/parser": "^6.9.1",

@@ -18,6 +18,10 @@ pub enum SocialError {
     Serialization(#[from] serde_json::Error),
     #[error("Sync already in progress for account: {0}")]
     SyncInProgress(String),
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
+    #[error("Not found: {0}")]
+    NotFound(String),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -422,7 +426,7 @@ mod tests {
 
     #[test]
     fn test_add_and_get_account() {
-        let conn = Connection::open_in_memory().unwrap();
+        let mut conn = Connection::open_in_memory().unwrap();
         crate::db::migrate(&mut conn).unwrap();
 
         // Create a test space

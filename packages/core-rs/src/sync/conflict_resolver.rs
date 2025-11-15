@@ -1,7 +1,6 @@
 /// Conflict Resolution Engine for Distributed Sync
 /// Handles merging of concurrent updates using vector clocks
 /// Supports multiple conflict resolution strategies
-
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 
@@ -72,11 +71,7 @@ impl ConflictResolver {
     }
 
     /// Resolve conflict between two versions
-    pub fn resolve(
-        &self,
-        local: &VersionedEntity,
-        remote: &VersionedEntity,
-    ) -> ConflictResolution {
+    pub fn resolve(&self, local: &VersionedEntity, remote: &VersionedEntity) -> ConflictResolution {
         // Check if there's actually a conflict
         if local.vector_clock.happens_before(&remote.vector_clock) {
             // Remote is causally after local, no conflict
@@ -90,25 +85,15 @@ impl ConflictResolver {
 
         // Concurrent updates - real conflict
         match self.strategy {
-            ResolutionStrategy::CausalOrdering => {
-                self.resolve_causal_ordering(local, remote)
-            }
-            ResolutionStrategy::LastWriteWins => {
-                self.resolve_last_write_wins(local, remote)
-            }
-            ResolutionStrategy::DevicePriority => {
-                self.resolve_device_priority(local, remote)
-            }
-            ResolutionStrategy::Merge => {
-                self.resolve_merge(local, remote)
-            }
-            ResolutionStrategy::Manual => {
-                ConflictResolution::Unresolvable {
-                    version1: local.clone(),
-                    version2: remote.clone(),
-                    reason: "Manual resolution required".to_string(),
-                }
-            }
+            ResolutionStrategy::CausalOrdering => self.resolve_causal_ordering(local, remote),
+            ResolutionStrategy::LastWriteWins => self.resolve_last_write_wins(local, remote),
+            ResolutionStrategy::DevicePriority => self.resolve_device_priority(local, remote),
+            ResolutionStrategy::Merge => self.resolve_merge(local, remote),
+            ResolutionStrategy::Manual => ConflictResolution::Unresolvable {
+                version1: local.clone(),
+                version2: remote.clone(),
+                reason: "Manual resolution required".to_string(),
+            },
         }
     }
 
@@ -249,10 +234,7 @@ impl ConflictResolver {
 /// Merge two JSON objects with deep-merge strategy
 /// Recursively merges nested objects and prefers remote values on conflict
 /// to avoid losing updates from concurrent devices
-fn merge_json_objects(
-    local: &serde_json::Value,
-    remote: &serde_json::Value,
-) -> serde_json::Value {
+fn merge_json_objects(local: &serde_json::Value, remote: &serde_json::Value) -> serde_json::Value {
     use serde_json::Value::*;
 
     match (local, remote) {
@@ -321,14 +303,13 @@ mod tests {
         let resolver = ConflictResolver::new(ResolutionStrategy::LastWriteWins);
         let result = resolver.resolve(&local, &remote);
 
-        if let ConflictResolution::Resolved {
-            winning_version, ..
-        } = result
-        {
-            assert_eq!(winning_version.device_id, "device2");
-        } else {
-            panic!("Expected resolved conflict");
-        }
+        let winning_version = match result {
+            ConflictResolution::Resolved {
+                winning_version, ..
+            } => winning_version,
+            _ => panic!("Expected resolved conflict but got: {:?}", result),
+        };
+        assert_eq!(winning_version.device_id, "device2");
     }
 
     #[test]
@@ -341,14 +322,13 @@ mod tests {
 
         let result = resolver.resolve(&local, &remote);
 
-        if let ConflictResolution::Resolved {
-            winning_version, ..
-        } = result
-        {
-            assert_eq!(winning_version.device_id, "device1");
-        } else {
-            panic!("Expected resolved conflict");
-        }
+        let winning_version = match result {
+            ConflictResolution::Resolved {
+                winning_version, ..
+            } => winning_version,
+            _ => panic!("Expected resolved conflict but got: {:?}", result),
+        };
+        assert_eq!(winning_version.device_id, "device1");
     }
 
     #[test]
@@ -362,15 +342,14 @@ mod tests {
         let resolver = ConflictResolver::new(ResolutionStrategy::Merge);
         let result = resolver.resolve(&local, &remote);
 
-        if let ConflictResolution::Resolved {
-            winning_version, ..
-        } = result
-        {
-            assert_eq!(winning_version.data["a"], 1);
-            assert!(winning_version.data["b"].is_number());
-            assert_eq!(winning_version.data["c"], 4);
-        } else {
-            panic!("Expected resolved conflict");
-        }
+        let winning_version = match result {
+            ConflictResolution::Resolved {
+                winning_version, ..
+            } => winning_version,
+            _ => panic!("Expected resolved conflict but got: {:?}", result),
+        };
+        assert_eq!(winning_version.data["a"], 1);
+        assert!(winning_version.data["b"].is_number());
+        assert_eq!(winning_version.data["c"], 4);
     }
 }

@@ -6,6 +6,7 @@ import { getRecentNotes } from '../services/api';
 import { useStore } from '../store';
 import { Note } from '@noteece/types';
 import { formatTimestamp } from '../utils/dateUtils';
+import logger from '../utils/logger';
 
 interface ActivityProperties {
   icon: React.ReactNode;
@@ -24,7 +25,7 @@ export const Activity: React.FC<ActivityProperties> = ({ title }) => {
           const recentNotes = await getRecentNotes(activeSpaceId, 5);
           setNotes(recentNotes);
         } catch (error) {
-          console.error('Error fetching recent notes:', error);
+          logger.error('Error fetching recent notes:', error as Error);
         }
       }
     };

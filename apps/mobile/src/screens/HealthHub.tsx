@@ -48,7 +48,9 @@ export function HealthHub() {
   const [stats, setStats] = useState<HealthStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedView, setSelectedView] = useState<"today" | "week" | "month">("today");
+  const [selectedView, setSelectedView] = useState<"today" | "week" | "month">(
+    "today",
+  );
 
   useEffect(() => {
     loadHealthData();
@@ -174,7 +176,7 @@ export function HealthHub() {
     value: string | number,
     unit: string,
     color: string,
-    index: number = 0
+    index: number = 0,
   ) => (
     <ScaleIn delay={200 + index * 50} bounce initialScale={0.8}>
       <TouchableOpacity
@@ -202,7 +204,8 @@ export function HealthHub() {
         <View style={styles.goalHeader}>
           <View style={styles.goalInfo}>
             <Text style={styles.goalName}>
-              {goal.goal.type.charAt(0).toUpperCase() + goal.goal.type.slice(1)} Goal
+              {goal.goal.type.charAt(0).toUpperCase() + goal.goal.type.slice(1)}{" "}
+              Goal
             </Text>
             <Text style={styles.goalTarget}>
               {goal.current} / {goal.goal.target} {goal.goal.unit}
@@ -301,7 +304,10 @@ export function HealthHub() {
             onPress={() => handleViewChange("today")}
           >
             <Text
-              style={[styles.tabText, selectedView === "today" && styles.tabTextActive]}
+              style={[
+                styles.tabText,
+                selectedView === "today" && styles.tabTextActive,
+              ]}
             >
               Today
             </Text>
@@ -311,7 +317,10 @@ export function HealthHub() {
             onPress={() => handleViewChange("week")}
           >
             <Text
-              style={[styles.tabText, selectedView === "week" && styles.tabTextActive]}
+              style={[
+                styles.tabText,
+                selectedView === "week" && styles.tabTextActive,
+              ]}
             >
               Week
             </Text>
@@ -321,7 +330,10 @@ export function HealthHub() {
             onPress={() => handleViewChange("month")}
           >
             <Text
-              style={[styles.tabText, selectedView === "month" && styles.tabTextActive]}
+              style={[
+                styles.tabText,
+                selectedView === "month" && styles.tabTextActive,
+              ]}
             >
               Month
             </Text>
@@ -347,7 +359,7 @@ export function HealthHub() {
                   formatNumber(stats.today.steps),
                   "steps",
                   "#6366F1",
-                  0
+                  0,
                 )}
                 {renderMetricCard(
                   "navigate",
@@ -355,7 +367,7 @@ export function HealthHub() {
                   stats.today.distance.toFixed(1),
                   "km",
                   "#8B5CF6",
-                  1
+                  1,
                 )}
                 {renderMetricCard(
                   "flame",
@@ -363,7 +375,7 @@ export function HealthHub() {
                   formatNumber(stats.today.calories),
                   "kcal",
                   "#EF4444",
-                  2
+                  2,
                 )}
                 {renderMetricCard(
                   "timer",
@@ -371,7 +383,7 @@ export function HealthHub() {
                   stats.today.activeMinutes,
                   "min",
                   "#F59E0B",
-                  3
+                  3,
                 )}
               </View>
             </View>
@@ -385,7 +397,7 @@ export function HealthHub() {
                   stats.today.water,
                   "glasses",
                   "#3B82F6",
-                  4
+                  4,
                 )}
                 {renderMetricCard(
                   "moon",
@@ -393,7 +405,7 @@ export function HealthHub() {
                   stats.today.sleep.toFixed(1),
                   "hours",
                   "#8B5CF6",
-                  5
+                  5,
                 )}
                 {renderMetricCard(
                   "happy",
@@ -401,7 +413,7 @@ export function HealthHub() {
                   stats.today.mood ? `${stats.today.mood}/5` : "N/A",
                   "",
                   "#10B981",
-                  6
+                  6,
                 )}
               </View>
             </View>
@@ -490,7 +502,9 @@ export function HealthHub() {
                         styles.summaryValue,
                         {
                           color:
-                            stats.month.weightChange < 0 ? "#10B981" : "#EF4444",
+                            stats.month.weightChange < 0
+                              ? "#10B981"
+                              : "#EF4444",
                         },
                       ]}
                     >

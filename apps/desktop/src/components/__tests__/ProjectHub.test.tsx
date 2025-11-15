@@ -3,9 +3,9 @@ import { render, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { MantineProvider } from '@mantine/core';
 import ProjectHub from '../ProjectHub';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 
-jest.mock('@tauri-apps/api/core', () => ({
+jest.mock('@tauri-apps/api/tauri', () => ({
   invoke: jest.fn(),
 }));
 

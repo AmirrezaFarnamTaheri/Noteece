@@ -1,7 +1,6 @@
 /// Peer Discovery Module
 /// Uses mDNS for discovering other Noteece devices on local network
 /// Enables zero-configuration pairing and synchronization
-
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
 use thiserror::Error;
@@ -220,11 +219,7 @@ mod tests {
 
     #[test]
     fn test_peer_discovery_creation() {
-        let discovery = PeerDiscovery::new(
-            "device123".to_string(),
-            "My Desktop".to_string(),
-            8765,
-        );
+        let discovery = PeerDiscovery::new("device123".to_string(), "My Desktop".to_string(), 8765);
 
         assert_eq!(discovery.device_id, "device123");
         assert_eq!(discovery.device_name, "My Desktop");
@@ -239,12 +234,8 @@ mod tests {
             "app_version=1.0.0".to_string(),
         ];
 
-        let device = PeerDiscovery::parse_txt_records(
-            "My Mobile",
-            "192.168.1.101",
-            8765,
-            &txt,
-        ).expect("Failed to parse TXT records");
+        let device = PeerDiscovery::parse_txt_records("My Mobile", "192.168.1.101", 8765, &txt)
+            .expect("Failed to parse TXT records");
 
         assert_eq!(device.device_id, "device456");
         assert_eq!(device.device_type, "mobile");
@@ -253,11 +244,7 @@ mod tests {
 
     #[test]
     fn test_register_service() {
-        let discovery = PeerDiscovery::new(
-            "device123".to_string(),
-            "My Desktop".to_string(),
-            8765,
-        );
+        let discovery = PeerDiscovery::new("device123".to_string(), "My Desktop".to_string(), 8765);
 
         let result = discovery.register_service();
         assert!(result.is_ok());
@@ -275,23 +262,19 @@ mod tests {
             app_version: "1.0.0".to_string(),
         };
 
-        let discovery = PeerDiscovery::new(
-            "device123".to_string(),
-            "My Desktop".to_string(),
-            8765,
-        );
+        let discovery = PeerDiscovery::new("device123".to_string(), "My Desktop".to_string(), 8765);
 
         // Mock check (in production would do actual connection check)
         assert!(!device.ip_address.is_empty());
         assert!(device.port > 0);
     }
 
-    #[test]
-    fn test_network_validator() {
-        let port_check = NetworkValidator::check_port_open(8765);
+    #[tokio::test]
+    async fn test_network_validator() {
+        let port_check = NetworkValidator::check_port_open(8765).await;
         assert!(port_check.is_ok());
 
-        let invalid_port = NetworkValidator::check_port_open(100);
+        let invalid_port = NetworkValidator::check_port_open(100).await;
         assert!(invalid_port.is_ok());
     }
 }

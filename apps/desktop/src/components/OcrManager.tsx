@@ -18,9 +18,9 @@ import {
   Modal,
   FileButton,
 } from '@mantine/core';
-import { invoke } from '@tauri-apps/api/core';
-import { open } from '@tauri-apps/plugin-dialog';
-import { IconUpload, IconSearch, IconCheck, IconX, IconClock, IconFile, IconTrash } from '@tabler/icons-react';
+import { invoke } from '@tauri-apps/api/tauri';
+import { open } from '@tauri-apps/api/dialog';
+import { IconUpload, IconSearch, IconCheck, IconX, IconClock, IconFile } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 
 interface OcrResult {
@@ -41,6 +41,7 @@ export function OcrManager() {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [language, setLanguage] = useState('eng');
   const [isUploading, setIsUploading] = useState(false);
+  const [manualFilePath, setManualFilePath] = useState('');
   const [currentStatus, setCurrentStatus] = useState<OcrResult | null>(null);
 
   // Search OCR text
@@ -98,28 +99,49 @@ export function OcrManager() {
     }
   };
 
-  // Process OCR for an uploaded image
-  const handleProcessOcr = async () => {
-    setIsUploading(true);
+  // Open file dialog to select image
+  const handleBrowseFile = async () => {
     try {
-      // For Tauri, we need to get the file path
-      // Open file dialog to select image
-      const filePath = await open({
+      const selected = await open({
         title: 'Select Image for OCR',
         multiple: false,
-        filters: [{
-          name: 'Images',
-          extensions: ['png', 'jpg', 'jpeg', 'tiff', 'bmp']
-        }]
+        filters: [
+          {
+            name: 'Images',
+            extensions: ['png', 'jpg', 'jpeg', 'tiff', 'bmp'],
+          },
+        ],
       });
 
-      if (!filePath) {
-        setIsUploading(false);
-        return;
+      if (selected && typeof selected === 'string') {
+        setManualFilePath(selected);
       }
+    } catch (error) {
+      notifications.show({
+        title: 'File Selection Failed',
+        message: String(error),
+        color: 'red',
+      });
+    }
+  };
+
+  // Process OCR for an uploaded image
+  const handleProcessOcr = async () => {
+    if (!manualFilePath.trim()) {
+      notifications.show({
+        title: 'File Path Required',
+        message: 'Please enter a valid file path or use Browse button to select a file',
+        color: 'yellow',
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const filePath = manualFilePath.trim();
 
       // Generate a unique blob ID
-      const blobId = `blob_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const blobId = `blob_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
       const result = await invoke<string>('process_ocr_cmd', {
         blobId,
@@ -138,6 +160,7 @@ export function OcrManager() {
           message: 'Successfully extracted text from image',
           color: 'green',
         });
+        setManualFilePath(''); // Clear file path on success
         setUploadModalOpen(false);
       } else if (status.status === 'failed') {
         notifications.show({
@@ -207,19 +230,16 @@ export function OcrManager() {
               Extract text from images using Tesseract OCR
             </Text>
           </Box>
-          <Button
-            leftSection={<IconUpload size={16} />}
-            onClick={() => setUploadModalOpen(true)}
-          >
+          <Button leftSection={<IconUpload size={16} />} onClick={() => setUploadModalOpen(true)}>
             Process Image
           </Button>
         </Group>
 
         {/* Info Alert */}
         <Alert color="blue" title="About OCR">
-          OCR (Optical Character Recognition) extracts text from images. Upload images containing text
-          (documents, screenshots, photos) to make them searchable. Supported formats: PNG, JPG, TIFF, BMP.
-          Requires Tesseract to be installed on your system.
+          OCR (Optical Character Recognition) extracts text from images. Upload images containing text (documents,
+          screenshots, photos) to make them searchable. Supported formats: PNG, JPG, TIFF, BMP. Requires Tesseract to be
+          installed on your system.
         </Alert>
 
         {/* Current Status */}
@@ -283,7 +303,7 @@ export function OcrManager() {
             {searchResults.length > 0 && (
               <Box>
                 <Text size="sm" c="dimmed" mb="sm">
-                  Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
+                  Found {searchResults.length} result{searchResults.length === 1 ? '' : 's'}
                 </Text>
                 <Table striped highlightOnHover>
                   <Table.Thead>
@@ -302,22 +322,18 @@ export function OcrManager() {
                         <Table.Td>{getStatusBadge(result.status)}</Table.Td>
                         <Table.Td>
                           <Text size="xs" style={{ fontFamily: 'monospace' }}>
-                            {result.blob_id.substring(0, 12)}...
+                            {result.blob_id.slice(0, 12)}...
                           </Text>
                         </Table.Td>
                         <Table.Td>{result.language || 'N/A'}</Table.Td>
-                        <Table.Td>
-                          {result.confidence ? `${(result.confidence * 100).toFixed(1)}%` : 'N/A'}
-                        </Table.Td>
+                        <Table.Td>{result.confidence ? `${(result.confidence * 100).toFixed(1)}%` : 'N/A'}</Table.Td>
                         <Table.Td>
                           <Text size="sm" lineClamp={2}>
-                            {result.text ? result.text.substring(0, 100) + '...' : 'No text'}
+                            {result.text ? result.text.slice(0, 100) + '...' : 'No text'}
                           </Text>
                         </Table.Td>
                         <Table.Td>
-                          {result.processed_at
-                            ? new Date(result.processed_at * 1000).toLocaleString()
-                            : 'Pending'}
+                          {result.processed_at ? new Date(result.processed_at * 1000).toLocaleString() : 'Pending'}
                         </Table.Td>
                       </Table.Tr>
                     ))}
@@ -336,9 +352,29 @@ export function OcrManager() {
           size="md"
         >
           <Stack gap="md">
-            <Alert color="blue">
-              Select an image file to extract text. Supported formats: PNG, JPG, JPEG, TIFF, BMP
+            <Alert color="blue" title="File Selection">
+              Click Browse to select an image file or enter the path manually. Supported formats: PNG, JPG, JPEG, TIFF, BMP
             </Alert>
+
+            <Group align="flex-end" gap="sm">
+              <Box style={{ flex: 1 }}>
+                <TextInput
+                  label="Image File Path"
+                  description="Full path to the image file"
+                  value={manualFilePath}
+                  onChange={(e) => setManualFilePath(e.target.value)}
+                  placeholder="/path/to/image.png"
+                  required
+                />
+              </Box>
+              <Button
+                onClick={handleBrowseFile}
+                variant="default"
+                leftSection={<IconFile size={16} />}
+              >
+                Browse
+              </Button>
+            </Group>
 
             <TextInput
               label="Language Code"
@@ -360,11 +396,7 @@ export function OcrManager() {
               <Button variant="default" onClick={() => setUploadModalOpen(false)}>
                 Cancel
               </Button>
-              <Button
-                onClick={handleProcessOcr}
-                loading={isUploading}
-                leftSection={<IconUpload size={16} />}
-              >
+              <Button onClick={handleProcessOcr} loading={isUploading} leftSection={<IconUpload size={16} />}>
                 Process Image
               </Button>
             </Group>

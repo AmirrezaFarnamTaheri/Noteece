@@ -4,7 +4,6 @@
 /// Each device maintains a clock that increments for local events
 /// and tracks seen versions from all other devices.
 /// This enables detecting concurrent, causally dependent, and conflicting updates.
-
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

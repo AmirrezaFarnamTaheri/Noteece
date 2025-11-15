@@ -281,12 +281,12 @@ class ShareViewController: UIViewController {
   // Write files
   fs.writeFileSync(
     path.join(targetPath, "ShareViewController.swift"),
-    shareViewControllerContent
+    shareViewControllerContent,
   );
   fs.writeFileSync(path.join(targetPath, "Info.plist"), infoPlistContent);
   fs.writeFileSync(
     path.join(targetPath, "MainInterface.storyboard"),
-    storyboardContent
+    storyboardContent,
   );
 
   console.log("✅ iOS Share Extension files created");
@@ -337,7 +337,7 @@ function withShareExtensionAndroid(config) {
 
     // Remove existing share activity if present
     mainApplication.activity = mainApplication.activity.filter(
-      (activity) => activity.$["android:name"] !== ".ShareActivity"
+      (activity) => activity.$["android:name"] !== ".ShareActivity",
     );
 
     // Add share activity
@@ -355,7 +355,7 @@ function withShareExtensionAndroid(config) {
       const activityPath = path.join(
         androidRoot,
         "app/src/main/java",
-        packagePath
+        packagePath,
       );
 
       // Create directory if it doesn't exist

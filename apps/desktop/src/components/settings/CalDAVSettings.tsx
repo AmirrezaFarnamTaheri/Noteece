@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import {
   Container,
   Title,
@@ -22,6 +22,7 @@ import {
   Table,
 } from '@mantine/core';
 import { IconPlus, IconRefresh, IconTrash, IconCheck, IconAlertCircle, IconClock } from '@tabler/icons-react';
+import logger from '../../utils/logger';
 
 interface CalDavAccount {
   id: string;
@@ -53,10 +54,10 @@ const CalDAVSettings: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [modalOpened, setModalOpened] = useState(false);
   const [syncing, setSyncing] = useState<string | null>(null);
-  const syncingMapRef = React.useRef<Set<string>>(new Set());
+  const syncingMapReference = React.useRef<Set<string>>(new Set());
 
   // Safe number parser to prevent NaN in UI
-  const safeNum = (v: unknown): number => {
+  const safeNumber = (v: unknown): number => {
     const n = typeof v === 'number' ? v : Number(v);
     return Number.isFinite(n) && n >= 0 ? n : 0;
   };
@@ -77,7 +78,7 @@ const CalDAVSettings: React.FC = () => {
       const result = await invoke<CalDavAccount[]>('get_caldav_accounts_cmd');
       setAccounts(result);
     } catch (error) {
-      console.error('Failed to load CalDAV accounts:', error);
+      logger.error('Failed to load CalDAV accounts:', error as Error);
     } finally {
       setLoading(false);
     }
@@ -100,46 +101,43 @@ const CalDAVSettings: React.FC = () => {
 
       await loadAccounts();
     } catch (error) {
-      console.error('Failed to add account:', error);
+      logger.error('Failed to add account:', error as Error);
       alert(`Failed to add account: ${String(error)}`);
     }
   };
 
   const syncAccount = async (accountId: string) => {
     // Per-account locking to allow different accounts to sync concurrently
-    if (syncingMapRef.current.has(accountId)) {
+    if (syncingMapReference.current.has(accountId)) {
       return;
     }
-    syncingMapRef.current.add(accountId);
+    syncingMapReference.current.add(accountId);
     setSyncing(accountId);
     try {
       const result = await invoke<Partial<SyncResult>>('sync_caldav_account_cmd', { accountId });
 
       const success = Boolean(result?.success);
-      const pulled = safeNum(result?.events_pulled);
-      const pushed = safeNum(result?.events_pushed);
-      const conflicts = safeNum(result?.conflicts);
-      const errors = Array.isArray(result?.errors) ? (result!.errors as string[]) : [];
+      const pulled = safeNumber(result?.events_pulled);
+      const pushed = safeNumber(result?.events_pushed);
+      const conflicts = safeNumber(result?.conflicts);
+      const errors = Array.isArray(result?.errors) ? result.errors : [];
 
       if (success) {
         alert(
-          `Sync completed:\n` +
-            `Pulled: ${pulled} events\n` +
-            `Pushed: ${pushed} events\n` +
-            `Conflicts: ${conflicts}`
+          `Sync completed:\n` + `Pulled: ${pulled} events\n` + `Pushed: ${pushed} events\n` + `Conflicts: ${conflicts}`,
         );
       } else {
-        const errorMsg = errors.length ? errors.join(', ') : 'Unknown error';
-        alert(`Sync failed: ${errorMsg}`);
+        const errorMessage = errors.length > 0 ? errors.join(', ') : 'Unknown error';
+        alert(`Sync failed: ${errorMessage}`);
       }
 
       await loadAccounts();
-    } catch (e) {
-      alert(`Sync failed: ${String(e)}`);
+    } catch (error) {
+      alert(`Sync failed: ${String(error)}`);
     } finally {
-      syncingMapRef.current.delete(accountId);
+      syncingMapReference.current.delete(accountId);
       // Clear global spinner only if this account is the one shown
-      setSyncing((curr) => (curr === accountId ? null : curr));
+      setSyncing((current) => (current === accountId ? null : current));
     }
   };
 
@@ -152,7 +150,7 @@ const CalDAVSettings: React.FC = () => {
       await invoke('delete_caldav_account_cmd', { accountId });
       await loadAccounts();
     } catch (error) {
-      console.error('Failed to delete account:', error);
+      logger.error('Failed to delete account:', error as Error);
     }
   };
 

@@ -21,7 +21,12 @@ export function SkeletonListItem({
   return (
     <View style={styles.listItem}>
       {showAvatar && (
-        <SkeletonBox width={48} height={48} borderRadius={24} style={styles.avatar} />
+        <SkeletonBox
+          width={48}
+          height={48}
+          borderRadius={24}
+          style={styles.avatar}
+        />
       )}
       <View style={styles.content}>
         {Array.from({ length: lines }).map((_, index) => (

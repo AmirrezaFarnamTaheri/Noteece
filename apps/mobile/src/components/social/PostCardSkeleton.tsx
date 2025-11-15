@@ -28,7 +28,7 @@ function SkeletonItem() {
           duration: 1000,
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
 
     loopAnim.start();

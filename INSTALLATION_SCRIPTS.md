@@ -6,38 +6,43 @@ This document provides comprehensive instructions for using the automated instal
 
 Three installation scripts are provided for maximum platform compatibility:
 
-| Script | Platform | Shell | Requirements |
-|--------|----------|-------|--------------|
-| `install.sh` | macOS, Linux | Bash | Bash 4.0+, sudo access (for package installation) |
-| `install.bat` | Windows | Command Prompt (cmd.exe) | Windows 10+, Administrator privileges |
-| `install.ps1` | Windows | PowerShell | PowerShell 5.0+, Administrator privileges |
+| Script        | Platform     | Shell                    | Requirements                                      |
+| ------------- | ------------ | ------------------------ | ------------------------------------------------- |
+| `install.sh`  | macOS, Linux | Bash                     | Bash 4.0+, sudo access (for package installation) |
+| `install.bat` | Windows      | Command Prompt (cmd.exe) | Windows 10+, Administrator privileges             |
+| `install.ps1` | Windows      | PowerShell               | PowerShell 5.0+, Administrator privileges         |
 
 ## Features
 
 All installation scripts provide:
 
 ✅ **System Requirements Verification**
+
 - Node.js 18.0.0+
 - Rust 1.70.0+
 - pnpm 8.0.0+
 - Git 2.0.0+
 
 ✅ **Automatic Dependency Installation**
+
 - Detects missing dependencies
 - Installs via appropriate package manager (Homebrew, apt, dnf, Chocolatey, etc.)
 - Configures Rust toolchains and targets
 
 ✅ **Repository Setup**
+
 - Installs Node.js dependencies via pnpm
 - Sets up Rust workspace
 - Creates environment configuration (.env)
 
 ✅ **Testing (Optional)**
+
 - Runs comprehensive test suites
 - Validates extractors, E2E flows, and performance
 - Provides detailed test output
 
 ✅ **Building (Optional)**
+
 - Builds for target platforms (macOS, Windows, Linux)
 - Creates installation packages
 - Generates distribution artifacts
@@ -64,12 +69,14 @@ bash install.sh --only-setup    # Only setup, no tests or build
 ### Step-by-Step Walkthrough
 
 #### 1. Download the Repository
+
 ```bash
 git clone https://github.com/AmirrezaFarnamTaheri/Noteece.git
 cd Noteece
 ```
 
 #### 2. Run the Installation Script
+
 ```bash
 bash install.sh
 ```
@@ -77,6 +84,7 @@ bash install.sh
 #### 3. What the Script Does
 
 **System Detection** (30 seconds)
+
 ```
 Operating System: macOS (or Linux)
 Architecture: arm64 (or x86_64)
@@ -84,18 +92,21 @@ Architecture: arm64 (or x86_64)
 
 **Dependency Checking** (30 seconds)
 The script checks for:
+
 - Node.js (required: 18+)
 - Rust (required: 1.70+)
 - pnpm (required: 8+)
 - Git (required: 2+)
 
 **Installation** (varies)
+
 - If dependencies are missing, they're installed automatically
 - On macOS: Uses Homebrew
 - On Linux: Uses apt (Ubuntu/Debian) or dnf (Fedora/RHEL)
 - Installs Rust targets for your platform
 
 **Repository Setup** (2-3 minutes)
+
 ```
 Installing Node dependencies...
 Setting up Rust workspace...
@@ -103,6 +114,7 @@ Creating .env configuration...
 ```
 
 **Running Tests** (5-10 minutes) - if not skipped
+
 ```
 Running all tests...
 PASS extractors.test.ts (90+ tests)
@@ -113,6 +125,7 @@ Tests: 180+ passed, 180+ total
 ```
 
 **Building** (10-20 minutes) - if not skipped
+
 ```
 Building desktop application...
 Building macOS (Intel x86_64)...  [if on Intel Mac]
@@ -122,6 +135,7 @@ Collecting build artifacts...
 ```
 
 **Artifacts Generated**
+
 ```
 Generated 5 artifacts in ./dist/
 - Noteece.dmg (macOS)
@@ -146,6 +160,7 @@ bash install.sh --only-setup
 ### Troubleshooting on macOS/Linux
 
 #### "Node version too old"
+
 ```bash
 # Update Node.js
 nvm install 18
@@ -156,6 +171,7 @@ brew install node
 ```
 
 #### "Rust not found"
+
 ```bash
 # Install Rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -163,12 +179,14 @@ source $HOME/.cargo/env
 ```
 
 #### "pnpm not found"
+
 ```bash
 # Install pnpm globally
 npm install -g pnpm@8
 ```
 
 #### "Permission denied" on build
+
 ```bash
 # Ensure correct permissions
 chmod +x install.sh
@@ -178,6 +196,7 @@ bash install.sh
 ```
 
 #### Build fails on macOS
+
 ```bash
 # Install Xcode Command Line Tools
 xcode-select --install
@@ -187,6 +206,7 @@ rustup target add x86_64-apple-darwin aarch64-apple-darwin
 ```
 
 #### Tests fail
+
 ```bash
 # Clear cache and try again
 rm -rf node_modules pnpm-lock.yaml
@@ -202,9 +222,11 @@ bash install.sh
 Windows users have two options for running the installation script:
 
 #### Option 1: PowerShell (Recommended)
+
 PowerShell version provides better error handling and colored output.
 
 #### Option 2: Command Prompt
+
 Traditional batch script for compatibility.
 
 Choose based on your preference - both accomplish the same goal.
@@ -242,12 +264,14 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ### Full Installation Process
 
 #### 1. Clone Repository
+
 ```powershell
 git clone https://github.com/AmirrezaFarnamTaheri/Noteece.git
 cd Noteece
 ```
 
 #### 2. Run as Administrator
+
 - Right-click PowerShell
 - Select "Run as Administrator"
 - Paste: `.\install.ps1`
@@ -255,6 +279,7 @@ cd Noteece
 #### 3. Installation Stages
 
 **System Detection**
+
 ```
 Operating System: Windows 11 (or Windows 10)
 Architecture: x86_64 (or ARM64)
@@ -262,6 +287,7 @@ Computer: YOUR-COMPUTER-NAME
 ```
 
 **Dependency Checking** (1 minute)
+
 ```
 [✓] Node.js 18.5.0
 [✓] Rust 1.72.0
@@ -270,12 +296,14 @@ Computer: YOUR-COMPUTER-NAME
 ```
 
 **Dependency Installation** (5-10 minutes)
+
 - If Chocolatey not found: Installs Chocolatey
 - Installs missing dependencies via Chocolatey
 - Configures Rust and Visual C++ toolchain
 - Refreshes environment variables
 
 **Repository Setup** (2-3 minutes)
+
 ```
 [✓] Project directory: C:\Users\YourName\Noteece
 [✓] Node dependencies installed
@@ -283,6 +311,7 @@ Computer: YOUR-COMPUTER-NAME
 ```
 
 **Configuration** (30 seconds)
+
 ```
 [✓] .env file created with defaults
 Database path: %USERPROFILE%\.noteece\data
@@ -290,6 +319,7 @@ Backup path: %USERPROFILE%\.noteece\backups
 ```
 
 **Testing** (5-10 minutes) - if not skipped
+
 ```
 [*] Running Test Suite
 Running all tests...
@@ -297,6 +327,7 @@ Running all tests...
 ```
 
 **Building** (10-20 minutes) - if not skipped
+
 ```
 [*] Building Noteece
 Building Windows (x86_64)...
@@ -320,17 +351,20 @@ Building Windows (x86_64)...
 ### Troubleshooting PowerShell
 
 #### "Running scripts is disabled"
+
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
 #### "Must run as Administrator"
+
 ```powershell
 # Right-click PowerShell → "Run as Administrator"
 # Then run: .\install.ps1
 ```
 
 #### Chocolatey installation fails
+
 ```powershell
 # Install Chocolatey manually:
 Set-ExecutionPolicy Bypass -Scope Process -Force
@@ -339,6 +373,7 @@ iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocola
 ```
 
 #### Build fails - Visual C++ not found
+
 ```powershell
 # Download Visual Studio Build Tools
 # https://visualstudio.microsoft.com/downloads/
@@ -405,6 +440,7 @@ install.bat --only-setup
 ### Batch Troubleshooting
 
 #### "Access denied"
+
 ```cmd
 # Right-click Command Prompt
 # Select "Run as Administrator"
@@ -412,6 +448,7 @@ install.bat --only-setup
 ```
 
 #### Chocolatey installation fails
+
 ```cmd
 REM Install manually from: https://chocolatey.org/install
 REM Then run: install.bat
@@ -424,6 +461,7 @@ REM Then run: install.bat
 ### Check Installation Success
 
 #### macOS/Linux
+
 ```bash
 # Verify versions
 node --version    # Should be 18.0.0+
@@ -440,6 +478,7 @@ ls -la dist/
 ```
 
 #### Windows (PowerShell)
+
 ```powershell
 # Verify versions
 node --version    # Should be 18.0.0+
@@ -503,6 +542,7 @@ pnpm build -- --target x86_64-unknown-linux-gnu # Linux
 ### Configuration
 
 Edit `.env` for custom settings:
+
 ```env
 NOTEECE_SERVER_PORT=8765
 NOTEECE_DB_PATH=~/.noteece/data
@@ -542,21 +582,22 @@ NOTEECE_VERSION=1.0.0
 
 ### Estimated Installation Times
 
-| Step | Duration | Notes |
-|------|----------|-------|
-| System Detection | 30s | Fast |
-| Dependency Check | 1m | Depends on system state |
-| Installation | 5-15m | Depends on missing packages |
-| Node Setup | 2-3m | pnpm install |
-| Rust Setup | 1-2m | Fetching dependencies |
-| Configuration | 1m | Creating .env |
-| Testing | 5-10m | If --skip-tests not used |
-| Building | 10-20m | If --skip-build not used |
-| **Total** | **30-75m** | Varies by options and system |
+| Step             | Duration   | Notes                        |
+| ---------------- | ---------- | ---------------------------- |
+| System Detection | 30s        | Fast                         |
+| Dependency Check | 1m         | Depends on system state      |
+| Installation     | 5-15m      | Depends on missing packages  |
+| Node Setup       | 2-3m       | pnpm install                 |
+| Rust Setup       | 1-2m       | Fetching dependencies        |
+| Configuration    | 1m         | Creating .env                |
+| Testing          | 5-10m      | If --skip-tests not used     |
+| Building         | 10-20m     | If --skip-build not used     |
+| **Total**        | **30-75m** | Varies by options and system |
 
 ### Speed Tips
 
 For faster installation:
+
 ```bash
 # Skip tests (fastest setup)
 bash install.sh --only-setup
@@ -575,6 +616,7 @@ bash install.sh
 ### Common Issues
 
 **"Command not found"** (macOS/Linux)
+
 ```bash
 # Make script executable
 chmod +x install.sh
@@ -584,6 +626,7 @@ bash install.sh
 ```
 
 **Script not found** (Windows)
+
 ```powershell
 # Verify you're in the project directory
 Get-Location  # Should be C:\path\to\Noteece
@@ -593,6 +636,7 @@ Get-Location  # Should be C:\path\to\Noteece
 ```
 
 **Permission errors** (All platforms)
+
 ```bash
 # macOS/Linux: Use sudo if needed
 sudo bash install.sh

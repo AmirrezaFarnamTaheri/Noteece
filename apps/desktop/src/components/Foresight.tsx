@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import {
   Container,
   Title,
@@ -26,6 +26,7 @@ import {
   IconTarget,
   IconTrendingUp,
 } from '@tabler/icons-react';
+import logger from '../utils/logger';
 
 interface Insight {
   id: string;
@@ -70,7 +71,7 @@ const Foresight: React.FC = () => {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedInsights, setExpandedInsights] = useState<Set<string>>(new Set());
-  const executingRef = React.useRef(false);
+  const executingReference = React.useRef(false);
 
   useEffect(() => {
     void loadInsights();
@@ -82,7 +83,7 @@ const Foresight: React.FC = () => {
       const result = await invoke<Insight[]>('get_active_insights_cmd', { limit: 20 });
       setInsights(result);
     } catch (error) {
-      console.error('Failed to load insights:', error);
+      logger.error('Failed to load insights:', error as Error);
     } finally {
       setLoading(false);
     }
@@ -97,18 +98,18 @@ const Foresight: React.FC = () => {
         actionType: null,
         feedbackType: 'dismissed',
       });
-      setInsights((prev) => prev.filter((item) => item.id !== insightId));
+      setInsights((previous) => previous.filter((item) => item.id !== insightId));
     } catch (error) {
-      console.error('Failed to dismiss insight:', error);
+      logger.error('Failed to dismiss insight:', error as Error);
     }
   };
 
   const executeAction = async (insight: Insight, action: SuggestedAction) => {
     // Re-entrancy guard using ref to prevent duplicate execution
-    if (executingRef.current) return;
-    executingRef.current = true;
+    if (executingReference.current) return;
+    executingReference.current = true;
     try {
-      const requireParam = (key: string) => {
+      const requireParameter = (key: string) => {
         const v = action.parameters?.[key];
         if (v === undefined || v === null || v === '') {
           throw new Error(`Missing required parameter: ${key}`);
@@ -119,8 +120,8 @@ const Foresight: React.FC = () => {
       // Validate ID format to prevent injection attacks
       const assertId = (id: string, name: string) => {
         // Accept ULID (26 chars) or UUID format
-        const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-        const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        const ULID_RE = /^[\da-hjkmnp-tv-z]{26}$/i;
+        const UUID_RE = /^[\da-f]{8}-[\da-f]{4}-[1-5][\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/i;
         if (!(ULID_RE.test(id) || UUID_RE.test(id))) {
           throw new Error(`Invalid ${name} format`);
         }
@@ -129,16 +130,17 @@ const Foresight: React.FC = () => {
       // Perform non-navigational work first
       switch (action.action_type) {
         case 'generate_weekly_review': {
-          const spaceId = requireParam('space_id');
+          const spaceId = requireParameter('space_id');
           await invoke('generate_weekly_review_cmd', { spaceId });
           break;
         }
         case 'schedule_focus': {
-          console.log('Scheduling focus block:', action.parameters);
+          logger.info('Scheduling focus block');
           break;
         }
-        default:
+        default: {
           break;
+        }
       }
 
       // Record feedback
@@ -150,25 +152,25 @@ const Foresight: React.FC = () => {
       });
 
       // Optimistically update local UI first
-      setInsights((prev) => prev.filter((i) => i.id !== insight.id));
+      setInsights((previous) => previous.filter((index) => index.id !== insight.id));
 
       // Ensure dismiss is sent before navigating away
       try {
         await invoke('dismiss_insight_cmd', { insightId: insight.id });
-      } catch (e) {
-        console.error('Failed to dismiss insight:', e);
+      } catch (error) {
+        logger.error('Failed to dismiss insight:', error as Error);
       }
 
       // Navigate last, using assign to avoid bfcache issues
       switch (action.action_type) {
         case 'open_task': {
-          const taskId = requireParam('task_id');
+          const taskId = requireParameter('task_id');
           assertId(taskId, 'task_id');
           window.location.assign(`/tasks/${encodeURIComponent(taskId)}`);
           break;
         }
         case 'review_project': {
-          const projectId = requireParam('project_id');
+          const projectId = requireParameter('project_id');
           assertId(projectId, 'project_id');
           window.location.assign(`/projects/${encodeURIComponent(projectId)}`);
           break;
@@ -185,14 +187,15 @@ const Foresight: React.FC = () => {
           window.location.assign('/notes');
           break;
         }
-        default:
+        default: {
           break;
+        }
       }
     } catch (error) {
-      console.error('Failed to execute action:', error);
+      logger.error('Failed to execute action:', error as Error);
       alert(String(error));
     } finally {
-      executingRef.current = false;
+      executingReference.current = false;
     }
   };
 

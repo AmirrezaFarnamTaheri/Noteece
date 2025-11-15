@@ -220,11 +220,11 @@ For detailed setup instructions, see the [Developer Guide](DEVELOPER_GUIDE.md).
 
 Noteece is a monorepo that contains the following packages:
 
-- `apps/desktop`: The Tauri v2-based desktop application with React, TypeScript, and Mantine UI
+- `apps/desktop`: The Tauri v1-based desktop application with React, TypeScript, and Mantine UI
 - `apps/mobile`: The React Native/Expo mobile application - **FULLY IMPLEMENTED** with complete feature parity
 - `packages/core-rs`: The Rust core that contains the application's business logic
 - `packages/editor`: The Lexical-based rich text editor
-- `packages/ui`: Shared UI components built with Mantine v7
+- `packages/ui`: Shared UI components built with Mantine v8
 - `packages/types`: Shared TypeScript types for the frontend and backend
 - `packages/locale`: Internationalization support (planned)
 - `packages/modes`: Mode system definitions and templates
@@ -232,8 +232,8 @@ Noteece is a monorepo that contains the following packages:
 
 ### Technology Stack
 
-- **Frontend**: React 18, TypeScript, Mantine v7, React Query, Lexical Editor
-- **Backend**: Rust, Tauri v2, SQLCipher, rusqlite
+- **Frontend**: React 18, TypeScript, Mantine v8, React Query v5, Lexical Editor
+- **Backend**: Rust, Tauri v1, SQLCipher, rusqlite
 - **Build System**: Turborepo, pnpm workspaces, Vite
 - **Cryptography**: Argon2id, XChaCha20-Poly1305
 - **State Management**: Zustand, React Query
@@ -273,6 +273,10 @@ Noteece is currently in **active development**. The following phases have been c
 - ✅ **Phase 5**: Advanced Integration (Complete - OCR, CalDAV, Sync Status, User Management)
 
 **Current Status**: 🎉 **All core features 100% complete** - Desktop app production-ready, mobile app ready for deployment, all sync and collaboration features fully functional.
+
+> 📋 **[Final Cleanup Report](docs/FINAL_CLEANUP_REPORT.md)** - Comprehensive report on all bug fixes, CI/CD improvements, and production readiness validation (November 2025)
+>
+> 📊 **[Code Quality Report](docs/CODE_QUALITY_REPORT.md)** - Complete codebase analysis with quality metrics, security review, and production readiness checklist (November 2025)
 
 ### Recent Updates (November 2025)
 
@@ -397,6 +401,7 @@ For more details, see the [Security Architecture](DEVELOPER_GUIDE.md#security-ar
 ### Completed in November 2025 🎉
 
 **Session 1: CalDAV Commands & OCR UI**
+
 - ✅ **OCR Integration (100%)** - Complete text extraction system
   - Full frontend UI (OcrManager.tsx - 362 lines)
   - Image upload and text extraction via Tesseract
@@ -411,6 +416,7 @@ For more details, see the [Security Architecture](DEVELOPER_GUIDE.md#security-ar
   - Fixed enum type mappings (SyncDirection, ConflictResolution)
 
 **Session 2: Sync Status & User Management Backend**
+
 - ✅ **Sync Status Backend** - Complete database and operations
   - 4 database tables (sync_state, sync_history, sync_conflict, sync_vector_clock)
   - Device discovery and registration
@@ -433,6 +439,7 @@ For more details, see the [Security Architecture](DEVELOPER_GUIDE.md#security-ar
   - Suspend/activate functionality
 
 **Session 3: User Management UI Integration**
+
 - ✅ **User Management Frontend (100%)** - Complete RBAC UI
   - 12 Tauri commands exposing full RBAC
   - Complete UI rewrite with React Query (752 lines)
@@ -444,6 +451,7 @@ For more details, see the [Security Architecture](DEVELOPER_GUIDE.md#security-ar
   - Success/error notifications
 
 **Session 4: CalDAV WebDAV Protocol**
+
 - ✅ **CalDAV Integration (100%)** - Full CalDAV/WebDAV protocol
   - Real HTTP operations (REPORT, PUT, DELETE)
   - iCalendar parsing via ical crate
@@ -458,6 +466,7 @@ For more details, see the [Security Architecture](DEVELOPER_GUIDE.md#security-ar
 ### Future Enhancements 📋
 
 **Automation DSL (2-3 weeks)**
+
 - JavaScript-based automation system with QuickJS runtime
 - Trigger system (cron scheduling, event hooks, manual triggers)
 - API bindings for notes, tasks, templates, calendar
@@ -465,12 +474,14 @@ For more details, see the [Security Architecture](DEVELOPER_GUIDE.md#security-ar
 - Sandboxed execution with permission system
 
 **Additional CalDAV Features**
+
 - Recurring events support (RRULE parsing)
 - Push sync for local changes (bidirectional completion)
 - VTODO support for task synchronization
 - Incremental sync with sync-token
 
 **Quality of Life**
+
 - Comprehensive automated test suite
 - Performance optimization passes
 - Additional import/export formats
@@ -506,6 +517,7 @@ With all core features 100% complete, the next steps are:
    - User feedback integration
    - Additional integrations
    - Performance improvements
+
 - Plugin system
 - Apple Watch companion app
 - Voice command integration (Siri Shortcuts, Google Assistant)

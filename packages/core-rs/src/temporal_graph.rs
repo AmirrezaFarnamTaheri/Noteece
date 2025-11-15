@@ -192,28 +192,18 @@ pub fn build_current_graph(
     // Exclude self-links to maintain graph integrity
     let stable_space_id = space_id.to_string();
 
-    let backlink_rows_result = conn
-        .prepare(
-            "SELECT id, from_note_id, to_note_id, created_at
+    // Try to query with space_id column first
+    let mut use_join = false;
+    let mut stmt_result = conn.prepare(
+        "SELECT id, from_note_id, to_note_id, created_at
          FROM note_link
          WHERE space_id = ?1 AND from_note_id != to_note_id",
-        )
-        .and_then(|mut stmt| {
-            stmt.query_map([&stable_space_id], |row| {
-                Ok(GraphEdge {
-                    id: row.get(0)?,
-                    source_id: row.get(1)?,
-                    target_id: row.get(2)?,
-                    edge_type: "backlink".to_string(),
-                    created_at: row.get(3)?,
-                    weight: 1.0,
-                })
-            })
-        });
+    );
 
-    // If note_link lacks space_id column, use JOIN-based filtering with self-link exclusion
-    let backlink_rows = if backlink_rows_result.is_err() {
-        let mut backlink_stmt = conn.prepare(
+    if stmt_result.is_err() {
+        // If note_link lacks space_id column, use JOIN-based filtering with self-link exclusion
+        use_join = true;
+        stmt_result = conn.prepare(
             "SELECT nl.id, nl.from_note_id, nl.to_note_id, nl.created_at
              FROM note_link nl
              LEFT JOIN note n1 ON n1.id = nl.from_note_id
@@ -221,20 +211,20 @@ pub fn build_current_graph(
              WHERE n1.space_id = ?1
                AND n2.space_id = ?1
                AND nl.from_note_id != nl.to_note_id",
-        )?;
-        backlink_stmt.query_map([&stable_space_id], |row| {
-            Ok(GraphEdge {
-                id: row.get(0)?,
-                source_id: row.get(1)?,
-                target_id: row.get(2)?,
-                edge_type: "backlink".to_string(),
-                created_at: row.get(3)?,
-                weight: 1.0,
-            })
-        })?
-    } else {
-        backlink_rows_result?
-    };
+        );
+    }
+
+    let mut stmt = stmt_result?;
+    let backlink_rows = stmt.query_map([&stable_space_id], |row| {
+        Ok(GraphEdge {
+            id: row.get(0)?,
+            source_id: row.get(1)?,
+            target_id: row.get(2)?,
+            edge_type: "backlink".to_string(),
+            created_at: row.get(3)?,
+            weight: 1.0,
+        })
+    })?;
 
     for edge in backlink_rows {
         edges.push(edge?);

@@ -38,6 +38,7 @@ When a user shares content from another app (Safari, Twitter, Instagram, etc.):
 9. User taps item to process or dismiss
 
 **Supported Content Types:**
+
 - URLs (web links, social media posts)
 - Plain text
 - Images (up to 5)
@@ -56,6 +57,7 @@ When a user shares content from another app:
 8. User taps item to process or dismiss
 
 **Supported Content Types:**
+
 - Text (plain text, shared text)
 - Images (single or multiple)
 
@@ -74,9 +76,7 @@ The share extension is configured automatically via the Expo config plugin:
 ```json
 {
   "expo": {
-    "plugins": [
-      "./plugins/withShareExtension.js"
-    ]
+    "plugins": ["./plugins/withShareExtension.js"]
   }
 }
 ```
@@ -107,6 +107,7 @@ eas build --profile production --platform android
 ```
 
 The plugin automatically:
+
 - Creates `ShareActivity.kt` in the app package
 - Adds intent filters to `AndroidManifest.xml`
 - Configures share target for text and images
@@ -125,6 +126,7 @@ The plugin automatically:
 8. Shared content banner should appear at top
 
 **Troubleshooting:**
+
 - If extension doesn't appear: Check App Groups entitlement in Xcode
 - If content not appearing: Check UserDefaults with key `sharedItems`
 - View logs in Xcode for debugging
@@ -141,6 +143,7 @@ The plugin automatically:
 8. Shared content banner should appear at top
 
 **Troubleshooting:**
+
 - If Noteece doesn't appear: Check AndroidManifest.xml has ShareActivity
 - If content not appearing: Check SharedPreferences with `adb`
 - View logs with `adb logcat -s ReactNativeJS ShareActivity`
@@ -168,6 +171,7 @@ Social Database
 ### Native Storage
 
 **iOS (App Group):**
+
 ```swift
 let appGroupId = "group.com.noteece.app.social"
 let userDefaults = UserDefaults(suiteName: appGroupId)
@@ -175,6 +179,7 @@ userDefaults.set(sharedItems, forKey: "sharedItems")
 ```
 
 **Android (SharedPreferences):**
+
 ```kotlin
 val prefs = getSharedPreferences("noteece_shared_items", Context.MODE_PRIVATE)
 prefs.edit().putString("items", itemsJson).apply()
@@ -196,6 +201,7 @@ Shared items are stored in AsyncStorage as JSON:
 ```
 
 Items are:
+
 - Added when read from native storage
 - Marked as processed when user taps "Process"
 - Cleaned up after 24 hours
@@ -215,9 +221,10 @@ The current implementation uses a **placeholder pattern** for native module acce
 To complete the implementation:
 
 1. **Create Native Module** for reading App Group/SharedPreferences:
+
    ```typescript
    // Future API
-   import { SharedStorage } from './native-modules/SharedStorage';
+   import { SharedStorage } from "./native-modules/SharedStorage";
    const items = await SharedStorage.getItems();
    ```
 
@@ -276,10 +283,10 @@ Shared content respects the biometric lock setting:
 
 ```typescript
 const {
-  hasSharedContent,  // boolean: Are there unprocessed items?
-  sharedItems,       // SharedItem[]: Array of pending items
-  processItems,      // (timestamps: number[]) => Promise<void>
-  refresh,           // () => Promise<void>: Reload from native storage
+  hasSharedContent, // boolean: Are there unprocessed items?
+  sharedItems, // SharedItem[]: Array of pending items
+  processItems, // (timestamps: number[]) => Promise<void>
+  refresh, // () => Promise<void>: Reload from native storage
 } = useSharedContent();
 ```
 

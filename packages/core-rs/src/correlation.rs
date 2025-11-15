@@ -258,7 +258,7 @@ impl CorrelationEngine {
             Some(Correlation {
                 correlation_type: CorrelationType::FinanceTasks,
                 strength: budget_pressure,
-                entities: spending_tasks.iter().map(|t| t.id.clone()).collect(),
+                entities: spending_tasks.iter().map(|t| t.id.to_string()).collect(),
                 pattern_description: format!(
                     "Budget at {}% with {} pending purchase tasks",
                     (budget_pressure * 100.0).round(),
@@ -509,7 +509,7 @@ impl CorrelationEngine {
         since: i64,
     ) -> Result<Vec<TimeEntry>, CorrelationError> {
         let mut stmt = conn.prepare(
-            "SELECT id, space_id, task_id, project_id, note_id, description, started_at, ended_at, duration_seconds, created_at
+            "SELECT id, space_id, task_id, project_id, note_id, description, started_at, ended_at, duration_seconds, is_running
              FROM time_entry
              WHERE space_id = ?1 AND started_at >= ?2
              ORDER BY started_at DESC",
@@ -517,17 +517,35 @@ impl CorrelationEngine {
 
         let entries = stmt
             .query_map(params![space_id.to_string(), since], |row| {
+                let id_str: String = row.get(0)?;
+                let space_id_str: String = row.get(1)?;
+                let task_id_str: Option<String> = row.get(2)?;
+                let project_id_str: Option<String> = row.get(3)?;
+                let note_id_str: Option<String> = row.get(4)?;
+
                 Ok(TimeEntry {
-                    id: row.get(0)?,
-                    space_id: row.get(1)?,
-                    task_id: row.get(2)?,
-                    project_id: row.get(3)?,
-                    note_id: row.get(4)?,
+                    id: Ulid::from_string(&id_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    space_id: Ulid::from_string(&space_id_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            1,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    task_id: task_id_str.and_then(|s| Ulid::from_string(&s).ok()),
+                    project_id: project_id_str.and_then(|s| Ulid::from_string(&s).ok()),
+                    note_id: note_id_str.and_then(|s| Ulid::from_string(&s).ok()),
                     description: row.get(5)?,
                     started_at: row.get(6)?,
                     ended_at: row.get(7)?,
                     duration_seconds: row.get(8)?,
-                    created_at: row.get(9)?,
+                    is_running: row.get(9)?,
                 })
             })?
             .collect::<Result<Vec<_>, _>>()?;
@@ -549,12 +567,30 @@ impl CorrelationEngine {
 
         let tasks = stmt
             .query_map([space_id.to_string()], |row| {
+                let id_str: String = row.get(0)?;
+                let space_id_str: String = row.get(1)?;
+                let note_id_str: Option<String> = row.get(2)?;
+                let project_id_str: Option<String> = row.get(3)?;
+                let parent_task_id_str: Option<String> = row.get(4)?;
+
                 Ok(Task {
-                    id: row.get(0)?,
-                    space_id: row.get(1)?,
-                    note_id: row.get(2)?,
-                    project_id: row.get(3)?,
-                    parent_task_id: row.get(4)?,
+                    id: Ulid::from_string(&id_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    space_id: Ulid::from_string(&space_id_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            1,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    note_id: note_id_str.and_then(|s| Ulid::from_string(&s).ok()),
+                    project_id: project_id_str.and_then(|s| Ulid::from_string(&s).ok()),
+                    parent_task_id: parent_task_id_str.and_then(|s| Ulid::from_string(&s).ok()),
                     title: row.get(5)?,
                     description: row.get(6)?,
                     status: row.get(7)?,
@@ -580,7 +616,7 @@ impl CorrelationEngine {
         since: i64,
     ) -> Result<Vec<Transaction>, CorrelationError> {
         let mut stmt = conn.prepare(
-            "SELECT id, space_id, transaction_type, amount, currency, category, account, description, date, recurring, created_at
+            "SELECT id, space_id, note_id, transaction_type, amount, currency, category, account, description, date, recurring, recurring_frequency, blob_id, created_at
              FROM transaction
              WHERE space_id = ?1 AND date >= ?2
              ORDER BY date DESC",
@@ -591,15 +627,18 @@ impl CorrelationEngine {
                 Ok(Transaction {
                     id: row.get(0)?,
                     space_id: row.get(1)?,
-                    transaction_type: row.get(2)?,
-                    amount: row.get(3)?,
-                    currency: row.get(4)?,
-                    category: row.get(5)?,
-                    account: row.get(6)?,
-                    description: row.get(7)?,
-                    date: row.get(8)?,
-                    recurring: row.get(9)?,
-                    created_at: row.get(10)?,
+                    note_id: row.get(2)?,
+                    transaction_type: row.get(3)?,
+                    amount: row.get(4)?,
+                    currency: row.get(5)?,
+                    category: row.get(6)?,
+                    account: row.get(7)?,
+                    description: row.get(8)?,
+                    date: row.get(9)?,
+                    recurring: row.get(10)?,
+                    recurring_frequency: row.get(11)?,
+                    blob_id: row.get(12)?,
+                    created_at: row.get(13)?,
                 })
             })?
             .collect::<Result<Vec<_>, _>>()?;

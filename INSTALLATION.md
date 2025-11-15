@@ -11,6 +11,7 @@ bash ./install.sh
 ```
 
 This script will:
+
 - ✅ Check system requirements
 - ✅ Install dependencies (Node.js, Rust, pnpm)
 - ✅ Download and configure the project
@@ -26,16 +27,19 @@ This script will:
 ### System Requirements
 
 #### Desktop Build
+
 - **macOS 10.15+** (Intel or Apple Silicon)
 - **Windows 10+**
 - **Linux** (Ubuntu 18.04+ / Fedora 30+)
 
 **Required Tools**:
+
 - Node.js 18.x or higher
 - Rust 1.70+
 - pnpm 8.x
 
 #### Mobile Build
+
 - **iOS**: macOS with Xcode 14+
 - **Android**: Android SDK 30+, JDK 11+
 
@@ -110,14 +114,17 @@ pnpm test -- performance.test.ts
 After building, installation packages are available in `./dist/`:
 
 #### macOS
+
 - `.dmg` - Disk image for easy drag-and-drop installation
 - `.app` - Direct application bundle
 
 #### Windows
+
 - `.msi` - Windows Installer package
 - `.exe` - Portable executable
 
 #### Linux
+
 - `.AppImage` - Universal Linux format (no installation required)
 - `.deb` - Debian package (Ubuntu, Debian)
 - `.rpm` - RPM package (Fedora, Red Hat)
@@ -125,10 +132,12 @@ After building, installation packages are available in `./dist/`:
 ### Mobile Distribution Formats
 
 #### iOS
+
 - `.ipa` - iOS App Package (requires Apple Developer account)
 - TestFlight distribution link
 
 #### Android
+
 - `.apk` - Android App Package (sideload)
 - `.aab` - Android App Bundle (Google Play Store)
 
@@ -161,6 +170,7 @@ NOTEECE_DEV_MODE=false
 ### Build Configuration
 
 Edit `build.config.ts` to customize:
+
 - Output directory
 - Optimization settings
 - Cache configuration
@@ -207,6 +217,7 @@ pnpm test
 ### Common Issues
 
 #### "Node version too old"
+
 ```bash
 # Update Node.js
 nvm install 18
@@ -214,18 +225,21 @@ nvm use 18
 ```
 
 #### "Rust not found"
+
 ```bash
 # Install Rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
 #### "pnpm not found"
+
 ```bash
 # Install pnpm
 npm install -g pnpm@8
 ```
 
 #### Build fails on macOS
+
 ```bash
 # Install Xcode command line tools
 xcode-select --install
@@ -235,6 +249,7 @@ rustup target add x86_64-apple-darwin aarch64-apple-darwin
 ```
 
 #### Build fails on Windows
+
 ```bash
 # Install Visual Studio Build Tools
 # Download from: https://visualstudio.microsoft.com/downloads/
@@ -244,6 +259,7 @@ rustup default stable-msvc
 ```
 
 #### Tests fail
+
 ```bash
 # Clear cache and reinstall
 rm -rf node_modules pnpm-lock.yaml
@@ -275,6 +291,7 @@ cargo run --package core-rs
 ### Hot Reload
 
 Development servers support hot module reloading (HMR):
+
 - Changes to React components auto-refresh
 - Rust changes require rebuild
 - CSS changes auto-apply
@@ -305,6 +322,7 @@ NOTEECE_VERSION=1.0.0
 ```
 
 Update in:
+
 - `package.json`
 - `Cargo.toml`
 - `ios/Noteece.xcodeproj/project.pbxproj`
@@ -315,18 +333,21 @@ Update in:
 ## Security Notes
 
 ### First Run Setup
+
 1. Create secure vault with strong password
 2. Enable device pairing for sync
 3. Configure backup location
 4. Set session timeout (default 24h)
 
 ### Data Privacy
+
 - All data encrypted at rest (AES-256)
 - Sync uses ECDH key exchange
 - Local-first architecture (no cloud)
 - Backups encrypted with vault key
 
 ### Updates
+
 - Check for updates: `noteece --check-updates`
 - Auto-update available on desktop
 - Manual update required for mobile
@@ -336,6 +357,7 @@ Update in:
 ## Support
 
 For issues or questions:
+
 1. Check [Troubleshooting](#troubleshooting) section
 2. Search GitHub issues: https://github.com/AmirrezaFarnamTaheri/Noteece/issues
 3. Report bugs with system info:

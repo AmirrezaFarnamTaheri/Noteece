@@ -32,9 +32,5 @@ export function FadeIn({
     }).start();
   }, [opacity, duration, delay]);
 
-  return (
-    <Animated.View style={[style, { opacity }]}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={[style, { opacity }]}>{children}</Animated.View>;
 }

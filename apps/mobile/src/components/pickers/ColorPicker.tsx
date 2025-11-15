@@ -30,21 +30,45 @@ interface ColorPickerProps {
 // Predefined color palette (Material Design-inspired)
 const COLOR_PALETTE = [
   // Reds
-  "#F44336", "#E91E63", "#FF5252", "#FF1744",
+  "#F44336",
+  "#E91E63",
+  "#FF5252",
+  "#FF1744",
   // Purples
-  "#9C27B0", "#673AB7", "#E040FB", "#7C4DFF",
+  "#9C27B0",
+  "#673AB7",
+  "#E040FB",
+  "#7C4DFF",
   // Blues
-  "#2196F3", "#3F51B5", "#03A9F4", "#448AFF",
+  "#2196F3",
+  "#3F51B5",
+  "#03A9F4",
+  "#448AFF",
   // Cyans & Teals
-  "#00BCD4", "#009688", "#00E5FF", "#1DE9B6",
+  "#00BCD4",
+  "#009688",
+  "#00E5FF",
+  "#1DE9B6",
   // Greens
-  "#4CAF50", "#8BC34A", "#00E676", "#76FF03",
+  "#4CAF50",
+  "#8BC34A",
+  "#00E676",
+  "#76FF03",
   // Yellows & Oranges
-  "#FFEB3B", "#FFC107", "#FF9800", "#FF6F00",
+  "#FFEB3B",
+  "#FFC107",
+  "#FF9800",
+  "#FF6F00",
   // Browns & Greys
-  "#795548", "#9E9E9E", "#607D8B", "#455A64",
+  "#795548",
+  "#9E9E9E",
+  "#607D8B",
+  "#455A64",
   // Special colors
-  "#000000", "#FFFFFF", "#FF4081", "#00BFA5",
+  "#000000",
+  "#FFFFFF",
+  "#FF4081",
+  "#00BFA5",
 ];
 
 export function ColorPicker({
@@ -151,7 +175,9 @@ export function ColorPicker({
                     <Text style={styles.applyButtonText}>Apply</Text>
                   </TouchableOpacity>
                 </View>
-                <Text style={styles.hint}>Enter hex color code (e.g., #FF5733)</Text>
+                <Text style={styles.hint}>
+                  Enter hex color code (e.g., #FF5733)
+                </Text>
               </View>
             )}
           </ScrollView>

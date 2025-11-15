@@ -73,7 +73,11 @@ export function CategoryPicker({
   const handleCreate = () => {
     if (newCategoryName.trim() && onCreateCategory) {
       haptics.success();
-      onCreateCategory(newCategoryName.trim(), newCategoryColor, newCategoryIcon);
+      onCreateCategory(
+        newCategoryName.trim(),
+        newCategoryColor,
+        newCategoryIcon,
+      );
       setNewCategoryName("");
       setNewCategoryColor("#007AFF");
       setNewCategoryIcon("📌");
@@ -150,9 +154,7 @@ export function CategoryPicker({
                       {category.name}
                     </Text>
                   </View>
-                  {isSelected && (
-                    <Text style={styles.checkmark}>✓</Text>
-                  )}
+                  {isSelected && <Text style={styles.checkmark}>✓</Text>}
                 </TouchableOpacity>
               );
             })}

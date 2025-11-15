@@ -11,8 +11,8 @@ import '@testing-library/jest-dom';
 
 // Mock Tauri invoke
 const mockInvoke = jest.fn();
-jest.mock('@tauri-apps/api/core', () => ({
-  invoke: (...args: any[]) => mockInvoke(...args),
+jest.mock('@tauri-apps/api/tauri', () => ({
+  invoke: (...arguments_: any[]) => mockInvoke(...arguments_),
 }));
 
 // Mock store
@@ -36,7 +36,7 @@ const renderWithProviders = (component: React.ReactElement) => {
   return render(
     <QueryClientProvider client={queryClient}>
       <MantineProvider>{component}</MantineProvider>
-    </QueryClientProvider>
+    </QueryClientProvider>,
   );
 };
 
@@ -79,7 +79,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
           'invite_user_cmd',
           expect.objectContaining({
             invitedBy: 'system_user', // Session 5 fix: documented placeholder
-          })
+          }),
         );
       });
     });
@@ -158,9 +158,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
       await waitFor(() => {
         // CRITICAL TEST: Should call revoke for permissions not in custom list
         // This tests the Session 5 fix where we removed `length > 0` check
-        const revokeCalls = mockInvoke.mock.calls.filter(
-          (call) => call[0] === 'revoke_permission_cmd'
-        );
+        const revokeCalls = mockInvoke.mock.calls.filter((call) => call[0] === 'revoke_permission_cmd');
 
         expect(revokeCalls.length).toBeGreaterThan(0);
 
@@ -194,9 +192,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
       fireEvent.click(saveButton);
 
       await waitFor(() => {
-        const revokeCalls = mockInvoke.mock.calls.filter(
-          (call) => call[0] === 'revoke_permission_cmd'
-        );
+        const revokeCalls = mockInvoke.mock.calls.filter((call) => call[0] === 'revoke_permission_cmd');
 
         // Should NOT revoke read_notes or write_notes (role permissions)
         const revokedPermissions = revokeCalls.map((call) => call[1].permission);
@@ -226,9 +222,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
       fireEvent.click(saveButton);
 
       await waitFor(() => {
-        const revokeCalls = mockInvoke.mock.calls.filter(
-          (call) => call[0] === 'revoke_permission_cmd'
-        );
+        const revokeCalls = mockInvoke.mock.calls.filter((call) => call[0] === 'revoke_permission_cmd');
 
         const revokedPermissions = revokeCalls.map((call) => call[1].permission);
 
@@ -289,7 +283,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
             email: 'new@example.com',
             role: expect.any(String),
             invitedBy: 'system_user', // Correct audit identity
-          })
+          }),
         );
       });
     });
@@ -415,7 +409,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
           ]);
         }
         if (cmd === 'grant_permission_cmd') {
-          return Promise.resolve(undefined);
+          return Promise.resolve();
         }
         return Promise.resolve([]);
       });
@@ -439,9 +433,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
 
       // Both should succeed without conflicts
       await waitFor(() => {
-        const grantCalls = mockInvoke.mock.calls.filter(
-          (call) => call[0] === 'grant_permission_cmd'
-        );
+        const grantCalls = mockInvoke.mock.calls.filter((call) => call[0] === 'grant_permission_cmd');
         expect(grantCalls.length).toBeGreaterThanOrEqual(0);
       });
     });

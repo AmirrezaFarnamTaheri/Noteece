@@ -135,6 +135,7 @@ The Noteece Social Media Suite is a **local-first** social media aggregation too
 You can add multiple accounts for the same platform:
 
 **Example: Personal + Work Twitter**
+
 ```
 1. Add first account: @personal_twitter
 2. Add second account: @work_twitter
@@ -144,6 +145,7 @@ You can add multiple accounts for the same platform:
 ```
 
 **Account Settings:**
+
 - **Enable/Disable**: Temporarily stop syncing an account
 - **Sync Frequency**: Adjust how often to check for updates
 - **Edit Display Name**: Change how the account appears in your interface
@@ -167,6 +169,7 @@ Each account shows a sync status indicator:
 The **Unified Timeline** shows all posts from all your connected accounts in one continuous feed.
 
 **Features:**
+
 - **Infinite Scroll**: Automatically loads more posts as you scroll
 - **Platform Badges**: Each post shows its source platform
 - **Engagement Metrics**: Likes, shares, comments, views
@@ -176,6 +179,7 @@ The **Unified Timeline** shows all posts from all your connected accounts in one
 ### Filtering
 
 **Filter by Platform:**
+
 ```
 [All Platforms ▼]  [Twitter] [Instagram] [LinkedIn] [+5 more]
 ```
@@ -183,6 +187,7 @@ The **Unified Timeline** shows all posts from all your connected accounts in one
 Click platform badges to toggle visibility. Selected platforms remain visible while others are hidden.
 
 **Filter by Time Range:**
+
 - **Today**: Posts from last 24 hours
 - **This Week**: Last 7 days
 - **This Month**: Last 30 days
@@ -190,6 +195,7 @@ Click platform badges to toggle visibility. Selected platforms remain visible wh
 - **All Time**: Everything (default)
 
 **Filter by Category:**
+
 ```
 [All Categories ▼]  [Work] [Personal] [Learning] [News]
 ```
@@ -210,6 +216,7 @@ Click platform badges to toggle visibility. Selected platforms remain visible wh
 Categories help you organize posts across all platforms. Think of them as **cross-platform labels**.
 
 **Example Categories:**
+
 - **Work**: LinkedIn posts, work-related tweets, Slack messages
 - **Personal**: Family Instagram photos, personal Facebook posts
 - **Learning**: Educational YouTube videos, Medium articles
@@ -225,6 +232,7 @@ Categories help you organize posts across all platforms. Think of them as **cros
 5. Click **"Create"**
 
 **Best Practices:**
+
 - Keep categories broad (5-10 total)
 - Use consistent naming
 - Choose distinct colors
@@ -233,11 +241,13 @@ Categories help you organize posts across all platforms. Think of them as **cros
 ### Manual Categorization
 
 **On any post:**
+
 1. Click the **category icon** (🏷️)
 2. Select one or more categories
 3. Post is instantly tagged
 
 **Bulk Categorization:**
+
 1. Select multiple posts (checkbox)
 2. Click **"Assign Category"**
 3. Choose category
@@ -246,12 +256,14 @@ Categories help you organize posts across all platforms. Think of them as **cros
 ### Auto-Categorization
 
 Let the AI automatically categorize posts based on:
+
 - **Content keywords**: "meeting" → Work
 - **Platform**: LinkedIn → Work, Instagram → Personal
 - **Hashtags**: #tech → Learning
 - **Author**: Specific accounts → Specific categories
 
 **Setting up Auto Rules:**
+
 1. Go to **Settings** → **Categories**
 2. Click **"Add Auto Rule"**
 3. Choose rule type:
@@ -264,6 +276,7 @@ Let the AI automatically categorize posts based on:
 6. Save
 
 **Example Auto Rules:**
+
 ```
 Rule 1 (Priority 10): Platform = LinkedIn → Category = Work
 Rule 2 (Priority 5):  Content contains "meeting" → Category = Work
@@ -279,6 +292,7 @@ Rule 3 (Priority 1):  Hashtag contains "#funny" → Category = Entertainment
 The search box supports **FTS5 full-text search** across all posts:
 
 **Search Syntax:**
+
 ```
 Simple search:     hello world
 Exact phrase:      "hello world"
@@ -287,6 +301,7 @@ Content + author:  tech @elonmusk
 ```
 
 **Search Tips:**
+
 - Search is **case-insensitive**
 - Results are **ranked by relevance**
 - Searches **content and author names**
@@ -294,6 +309,7 @@ Content + author:  tech @elonmusk
 - **300ms debounced** for performance
 
 **Advanced Queries:**
+
 ```
 Multiple terms:  machine learning AI
 Exclusion:      (not supported yet)
@@ -303,6 +319,7 @@ Wildcards:      (not supported yet)
 ### Browsing by Platform
 
 Click any platform badge to filter the timeline:
+
 ```
 [Twitter] → Shows only Twitter posts
 [Instagram] + [TikTok] → Shows Instagram and TikTok posts
@@ -311,6 +328,7 @@ Click any platform badge to filter the timeline:
 ### Browsing by Category
 
 Click any category in the sidebar:
+
 ```
 [Work] → Shows all posts tagged as "Work"
 [Learning] → Shows all educational content
@@ -325,6 +343,7 @@ Click any category in the sidebar:
 The Analytics Dashboard shows insights about your social media usage:
 
 **Metrics Displayed:**
+
 - Total posts synced
 - Platforms active
 - Categories in use
@@ -333,6 +352,7 @@ The Analytics Dashboard shows insights about your social media usage:
 ### Platform Breakdown
 
 See which platforms you use most:
+
 ```
 Twitter:    1,234 posts (45%)  [████████░░]
 Instagram:    876 posts (32%)  [██████░░░░]
@@ -343,6 +363,7 @@ Reddit:       187 posts (7%)   [█░░░░░░░░░]
 ### Time Series Activity
 
 Track your activity over time:
+
 ```
 Daily Post Count (Last 14 Days)
 150│     ╭─╮
@@ -357,6 +378,7 @@ Daily Post Count (Last 14 Days)
 ### Category Statistics
 
 See engagement by category:
+
 ```
 Category    Posts  Avg Engagement
 Work          342   12.5%
@@ -366,6 +388,7 @@ News          123   6.2%
 ```
 
 **Engagement Rate Formula:**
+
 ```
 (likes + comments + shares) / views × 100
 ```
@@ -373,6 +396,7 @@ News          123   6.2%
 ### Top Performing Posts
 
 View your highest engagement posts:
+
 ```
 1. "Check out this new feature!" - 1.2K likes, 234 comments
 2. "Excited to announce..." - 890 likes, 156 comments
@@ -382,6 +406,7 @@ View your highest engagement posts:
 ### Time Range Selection
 
 Choose analysis period:
+
 - Last 7 days
 - Last 30 days (default)
 - Last 90 days
@@ -400,6 +425,7 @@ Analytics refresh every 60 seconds automatically.
 Focus Modes help you **stay productive** by blocking distracting platforms during work hours.
 
 **Use Cases:**
+
 - Block social media during deep work
 - Allow only educational content during study time
 - Complete digital detox on weekends
@@ -408,24 +434,28 @@ Focus Modes help you **stay productive** by blocking distracting platforms durin
 ### Preset Focus Modes
 
 **1. Deep Work 🧠**
+
 - **Purpose**: Maximum productivity
 - **Blocks**: Twitter, Instagram, TikTok, Facebook, Reddit
 - **Allows**: LinkedIn, Slack (work platforms)
 - **Best For**: Focused work sessions
 
 **2. Social Time 👥**
+
 - **Purpose**: Controlled social media use
 - **Blocks**: None
 - **Allows**: Twitter, Instagram, Facebook
 - **Best For**: Scheduled social media breaks
 
 **3. Learning 📚**
+
 - **Purpose**: Educational content only
 - **Blocks**: Instagram, TikTok, Dating apps
 - **Allows**: YouTube, Reddit (educational)
 - **Best For**: Study sessions
 
 **4. Detox 🌿**
+
 - **Purpose**: Complete digital break
 - **Blocks**: All social media platforms
 - **Allows**: Nothing
@@ -434,12 +464,14 @@ Focus Modes help you **stay productive** by blocking distracting platforms durin
 ### Activating Focus Modes
 
 **Manual Activation:**
+
 1. Go to **Settings** → **Focus Modes**
 2. Click **"Activate"** on desired mode
 3. Mode becomes active (only one at a time)
 4. Click **"Deactivate"** to turn off
 
 **What Happens When Active:**
+
 - Blocked platforms **won't sync**
 - Timeline **hides** posts from blocked platforms
 - WebView windows for blocked platforms **can't open**
@@ -458,6 +490,7 @@ Focus Modes help you **stay productive** by blocking distracting platforms durin
 7. Save
 
 **Example Custom Mode: "Morning Routine"**
+
 - Blocks: Twitter, Facebook, Reddit (distracting)
 - Allows: LinkedIn (check work updates), Spotify (music)
 - Active: 6 AM - 9 AM weekdays
@@ -471,30 +504,35 @@ Focus Modes help you **stay productive** by blocking distracting platforms durin
 Automation Rules let you **trigger actions** based on specific events.
 
 **Components:**
+
 1. **Trigger**: When something happens
 2. **Action**: Do something automatically
 
 ### Trigger Types
 
 **1. Time of Day**
+
 ```
 Trigger: Every day at 9:00 AM
 Action: Activate "Deep Work" focus mode
 ```
 
 **2. Day of Week**
+
 ```
 Trigger: Every Monday
 Action: Send notification "Start weekly review"
 ```
 
 **3. Platform Open**
+
 ```
 Trigger: When Twitter is opened
 Action: Send notification "Remember your focus goal!"
 ```
 
 **4. Category Post**
+
 ```
 Trigger: New post in "Work" category
 Action: Auto-categorize as "Important"
@@ -503,18 +541,22 @@ Action: Auto-categorize as "Important"
 ### Action Types
 
 **1. Activate Focus Mode**
+
 - Turn on a specific focus mode
 - Example: "Activate Deep Work at 9 AM"
 
 **2. Disable Sync**
+
 - Stop syncing a specific platform
 - Example: "Disable Twitter sync on weekends"
 
 **3. Send Notification**
+
 - Show a reminder message
 - Example: "Remember to take a break!"
 
 **4. Auto-Categorize**
+
 - Assign category to new posts
 - Example: "Categorize all LinkedIn posts as Work"
 
@@ -537,6 +579,7 @@ Action: Auto-categorize as "Important"
 ### Example Automation Rules
 
 **Rule 1: Morning Productivity**
+
 ```
 Name: Morning Focus
 Trigger: Time of Day = 09:00
@@ -545,6 +588,7 @@ Enabled: Yes
 ```
 
 **Rule 2: Weekend Detox**
+
 ```
 Name: Weekend Digital Detox
 Trigger: Day of Week = Saturday
@@ -553,6 +597,7 @@ Enabled: Yes
 ```
 
 **Rule 3: Twitter Warning**
+
 ```
 Name: Twitter Distraction Warning
 Trigger: Platform Open = Twitter
@@ -561,6 +606,7 @@ Enabled: Yes
 ```
 
 **Rule 4: Auto-Tag Work Posts**
+
 ```
 Name: Auto-Tag LinkedIn
 Trigger: Category Post = (all)
@@ -583,17 +629,20 @@ Enabled: Yes
 ### How Your Data is Protected
 
 **1. Military-Grade Encryption**
+
 - **Database**: SQLCipher with 256-bit AES encryption
 - **Credentials**: XChaCha20-Poly1305 AEAD encryption
 - **Key Derivation**: Argon2 password hashing
 
 **2. Local-First Architecture**
+
 - All data stored on YOUR device
 - No cloud servers
 - No data transmitted to Noteece servers
 - You control the encryption key
 
 **3. Secure Memory**
+
 - Encryption keys zeroed on app exit
 - Memory protected by OS process isolation
 - No keys written to disk unencrypted
@@ -601,6 +650,7 @@ Enabled: Yes
 ### What Data is Collected?
 
 **Stored Locally:**
+
 - Social media posts (content, author, timestamp)
 - Account credentials (encrypted)
 - Categories and tags
@@ -608,6 +658,7 @@ Enabled: Yes
 - Session cookies (encrypted)
 
 **Never Collected:**
+
 - Your master password (only you know it)
 - Data from platforms you don't connect
 - Browsing history outside connected platforms
@@ -618,6 +669,7 @@ Enabled: Yes
 Special privacy considerations for Tinder, Bumble, Hinge:
 
 **Privacy Protections:**
+
 - ⚠️ Explicit privacy notice on first use
 - Only stores **first names** (no last names)
 - Messages tagged as **sensitive**
@@ -625,6 +677,7 @@ Special privacy considerations for Tinder, Bumble, Hinge:
 - Clear user consent required
 
 **Recommendations:**
+
 - Use carefully and consider privacy implications
 - Don't sync if sharing device with others
 - Regular database backups kept secure
@@ -633,24 +686,28 @@ Special privacy considerations for Tinder, Bumble, Hinge:
 ### Best Security Practices
 
 **1. Strong Master Password**
+
 - Minimum 12 characters
 - Mix uppercase, lowercase, numbers, symbols
 - Don't reuse passwords
 - Use a password manager
 
 **2. Device Security**
+
 - Enable disk encryption (BitLocker, FileVault, LUKS)
 - Lock screen when away
 - Keep OS and Noteece updated
 - Antivirus software active
 
 **3. Backup Strategy**
+
 - Regular encrypted backups
 - Store backups securely (encrypted external drive)
 - Test restore procedure
 - Don't store backups in cloud unencrypted
 
 **4. Account Security**
+
 - Use 2FA on all social accounts
 - Review connected apps regularly
 - Log out after syncing (optional)
@@ -659,11 +716,13 @@ Special privacy considerations for Tinder, Bumble, Hinge:
 ### Data Retention
 
 **Automatic Cleanup:**
+
 - Posts older than 1 year can be auto-archived
 - Deleted accounts remove all associated posts
 - Session cookies expire after 30 days of inactivity
 
 **Manual Control:**
+
 - Delete individual posts
 - Delete entire accounts
 - Clear sync history
@@ -672,6 +731,7 @@ Special privacy considerations for Tinder, Bumble, Hinge:
 ### GDPR & Data Rights
 
 Since all data is stored locally on your device:
+
 - **You own 100% of your data**
 - **Right to Access**: You have full access via database
 - **Right to Deletion**: Delete any data anytime
@@ -685,36 +745,42 @@ Since all data is stored locally on your device:
 ### Getting the Most Out of the Social Suite
 
 **1. Start Small**
+
 - Connect 2-3 platforms first
 - Learn the interface
 - Add more platforms gradually
 - Don't overwhelm yourself
 
 **2. Use Categories Wisely**
+
 - Create 5-10 broad categories
 - Use consistent naming
 - Auto-categorize when possible
 - Review and refine monthly
 
 **3. Focus Mode Strategy**
+
 - Activate Deep Work during peak productivity hours
 - Schedule Social Time breaks (15-30 min)
 - Use Detox mode on weekends
 - Create custom modes for your workflow
 
 **4. Automation for Efficiency**
+
 - Auto-activate focus modes at set times
 - Auto-categorize by platform
 - Set sync frequency per account needs
 - Use notifications sparingly
 
 **5. Search Like a Pro**
+
 - Use quotes for exact phrases
 - Search by @author for specific people
 - Combine keywords for precise results
 - Save common searches as bookmarks
 
 **6. Analytics for Insights**
+
 - Check weekly to understand usage patterns
 - Identify time-consuming platforms
 - Balance engagement vs. consumption
@@ -723,12 +789,14 @@ Since all data is stored locally on your device:
 ### Performance Optimization
 
 **For Large Databases (10,000+ posts):**
+
 - Enable auto-cleanup for old posts
 - Reduce sync frequency for less active accounts
 - Use focused searches instead of browsing
 - Close unused WebView windows
 
 **For Multiple Accounts:**
+
 - Group by purpose (personal vs. work)
 - Use categories to stay organized
 - Sync work accounts more frequently
@@ -737,30 +805,35 @@ Since all data is stored locally on your device:
 ### Troubleshooting Common Issues
 
 **WebView Won't Load:**
+
 - Check internet connection
 - Clear cookies and session data
 - Re-authenticate account
 - Check platform isn't blocked by focus mode
 
 **Sync Not Working:**
+
 - Verify account is enabled
 - Check sync frequency setting
 - Look for error status indicator
 - Re-authenticate if needed
 
 **Posts Not Appearing:**
+
 - Check platform filter (might be hidden)
 - Verify time range filter
 - Check category filter
 - Wait for sync to complete
 
 **Search Not Working:**
+
 - Check query syntax (no special characters)
 - Verify posts exist with that content
 - Try broader search terms
 - Rebuild FTS index (Settings)
 
 **Slow Performance:**
+
 - Close unused WebView windows
 - Reduce number of active accounts
 - Enable old post cleanup
@@ -780,12 +853,14 @@ Escape           Close modal/WebView
 ### Getting Help
 
 **Documentation:**
+
 - User Guide (this document)
 - Platform Setup Guides
 - Troubleshooting Guide
 - Security Documentation
 
 **Support:**
+
 - GitHub Issues: https://github.com/AmirrezaFarnamTaheri/Noteece/issues
 - Community Forum: (coming soon)
 - Email: (check project README)
@@ -797,6 +872,7 @@ Escape           Close modal/WebView
 The Noteece Social Media Suite empowers you to take control of your social media experience with **privacy, organization, and productivity** at its core.
 
 **Remember:**
+
 - Your data belongs to YOU
 - Everything is encrypted and local
 - You're in control of what platforms you connect
@@ -808,6 +884,6 @@ The Noteece Social Media Suite empowers you to take control of your social media
 
 ---
 
-*Noteece Social Media Suite - Desktop Edition*
-*Built with Rust, Tauri, React, and ❤️*
-*© 2025 - Privacy-First, Local-First, You-First*
+_Noteece Social Media Suite - Desktop Edition_
+_Built with Rust, Tauri, React, and ❤️_
+_© 2025 - Privacy-First, Local-First, You-First_

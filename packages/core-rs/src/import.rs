@@ -19,6 +19,8 @@ pub enum ImportError {
     UnsupportedFormat,
     #[error("Database error: {0}")]
     Db(#[from] crate::db::DbError),
+    #[error("SQLite error: {0}")]
+    Sqlite(#[from] rusqlite::Error),
     #[error("Zip error: {0}")]
     Zip(#[from] zip::result::ZipError),
     #[error("Gray Matter parse error: {0}")]
@@ -183,7 +185,8 @@ pub fn export_to_zip(
 ) -> Result<(), ImportError> {
     let file = fs::File::create(output_path)?;
     let mut zip = ZipWriter::new(file);
-    let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+    let options: FileOptions<()> =
+        FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
 
     // Create dedicated notes directory in the archive
     zip.add_directory("notes/", options)?;

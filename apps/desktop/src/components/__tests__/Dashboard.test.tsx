@@ -5,7 +5,7 @@ import Dashboard from '../Dashboard';
 import '@testing-library/jest-dom';
 
 // Mock Tauri API
-jest.mock('@tauri-apps/api/core', () => ({
+jest.mock('@tauri-apps/api/tauri', () => ({
   invoke: jest.fn(),
 }));
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import {
   Container,
   Title,
@@ -22,6 +22,7 @@ import {
 import { DatePicker } from '@mantine/dates';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { IconPlus, IconTrendingUp, IconWallet, IconReceipt } from '@tabler/icons-react';
+import logger from '../../utils/logger';
 
 interface Transaction {
   id: string;
@@ -78,7 +79,7 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       });
       setTransactions(data);
     } catch (error) {
-      console.error('Failed to load transactions:', error);
+      logger.error('Failed to load transactions:', error as Error);
     } finally {
       setLoading(false);
     }
@@ -87,16 +88,18 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
   const addTransaction = async () => {
     try {
       // Validate amount
-      const amountNum = Number(formAmount);
-      if (!Number.isFinite(amountNum) || amountNum <= 0) {
+      const amountNumber = Number(formAmount);
+      if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
         alert('Please enter a valid amount greater than 0.');
         return;
       }
       // Convert to integer cents (minor units) to avoid float precision errors
-      const amountInCents = Math.round(amountNum * 100);
+      const amountInCents = Math.round(amountNumber * 100);
 
       // Validate and normalize string fields to prevent empty or invalid data
-      const currency = String(formCurrency || '').trim().toUpperCase();
+      const currency = String(formCurrency || '')
+        .trim()
+        .toUpperCase();
       const category = String(formCategory || '').trim();
       const account = String(formAccount || '').trim();
 
@@ -140,7 +143,7 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       setFormDescription('');
       await loadData();
     } catch (error) {
-      console.error('Failed to add transaction:', error);
+      logger.error('Failed to add transaction:', error as Error);
       alert(`Failed to add transaction: ${String(error)}`);
     }
   };
@@ -346,7 +349,6 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
             onChange={(value) => setFormAmount(Number(value))}
             min={0}
             step={0.01}
-            precision={2}
             prefix="$"
             required
           />
@@ -374,7 +376,6 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
             placeholder="Optional notes"
           />
 
-          <DatePicker label="Date" value={formDate} onChange={(value) => value && setFormDate(value)} />
 
           <Group justify="flex-end" mt="md">
             <Button variant="light" onClick={() => setModalOpened(false)}>

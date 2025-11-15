@@ -10,7 +10,10 @@ import { View, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { SocialHub } from "@/screens/SocialHub";
 import { BiometricLockScreen } from "@/components/social/BiometricLockScreen";
-import { requiresSocialAuthentication, lockSocialSession } from "@/lib/social-security";
+import {
+  requiresSocialAuthentication,
+  lockSocialSession,
+} from "@/lib/social-security";
 import { colors } from "@/lib/theme";
 import { AppState, AppStateStatus } from "react-native";
 
@@ -28,7 +31,7 @@ export default function SocialTab() {
   useEffect(() => {
     const subscription = AppState.addEventListener(
       "change",
-      handleAppStateChange
+      handleAppStateChange,
     );
 
     return () => {

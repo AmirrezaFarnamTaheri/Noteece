@@ -1,9 +1,6 @@
 /// Authentication Module
 /// Handles user authentication, password hashing, and session management
-
-use argon2::{
-    password_hash::SaltString, Argon2, PasswordHash, PasswordHasher, PasswordVerifier,
-};
+use argon2::{password_hash::SaltString, Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use rand_core::OsRng;
 use rusqlite::Connection;
 use std::sync::Arc;
@@ -108,9 +105,10 @@ impl AuthService {
         let user_id = Ulid::new().to_string();
         let now = chrono::Utc::now().timestamp();
 
-        let conn = self.conn.lock().map_err(|e| {
-            AuthError::DatabaseError(format!("Failed to lock database: {}", e))
-        })?;
+        let conn = self
+            .conn
+            .lock()
+            .map_err(|e| AuthError::DatabaseError(format!("Failed to lock database: {}", e)))?;
 
         conn.execute(
             "INSERT INTO users (id, username, email, password_hash, created_at)
@@ -141,9 +139,10 @@ impl AuthService {
 
     /// Authenticate a user and create a session
     pub fn authenticate(&self, username: &str, password: &str) -> Result<Session, AuthError> {
-        let conn = self.conn.lock().map_err(|e| {
-            AuthError::DatabaseError(format!("Failed to lock database: {}", e))
-        })?;
+        let conn = self
+            .conn
+            .lock()
+            .map_err(|e| AuthError::DatabaseError(format!("Failed to lock database: {}", e)))?;
 
         let mut stmt = conn
             .prepare("SELECT id, password_hash FROM users WHERE username = ?1")
@@ -156,8 +155,8 @@ impl AuthService {
             .map_err(|_| AuthError::InvalidCredentials)?;
 
         // Verify password
-        let parsed_hash = PasswordHash::new(&stored_hash)
-            .map_err(|_| AuthError::InvalidCredentials)?;
+        let parsed_hash =
+            PasswordHash::new(&stored_hash).map_err(|_| AuthError::InvalidCredentials)?;
         Argon2::default()
             .verify_password(password.as_bytes(), &parsed_hash)
             .map_err(|_| AuthError::InvalidCredentials)?;
@@ -191,9 +190,10 @@ impl AuthService {
 
     /// Validate a session token and return the user ID
     pub fn validate_session(&self, token: &str) -> Result<String, AuthError> {
-        let conn = self.conn.lock().map_err(|e| {
-            AuthError::DatabaseError(format!("Failed to lock database: {}", e))
-        })?;
+        let conn = self
+            .conn
+            .lock()
+            .map_err(|e| AuthError::DatabaseError(format!("Failed to lock database: {}", e)))?;
 
         let mut stmt = conn
             .prepare(
@@ -221,19 +221,24 @@ impl AuthService {
 
     /// Logout by deleting the session
     pub fn logout(&self, token: &str) -> Result<(), AuthError> {
-        let conn = self.conn.lock().map_err(|e| {
-            AuthError::DatabaseError(format!("Failed to lock database: {}", e))
-        })?;
+        let conn = self
+            .conn
+            .lock()
+            .map_err(|e| AuthError::DatabaseError(format!("Failed to lock database: {}", e)))?;
 
-        conn.execute("DELETE FROM sessions WHERE token = ?1", rusqlite::params![token])?;
+        conn.execute(
+            "DELETE FROM sessions WHERE token = ?1",
+            rusqlite::params![token],
+        )?;
         Ok(())
     }
 
     /// Get a user by ID
     pub fn get_user(&self, user_id: &str) -> Result<User, AuthError> {
-        let conn = self.conn.lock().map_err(|e| {
-            AuthError::DatabaseError(format!("Failed to lock database: {}", e))
-        })?;
+        let conn = self
+            .conn
+            .lock()
+            .map_err(|e| AuthError::DatabaseError(format!("Failed to lock database: {}", e)))?;
 
         let mut stmt = conn
             .prepare(
@@ -257,9 +262,10 @@ impl AuthService {
 
     /// Get all users (admin function)
     pub fn get_all_users(&self) -> Result<Vec<User>, AuthError> {
-        let conn = self.conn.lock().map_err(|e| {
-            AuthError::DatabaseError(format!("Failed to lock database: {}", e))
-        })?;
+        let conn = self
+            .conn
+            .lock()
+            .map_err(|e| AuthError::DatabaseError(format!("Failed to lock database: {}", e)))?;
 
         let mut stmt = conn
             .prepare(
@@ -297,9 +303,10 @@ impl AuthService {
             return Err(AuthError::WeakPassword);
         }
 
-        let conn = self.conn.lock().map_err(|e| {
-            AuthError::DatabaseError(format!("Failed to lock database: {}", e))
-        })?;
+        let conn = self
+            .conn
+            .lock()
+            .map_err(|e| AuthError::DatabaseError(format!("Failed to lock database: {}", e)))?;
 
         // Get user's current password hash
         let stored_hash: String = conn
@@ -311,8 +318,8 @@ impl AuthService {
             .map_err(|_| AuthError::UserNotFound)?;
 
         // Verify old password
-        let parsed_hash = PasswordHash::new(&stored_hash)
-            .map_err(|_| AuthError::InvalidCredentials)?;
+        let parsed_hash =
+            PasswordHash::new(&stored_hash).map_err(|_| AuthError::InvalidCredentials)?;
         Argon2::default()
             .verify_password(old_password.as_bytes(), &parsed_hash)
             .map_err(|_| AuthError::InvalidCredentials)?;
@@ -471,7 +478,7 @@ mod tests {
     #[test]
     fn test_session_expiration() {
         let (conn, _dir) = setup_auth_db();
-        let auth = AuthService::new(conn);
+        let auth = AuthService::new(conn.clone());
 
         auth.create_user("testuser", "test@example.com", "password123")
             .unwrap();

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Card,
   Stack,
@@ -11,7 +11,7 @@ import {
   UnstyledButton,
   Divider,
   Indicator,
-} from '@mantine/core';
+} from "@mantine/core";
 import {
   IconBell,
   IconCheck,
@@ -20,11 +20,11 @@ import {
   IconInfoCircle,
   IconCheckCircle,
   IconAlertTriangle,
-} from '@tabler/icons-react';
+} from "@tabler/icons-react";
 
 export interface Notification {
   id: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  type: "info" | "success" | "warning" | "error";
   title: string;
   message: string;
   timestamp: number;
@@ -43,29 +43,31 @@ export interface NotificationCenterProps {
   maxHeight?: number;
 }
 
-const getNotificationIcon = (type: Notification['type']) => {
+const getNotificationIcon = (type: Notification["type"]) => {
   switch (type) {
-    case 'success':
+    case "success":
       return <IconCheckCircle size={18} color="var(--mantine-color-green-6)" />;
-    case 'warning':
-      return <IconAlertTriangle size={18} color="var(--mantine-color-yellow-6)" />;
-    case 'error':
+    case "warning":
+      return (
+        <IconAlertTriangle size={18} color="var(--mantine-color-yellow-6)" />
+      );
+    case "error":
       return <IconAlertCircle size={18} color="var(--mantine-color-red-6)" />;
     default:
       return <IconInfoCircle size={18} color="var(--mantine-color-blue-6)" />;
   }
 };
 
-const getNotificationColor = (type: Notification['type']): string => {
+const getNotificationColor = (type: Notification["type"]): string => {
   switch (type) {
-    case 'success':
-      return 'green';
-    case 'warning':
-      return 'yellow';
-    case 'error':
-      return 'red';
+    case "success":
+      return "green";
+    case "warning":
+      return "yellow";
+    case "error":
+      return "red";
     default:
-      return 'blue';
+      return "blue";
   }
 };
 
@@ -87,7 +89,7 @@ export function NotificationCenter({
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return 'Just now';
+    if (minutes < 1) return "Just now";
     if (minutes < 60) return `${minutes}m ago`;
     if (hours < 24) return `${hours}h ago`;
     return `${days}d ago`;
@@ -97,7 +99,11 @@ export function NotificationCenter({
     return (
       <Card shadow="sm" padding="lg" radius="md" withBorder>
         <Stack gap="md" align="center" py="xl">
-          <IconBell size={48} stroke={1.5} color="var(--mantine-color-gray-4)" />
+          <IconBell
+            size={48}
+            stroke={1.5}
+            color="var(--mantine-color-gray-4)"
+          />
           <Text c="dimmed">No notifications</Text>
         </Stack>
       </Card>
@@ -156,15 +162,19 @@ export function NotificationCenter({
                 withBorder
                 style={{
                   backgroundColor: notification.read
-                    ? 'transparent'
-                    : 'var(--mantine-color-gray-0)',
+                    ? "transparent"
+                    : "var(--mantine-color-gray-0)",
                   borderLeft: `4px solid var(--mantine-color-${getNotificationColor(
-                    notification.type
+                    notification.type,
                   )}-6)`,
                 }}
               >
                 <Stack gap="xs">
-                  <Group justify="space-between" align="flex-start" wrap="nowrap">
+                  <Group
+                    justify="space-between"
+                    align="flex-start"
+                    wrap="nowrap"
+                  >
                     <Group gap="xs" align="flex-start" style={{ flex: 1 }}>
                       {getNotificationIcon(notification.type)}
                       <Stack gap={4} style={{ flex: 1 }}>
@@ -209,22 +219,22 @@ export function NotificationCenter({
                     <UnstyledButton
                       onClick={notification.action}
                       style={{
-                        padding: '4px 8px',
+                        padding: "4px 8px",
                         borderRadius: 4,
                         backgroundColor: `var(--mantine-color-${getNotificationColor(
-                          notification.type
+                          notification.type,
                         )}-1)`,
                         color: `var(--mantine-color-${getNotificationColor(
-                          notification.type
+                          notification.type,
                         )}-7)`,
-                        fontSize: '12px',
+                        fontSize: "12px",
                         fontWeight: 600,
-                        textAlign: 'center',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
+                        textAlign: "center",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
                       }}
                     >
-                      {notification.actionLabel || 'Take Action'}
+                      {notification.actionLabel || "Take Action"}
                     </UnstyledButton>
                   )}
                 </Stack>
@@ -243,7 +253,7 @@ export function NotificationPopover({
   onMarkAsRead,
   onMarkAllAsRead,
   onDismiss,
-}: Omit<NotificationCenterProps, 'onDismissAll' | 'maxHeight'>) {
+}: Omit<NotificationCenterProps, "onDismissAll" | "maxHeight">) {
   const [opened, setOpened] = useState(false);
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -260,7 +270,7 @@ export function NotificationPopover({
           variant="subtle"
           size="lg"
           onClick={() => setOpened((o) => !o)}
-          style={{ position: 'relative' }}
+          style={{ position: "relative" }}
         >
           <Indicator
             inline
@@ -288,8 +298,8 @@ export function NotificationPopover({
                   setOpened(false);
                 }}
                 style={{
-                  fontSize: '12px',
-                  color: 'var(--mantine-color-blue-6)',
+                  fontSize: "12px",
+                  color: "var(--mantine-color-blue-6)",
                   fontWeight: 600,
                 }}
               >
@@ -320,13 +330,13 @@ export function NotificationPopover({
                       }
                     }}
                     style={{
-                      padding: '8px',
+                      padding: "8px",
                       borderRadius: 4,
                       backgroundColor: notification.read
-                        ? 'transparent'
-                        : 'var(--mantine-color-gray-0)',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s',
+                        ? "transparent"
+                        : "var(--mantine-color-gray-0)",
+                      cursor: "pointer",
+                      transition: "background-color 0.2s",
                     }}
                   >
                     <Group gap="xs" align="flex-start" wrap="nowrap">
@@ -348,8 +358,8 @@ export function NotificationPopover({
                           style={{
                             width: 6,
                             height: 6,
-                            borderRadius: '50%',
-                            backgroundColor: 'var(--mantine-color-blue-6)',
+                            borderRadius: "50%",
+                            backgroundColor: "var(--mantine-color-blue-6)",
                             flexShrink: 0,
                           }}
                         />

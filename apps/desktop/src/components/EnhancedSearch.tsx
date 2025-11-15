@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { TextInput, Button, Group, Select, MultiSelect, Paper, Text } from '@mantine/core';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { Note, Tag } from '@noteece/types';
 import { useStore } from '../store';
 import { getAllTagsInSpace } from '@/services/api';
+import logger from '../utils/logger';
 
 const EnhancedSearch: React.FC = () => {
   const [query, setQuery] = useState('');
@@ -20,7 +21,7 @@ const EnhancedSearch: React.FC = () => {
           const tags = await getAllTagsInSpace(activeSpaceId);
           setAllTags(tags);
         } catch (error) {
-          console.error('Failed to fetch tags:', error);
+          logger.error('Failed to fetch tags:', error as Error);
         }
       }
     };
@@ -41,7 +42,7 @@ const EnhancedSearch: React.FC = () => {
         const results: Note[] = await invoke('search_notes_cmd', { query: searchQuery, scope: activeSpaceId });
         setResults(results);
       } catch (error) {
-        console.error('Failed to search notes:', error);
+        logger.error('Failed to search notes:', error as Error);
       }
     }
   };

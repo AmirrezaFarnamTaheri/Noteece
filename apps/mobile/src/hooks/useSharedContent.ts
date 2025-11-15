@@ -34,7 +34,7 @@ export function useSharedContent() {
 
     const subscription = AppState.addEventListener(
       "change",
-      handleAppStateChange
+      handleAppStateChange,
     );
 
     return () => {
@@ -88,7 +88,10 @@ export function useSharedContent() {
       // Cleanup old processed items
       await cleanupProcessedItems();
     } catch (error) {
-      console.error("[useSharedContent] Failed to check for shared content:", error);
+      console.error(
+        "[useSharedContent] Failed to check for shared content:",
+        error,
+      );
     }
   };
 

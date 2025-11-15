@@ -1,12 +1,11 @@
+use chrono::{DateTime, Utc};
 /// Desktop-Mobile Sync Protocol for SocialHub
 /// Enables synchronization of social media data between desktop and mobile devices
 /// Uses encrypted protocol with local network discovery
-
 use serde::{Deserialize, Serialize};
-use std::net::{SocketAddr, IpAddr};
+use std::net::{IpAddr, SocketAddr};
 use std::sync::Arc;
 use thiserror::Error;
-use chrono::{DateTime, Utc};
 
 #[derive(Error, Debug)]
 pub enum SyncProtocolError {
@@ -33,6 +32,15 @@ pub enum SyncProtocolError {
 
     #[error("Device already exists")]
     DuplicateDevice,
+
+    #[error("Discovery failed: {0}")]
+    DiscoveryFailed(String),
+
+    #[error("Key exchange failed")]
+    KeyExchangeFailed,
+
+    #[error("Connection failed: {0}")]
+    ConnectionFailed(String),
 
     #[error("Serialization error: {0}")]
     Serialization(#[from] serde_json::Error),
@@ -289,11 +297,12 @@ impl SyncProtocol {
         use std::net::IpAddr;
 
         // Create mDNS service daemon
-        let mdns = ServiceDaemon::new()
-            .map_err(|e| SyncProtocolError::DiscoveryFailed(e.to_string()))?;
+        let mdns =
+            ServiceDaemon::new().map_err(|e| SyncProtocolError::DiscoveryFailed(e.to_string()))?;
 
         // Browse for socialhub sync services
-        let receiver = mdns.browse("_socialhub-sync._tcp.local.")
+        let receiver = mdns
+            .browse("_socialhub-sync._tcp.local.")
             .map_err(|e| SyncProtocolError::DiscoveryFailed(e.to_string()))?;
 
         let mut discovered_devices = Vec::new();
@@ -306,32 +315,38 @@ impl SyncProtocol {
                 Ok(event) => {
                     if let mdns_sd::ServiceEvent::ServiceResolved(info) = event {
                         // Extract device information from mDNS record
-                        if let Some(address) = info.get_addresses().next() {
+                        if let Some(address) = info.get_addresses().iter().next() {
                             let device = DeviceInfo {
                                 device_id: info.get_fullname().to_string(),
-                                device_name: info.get_properties()
+                                device_name: info
+                                    .get_properties()
                                     .get("name")
-                                    .and_then(|v| v.first())
-                                    .map(|s| String::from_utf8_lossy(s).to_string())
+                                    .and_then(|v| {
+                                        v.val()
+                                            .map(|bytes| String::from_utf8_lossy(bytes).to_string())
+                                    })
                                     .unwrap_or_else(|| "Unknown Device".to_string()),
-                                device_type: match info.get_properties()
-                                    .get("type")
-                                    .and_then(|v| v.first())
-                                    .map(|v| String::from_utf8_lossy(v).to_string()) {
+                                device_type: match info.get_properties().get("type").and_then(|v| {
+                                    v.val()
+                                        .map(|bytes| String::from_utf8_lossy(bytes).to_string())
+                                }) {
                                     Some(t) if t == "desktop" => DeviceType::Desktop,
                                     _ => DeviceType::Mobile,
                                 },
-                                ip_address: *address,
+                                ip_address: std::net::IpAddr::V4(*address),
                                 sync_port: info.get_port(),
-                                public_key: info.get_properties()
+                                public_key: info
+                                    .get_properties()
                                     .get("pubkey")
-                                    .and_then(|v| v.first())
-                                    .map(|v| v.to_vec())
+                                    .and_then(|v| v.val().map(|bytes| bytes.to_vec()))
                                     .unwrap_or_default(),
-                                os_version: info.get_properties()
+                                os_version: info
+                                    .get_properties()
                                     .get("os")
-                                    .and_then(|v| v.first())
-                                    .map(|s| String::from_utf8_lossy(s).to_string())
+                                    .and_then(|v| {
+                                        v.val()
+                                            .map(|bytes| String::from_utf8_lossy(bytes).to_string())
+                                    })
                                     .unwrap_or_else(|| "Unknown".to_string()),
                                 last_seen: chrono::Utc::now(),
                                 is_active: true,
@@ -340,7 +355,7 @@ impl SyncProtocol {
                         }
                     }
                 }
-                Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
+                Err(flume::RecvTimeoutError::Timeout) => {
                     attempts += 1;
                     // Continue searching
                 }
@@ -367,16 +382,20 @@ impl SyncProtocol {
         }
 
         // Check for duplicate
-        if self.paired_devices.iter().any(|d| d.device_id == pairing_request.mobile_device.device_id) {
+        if self
+            .paired_devices
+            .iter()
+            .any(|d| d.device_id == pairing_request.mobile_device.device_id)
+        {
             return Err(SyncProtocolError::DuplicateDevice);
         }
 
         // Perform ECDH key exchange using X25519
-        use x25519_dalek::{PublicKey, StaticSecret};
         use rand::rngs::OsRng;
+        use x25519_dalek::{EphemeralSecret, PublicKey};
 
         // Generate ephemeral key pair for this session
-        let ephemeral_secret = StaticSecret::random_from_rng(OsRng);
+        let ephemeral_secret = EphemeralSecret::random_from_rng(OsRng);
         let ephemeral_public = PublicKey::from(&ephemeral_secret);
 
         // Attempt to parse the mobile device's public key from pairing request
@@ -387,7 +406,7 @@ impl SyncProtocol {
             // Perform ECDH with mobile device's public key
             let mobile_public = PublicKey::from(
                 <[u8; 32]>::try_from(&pairing_request.mobile_device.public_key[..])
-                    .map_err(|_| SyncProtocolError::KeyExchangeFailed)?
+                    .map_err(|_| SyncProtocolError::KeyExchangeFailed)?,
             );
 
             // Compute shared secret: ephemeral_secret * mobile_public
@@ -421,7 +440,8 @@ impl SyncProtocol {
         categories: Vec<SyncCategory>,
     ) -> Result<(), SyncProtocolError> {
         // Verify device is paired and active
-        let device = self.paired_devices
+        let device = self
+            .paired_devices
             .iter()
             .find(|d| d.device_id == device_id)
             .ok_or(SyncProtocolError::DeviceNotFound)?;
@@ -451,10 +471,12 @@ impl SyncProtocol {
         // Verify device is reachable at its IP address and port
         if let Err(_) = std::net::TcpStream::connect_timeout(
             &std::net::SocketAddr::new(device.ip_address, device.sync_port),
-            std::time::Duration::from_secs(5)
+            std::time::Duration::from_secs(5),
         ) {
             self.sync_state = SyncState::Idle;
-            return Err(SyncProtocolError::ConnectionFailed);
+            return Err(SyncProtocolError::ConnectionFailed(
+                "Failed to establish connection".to_string(),
+            ));
         }
 
         // Create sync session with device
@@ -524,7 +546,7 @@ impl SyncProtocol {
     /// Constant-time comparison to prevent timing attacks
     /// Returns true only if both slices have equal length AND equal contents
     fn constant_time_compare(a: &[u8], b: &[u8]) -> bool {
-        use subtle::ConstantTimeComparison;
+        use subtle::ConstantTimeEq;
 
         // First check lengths in constant time (if available)
         // If lengths differ, the comparison should fail without leaking info

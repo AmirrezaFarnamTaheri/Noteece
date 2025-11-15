@@ -63,7 +63,7 @@ Run the app and trigger a test error:
 
 ```javascript
 // Add this to any screen to test Sentry
-throw new Error('Test Sentry error tracking');
+throw new Error("Test Sentry error tracking");
 ```
 
 You should see the error appear in your Sentry dashboard within a few seconds.
@@ -79,7 +79,7 @@ All uncaught JavaScript errors are automatically sent to Sentry via the `ErrorBo
 ```typescript
 // Errors are automatically captured with React component context
 Sentry.withScope((scope) => {
-  scope.setContext('react_error_boundary', {
+  scope.setContext("react_error_boundary", {
     componentStack: errorInfo.componentStack,
   });
   Sentry.captureException(error);
@@ -89,6 +89,7 @@ Sentry.withScope((scope) => {
 ### 2. Performance Monitoring
 
 Sentry automatically tracks:
+
 - App startup time
 - Screen navigation performance
 - Network request performance
@@ -102,6 +103,7 @@ tracesSampleRate: __DEV__ ? 1.0 : 0.2, // 100% in dev, 20% in production
 ### 3. Session Tracking
 
 Sessions are automatically tracked to understand:
+
 - How many users are using the app
 - Session duration
 - Crash-free session rate
@@ -109,6 +111,7 @@ Sessions are automatically tracked to understand:
 ### 4. Release Tracking
 
 Errors are tagged with:
+
 - **Release version**: From `app.json` version
 - **Environment**: `development` or `production`
 - **Dist**: Build number for iOS/Android
@@ -118,23 +121,23 @@ Errors are tagged with:
 You can manually report errors with additional context:
 
 ```typescript
-import { captureException, addBreadcrumb } from '@/lib/sentry';
+import { captureException, addBreadcrumb } from "@/lib/sentry";
 
 // Capture an exception with context
 try {
   dangerousFunction();
 } catch (error) {
   captureException(error, {
-    feature: 'sync',
-    operation: 'manual_sync',
+    feature: "sync",
+    operation: "manual_sync",
   });
 }
 
 // Add breadcrumbs for debugging
 addBreadcrumb({
-  category: 'sync',
-  message: 'Starting manual sync',
-  level: 'info',
+  category: "sync",
+  message: "Starting manual sync",
+  level: "info",
 });
 ```
 
@@ -143,7 +146,7 @@ addBreadcrumb({
 Track which users are affected by errors:
 
 ```typescript
-import { setUser, clearUser } from '@/lib/sentry';
+import { setUser, clearUser } from "@/lib/sentry";
 
 // After user logs in
 setUser({
@@ -168,9 +171,9 @@ Initialize Sentry (called automatically in `app/_layout.tsx`)
 Manually capture an exception with optional context
 
 ```typescript
-captureException(new Error('Something went wrong'), {
-  action: 'delete_task',
-  taskId: '123',
+captureException(new Error("Something went wrong"), {
+  action: "delete_task",
+  taskId: "123",
 });
 ```
 
@@ -179,7 +182,7 @@ captureException(new Error('Something went wrong'), {
 Send a message to Sentry (for logging important events)
 
 ```typescript
-captureMessage('User completed onboarding', 'info');
+captureMessage("User completed onboarding", "info");
 ```
 
 ### `setUser(user)`
@@ -188,9 +191,9 @@ Set user context for all future events
 
 ```typescript
 setUser({
-  id: 'user123',
-  email: 'user@example.com',
-  username: 'johndoe',
+  id: "user123",
+  email: "user@example.com",
+  username: "johndoe",
 });
 ```
 
@@ -204,9 +207,9 @@ Add a breadcrumb for debugging
 
 ```typescript
 addBreadcrumb({
-  category: 'navigation',
-  message: 'User navigated to tasks screen',
-  level: 'info',
+  category: "navigation",
+  message: "User navigated to tasks screen",
+  level: "info",
 });
 ```
 
@@ -215,8 +218,8 @@ addBreadcrumb({
 Add tags for filtering in Sentry
 
 ```typescript
-setTag('feature', 'sync');
-setTag('sync_type', 'manual');
+setTag("feature", "sync");
+setTag("sync_type", "manual");
 ```
 
 ### `setExtra(key, value)`
@@ -224,8 +227,8 @@ setTag('sync_type', 'manual');
 Add extra data to events
 
 ```typescript
-setExtra('sync_duration_ms', 1234);
-setExtra('num_items_synced', 42);
+setExtra("sync_duration_ms", 1234);
+setExtra("num_items_synced", 42);
 ```
 
 ## Best Practices
@@ -254,12 +257,12 @@ Add breadcrumbs before operations that might fail:
 
 ```typescript
 addBreadcrumb({
-  category: 'database',
+  category: "database",
   message: `Querying tasks for space ${spaceId}`,
-  level: 'info',
+  level: "info",
 });
 
-const tasks = await dbQuery('SELECT * FROM task WHERE space_id = ?', [spaceId]);
+const tasks = await dbQuery("SELECT * FROM task WHERE space_id = ?", [spaceId]);
 ```
 
 ### 3. Set Meaningful Context
@@ -281,6 +284,7 @@ try {
 ### 4. Adjust Sample Rates for Production
 
 The default configuration captures:
+
 - **100% of errors** (always want to know about crashes)
 - **20% of performance traces** (to reduce quota usage)
 
@@ -315,6 +319,7 @@ throw new Error('Test Sentry error');
 ### Errors Not Appearing in Sentry
 
 **Checklist**:
+
 1. ✅ DSN is correct
 2. ✅ App is connected to internet
 3. ✅ Error occurred after Sentry initialization
@@ -373,6 +378,7 @@ sentry-cli releases files <release-version> upload-sourcemaps ./dist
 ## Cost Considerations
 
 Sentry offers:
+
 - **Free tier**: 5,000 errors/month, 10,000 performance units/month
 - **Paid tiers**: Start at $26/month for more capacity
 

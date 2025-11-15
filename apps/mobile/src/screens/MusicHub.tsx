@@ -52,7 +52,9 @@ async function loadPlaylistsFromDatabase(): Promise<Playlist[]> {
 }
 
 export function MusicHub() {
-  const [view, setView] = useState<"library" | "playlists" | "search">("library");
+  const [view, setView] = useState<"library" | "playlists" | "search">(
+    "library",
+  );
   const [tracks, setTracks] = useState<Track[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [stats, setStats] = useState<MusicStats | null>(null);
@@ -144,7 +146,9 @@ export function MusicHub() {
 
       // Use loaded data if available, otherwise use mock data
       setTracks(loadedTracks.length > 0 ? loadedTracks : mockTracks);
-      setPlaylists(loadedPlaylists.length > 0 ? loadedPlaylists : mockPlaylists);
+      setPlaylists(
+        loadedPlaylists.length > 0 ? loadedPlaylists : mockPlaylists,
+      );
     } catch (error) {
       console.error("Failed to load music:", error);
     } finally {
@@ -189,7 +193,10 @@ export function MusicHub() {
     >
       <View style={styles.trackArtwork}>
         {item.artworkUrl ? (
-          <Image source={{ uri: item.artworkUrl }} style={styles.artworkImage} />
+          <Image
+            source={{ uri: item.artworkUrl }}
+            style={styles.artworkImage}
+          />
         ) : (
           <LinearGradient
             colors={["#6366F1", "#8B5CF6"]}
@@ -209,9 +216,16 @@ export function MusicHub() {
       </View>
       <View style={styles.trackMeta}>
         {item.isFavorite && (
-          <Ionicons name="heart" size={16} color="#EF4444" style={styles.favoriteIcon} />
+          <Ionicons
+            name="heart"
+            size={16}
+            color="#EF4444"
+            style={styles.favoriteIcon}
+          />
         )}
-        <Text style={styles.trackDuration}>{formatDuration(item.duration)}</Text>
+        <Text style={styles.trackDuration}>
+          {formatDuration(item.duration)}
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -220,10 +234,17 @@ export function MusicHub() {
     <TouchableOpacity style={styles.playlistItem}>
       <View style={styles.playlistArtwork}>
         {item.artworkUrl ? (
-          <Image source={{ uri: item.artworkUrl }} style={styles.artworkImage} />
+          <Image
+            source={{ uri: item.artworkUrl }}
+            style={styles.artworkImage}
+          />
         ) : (
           <LinearGradient
-            colors={item.isSmartPlaylist ? ["#10B981", "#059669"] : ["#6366F1", "#8B5CF6"]}
+            colors={
+              item.isSmartPlaylist
+                ? ["#10B981", "#059669"]
+                : ["#6366F1", "#8B5CF6"]
+            }
             style={styles.artworkPlaceholder}
           >
             <Ionicons
@@ -321,7 +342,9 @@ export function MusicHub() {
           style={[styles.tab, view === "library" && styles.tabActive]}
           onPress={() => setView("library")}
         >
-          <Text style={[styles.tabText, view === "library" && styles.tabTextActive]}>
+          <Text
+            style={[styles.tabText, view === "library" && styles.tabTextActive]}
+          >
             Library
           </Text>
         </TouchableOpacity>
@@ -329,7 +352,12 @@ export function MusicHub() {
           style={[styles.tab, view === "playlists" && styles.tabActive]}
           onPress={() => setView("playlists")}
         >
-          <Text style={[styles.tabText, view === "playlists" && styles.tabTextActive]}>
+          <Text
+            style={[
+              styles.tabText,
+              view === "playlists" && styles.tabTextActive,
+            ]}
+          >
             Playlists
           </Text>
         </TouchableOpacity>
@@ -347,7 +375,11 @@ export function MusicHub() {
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Ionicons name="musical-notes-outline" size={64} color="#9CA3AF" />
+              <Ionicons
+                name="musical-notes-outline"
+                size={64}
+                color="#9CA3AF"
+              />
               <Text style={styles.emptyText}>No tracks yet</Text>
               <Text style={styles.emptySubtext}>
                 Add music to your library to get started

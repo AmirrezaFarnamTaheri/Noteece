@@ -62,7 +62,8 @@ function formatLastSync(isoString: string): string {
     const diffDays = Math.floor(diffMs / 86400000);
 
     if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`;
+    if (diffMins < 60)
+      return `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`;
     if (diffHours < 24)
       return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
     if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
@@ -108,7 +109,7 @@ export function SocialSettings() {
 
     // Load background sync status
     const isRegistered = await TaskManager.isTaskRegisteredAsync(
-      "background-sync-task"
+      "background-sync-task",
     );
     setBackgroundSync(isRegistered);
 
@@ -127,7 +128,7 @@ export function SocialSettings() {
       Alert.alert(
         "Background Sync Enabled",
         "Social data will sync automatically every 15 minutes when connected to a desktop app.",
-        [{ text: "OK" }]
+        [{ text: "OK" }],
       );
     } else {
       // Disable background sync
@@ -143,7 +144,7 @@ export function SocialSettings() {
               setBackgroundSync(false);
             },
           },
-        ]
+        ],
       );
     }
   };
@@ -160,12 +161,15 @@ export function SocialSettings() {
         const now = new Date().toISOString();
         await AsyncStorage.setItem("social_last_sync", now);
         setLastSyncTime(now);
-        Alert.alert("Sync Complete", "Social data has been synchronized successfully.");
+        Alert.alert(
+          "Sync Complete",
+          "Social data has been synchronized successfully.",
+        );
       } else {
         Alert.alert(
           "Sync Failed",
           "Could not find a desktop app on the local network. Make sure your desktop app is running and connected to the same WiFi network.",
-          [{ text: "OK" }]
+          [{ text: "OK" }],
         );
       }
     } catch (error) {
@@ -181,7 +185,7 @@ export function SocialSettings() {
       Alert.alert(
         "Biometric Not Available",
         "Biometric authentication is not available on this device or no biometric data is enrolled.",
-        [{ text: "OK" }]
+        [{ text: "OK" }],
       );
       return;
     }
@@ -195,10 +199,12 @@ export function SocialSettings() {
         Alert.alert(
           "Biometric Lock Enabled",
           `Social Hub will now require ${typesText} authentication to access.`,
-          [{ text: "OK" }]
+          [{ text: "OK" }],
         );
       } else {
-        Alert.alert("Error", "Failed to enable biometric lock", [{ text: "OK" }]);
+        Alert.alert("Error", "Failed to enable biometric lock", [
+          { text: "OK" },
+        ]);
       }
     } else {
       // Disabling biometric lock
@@ -221,7 +227,7 @@ export function SocialSettings() {
               }
             },
           },
-        ]
+        ],
       );
     }
   };
@@ -245,7 +251,7 @@ export function SocialSettings() {
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -258,7 +264,9 @@ export function SocialSettings() {
         dbQuery("SELECT * FROM social_post WHERE space_id = ?", [spaceId]),
         dbQuery("SELECT * FROM social_category WHERE space_id = ?", [spaceId]),
         dbQuery("SELECT * FROM social_account WHERE space_id = ?", [spaceId]),
-        dbQuery("SELECT * FROM social_focus_mode WHERE space_id = ?", [spaceId]),
+        dbQuery("SELECT * FROM social_focus_mode WHERE space_id = ?", [
+          spaceId,
+        ]),
       ]);
 
       // Create export data
@@ -287,7 +295,7 @@ export function SocialSettings() {
       await FileSystem.writeAsStringAsync(
         fileUri,
         JSON.stringify(exportData, null, 2),
-        { encoding: FileSystem.EncodingType.UTF8 }
+        { encoding: FileSystem.EncodingType.UTF8 },
       );
 
       // Share file
@@ -301,12 +309,12 @@ export function SocialSettings() {
 
         Alert.alert(
           "Export Complete",
-          `Exported ${posts.length} posts, ${categories.length} categories, and ${accounts.length} accounts.`
+          `Exported ${posts.length} posts, ${categories.length} categories, and ${accounts.length} accounts.`,
         );
       } else {
         Alert.alert(
           "Export Complete",
-          `Data saved to ${fileName}. Sharing not available on this device.`
+          `Data saved to ${fileName}. Sharing not available on this device.`,
         );
       }
     } catch (error) {

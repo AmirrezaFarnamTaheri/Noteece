@@ -4,36 +4,33 @@
  * Manage social media post categories
  */
 
-import { Stack, Group, Title, Button, Card, Text, Badge, ActionIcon, Modal, TextInput, ColorInput } from '@mantine/core';
+import {
+  Stack,
+  Group,
+  Title,
+  Button,
+  Card,
+  Text,
+  Badge,
+  ActionIcon,
+  Modal,
+  TextInput,
+  ColorInput,
+} from '@mantine/core';
 import { IconPlus, IconEdit, IconTrash } from '@tabler/icons-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { notifications } from '@mantine/notifications';
 import { getSocialCategories, createSocialCategory, deleteSocialCategory } from '../../services/socialApi';
+import type { SocialCategory } from '@noteece/types';
 
-interface CategoryFilters {
-  platforms?: string[] | null;
-  authors?: string[] | null;
-  keywords?: string[] | null;
-}
-
-interface Category {
-  id: string;
-  space_id: string;
-  name: string;
-  color: string | null;
-  icon: string | null;
-  filters: CategoryFilters | null;
-  created_at: number;
-}
-
-interface CategoryManagerProps {
+interface CategoryManagerProperties {
   spaceId: string;
 }
 
-export function CategoryManager({ spaceId }: CategoryManagerProps) {
+export function CategoryManager({ spaceId }: CategoryManagerProperties) {
   const [modalOpened, setModalOpened] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editingCategory, setEditingCategory] = useState<SocialCategory | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     color: '#3b82f6',
@@ -51,16 +48,13 @@ export function CategoryManager({ spaceId }: CategoryManagerProps) {
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const keywords = data.keywords
-        ? data.keywords.split(',').map(k => k.trim()).filter(k => k.length > 0)
+        ? data.keywords
+            .split(',')
+            .map((k) => k.trim())
+            .filter((k) => k.length > 0)
         : null;
 
-      return await createSocialCategory(
-        spaceId,
-        data.name,
-        data.color,
-        data.icon,
-        keywords
-      );
+      return await createSocialCategory(spaceId, data.name, data.color, data.icon, keywords);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['socialCategories', spaceId] });
@@ -99,14 +93,14 @@ export function CategoryManager({ spaceId }: CategoryManagerProps) {
     },
   });
 
-  const handleOpenModal = (category?: Category) => {
+  const handleOpenModal = (category?: SocialCategory) => {
     if (category) {
       setEditingCategory(category);
       setFormData({
         name: category.name,
         color: category.color || '#3b82f6',
         icon: category.icon || '📁',
-        keywords: category.filters?.keywords?.join(', ') || '',
+        keywords: '',
       });
     } else {
       setEditingCategory(null);
@@ -164,10 +158,7 @@ export function CategoryManager({ spaceId }: CategoryManagerProps) {
               Organize your social media content with custom categories
             </Text>
           </div>
-          <Button
-            leftSection={<IconPlus size={16} />}
-            onClick={() => handleOpenModal()}
-          >
+          <Button leftSection={<IconPlus size={16} />} onClick={() => handleOpenModal()}>
             Create Category
           </Button>
         </Group>
@@ -194,32 +185,13 @@ export function CategoryManager({ spaceId }: CategoryManagerProps) {
                           </Badge>
                         )}
                       </Group>
-                      {category.filters?.keywords && category.filters.keywords.length > 0 && (
-                        <Group gap="xs" mt="xs">
-                          <Text size="xs" c="dimmed">
-                            Keywords:
-                          </Text>
-                          {category.filters.keywords.map((keyword, idx) => (
-                            <Badge key={idx} size="sm" variant="outline">
-                              {keyword}
-                            </Badge>
-                          ))}
-                        </Group>
-                      )}
                     </div>
                   </Group>
                   <Group>
-                    <ActionIcon
-                      variant="subtle"
-                      onClick={() => handleOpenModal(category)}
-                    >
+                    <ActionIcon variant="subtle" onClick={() => handleOpenModal(category)}>
                       <IconEdit size={16} />
                     </ActionIcon>
-                    <ActionIcon
-                      variant="subtle"
-                      color="red"
-                      onClick={() => handleDelete(category.id, category.name)}
-                    >
+                    <ActionIcon variant="subtle" color="red" onClick={() => handleDelete(category.id, category.name)}>
                       <IconTrash size={16} />
                     </ActionIcon>
                   </Group>
@@ -237,11 +209,7 @@ export function CategoryManager({ spaceId }: CategoryManagerProps) {
               <Text size="sm" c="dimmed" ta="center">
                 Create your first category to organize your social media content across platforms
               </Text>
-              <Button
-                leftSection={<IconPlus size={16} />}
-                onClick={() => handleOpenModal()}
-                mt="md"
-              >
+              <Button leftSection={<IconPlus size={16} />} onClick={() => handleOpenModal()} mt="md">
                 Create Your First Category
               </Button>
             </Stack>

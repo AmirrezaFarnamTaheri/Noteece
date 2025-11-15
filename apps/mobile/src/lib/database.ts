@@ -77,9 +77,7 @@ async function runMigrations(currentVersion: number): Promise<void> {
 
   // Migration from v2 to v3: Add social media suite tables
   if (currentVersion < 3) {
-    console.log(
-      "Running migration v2 -> v3: Adding social media suite tables",
-    );
+    console.log("Running migration v2 -> v3: Adding social media suite tables");
 
     try {
       await db.execAsync(`

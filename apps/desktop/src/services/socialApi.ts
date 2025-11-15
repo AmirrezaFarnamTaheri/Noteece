@@ -4,7 +4,7 @@
  * TypeScript wrapper for Tauri commands
  */
 
-import { invoke } from '@tauri-apps/api';
+import { invoke } from '@tauri-apps/api/tauri';
 import type {
   SocialAccount,
   SocialPost,
@@ -22,7 +22,7 @@ export async function addSocialAccount(
   platform: string,
   username: string,
   displayName: string | null,
-  credentials: string
+  credentials: string,
 ): Promise<SocialAccount> {
   return await invoke('add_social_account_cmd', {
     spaceId,
@@ -56,7 +56,7 @@ export async function updateSocialAccount(
     enabled?: boolean;
     syncFrequencyMinutes?: number;
     displayName?: string | null;
-  }
+  },
 ): Promise<void> {
   return await invoke('update_social_account_cmd', {
     accountId,
@@ -76,16 +76,13 @@ export async function deleteSocialAccount(accountId: string): Promise<void> {
 /**
  * Store social posts (bulk insert from extractors)
  */
-export async function storeSocialPosts(
-  accountId: string,
-  posts: SocialPost[]
-): Promise<number> {
+export async function storeSocialPosts(accountId: string, posts: SocialPost[]): Promise<number> {
   // Prevent overwhelming IPC/native layer with oversized batches
   const MAX_POSTS = 1000;
   const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
 
   if (!Array.isArray(posts)) {
-    throw new Error('Invalid posts payload: must be an array');
+    throw new TypeError('Invalid posts payload: must be an array');
   }
 
   if (posts.length > MAX_POSTS) {
@@ -95,9 +92,7 @@ export async function storeSocialPosts(
   // Rough size check to prevent memory exhaustion
   const approx = new Blob([JSON.stringify(posts)]).size;
   if (approx > MAX_BYTES) {
-    throw new Error(
-      `Posts payload too large (${approx} bytes > ${MAX_BYTES} bytes)`
-    );
+    throw new Error(`Posts payload too large (${approx} bytes > ${MAX_BYTES} bytes)`);
   }
 
   return await invoke('store_social_posts_cmd', { accountId, posts });
@@ -106,10 +101,7 @@ export async function storeSocialPosts(
 /**
  * Get unified timeline across all platforms
  */
-export async function getUnifiedTimeline(
-  spaceId: string,
-  filters: TimelineFilters = {}
-): Promise<TimelinePost[]> {
+export async function getUnifiedTimeline(spaceId: string, filters: TimelineFilters = {}): Promise<TimelinePost[]> {
   return await invoke('get_unified_timeline_cmd', {
     spaceId,
     filters,
@@ -124,7 +116,7 @@ export async function createSocialCategory(
   name: string,
   color?: string | null,
   icon?: string | null,
-  keywords?: string[] | null
+  keywords?: string[] | null,
 ): Promise<SocialCategory> {
   return await invoke('create_social_category_cmd', {
     spaceId,
@@ -148,7 +140,7 @@ export async function getSocialCategories(spaceId: string): Promise<SocialCatego
 export async function assignSocialCategory(
   postId: string,
   categoryId: string,
-  assignedBy: 'user' | 'auto' | 'ai'
+  assignedBy: 'user' | 'auto' | 'ai',
 ): Promise<void> {
   return await invoke('assign_social_category_cmd', {
     postId,

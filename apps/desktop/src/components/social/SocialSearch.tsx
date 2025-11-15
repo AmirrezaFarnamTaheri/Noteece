@@ -17,25 +17,25 @@ interface SearchResult {
   platform: string;
   account_username: string;
   author: string;
-  author_handle: string | null;
-  content: string | null;
+  author_handle: string | undefined;
+  content: string | undefined;
   timestamp: number;
   engagement: {
-    likes: number | null;
-    shares: number | null;
-    comments: number | null;
-    views: number | null;
+    likes: number | undefined;
+    shares: number | undefined;
+    comments: number | undefined;
+    views: number | undefined;
   };
   media_urls: string[];
-  post_type: string | null;
+  post_type: string | undefined;
   categories: string[];
 }
 
-interface SocialSearchProps {
+interface SocialSearchProperties {
   spaceId: string;
 }
 
-export function SocialSearch({ spaceId }: SocialSearchProps) {
+export function SocialSearch({ spaceId }: SocialSearchProperties) {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
 
@@ -101,13 +101,9 @@ export function SocialSearch({ spaceId }: SocialSearchProps) {
             <>
               <Group>
                 <Text size="sm" fw={500}>
-                  Found {results.length} result{results.length !== 1 ? 's' : ''}
+                  Found {results.length} result{results.length === 1 ? '' : 's'}
                 </Text>
-                {debouncedQuery && (
-                  <Pill size="sm">
-                    Searching for: "{debouncedQuery}"
-                  </Pill>
-                )}
+                {debouncedQuery && <Pill size="sm">Searching for: "{debouncedQuery}"</Pill>}
               </Group>
 
               <Stack gap="md">

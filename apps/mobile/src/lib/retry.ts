@@ -47,11 +47,11 @@ function sleep(ms: number): Promise<void> {
  */
 function calculateDelay(
   attempt: number,
-  config: Required<RetryConfig>
+  config: Required<RetryConfig>,
 ): number {
   const exponentialDelay = Math.min(
     config.initialDelay * Math.pow(config.backoffFactor, attempt),
-    config.maxDelay
+    config.maxDelay,
   );
 
   if (config.jitter) {
@@ -74,7 +74,7 @@ function shouldRetry(error: Error, config: Required<RetryConfig>): boolean {
   return config.retryableErrors.some(
     (pattern) =>
       errorMessage.includes(pattern.toLowerCase()) ||
-      errorName.includes(pattern.toLowerCase())
+      errorName.includes(pattern.toLowerCase()),
   );
 }
 
@@ -95,7 +95,7 @@ function shouldRetry(error: Error, config: Required<RetryConfig>): boolean {
  */
 export async function withRetry<T>(
   fn: () => Promise<T>,
-  config: RetryConfig = {}
+  config: RetryConfig = {},
 ): Promise<T> {
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
   let lastError: Error = new Error("Unknown error");
@@ -120,9 +120,11 @@ export async function withRetry<T>(
       const delay = calculateDelay(attempt, finalConfig);
       finalConfig.onRetry(attempt + 1, lastError);
 
-      console.log(
-        `[Retry] Attempt ${attempt + 1}/${finalConfig.maxRetries} failed: ${lastError.message}. Retrying in ${Math.round(delay)}ms...`
-      );
+      if (__DEV__) {
+        console.log(
+          `[Retry] Attempt ${attempt + 1}/${finalConfig.maxRetries} failed: ${lastError.message}. Retrying in ${Math.round(delay)}ms...`,
+        );
+      }
 
       // Wait before retrying
       await sleep(delay);
@@ -150,7 +152,7 @@ export async function withRetry<T>(
  */
 export function retryable<TArgs extends any[], TResult>(
   fn: (...args: TArgs) => Promise<TResult>,
-  config: RetryConfig = {}
+  config: RetryConfig = {},
 ): (...args: TArgs) => Promise<TResult> {
   return (...args: TArgs) => withRetry(() => fn(...args), config);
 }
@@ -170,7 +172,7 @@ export function retryable<TArgs extends any[], TResult>(
 export async function retryUntil<T>(
   fn: () => Promise<T>,
   predicate: (result: T) => boolean,
-  config: RetryConfig = {}
+  config: RetryConfig = {},
 ): Promise<T> {
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
 
@@ -188,9 +190,11 @@ export async function retryUntil<T>(
       }
 
       const delay = calculateDelay(attempt, finalConfig);
-      console.log(
-        `[Retry] Predicate not satisfied. Attempt ${attempt + 1}/${finalConfig.maxRetries}. Retrying in ${Math.round(delay)}ms...`
-      );
+      if (__DEV__) {
+        console.log(
+          `[Retry] Predicate not satisfied. Attempt ${attempt + 1}/${finalConfig.maxRetries}. Retrying in ${Math.round(delay)}ms...`,
+        );
+      }
 
       await sleep(delay);
     } catch (error) {
@@ -209,9 +213,11 @@ export async function retryUntil<T>(
       const delay = calculateDelay(attempt, finalConfig);
       finalConfig.onRetry(attempt + 1, lastError);
 
-      console.log(
-        `[Retry] Attempt ${attempt + 1}/${finalConfig.maxRetries} failed. Retrying in ${Math.round(delay)}ms...`
-      );
+      if (__DEV__) {
+        console.log(
+          `[Retry] Attempt ${attempt + 1}/${finalConfig.maxRetries} failed. Retrying in ${Math.round(delay)}ms...`,
+        );
+      }
 
       await sleep(delay);
     }
@@ -228,8 +234,8 @@ export async function retryUntil<T>(
  * due to network issue).
  */
 export async function batchRetry<T>(
-  operations: Array<() => Promise<T>>,
-  config: RetryConfig = {}
+  operations: (() => Promise<T>)[],
+  config: RetryConfig = {},
 ): Promise<T[]> {
   return withRetry(async () => {
     return Promise.all(operations.map((op) => op()));

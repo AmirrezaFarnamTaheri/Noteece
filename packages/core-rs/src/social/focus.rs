@@ -132,7 +132,7 @@ pub fn get_focus_modes(conn: &Connection, space_id: &str) -> Result<Vec<FocusMod
          ORDER BY created_at DESC",
     )?;
 
-    let modes = stmt
+    let modes: Vec<FocusMode> = stmt
         .query_map([space_id], |row| {
             let blocked_json: String = row.get(6)?;
             let allowed_json: String = row.get(7)?;
@@ -164,7 +164,7 @@ pub fn get_focus_modes(conn: &Connection, space_id: &str) -> Result<Vec<FocusMod
 
 /// Activate a focus mode (deactivates all others)
 pub fn activate_focus_mode(
-    conn: &Connection,
+    conn: &mut Connection,
     focus_mode_id: &str,
     space_id: &str,
 ) -> Result<(), SocialError> {
@@ -436,7 +436,7 @@ pub fn get_automation_rules(
          ORDER BY created_at DESC",
     )?;
 
-    let rules = stmt
+    let rules: Vec<AutomationRule> = stmt
         .query_map([space_id], |row| {
             let trigger_type_str: String = row.get(3)?;
             let action_type_str: String = row.get(5)?;

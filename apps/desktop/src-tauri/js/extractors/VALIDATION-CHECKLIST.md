@@ -29,6 +29,7 @@
 - [ ] No duplicate IDs for different content
 
 **Common Validation Patterns:**
+
 ```javascript
 // Twitter: Numeric ID (snowflake)
 /^\d{15,20}$/
@@ -61,6 +62,7 @@
 - [ ] Sanitizes HTML/text content
 
 **Security Validations:**
+
 ```javascript
 // URL validation
 function isValidMediaUrl(url) {
@@ -99,6 +101,7 @@ function isValidEngagement(num) {
 - [ ] Batch operations where possible
 
 **Performance Patterns:**
+
 ```javascript
 const processedIds = new Set();
 const MAX_PROCESSED_IDS = 1000;
@@ -107,7 +110,7 @@ const MAX_PROCESSED_IDS = 1000;
 if (processedIds.size > MAX_PROCESSED_IDS) {
   const toKeep = Array.from(processedIds).slice(-500);
   processedIds.clear();
-  toKeep.forEach(id => processedIds.add(id));
+  toKeep.forEach((id) => processedIds.add(id));
 }
 ```
 
@@ -122,96 +125,112 @@ if (processedIds.size > MAX_PROCESSED_IDS) {
 ### 9. **Platform-Specific Validations** 🎯
 
 #### Twitter/X
+
 - [ ] Handles retweets vs original tweets
 - [ ] Quote tweet detection
 - [ ] Thread detection
 - [ ] Numeric snowflake ID validation (15-20 digits)
 
 #### YouTube
+
 - [ ] 11-character video ID validation
 - [ ] Duration parsing validation (no NaN)
 - [ ] Shorts vs regular video detection
 - [ ] Channel handle extraction
 
 #### Instagram
+
 - [ ] Story vs post vs reel detection
 - [ ] Carousel image handling
 - [ ] Caption hashtag parsing
 - [ ] Post ID from URL (/p/{id}/)
 
 #### TikTok
+
 - [ ] Video ID validation
 - [ ] Sound/music metadata
 - [ ] For You Page vs Following feed
 - [ ] Video URL validation
 
 #### LinkedIn
+
 - [ ] URN-based ID extraction
 - [ ] Sponsored content filtering
 - [ ] Article vs post detection
 - [ ] Job posting detection
 
 #### Discord
+
 - [ ] Message ID from element ID
 - [ ] Fallback ID with channel + author + timestamp
 - [ ] Attachment URL extraction
 - [ ] Embed detection
 
 #### Reddit
-- [ ] t3_ prefix handling
+
+- [ ] t3\_ prefix handling
 - [ ] Fullname attribute extraction
 - [ ] Subreddit context
 - [ ] Comment vs post detection
 
 #### Spotify
+
 - [ ] URI format (spotify:track:ID)
 - [ ] Track vs playlist vs podcast
 - [ ] Duration parsing
 - [ ] Album artwork URL
 
 #### Pinterest
+
 - [ ] 18-digit numeric pin ID
 - [ ] Board context
 - [ ] Source URL tracking
 - [ ] Image URL extraction
 
 #### Facebook
+
 - [ ] Data-ft JSON parsing
 - [ ] Story vs post detection
 - [ ] Group vs page vs profile
 - [ ] Reactions breakdown
 
 #### Threads
+
 - [ ] Post ID from URL (/t/{id})
 - [ ] Reply chain detection
 - [ ] Quote post handling
 - [ ] Instagram integration
 
 #### Bluesky
+
 - [ ] AT Protocol URI parsing
 - [ ] DID (Decentralized ID) extraction
 - [ ] Repost vs original
 - [ ] Handle extraction
 
 #### Mastodon
+
 - [ ] Instance-agnostic selectors
 - [ ] Boost vs original detection
 - [ ] Content warning handling
 - [ ] Status ID extraction
 
 #### Snapchat
+
 - [ ] Story vs Spotlight detection
 - [ ] Ephemeral content handling
 - [ ] Limited metadata availability
 - [ ] Composite ID generation
 
 #### Telegram
+
 - [ ] Message ID from data-mid
 - [ ] Channel vs chat detection
 - [ ] Fallback ID generation
 - [ ] View count for channels
 
 #### Gmail
+
 - [ ] Message ID from data attribute
 - [ ] Label extraction
 - [ ] Conversation threading
@@ -219,6 +238,7 @@ if (processedIds.size > MAX_PROCESSED_IDS) {
 - [ ] Privacy-conscious extraction
 
 #### Dating Apps (Tinder, Bumble, Hinge)
+
 - [ ] **Privacy consent required**
 - [ ] Limited extraction scope
 - [ ] Profile ID anonymization
@@ -226,6 +246,7 @@ if (processedIds.size > MAX_PROCESSED_IDS) {
 - [ ] Explicit user opt-in
 
 #### Castbox
+
 - [ ] Episode ID extraction
 - [ ] Duration parsing validation (no NaN)
 - [ ] Show metadata
@@ -308,51 +329,58 @@ For each extractor, test:
 ## Common Issues & Fixes
 
 ### Issue: Duplicate Posts
+
 **Fix:** Add deduplication Set and mark processed elements
 
 ### Issue: NaN in Engagement/Duration
+
 **Fix:** Add `Number.isFinite()` checks before returning
 
 ### Issue: Invalid URLs
+
 **Fix:** Validate URL scheme before adding to media_urls
 
 ### Issue: Future Timestamps
+
 **Fix:** Cap timestamps at Date.now() + reasonable buffer
 
 ### Issue: Memory Leaks
+
 **Fix:** Limit processedIds Set size, clear periodically
 
 ### Issue: Platform UI Changes
+
 **Fix:** Add multiple fallback selectors, graceful degradation
 
 ---
 
 ## Validation Status
 
-| Platform | Structure | Validation | Security | Performance | Status |
-|----------|-----------|------------|----------|-------------|--------|
-| Twitter | ✅ | ✅ | ✅ | ✅ | **PASS** |
-| YouTube | ✅ | ✅ | ✅ | ✅ | **PASS** |
-| Instagram | ⚠️ | ⚠️ | ✅ | ✅ | **REVIEW** |
-| TikTok | ⚠️ | ⚠️ | ✅ | ✅ | **REVIEW** |
-| LinkedIn | ✅ | ✅ | ✅ | ✅ | **PASS** |
-| Discord | ✅ | ✅ | ✅ | ✅ | **PASS** |
-| Reddit | ✅ | ✅ | ✅ | ✅ | **PASS** |
-| Spotify | ✅ | ✅ | ✅ | ✅ | **PASS** |
-| Pinterest | ✅ | ✅ | ✅ | ✅ | **PASS** |
-| Facebook | ⚠️ | ⚠️ | ✅ | ⚠️ | **REVIEW** |
-| Threads | ✅ | ✅ | ✅ | ✅ | **PASS** |
-| Bluesky | ✅ | ✅ | ✅ | ✅ | **PASS** |
-| Mastodon | ✅ | ✅ | ✅ | ✅ | **PASS** |
-| Snapchat | ⚠️ | ⚠️ | ✅ | ✅ | **REVIEW** |
-| Telegram | ✅ | ✅ | ✅ | ✅ | **PASS** |
-| Gmail | ✅ | ✅ | ✅ | ✅ | **PASS** |
-| Tinder | ⚠️ | ✅ | ✅ | ✅ | **PRIVACY** |
-| Bumble | ⚠️ | ✅ | ✅ | ✅ | **PRIVACY** |
-| Hinge | ⚠️ | ✅ | ✅ | ✅ | **PRIVACY** |
-| Castbox | ✅ | ✅ | ✅ | ✅ | **PASS** |
+| Platform  | Structure | Validation | Security | Performance | Status      |
+| --------- | --------- | ---------- | -------- | ----------- | ----------- |
+| Twitter   | ✅        | ✅         | ✅       | ✅          | **PASS**    |
+| YouTube   | ✅        | ✅         | ✅       | ✅          | **PASS**    |
+| Instagram | ⚠️        | ⚠️         | ✅       | ✅          | **REVIEW**  |
+| TikTok    | ⚠️        | ⚠️         | ✅       | ✅          | **REVIEW**  |
+| LinkedIn  | ✅        | ✅         | ✅       | ✅          | **PASS**    |
+| Discord   | ✅        | ✅         | ✅       | ✅          | **PASS**    |
+| Reddit    | ✅        | ✅         | ✅       | ✅          | **PASS**    |
+| Spotify   | ✅        | ✅         | ✅       | ✅          | **PASS**    |
+| Pinterest | ✅        | ✅         | ✅       | ✅          | **PASS**    |
+| Facebook  | ⚠️        | ⚠️         | ✅       | ⚠️          | **REVIEW**  |
+| Threads   | ✅        | ✅         | ✅       | ✅          | **PASS**    |
+| Bluesky   | ✅        | ✅         | ✅       | ✅          | **PASS**    |
+| Mastodon  | ✅        | ✅         | ✅       | ✅          | **PASS**    |
+| Snapchat  | ⚠️        | ⚠️         | ✅       | ✅          | **REVIEW**  |
+| Telegram  | ✅        | ✅         | ✅       | ✅          | **PASS**    |
+| Gmail     | ✅        | ✅         | ✅       | ✅          | **PASS**    |
+| Tinder    | ⚠️        | ✅         | ✅       | ✅          | **PRIVACY** |
+| Bumble    | ⚠️        | ✅         | ✅       | ✅          | **PRIVACY** |
+| Hinge     | ⚠️        | ✅         | ✅       | ✅          | **PRIVACY** |
+| Castbox   | ✅        | ✅         | ✅       | ✅          | **PASS**    |
 
 **Legend:**
+
 - ✅ **PASS:** Fully validated
 - ⚠️ **REVIEW:** Needs enhancements
 - ❌ **FAIL:** Critical issues
@@ -372,5 +400,5 @@ For each extractor, test:
 
 ---
 
-*Last Updated: 2025-11-07*
-*Version: 1.0*
+_Last Updated: 2025-11-07_
+_Version: 1.0_

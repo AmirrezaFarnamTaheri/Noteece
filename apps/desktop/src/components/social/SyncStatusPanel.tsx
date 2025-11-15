@@ -26,17 +26,17 @@ interface SyncTask {
   next_sync: number;
 }
 
-interface SyncStatusPanelProps {
+interface SyncStatusPanelProperties {
   spaceId: string;
 }
 
-export function SyncStatusPanel({ spaceId }: SyncStatusPanelProps) {
+export function SyncStatusPanel({ spaceId }: SyncStatusPanelProperties) {
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['syncStats', spaceId],
     queryFn: async () => {
       return await invoke<SyncStats>('get_sync_stats_cmd', { spaceId });
     },
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30_000, // Refresh every 30 seconds
   });
 
   const { data: tasks, isLoading: tasksLoading } = useQuery({
@@ -44,7 +44,7 @@ export function SyncStatusPanel({ spaceId }: SyncStatusPanelProps) {
     queryFn: async () => {
       return await invoke<SyncTask[]>('get_sync_tasks_cmd', { spaceId });
     },
-    refetchInterval: 30000,
+    refetchInterval: 30_000,
   });
 
   const formatLastSync = (timestamp: number | null) => {
@@ -54,9 +54,9 @@ export function SyncStatusPanel({ spaceId }: SyncStatusPanelProps) {
     const now = Date.now();
     const diff = now - date.getTime();
 
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
+    const minutes = Math.floor(diff / 60_000);
+    const hours = Math.floor(diff / 3_600_000);
+    const days = Math.floor(diff / 86_400_000);
 
     if (minutes < 1) return 'Just now';
     if (minutes < 60) return `${minutes}m ago`;
@@ -84,11 +84,7 @@ export function SyncStatusPanel({ spaceId }: SyncStatusPanelProps) {
       <Card shadow="sm" padding="lg" radius="md" withBorder>
         <Group justify="space-between" mb="md">
           <Title order={3}>Sync Status</Title>
-          <Badge
-            leftSection={<IconClock size={14} />}
-            variant="light"
-            color="blue"
-          >
+          <Badge leftSection={<IconClock size={14} />} variant="light" color="blue">
             Auto-sync enabled
           </Badge>
         </Group>
@@ -104,12 +100,7 @@ export function SyncStatusPanel({ spaceId }: SyncStatusPanelProps) {
                 {stats?.accounts_synced_today || 0} / {stats?.total_accounts || 0} accounts
               </Text>
             </Group>
-            <Progress
-              value={getSyncProgress()}
-              color="blue"
-              size="lg"
-              radius="xl"
-            />
+            <Progress value={getSyncProgress()} color="blue" size="lg" radius="xl" />
           </div>
 
           {/* Statistics Grid */}

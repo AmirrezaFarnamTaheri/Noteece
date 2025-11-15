@@ -15,11 +15,11 @@ import { SocialAnalytics } from './SocialAnalytics';
 import { SocialSearch } from './SocialSearch';
 import { getTimelineStats } from '../../services/socialApi';
 
-interface SocialHubProps {
+interface SocialHubProperties {
   spaceId: string;
 }
 
-export function SocialHub({ spaceId }: SocialHubProps) {
+export function SocialHub({ spaceId }: SocialHubProperties) {
   const { data: stats } = useQuery({
     queryKey: ['timelineStats', spaceId],
     queryFn: () => getTimelineStats(spaceId),
@@ -129,7 +129,10 @@ export function SocialHub({ spaceId }: SocialHubProps) {
               Phase 3 - Week 12 Complete! 🎉
             </Badge>
             <Text size="sm">
-              Social Media Suite - 18 platform extractors with analytics & search! Now supporting Twitter, YouTube, Instagram, TikTok, Pinterest, LinkedIn, Discord, Reddit, Spotify, Castbox, FotMob, SofaScore, Telegram, Gmail, Tinder, Bumble, and Hinge. Features: Category system, Analytics dashboard, FTS search, and privacy-first dating app integration!
+              Social Media Suite - 18 platform extractors with analytics & search! Now supporting Twitter, YouTube,
+              Instagram, TikTok, Pinterest, LinkedIn, Discord, Reddit, Spotify, Castbox, FotMob, SofaScore, Telegram,
+              Gmail, Tinder, Bumble, and Hinge. Features: Category system, Analytics dashboard, FTS search, and
+              privacy-first dating app integration!
             </Text>
           </Group>
         </Card>

@@ -1,6 +1,7 @@
 // Notification utilities for user feedback
 import { notifications } from '@mantine/notifications';
 import { IconCheck, IconX, IconAlertTriangle, IconInfoCircle } from '@tabler/icons-react';
+import logger from './logger';
 
 export interface NotificationOptions {
   title?: string;
@@ -112,7 +113,7 @@ export const updateToError = (id: string, options: NotificationOptions) => {
  * Handles errors from async operations and shows appropriate notifications
  */
 export const handleAsyncError = (error: unknown, context: string): void => {
-  console.error(`Error in ${context}:`, error);
+  logger.error(`Error in ${context}:`, error as Error);
 
   let errorMessage = 'An unexpected error occurred';
 

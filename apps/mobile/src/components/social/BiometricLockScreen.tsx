@@ -63,7 +63,7 @@ export function BiometricLockScreen({
           duration: 1000,
           useNativeDriver: true,
         }),
-      ])
+      ]),
     ).start();
   };
 
@@ -84,19 +84,15 @@ export function BiometricLockScreen({
           [
             { text: "Cancel", onPress: onCancel, style: "cancel" },
             { text: "Retry", onPress: handleAuthenticate },
-          ]
+          ],
         );
       }
     } catch (error) {
       console.error("Authentication error:", error);
-      Alert.alert(
-        "Error",
-        "Failed to authenticate. Please try again.",
-        [
-          { text: "Cancel", onPress: onCancel, style: "cancel" },
-          { text: "Retry", onPress: handleAuthenticate },
-        ]
-      );
+      Alert.alert("Error", "Failed to authenticate. Please try again.", [
+        { text: "Cancel", onPress: onCancel, style: "cancel" },
+        { text: "Retry", onPress: handleAuthenticate },
+      ]);
     } finally {
       setIsAuthenticating(false);
     }
@@ -145,7 +141,9 @@ export function BiometricLockScreen({
           >
             <LinearGradient
               colors={
-                isAuthenticating ? ["#4B5563", "#6B7280"] : ["#6366F1", "#8B5CF6"]
+                isAuthenticating
+                  ? ["#4B5563", "#6B7280"]
+                  : ["#6366F1", "#8B5CF6"]
               }
               style={styles.authenticateButtonGradient}
               start={{ x: 0, y: 0 }}

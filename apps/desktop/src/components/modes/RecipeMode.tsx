@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import {
   Container,
   Title,
@@ -18,6 +18,7 @@ import {
   Loader,
 } from '@mantine/core';
 import { IconPlus, IconClock, IconUsers, IconChefHat } from '@tabler/icons-react';
+import logger from '../../utils/logger';
 
 interface Recipe {
   id: string;
@@ -53,7 +54,7 @@ const RecipeMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       const data = await invoke<Recipe[]>('get_recipes_cmd', { spaceId, limit: 50 });
       setRecipes(data);
     } catch (error) {
-      console.error('Failed to load recipes:', error);
+      logger.error('Failed to load recipes:', error as Error);
     } finally {
       setLoading(false);
     }
@@ -65,8 +66,8 @@ const RecipeMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
         alert('Please provide a recipe name.');
         return;
       }
-      const servingsNum = Number(formServings);
-      if (!Number.isFinite(servingsNum) || servingsNum < 1 || !Number.isInteger(servingsNum)) {
+      const servingsNumber = Number(formServings);
+      if (!Number.isFinite(servingsNumber) || servingsNumber < 1 || !Number.isInteger(servingsNumber)) {
         alert('Servings must be a positive integer.');
         return;
       }
@@ -75,7 +76,7 @@ const RecipeMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       const noteId = await invoke<string>('create_note_for_recipe_cmd', {
         spaceId,
         title: formName,
-        metadata: { servings: servingsNum, difficulty: formDifficulty },
+        metadata: { servings: servingsNumber, difficulty: formDifficulty },
       });
       if (!noteId) {
         alert('Failed to create note for the recipe.');
@@ -86,7 +87,7 @@ const RecipeMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
         spaceId,
         noteId,
         name: formName,
-        servings: servingsNum,
+        servings: servingsNumber,
         difficulty: formDifficulty,
       });
 
@@ -95,7 +96,7 @@ const RecipeMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       setFormServings(4);
       await loadData();
     } catch (error) {
-      console.error('Failed to add recipe:', error);
+      logger.error('Failed to add recipe:', error as Error);
       alert(`Failed to add recipe: ${String(error)}`);
     }
   };

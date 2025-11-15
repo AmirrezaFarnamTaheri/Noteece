@@ -61,7 +61,11 @@ function categorizeError(error?: Error): ErrorCategory {
     return ErrorCategory.VALIDATION;
   }
 
-  if (message.includes("auth") || message.includes("token") || message.includes("401")) {
+  if (
+    message.includes("auth") ||
+    message.includes("token") ||
+    message.includes("401")
+  ) {
     return ErrorCategory.AUTH;
   }
 
@@ -135,7 +139,9 @@ export function ErrorFallback({
   return (
     <Shake intensity={compact ? 5 : 8} repeat={1} trigger={true}>
       <View style={[styles.container, compact && styles.containerCompact]}>
-        <View style={[styles.iconContainer, compact && styles.iconContainerCompact]}>
+        <View
+          style={[styles.iconContainer, compact && styles.iconContainerCompact]}
+        >
           <Ionicons
             name={config.icon}
             size={compact ? 32 : 48}
@@ -157,7 +163,9 @@ export function ErrorFallback({
             onPress={onRetry}
           >
             <Ionicons name="refresh" size={16} color={config.color} />
-            <Text style={[styles.retryText, { color: config.color }]}>Retry</Text>
+            <Text style={[styles.retryText, { color: config.color }]}>
+              Retry
+            </Text>
           </TouchableOpacity>
         )}
       </View>

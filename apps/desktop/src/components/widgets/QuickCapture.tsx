@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Paper, Text, Group, Textarea, Button, Stack } from '@mantine/core';
 import { IconNotebook, IconCheck } from '@tabler/icons-react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { useActiveSpace } from '../../hooks/useActiveSpace';
 import { showSuccess, showError } from '../../utils/notifications';
 import classes from '../Dashboard.module.css';
+import logger from '../../utils/logger';
 
 export const QuickCapture: React.FC = () => {
   const [note, setNote] = useState('');
@@ -30,7 +31,7 @@ export const QuickCapture: React.FC = () => {
       showError({
         message: 'Failed to create quick note',
       });
-      console.error('Error creating quick note:', error);
+      logger.error('Error creating quick note:', error as Error);
     } finally {
       setLoading(false);
     }
@@ -54,7 +55,7 @@ export const QuickCapture: React.FC = () => {
       showError({
         message: 'Failed to create task',
       });
-      console.error('Error creating task:', error);
+      logger.error('Error creating task:', error as Error);
     } finally {
       setLoading(false);
     }

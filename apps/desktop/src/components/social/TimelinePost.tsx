@@ -8,7 +8,7 @@ import { Card, Group, Text, Badge, Stack, Image, AspectRatio, ActionIcon } from 
 import { IconHeart, IconMessageCircle, IconShare, IconEye } from '@tabler/icons-react';
 import { SUPPORTED_PLATFORMS } from '@noteece/types';
 
-interface TimelinePostProps {
+interface TimelinePostProperties {
   post: {
     id: string;
     author: string;
@@ -30,7 +30,7 @@ interface TimelinePostProps {
   };
 }
 
-export function TimelinePost({ post }: TimelinePostProps) {
+export function TimelinePost({ post }: TimelinePostProperties) {
   const platform = SUPPORTED_PLATFORMS[post.platform as keyof typeof SUPPORTED_PLATFORMS];
 
   const formatTimestamp = (timestamp: number) => {
@@ -38,9 +38,9 @@ export function TimelinePost({ post }: TimelinePostProps) {
     const now = Date.now();
     const diff = now - date.getTime();
 
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
+    const minutes = Math.floor(diff / 60_000);
+    const hours = Math.floor(diff / 3_600_000);
+    const days = Math.floor(diff / 86_400_000);
 
     if (minutes < 1) return 'Just now';
     if (minutes < 60) return `${minutes}m ago`;
@@ -49,11 +49,11 @@ export function TimelinePost({ post }: TimelinePostProps) {
     return date.toLocaleDateString();
   };
 
-  const formatNumber = (num?: number) => {
-    if (!num) return '0';
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
+  const formatNumber = (number_?: number) => {
+    if (!number_) return '0';
+    if (number_ >= 1_000_000) return `${(number_ / 1_000_000).toFixed(1)}M`;
+    if (number_ >= 1000) return `${(number_ / 1000).toFixed(1)}K`;
+    return number_.toString();
   };
 
   return (
@@ -91,20 +91,11 @@ export function TimelinePost({ post }: TimelinePostProps) {
               <div key={index}>
                 {media.type === 'image' || media.type === 'thumbnail' ? (
                   <AspectRatio ratio={16 / 9}>
-                    <Image
-                      src={media.url}
-                      alt={media.alt || 'Post media'}
-                      fit="cover"
-                      radius="md"
-                    />
+                    <Image src={media.url} alt={media.alt || 'Post media'} fit="cover" radius="md" />
                   </AspectRatio>
                 ) : media.type === 'video' ? (
                   <AspectRatio ratio={16 / 9}>
-                    <video
-                      src={media.url}
-                      controls
-                      style={{ width: '100%', borderRadius: '8px' }}
-                    />
+                    <video src={media.url} controls style={{ width: '100%', borderRadius: '8px' }} />
                   </AspectRatio>
                 ) : null}
               </div>
@@ -157,7 +148,7 @@ export function TimelinePost({ post }: TimelinePostProps) {
         {post.type && post.type !== 'post' && (
           <Group gap="xs" mt="xs">
             <Badge size="sm" variant="dot">
-              {post.type.replace(/_/g, ' ')}
+              {post.type.replaceAll('_', ' ')}
             </Badge>
           </Group>
         )}

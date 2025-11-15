@@ -42,11 +42,11 @@ describe('E2E: Critical User Workflows', () => {
       // Step 2: Navigate to different pages
       const pages = ['/dashboard', '/settings', '/social-feed'];
 
-      pages.forEach((page) => {
+      for (const page of pages) {
         // Session should still be valid
         expect(session.token).toBeTruthy();
         expect(Date.now()).toBeLessThan(session.expires_at);
-      });
+      }
 
       // Step 3: Logout clears session
       expect(session.token).toBeTruthy(); // Before logout
@@ -93,15 +93,15 @@ describe('E2E: Critical User Workflows', () => {
       expect(backupSettings.ready).toBe(true);
 
       // Step 2: Create backup with description
-      const backupParams = {
+      const backupParameters = {
         description: 'Before major migration',
         encrypted: true,
         timestamp: new Date(),
       };
 
-      expect(backupParams.description).toBeTruthy();
-      expect(backupParams.encrypted).toBe(true);
-      expect(backupParams.timestamp).toBeDefined();
+      expect(backupParameters.description).toBeTruthy();
+      expect(backupParameters.encrypted).toBe(true);
+      expect(backupParameters.timestamp).toBeDefined();
 
       // Step 3: Backup created successfully
       const backupResult = {
@@ -121,14 +121,14 @@ describe('E2E: Critical User Workflows', () => {
         {
           id: 'backup_1',
           created_at: '2025-11-09T10:00:00Z',
-          size_bytes: 1024000,
+          size_bytes: 1_024_000,
           description: 'Initial backup',
           encrypted: true,
         },
         {
           id: 'backup_2',
           created_at: '2025-11-08T15:30:00Z',
-          size_bytes: 1048000,
+          size_bytes: 1_048_000,
           description: 'After sync',
           encrypted: true,
         },
@@ -137,17 +137,15 @@ describe('E2E: Critical User Workflows', () => {
       expect(backups.length).toBe(2);
 
       // Step 2: Inspect backup details
-      backups.forEach((backup) => {
+      for (const backup of backups) {
         expect(backup.id).toBeTruthy();
         expect(backup.created_at).toMatch(/^\d{4}-\d{2}-\d{2}/);
         expect(backup.size_bytes).toBeGreaterThan(0);
         expect(backup.encrypted).toBe(true);
-      });
+      }
 
       // Step 3: Sort by creation date
-      const sorted = backups.sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      const sorted = backups.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       expect(sorted[0].id).toBe('backup_1');
       expect(sorted[1].id).toBe('backup_2');
@@ -158,7 +156,7 @@ describe('E2E: Critical User Workflows', () => {
       const selectedBackup = {
         id: 'backup_1',
         description: 'Initial backup',
-        size_bytes: 1024000,
+        size_bytes: 1_024_000,
       };
 
       expect(selectedBackup.id).toBeTruthy();
@@ -199,10 +197,7 @@ describe('E2E: Critical User Workflows', () => {
       expect(deletionResult.status).toBe('success');
 
       // Step 4: Backup no longer in list
-      const remainingBackups = [
-        { id: 'backup_1' },
-        { id: 'backup_2' },
-      ];
+      const remainingBackups = [{ id: 'backup_1' }, { id: 'backup_2' }];
 
       const foundDeleted = remainingBackups.find((b) => b.id === backupToDelete.id);
       expect(foundDeleted).toBeUndefined();
@@ -339,12 +334,14 @@ describe('E2E: Critical User Workflows', () => {
     test('user filters and searches social media posts', async () => {
       // Step 1: Load social feed
       const feed = {
-        posts: Array(100).fill(null).map((_, i) => ({
-          id: `post_${i}`,
-          platform: ['twitter', 'instagram', 'facebook'][i % 3],
-          content: `Post ${i}`,
-          created_at: new Date(),
-        })),
+        posts: Array.from({ length: 100 })
+          .fill(null)
+          .map((_, index) => ({
+            id: `post_${index}`,
+            platform: ['twitter', 'instagram', 'facebook'][index % 3],
+            content: `Post ${index}`,
+            created_at: new Date(),
+          })),
       };
 
       expect(feed.posts.length).toBe(100);
@@ -355,9 +352,7 @@ describe('E2E: Critical User Workflows', () => {
 
       // Step 3: Search posts
       const searchQuery = 'test';
-      const searchResults = feed.posts.filter((p) =>
-        p.content.toLowerCase().includes(searchQuery)
-      );
+      const searchResults = feed.posts.filter((p) => p.content.toLowerCase().includes(searchQuery));
 
       expect(searchResults.length).toBeGreaterThanOrEqual(0);
 

@@ -63,7 +63,9 @@ export function IconPicker({
       // In a real app, you might want emoji names/keywords
       return allIcons;
     }
-    return ICON_CATEGORIES[selectedCategory as keyof typeof ICON_CATEGORIES] || [];
+    return (
+      ICON_CATEGORIES[selectedCategory as keyof typeof ICON_CATEGORIES] || []
+    );
   }, [selectedCategory, searchQuery, allIcons]);
 
   const handleSelectIcon = (icon: string) => {
@@ -165,7 +167,11 @@ export function IconPicker({
                   <Text style={styles.iconText}>{item}</Text>
                   {isSelected && (
                     <View style={styles.selectedBadge}>
-                      <Ionicons name="checkmark-circle" size={16} color="#007AFF" />
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={16}
+                        color="#007AFF"
+                      />
                     </View>
                   )}
                 </TouchableOpacity>

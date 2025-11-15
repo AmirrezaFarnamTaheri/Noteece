@@ -1,4 +1,5 @@
 // Date utility functions for safe and consistent date handling
+import logger from './logger';
 
 /**
  * Formats a Unix timestamp (in seconds) to a localized date string
@@ -20,7 +21,7 @@ export const formatTimestamp = (
     const date = new Date(timestamp * 1000);
     return date.toLocaleDateString(undefined, options);
   } catch (error) {
-    console.error('Error formatting timestamp:', error);
+    logger.error('Error formatting timestamp:', error as Error);
     return fallback;
   }
 };
@@ -40,7 +41,7 @@ export const formatTimestampWithTime = (timestamp: number | undefined, fallback:
     const date = new Date(timestamp * 1000);
     return date.toLocaleString();
   } catch (error) {
-    console.error('Error formatting timestamp with time:', error);
+    logger.error('Error formatting timestamp with time:', error as Error);
     return fallback;
   }
 };
@@ -70,7 +71,7 @@ export const formatRelativeTime = (timestamp: number | undefined, fallback: stri
 
     return date.toLocaleDateString();
   } catch (error) {
-    console.error('Error formatting relative time:', error);
+    logger.error('Error formatting relative time:', error as Error);
     return fallback;
   }
 };
@@ -112,7 +113,7 @@ export const parseDate = (value: string | number | Date | undefined): Date | nul
 
     return null;
   } catch (error) {
-    console.error('Error parsing date:', error);
+    logger.error('Error parsing date:', error as Error);
     return null;
   }
 };

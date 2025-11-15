@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Paper, Text, Group, Badge, Stack, useMantineTheme } from '@mantine/core';
 import { IconTags, IconArrowUpRight } from '@tabler/icons-react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { Tag } from '@noteece/types';
 import { useActiveSpace } from '../../hooks/useActiveSpace';
 import classes from '../Dashboard.module.css';
+import logger from '../../utils/logger';
 
 interface TagWithCount extends Tag {
   noteCount: number;
@@ -43,7 +44,7 @@ export const TagsCloud: React.FC = () => {
 
         setTags(tagsWithCounts.slice(0, 15)); // Top 15 tags
       } catch (error) {
-        console.error('Error fetching tags:', error);
+        logger.error('Error fetching tags:', error as Error);
       }
     };
     void fetchTags();

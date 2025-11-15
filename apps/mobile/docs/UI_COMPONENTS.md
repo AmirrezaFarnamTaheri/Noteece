@@ -21,25 +21,28 @@ All animation components use React Native's Animated API with `useNativeDriver: 
 Smooth fade-in animation for any child component.
 
 **Props:**
+
 ```typescript
 interface FadeInProps {
   children: React.ReactNode;
-  duration?: number;        // Animation duration in ms (default: 300)
-  delay?: number;           // Delay before animation starts (default: 0)
-  style?: ViewStyle;        // Additional styles
+  duration?: number; // Animation duration in ms (default: 300)
+  delay?: number; // Delay before animation starts (default: 0)
+  style?: ViewStyle; // Additional styles
 }
 ```
 
 **Example:**
+
 ```tsx
-import { FadeIn } from '@/components/animations';
+import { FadeIn } from "@/components/animations";
 
 <FadeIn duration={500} delay={200}>
   <Text>This text fades in smoothly</Text>
-</FadeIn>
+</FadeIn>;
 ```
 
 **Use Cases:**
+
 - Content reveals
 - Modal/dialog appearances
 - Screen transitions
@@ -52,29 +55,32 @@ import { FadeIn } from '@/components/animations';
 Directional slide-in animation from various edges.
 
 **Props:**
+
 ```typescript
 interface SlideInProps {
   children: React.ReactNode;
-  direction?: 'left' | 'right' | 'top' | 'bottom';  // Default: 'bottom'
-  duration?: number;        // Animation duration in ms (default: 300)
-  delay?: number;           // Delay before animation (default: 0)
-  distance?: number;        // Distance to slide in px (default: 50)
+  direction?: "left" | "right" | "top" | "bottom"; // Default: 'bottom'
+  duration?: number; // Animation duration in ms (default: 300)
+  delay?: number; // Delay before animation (default: 0)
+  distance?: number; // Distance to slide in px (default: 50)
   style?: ViewStyle;
 }
 ```
 
 **Example:**
+
 ```tsx
-import { SlideIn } from '@/components/animations';
+import { SlideIn } from "@/components/animations";
 
 <SlideIn direction="right" distance={100}>
   <View style={styles.card}>
     <Text>Slides in from the right</Text>
   </View>
-</SlideIn>
+</SlideIn>;
 ```
 
 **Use Cases:**
+
 - List item animations
 - Card reveals
 - Notification banners
@@ -87,29 +93,32 @@ import { SlideIn } from '@/components/animations';
 Scale animation with optional bounce effect.
 
 **Props:**
+
 ```typescript
 interface ScaleInProps {
   children: React.ReactNode;
-  duration?: number;        // Animation duration in ms (default: 300)
-  delay?: number;           // Delay before animation (default: 0)
-  initialScale?: number;    // Starting scale (default: 0.8)
-  bounce?: boolean;         // Enable bounce effect (default: false)
+  duration?: number; // Animation duration in ms (default: 300)
+  delay?: number; // Delay before animation (default: 0)
+  initialScale?: number; // Starting scale (default: 0.8)
+  bounce?: boolean; // Enable bounce effect (default: false)
   style?: ViewStyle;
 }
 ```
 
 **Example:**
+
 ```tsx
-import { ScaleIn } from '@/components/animations';
+import { ScaleIn } from "@/components/animations";
 
 <ScaleIn bounce initialScale={0.5}>
   <TouchableOpacity style={styles.button}>
     <Text>Button with bounce</Text>
   </TouchableOpacity>
-</ScaleIn>
+</ScaleIn>;
 ```
 
 **Use Cases:**
+
 - Button feedback
 - Icon animations
 - Achievement popups
@@ -122,29 +131,32 @@ import { ScaleIn } from '@/components/animations';
 Continuous pulsing animation for attention-grabbing elements.
 
 **Props:**
+
 ```typescript
 interface PulseProps {
   children: React.ReactNode;
-  duration?: number;        // Full cycle duration in ms (default: 1000)
-  minScale?: number;        // Minimum scale (default: 0.95)
-  maxScale?: number;        // Maximum scale (default: 1.05)
-  repeat?: boolean;         // Enable looping (default: true)
+  duration?: number; // Full cycle duration in ms (default: 1000)
+  minScale?: number; // Minimum scale (default: 0.95)
+  maxScale?: number; // Maximum scale (default: 1.05)
+  repeat?: boolean; // Enable looping (default: true)
   style?: ViewStyle;
 }
 ```
 
 **Example:**
+
 ```tsx
-import { Pulse } from '@/components/animations';
+import { Pulse } from "@/components/animations";
 
 <Pulse duration={1500} minScale={0.9} maxScale={1.1}>
   <View style={styles.badge}>
     <Text>5</Text>
   </View>
-</Pulse>
+</Pulse>;
 ```
 
 **Use Cases:**
+
 - Notification badges
 - Live indicators
 - Recording status
@@ -161,20 +173,22 @@ Skeleton components provide animated loading placeholders with shimmer effects.
 Base skeleton component for custom loading shapes.
 
 **Props:**
+
 ```typescript
 interface SkeletonBoxProps {
-  width?: number | string;   // Width (default: '100%')
-  height?: number | string;  // Height (default: 20)
-  borderRadius?: number;     // Border radius (default: 4)
+  width?: number | string; // Width (default: '100%')
+  height?: number | string; // Height (default: 20)
+  borderRadius?: number; // Border radius (default: 4)
   style?: ViewStyle;
 }
 ```
 
 **Example:**
-```tsx
-import { SkeletonBox } from '@/components/skeletons';
 
-<SkeletonBox width={200} height={40} borderRadius={8} />
+```tsx
+import { SkeletonBox } from "@/components/skeletons";
+
+<SkeletonBox width={200} height={40} borderRadius={8} />;
 ```
 
 ---
@@ -184,21 +198,24 @@ import { SkeletonBox } from '@/components/skeletons';
 Skeleton placeholder for card-based layouts.
 
 **Props:**
+
 ```typescript
 interface SkeletonCardProps {
-  showImage?: boolean;      // Show image placeholder (default: true)
-  lines?: number;           // Number of text lines (default: 3)
+  showImage?: boolean; // Show image placeholder (default: true)
+  lines?: number; // Number of text lines (default: 3)
 }
 ```
 
 **Example:**
-```tsx
-import { SkeletonCard } from '@/components/skeletons';
 
-<SkeletonCard showImage lines={2} />
+```tsx
+import { SkeletonCard } from "@/components/skeletons";
+
+<SkeletonCard showImage lines={2} />;
 ```
 
 **Use Cases:**
+
 - Blog post cards
 - Product cards
 - News articles
@@ -211,22 +228,25 @@ import { SkeletonCard } from '@/components/skeletons';
 Skeleton placeholder for list items.
 
 **Props:**
+
 ```typescript
 interface SkeletonListProps {
-  count?: number;           // Number of items (default: 5)
-  showAvatar?: boolean;     // Show avatar placeholder (default: true)
-  lines?: number;           // Text lines per item (default: 2)
+  count?: number; // Number of items (default: 5)
+  showAvatar?: boolean; // Show avatar placeholder (default: true)
+  lines?: number; // Text lines per item (default: 2)
 }
 ```
 
 **Example:**
-```tsx
-import { SkeletonList } from '@/components/skeletons';
 
-<SkeletonList count={10} showAvatar lines={3} />
+```tsx
+import { SkeletonList } from "@/components/skeletons";
+
+<SkeletonList count={10} showAvatar lines={3} />;
 ```
 
 **Use Cases:**
+
 - User lists
 - Comment sections
 - Chat messages
@@ -243,17 +263,19 @@ Comprehensive error handling and recovery components.
 Full-screen error boundary for catching React errors.
 
 **Props:**
+
 ```typescript
 interface ErrorBoundaryProps {
   children: ReactNode;
-  fallback?: ReactNode;                    // Custom fallback UI
-  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;  // Error callback
+  fallback?: ReactNode; // Custom fallback UI
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void; // Error callback
 }
 ```
 
 **Example:**
+
 ```tsx
-import { ErrorBoundary } from '@/components/errors';
+import { ErrorBoundary } from "@/components/errors";
 
 <ErrorBoundary
   onError={(error, info) => {
@@ -261,10 +283,11 @@ import { ErrorBoundary } from '@/components/errors';
   }}
 >
   <YourApp />
-</ErrorBoundary>
+</ErrorBoundary>;
 ```
 
 **Features:**
+
 - Automatic error catching
 - Retry functionality
 - Dev-only error details
@@ -272,16 +295,15 @@ import { ErrorBoundary } from '@/components/errors';
 - Error logging callback
 
 **Root Layout Integration:**
+
 ```tsx
 // app/_layout.tsx
-import { ErrorBoundary } from '@/components/errors';
+import { ErrorBoundary } from "@/components/errors";
 
 export default function RootLayout() {
   return (
     <ErrorBoundary>
-      <Stack>
-        {/* Your app */}
-      </Stack>
+      <Stack>{/* Your app */}</Stack>
     </ErrorBoundary>
   );
 }
@@ -294,32 +316,37 @@ export default function RootLayout() {
 Lightweight inline error display for component-level errors.
 
 **Props:**
+
 ```typescript
 interface ErrorFallbackProps {
-  error?: Error;            // Error object
-  onRetry?: () => void;     // Retry callback
-  message?: string;         // Custom error message
-  compact?: boolean;        // Compact mode (default: false)
+  error?: Error; // Error object
+  onRetry?: () => void; // Retry callback
+  message?: string; // Custom error message
+  compact?: boolean; // Compact mode (default: false)
 }
 ```
 
 **Example:**
-```tsx
-import { ErrorFallback } from '@/components/errors';
 
-{error ? (
-  <ErrorFallback
-    error={error}
-    message="Failed to load posts"
-    onRetry={refetch}
-    compact
-  />
-) : (
-  <PostList posts={posts} />
-)}
+```tsx
+import { ErrorFallback } from "@/components/errors";
+
+{
+  error ? (
+    <ErrorFallback
+      error={error}
+      message="Failed to load posts"
+      onRetry={refetch}
+      compact
+    />
+  ) : (
+    <PostList posts={posts} />
+  );
+}
 ```
 
 **Use Cases:**
+
 - API fetch errors
 - Component load failures
 - Network errors
@@ -336,8 +363,9 @@ Comprehensive haptic feedback system integrated with user settings.
 Central manager for all haptic feedback.
 
 **Available Methods:**
+
 ```typescript
-import { haptics } from '@/lib/haptics';
+import { haptics } from "@/lib/haptics";
 
 // Light - Subtle interactions
 await haptics.light();
@@ -370,40 +398,45 @@ await haptics.soft();
 ### Usage Guidelines
 
 **Light Haptics:**
+
 - Hover states
 - Small UI changes
 - Minor confirmations
 - Theme changes
 
 **Medium Haptics:**
+
 - Button presses
 - Toggle switches
 - List selections
 - Tab navigation
 
 **Heavy Haptics:**
+
 - Lock vault
 - Delete actions
 - Major confirmations
 - Important saves
 
 **Success/Warning/Error:**
+
 - API responses
 - Validation results
 - Operation outcomes
 - System notifications
 
 **Example Implementation:**
+
 ```tsx
-import { haptics } from '@/lib/haptics';
+import { haptics } from "@/lib/haptics";
 
 const handleSave = async () => {
   try {
-    haptics.medium();  // Immediate feedback
+    haptics.medium(); // Immediate feedback
     await saveData();
     haptics.success(); // Success confirmation
   } catch (error) {
-    haptics.error();   // Error feedback
+    haptics.error(); // Error feedback
     showError(error);
   }
 };
@@ -416,7 +449,7 @@ Haptics respect user preferences automatically:
 ```tsx
 // Settings toggle (automatically handled)
 const handleToggleHaptics = async (value: boolean) => {
-  await updateSetting('haptics', value);
+  await updateSetting("haptics", value);
   // Haptic manager updates automatically
 };
 ```
@@ -433,12 +466,15 @@ const handleToggleHaptics = async (value: boolean) => {
 4. **Avoid Over-Animation:** Don't animate everything - be selective
 
 **Example - Staggered List:**
+
 ```tsx
-{items.map((item, index) => (
-  <SlideIn key={item.id} delay={index * 50} direction="bottom">
-    <ListItem item={item} />
-  </SlideIn>
-))}
+{
+  items.map((item, index) => (
+    <SlideIn key={item.id} delay={index * 50} direction="bottom">
+      <ListItem item={item} />
+    </SlideIn>
+  ));
+}
 ```
 
 ### Skeleton Best Practices
@@ -449,19 +485,22 @@ const handleToggleHaptics = async (value: boolean) => {
 4. **Shimmer Effect:** Built-in shimmer provides better UX than static
 
 **Example - Conditional Rendering:**
+
 ```tsx
-{loading ? (
-  <SkeletonList count={10} />
-) : (
-  <FlatList
-    data={items}
-    renderItem={({ item, index }) => (
-      <FadeIn delay={index * 30}>
-        <ListItem item={item} />
-      </FadeIn>
-    )}
-  />
-)}
+{
+  loading ? (
+    <SkeletonList count={10} />
+  ) : (
+    <FlatList
+      data={items}
+      renderItem={({ item, index }) => (
+        <FadeIn delay={index * 30}>
+          <ListItem item={item} />
+        </FadeIn>
+      )}
+    />
+  );
+}
 ```
 
 ### Error Handling Best Practices
@@ -472,10 +511,11 @@ const handleToggleHaptics = async (value: boolean) => {
 4. **User-Friendly Messages:** Avoid technical jargon in production
 
 **Example - Component-Level Boundary:**
+
 ```tsx
 <ErrorBoundary
   onError={(error, info) => {
-    logError({ error, info, component: 'SocialHub' });
+    logError({ error, info, component: "SocialHub" });
   }}
 >
   <SocialHub />
@@ -490,19 +530,20 @@ const handleToggleHaptics = async (value: boolean) => {
 4. **Respect Settings:** Always check user preferences (handled automatically)
 
 **Example - Multi-Step Action:**
+
 ```tsx
 const handleDelete = async () => {
-  haptics.warning();              // Alert user
+  haptics.warning(); // Alert user
   const confirmed = await showAlert();
 
   if (!confirmed) return;
 
-  haptics.heavy();                // Confirm action
+  haptics.heavy(); // Confirm action
   try {
     await deleteItem();
-    haptics.success();            // Success feedback
+    haptics.success(); // Success feedback
   } catch (error) {
-    haptics.error();              // Error feedback
+    haptics.error(); // Error feedback
   }
 };
 ```
@@ -514,7 +555,7 @@ const handleDelete = async () => {
 Combine components for rich interactions:
 
 ```tsx
-import { FadeIn, SlideIn, SkeletonCard, ErrorFallback } from '@/components';
+import { FadeIn, SlideIn, SkeletonCard, ErrorFallback } from "@/components";
 
 function PostCard({ postId }) {
   const { data, loading, error, refetch } = usePost(postId);
@@ -628,6 +669,7 @@ Planned improvements:
 ## Support
 
 For issues or questions:
+
 - Check component source code in `/src/components/`
 - Review TypeScript types for prop definitions
 - Test in development mode for detailed error messages

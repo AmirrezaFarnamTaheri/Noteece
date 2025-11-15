@@ -7,12 +7,14 @@ Welcome to Noteece! This guide will help you get started with minimal technical 
 Noteece is a **secure, private note-taking and task management app** that works entirely on your device. Your data is encrypted and never leaves your computer unless you choose to sync it with other devices.
 
 Think of it as a combination of:
+
 - 📝 A note-taking app (like Notion or Obsidian)
 - ✅ A task manager (like Todoist)
 - 📊 A project tracker
 - 🎯 A life organizer
 
 **Key Benefits:**
+
 - ✅ **Completely Private** - Your notes are encrypted with a password only you know
 - ✅ **Works Offline** - No internet required
 - ✅ **No Account Needed** - No sign-up, no emails, no tracking
@@ -66,6 +68,7 @@ pnpm build:tauri
 #### Current Status: Fully Implemented, Ready for Deployment
 
 The mobile app is **fully implemented** with complete feature parity to desktop. Features include:
+
 - Same secure encrypted vault as desktop with biometric unlock (Face ID, Touch ID, Fingerprint)
 - Works offline with background sync via local-network mDNS device discovery
 - Quick capture with voice and camera
@@ -76,6 +79,7 @@ The mobile app is **fully implemented** with complete feature parity to desktop.
 - Data export, password management, and secure wipe
 
 **Deployment Status:**
+
 - iOS: Built with EAS, ready for TestFlight or App Store submission
 - Android: Built with EAS, ready for APK or AAB distribution
 - See [apps/mobile/README.md](apps/mobile/README.md) for full details
@@ -146,6 +150,7 @@ After creating your vault, you'll see the **main interface**:
 ### Creating a Note
 
 #### Desktop
+
 1. Click **"Notes"** in the sidebar
 2. Click the **"+ New Note"** button (top right)
 3. Type your note title
@@ -153,6 +158,7 @@ After creating your vault, you'll see the **main interface**:
 5. Your note saves automatically
 
 #### Mobile
+
 1. Tap the **"+"** button (floating action button)
 2. Choose **"Note"**
 3. Type your title and content
@@ -161,6 +167,7 @@ After creating your vault, you'll see the **main interface**:
 ### Creating a Task
 
 #### Desktop
+
 1. Click **"Tasks"** in the sidebar
 2. Click **"+ New Task"**
 3. Enter task name
@@ -168,6 +175,7 @@ After creating your vault, you'll see the **main interface**:
 5. Click **"Create"**
 
 #### Mobile
+
 1. Tap the **"+"** button
 2. Choose **"Task"**
 3. Enter task details
@@ -191,10 +199,11 @@ Noteece understands **Markdown**, a simple way to format text:
 
 ```markdown
 # Big Heading
+
 ## Medium Heading
 
 **bold text**
-*italic text*
+_italic text_
 
 - Bullet point
 - Another point
@@ -261,12 +270,14 @@ Sync your data across devices:
 **Never locked in!** Export anytime:
 
 #### Single Note
+
 1. Open the note
 2. Click **"•••"** (more options)
 3. Choose **"Export"**
 4. Select format: Markdown, HTML, or PDF
 
 #### All Data
+
 1. Go to **Settings → Export**
 2. Choose **"Export All Data"**
 3. Select destination folder
@@ -306,6 +317,7 @@ Use NFC tags to trigger quick actions:
 3. **Tap Tag** - Action happens instantly!
 
 **Example Uses:**
+
 - Tag on desk: Opens "Work Tasks"
 - Tag on fridge: Opens "Shopping List"
 - Tag in gym bag: Creates workout log
@@ -323,6 +335,7 @@ Get reminded about tasks at specific places:
 ### 🔔 Quick Actions
 
 Long-press the app icon (iOS/Android):
+
 - Quick Capture
 - New Task
 - Today's Tasks
@@ -333,27 +346,32 @@ Long-press the app icon (iOS/Android):
 ## Tips for Beginners
 
 ### 1. Start Simple
+
 - Don't try to organize everything at once
 - Start with a few notes and tasks
 - Add more structure as you go
 
 ### 2. Use Daily Notes
+
 - Create a note for each day
 - Quick way to journal and track tasks
 - Template: "Daily Note - [Date]"
 
 ### 3. Set Up Templates
+
 - Create note templates for recurring needs
 - Example: Meeting notes, project plans
 - Settings → Templates → New Template
 
 ### 4. Enable Keyboard Shortcuts (Desktop)
+
 - `Ctrl/Cmd + K`: Quick search
 - `Ctrl/Cmd + N`: New note
 - `Ctrl/Cmd + T`: New task
 - `Ctrl/Cmd + /`: Show all shortcuts
 
 ### 5. Regular Exports
+
 - Export your data monthly as backup
 - Settings → Export → Export All
 - Store on external drive or cloud (already encrypted!)
@@ -363,27 +381,33 @@ Long-press the app icon (iOS/Android):
 ## Troubleshooting
 
 ### I Forgot My Password
+
 Unfortunately, **there's no way to recover a forgotten password**. This is by design for security. Your only options:
+
 1. Use recovery codes (if you saved them)
 2. Start fresh with a new vault (data lost)
 
 **Prevention:**
+
 - Use a password manager
 - Write password on paper, keep it safe
 - Export data regularly as encrypted backup
 
 ### App Won't Open
+
 1. **Restart your computer/phone**
 2. **Check for updates** in app store or GitHub
 3. **Reinstall the app** (your data is safe, it's in a separate folder)
 
 ### Sync Not Working
+
 1. **Check both devices are on same WiFi**
 2. **Check Settings → Sync is enabled** on both
 3. **Try manual sync** (Settings → Sync → Sync Now)
 4. **Check firewall** isn't blocking the app
 
 ### Data Export Failed
+
 1. **Check available disk space** (need 2x your data size)
 2. **Choose different location** (not cloud folder)
 3. **Try exporting smaller chunks** (one space at a time)
@@ -393,6 +417,7 @@ Unfortunately, **there's no way to recover a forgotten password**. This is by de
 ## Privacy & Security
 
 ### What We NEVER Do
+
 - ❌ Collect your data
 - ❌ Track your usage
 - ❌ Phone home
@@ -400,6 +425,7 @@ Unfortunately, **there's no way to recover a forgotten password**. This is by de
 - ❌ Store your password anywhere
 
 ### What IS Encrypted
+
 - ✅ All your notes and tasks
 - ✅ All attachments and images
 - ✅ All metadata (titles, dates, tags)
@@ -407,7 +433,9 @@ Unfortunately, **there's no way to recover a forgotten password**. This is by de
 - ✅ Everything in the database
 
 ### Password Storage
+
 Your password is **never stored anywhere**. When you unlock:
+
 1. You enter your password
 2. It derives an encryption key (using Argon2id)
 3. Key unlocks your vault
@@ -419,15 +447,18 @@ Your password is **never stored anywhere**. When you unlock:
 ## Getting Help
 
 ### Built-in Help
+
 - Press **`F1`** or **`?`** for keyboard shortcuts
 - Settings → Help → User Guide
 
 ### Online Resources
+
 - **User Guide**: [USER_GUIDE.md](USER_GUIDE.md) - Comprehensive feature guide
 - **GitHub Issues**: [Report bugs](https://github.com/AmirrezaFarnamTaheri/Noteece/issues)
 - **Discussions**: [Ask questions](https://github.com/AmirrezaFarnamTaheri/Noteece/discussions)
 
 ### Community
+
 - Join our discussions for tips and workflows
 - Share your experience to help others
 - Request features you'd like to see

@@ -6,7 +6,11 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import { ErrorBoundary } from "@/components/errors";
-import { ThemeProvider, useThemeColors, useIsDark } from "@/contexts/ThemeContext";
+import {
+  ThemeProvider,
+  useThemeColors,
+  useIsDark,
+} from "@/contexts/ThemeContext";
 import { useVaultStore } from "@/store/vault";
 import { useAppContext } from "@/store/app-context";
 import { initializeDatabase } from "@/lib/database";

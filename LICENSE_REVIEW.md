@@ -26,20 +26,24 @@ We chose GPL v3 for Noteece because:
 GPL v3 guarantees users four essential freedoms:
 
 **Freedom 0**: The freedom to **run the program** for any purpose
+
 - Use Noteece for personal, commercial, educational, or any other purpose
 - No restrictions on who can use it or how
 
 **Freedom 1**: The freedom to **study how the program works**, and change it
+
 - Source code is always available
 - You can learn from it, audit it, and modify it
 - Must have access to "preferred form for modification"
 
 **Freedom 2**: The freedom to **redistribute copies**
+
 - Share Noteece with others
 - Distribute on app stores, websites, or any medium
 - Cannot charge for the GPL v3 code itself (but can charge for distribution services)
 
 **Freedom 3**: The freedom to **distribute modified versions**
+
 - Create your own fork with changes
 - Share your improvements with others
 - Help the community by contributing back
@@ -51,10 +55,11 @@ GPL v3 is a **copyleft** license, meaning:
 ✅ **Anyone can use the software freely**
 ✅ **Anyone can modify the software**
 ❗ **But** if you distribute modified versions, you **must**:
-   - Keep the same GPL v3 license
-   - Provide source code
-   - Preserve copyright notices
-   - Document your changes
+
+- Keep the same GPL v3 license
+- Provide source code
+- Preserve copyright notices
+- Document your changes
 
 **Bottom Line**: Copyleft ensures that Noteece and all derivatives remain free software forever.
 
@@ -63,70 +68,81 @@ GPL v3 is a **copyleft** license, meaning:
 ### What You CAN Do
 
 ✅ **Use Noteece for any purpose**
-   - Personal use
-   - Commercial use
-   - Educational use
-   - Government use
-   - Any legal purpose
+
+- Personal use
+- Commercial use
+- Educational use
+- Government use
+- Any legal purpose
 
 ✅ **Study the source code**
-   - Read how encryption works
-   - Audit for security
-   - Learn from the implementation
-   - Verify privacy claims
+
+- Read how encryption works
+- Audit for security
+- Learn from the implementation
+- Verify privacy claims
 
 ✅ **Modify Noteece**
-   - Add features you want
-   - Fix bugs
-   - Customize the UI
-   - Remove features you don't need
-   - Create a completely different app based on it
+
+- Add features you want
+- Fix bugs
+- Customize the UI
+- Remove features you don't need
+- Create a completely different app based on it
 
 ✅ **Distribute unmodified copies**
-   - Share with friends
-   - Put on your website
-   - Upload to alternative app stores
-   - Include in USB stick distributions
-   - **Note**: You may charge for distribution services, but must provide source
+
+- Share with friends
+- Put on your website
+- Upload to alternative app stores
+- Include in USB stick distributions
+- **Note**: You may charge for distribution services, but must provide source
 
 ✅ **Distribute modified versions**
-   - Fork the project on GitHub
-   - Create your own variant
-   - Distribute your improvements
-   - **Must**: Provide source code under GPL v3
+
+- Fork the project on GitHub
+- Create your own variant
+- Distribute your improvements
+- **Must**: Provide source code under GPL v3
 
 ✅ **Use in commercial products** (with conditions)
-   - Integrate into a larger application
-   - **But**: The Noteece parts remain GPL v3
-   - **And**: If you distribute, you must provide source
+
+- Integrate into a larger application
+- **But**: The Noteece parts remain GPL v3
+- **And**: If you distribute, you must provide source
 
 ### What You CANNOT Do
 
 ❌ **Distribute without source code**
-   - If you distribute binaries, you must provide source
-   - "Source code" means the preferred form for modification
-   - Must include build scripts and instructions
+
+- If you distribute binaries, you must provide source
+- "Source code" means the preferred form for modification
+- Must include build scripts and instructions
 
 ❌ **Add additional restrictions**
-   - Cannot add proprietary licenses on top
-   - Cannot add DRM or technical protection measures
-   - Cannot restrict further redistribution
-   - Cannot add patent restrictions beyond what GPL v3 allows
+
+- Cannot add proprietary licenses on top
+- Cannot add DRM or technical protection measures
+- Cannot restrict further redistribution
+- Cannot add patent restrictions beyond what GPL v3 allows
 
 ❌ **Sublicense under different terms**
-   - All derivatives must be GPL v3 (or later)
-   - Cannot relicense as MIT, Apache, proprietary, etc.
-   - Cannot make a proprietary fork
+
+- All derivatives must be GPL v3 (or later)
+- Cannot relicense as MIT, Apache, proprietary, etc.
+- Cannot make a proprietary fork
 
 ❌ **Claim warranty or liability**
-   - Software is provided "as is"
-   - Contributors have no liability
-   - Cannot promise guarantees on behalf of the project
+
+- Software is provided "as is"
+- Contributors have no liability
+- Cannot promise guarantees on behalf of the project
 
 ❌ **Remove copyright notices**
-   - Must preserve all copyright statements
-   - Must preserve license notices
-   - Must preserve disclaimer of warranty
+
+- Must preserve all copyright statements
+- Must preserve license notices
+- Must preserve disclaimer of warranty
 
 ## Key GPL v3 Provisions
 
@@ -135,11 +151,13 @@ GPL v3 is a **copyleft** license, meaning:
 **Requirement**: If you distribute Noteece (modified or not), you must provide source code.
 
 **How to comply**:
+
 - Include source code with binary distribution
 - Offer written offer to provide source (valid for 3 years)
 - Point to public GitHub repository (if you haven't modified it)
 
 **"Source code" means**:
+
 - All source files needed to build the app
 - Build scripts and configuration
 - Instructions for compilation
@@ -150,6 +168,7 @@ GPL v3 is a **copyleft** license, meaning:
 **Requirement**: Modified versions must also be GPL v3.
 
 **What counts as a "derivative work"**:
+
 - ✅ Modified Noteece with bug fixes → GPL v3
 - ✅ Noteece with added features → GPL v3
 - ✅ Noteece UI with different theme → GPL v3
@@ -158,6 +177,7 @@ GPL v3 is a **copyleft** license, meaning:
 - ❓ Noteece alongside proprietary app in a "mere aggregation" → Separate licenses OK
 
 **The "viral" nature**:
+
 - GPL v3 "propagates" to linked code
 - This ensures freedom is preserved
 - Some call it "viral" (negative) others "copyleft protection" (positive)
@@ -165,11 +185,13 @@ GPL v3 is a **copyleft** license, meaning:
 ### 3. Patent License Grant
 
 **Automatic patent license**:
+
 - Contributors grant patent licenses for their contributions
 - You get patent rights to use, modify, and distribute
 - Protects users from patent litigation
 
 **Patent retaliation**:
+
 - If you sue someone for patent infringement based on GPL v3 software
 - You lose your GPL v3 license
 - This discourages patent trolling
@@ -177,12 +199,14 @@ GPL v3 is a **copyleft** license, meaning:
 ### 4. Anti-Tivoization
 
 **Prohibition on hardware restrictions**:
+
 - Cannot distribute GPL v3 software on hardware that prevents user modifications
 - If hardware checks signatures, must provide keys
 - Applies to "User Products" (consumer devices)
 - Does NOT apply to industrial/commercial products
 
 **Why this matters**:
+
 - Some vendors lock bootloaders to prevent modified software
 - GPL v3 says if you use GPL v3 software, users must be able to run modified versions
 - Only applies if you distribute the hardware
@@ -190,12 +214,14 @@ GPL v3 is a **copyleft** license, meaning:
 ### 5. No Additional Restrictions
 
 **You cannot**:
+
 - Add technical protection measures (DRM)
 - Add patent restrictions
 - Add geographic restrictions
 - Add use restrictions
 
 **Example**:
+
 - ❌ Cannot add "license key" system
 - ❌ Cannot restrict to certain countries
 - ❌ Cannot add "for personal use only" clause
@@ -204,6 +230,7 @@ GPL v3 is a **copyleft** license, meaning:
 ### 6. License Compatibility
 
 **Compatible licenses** (can combine with GPL v3):
+
 - MIT License ✅
 - Apache License 2.0 ✅
 - BSD Licenses (2-clause, 3-clause) ✅
@@ -211,6 +238,7 @@ GPL v3 is a **copyleft** license, meaning:
 - GPL v2 "or later" ✅ (can upgrade to v3)
 
 **Incompatible licenses**:
+
 - GPL v2 only (without "or later") ❌
 - Proprietary licenses ❌
 - Licenses with additional restrictions ❌
@@ -219,6 +247,7 @@ GPL v3 is a **copyleft** license, meaning:
 ### 7. "Or Later" Clause
 
 Noteece is licensed as **GPL v3 or later**:
+
 - You can choose to use under GPL v3
 - Or under any later version (e.g., hypothetical GPL v4)
 - Gives flexibility for future license updates
@@ -231,12 +260,14 @@ Noteece is licensed as **GPL v3 or later**:
 > THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.
 
 **What this means**:
+
 - Software provided "as is"
 - No guarantees it will work
 - No liability for damages
 - No fitness for particular purpose
 
 **Why**:
+
 - Free software projects cannot afford liability
 - Contributors need protection
 - Standard for FOSS
@@ -248,6 +279,7 @@ Noteece is licensed as **GPL v3 or later**:
 > IN NO EVENT...SHALL THE COPYRIGHT HOLDER BE LIABLE...FOR DAMAGES
 
 **What this means**:
+
 - Contributors are not liable for bugs
 - Not liable for data loss
 - Not liable for security breaches (unless intentional)
@@ -324,6 +356,7 @@ Noteece uses the following dependencies - all GPL v3 compatible:
 ### JavaScript/React Native Libraries
 
 All dependencies in `package.json` have been reviewed:
+
 - Most are MIT or Apache 2.0 (GPL-compatible)
 - None have GPL-incompatible restrictions
 - See `package.json` for complete list
@@ -331,6 +364,7 @@ All dependencies in `package.json` have been reviewed:
 ### Rust Crates
 
 All dependencies in `Cargo.toml` have been reviewed:
+
 - Mostly MIT, Apache 2.0, or dual-licensed
 - All are GPL v3 compatible
 - See `Cargo.toml` for complete list
@@ -346,6 +380,7 @@ All dependencies in `Cargo.toml` have been reviewed:
 ### Can I sell Noteece?
 
 You can charge for **services** like:
+
 - Custom development
 - Support and training
 - Distribution and installation
@@ -360,6 +395,7 @@ You cannot prevent recipients from redistributing for free.
 ### Can I use Noteece with a proprietary app?
 
 **Maybe**:
+
 - If they communicate via IPC/API and are separate programs → Likely OK
 - If you link them together into one program → Likely GPL v3 applies to all
 - Gray area: consult a lawyer for specific cases
@@ -379,6 +415,7 @@ You cannot prevent recipients from redistributing for free.
 ### Can I contribute to Noteece?
 
 **Yes**! Contributions are welcome:
+
 - Contributions are assumed to be under GPL v3 (or later)
 - You retain copyright to your contributions
 - See CONTRIBUTING.md for details

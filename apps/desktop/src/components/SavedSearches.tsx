@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { Card, Button, Modal, TextInput, Select, List, ThemeIcon, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconSearch } from '@tabler/icons-react';
+import logger from '../utils/logger';
 
 interface SavedSearch {
   id: string;
@@ -28,7 +29,7 @@ const SavedSearches: React.FC<SavedSearchesProperties> = ({ spaceId }) => {
       const searchesData: SavedSearch[] = await invoke('get_saved_searches_cmd', { spaceId });
       setSearches(searchesData);
     } catch (error) {
-      console.error('Error fetching saved searches:', error);
+      logger.error('Error fetching saved searches:', error as Error);
     }
   };
 
@@ -51,7 +52,7 @@ const SavedSearches: React.FC<SavedSearchesProperties> = ({ spaceId }) => {
       setQueryString('');
       close();
     } catch (error) {
-      console.error('Error creating saved search:', error);
+      logger.error('Error creating saved search:', error as Error);
     }
   };
 

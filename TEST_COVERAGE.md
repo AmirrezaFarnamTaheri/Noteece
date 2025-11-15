@@ -6,11 +6,11 @@ This document provides an overview of the test coverage for Noteece, with a focu
 
 ## Quick Stats
 
-| Category | Total Tests | Security-Specific | Coverage |
-|----------|-------------|-------------------|----------|
-| **Rust Core** | 43 | 30 | High |
-| **TypeScript UI** | 10+ | - | Moderate |
-| **Total** | **53+** | **30+** | **High** |
+| Category          | Total Tests | Security-Specific | Coverage |
+| ----------------- | ----------- | ----------------- | -------- |
+| **Rust Core**     | 43          | 30                | High     |
+| **TypeScript UI** | 10+         | -                 | Moderate |
+| **Total**         | **53+**     | **30+**           | **High** |
 
 ## Rust Test Suites
 
@@ -25,6 +25,7 @@ cargo test crypto_tests
 ```
 
 **Key Tests**:
+
 - `test_encrypt_with_invalid_dek_length` - Validates strict 32-byte DEK requirement
 - `test_decrypt_with_invalid_ciphertext_too_short` - Enforces minimum nonce+tag length
 - `test_decrypt_with_wrong_dek` - Verifies authentication tag validation
@@ -32,6 +33,7 @@ cargo test crypto_tests
 - `test_same_plaintext_different_ciphertexts` - Verifies nonce randomness
 
 **Security Features Tested**:
+
 - ✅ Strict DEK validation (Batch 1)
 - ✅ Ciphertext length validation (Batch 1)
 - ✅ Authentication tag verification
@@ -49,12 +51,14 @@ cargo test ocr_tests
 ```
 
 **Key Security Tests**:
+
 - `test_ocr_language_validation_invalid` - Blocks command injection (`;`, `&&`, `|`, `` ` ``)
 - `test_ocr_output_size_limit` - Enforces 10MB output limit
 - `test_process_ocr_job_transactional_behavior` - Verifies atomic updates
 - `test_ocr_result_atomicity` - Tests transaction rollback
 
 **Security Features Tested**:
+
 - ✅ Language parameter validation (Batch 3)
 - ✅ Command injection prevention
 - ✅ Path traversal prevention
@@ -72,12 +76,14 @@ cargo test import_tests
 ```
 
 **Key Security Tests**:
+
 - `test_export_to_json_decrypts_content` - Verifies ciphertext is NOT leaked
 - `test_export_to_zip_unique_filenames` - Prevents filename collisions
 - `test_export_to_zip_filename_sanitization` - Handles special characters
 - `test_export_to_zip_preserves_content` - Validates Unicode preservation
 
 **Security Features Tested**:
+
 - ✅ Export decryption (Batch 3)
 - ✅ Ciphertext leakage prevention
 - ✅ Unique ZIP filenames (Batch 5)
@@ -95,11 +101,13 @@ cargo test search_tests
 ```
 
 **Key Security Tests**:
+
 - `test_search_does_not_expose_encrypted_content` - Verifies no ciphertext in results
 - `test_search_does_not_match_encrypted_content` - Confirms encrypted content not searchable
 - `test_search_performance_without_encrypted_content` - Performance without loading sensitive data
 
 **Security Features Tested**:
+
 - ✅ Encrypted content protection (Batch 1 & 4)
 - ✅ Privacy in search results
 - ✅ Performance optimization
@@ -107,6 +115,7 @@ cargo test search_tests
 ### 5. Additional Test Suites
 
 **26+ existing tests** across:
+
 - `backlink_tests.rs` - Note relationships
 - `blob_tests.rs` - Binary data handling
 - `calendar_tests.rs` - CalDAV integration
@@ -181,23 +190,28 @@ File: `.github/workflows/ci.yml`
 ## Coverage by Security Batch
 
 ### Batch 1 (Critical Security)
+
 - ✅ DEK validation (crypto_tests.rs)
 - ✅ Ciphertext validation (crypto_tests.rs)
 - ✅ Search encrypted content protection (search_tests.rs)
 
 ### Batch 2 (Medium/Low Priority)
+
 - ✅ OCR output size limits (ocr_tests.rs)
-- ⚠️  UI component tests (Dashboard, ProjectHub, widgets)
+- ⚠️ UI component tests (Dashboard, ProjectHub, widgets)
 
 ### Batch 3 (High-Priority Security)
+
 - ✅ Export decryption (import_tests.rs)
 - ✅ OCR language validation (ocr_tests.rs)
 
 ### Batch 4 (Reliability & Performance)
+
 - ✅ OCR transactional updates (ocr_tests.rs)
 - ✅ Search performance (search_tests.rs)
 
 ### Batch 5 (Security Hardening)
+
 - ✅ Unique ZIP filenames (import_tests.rs)
 - ✅ Filename sanitization (import_tests.rs)
 
@@ -230,13 +244,13 @@ fn test_security_feature_prevents_attack() {
 
 ### Coverage Requirements
 
-| Code Type | Minimum Coverage | Enforcement |
-|-----------|------------------|-------------|
-| Security functions | 100% | Required |
-| Encryption/crypto | 100% | Required |
-| Input validation | 100% | Required |
-| Database operations | 80%+ | Recommended |
-| UI components | 60%+ | Recommended |
+| Code Type           | Minimum Coverage | Enforcement |
+| ------------------- | ---------------- | ----------- |
+| Security functions  | 100%             | Required    |
+| Encryption/crypto   | 100%             | Required    |
+| Input validation    | 100%             | Required    |
+| Database operations | 80%+             | Recommended |
+| UI components       | 60%+             | Recommended |
 
 ## Known Testing Limitations
 
@@ -260,17 +274,18 @@ Areas requiring future test expansion:
 
 ### Execution Time
 
-| Test Suite | Approx. Time | Notes |
-|------------|--------------|-------|
-| crypto_tests | 10-15s | Large data tests |
-| ocr_tests | 2-5s | Mock-based |
-| import_tests | 5-10s | Includes ZIP I/O |
-| search_tests | 3-5s | Database queries |
-| **Total (Rust)** | **~30s** | Parallel execution |
+| Test Suite       | Approx. Time | Notes              |
+| ---------------- | ------------ | ------------------ |
+| crypto_tests     | 10-15s       | Large data tests   |
+| ocr_tests        | 2-5s         | Mock-based         |
+| import_tests     | 5-10s        | Includes ZIP I/O   |
+| search_tests     | 3-5s         | Database queries   |
+| **Total (Rust)** | **~30s**     | Parallel execution |
 
 ### Test Stability
 
 **All new tests are deterministic** (no flaky tests):
+
 - ✅ No timing-dependent assertions
 - ✅ No network dependencies
 - ✅ Isolated test databases (tempdir)

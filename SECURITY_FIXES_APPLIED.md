@@ -12,14 +12,14 @@ Based on comprehensive security and code quality analysis, **6 critical and high
 
 ### Summary
 
-| Issue | Severity | Component | Status | Fix |
-|-------|----------|-----------|--------|-----|
-| Device pairing validation | 🔴 CRITICAL | mobile_sync.rs | ✅ Fixed | Constant-time code comparison |
-| Weak hash function | 🔴 CRITICAL | backup.rs | ✅ Fixed | SHA-256 instead of DefaultHasher |
-| Auth state inconsistency | 🟠 HIGH | auth.ts | ✅ Fixed | Clear in-memory state on failure |
-| Non-atomic restore | 🟠 HIGH | backup.rs | ✅ Fixed | Single transaction wrapper |
-| Ciphertext validation | 🟠 HIGH | crypto.rs | ✅ Fixed | Defense-in-depth checks |
-| Error throwing in utils | 🟠 HIGH | UserManagement.tsx | ✅ Fixed | Return null, let caller decide |
+| Issue                     | Severity    | Component          | Status   | Fix                              |
+| ------------------------- | ----------- | ------------------ | -------- | -------------------------------- |
+| Device pairing validation | 🔴 CRITICAL | mobile_sync.rs     | ✅ Fixed | Constant-time code comparison    |
+| Weak hash function        | 🔴 CRITICAL | backup.rs          | ✅ Fixed | SHA-256 instead of DefaultHasher |
+| Auth state inconsistency  | 🟠 HIGH     | auth.ts            | ✅ Fixed | Clear in-memory state on failure |
+| Non-atomic restore        | 🟠 HIGH     | backup.rs          | ✅ Fixed | Single transaction wrapper       |
+| Ciphertext validation     | 🟠 HIGH     | crypto.rs          | ✅ Fixed | Defense-in-depth checks          |
+| Error throwing in utils   | 🟠 HIGH     | UserManagement.tsx | ✅ Fixed | Return null, let caller decide   |
 
 ---
 
@@ -31,9 +31,11 @@ Based on comprehensive security and code quality analysis, **6 critical and high
 **Severity**: 🔴 CRITICAL (Importance: 10/10)
 
 #### Problem
+
 The device pairing method only validated pairing code length (6 characters) without verifying the actual code value. An attacker could pair any device by simply sending a 6-digit code.
 
 **Vulnerable Code**:
+
 ```rust
 pub async fn pair_device(
     &mut self,
@@ -48,12 +50,14 @@ pub async fn pair_device(
 ```
 
 #### Solution
+
 - Added `expected_pairing_code` parameter to `pair_device()` method
 - Implemented constant-time comparison using `subtle` crate to prevent timing attacks
 - Added new test case `test_device_pairing_with_wrong_code()` to verify rejection of incorrect codes
 - Properly validates pairing code against the code shown on the desktop
 
 **Fixed Code**:
+
 ```rust
 pub async fn pair_device(
     &mut self,
@@ -81,6 +85,7 @@ fn constant_time_compare(a: &[u8], b: &[u8]) -> bool {
 ```
 
 #### Impact
+
 - Prevents unauthorized device pairing
 - Uses timing-attack resistant comparison
 - Ensures only devices with the correct PIN can pair
@@ -94,13 +99,16 @@ fn constant_time_compare(a: &[u8], b: &[u8]) -> bool {
 **Severity**: 🔴 CRITICAL (Importance: 9/10)
 
 #### Problem
+
 The backup checksum used `std::collections::hash_map::DefaultHasher`, which is:
+
 - Non-cryptographic (designed for hash tables, not security)
 - Unstable across Rust versions (hash values may differ)
 - Cannot detect intentional tampering
 - Would cause restore failures if hash function changed
 
 **Vulnerable Code**:
+
 ```rust
 fn calculate_checksum(&self, data: &[u8]) -> String {
     use std::collections::hash_map::DefaultHasher;
@@ -113,6 +121,7 @@ fn calculate_checksum(&self, data: &[u8]) -> String {
 ```
 
 #### Solution
+
 - Replaced `DefaultHasher` with SHA-256 from `sha2` crate
 - Provides cryptographic hash suitable for integrity verification
 - Deterministic across all platforms and Rust versions
@@ -120,6 +129,7 @@ fn calculate_checksum(&self, data: &[u8]) -> String {
 - Consistent with stated "SHA256 checksum" documentation
 
 **Fixed Code**:
+
 ```rust
 fn calculate_checksum(&self, data: &[u8]) -> String {
     use sha2::{Sha256, Digest};
@@ -131,6 +141,7 @@ fn calculate_checksum(&self, data: &[u8]) -> String {
 ```
 
 #### Impact
+
 - Ensures backup integrity can be cryptographically verified
 - Detects any tampering or corruption
 - Provides stable hash across versions and platforms
@@ -145,13 +156,16 @@ fn calculate_checksum(&self, data: &[u8]) -> String {
 **Severity**: 🟠 HIGH (Importance: 8/10)
 
 #### Problem
+
 The `refreshAuth()` method cleared session storage on failure but left in-memory `session` and `currentUser` properties in their previous state, creating an inconsistent state where:
+
 - Storage says user is logged out
 - In-memory state says user is logged in
 - UI might display user as logged in while operations fail
 - Could lead to security issues if application doesn't handle properly
 
 **Vulnerable Code**:
+
 ```rust
 async refreshAuth(): Promise<boolean> {
     try {
@@ -172,12 +186,14 @@ async refreshAuth(): Promise<boolean> {
 ```
 
 #### Solution
+
 - Clear both in-memory `session` and `currentUser` properties on failure
 - Ensure consistency between storage and in-memory state
 - Added null assignments in both error paths
 - Maintains single source of truth for auth state
 
 **Fixed Code**:
+
 ```rust
 async refreshAuth(): Promise<boolean> {
     try {
@@ -204,6 +220,7 @@ async refreshAuth(): Promise<boolean> {
 ```
 
 #### Impact
+
 - Prevents authentication state inconsistencies
 - Ensures UI accurately reflects auth status
 - Prevents operation failures due to stale state
@@ -218,13 +235,16 @@ async refreshAuth(): Promise<boolean> {
 **Severity**: 🟠 HIGH (Importance: 8/10)
 
 #### Problem
+
 The `restore_backup()` method performed clear and import operations separately without a transaction:
+
 - If `clear_database()` succeeds but `import_database()` fails, database is left empty
 - No rollback mechanism
 - Data loss possible if import fails (network, disk, etc.)
 - Even though `import_database()` used its own transaction, it wasn't in same transaction as clear
 
 **Vulnerable Code**:
+
 ```rust
 pub fn restore_backup(
     &self,
@@ -245,6 +265,7 @@ pub fn restore_backup(
 ```
 
 #### Solution
+
 - Created transaction-aware versions: `clear_database_tx()` and `import_database_tx()`
 - Wrap both operations in single outer transaction
 - Atomically commit or rollback entire restore operation
@@ -252,6 +273,7 @@ pub fn restore_backup(
 - Pre-restore backup still created separately (for user safety)
 
 **Fixed Code**:
+
 ```rust
 pub fn restore_backup(
     &self,
@@ -284,6 +306,7 @@ fn import_database_tx(&self, tx: &rusqlite::Transaction, data: &serde_json::Valu
 ```
 
 #### Impact
+
 - Prevents data loss from partial restore failures
 - Ensures database consistency at all times
 - Either fully restores or rolls back completely
@@ -298,12 +321,15 @@ fn import_database_tx(&self, tx: &rusqlite::Transaction, data: &serde_json::Valu
 **Severity**: 🟠 HIGH (Importance: 8/10)
 
 #### Problem
+
 While the initial length check existed, after splitting the nonce there was no explicit validation that the remaining ciphertext is long enough for the authentication tag (16 bytes). This is a defense-in-depth measure:
+
 - Mathematically redundant with initial check (but good practice)
 - Prevents potential issues from refactoring
 - Provides clear error messages for different failure modes
 
 **Current Code**:
+
 ```rust
 const NONCE_LEN: usize = 24;
 const TAG_LEN: usize = 16;
@@ -316,12 +342,14 @@ let (nonce_bytes, ciphertext) = encrypted.split_at(NONCE_LEN);
 ```
 
 #### Solution
+
 - Added explicit check after nonce split
 - Validates remaining ciphertext contains at least auth tag (16 bytes)
 - Improved error message distinguishes between different failure modes
 - Added code comments explaining constant values and their meaning
 
 **Fixed Code**:
+
 ```rust
 // XChaCha20Poly1305 nonce is 24 bytes, authentication tag is 16 bytes
 const NONCE_LEN: usize = 24;
@@ -346,6 +374,7 @@ if ciphertext.len() < TAG_LEN {
 ```
 
 #### Impact
+
 - Defense-in-depth security validation
 - Clearer error messages for debugging
 - Protection against future refactoring mistakes
@@ -360,13 +389,16 @@ if ciphertext.len() < TAG_LEN {
 **Severity**: 🟠 HIGH (Importance: 8/10)
 
 #### Problem
+
 The `getCurrentUserId()` utility function threw an error when user wasn't authenticated:
+
 - Throwing errors in utility functions is React anti-pattern
 - Can cause application crashes in component lifecycle
 - Forces every caller to have try-catch
 - Prevents graceful degradation
 
 **Vulnerable Code**:
+
 ```typescript
 function getCurrentUserId(): string {
   const userId = authService.getCurrentUserId();
@@ -381,6 +413,7 @@ const invitedBy: getCurrentUserId(),  // Could throw during render!
 ```
 
 #### Solution
+
 - Changed return type to `string | null`
 - Return null instead of throwing
 - Moved authentication check to caller (mutations)
@@ -389,6 +422,7 @@ const invitedBy: getCurrentUserId(),  // Could throw during render!
 - Better separation of concerns
 
 **Fixed Code**:
+
 ```typescript
 /**
  * Get current user ID for audit logging
@@ -401,10 +435,14 @@ function getCurrentUserId(): string | null {
 
 // Callers explicitly handle null
 const inviteUserMutation = useMutation({
-  mutationFn: async (values: { email: string; roleId: string; customPermissions: string[] }) => {
+  mutationFn: async (values: {
+    email: string;
+    roleId: string;
+    customPermissions: string[];
+  }) => {
     const currentUserId = getCurrentUserId();
     if (!currentUserId) {
-      throw new Error('User not authenticated. Please log in first.');
+      throw new Error("User not authenticated. Please log in first.");
     }
     // ... use currentUserId
   },
@@ -412,6 +450,7 @@ const inviteUserMutation = useMutation({
 ```
 
 #### Impact
+
 - Prevents React component crashes
 - Follows React best practices for error handling
 - Better error handling at semantic level (mutation)
@@ -423,6 +462,7 @@ const inviteUserMutation = useMutation({
 ## Test Coverage
 
 All fixes include:
+
 - ✅ Unit tests validating the security fix
 - ✅ Error case testing
 - ✅ Integration with existing code
@@ -448,6 +488,7 @@ All fixes include:
 ## Security Implications
 
 ### Before Fixes
+
 - ❌ Unauthorized device pairing possible (length-only check)
 - ❌ Backup tampering undetectable (non-cryptographic hash)
 - ❌ Backup restore could lose all data (non-atomic)
@@ -456,6 +497,7 @@ All fixes include:
 - ❌ React component crashes from utility errors
 
 ### After Fixes
+
 - ✅ Device pairing requires correct PIN (constant-time comparison)
 - ✅ Backup integrity cryptographically verified (SHA-256)
 - ✅ Backup restore is atomic (all-or-nothing)
@@ -467,13 +509,13 @@ All fixes include:
 
 ## Files Modified
 
-| File | Changes | Lines |
-|------|---------|-------|
-| `packages/core-rs/src/social/mobile_sync.rs` | Device pairing validation + constant-time comparison + test | +30 |
-| `packages/core-rs/src/social/backup.rs` | SHA-256 checksum + atomic restore + transaction helpers | +120 |
-| `packages/core-rs/src/crypto.rs` | Enhanced ciphertext validation | +10 |
-| `apps/desktop/src/services/auth.ts` | Auth state consistency fix | +4 |
-| `apps/desktop/src/components/UserManagement.tsx` | Error handling improvement + callers update | +10 |
+| File                                             | Changes                                                     | Lines |
+| ------------------------------------------------ | ----------------------------------------------------------- | ----- |
+| `packages/core-rs/src/social/mobile_sync.rs`     | Device pairing validation + constant-time comparison + test | +30   |
+| `packages/core-rs/src/social/backup.rs`          | SHA-256 checksum + atomic restore + transaction helpers     | +120  |
+| `packages/core-rs/src/crypto.rs`                 | Enhanced ciphertext validation                              | +10   |
+| `apps/desktop/src/services/auth.ts`              | Auth state consistency fix                                  | +4    |
+| `apps/desktop/src/components/UserManagement.tsx` | Error handling improvement + callers update                 | +10   |
 
 **Total Changes**: ~174 lines of security enhancements
 
@@ -482,12 +524,14 @@ All fixes include:
 ## Deployment Notes
 
 ### Required Changes
+
 - All fixes are backward compatible
 - No database migrations required
 - No API changes
 - Existing backups will continue to work (SHA-256 checksum will be recalculated)
 
 ### Testing Before Production
+
 1. Verify device pairing with correct and incorrect codes
 2. Test backup creation and restoration
 3. Test authentication refresh scenarios
@@ -495,6 +539,7 @@ All fixes include:
 5. Run all unit tests (87+ existing + 2 new)
 
 ### Rollout Strategy
+
 1. ✅ Code review (using CODE_REVIEW_GUIDE.md)
 2. ✅ Unit testing (all tests pass)
 3. → Staging deployment
@@ -506,6 +551,7 @@ All fixes include:
 ## Summary
 
 All **6 critical and high-priority security issues** have been successfully resolved with minimal, focused changes:
+
 - **Device Pairing**: Now cryptographically secure
 - **Backup Integrity**: Now uses proper cryptographic hash
 - **Backup Restore**: Now atomic and failure-safe

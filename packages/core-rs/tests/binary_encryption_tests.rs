@@ -2,7 +2,7 @@
 // Tests for the critical fix: handling binary data in sync without UTF-8 conversion
 // Ensures that arbitrary binary data (including invalid UTF-8) is preserved during encryption/decryption
 
-use core_rs::crypto::{encrypt_bytes, decrypt_bytes, encrypt_string, decrypt_string, generate_dek};
+use core_rs::crypto::{decrypt_bytes, decrypt_string, encrypt_bytes, encrypt_string, generate_dek};
 
 #[test]
 fn test_encrypt_decrypt_binary_data() {
@@ -13,8 +13,14 @@ fn test_encrypt_decrypt_binary_data() {
     let encrypted = encrypt_bytes(&data, &dek).expect("Encryption should succeed");
     let decrypted = decrypt_bytes(&encrypted, &dek).expect("Decryption should succeed");
 
-    assert_eq!(data, decrypted, "Decrypted data must match original binary data");
-    assert_ne!(data, encrypted, "Encrypted data should differ from plaintext");
+    assert_eq!(
+        data, decrypted,
+        "Decrypted data must match original binary data"
+    );
+    assert_ne!(
+        data, encrypted,
+        "Encrypted data should differ from plaintext"
+    );
 }
 
 #[test]
@@ -55,7 +61,10 @@ fn test_large_binary_payload() {
     let encrypted = encrypt_bytes(&data, &dek).expect("Encryption should succeed");
     let decrypted = decrypt_bytes(&encrypted, &dek).expect("Decryption should succeed");
 
-    assert_eq!(data, decrypted, "Large binary payload must be preserved exactly");
+    assert_eq!(
+        data, decrypted,
+        "Large binary payload must be preserved exactly"
+    );
 }
 
 #[test]
@@ -104,10 +113,7 @@ fn test_decrypt_corrupted_ciphertext_fails() {
     }
 
     let result = decrypt_bytes(&encrypted, &dek);
-    assert!(
-        result.is_err(),
-        "Decryption of corrupted data should fail"
-    );
+    assert!(result.is_err(), "Decryption of corrupted data should fail");
 }
 
 #[test]
@@ -118,7 +124,10 @@ fn test_string_encryption_still_works() {
     let encrypted = encrypt_string(plaintext, &dek).expect("String encryption should succeed");
     let decrypted = decrypt_string(&encrypted, &dek).expect("String decryption should succeed");
 
-    assert_eq!(plaintext, decrypted, "String encryption/decryption must still work");
+    assert_eq!(
+        plaintext, decrypted,
+        "String encryption/decryption must still work"
+    );
 }
 
 #[test]
@@ -140,7 +149,10 @@ fn test_invalid_dek_length_fails() {
     let invalid_dek = vec![1u8, 2, 3]; // Too short
 
     let result = encrypt_bytes(data, &invalid_dek);
-    assert!(result.is_err(), "Encryption with invalid DEK length should fail");
+    assert!(
+        result.is_err(),
+        "Encryption with invalid DEK length should fail"
+    );
 }
 
 #[test]

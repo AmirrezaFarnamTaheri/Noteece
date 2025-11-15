@@ -94,7 +94,9 @@ export async function processSharedItems(): Promise<number> {
     for (const item of items) {
       const itemSize = JSON.stringify(item).length;
       if (itemSize > MAX_ITEM_SIZE) {
-        console.warn(`[ShareHandler] Item exceeds size limit (${itemSize} > ${MAX_ITEM_SIZE}), skipping`);
+        console.warn(
+          `[ShareHandler] Item exceeds size limit (${itemSize} > ${MAX_ITEM_SIZE}), skipping`,
+        );
         continue;
       }
 
@@ -108,7 +110,9 @@ export async function processSharedItems(): Promise<number> {
     // Cap queue size (keep most recent items)
     if (pendingItems.length > MAX_QUEUE_SIZE) {
       pendingItems = pendingItems.slice(-MAX_QUEUE_SIZE);
-      console.warn(`[ShareHandler] Queue exceeded maximum size, keeping ${MAX_QUEUE_SIZE} most recent items`);
+      console.warn(
+        `[ShareHandler] Queue exceeded maximum size, keeping ${MAX_QUEUE_SIZE} most recent items`,
+      );
     }
 
     await AsyncStorage.setItem(pendingKey, JSON.stringify(pendingItems));
@@ -146,9 +150,7 @@ export async function getPendingItems(): Promise<any[]> {
 /**
  * Mark items as processed
  */
-export async function markItemsProcessed(
-  timestamps: number[]
-): Promise<void> {
+export async function markItemsProcessed(timestamps: number[]): Promise<void> {
   try {
     const pendingKey = "social_pending_items";
     const data = await AsyncStorage.getItem(pendingKey);
@@ -228,7 +230,7 @@ async function getSharedItemsIOS(): Promise<SharedItem[]> {
 
   console.log(
     "[ShareHandler] iOS App Group access requires native module " +
-    "(configure with EAS config plugin or custom native module)"
+      "(configure with EAS config plugin or custom native module)",
   );
   return [];
 }
@@ -238,7 +240,9 @@ async function getSharedItemsIOS(): Promise<SharedItem[]> {
  * NOTE: Requires native module implementation (see getSharedItemsIOS)
  */
 async function clearSharedItemsIOS(): Promise<void> {
-  console.log("[ShareHandler] iOS App Group clear (native module implementation required)");
+  console.log(
+    "[ShareHandler] iOS App Group clear (native module implementation required)",
+  );
 }
 
 /**
@@ -258,7 +262,7 @@ async function getSharedItemsAndroid(): Promise<SharedItem[]> {
 
   console.log(
     "[ShareHandler] Android SharedPreferences access requires native module " +
-    "(configure with custom native module or EAS config plugin)"
+      "(configure with custom native module or EAS config plugin)",
   );
   return [];
 }
@@ -268,5 +272,7 @@ async function getSharedItemsAndroid(): Promise<SharedItem[]> {
  * NOTE: Requires native module implementation (see getSharedItemsAndroid)
  */
 async function clearSharedItemsAndroid(): Promise<void> {
-  console.log("[ShareHandler] Android SharedPreferences clear (native module implementation required)");
+  console.log(
+    "[ShareHandler] Android SharedPreferences clear (native module implementation required)",
+  );
 }

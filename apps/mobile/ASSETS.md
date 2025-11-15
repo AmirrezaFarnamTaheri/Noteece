@@ -5,6 +5,7 @@ This document provides instructions and specifications for all Noteece mobile ap
 ## App Icon (1024x1024)
 
 ### Design Concept
+
 The Noteece app icon represents the fusion of note-taking, time tracking, and personal intelligence. The design features:
 
 - **Base Color**: Deep space blue (#0A0E27) - representing the "vault" concept
@@ -56,6 +57,7 @@ The Noteece app icon represents the fusion of note-taking, time tracking, and pe
    - Save as `icon.png`
 
 2. **Using ImageMagick (CLI):**
+
    ```bash
    convert -size 1024x1024 xc:"#0A0E27" \
      -fill "#6366F1" -font Arial-Bold -pointsize 600 \
@@ -71,6 +73,7 @@ The Noteece app icon represents the fusion of note-taking, time tracking, and pe
 ## Splash Screen (2048x2048)
 
 ### Design Concept
+
 Clean, minimal splash screen that matches the app's dark theme with the app icon centered.
 
 ### SVG Template
@@ -167,11 +170,13 @@ Android uses adaptive icons with two layers: foreground and background.
 ### Required Sizes
 
 **iOS:**
+
 - iPhone 14 Pro Max: 1290x2796
 - iPhone 14 Pro: 1179x2556
 - iPad Pro 12.9": 2048x2732
 
 **Android:**
+
 - Phone: 1080x1920
 - 7" Tablet: 1200x1920
 - 10" Tablet: 1600x2560
@@ -187,6 +192,7 @@ Android uses adaptive icons with two layers: foreground and background.
 ### Capture Instructions
 
 Using Expo:
+
 ```bash
 # iOS
 expo start --ios
@@ -198,12 +204,14 @@ expo start --android
 ```
 
 Using physical devices:
+
 - iOS: Volume Up + Side Button
 - Android: Volume Down + Power Button
 
 ### Post-processing
 
 Add marketing frame using tools like:
+
 - [App Mockup](https://app-mockup.com/)
 - [Previewed](https://previewed.app/)
 - [Figma with device frames](https://www.figma.com/)

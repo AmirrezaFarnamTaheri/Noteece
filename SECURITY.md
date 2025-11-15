@@ -18,7 +18,7 @@ Noteece is a privacy-first, local-first note-taking application that prioritizes
   - Protected by OS process isolation
 - **Lifetime**: While long-lived in-memory DEKs increase exposure surface, this is a necessary trade-off for the local-first architecture's responsiveness and offline capabilities
 
-*Location: `apps/desktop/src-tauri/src/main.rs:30-49`*
+_Location: `apps/desktop/src-tauri/src/main.rs:30-49`_
 
 #### Note Content Encryption
 
@@ -27,7 +27,7 @@ Noteece is a privacy-first, local-first note-taking application that prioritizes
 - **Tag**: 16-byte Poly1305 authentication tag
 - **Validation**: Strict validation of DEK length (exactly 32 bytes) and ciphertext minimum length (nonce + tag)
 
-*Location: `packages/core-rs/src/crypto.rs`*
+_Location: `packages/core-rs/src/crypto.rs`_
 
 #### Sync Agent Encryption
 
@@ -35,7 +35,7 @@ Noteece is a privacy-first, local-first note-taking application that prioritizes
 - **Plaintext Fallback**: If incoming data cannot be decrypted, it's treated as plaintext and encrypted with the local DEK
 - **Error Handling**: Encryption failures during sync are propagated as SyncError::EncryptionError
 
-*Location: `packages/core-rs/src/sync_agent.rs:515-549`*
+_Location: `packages/core-rs/src/sync_agent.rs:515-549`_
 
 **Known Consideration**: The use of `String::from_utf8_lossy()` for converting sync data may not preserve binary ciphertext perfectly. This is acceptable for the current text-based note format but may need review for binary attachments.
 
@@ -47,7 +47,7 @@ Noteece is a privacy-first, local-first note-taking application that prioritizes
 - **Error Handling**: If decryption fails, the content field is cleared and a warning is logged
 - **User Responsibility**: Exported JSON files are unencrypted and should be protected by the user
 
-*Location: `packages/core-rs/src/import.rs:141-175`*
+_Location: `packages/core-rs/src/import.rs:141-175`_
 
 ### Input Validation
 
@@ -59,7 +59,7 @@ Noteece is a privacy-first, local-first note-taking application that prioritizes
 - **Output Size Limits**: Tesseract output is capped at 10MB to prevent memory exhaustion
 - **Path Validation**: Image paths are validated for existence and file type before processing
 
-*Location: `packages/core-rs/src/ocr.rs:110-151`*
+_Location: `packages/core-rs/src/ocr.rs:110-151`_
 
 **Sensitive Data Consideration**: OCR output may contain sensitive information extracted from images. Downstream components are responsible for applying appropriate access controls.
 
@@ -70,7 +70,7 @@ Noteece is a privacy-first, local-first note-taking application that prioritizes
 - **Account**: Cannot be empty
 - **Amount**: Must be a positive finite number, converted to integer cents to avoid floating-point precision errors
 
-*Location: `apps/desktop/src/components/modes/FinanceMode.tsx:98-136`*
+_Location: `apps/desktop/src/components/modes/FinanceMode.tsx:98-136`_
 
 ### SQL Injection Prevention
 
@@ -79,13 +79,13 @@ Noteece is a privacy-first, local-first note-taking application that prioritizes
 All SQL queries use parameterized statements via rusqlite's `params!` macro to prevent SQL injection:
 
 - **Note Links**: Backlink queries explicitly exclude self-links to maintain graph integrity
-  *Location: `packages/core-rs/src/temporal_graph.rs:190-235`*
+  _Location: `packages/core-rs/src/temporal_graph.rs:190-235`_
 
 - **Personal Modes**: Health metrics queries use owned values to prevent dangling parameter references
-  *Location: `packages/core-rs/src/personal_modes.rs`*
+  _Location: `packages/core-rs/src/personal_modes.rs`_
 
 - **Search**: Task and note search queries use proper parameter binding
-  *Location: `packages/core-rs/src/search.rs`*
+  _Location: `packages/core-rs/src/search.rs`_
 
 ### UI Security
 
@@ -95,21 +95,21 @@ All SQL queries use parameterized statements via rusqlite's `params!` macro to p
   - Whitelist: gray, blue, yellow, green, red, orange, cyan, teal, pink, purple
   - Default fallback: gray (if validation fails)
 
-*Location: `apps/desktop/src/components/TaskBoard.tsx:11`*
+_Location: `apps/desktop/src/components/TaskBoard.tsx:11`_
 
 #### Re-entrancy Guards
 
 - **Foresight Action Execution**: Uses React useRef to prevent duplicate action execution on rapid clicks
 - **CalDAV Sync**: Uses atomic ref-based locking to prevent concurrent syncs
 
-*Locations: `apps/desktop/src/components/Foresight.tsx:73,108`, `apps/desktop/src/components/settings/CalDAVSettings.tsx:56,103-106`*
+_Locations: `apps/desktop/src/components/Foresight.tsx:73,108`, `apps/desktop/src/components/settings/CalDAVSettings.tsx:56,103-106`_
 
 #### Date/Time Handling
 
 - **Timezone Safety**: Date keys are normalized to local midnight to avoid timezone drift
 - **Timer Stability**: Focus timer uses refs to prevent closure capture and interval drift
 
-*Locations: `packages/ui/src/components/MiniCalendar.tsx`, `packages/ui/src/components/FocusTimer.tsx`*
+_Locations: `packages/ui/src/components/MiniCalendar.tsx`, `packages/ui/src/components/FocusTimer.tsx`_
 
 ### Search Privacy
 
@@ -119,7 +119,7 @@ All SQL queries use parameterized statements via rusqlite's `params!` macro to p
 - **Snippets**: Set to None for encrypted notes since ciphertext cannot produce meaningful snippets
 - **Relevance**: Based on title only to avoid using ciphertext in scoring
 
-*Location: `packages/core-rs/src/search.rs`*
+_Location: `packages/core-rs/src/search.rs`_
 
 ## Known Security Considerations
 
@@ -128,11 +128,13 @@ All SQL queries use parameterized statements via rusqlite's `params!` macro to p
 **Trade-off**: The Data Encryption Key (DEK) remains in process memory for the application lifetime rather than being cleared after each operation.
 
 **Rationale**: This design choice is necessary for the local-first architecture, which requires:
+
 - Fast, synchronous access to notes without password re-entry
 - Offline-first functionality without authentication round-trips
 - Responsive UI without encryption/decryption delays
 
 **Mitigations**:
+
 - DEK is never written to disk unencrypted
 - Automatically zeroed on application exit (including panic scenarios)
 - Protected by OS process isolation
@@ -147,6 +149,7 @@ All SQL queries use parameterized statements via rusqlite's `params!` macro to p
 **Current Status**: Acceptable for text-based notes, which are the current use case.
 
 **Future Enhancement**: For binary attachments or non-text content, consider:
+
 - Using byte-based encryption/decryption
 - Implementing separate handling for binary and text content
 - Base64 encoding for binary data in sync protocol
@@ -156,11 +159,13 @@ All SQL queries use parameterized statements via rusqlite's `params!` macro to p
 **Consideration**: OCR processing extracts text from images, which may include sensitive information (PII, credentials, financial data).
 
 **User Responsibility**: Users should:
+
 - Be aware of what images they process with OCR
 - Apply appropriate access controls to notes containing OCR results
 - Consider disabling OCR for highly sensitive images
 
 **Application Controls**:
+
 - OCR results are encrypted at rest (same as note content)
 - Access controlled through space-based permissions
 - OCR can be disabled at the application level
@@ -197,6 +202,7 @@ We take security seriously. If you discover a security vulnerability in Noteece:
 ### Responsible Disclosure
 
 We request that security researchers:
+
 - Allow reasonable time for fixes before public disclosure
 - Avoid exploiting vulnerabilities beyond demonstration
 - Not access, modify, or delete user data without permission
@@ -234,138 +240,157 @@ We request that security researchers:
 
 ## Security Audit History
 
-| Date | Type | Scope | Findings | Status |
-|------|------|-------|----------|--------|
-| 2025-01 | PR Compliance Review | Batch 1 | 6 critical security issues | ✅ Fixed |
-| 2025-01 | PR Compliance Review | Batch 2 | 13 medium/low priority issues | ✅ Fixed |
-| 2025-01 | PR Compliance Review | Batch 3 | 5 high priority security issues | ✅ Fixed |
-| 2025-01 | PR Compliance Review | Batch 4 | 7 reliability & performance issues | ✅ Fixed |
-| 2025-01 | PR Compliance Review | Batch 5 | 4 security hardening improvements | ✅ Fixed |
-| 2025-01 | Architecture Review | Major Items | 3 breaking changes identified | 📝 Documented |
-| 2025-11-06 | PR Compliance Review | Batch 6 | 6 security compliance issues | ✅ 5 Fixed, 1 Documented |
+| Date       | Type                 | Scope       | Findings                           | Status                   |
+| ---------- | -------------------- | ----------- | ---------------------------------- | ------------------------ |
+| 2025-01    | PR Compliance Review | Batch 1     | 6 critical security issues         | ✅ Fixed                 |
+| 2025-01    | PR Compliance Review | Batch 2     | 13 medium/low priority issues      | ✅ Fixed                 |
+| 2025-01    | PR Compliance Review | Batch 3     | 5 high priority security issues    | ✅ Fixed                 |
+| 2025-01    | PR Compliance Review | Batch 4     | 7 reliability & performance issues | ✅ Fixed                 |
+| 2025-01    | PR Compliance Review | Batch 5     | 4 security hardening improvements  | ✅ Fixed                 |
+| 2025-01    | Architecture Review  | Major Items | 3 breaking changes identified      | 📝 Documented            |
+| 2025-11-06 | PR Compliance Review | Batch 6     | 6 security compliance issues       | ✅ 5 Fixed, 1 Documented |
 
 ### Batch 6 Improvements (Security Compliance)
 
 **CalDAV HTTPS Enforcement (Priority 10 - CRITICAL)**:
+
 - Enforced HTTPS for all CalDAV credential transmission
 - HTTP allowed only for localhost/127.0.0.1 (development)
 - Clear error messages guide users to HTTPS
 - Applied to: fetch_calendar_events, create_caldav_event, update_caldav_event
-- *Location: packages/core-rs/src/caldav.rs:622-633, 697-708, 753-764*
+- _Location: packages/core-rs/src/caldav.rs:622-633, 697-708, 753-764_
 
 **CalDAV Redirect Protection (Priority 10 - CRITICAL)**:
+
 - Disabled automatic redirects in HTTP client
 - Explicit status code checks for redirection attempts
 - Prevents credential leakage to untrusted hosts
 - Applied to all CalDAV HTTP operations
-- *Location: packages/core-rs/src/caldav.rs:636-641, 657-663*
+- _Location: packages/core-rs/src/caldav.rs:636-641, 657-663_
 
 **Parameter Name Standardization (Priority 8)**:
+
 - Fixed runtime error from spaceId/space_id mismatch
 - Updated 8 occurrences in UserManagement component
 - Tauri commands require snake_case parameters
-- *Location: apps/desktop/src/components/UserManagement.tsx*
+- _Location: apps/desktop/src/components/UserManagement.tsx_
 
 **OCR Notification Timing Fix (Priority 6)**:
+
 - Status verification before showing success notification
 - Prevents misleading "success" messages for failed OCR
 - Proper handling of queued/processing/failed states
-- *Location: apps/desktop/src/components/OcrManager.tsx:124-154*
+- _Location: apps/desktop/src/components/OcrManager.tsx:124-154_
 
 **Blocking HTTP Client Removal (Priority 8)**:
+
 - Removed blocking feature from reqwest dependency
 - Prevents async runtime deadlocks in Tauri
 - All CalDAV operations now fully async
-- *Location: packages/core-rs/Cargo.toml:36*
+- _Location: packages/core-rs/Cargo.toml:36_
 
 **Improved DateTime Parsing (Priority 7)**:
+
 - Added comprehensive bounds checking for string slicing
 - Validates input length before parsing
 - Safe slicing with Option::get() instead of direct indexing
 - chrono validation for date/time component correctness
 - Detailed error messages for debugging
-- *Location: packages/core-rs/src/caldav.rs:902-964*
+- _Location: packages/core-rs/src/caldav.rs:902-964_
 
 **XML Parsing Security Documentation (Priority 5)**:
+
 - Documented security considerations for simple string splitting
 - Risk assessment: low for trusted CalDAV servers
 - Migration plan to quick-xml for future untrusted sources
-- *Location: packages/core-rs/src/caldav.rs:787-811*
+- _Location: packages/core-rs/src/caldav.rs:787-811_
 
 **Known Limitation - Weak Encryption Handling (Priority 9)**:
+
 - resolve_conflict_with_dek() accepts empty DEK slice
 - Not yet exposed to Tauri frontend (no production usage)
 - Documented mitigation plan for Sprint 7
 - Comprehensive testing suite added (54+ tests)
-- *Location: packages/core-rs/src/sync_agent.rs:1178*
+- _Location: packages/core-rs/src/sync_agent.rs:1178_
 
 ### Batch 4 Improvements (Reliability & Performance)
 
 **Sync Conflict Resolution (Priority 9)**:
+
 - Populated `local_version` field with actual local data in conflict detection
 - Essential for proper conflict resolution logic
-- *Location: packages/core-rs/src/sync_agent.rs:602-686*
+- _Location: packages/core-rs/src/sync_agent.rs:602-686_
 
 **Per-Account Sync Locking (Priority 8)**:
+
 - Refactored from global lock to per-account Set
 - Allows concurrent syncs of different accounts
 - Added `safeNum()` utility to prevent NaN in UI
-- *Location: apps/desktop/src/components/settings/CalDAVSettings.tsx*
+- _Location: apps/desktop/src/components/settings/CalDAVSettings.tsx_
 
 **Database Atomicity (Priority 7)**:
+
 - OCR status updates now use transactions
 - Prevents inconsistent states on errors
-- *Location: packages/core-rs/src/ocr.rs:219-276*
+- _Location: packages/core-rs/src/ocr.rs:219-276_
 
 **Search Performance & Security (Priority 7)**:
+
 - Removed unused `encrypted_content` column from note search
 - Reduces memory usage and I/O
 - Prevents unnecessary exposure of encrypted data
-- *Location: packages/core-rs/src/search.rs:213-292*
+- _Location: packages/core-rs/src/search.rs:213-292_
 
 **NULL Handling (Priority 7)**:
+
 - Task search now uses proper `Option<T>` types instead of `.ok()`
 - More robust handling of nullable database columns
-- *Location: packages/core-rs/src/search.rs:350-358*
+- _Location: packages/core-rs/src/search.rs:350-358_
 
 **Timestamp Validation (Priority 7)**:
+
 - Added defensive checks for timestamps in ActivityTimeline
 - Handles NaN, negative, and future dates gracefully
-- *Location: packages/ui/src/components/ActivityTimeline.tsx:54-72*
+- _Location: packages/ui/src/components/ActivityTimeline.tsx:54-72_
 
 **Logging Separation (Priority 6)**:
+
 - Errors and warnings now sent to stderr
 - Info and debug messages to stdout
 - Better separation for CI/CD pipelines
-- *Location: packages/core-rs/src/logger.rs:71-81*
+- _Location: packages/core-rs/src/logger.rs:71-81_
 
 ### Batch 5 Improvements (Security Hardening)
 
 **File I/O Error Reporting (Priority 8)**:
+
 - Logger now surfaces write, flush, and lock errors to stderr
 - Previously silently ignored file logging failures
 - Helps diagnose logging infrastructure issues
-- *Location: packages/core-rs/src/logger.rs:62-74*
+- _Location: packages/core-rs/src/logger.rs:62-74_
 
 **Unique ZIP Filenames (Priority 8)**:
+
 - ZIP exports now use ID-prefixed filenames to prevent collisions
 - Format: `notes/{id}_{sanitized_title}.md`
 - Explicit directory creation in archive
 - Prevents data loss when multiple notes have same title
-- *Location: packages/core-rs/src/import.rs:184-213*
+- _Location: packages/core-rs/src/import.rs:184-213_
 
 **Action Parameter Validation (Priority 8)**:
+
 - Added ULID/UUID format validation before navigation
 - Prevents injection attacks via malformed IDs
 - Validates task_id and project_id parameters
-- *Location: apps/desktop/src/components/Foresight.tsx:119-127*
+- _Location: apps/desktop/src/components/Foresight.tsx:119-127_
 
 **TypeScript Type Hardening (Priority 6)**:
+
 - TaskBoard columns frozen with Object.freeze()
 - Added strict SafeColor type with const assertion
 - Icon validation to prevent XSS
 - Improved compile-time type safety
-- *Location: apps/desktop/src/components/TaskBoard.tsx:11-22*
+- _Location: apps/desktop/src/components/TaskBoard.tsx:11-22_
 
 ### Known Architectural Limitations
 
@@ -376,6 +401,7 @@ The following issues were identified during security review but require breaking
 **Issue**: The sync agent uses `String::from_utf8_lossy()` to convert potentially binary ciphertext to UTF-8 strings. Ciphertext should be treated as opaque bytes and stored in BLOB columns, not TEXT.
 
 **Current Behavior**:
+
 ```rust
 // sync_agent.rs
 let data_str = String::from_utf8_lossy(data).to_string();
@@ -384,54 +410,61 @@ let ciphertext: String = crate::crypto::encrypt_string(&data_str, dek)?;
 ```
 
 **Impact**:
+
 - May corrupt binary data during sync
 - Ciphertext stored as TEXT instead of BLOB
 - Limited to UTF-8 representable ciphertext
 
 **Why Not Fixed**:
+
 - Requires database migration (TEXT → BLOB)
 - Changes encrypt/decrypt API signatures
 - Affects all callers throughout codebase
 - Breaking change for existing encrypted data
 
 **Mitigation**:
+
 - Current implementation works for text-based notes
 - Base64-encoded ciphertext is UTF-8 safe
 - No reported data corruption issues
 
 **Future Fix**: Version 2.0 will migrate to byte-based encryption/decryption with BLOB storage
 
-*Location: packages/core-rs/src/sync_agent.rs:512-542*
+_Location: packages/core-rs/src/sync_agent.rs:512-542_
 
 **2. AAD (Authenticated Associated Data) Encryption (Priority 9)**
 
 **Issue**: Encryption does not use AAD to bind ciphertext to its context, allowing potential misuse if ciphertext is moved between contexts.
 
 **Current API**:
+
 ```rust
 pub fn encrypt_string(plaintext: &str, dek: &[u8]) -> Result<String, CryptoError>
 pub fn decrypt_string(encrypted: &str, dek: &[u8]) -> Result<String, CryptoError>
 ```
 
 **Proposed API**:
+
 ```rust
 pub fn encrypt_string(plaintext: &str, dek: &[u8], aad: &[u8]) -> Result<String, CryptoError>
 pub fn decrypt_string(encrypted: &str, dek: &[u8], aad: &[u8]) -> Result<String, CryptoError>
 ```
 
 **Impact of Change**:
+
 - All 40+ callers need to provide AAD parameter
 - Existing encrypted data incompatible without migration
 - Protocol change affects sync
 
 **Mitigation**:
+
 - Current encryption uses XChaCha20-Poly1305 with authentication
 - Poly1305 MAC prevents tampering
 - DEK is user-specific, limiting attack surface
 
 **Future Fix**: Version 2.0 will add AAD with format versioning and migration path
 
-*Location: packages/core-rs/src/crypto.rs*
+_Location: packages/core-rs/src/crypto.rs_
 
 **3. Asynchronous DEK Cleanup (Priority 7)**
 
@@ -440,43 +473,48 @@ pub fn decrypt_string(encrypted: &str, dek: &[u8], aad: &[u8]) -> Result<String,
 **Proposed Solution**: Move to async tasks using `tauri::async_runtime::spawn()`
 
 **Why Not Fixed**:
+
 - Risk of incomplete cleanup if async task doesn't complete
 - Panic hooks calling async code is non-idiomatic
 - Current synchronous approach is safer
 - No reported deadlock issues
 
 **Mitigation**:
+
 - Zeroizing trait ensures cleanup on Drop
 - OS process termination clears memory
 - Best-effort cleanup in panic handler
 
 **Future Fix**: Comprehensive async refactor with guaranteed cleanup semantics
 
-*Location: apps/desktop/src-tauri/src/main.rs*
+_Location: apps/desktop/src-tauri/src/main.rs_
 
 ### External Command Security
 
 **OCR Tesseract Invocation**
 
 **Current Security Measures**:
+
 - Language parameter validation (alphanumeric + '+' and '-')
 - Output size limit (10MB cap)
 - Path existence and file type checks
 - Process timeout protection
 
 **Remaining Concerns**:
+
 - No sandboxing of Tesseract process
 - User-supplied image paths could reference unintended files
 - Resource exhaustion if called repeatedly
 
 **Mitigation**:
+
 - OCR is user-initiated, not automatic
 - Image paths from trusted UI file picker
 - Output size and validation limits prevent DoS
 
 **Future Enhancement**: Sandbox Tesseract using OS-level process isolation
 
-*Location: packages/core-rs/src/ocr.rs*
+_Location: packages/core-rs/src/ocr.rs_
 
 ## Security Features Roadmap
 
@@ -571,7 +609,7 @@ To ensure the security improvements documented above are robust and maintainable
    - Filename uniqueness verification
 
 3. **Filename Sanitization**:
-   - Special character handling (/, \, :, *, ?, ", <, >, |) (test_export_to_zip_filename_sanitization)
+   - Special character handling (/, \, :, \*, ?, ", <, >, |) (test_export_to_zip_filename_sanitization)
    - Path injection prevention
 
 4. **Content Preservation**:
@@ -659,7 +697,7 @@ To ensure the security improvements documented above are robust and maintainable
 
 **Coverage**: All Session 5 database schema and sync enhancements are tested.
 
-#### UserManagement QA Fixes Tests (apps/desktop/src/components/__tests__/UserManagement.qa-fixes.test.tsx)
+#### UserManagement QA Fixes Tests (apps/desktop/src/components/**tests**/UserManagement.qa-fixes.test.tsx)
 
 **11 frontend validation tests** for Session 5 QA fixes covering:
 
@@ -702,16 +740,16 @@ The GitHub Actions CI workflow (`.github/workflows/ci.yml`) has been enhanced to
 
 ### Test Coverage Summary
 
-| Module | Total Tests | Security Tests | Coverage |
-|--------|-------------|----------------|----------|
-| crypto.rs | 16 | 16 | 100% of security logic |
-| ocr.rs | 16 | 6 | 100% of validation logic |
-| import.rs | 7 | 5 | 100% of export security |
-| search.rs | 4 | 3 | 100% of privacy logic |
-| collaboration.rs (RBAC) | 20 | 20 | 100% of token & permission logic |
-| sync_agent.rs | 23 | 23 | 100% of schema & sync logic |
-| UserManagement (Frontend) | 11 | 11 | 85% of frontend validation |
-| **Total** | **97** | **84** | **Very High** |
+| Module                    | Total Tests | Security Tests | Coverage                         |
+| ------------------------- | ----------- | -------------- | -------------------------------- |
+| crypto.rs                 | 16          | 16             | 100% of security logic           |
+| ocr.rs                    | 16          | 6              | 100% of validation logic         |
+| import.rs                 | 7           | 5              | 100% of export security          |
+| search.rs                 | 4           | 3              | 100% of privacy logic            |
+| collaboration.rs (RBAC)   | 20          | 20             | 100% of token & permission logic |
+| sync_agent.rs             | 23          | 23             | 100% of schema & sync logic      |
+| UserManagement (Frontend) | 11          | 11             | 85% of frontend validation       |
+| **Total**                 | **97**      | **84**         | **Very High**                    |
 
 ### Running Tests Locally
 
@@ -747,10 +785,11 @@ cargo tarpaulin --out Html --output-dir coverage
 ## Contact
 
 For security-related questions (non-vulnerabilities):
+
 - Create a discussion in the GitHub repository
 - Tag with `security` label
 
 ---
 
-*Last Updated: January 2025*
-*Security Policy Version: 1.0.0*
+_Last Updated: January 2025_
+_Security Policy Version: 1.0.0_

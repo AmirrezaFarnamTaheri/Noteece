@@ -21,6 +21,7 @@ import { $convertFromMarkdownString, $convertToMarkdownString, TRANSFORMERS } fr
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { Paper } from '@mantine/core';
 import classes from './LexicalEditor.module.css';
+import logger from '../utils/logger';
 
 interface LexicalEditorProperties {
   initialContent?: string;
@@ -145,7 +146,7 @@ export default function LexicalEditorComponent({
     namespace: 'NoteeceEditor',
     theme,
     onError: (error: Error) => {
-      console.error('Lexical Editor Error:', error);
+      logger.error('Lexical Editor Error:', error);
     },
     nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode, CodeNode, CodeHighlightNode, LinkNode],
   };

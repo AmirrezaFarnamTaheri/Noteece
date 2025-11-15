@@ -266,7 +266,7 @@ fn extract_topics(content: &str) -> Vec<String> {
     for (topic, keywords) in topic_keywords.iter() {
         let matches = keywords
             .iter()
-            .filter(|keyword| content_lower.contains(keyword))
+            .filter(|keyword| content_lower.contains(*keyword))
             .count();
 
         if matches >= MIN_KEYWORD_MATCHES {
@@ -345,9 +345,10 @@ pub fn auto_categorize_posts(conn: &Connection, space_id: &str) -> Result<usize,
         .filter_map(Result::ok)
         .collect();
 
+    let total_posts = posts.len();
     log::debug!(
         "[Social::Intelligence] Found {} uncategorized posts to process",
-        posts.len()
+        total_posts
     );
 
     for (post_id, content_opt, author, platform) in posts {
@@ -371,7 +372,7 @@ pub fn auto_categorize_posts(conn: &Connection, space_id: &str) -> Result<usize,
             );
 
             if has_topic_match || (is_work_platform && is_work_category) {
-                if assign_category(conn, &post_id, &category.id, Some("auto")).is_ok() {
+                if assign_category(conn, &post_id, &category.id, "auto").is_ok() {
                     categorized += 1;
                 }
                 break; // Only assign to first matching category
@@ -383,7 +384,7 @@ pub fn auto_categorize_posts(conn: &Connection, space_id: &str) -> Result<usize,
         "[Social::Intelligence] Auto-categorization complete for space {}: {} posts categorized out of {}",
         space_id,
         categorized,
-        posts.len()
+        total_posts
     );
 
     Ok(categorized)

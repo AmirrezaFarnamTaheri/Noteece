@@ -3,7 +3,8 @@
  * Handles authentication with the Tauri backend
  */
 
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
+import logger from '../utils/logger';
 
 export interface Session {
   id: string;
@@ -42,11 +43,7 @@ class AuthService {
   /**
    * Register a new user
    */
-  async register(
-    username: string,
-    email: string,
-    password: string
-  ): Promise<User> {
+  async register(username: string, email: string, password: string): Promise<User> {
     try {
       const user = await invoke<User>('create_user_cmd', {
         username,
@@ -112,7 +109,7 @@ class AuthService {
 
       const userId = await invoke<string>('validate_session_cmd', { token });
       return userId;
-    } catch (error) {
+    } catch {
       this.clearSessionStorage();
       return null;
     }
@@ -170,10 +167,7 @@ class AuthService {
   /**
    * Change password
    */
-  async changePassword(
-    oldPassword: string,
-    newPassword: string
-  ): Promise<void> {
+  async changePassword(oldPassword: string, newPassword: string): Promise<void> {
     try {
       if (!this.currentUser) {
         throw new Error('Not authenticated');
@@ -206,7 +200,7 @@ class AuthService {
         this.clearSessionStorage();
         return false;
       }
-    } catch (error) {
+    } catch {
       // Clear both storage and in-memory state for consistency on error
       this.session = null;
       this.currentUser = null;
@@ -226,7 +220,7 @@ class AuthService {
         this.session = JSON.parse(sessionData);
       }
     } catch (error) {
-      console.error('Failed to load session from storage:', error);
+      logger.error('Failed to load session from storage:', error as Error);
       this.clearSessionStorage();
     }
   }
@@ -236,7 +230,7 @@ class AuthService {
       localStorage.setItem(SESSION_TOKEN_KEY, session.token);
       localStorage.setItem(SESSION_DATA_KEY, JSON.stringify(session));
     } catch (error) {
-      console.error('Failed to save session to storage:', error);
+      logger.error('Failed to save session to storage:', error as Error);
     }
   }
 
@@ -245,7 +239,7 @@ class AuthService {
       localStorage.removeItem(SESSION_TOKEN_KEY);
       localStorage.removeItem(SESSION_DATA_KEY);
     } catch (error) {
-      console.error('Failed to clear session storage:', error);
+      logger.error('Failed to clear session storage:', error as Error);
     }
   }
 

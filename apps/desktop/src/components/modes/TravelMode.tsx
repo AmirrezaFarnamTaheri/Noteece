@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import {
   Container,
   Title,
@@ -18,6 +18,7 @@ import {
 } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
 import { IconPlus, IconPlane, IconMapPin, IconCalendar } from '@tabler/icons-react';
+import logger from '../../utils/logger';
 
 interface Trip {
   id: string;
@@ -61,7 +62,7 @@ const TravelMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       const data = await invoke<Trip[]>('get_trips_cmd', { spaceId, limit: 50 });
       setTrips(data);
     } catch (error) {
-      console.error('Failed to load trips:', error);
+      logger.error('Failed to load trips:', error as Error);
     } finally {
       setLoading(false);
     }
@@ -107,7 +108,7 @@ const TravelMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       setFormDestination('');
       await loadData();
     } catch (error) {
-      console.error('Failed to add trip:', error);
+      logger.error('Failed to add trip:', error as Error);
       alert(`Failed to add trip: ${String(error)}`);
     }
   };
@@ -215,11 +216,13 @@ const TravelMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
             placeholder="Paris, France"
             required
           />
-          <DatePicker label="Start Date" value={formStartDate} onChange={(value) => value && setFormStartDate(value)} />
           <DatePicker
-            label="End Date"
             value={formEndDate}
-            onChange={(value) => value && setFormEndDate(value)}
+            onChange={(value) => {
+              if (value) {
+                setFormEndDate(value as unknown as Date);
+              }
+            }}
             minDate={formStartDate}
           />
           <Group justify="flex-end" mt="md">

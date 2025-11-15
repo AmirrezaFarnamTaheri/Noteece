@@ -228,7 +228,7 @@ fn search_notes_advanced(
     // Space filter
     if let Some(space_id) = &query.filters.space_id {
         where_clauses.push("n.space_id = ?".to_string());
-        params.push(Box::new(space_id.clone()));
+        params.push(Box::new(space_id.to_string()));
     }
 
     // Text search - only search in title since encrypted_content is not searchable with LIKE
@@ -302,7 +302,7 @@ fn search_tasks_advanced(
     // Space filter
     if let Some(space_id) = &query.filters.space_id {
         where_clauses.push("t.space_id = ?".to_string());
-        params.push(Box::new(space_id.clone()));
+        params.push(Box::new(space_id.to_string()));
     }
 
     // Text search
@@ -395,7 +395,7 @@ fn search_projects_advanced(
     // Space filter
     if let Some(space_id) = &query.filters.space_id {
         where_clauses.push("p.space_id = ?".to_string());
-        params.push(Box::new(space_id.clone()));
+        params.push(Box::new(space_id.to_string()));
     }
 
     // Text search

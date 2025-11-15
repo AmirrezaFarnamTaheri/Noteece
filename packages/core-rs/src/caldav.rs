@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use reqwest::blocking::Client;
-use rusqlite::{params, Connection};
+use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use thiserror::Error;
@@ -650,7 +650,11 @@ fn fetch_calendar_events(
 </C:calendar-query>"#;
 
     let response = client
-        .request(reqwest::Method::from_bytes(b"REPORT")?, url)
+        .request(
+            reqwest::Method::from_bytes(b"REPORT")
+                .map_err(|e| CalDavError::Parse(e.to_string()))?,
+            url,
+        )
         .basic_auth(username, Some(password))
         .header("Depth", "1")
         .header("Content-Type", "application/xml; charset=utf-8")
