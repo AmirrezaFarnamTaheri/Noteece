@@ -77,6 +77,7 @@ const TemporalGraph: React.FC<{ spaceId: string }> = ({ spaceId }) => {
 
   useEffect(() => {
     void loadGraph();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaceId]);
 
   useEffect(() => {

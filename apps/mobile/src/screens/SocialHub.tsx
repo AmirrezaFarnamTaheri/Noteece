@@ -86,6 +86,7 @@ export function SocialHub() {
   useEffect(() => {
     loadData();
     loadSavedFilters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Load saved filters from storage
@@ -220,6 +221,7 @@ export function SocialHub() {
     } finally {
       setRefreshing(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPlatforms, selectedCategories, searchQuery]);
 
   const handleLoadMore = async () => {
@@ -341,6 +343,7 @@ export function SocialHub() {
     if (!loading) {
       handleRefresh();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPlatforms, selectedCategories, searchQuery]);
 
   const availablePlatforms: Platform[] = [

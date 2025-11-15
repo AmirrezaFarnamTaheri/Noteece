@@ -61,7 +61,7 @@ export default function MusicLabScreen() {
         sound.unloadAsync();
       }
     };
-  }, []);
+  }, [sound]);
 
   // Update playback status
   useEffect(() => {
@@ -82,7 +82,8 @@ export default function MusicLabScreen() {
 
     const interval = setInterval(updateStatus, 1000);
     return () => clearInterval(interval);
-  }, [sound, currentTrack]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sound]);
 
   const playTrack = async (track: Track) => {
     try {

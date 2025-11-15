@@ -169,6 +169,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (!isLoading) {
       saveThemePreference();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [themeMode, isLoading]);
 
   const loadThemePreference = async () => {

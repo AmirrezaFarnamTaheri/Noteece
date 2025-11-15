@@ -46,6 +46,7 @@ const RecipeMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
 
   useEffect(() => {
     void loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaceId]);
 
   const loadData = async () => {

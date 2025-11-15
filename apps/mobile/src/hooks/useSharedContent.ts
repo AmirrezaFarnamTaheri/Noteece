@@ -40,6 +40,7 @@ export function useSharedContent() {
     return () => {
       subscription.remove();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Listen for deep link events (share extension may use deep links)
