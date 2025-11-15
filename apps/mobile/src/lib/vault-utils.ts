@@ -213,7 +213,9 @@ export async function changeVaultPassword(
       await SecureStore.deleteItemAsync("biometric_vault_data");
     } catch (error) {
       // Biometric data might not exist, that's okay
-      console.log("No biometric data to clear");
+      if (__DEV__) {
+        console.log("No biometric data to clear");
+      }
     }
 
     return { success: true };

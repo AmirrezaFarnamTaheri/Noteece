@@ -120,9 +120,11 @@ export async function withRetry<T>(
       const delay = calculateDelay(attempt, finalConfig);
       finalConfig.onRetry(attempt + 1, lastError);
 
-      console.log(
-        `[Retry] Attempt ${attempt + 1}/${finalConfig.maxRetries} failed: ${lastError.message}. Retrying in ${Math.round(delay)}ms...`,
-      );
+      if (__DEV__) {
+        console.log(
+          `[Retry] Attempt ${attempt + 1}/${finalConfig.maxRetries} failed: ${lastError.message}. Retrying in ${Math.round(delay)}ms...`,
+        );
+      }
 
       // Wait before retrying
       await sleep(delay);
@@ -188,9 +190,11 @@ export async function retryUntil<T>(
       }
 
       const delay = calculateDelay(attempt, finalConfig);
-      console.log(
-        `[Retry] Predicate not satisfied. Attempt ${attempt + 1}/${finalConfig.maxRetries}. Retrying in ${Math.round(delay)}ms...`,
-      );
+      if (__DEV__) {
+        console.log(
+          `[Retry] Predicate not satisfied. Attempt ${attempt + 1}/${finalConfig.maxRetries}. Retrying in ${Math.round(delay)}ms...`,
+        );
+      }
 
       await sleep(delay);
     } catch (error) {
@@ -209,9 +213,11 @@ export async function retryUntil<T>(
       const delay = calculateDelay(attempt, finalConfig);
       finalConfig.onRetry(attempt + 1, lastError);
 
-      console.log(
-        `[Retry] Attempt ${attempt + 1}/${finalConfig.maxRetries} failed. Retrying in ${Math.round(delay)}ms...`,
-      );
+      if (__DEV__) {
+        console.log(
+          `[Retry] Attempt ${attempt + 1}/${finalConfig.maxRetries} failed. Retrying in ${Math.round(delay)}ms...`,
+        );
+      }
 
       await sleep(delay);
     }
