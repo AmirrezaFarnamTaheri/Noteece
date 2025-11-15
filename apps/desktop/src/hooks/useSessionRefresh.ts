@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { authService } from '../services/auth';
+import logger from '../utils/logger';
 
 interface SessionWarning {
   show: boolean;
@@ -21,7 +22,7 @@ export const useSessionRefresh = (onSessionExpired?: () => void, onWarning?: (mi
         onSessionExpired?.();
       }
     } catch (error) {
-      console.error('Session check failed:', error);
+      logger.error('Session check failed:', error as Error);
       // Treat error as expired session for safety - but don't kill the interval
       setSessionWarning({ show: false, minutesLeft: 0 });
       onSessionExpired?.();
@@ -107,7 +108,7 @@ export const useSessionRefresh = (onSessionExpired?: () => void, onWarning?: (mi
       setSessionWarning({ show: false, minutesLeft: 0 });
       onSessionExpired?.();
     } catch (error) {
-      console.error('Logout failed:', error);
+      logger.error('Logout failed:', error as Error);
       onSessionExpired?.();
     }
   }, [onSessionExpired]);

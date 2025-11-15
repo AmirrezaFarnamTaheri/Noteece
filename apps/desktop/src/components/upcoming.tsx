@@ -6,6 +6,7 @@ import { getUpcomingTasks } from '../services/api';
 import { useStore } from '../store';
 import { Task } from '@noteece/types';
 import { formatRelativeTime, isOverdue } from '../utils/dateUtils';
+import logger from '../utils/logger';
 
 interface UpcomingProperties {
   icon: React.ReactNode;
@@ -24,7 +25,7 @@ export const Upcoming: React.FC<UpcomingProperties> = ({ icon, title }) => {
           const upcomingTasks = await getUpcomingTasks(activeSpaceId, 5);
           setTasks(upcomingTasks);
         } catch (error) {
-          console.error('Error fetching upcoming tasks:', error);
+          logger.error('Error fetching upcoming tasks:', error as Error);
         }
       }
     };

@@ -1,6 +1,6 @@
 // apps/desktop/src/services/api.ts
 
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import {
   AnalyticsData,
   FormTemplate,

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { Mode } from './types';
 import { useStore } from '../store';
+import logger from '../utils/logger';
 
 const availableModes: Mode[] = [
   { id: 'meeting-notes', name: 'Meeting Notes', category: 'productivity' },
@@ -23,7 +24,7 @@ const Settings: React.FC = () => {
         const spaceModes: Mode[] = await invoke('get_space_modes_cmd', { spaceId: activeSpaceId });
         setModes(spaceModes);
       } catch (error) {
-        console.error('Error fetching modes:', error);
+        logger.error('Error fetching modes:', error as Error);
       }
     };
 
@@ -62,7 +63,7 @@ const Settings: React.FC = () => {
       const spaceModes: Mode[] = await invoke('get_space_modes_cmd', { spaceId: activeSpaceId });
       setModes(spaceModes);
     } catch (error) {
-      console.error(`Error toggling mode ${mode.name}:`, error);
+      logger.error(`Error toggling mode ${mode.name}:`, error as Error);
     }
   };
 

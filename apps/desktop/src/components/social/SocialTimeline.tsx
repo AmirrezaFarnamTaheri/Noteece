@@ -6,7 +6,7 @@
 
 import { Stack, Center, Text, Loader, Button } from '@mantine/core';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { useState, useEffect, useRef } from 'react';
 import { TimelinePost } from './TimelinePost';
 import { TimelineFilters, TimelineFilterValues } from './TimelineFilters';

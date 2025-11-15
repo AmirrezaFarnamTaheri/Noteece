@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import {
   Container,
   Title,
@@ -18,6 +18,7 @@ import {
   Loader,
 } from '@mantine/core';
 import { IconPlus, IconClock, IconUsers, IconChefHat } from '@tabler/icons-react';
+import logger from '../../utils/logger';
 
 interface Recipe {
   id: string;
@@ -53,7 +54,7 @@ const RecipeMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       const data = await invoke<Recipe[]>('get_recipes_cmd', { spaceId, limit: 50 });
       setRecipes(data);
     } catch (error) {
-      console.error('Failed to load recipes:', error);
+      logger.error('Failed to load recipes:', error as Error);
     } finally {
       setLoading(false);
     }
@@ -95,7 +96,7 @@ const RecipeMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       setFormServings(4);
       await loadData();
     } catch (error) {
-      console.error('Failed to add recipe:', error);
+      logger.error('Failed to add recipe:', error as Error);
       alert(`Failed to add recipe: ${String(error)}`);
     }
   };

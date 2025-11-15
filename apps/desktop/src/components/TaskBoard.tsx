@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Button, TextInput, Group, Paper, Title, Stack, Text, Badge, ActionIcon, Tooltip } from '@mantine/core';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import type { DropResult } from 'react-beautiful-dnd';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { Task } from './types';
 import { useStore } from '../store';
 import { IconPlus, IconGripVertical, IconCalendar, IconFlag } from '@tabler/icons-react';
+import logger from '../utils/logger';
 
 // Whitelist of safe Mantine color tokens to prevent CSS injection
 const SAFE_COLORS = new Set([
@@ -43,7 +44,7 @@ const TaskBoard: React.FC = () => {
       const tasksData: Task[] = await invoke('get_all_tasks_in_space_cmd', { spaceId: activeSpaceId });
       setTasks(tasksData);
     } catch (error) {
-      console.error('Failed to fetch tasks:', error);
+      logger.error('Failed to fetch tasks:', error as Error);
     }
   };
 
@@ -58,7 +59,7 @@ const TaskBoard: React.FC = () => {
       setNewTaskTitle('');
       fetchTasks(); // Refresh the list
     } catch (error) {
-      console.error('Failed to create task:', error);
+      logger.error('Failed to create task:', error as Error);
     }
   };
 
@@ -80,7 +81,7 @@ const TaskBoard: React.FC = () => {
         await invoke('update_task_cmd', { task: updatedTask });
         fetchTasks(); // Refresh the list
       } catch (error) {
-        console.error('Failed to update task:', error);
+        logger.error('Failed to update task:', error as Error);
       }
     }
   };

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { Button, Card, Select, Group, TextInput } from '@mantine/core';
+import logger from '../utils/logger';
 
 interface AdvancedImportProperties {
   spaceId: string;
@@ -23,7 +24,7 @@ const AdvancedImport: React.FC<AdvancedImportProperties> = ({ spaceId }) => {
       }
       // Optionally, show a success notification
     } catch (error) {
-      console.error('Error importing:', error);
+      logger.error('Error importing:', error as Error);
     }
   };
 

@@ -6,11 +6,12 @@ import { Card, Text, Badge, Group, Button, Modal, TextInput, Textarea, ActionIco
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlayerPlay, IconPlayerStop } from '@tabler/icons-react';
 import { Task, TimeEntry } from '@noteece/types';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { useStore } from '../../store';
 import { startTimeEntry, stopTimeEntry, getRunningEntries } from '../../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notifications } from '@mantine/notifications';
+import logger from '../../utils/logger';
 
 interface KanbanContext {
   tasks: Task[];
@@ -118,7 +119,7 @@ const Kanban: React.FC = () => {
       setNewTaskDescription('');
       close();
     } catch (error) {
-      console.error('Error creating task:', error);
+      logger.error('Error creating task:', error as Error);
     }
   };
 

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Button, TextInput, List, Group, Modal, Select, LoadingOverlay, Text } from '@mantine/core';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { Note } from '@noteece/types';
 import { useStore } from '../store';
 import { useNotes, useFormTemplates } from '../hooks/useQueries';
 import LexicalEditor from './LexicalEditor';
 import classes from './NoteEditor.module.css';
+import logger from '../utils/logger';
 
 const NoteEditor: React.FC = () => {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
@@ -35,11 +36,11 @@ const NoteEditor: React.FC = () => {
 
   const handleCreateNote = async () => {
     if (!activeSpaceId) {
-      console.warn('Cannot create note: no active space');
+      logger.warn('Cannot create note: no active space');
       return;
     }
     if (!title.trim()) {
-      console.warn('Cannot create note: title is required');
+      logger.warn('Cannot create note: title is required');
       return;
     }
     try {
@@ -47,24 +48,24 @@ const NoteEditor: React.FC = () => {
       refetchNotes(); // Refresh the list using React Query
       handleNewNoteClick();
     } catch (error) {
-      console.error('Failed to create note:', error);
+      logger.error('Failed to create note:', error as Error);
     }
   };
 
   const handleUpdateNote = async () => {
     if (!selectedNote) {
-      console.warn('Cannot update: no note selected');
+      logger.warn('Cannot update: no note selected');
       return;
     }
     if (!title.trim()) {
-      console.warn('Cannot update note: title is required');
+      logger.warn('Cannot update note: title is required');
       return;
     }
     try {
       await invoke('update_note_content_cmd', { id: selectedNote.id, title, content });
       refetchNotes(); // Refresh the list using React Query
     } catch (error) {
-      console.error('Failed to update note:', error);
+      logger.error('Failed to update note:', error as Error);
     }
   };
 
@@ -75,7 +76,7 @@ const NoteEditor: React.FC = () => {
       refetchNotes(); // Refresh the list using React Query
       setSelectedNote(null);
     } catch (error) {
-      console.error('Failed to delete note:', error);
+      logger.error('Failed to delete note:', error as Error);
     }
   };
 

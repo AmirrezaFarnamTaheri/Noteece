@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { Textarea, TextInput, Button, Card, Text, Stack, Group, Badge, List, Alert } from '@mantine/core';
 import { IconCheck } from '@tabler/icons-react';
 import { showSuccess, showError } from '../utils/notifications';
 import { useActiveSpace } from '../hooks/useActiveSpace';
+import logger from '../utils/logger';
 
 interface MeetingNotesProperties {
   noteId?: string; // Optional: editing an existing note
@@ -64,7 +65,7 @@ const MeetingNotes: React.FC<MeetingNotesProperties> = ({ noteId }) => {
               description: `Action item from meeting: ${title}`,
             });
           } catch (error) {
-            console.error('Error creating task:', error);
+            logger.error('Error creating task:', error as Error);
           }
         }
       }
@@ -75,7 +76,7 @@ const MeetingNotes: React.FC<MeetingNotesProperties> = ({ noteId }) => {
       });
     } catch (error) {
       showError({ message: 'Failed to save meeting note' });
-      console.error('Error saving meeting note:', error);
+      logger.error('Error saving meeting note:', error as Error);
     } finally {
       setLoading(false);
     }

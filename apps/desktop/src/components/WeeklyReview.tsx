@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { Button, Card, Text, Loader, Alert } from '@mantine/core';
 import { IconInfoCircle } from '@tabler/icons-react';
+import logger from '../utils/logger';
 
 interface Note {
   id: string;
@@ -30,7 +31,7 @@ const WeeklyReview: React.FC<WeeklyReviewProperties> = ({ spaceId }) => {
       setReviewNote(note);
     } catch (error_) {
       setError('Failed to generate weekly review. Please try again later.');
-      console.error(error_);
+      logger.error('Failed to generate weekly review:', error_ as Error);
     } finally {
       setLoading(false);
     }

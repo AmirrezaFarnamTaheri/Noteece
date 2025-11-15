@@ -11,7 +11,7 @@ import '@testing-library/jest-dom';
 
 // Mock Tauri invoke
 const mockInvoke = jest.fn();
-jest.mock('@tauri-apps/api/core', () => ({
+jest.mock('@tauri-apps/api/tauri', () => ({
   invoke: (...arguments_: any[]) => mockInvoke(...arguments_),
 }));
 

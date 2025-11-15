@@ -24,6 +24,7 @@ import { ThemeToggle } from './ThemeToggle';
 import { getOrCreateDailyNote } from '@/services/api';
 import classes from './MainLayout.module.css';
 import { useStore } from '../store';
+import logger from '../utils/logger';
 
 const navLinkGroups = [
   {
@@ -74,7 +75,7 @@ const MainLayout: React.FC = () => {
         const dailyNote = await getOrCreateDailyNote(activeSpaceId);
         navigate(`/main/editor?noteId=${dailyNote.id.toString()}`);
       } catch (error) {
-        console.error('Error getting or creating daily note:', error);
+        logger.error('Error getting or creating daily note:', error as Error);
       }
     }
   };

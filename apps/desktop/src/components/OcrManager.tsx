@@ -18,7 +18,7 @@ import {
   Modal,
   FileButton,
 } from '@mantine/core';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { open } from '@tauri-apps/api/dialog';
 import { IconUpload, IconSearch, IconCheck, IconX, IconClock, IconFile } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';

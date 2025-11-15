@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import {
   Container,
   Title,
@@ -16,6 +16,7 @@ import {
   Paper,
 } from '@mantine/core';
 import { IconPlayerPlay, IconPlayerPause, IconRefresh, IconZoomIn, IconZoomOut } from '@tabler/icons-react';
+import logger from '../utils/logger';
 
 interface GraphNode {
   id: string;
@@ -118,7 +119,7 @@ const TemporalGraph: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       });
       setEvolution(evolutionData);
     } catch (error) {
-      console.error('Failed to load graph:', error);
+      logger.error('Failed to load graph:', error as Error);
     } finally {
       setLoading(false);
     }

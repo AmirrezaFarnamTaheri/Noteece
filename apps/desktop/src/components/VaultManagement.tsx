@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Button, TextInput, Paper, Title, Container } from '@mantine/core';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { useNavigate } from 'react-router-dom';
+import logger from '../utils/logger';
 
 const VaultManagement: React.FC = () => {
   const [path, setPath] = useState('');
@@ -13,7 +14,7 @@ const VaultManagement: React.FC = () => {
       await invoke('create_vault', { path, password });
       navigate('/main');
     } catch (error) {
-      console.error('Failed to create vault:', error);
+      logger.error('Failed to create vault:', error as Error);
     }
   };
 
@@ -22,7 +23,7 @@ const VaultManagement: React.FC = () => {
       await invoke('unlock_vault', { path, password });
       navigate('/main');
     } catch (error) {
-      console.error('Failed to unlock vault:', error);
+      logger.error('Failed to unlock vault:', error as Error);
     }
   };
 

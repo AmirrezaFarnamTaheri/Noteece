@@ -3,7 +3,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import {
   Button,
   Group,
@@ -31,6 +31,7 @@ import {
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import classes from './SpacedRepetition.module.css';
+import logger from '../utils/logger';
 
 interface KnowledgeCard {
   id: string;
@@ -73,7 +74,7 @@ const SpacedRepetition: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching due cards:', error);
+      logger.error('Error fetching due cards:', error as Error);
       notifications.show({
         title: 'Error',
         message: 'Failed to fetch cards',
@@ -88,7 +89,7 @@ const SpacedRepetition: React.FC = () => {
     const currentCard = cards[indexAtStart];
 
     if (!currentCard) {
-      console.warn('No current card available for review');
+      logger.warn('No current card available for review');
       return;
     }
     const reviewedId = currentCard.id;
@@ -128,7 +129,7 @@ const SpacedRepetition: React.FC = () => {
         await fetchCards();
       }
     } catch (error) {
-      console.error('Error reviewing card:', error);
+      logger.error('Error reviewing card:', error as Error);
       notifications.show({ title: 'Error', message: 'Failed to review card', color: 'red' });
     }
   };

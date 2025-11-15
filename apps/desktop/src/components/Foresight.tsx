@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import {
   Container,
   Title,
@@ -26,6 +26,7 @@ import {
   IconTarget,
   IconTrendingUp,
 } from '@tabler/icons-react';
+import logger from '../utils/logger';
 
 interface Insight {
   id: string;
@@ -82,7 +83,7 @@ const Foresight: React.FC = () => {
       const result = await invoke<Insight[]>('get_active_insights_cmd', { limit: 20 });
       setInsights(result);
     } catch (error) {
-      console.error('Failed to load insights:', error);
+      logger.error('Failed to load insights:', error as Error);
     } finally {
       setLoading(false);
     }
@@ -99,7 +100,7 @@ const Foresight: React.FC = () => {
       });
       setInsights((previous) => previous.filter((item) => item.id !== insightId));
     } catch (error) {
-      console.error('Failed to dismiss insight:', error);
+      logger.error('Failed to dismiss insight:', error as Error);
     }
   };
 
@@ -134,7 +135,7 @@ const Foresight: React.FC = () => {
           break;
         }
         case 'schedule_focus': {
-          console.log('Scheduling focus block:', action.parameters);
+          logger.info('Scheduling focus block');
           break;
         }
         default: {
@@ -157,7 +158,7 @@ const Foresight: React.FC = () => {
       try {
         await invoke('dismiss_insight_cmd', { insightId: insight.id });
       } catch (error) {
-        console.error('Failed to dismiss insight:', error);
+        logger.error('Failed to dismiss insight:', error as Error);
       }
 
       // Navigate last, using assign to avoid bfcache issues
@@ -191,7 +192,7 @@ const Foresight: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('Failed to execute action:', error);
+      logger.error('Failed to execute action:', error as Error);
       alert(String(error));
     } finally {
       executingReference.current = false;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import styles from './BackupRestore.module.css';
 
 interface BackupMetadata {

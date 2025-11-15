@@ -36,11 +36,12 @@ import {
 } from '@tabler/icons-react';
 import { useForm } from '@mantine/form';
 import { EmptyState } from '@noteece/ui';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notifications } from '@mantine/notifications';
 import { useStore } from '../store';
 import { authService } from '../services/auth';
+import logger from '../utils/logger';
 
 interface SpaceUser {
   user_id: string;
@@ -96,7 +97,7 @@ function getCurrentUserId(): string | null {
     return authService.getCurrentUserId();
   } catch (error) {
     // Log error for debugging but return null instead of crashing
-    console.error('Failed to get current user ID:', error);
+    logger.error('Failed to get current user ID:', error as Error);
     return null;
   }
 }
@@ -183,7 +184,7 @@ const UserManagement: React.FC = () => {
         message: 'Could not send invitation. Please try again or contact support.',
         color: 'red',
       });
-      console.error('Invite error (not shown to user):', error);
+      logger.error('Invite error (not shown to user):', error as Error);
     },
   });
 
@@ -252,7 +253,7 @@ const UserManagement: React.FC = () => {
         message: 'Could not update user role. Please try again or contact support.',
         color: 'red',
       });
-      console.error('Update role error (not shown to user):', error);
+      logger.error('Update role error (not shown to user):', error as Error);
     },
   });
 

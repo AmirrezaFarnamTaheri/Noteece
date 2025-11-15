@@ -4,7 +4,7 @@
  * Coverage: Selector resilience, data normalization, error handling
  */
 
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 
 // Mock data for each social platform
 const mockExtractorData = {

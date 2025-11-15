@@ -3,7 +3,8 @@
  * Handles authentication with the Tauri backend
  */
 
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
+import logger from '../utils/logger';
 
 export interface Session {
   id: string;
@@ -219,7 +220,7 @@ class AuthService {
         this.session = JSON.parse(sessionData);
       }
     } catch (error) {
-      console.error('Failed to load session from storage:', error);
+      logger.error('Failed to load session from storage:', error as Error);
       this.clearSessionStorage();
     }
   }
@@ -229,7 +230,7 @@ class AuthService {
       localStorage.setItem(SESSION_TOKEN_KEY, session.token);
       localStorage.setItem(SESSION_DATA_KEY, JSON.stringify(session));
     } catch (error) {
-      console.error('Failed to save session to storage:', error);
+      logger.error('Failed to save session to storage:', error as Error);
     }
   }
 
@@ -238,7 +239,7 @@ class AuthService {
       localStorage.removeItem(SESSION_TOKEN_KEY);
       localStorage.removeItem(SESSION_DATA_KEY);
     } catch (error) {
-      console.error('Failed to clear session storage:', error);
+      logger.error('Failed to clear session storage:', error as Error);
     }
   }
 

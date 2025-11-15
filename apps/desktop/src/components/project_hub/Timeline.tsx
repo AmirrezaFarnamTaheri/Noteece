@@ -6,6 +6,7 @@ import moment from 'moment';
 import { useOutletContext } from 'react-router-dom';
 import { Task, ProjectMilestone } from '@noteece/types';
 import { getProjectMilestones } from '@/services/api';
+import logger from '../../utils/logger';
 
 interface TimelineContext {
   tasks: Task[];
@@ -23,7 +24,7 @@ const ProjectTimeline: React.FC = () => {
           const milestonesData = await getProjectMilestones(projectId);
           setMilestones(milestonesData);
         } catch (error) {
-          console.error('Error fetching milestones:', error);
+          logger.error('Error fetching milestones:', error as Error);
         }
       }
     };

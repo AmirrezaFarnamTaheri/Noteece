@@ -6,6 +6,7 @@ import { getAllProjectsInSpace } from '../../services/api';
 import { useActiveSpace } from '../../hooks/useActiveSpace';
 import { formatTimestamp } from '../../utils/dateUtils';
 import classes from '../Dashboard.module.css';
+import logger from '../../utils/logger';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -44,7 +45,7 @@ export const RecentProjects: React.FC = () => {
           .slice(0, 5);
         setProjects(activeProjects);
       } catch (error) {
-        console.error('Error fetching projects:', error);
+        logger.error('Error fetching projects:', error as Error);
       }
     };
     void fetchProjects();

@@ -4,6 +4,7 @@ import { Table, Button, Modal, TextInput, Select } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { getProjectRisks, createProjectRisk } from '@/services/api';
 import { ProjectRisk } from '@noteece/types';
+import logger from '../../utils/logger';
 
 interface RisksContext {
   projectId: string;
@@ -28,7 +29,7 @@ const Risks: React.FC = () => {
         const risksData = await getProjectRisks(projectId);
         setRisks(risksData);
       } catch (error) {
-        console.error('Error fetching risks:', error);
+        logger.error('Error fetching risks:', error as Error);
       }
     }
   };
@@ -44,7 +45,7 @@ const Risks: React.FC = () => {
       setOpened(false);
       form.reset();
     } catch (error) {
-      console.error('Error creating risk:', error);
+      logger.error('Error creating risk:', error as Error);
     }
   };
 

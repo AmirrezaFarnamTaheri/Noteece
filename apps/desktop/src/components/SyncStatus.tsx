@@ -32,7 +32,7 @@ import {
   IconDevices,
 } from '@tabler/icons-react';
 import { LoadingCard, EmptyState } from '@noteece/ui';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notifications } from '@mantine/notifications';
 import { useStore } from '../store';

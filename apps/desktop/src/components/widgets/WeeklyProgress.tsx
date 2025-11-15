@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Paper, Text, Group, Progress, Stack, useMantineTheme, Badge } from '@mantine/core';
 import { IconTarget, IconArrowUpRight, IconTrendingUp } from '@tabler/icons-react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { Task } from '@noteece/types';
 import { useActiveSpace } from '../../hooks/useActiveSpace';
 import { getStartOfToday, getEndOfToday } from '../../utils/dateUtils';
 import classes from '../Dashboard.module.css';
+import logger from '../../utils/logger';
 
 export const WeeklyProgress: React.FC = () => {
   const theme = useMantineTheme();
@@ -21,7 +22,7 @@ export const WeeklyProgress: React.FC = () => {
         });
         setTasks(tasksData);
       } catch (error) {
-        console.error('Error fetching tasks:', error);
+        logger.error('Error fetching tasks:', error as Error);
       }
     };
     void fetchTasks();

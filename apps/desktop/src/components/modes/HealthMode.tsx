@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import {
   Container,
   Title,
@@ -20,6 +20,7 @@ import {
 import { DateTimePicker } from '@mantine/dates';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { IconPlus, IconTarget, IconTrendingUp, IconActivity } from '@tabler/icons-react';
+import logger from '../../utils/logger';
 
 interface HealthMetric {
   id: string;
@@ -88,7 +89,7 @@ const HealthMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       setMetrics(metricsData);
       setGoals(goalsData);
     } catch (error) {
-      console.error('Failed to load health data:', error);
+      logger.error('Failed to load health data:', error as Error);
     } finally {
       setLoading(false);
     }
@@ -108,7 +109,7 @@ const HealthMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       setFormValue(0);
       await loadData();
     } catch (error) {
-      console.error('Failed to add metric:', error);
+      logger.error('Failed to add metric:', error as Error);
       alert(`Failed to add metric: ${String(error)}`);
     }
   };

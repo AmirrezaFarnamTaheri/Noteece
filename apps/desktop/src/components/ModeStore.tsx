@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { Card, Switch, Group, Text } from '@mantine/core';
+import logger from '../utils/logger';
 
 interface Mode {
   id: string;
@@ -25,7 +26,7 @@ const ModeStore: React.FC<ModeStoreProperties> = ({ spaceId }) => {
       const modes: Mode[] = await invoke('get_space_modes_cmd', { spaceId });
       setEnabledModes(modes);
     } catch (error) {
-      console.error('Error fetching enabled modes:', error);
+      logger.error('Error fetching enabled modes:', error as Error);
     }
   };
 
@@ -46,7 +47,7 @@ const ModeStore: React.FC<ModeStoreProperties> = ({ spaceId }) => {
         : invoke('enable_mode_cmd', { spaceId, mode }));
       void fetchEnabledModes();
     } catch (error) {
-      console.error('Error toggling mode:', error);
+      logger.error('Error toggling mode:', error as Error);
     }
   };
 

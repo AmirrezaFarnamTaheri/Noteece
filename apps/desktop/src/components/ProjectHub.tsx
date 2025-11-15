@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { Task, Project } from '@noteece/types';
 import { Tabs, List, ThemeIcon } from '@mantine/core';
 import { IconCircleDashed } from '@tabler/icons-react';
 import { useStore } from '../store';
 import { getAllProjectsInSpace } from '@/services/api';
+import logger from '../utils/logger';
 
 const ProjectHub: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -24,7 +25,7 @@ const ProjectHub: React.FC = () => {
             setSelectedProjectId(projectsData[0].id);
           }
         } catch (error) {
-          console.error('Error fetching projects:', error);
+          logger.error('Error fetching projects:', error as Error);
         }
       }
     };
@@ -38,7 +39,7 @@ const ProjectHub: React.FC = () => {
           const tasksData: Task[] = await invoke('get_tasks_by_project_cmd', { projectId: selectedProjectId });
           setTasks(tasksData);
         } catch (error) {
-          console.error('Error fetching tasks:', error);
+          logger.error('Error fetching tasks:', error as Error);
         }
       }
     };

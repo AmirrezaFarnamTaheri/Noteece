@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import {
   Container,
   Title,
@@ -22,6 +22,7 @@ import {
 import { DatePicker } from '@mantine/dates';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { IconPlus, IconTrendingUp, IconWallet, IconReceipt } from '@tabler/icons-react';
+import logger from '../../utils/logger';
 
 interface Transaction {
   id: string;
@@ -78,7 +79,7 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       });
       setTransactions(data);
     } catch (error) {
-      console.error('Failed to load transactions:', error);
+      logger.error('Failed to load transactions:', error as Error);
     } finally {
       setLoading(false);
     }
@@ -142,7 +143,7 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       setFormDescription('');
       await loadData();
     } catch (error) {
-      console.error('Failed to add transaction:', error);
+      logger.error('Failed to add transaction:', error as Error);
       alert(`Failed to add transaction: ${String(error)}`);
     }
   };

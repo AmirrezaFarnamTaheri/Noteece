@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Paper, Text, Group, Stack, Badge, RingProgress, useMantineTheme } from '@mantine/core';
 import { IconFlag, IconArrowUpRight } from '@tabler/icons-react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { Task } from '@noteece/types';
 import { useActiveSpace } from '../../hooks/useActiveSpace';
 import classes from '../Dashboard.module.css';
+import logger from '../../utils/logger';
 
 interface PriorityStats {
   priority: number;
@@ -28,7 +29,7 @@ export const TasksByPriority: React.FC = () => {
         // Only include incomplete tasks
         setTasks(tasksData.filter((t) => t.status !== 'done' && t.status !== 'cancelled'));
       } catch (error) {
-        console.error('Error fetching tasks:', error);
+        logger.error('Error fetching tasks:', error as Error);
       }
     };
     void fetchTasks();

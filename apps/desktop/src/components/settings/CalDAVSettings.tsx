@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import {
   Container,
   Title,
@@ -22,6 +22,7 @@ import {
   Table,
 } from '@mantine/core';
 import { IconPlus, IconRefresh, IconTrash, IconCheck, IconAlertCircle, IconClock } from '@tabler/icons-react';
+import logger from '../../utils/logger';
 
 interface CalDavAccount {
   id: string;
@@ -77,7 +78,7 @@ const CalDAVSettings: React.FC = () => {
       const result = await invoke<CalDavAccount[]>('get_caldav_accounts_cmd');
       setAccounts(result);
     } catch (error) {
-      console.error('Failed to load CalDAV accounts:', error);
+      logger.error('Failed to load CalDAV accounts:', error as Error);
     } finally {
       setLoading(false);
     }
@@ -100,7 +101,7 @@ const CalDAVSettings: React.FC = () => {
 
       await loadAccounts();
     } catch (error) {
-      console.error('Failed to add account:', error);
+      logger.error('Failed to add account:', error as Error);
       alert(`Failed to add account: ${String(error)}`);
     }
   };
@@ -149,7 +150,7 @@ const CalDAVSettings: React.FC = () => {
       await invoke('delete_caldav_account_cmd', { accountId });
       await loadAccounts();
     } catch (error) {
-      console.error('Failed to delete account:', error);
+      logger.error('Failed to delete account:', error as Error);
     }
   };
 

@@ -4,7 +4,7 @@
  * TypeScript wrapper for Tauri commands
  */
 
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import type {
   SocialAccount,
   SocialPost,
