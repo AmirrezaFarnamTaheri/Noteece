@@ -303,14 +303,13 @@ mod tests {
         let resolver = ConflictResolver::new(ResolutionStrategy::LastWriteWins);
         let result = resolver.resolve(&local, &remote);
 
-        if let ConflictResolution::Resolved {
-            winning_version, ..
-        } = result
-        {
-            assert_eq!(winning_version.device_id, "device2");
-        } else {
-            panic!("Expected resolved conflict");
-        }
+        let winning_version = match result {
+            ConflictResolution::Resolved {
+                winning_version, ..
+            } => winning_version,
+            _ => panic!("Expected resolved conflict but got: {:?}", result),
+        };
+        assert_eq!(winning_version.device_id, "device2");
     }
 
     #[test]
@@ -323,14 +322,13 @@ mod tests {
 
         let result = resolver.resolve(&local, &remote);
 
-        if let ConflictResolution::Resolved {
-            winning_version, ..
-        } = result
-        {
-            assert_eq!(winning_version.device_id, "device1");
-        } else {
-            panic!("Expected resolved conflict");
-        }
+        let winning_version = match result {
+            ConflictResolution::Resolved {
+                winning_version, ..
+            } => winning_version,
+            _ => panic!("Expected resolved conflict but got: {:?}", result),
+        };
+        assert_eq!(winning_version.device_id, "device1");
     }
 
     #[test]
@@ -344,15 +342,14 @@ mod tests {
         let resolver = ConflictResolver::new(ResolutionStrategy::Merge);
         let result = resolver.resolve(&local, &remote);
 
-        if let ConflictResolution::Resolved {
-            winning_version, ..
-        } = result
-        {
-            assert_eq!(winning_version.data["a"], 1);
-            assert!(winning_version.data["b"].is_number());
-            assert_eq!(winning_version.data["c"], 4);
-        } else {
-            panic!("Expected resolved conflict");
-        }
+        let winning_version = match result {
+            ConflictResolution::Resolved {
+                winning_version, ..
+            } => winning_version,
+            _ => panic!("Expected resolved conflict but got: {:?}", result),
+        };
+        assert_eq!(winning_version.data["a"], 1);
+        assert!(winning_version.data["b"].is_number());
+        assert_eq!(winning_version.data["c"], 4);
     }
 }

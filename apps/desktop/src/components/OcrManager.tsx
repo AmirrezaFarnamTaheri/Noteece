@@ -40,6 +40,7 @@ export function OcrManager() {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [language, setLanguage] = useState('eng');
   const [isUploading, setIsUploading] = useState(false);
+  const [manualFilePath, setManualFilePath] = useState('');
   const [currentStatus, setCurrentStatus] = useState<OcrResult | null>(null);
 
   // Search OCR text
@@ -99,37 +100,18 @@ export function OcrManager() {
 
   // Process OCR for an uploaded image
   const handleProcessOcr = async () => {
-    setIsUploading(true);
-    try {
-      // TODO: Implement file dialog using FileButton component or Tauri dialog plugin
-      // For now, users need to provide the file path directly
+    if (!manualFilePath.trim()) {
       notifications.show({
-        title: 'Feature Not Implemented',
-        message: 'File selection dialog is not yet implemented. Please use the Tauri invoke command directly.',
+        title: 'File Path Required',
+        message: 'Please enter a valid file path to process',
         color: 'yellow',
       });
-      setIsUploading(false);
       return;
+    }
 
-      /* Commented out until dialog plugin is properly configured
-      const filePath = await open({
-        title: 'Select Image for OCR',
-        multiple: false,
-        filters: [
-          {
-            name: 'Images',
-            extensions: ['png', 'jpg', 'jpeg', 'tiff', 'bmp'],
-          },
-        ],
-      });
-
-      if (!filePath) {
-        setIsUploading(false);
-        return;
-      }
-      */
-
-      const filePath = ''; // Placeholder
+    setIsUploading(true);
+    try {
+      const filePath = manualFilePath.trim();
 
       // Generate a unique blob ID
       const blobId = `blob_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
@@ -151,6 +133,7 @@ export function OcrManager() {
           message: 'Successfully extracted text from image',
           color: 'green',
         });
+        setManualFilePath(''); // Clear file path on success
         setUploadModalOpen(false);
       } else if (status.status === 'failed') {
         notifications.show({
@@ -342,9 +325,22 @@ export function OcrManager() {
           size="md"
         >
           <Stack gap="md">
-            <Alert color="blue">
-              Select an image file to extract text. Supported formats: PNG, JPG, JPEG, TIFF, BMP
+            <Alert color="blue" title="File Selection">
+              Enter the full path to an image file to extract text. Supported formats: PNG, JPG, JPEG, TIFF, BMP
+              <br />
+              <Text size="xs" mt="xs" c="dimmed">
+                Note: File browser dialog will be added in a future update when the Tauri dialog plugin is configured.
+              </Text>
             </Alert>
+
+            <TextInput
+              label="Image File Path"
+              description="Full path to the image file (e.g., /home/user/documents/scan.png or C:\Users\Name\Documents\scan.jpg)"
+              value={manualFilePath}
+              onChange={(e) => setManualFilePath(e.target.value)}
+              placeholder="/path/to/image.png"
+              required
+            />
 
             <TextInput
               label="Language Code"
