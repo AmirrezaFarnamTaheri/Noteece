@@ -95,10 +95,12 @@ const AccountSettings: React.FC<AccountSettingsProperties> = ({ onLogout }) => {
     }
   };
 
-  export const formatDate = (timestamp: number | undefined | null) => {
-    if (!timestamp) return 'Never';
+  const formatDate = (timestamp: number | undefined | null) => {
+    if (timestamp == null) return 'Never';
+    if (!Number.isFinite(timestamp)) return 'Invalid date';
+    const seconds = Math.max(0, timestamp);
     try {
-      return new Date(timestamp * 1000).toLocaleString();
+      return new Date(seconds * 1000).toLocaleString();
     } catch {
       return 'Invalid date';
     }

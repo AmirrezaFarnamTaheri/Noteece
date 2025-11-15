@@ -97,7 +97,7 @@ export function SocialAnalytics({ spaceId }: SocialAnalyticsProperties) {
     );
   }
 
-  export const formatNumber = (number_: number) => {
+  const formatNumber = (number_: number) => {
     if (number_ >= 1_000_000) return `${(number_ / 1_000_000).toFixed(1)}M`;
     if (number_ >= 1000) return `${(number_ / 1000).toFixed(1)}K`;
     return number_.toString();

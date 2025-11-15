@@ -140,6 +140,9 @@ export class AutomationParser {
           throw new ParseError('Expected cron string literal for Schedule(...)');
         }
         const cronStr = this.advance().value.slice(1, -1);
+        if (!cronStr || cronStr.trim().length === 0) {
+          throw new ParseError('Cron string cannot be empty');
+        }
         this.consume(')', 'Expected )');
         return { type: 'Schedule', cron: cronStr };
       }

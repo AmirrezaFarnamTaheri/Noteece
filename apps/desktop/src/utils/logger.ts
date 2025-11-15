@@ -36,8 +36,12 @@ class Logger {
 
   addListener(listener: LogListener): () => void {
     this.listeners.add(listener);
+    let removed = false;
     return () => {
-      this.listeners.delete(listener);
+      if (!removed) {
+        this.listeners.delete(listener);
+        removed = true;
+      }
     };
   }
 
@@ -140,6 +144,11 @@ logger.addListener((entry: LogEntry) => {
   };
 
   try {
+    // Check if localStorage is available
+    const testKey = '__localStorage_available__';
+    localStorage.setItem(testKey, 'true');
+    localStorage.removeItem(testKey);
+
     const raw = localStorage.getItem('noteece_error_logs');
     const logs: any[] = raw ? JSON.parse(raw) : [];
 
@@ -164,7 +173,11 @@ logger.addListener((entry: LogEntry) => {
 
     localStorage.setItem('noteece_error_logs', JSON.stringify(logs));
   } catch (error) {
-    console.error('Failed to persist error log:', error);
+    // Silently ignore storage errors (quota exceeded, unavailable, etc)
+    // Don't log to console to avoid recursion
+    if (error instanceof Error && error.name === 'QuotaExceededError') {
+      // Storage quota exceeded - consider clearing old logs or alternative storage
+    }
   }
 });
 
