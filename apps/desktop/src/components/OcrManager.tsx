@@ -19,6 +19,7 @@ import {
   FileButton,
 } from '@mantine/core';
 import { invoke } from '@tauri-apps/api/core';
+import { open } from '@tauri-apps/api/dialog';
 import { IconUpload, IconSearch, IconCheck, IconX, IconClock, IconFile } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 
@@ -98,12 +99,38 @@ export function OcrManager() {
     }
   };
 
+  // Open file dialog to select image
+  const handleBrowseFile = async () => {
+    try {
+      const selected = await open({
+        title: 'Select Image for OCR',
+        multiple: false,
+        filters: [
+          {
+            name: 'Images',
+            extensions: ['png', 'jpg', 'jpeg', 'tiff', 'bmp'],
+          },
+        ],
+      });
+
+      if (selected && typeof selected === 'string') {
+        setManualFilePath(selected);
+      }
+    } catch (error) {
+      notifications.show({
+        title: 'File Selection Failed',
+        message: String(error),
+        color: 'red',
+      });
+    }
+  };
+
   // Process OCR for an uploaded image
   const handleProcessOcr = async () => {
     if (!manualFilePath.trim()) {
       notifications.show({
         title: 'File Path Required',
-        message: 'Please enter a valid file path to process',
+        message: 'Please enter a valid file path or use Browse button to select a file',
         color: 'yellow',
       });
       return;
@@ -326,21 +353,28 @@ export function OcrManager() {
         >
           <Stack gap="md">
             <Alert color="blue" title="File Selection">
-              Enter the full path to an image file to extract text. Supported formats: PNG, JPG, JPEG, TIFF, BMP
-              <br />
-              <Text size="xs" mt="xs" c="dimmed">
-                Note: File browser dialog will be added in a future update when the Tauri dialog plugin is configured.
-              </Text>
+              Click Browse to select an image file or enter the path manually. Supported formats: PNG, JPG, JPEG, TIFF, BMP
             </Alert>
 
-            <TextInput
-              label="Image File Path"
-              description="Full path to the image file (e.g., /home/user/documents/scan.png or C:\Users\Name\Documents\scan.jpg)"
-              value={manualFilePath}
-              onChange={(e) => setManualFilePath(e.target.value)}
-              placeholder="/path/to/image.png"
-              required
-            />
+            <Group align="flex-end" gap="sm">
+              <Box style={{ flex: 1 }}>
+                <TextInput
+                  label="Image File Path"
+                  description="Full path to the image file"
+                  value={manualFilePath}
+                  onChange={(e) => setManualFilePath(e.target.value)}
+                  placeholder="/path/to/image.png"
+                  required
+                />
+              </Box>
+              <Button
+                onClick={handleBrowseFile}
+                variant="default"
+                leftSection={<IconFile size={16} />}
+              >
+                Browse
+              </Button>
+            </Group>
 
             <TextInput
               label="Language Code"
