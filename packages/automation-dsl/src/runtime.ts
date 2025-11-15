@@ -100,29 +100,45 @@ export class AutomationRuntimeImpl implements AutomationRuntime {
     left: AutomationValue,
     right: AutomationValue
   ): AutomationValue {
+    const isNumber = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+
     switch (operator) {
       case '+':
-        return (left as number) + (right as number);
       case '-':
-        return (left as number) - (right as number);
       case '*':
-        return (left as number) * (right as number);
       case '/':
-        return (left as number) / (right as number);
-      case '%':
-        return (left as number) % (right as number);
+      case '%': {
+        if (!isNumber(left) || !isNumber(right)) {
+          throw new RuntimeError(`Operator '${operator}' requires numeric operands`);
+        }
+        switch (operator) {
+          case '+': return left + right;
+          case '-': return left - right;
+          case '*': return left * right;
+          case '/': return left / right;
+          case '%': return left % right;
+        }
+        break;
+      }
       case '==':
         return left === right;
       case '!=':
         return left !== right;
       case '<':
-        return (left as number) < (right as number);
       case '>':
-        return (left as number) > (right as number);
       case '<=':
-        return (left as number) <= (right as number);
-      case '>=':
-        return (left as number) >= (right as number);
+      case '>=': {
+        if (!isNumber(left) || !isNumber(right)) {
+          throw new RuntimeError(`Operator '${operator}' requires numeric operands`);
+        }
+        switch (operator) {
+          case '<': return left < right;
+          case '>': return left > right;
+          case '<=': return left <= right;
+          case '>=': return left >= right;
+        }
+        break;
+      }
       case '&&':
         return Boolean(left) && Boolean(right);
       case '||':
@@ -201,7 +217,7 @@ export class AutomationRuntimeImpl implements AutomationRuntime {
   /**
    * Fire a trigger event manually (for testing or manual invocation)
    */
-  async fireTrigger(eventType: string, data?: unknown): Promise<void> {
+  async fireTrigger(eventType: string, _data?: unknown): Promise<void> {
     for (const [, trigger] of this.activeTriggers) {
       if (trigger.event.type === eventType) {
         // Check conditions

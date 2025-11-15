@@ -15,7 +15,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { typography, spacing } from "@/lib/theme";
 import { useVaultStore } from "@/store/vault";
 import {
-  useAppContext,
   useSettings,
   useUpdateSetting,
 } from "@/store/app-context";

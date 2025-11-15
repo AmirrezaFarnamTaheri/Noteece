@@ -184,7 +184,7 @@ const UserManagement: React.FC = () => {
         message: 'Could not send invitation. Please try again or contact support.',
         color: 'red',
       });
-      logger.error('Invite error (not shown to user):', error as Error);
+      logger.error('Invite error (not shown to user):', error);
     },
   });
 
@@ -253,7 +253,7 @@ const UserManagement: React.FC = () => {
         message: 'Could not update user role. Please try again or contact support.',
         color: 'red',
       });
-      logger.error('Update role error (not shown to user):', error as Error);
+      logger.error('Update role error (not shown to user):', error);
     },
   });
 

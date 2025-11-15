@@ -24,7 +24,7 @@ type LogListener = (entry: LogEntry) => void | Promise<void>;
 class Logger {
   private level: LogLevel = LogLevel.INFO;
   private context: Record<string, unknown> = {};
-  private listeners: LogListener[] = [];
+  private listeners: Set<LogListener> = new Set();
 
   setLevel(level: LogLevel): void {
     this.level = level;
@@ -34,8 +34,11 @@ class Logger {
     this.context = { ...this.context, ...ctx };
   }
 
-  addListener(listener: LogListener): void {
-    this.listeners.push(listener);
+  addListener(listener: LogListener): () => void {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
   }
 
   private log(level: LogLevel, message: string, error?: Error): void {
@@ -49,14 +52,37 @@ class Logger {
       error,
     };
 
-    // Console output
+    // Console output by severity
     const levelStr = LogLevel[level];
-    console.log(`[${levelStr}] ${message}`, error || '');
+    const args: unknown[] = [`[${levelStr}] ${message}`];
+    if (error) args.push(error);
+    switch (level) {
+      case LogLevel.ERROR: {
+        console.error(...args);
+        break;
+      }
+      case LogLevel.WARN: {
+        console.warn(...args);
+        break;
+      }
+      case LogLevel.INFO: {
+        console.info(...args);
+        break;
+      }
+      default: {
+        console.debug(...args);
+        break;
+      }
+    }
 
-    // Notify listeners
-    this.listeners.forEach((listener) => {
-      void listener(entry);
-    });
+    // Notify listeners (ignore individual listener failures)
+    for (const listener of this.listeners) {
+      try {
+        void listener(entry);
+      } catch {
+        // swallow listener errors
+      }
+    }
   }
 
   debug(message: string): void {
@@ -93,29 +119,49 @@ logger.setContext({
 
 // Persist critical logs to storage
 logger.addListener((entry: LogEntry) => {
-  if (entry.level >= LogLevel.ERROR) {
+  if (entry.level < LogLevel.ERROR) return;
+
+  const safeStringify = (obj: unknown): string => {
+    const seen = new WeakSet();
     try {
-      // Store critical logs for debugging
-      const logs = JSON.parse(localStorage.getItem('noteece_error_logs') || '[]');
-      logs.push({
-        ...entry,
-        error: entry.error
-          ? {
-              message: entry.error.message,
-              stack: entry.error.stack,
-            }
-          : undefined,
+      return JSON.stringify(obj, function (_key, value) {
+        if (typeof value === 'object' && value !== null) {
+          if (seen.has(value as object)) return '[Circular]';
+          seen.add(value as object);
+        }
+        if (typeof value === 'string' && value.length > 1000) {
+          return value.slice(0, 1000) + '…';
+        }
+        return value;
       });
-
-      // Keep only last 100 error logs
-      if (logs.length > 100) {
-        logs.shift();
-      }
-
-      localStorage.setItem('noteece_error_logs', JSON.stringify(logs));
-    } catch (error) {
-      console.error('Failed to persist error log:', error);
+    } catch {
+      return '[Unserializable]';
     }
+  };
+
+  try {
+    const raw = localStorage.getItem('noteece_error_logs');
+    const logs: any[] = raw ? JSON.parse(raw) : [];
+
+    const sanitized = {
+      level: entry.level,
+      message: entry.message,
+      timestamp: entry.timestamp,
+      context: entry.context ? safeStringify(entry.context) : undefined,
+      error: entry.error
+        ? {
+            message: entry.error.message,
+            stack: entry.error.stack?.slice(0, 5000),
+          }
+        : undefined,
+    };
+
+    logs.push(sanitized);
+    while (logs.length > 100) logs.shift();
+
+    localStorage.setItem('noteece_error_logs', JSON.stringify(logs));
+  } catch (e) {
+    console.error('Failed to persist error log:', e);
   }
 });
 

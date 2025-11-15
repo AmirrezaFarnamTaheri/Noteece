@@ -9,9 +9,6 @@ import {
   TriggerNode,
   ActionNode,
   ExpressionNode,
-  LiteralNode,
-  IdentifierNode,
-  BinaryExpressionNode,
   ParseError,
   TriggerEvent,
   ActionType,
@@ -139,7 +136,10 @@ export class AutomationParser {
         return { type: 'TagAdded' };
       case 'Schedule': {
         this.consume('(', 'Expected (');
-        const cronStr = this.advance().value.replace(/['"]/g, '');
+        if (!this.check('STRING')) {
+          throw new ParseError('Expected cron string literal for Schedule(...)');
+        }
+        const cronStr = this.advance().value.slice(1, -1);
         this.consume(')', 'Expected )');
         return { type: 'Schedule', cron: cronStr };
       }
@@ -157,6 +157,10 @@ export class AutomationParser {
 
     if (this.match('(')) {
       while (!this.check(')') && !this.isAtEnd()) {
+        // Ensure parameter name is a valid identifier
+        if (!this.check('IDENTIFIER')) {
+          throw new ParseError(`Expected parameter name (identifier), got: ${this.peek().value}`);
+        }
         const paramName = this.advance().value;
         this.consume(':', 'Expected :');
         parameters[paramName] = this.parseExpression();
@@ -266,6 +270,13 @@ export class AutomationParser {
 
     if (this.match('IDENTIFIER')) {
       const name = this.previous().value;
+      // Recognize boolean and null literals
+      if (name === 'true' || name === 'false') {
+        return { type: 'Literal', value: name === 'true' };
+      }
+      if (name === 'null') {
+        return { type: 'Literal', value: null };
+      }
 
       if (this.match('(')) {
         const args: ExpressionNode[] = [];

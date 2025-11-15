@@ -121,7 +121,7 @@ export default function InsightsScreen() {
 
   useEffect(() => {
     loadInsights();
-  }, [filter]);
+  }, [filter, loadInsights]);
 
   const dismissInsight = async (insightId: string) => {
     try {
