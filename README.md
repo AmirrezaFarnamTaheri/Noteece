@@ -220,11 +220,11 @@ For detailed setup instructions, see the [Developer Guide](DEVELOPER_GUIDE.md).
 
 Noteece is a monorepo that contains the following packages:
 
-- `apps/desktop`: The Tauri v2-based desktop application with React, TypeScript, and Mantine UI
+- `apps/desktop`: The Tauri v1-based desktop application with React, TypeScript, and Mantine UI
 - `apps/mobile`: The React Native/Expo mobile application - **FULLY IMPLEMENTED** with complete feature parity
 - `packages/core-rs`: The Rust core that contains the application's business logic
 - `packages/editor`: The Lexical-based rich text editor
-- `packages/ui`: Shared UI components built with Mantine v7
+- `packages/ui`: Shared UI components built with Mantine v8
 - `packages/types`: Shared TypeScript types for the frontend and backend
 - `packages/locale`: Internationalization support (planned)
 - `packages/modes`: Mode system definitions and templates
@@ -232,8 +232,8 @@ Noteece is a monorepo that contains the following packages:
 
 ### Technology Stack
 
-- **Frontend**: React 18, TypeScript, Mantine v7, React Query, Lexical Editor
-- **Backend**: Rust, Tauri v2, SQLCipher, rusqlite
+- **Frontend**: React 18, TypeScript, Mantine v8, React Query v5, Lexical Editor
+- **Backend**: Rust, Tauri v1, SQLCipher, rusqlite
 - **Build System**: Turborepo, pnpm workspaces, Vite
 - **Cryptography**: Argon2id, XChaCha20-Poly1305
 - **State Management**: Zustand, React Query
@@ -273,6 +273,8 @@ Noteece is currently in **active development**. The following phases have been c
 - ✅ **Phase 5**: Advanced Integration (Complete - OCR, CalDAV, Sync Status, User Management)
 
 **Current Status**: 🎉 **All core features 100% complete** - Desktop app production-ready, mobile app ready for deployment, all sync and collaboration features fully functional.
+
+> 📋 **[Final Cleanup Report](docs/FINAL_CLEANUP_REPORT.md)** - Comprehensive report on all bug fixes, CI/CD improvements, and production readiness validation (November 2025)
 
 ### Recent Updates (November 2025)
 
