@@ -9,13 +9,9 @@
 import { dbQuery, dbExecute } from "./database";
 import type {
   SocialAccount,
-  SocialPost,
   TimelinePost,
   SocialCategory,
-  PostCategory,
   FocusMode,
-  AutomationRule,
-  SyncHistory,
   TimelineFilters,
   CategoryStats,
   PlatformStats,

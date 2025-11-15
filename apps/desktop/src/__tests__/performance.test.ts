@@ -65,50 +65,42 @@ describe('Performance Benchmarks', () => {
   });
 
   describe('Backup/Restore Performance', () => {
-    test(
-      'create backup of 100MB completes within 30 seconds',
-      async () => {
-        const startTime = performance.now();
+    test('create backup of 100MB completes within 30 seconds', async () => {
+      const startTime = performance.now();
 
-        // Simulate backup creation
-        const backupSize = 100 * 1024 * 1024; // 100MB
-        const compressionRatio = 0.7; // 70% compression
-        const encryptionOverhead = 1.05; // 5% overhead
+      // Simulate backup creation
+      const backupSize = 100 * 1024 * 1024; // 100MB
+      const compressionRatio = 0.7; // 70% compression
+      const encryptionOverhead = 1.05; // 5% overhead
 
-        // Simulate processing
-        const processedSize = backupSize * compressionRatio * encryptionOverhead;
+      // Simulate processing
+      const processedSize = backupSize * compressionRatio * encryptionOverhead;
 
-        // Estimate time: ~3.3MB/sec for modern hardware
-        const estimatedTime = (processedSize / (3.3 * 1024 * 1024)) * 1000;
+      // Estimate time: ~3.3MB/sec for modern hardware
+      const estimatedTime = (processedSize / (3.3 * 1024 * 1024)) * 1000;
 
-        await sleep(Math.min(estimatedTime, 5000));
+      await sleep(Math.min(estimatedTime, 5000));
 
-        const endTime = performance.now();
-        const duration = endTime - startTime;
+      const endTime = performance.now();
+      const duration = endTime - startTime;
 
-        expect(duration).toBeLessThan(30_000);
-      },
-      10000,
-    );
+      expect(duration).toBeLessThan(30_000);
+    }, 10000);
 
-    test(
-      'restore backup of 100MB completes within 20 seconds',
-      async () => {
-        const startTime = performance.now();
+    test('restore backup of 100MB completes within 20 seconds', async () => {
+      const startTime = performance.now();
 
-        // Simulate restore
-        const backupSize = 100 * 1024 * 1024;
-        const decompression = backupSize / (4 * 1024 * 1024); // 4MB/sec decompression
+      // Simulate restore
+      const backupSize = 100 * 1024 * 1024;
+      const decompression = backupSize / (4 * 1024 * 1024); // 4MB/sec decompression
 
-        await sleep(Math.min(decompression * 10, 5000));
+      await sleep(Math.min(decompression * 10, 5000));
 
-        const endTime = performance.now();
-        const duration = endTime - startTime;
+      const endTime = performance.now();
+      const duration = endTime - startTime;
 
-        expect(duration).toBeLessThan(20_000);
-      },
-      10000,
-    );
+      expect(duration).toBeLessThan(20_000);
+    }, 10000);
 
     test('list backups with 50 backups returns within 500ms', async () => {
       const startTime = performance.now();

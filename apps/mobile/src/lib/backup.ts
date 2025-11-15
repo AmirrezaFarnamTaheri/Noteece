@@ -145,7 +145,7 @@ async function exportPosts(spaceId: string): Promise<any[]> {
           (key) => scrubbed[key] === undefined && delete scrubbed[key],
         );
         post.raw_json = JSON.stringify(scrubbed);
-      } catch (e) {
+      } catch {
         // If parsing fails, remove raw_json entirely for safety
         post.raw_json = null;
       }

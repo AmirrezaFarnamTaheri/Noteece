@@ -16,8 +16,6 @@ import {
   MUSIC_LIBRARY,
   Track,
   getTracksByGenre,
-  getAllGenres,
-  getLibraryStats,
 } from "@/lib/music-service";
 import { isValidMusicUrl } from "@/lib/music-security";
 
@@ -40,7 +38,6 @@ export default function MusicLabScreen() {
   const [filter, setFilter] = useState<GenreFilter>("all");
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [showAllGenres, setShowAllGenres] = useState(false);
 
   // Initialize audio mode
   useEffect(() => {

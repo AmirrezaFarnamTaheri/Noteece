@@ -33,8 +33,6 @@ import { ErrorFallback } from "../components/errors";
 import { useCurrentSpace } from "../store/app-context";
 import type { PlatformStats, CategoryStats } from "../types/social";
 
-const { width } = Dimensions.get("window");
-
 export function SocialAnalytics() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

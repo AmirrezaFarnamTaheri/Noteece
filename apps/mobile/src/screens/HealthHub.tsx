@@ -18,15 +18,9 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { FadeIn, SlideIn, ScaleIn } from "@/components/animations";
-import { SkeletonBox, SkeletonCard } from "@/components/skeletons";
+import { SkeletonBox } from "@/components/skeletons";
 import { haptics } from "@/lib/haptics";
-import type {
-  HealthStats,
-  HealthGoal,
-  Activity,
-  DayStats,
-  METRIC_ICONS,
-} from "../types/health";
+import type { HealthStats } from "../types/health";
 
 const { width } = Dimensions.get("window");
 
@@ -151,7 +145,7 @@ export function HealthHub() {
     try {
       await loadHealthData();
       haptics.success();
-    } catch (error) {
+    } catch {
       haptics.error();
     } finally {
       setRefreshing(false);

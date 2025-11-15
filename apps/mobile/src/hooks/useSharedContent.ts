@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { AppState, AppStateStatus, Platform } from "react-native";
+import { AppState, AppStateStatus } from "react-native";
 import * as Linking from "expo-linking";
 import {
   processSharedItems,

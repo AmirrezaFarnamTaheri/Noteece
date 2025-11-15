@@ -197,7 +197,7 @@ export async function clearAllData(): Promise<{
     try {
       const SecureStore = require("expo-secure-store");
       await SecureStore.deleteItemAsync("biometric_vault_data");
-    } catch (error) {
+    } catch {
       // SecureStore might not have data, that's okay
       console.log("No SecureStore data to clear");
     }

@@ -246,7 +246,7 @@ export function SocialSettings() {
               // Clear cached data
               await AsyncStorage.removeItem("social_last_sync");
               Alert.alert("Success", "Cache cleared successfully");
-            } catch (error) {
+            } catch {
               Alert.alert("Error", "Failed to clear cache");
             }
           },
