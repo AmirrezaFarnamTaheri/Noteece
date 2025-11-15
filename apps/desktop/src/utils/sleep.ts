@@ -3,8 +3,8 @@
  * Avoids ESLint promise/avoid-new warnings
  */
 
-/* eslint-disable-next-line promise/avoid-new */
 export const sleep = (ms: number): Promise<void> => {
+  // eslint-disable-next-line promise/avoid-new
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
