@@ -80,15 +80,15 @@ export function CalendarWidget() {
         </Group>
       </Group>
 
-      {/* Mantine v8 Calendar API has changed - using any to bypass type errors */}
-      {(Calendar as any)({
+      {/* Mantine v8 Calendar API has changed - using React.createElement for type safety */}
+      {React.createElement(Calendar, {
         value: selectedDate,
-        onChange: (date: any) => {
+        onChange: (date: Date | null) => {
           if (date) {
-            setSelectedDate(date as unknown as Date);
+            setSelectedDate(date);
           }
         },
-        getDayProps: getDayProperties as any,
+        getDayProps: getDayProperties,
         size: 'sm',
       })}
 

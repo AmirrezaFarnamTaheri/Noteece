@@ -34,7 +34,7 @@ const ModeStore: React.FC<ModeStoreProperties> = ({ spaceId }) => {
     if (spaceId) {
       void fetchEnabledModes();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaceId]);
 
   const isModeEnabled = (mode: Mode) => {

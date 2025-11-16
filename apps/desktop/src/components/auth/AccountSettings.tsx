@@ -131,19 +131,19 @@ const AccountSettings: React.FC<AccountSettingsProperties> = ({ onLogout }) => {
           <h3>Profile Information</h3>
           <div className={styles.infoGrid}>
             <div className={styles.infoItem}>
-              <label>Username</label>
+              <strong>Username</strong>
               <p className={styles.value}>{user.username}</p>
             </div>
             <div className={styles.infoItem}>
-              <label>Email</label>
+              <strong>Email</strong>
               <p className={styles.value}>{user.email}</p>
             </div>
             <div className={styles.infoItem}>
-              <label>Account Created</label>
+              <strong>Account Created</strong>
               <p className={styles.value}>{formatDate(user.created_at)}</p>
             </div>
             <div className={styles.infoItem}>
-              <label>Last Login</label>
+              <strong>Last Login</strong>
               <p className={styles.value}>{formatDate(user.last_login_at)}</p>
             </div>
           </div>

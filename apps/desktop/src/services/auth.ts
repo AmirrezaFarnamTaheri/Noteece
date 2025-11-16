@@ -156,7 +156,7 @@ class AuthService {
     const sessionData = localStorage.getItem(SESSION_DATA_KEY);
     if (sessionData) {
       try {
-        return JSON.parse(sessionData);
+        return JSON.parse(sessionData) as Session;
       } catch {
         return null;
       }
@@ -217,7 +217,7 @@ class AuthService {
       const sessionData = localStorage.getItem(SESSION_DATA_KEY);
 
       if (token && sessionData) {
-        this.session = JSON.parse(sessionData);
+        this.session = JSON.parse(sessionData) as Session;
       }
     } catch (error) {
       logger.error('Failed to load session from storage:', error as Error);

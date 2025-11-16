@@ -99,7 +99,7 @@ const Login: React.FC<LoginProperties> = ({ onSuccess, onSwitchToRegister }) => 
         <div className={styles.divider}>or</div>
 
         <p className={styles.switchText}>
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <button onClick={onSwitchToRegister} className={styles.switchLink} disabled={loading}>
             Create one
           </button>

@@ -37,7 +37,7 @@ const SavedSearches: React.FC<SavedSearchesProperties> = ({ spaceId }) => {
     if (spaceId) {
       void fetchSearches();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaceId]);
 
   const handleCreateSearch = async () => {

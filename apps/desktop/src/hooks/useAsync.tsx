@@ -65,7 +65,7 @@ export function useAsync<T, Arguments extends unknown[] = []>(
     if (immediate) {
       execute(...([] as unknown as Arguments));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return { data, error, loading, execute, reset };

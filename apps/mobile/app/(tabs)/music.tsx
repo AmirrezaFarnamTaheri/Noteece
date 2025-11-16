@@ -12,11 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Audio } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
 import { colors, typography, spacing } from "@/lib/theme";
-import {
-  MUSIC_LIBRARY,
-  Track,
-  getTracksByGenre,
-} from "@/lib/music-service";
+import { MUSIC_LIBRARY, Track, getTracksByGenre } from "@/lib/music-service";
 import { isValidMusicUrl } from "@/lib/music-security";
 
 type GenreFilter =

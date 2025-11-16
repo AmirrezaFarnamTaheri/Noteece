@@ -36,7 +36,7 @@ const Risks: React.FC = () => {
 
   useEffect(() => {
     void fetchRisks();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
   const handleSubmit = async (values: typeof form.values) => {

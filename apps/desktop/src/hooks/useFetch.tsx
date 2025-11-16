@@ -51,7 +51,7 @@ export function useFetch<T>(fetchFunction: () => Promise<T>, options: UseFetchOp
 
   useEffect(() => {
     fetch();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [skip, ...dependencies]);
 
   return {

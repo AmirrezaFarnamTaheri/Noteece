@@ -15,8 +15,28 @@ interface SocialTimelineProperties {
   spaceId: string;
 }
 
+interface Post {
+  id: string;
+  author: string;
+  handle: string;
+  platform: string;
+  content: string;
+  contentHtml?: string;
+  media?: Array<{
+    type: string;
+    url: string;
+    alt?: string;
+  }>;
+  timestamp: number;
+  likes?: number;
+  comments?: number;
+  shares?: number;
+  views?: number;
+  type?: string;
+}
+
 interface TimelineResponse {
-  posts: any[];
+  posts: Post[];
   has_more: boolean;
   total_count: number;
 }
@@ -44,7 +64,7 @@ export function SocialTimeline({ spaceId }: SocialTimelineProperties) {
         offset: pageParameter,
       };
 
-      const result = await invoke<any[]>('get_unified_timeline_cmd', {
+      const result = await invoke<Post[]>('get_unified_timeline_cmd', {
         spaceId,
         filters: timelineFilters,
       });
@@ -114,7 +134,7 @@ export function SocialTimeline({ spaceId }: SocialTimelineProperties) {
   }
 
   // Sort posts based on sort filter
-  const sortPosts = (posts: any[]) => {
+  const sortPosts = (posts: Post[]): Post[] => {
     const sorted = [...posts];
     switch (filters.sortBy) {
       case 'oldest': {
@@ -126,7 +146,9 @@ export function SocialTimeline({ spaceId }: SocialTimelineProperties) {
       case 'most_commented': {
         return sorted.sort((a, b) => (b.comments || 0) - (a.comments || 0));
       }
-      case 'newest':
+      case 'newest': {
+        return sorted.sort((a, b) => b.timestamp - a.timestamp);
+      }
       default: {
         return sorted.sort((a, b) => b.timestamp - a.timestamp);
       }
@@ -193,7 +215,7 @@ export function SocialTimeline({ spaceId }: SocialTimelineProperties) {
           {!hasNextPage && sortedPosts.length > 0 && (
             <Center py="md">
               <Text size="sm" c="dimmed">
-                You've reached the end of your timeline
+                You&apos;ve reached the end of your timeline
               </Text>
             </Center>
           )}

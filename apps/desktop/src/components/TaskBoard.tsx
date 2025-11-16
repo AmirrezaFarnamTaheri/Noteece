@@ -50,7 +50,7 @@ const TaskBoard: React.FC = () => {
 
   useEffect(() => {
     void fetchTasks();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSpaceId]);
 
   const handleCreateTask = async () => {

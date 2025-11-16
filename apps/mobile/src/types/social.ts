@@ -199,7 +199,8 @@ export interface ActivityStats {
   date: string;
   post_count: number;
   platforms: {
-    [key in Platform]?: number;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    [_key in Platform]?: number;
   };
 }
 

@@ -12,7 +12,7 @@ import '@testing-library/jest-dom';
 // Mock Tauri invoke
 const mockInvoke = jest.fn();
 jest.mock('@tauri-apps/api/tauri', () => ({
-  invoke: (...arguments_: any[]) => mockInvoke(...arguments_),
+  invoke: <T = unknown>(...arguments_: unknown[]) => mockInvoke(...arguments_) as Promise<T>,
 }));
 
 // Mock store
@@ -143,11 +143,11 @@ describe('UserManagement QA Fixes (Session 5)', () => {
 
       // Clear all custom permissions (reset to role defaults)
       const customPermCheckboxes = screen.getAllByRole('checkbox');
-      customPermCheckboxes.forEach((checkbox: HTMLElement) => {
+      for (const checkbox of customPermCheckboxes) {
         if ((checkbox as HTMLInputElement).checked) {
           fireEvent.click(checkbox);
         }
-      });
+      }
 
       // Save
       const saveButton = screen.getByRole('button', { name: /save/i });
@@ -163,7 +163,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
         expect(revokeCalls.length).toBeGreaterThan(0);
 
         // Should revoke custom_perm_1 and custom_perm_2
-        const revokedPermissions = revokeCalls.map((call) => call[1].permission);
+        const revokedPermissions = revokeCalls.map((call) => (call[1] as { permission: string }).permission);
         expect(revokedPermissions).toContain('custom_perm_1');
         expect(revokedPermissions).toContain('custom_perm_2');
       });
@@ -181,11 +181,11 @@ describe('UserManagement QA Fixes (Session 5)', () => {
 
       // Clear custom permissions
       const customPermCheckboxes = screen.getAllByRole('checkbox');
-      customPermCheckboxes.forEach((checkbox: HTMLElement) => {
+      for (const checkbox of customPermCheckboxes) {
         if ((checkbox as HTMLInputElement).checked) {
           fireEvent.click(checkbox);
         }
-      });
+      }
 
       const saveButton = screen.getByRole('button', { name: /save/i });
       mockInvoke.mockResolvedValue({});
@@ -195,7 +195,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
         const revokeCalls = mockInvoke.mock.calls.filter((call) => call[0] === 'revoke_permission_cmd');
 
         // Should NOT revoke read_notes or write_notes (role permissions)
-        const revokedPermissions = revokeCalls.map((call) => call[1].permission);
+        const revokedPermissions = revokeCalls.map((call) => (call[1] as { permission: string }).permission);
         expect(revokedPermissions).not.toContain('read_notes');
         expect(revokedPermissions).not.toContain('write_notes');
       });
@@ -224,7 +224,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
       await waitFor(() => {
         const revokeCalls = mockInvoke.mock.calls.filter((call) => call[0] === 'revoke_permission_cmd');
 
-        const revokedPermissions = revokeCalls.map((call) => call[1].permission);
+        const revokedPermissions = revokeCalls.map((call) => (call[1] as { permission: string }).permission);
 
         // Should revoke custom_perm_2 but not custom_perm_1
         expect(revokedPermissions).toContain('custom_perm_2');
@@ -321,7 +321,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
 
         if (inviteCalls.length > 0) {
           // If it got through (shouldn't), verify it's sanitized
-          const email = inviteCalls[0][1].email;
+          const email = (inviteCalls[0][1] as { email: string }).email;
           expect(email).not.toContain('<script>');
           expect(email).not.toContain('</script>');
         }

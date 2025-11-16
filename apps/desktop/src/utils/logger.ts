@@ -19,6 +19,20 @@ export interface LogEntry {
   error?: Error;
 }
 
+interface StoredLogEntry {
+  level: LogLevel;
+  message: string;
+  timestamp: number;
+  context?: string;
+  error?:
+    | {
+        message: string;
+        stack?: string;
+        name: string;
+      }
+    | string;
+}
+
 type LogListener = (entry: LogEntry) => void | Promise<void>;
 
 class Logger {
@@ -129,15 +143,15 @@ logger.addListener((entry: LogEntry) => {
   const safeStringify = (obj: unknown): string => {
     const seen = new WeakSet();
     try {
-      return JSON.stringify(obj, function (_key, value) {
+      return JSON.stringify(obj, function (_key, value: unknown) {
         if (typeof value === 'object' && value !== null) {
-          if (seen.has(value as object)) return '[Circular]';
-          seen.add(value as object);
+          if (seen.has(value)) return '[Circular]';
+          seen.add(value);
         }
         if (typeof value === 'string' && value.length > 1000) {
           return value.slice(0, 1000) + '…';
         }
-        return value;
+        return value as string | number | boolean | null | object;
       });
     } catch {
       return '[Unserializable]';
@@ -151,9 +165,9 @@ logger.addListener((entry: LogEntry) => {
     localStorage.removeItem(testKey);
 
     const raw = localStorage.getItem('noteece_error_logs');
-    const logs: any[] = raw ? JSON.parse(raw) : [];
+    const logs: StoredLogEntry[] = raw ? (JSON.parse(raw) as StoredLogEntry[]) : [];
 
-    const sanitized = {
+    const sanitized: StoredLogEntry = {
       level: entry.level,
       message: entry.message,
       timestamp: entry.timestamp,

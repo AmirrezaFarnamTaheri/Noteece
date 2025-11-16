@@ -14,7 +14,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Dimensions,
   RefreshControl,
   ActivityIndicator,
   TouchableOpacity,

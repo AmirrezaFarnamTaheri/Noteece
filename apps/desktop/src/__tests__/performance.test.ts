@@ -85,7 +85,7 @@ describe('Performance Benchmarks', () => {
       const duration = endTime - startTime;
 
       expect(duration).toBeLessThan(30_000);
-    }, 10000);
+    }, 10_000);
 
     test('restore backup of 100MB completes within 20 seconds', async () => {
       const startTime = performance.now();
@@ -100,7 +100,7 @@ describe('Performance Benchmarks', () => {
       const duration = endTime - startTime;
 
       expect(duration).toBeLessThan(20_000);
-    }, 10000);
+    }, 10_000);
 
     test('list backups with 50 backups returns within 500ms', async () => {
       const startTime = performance.now();
@@ -346,7 +346,7 @@ describe('Performance Benchmarks', () => {
         }));
 
       const toDelete = records.slice(0, 50);
-      const remaining = records.filter((r) => !toDelete.find((d) => d.id === r.id));
+      const remaining = records.filter((r) => !toDelete.some((d) => d.id === r.id));
 
       const endTime = performance.now();
       const duration = endTime - startTime;

@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
+import * as SecureStore from "expo-secure-store";
 import { getDatabase } from "./database";
 
 /**
@@ -195,7 +196,6 @@ export async function clearAllData(): Promise<{
 
     // Clear SecureStore biometric data
     try {
-      const SecureStore = require("expo-secure-store");
       await SecureStore.deleteItemAsync("biometric_vault_data");
     } catch {
       // SecureStore might not have data, that's okay

@@ -35,7 +35,6 @@ export default function MoreScreen() {
   const colors = useThemeColors();
   const [backgroundSyncEnabled, setBackgroundSyncEnabled] = useState(false);
   const [nfcEnabled, setNfcEnabled] = useState(false);
-  const [_syncing, setSyncing] = useState(false);
 
   const handleLockVault = () => {
     haptics.warning();

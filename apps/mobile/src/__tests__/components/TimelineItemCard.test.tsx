@@ -26,9 +26,7 @@ describe("TimelineItemCard", () => {
   });
 
   it("should render timeline dot with correct color", () => {
-    render(
-      <TimelineItemCard item={mockTimelineItem} />,
-    );
+    render(<TimelineItemCard item={mockTimelineItem} />);
     // In production, add testID to the dot element
   });
 
