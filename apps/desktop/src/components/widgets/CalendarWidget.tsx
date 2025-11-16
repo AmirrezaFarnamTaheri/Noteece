@@ -82,7 +82,6 @@ export function CalendarWidget() {
 
       {/* Mantine v8 Calendar - Display with task/note indicators */}
       <Calendar
-        value={selectedDate}
         onDayClick={setSelectedDate}
         getDayProps={getDayProperties}
         size="sm"

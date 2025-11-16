@@ -3,16 +3,13 @@ module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['./jest.setup.ts'],
   transform: {
-    '^.+\\.tsx?$': 'ts-jest',
-  },
-  globals: {
-    'ts-jest': {
+    '^.+\\.tsx?$': ['ts-jest', {
       tsconfig: {
         jsx: 'react-jsx',
         esModuleInterop: true,
         allowSyntheticDefaultImports: true,
       },
-    },
+    }],
   },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
@@ -22,4 +19,5 @@ module.exports = {
   },
   modulePaths: ['<rootDir>/../../packages'],
   testMatch: ['<rootDir>/src/**/__tests__/**/*.test.ts?(x)'],
+  setupFiles: ['<rootDir>/jest.polyfill.ts'],
 };
