@@ -1,8 +1,21 @@
 module.exports = {
-  preset: "jest-expo",
+  testEnvironment: "node",
+  transform: {
+    "^.+\\.(js|jsx|ts|tsx)$": [
+      "babel-jest",
+      {
+        presets: ["babel-preset-expo"],
+        plugins: ["@babel/plugin-transform-flow-strip-types"],
+      },
+    ],
+  },
+  transformIgnorePatterns: [
+    "node_modules/(?!((jest-)?react-native|@react-native|expo|@expo|@react-navigation|react-native-reanimated|react-native-gesture-handler|@tauri-apps))",
+  ],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
+  setupFiles: ["<rootDir>/jest.pre-setup.js"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
   testPathIgnorePatterns: ["/node_modules/", "/android/", "/ios/"],
   collectCoverageFrom: [
