@@ -80,17 +80,17 @@ export function CalendarWidget() {
         </Group>
       </Group>
 
-      {/* Mantine v8 Calendar API has changed - using React.createElement for type safety */}
-      {React.createElement(Calendar, {
-        value: selectedDate,
-        onChange: (date: Date | null) => {
+      {/* Mantine v8 Calendar API - using JSX for proper type inference */}
+      <Calendar
+        value={selectedDate}
+        onChange={(date) => {
           if (date) {
             setSelectedDate(date);
           }
-        },
-        getDayProps: getDayProperties,
-        size: 'sm',
-      })}
+        }}
+        getDayProps={getDayProperties}
+        size="sm"
+      />
 
       <Stack gap="sm" mt="md">
         <Text size="sm" fw={500}>
