@@ -43,13 +43,25 @@ Object.keys(originalDefineProperty).forEach(key => {
 // Setup React Native environment
 global.window = global;
 global.self = global;
+// Provide a no-op requestAnimationFrame for libraries expecting it
+if (typeof global.requestAnimationFrame === 'undefined') {
+  global.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 0);
+}
 
 // Mock crypto if needed
 if (typeof global.crypto === 'undefined') {
   global.crypto = {
     getRandomValues: (arr) => {
+      if (
+        !arr ||
+        typeof arr.length !== 'number' ||
+        !ArrayBuffer.isView(arr) ||
+        !(arr.BYTES_PER_ELEMENT && arr.BYTES_PER_ELEMENT === 1)
+      ) {
+        throw new TypeError('Expected a Uint8Array or similar typed array');
+      }
       for (let i = 0; i < arr.length; i++) {
-        arr[i] = Math.floor(Math.random() * 256);
+        arr[i] = Math.floor(Math.random() * 256) & 0xff;
       }
       return arr;
     },

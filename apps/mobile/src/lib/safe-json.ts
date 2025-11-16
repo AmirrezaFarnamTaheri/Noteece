@@ -66,7 +66,8 @@ export function safeJsonParseWithValidation<T>(
  */
 export function safeJsonStringify(data: unknown, defaultValue = "{}"): string {
   try {
-    return JSON.stringify(data);
+    const result = JSON.stringify(data);
+    return result === undefined ? defaultValue : result;
   } catch (error) {
     console.error("JSON stringify error:", error);
     return defaultValue;
