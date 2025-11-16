@@ -80,7 +80,14 @@ export function CalendarWidget() {
         </Group>
       </Group>
 
-      {/* Mantine v8 Calendar - Basic calendar display */}
+      {/* Mantine v8 Calendar - Display with task/note indicators */}
+      <Calendar
+        defaultValue={selectedDate}
+        onDayClick={setSelectedDate}
+        getDayProps={getDayProperties}
+        size="sm"
+      />
+
       <Stack gap="sm" mt="md">
         <Text size="sm" fw={500}>
           {selectedDate.toLocaleDateString(undefined, {

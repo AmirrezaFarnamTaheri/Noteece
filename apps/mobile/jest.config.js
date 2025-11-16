@@ -1,16 +1,10 @@
 module.exports = {
   preset: "jest-expo",
   transform: {
-    "^.+\\.(js|jsx|ts|tsx)$": [
-      "babel-jest",
-      {
-        presets: ["babel-preset-expo"],
-        plugins: ["@babel/plugin-transform-flow-strip-types"],
-      },
-    ],
+    "^.+\\.(js|jsx|ts|tsx)$": "babel-jest",
   },
   transformIgnorePatterns: [
-    "node_modules/(?!((jest-)?react-native|@react-native|expo|@expo|@react-navigation|react-native-reanimated|react-native-gesture-handler|@tauri-apps|nanoid))",
+    "node_modules/(?!(jest-)?react-native|@react-native/(js-|community)|@react-native-async-storage|@react-native/js-polyfills|expo(nent)?|@expo(nent)?/.*|react-navigation|@react-navigation/.*|react-native-reanimated|react-native-gesture-handler|react-native-svg|@unimodules/.*|unimodules|sentry-expo)",
   ],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
