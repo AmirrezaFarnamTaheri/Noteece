@@ -80,14 +80,10 @@ export function CalendarWidget() {
         </Group>
       </Group>
 
-      {/* Mantine v8 Calendar API - using JSX for proper type inference */}
+      {/* Mantine v8 Calendar - Display with task/note indicators */}
       <Calendar
-        value={selectedDate}
-        onChange={(date) => {
-          if (date) {
-            setSelectedDate(date);
-          }
-        }}
+        defaultValue={selectedDate}
+        onDayClick={setSelectedDate}
         getDayProps={getDayProperties}
         size="sm"
       />

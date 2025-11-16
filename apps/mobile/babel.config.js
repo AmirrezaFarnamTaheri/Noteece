@@ -3,6 +3,7 @@ module.exports = function (api) {
   return {
     presets: ["babel-preset-expo"],
     plugins: [
+      "@babel/plugin-transform-flow-strip-types",
       "react-native-reanimated/plugin",
       [
         "module-resolver",
