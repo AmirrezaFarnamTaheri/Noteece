@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -57,7 +57,7 @@ export default function InsightsScreen() {
     }
   };
 
-  const loadInsights = async () => {
+  const loadInsights = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -117,11 +117,11 @@ export default function InsightsScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
 
   useEffect(() => {
     loadInsights();
-  }, [filter]);
+  }, [loadInsights]);
 
   const dismissInsight = async (insightId: string) => {
     try {

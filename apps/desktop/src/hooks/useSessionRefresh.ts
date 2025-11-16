@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { authService } from '../services/auth';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 interface SessionWarning {
   show: boolean;
@@ -37,7 +37,7 @@ export const useSessionRefresh = (onSessionExpired?: () => void, onWarning?: (mi
 
     // Handle various session.expires_at formats
     let expiresAtSec: number | null = null;
-    const exp = (session as any).expires_at;
+    const exp = session.expires_at;
 
     if (typeof exp === 'number' && Number.isFinite(exp)) {
       // Heuristic: if value looks like milliseconds (far in the future), convert to seconds
@@ -93,6 +93,7 @@ export const useSessionRefresh = (onSessionExpired?: () => void, onWarning?: (mi
         clearInterval(refreshIntervalReference.current);
       }
       if (warningTimeoutReference.current) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- Refs are safe to access in cleanup
         clearTimeout(warningTimeoutReference.current);
       }
     };

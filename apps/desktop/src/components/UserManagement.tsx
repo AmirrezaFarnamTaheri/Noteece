@@ -41,7 +41,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notifications } from '@mantine/notifications';
 import { useStore } from '../store';
 import { authService } from '../services/auth';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 interface SpaceUser {
   user_id: string;
@@ -184,7 +184,7 @@ const UserManagement: React.FC = () => {
         message: 'Could not send invitation. Please try again or contact support.',
         color: 'red',
       });
-      logger.error('Invite error (not shown to user):', error as Error);
+      logger.error('Invite error (not shown to user):', error);
     },
   });
 
@@ -253,7 +253,7 @@ const UserManagement: React.FC = () => {
         message: 'Could not update user role. Please try again or contact support.',
         color: 'red',
       });
-      logger.error('Update role error (not shown to user):', error as Error);
+      logger.error('Update role error (not shown to user):', error);
     },
   });
 
@@ -358,6 +358,7 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  // eslint-disable-next-line unicorn/consistent-function-scoping
   const getRelativeTime = (timestamp: number | null): string => {
     if (!timestamp || timestamp === 0) return 'Never';
     const diff = Date.now() - timestamp * 1000; // Convert from seconds to milliseconds

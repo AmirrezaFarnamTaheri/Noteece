@@ -103,7 +103,7 @@ export function SocialSearch({ spaceId }: SocialSearchProperties) {
                 <Text size="sm" fw={500}>
                   Found {results.length} result{results.length === 1 ? '' : 's'}
                 </Text>
-                {debouncedQuery && <Pill size="sm">Searching for: "{debouncedQuery}"</Pill>}
+                {debouncedQuery && <Pill size="sm">Searching for: &quot;{debouncedQuery}&quot;</Pill>}
               </Group>
 
               <Stack gap="md">

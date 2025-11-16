@@ -15,7 +15,7 @@
 export function safeJsonParse<T>(
   jsonString: string | null | undefined,
   defaultValue: T,
-  logError = true
+  logError = true,
 ): T {
   if (!jsonString) {
     return defaultValue;
@@ -25,7 +25,12 @@ export function safeJsonParse<T>(
     return JSON.parse(jsonString) as T;
   } catch (error) {
     if (logError) {
-      console.error('JSON parse error:', error, 'Input:', jsonString?.substring(0, 100));
+      console.error(
+        "JSON parse error:",
+        error,
+        "Input:",
+        jsonString?.substring(0, 100),
+      );
     }
     return defaultValue;
   }
@@ -41,7 +46,7 @@ export function safeJsonParse<T>(
 export function safeJsonParseWithValidation<T>(
   jsonString: string | null | undefined,
   validator: (data: unknown) => data is T,
-  defaultValue: T
+  defaultValue: T,
 ): T {
   const parsed = safeJsonParse<unknown>(jsonString, defaultValue, true);
 
@@ -49,7 +54,7 @@ export function safeJsonParseWithValidation<T>(
     return parsed;
   }
 
-  console.error('JSON validation failed for:', jsonString?.substring(0, 100));
+  console.error("JSON validation failed for:", jsonString?.substring(0, 100));
   return defaultValue;
 }
 
@@ -59,14 +64,11 @@ export function safeJsonParseWithValidation<T>(
  * @param defaultValue - Default string if stringify fails
  * @returns JSON string or default value
  */
-export function safeJsonStringify(
-  data: unknown,
-  defaultValue = '{}'
-): string {
+export function safeJsonStringify(data: unknown, defaultValue = "{}"): string {
   try {
     return JSON.stringify(data);
   } catch (error) {
-    console.error('JSON stringify error:', error);
+    console.error("JSON stringify error:", error);
     return defaultValue;
   }
 }
@@ -75,7 +77,7 @@ export function safeJsonStringify(
  * Type guard for checking if value is a valid JSON object
  */
 export function isJsonObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /**

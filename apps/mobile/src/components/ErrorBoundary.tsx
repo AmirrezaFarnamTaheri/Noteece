@@ -9,7 +9,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { colors, typography, spacing } from "@/lib/theme";
-import { Sentry, captureException } from "@/lib/sentry";
+import { Sentry } from "@/lib/sentry";
 
 interface Props {
   children: ReactNode;

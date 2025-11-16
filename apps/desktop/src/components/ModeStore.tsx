@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import { Card, Switch, Group, Text } from '@mantine/core';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 interface Mode {
   id: string;
@@ -34,6 +34,7 @@ const ModeStore: React.FC<ModeStoreProperties> = ({ spaceId }) => {
     if (spaceId) {
       void fetchEnabledModes();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaceId]);
 
   const isModeEnabled = (mode: Mode) => {

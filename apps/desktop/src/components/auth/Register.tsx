@@ -49,6 +49,7 @@ const Register: React.FC<RegisterProperties> = ({ onSuccess, onSwitchToLogin }) 
       return false;
     }
 
+    // eslint-disable-next-line security/detect-possible-timing-attacks -- String comparison is acceptable here for password validation in UI
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return false;
@@ -162,6 +163,7 @@ const Register: React.FC<RegisterProperties> = ({ onSuccess, onSwitchToLogin }) 
               </button>
             </div>
             {password && (
+              // eslint-disable-next-line security/detect-object-injection -- passwordStrength is a computed string value 'weak' | 'medium' | 'strong'
               <div className={`${styles.strengthMeter} ${styles[passwordStrength]}`}>
                 <div className={styles.strengthLabel}>
                   Strength: <strong>{passwordStrength.toUpperCase()}</strong>

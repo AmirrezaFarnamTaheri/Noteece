@@ -19,12 +19,26 @@ export interface LogEntry {
   error?: Error;
 }
 
+interface StoredLogEntry {
+  level: LogLevel;
+  message: string;
+  timestamp: number;
+  context?: string;
+  error?:
+    | {
+        message: string;
+        stack?: string;
+        name: string;
+      }
+    | string;
+}
+
 type LogListener = (entry: LogEntry) => void | Promise<void>;
 
 class Logger {
   private level: LogLevel = LogLevel.INFO;
   private context: Record<string, unknown> = {};
-  private listeners: LogListener[] = [];
+  private listeners: Set<LogListener> = new Set();
 
   setLevel(level: LogLevel): void {
     this.level = level;
@@ -34,8 +48,15 @@ class Logger {
     this.context = { ...this.context, ...ctx };
   }
 
-  addListener(listener: LogListener): void {
-    this.listeners.push(listener);
+  addListener(listener: LogListener): () => void {
+    this.listeners.add(listener);
+    let removed = false;
+    return () => {
+      if (!removed) {
+        this.listeners.delete(listener);
+        removed = true;
+      }
+    };
   }
 
   private log(level: LogLevel, message: string, error?: Error): void {
@@ -49,14 +70,38 @@ class Logger {
       error,
     };
 
-    // Console output
+    // Console output by severity
+    // eslint-disable-next-line security/detect-object-injection -- level is a LogLevel enum value
     const levelStr = LogLevel[level];
-    console.log(`[${levelStr}] ${message}`, error || '');
+    const args: unknown[] = [`[${levelStr}] ${message}`];
+    if (error) args.push(error);
+    switch (level) {
+      case LogLevel.ERROR: {
+        console.error(...args);
+        break;
+      }
+      case LogLevel.WARN: {
+        console.warn(...args);
+        break;
+      }
+      case LogLevel.INFO: {
+        console.info(...args);
+        break;
+      }
+      default: {
+        console.debug(...args);
+        break;
+      }
+    }
 
-    // Notify listeners
-    this.listeners.forEach((listener) => {
-      void listener(entry);
-    });
+    // Notify listeners (ignore individual listener failures)
+    for (const listener of this.listeners) {
+      try {
+        void listener(entry);
+      } catch {
+        // swallow listener errors
+      }
+    }
   }
 
   debug(message: string): void {
@@ -93,28 +138,61 @@ logger.setContext({
 
 // Persist critical logs to storage
 logger.addListener((entry: LogEntry) => {
-  if (entry.level >= LogLevel.ERROR) {
+  if (entry.level < LogLevel.ERROR) return;
+
+  // eslint-disable-next-line unicorn/consistent-function-scoping
+  const safeStringify = (obj: unknown): string => {
+    const seen = new WeakSet();
     try {
-      // Store critical logs for debugging
-      const logs = JSON.parse(localStorage.getItem('noteece_error_logs') || '[]');
-      logs.push({
-        ...entry,
-        error: entry.error
+      return JSON.stringify(obj, function (_key, value: unknown) {
+        if (typeof value === 'object' && value !== null) {
+          if (seen.has(value)) return '[Circular]';
+          seen.add(value);
+        }
+        if (typeof value === 'string' && value.length > 1000) {
+          return value.slice(0, 1000) + '…';
+        }
+        return value as string | number | boolean | null | object;
+      });
+    } catch {
+      return '[Unserializable]';
+    }
+  };
+
+  try {
+    // Check if localStorage is available
+    const testKey = '__localStorage_available__';
+    localStorage.setItem(testKey, 'true');
+    localStorage.removeItem(testKey);
+
+    const raw = localStorage.getItem('noteece_error_logs');
+    const logs: StoredLogEntry[] = raw ? (JSON.parse(raw) as StoredLogEntry[]) : [];
+
+    const sanitized: StoredLogEntry = {
+      level: entry.level,
+      message: entry.message,
+      timestamp: entry.timestamp,
+      context: entry.context ? safeStringify(entry.context) : undefined,
+      error: entry.error
+        ? entry.error instanceof Error
           ? {
               message: entry.error.message,
-              stack: entry.error.stack,
+              stack: entry.error.stack?.slice(0, 5000),
+              name: entry.error.name,
             }
-          : undefined,
-      });
+          : safeStringify(entry.error)
+        : undefined,
+    };
 
-      // Keep only last 100 error logs
-      if (logs.length > 100) {
-        logs.shift();
-      }
+    logs.push(sanitized);
+    while (logs.length > 100) logs.shift();
 
-      localStorage.setItem('noteece_error_logs', JSON.stringify(logs));
-    } catch (error) {
-      console.error('Failed to persist error log:', error);
+    localStorage.setItem('noteece_error_logs', JSON.stringify(logs));
+  } catch (error) {
+    // Silently ignore storage errors (quota exceeded, unavailable, etc)
+    // Don't log to console to avoid recursion
+    if (error instanceof Error && error.name === 'QuotaExceededError') {
+      // Storage quota exceeded - consider clearing old logs or alternative storage
     }
   }
 });

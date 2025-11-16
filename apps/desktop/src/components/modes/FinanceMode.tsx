@@ -22,7 +22,7 @@ import {
 import { DatePicker } from '@mantine/dates';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { IconPlus, IconTrendingUp, IconWallet, IconReceipt } from '@tabler/icons-react';
-import logger from '../../utils/logger';
+import { logger } from '../../utils/logger';
 
 interface Transaction {
   id: string;
@@ -68,6 +68,7 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
 
   useEffect(() => {
     void loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaceId]);
 
   const loadData = async () => {
@@ -375,7 +376,6 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
             onChange={(e) => setFormDescription(e.currentTarget.value)}
             placeholder="Optional notes"
           />
-
 
           <Group justify="flex-end" mt="md">
             <Button variant="light" onClick={() => setModalOpened(false)}>

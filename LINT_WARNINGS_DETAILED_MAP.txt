@@ -1,0 +1,426 @@
+================================================================================
+                     DETAILED WARNINGS LOCATION MAP
+================================================================================
+
+This file maps all 156 warnings by rule, file, and line number for easy access.
+
+================================================================================
+TOP WARNINGS - ACTIONABLE LIST
+================================================================================
+
+1. @typescript-eslint/no-unused-vars (54 warnings) - PRIORITY: HIGH
+   Location: Mobile App (59 instances)
+
+   MOBILE APP - Unused Variables:
+   ================================
+   /apps/mobile/app/(tabs)/more.tsx
+     38:10  'syncing' is assigned but never used
+
+   /apps/mobile/app/(tabs)/music.tsx
+     19:3   'getAllGenres' is defined but never used
+     20:3   'getLibraryStats' is defined but never used
+     43:10  'showAllGenres' is assigned but never used
+     43:25  'setShowAllGenres' is assigned but never used
+
+   /apps/mobile/app/(tabs)/today.tsx
+     1:20   'useEffect' is defined but never used
+     13:18  'isToday' is defined but never used
+     13:27  'isTomorrow' is defined but never used
+     13:39  'parseISO' is defined but never used
+     21:10  'TimelineItem' is defined but never used
+     28:28  'loading' is assigned but never used
+
+   /apps/mobile/plugins/withShareExtension.js
+     12:3   'withXcodeProject' is assigned but never used (appears 2x)
+     13:3   'withInfoPlist' is assigned but never used (appears 2x)
+
+   /apps/mobile/src/__tests__/components/TimelineItemCard.test.tsx
+     29:13  'getByTestId' is assigned but never used
+     41:13  'getByText' is assigned but never used
+
+   /apps/mobile/src/components/ErrorBoundary.tsx
+     12:18  'captureException' is defined but never used
+
+   /apps/mobile/src/hooks/useSharedContent.ts
+     12:36  'Platform' is defined but never used
+
+   /apps/mobile/src/lib/backup.ts
+     148:16 'e' is defined but never used
+
+   /apps/mobile/src/lib/data-utils.ts
+     200:14 'error' is defined but never used
+
+   /apps/mobile/src/lib/haptics.ts (9 INSTANCES)
+     45:14  'error' is defined but never used
+     58:14  'error' is defined but never used
+     71:14  'error' is defined but never used
+     84:14  'error' is defined but never used
+     97:14  'error' is defined but never used
+     110:14 'error' is defined but never used
+     123:14 'error' is defined but never used
+     136:14 'error' is defined but never used
+     149:14 'error' is defined but never used
+
+   /apps/mobile/src/lib/social-database.ts
+     12:3   'SocialPost' is defined but never used
+     15:3   'PostCategory' is defined but never used
+     17:3   'AutomationRule' is defined but never used
+     18:3   'SyncHistory' is defined but never used
+
+   /apps/mobile/src/lib/sync/sync-client.ts
+     41:10  'hkdf' is defined but never used
+     149:13 'publicKey' is assigned but never used
+
+   /apps/mobile/src/lib/vault-utils.ts
+     214:14 'error' is defined but never used
+
+   /apps/mobile/src/screens/HealthHub.tsx
+     21:23  'SkeletonCard' is defined but never used
+     25:3   'HealthGoal' is defined but never used
+     26:3   'Activity' is defined but never used
+     27:3   'DayStats' is defined but never used
+     28:3   'METRIC_ICONS' is defined but never used
+     154:14 'error' is defined but never used
+
+   /apps/mobile/src/screens/MusicHub.tsx
+     16:3   'ScrollView' is defined but never used
+     18:3   'TextInput' is defined but never used
+     25:9   'width' is assigned but never used
+     25:16  'height' is assigned but never used
+     60:10  'stats' is assigned but never used
+     60:17  'setStats' is assigned but never used
+     61:10  'loading' is assigned but never used
+     63:10  'searchQuery' is assigned but never used
+     63:23  'setSearchQuery' is assigned but never used
+
+   /apps/mobile/src/screens/SocialAnalytics.tsx
+     36:9   'width' is assigned but never used
+
+   /apps/mobile/src/screens/SocialHub.tsx
+     65:23  'setSearchQuery' is assigned but never used
+
+   /apps/mobile/src/screens/SocialSettings.tsx
+     249:22 'error' is defined but never used
+
+   /apps/mobile/src/types/social.ts
+     202:6  'key' is defined but never used
+
+   TOTAL: 59 warnings in mobile app
+
+---
+
+2. react-hooks/exhaustive-deps (26 warnings) - PRIORITY: HIGH
+   Location: Both apps (Desktop: 13, Mobile: 10)
+
+   DESKTOP APP - React Hook Dependencies:
+   =======================================
+   /apps/desktop/src/components/FormTemplates.tsx
+     36:6   Missing 'fetchTemplates'
+
+   /apps/desktop/src/components/ModeStore.tsx
+     37:6   Missing 'fetchEnabledModes'
+
+   /apps/desktop/src/components/SavedSearches.tsx
+     40:6   Missing 'fetchSearches'
+
+   /apps/desktop/src/components/TaskBoard.tsx
+     53:6   Missing 'fetchTasks'
+
+   /apps/desktop/src/components/TemporalGraph.tsx
+     80:6   Missing 'loadGraph'
+     145:24 Function Call Object Injection Sink (security/detect-object-injection)
+
+   /apps/desktop/src/components/modes/FinanceMode.tsx
+     71:6   Missing 'loadData'
+
+   /apps/desktop/src/components/modes/HealthMode.tsx
+     75:6   Missing 'loadData'
+
+   /apps/desktop/src/components/modes/RecipeMode.tsx
+     49:6   Missing 'loadData'
+
+   /apps/desktop/src/components/modes/TravelMode.tsx
+     57:6   Missing 'loadData'
+
+   /apps/desktop/src/components/project_hub/Risks.tsx
+     39:6   Missing 'fetchRisks'
+
+   /apps/desktop/src/hooks/useAsync.tsx
+     68:6   Missing 'execute', 'immediate'
+
+   /apps/desktop/src/hooks/useFetch.tsx
+     54:6   Missing 'fetch' or spread element issue
+
+   /apps/desktop/src/hooks/useSessionRefresh.ts
+     96:46  Ref value issue in cleanup function
+
+   MOBILE APP - React Hook Dependencies:
+   ======================================
+   /apps/mobile/app/(tabs)/music.tsx
+     67:6   Missing 'sound'
+     88:6   Missing 'playNextTrack'
+
+   /apps/mobile/app/(tabs)/tasks.tsx
+     73:6   Missing 'loadTasks'
+
+   /apps/mobile/app/unlock.tsx
+     52:6   Missing 'handleBiometricUnlock', 'isBiometricAvailable', 'isBiometricEnabled'
+
+   /apps/mobile/src/components/social/BiometricLockScreen.tsx
+     46:6   Missing 'handleAuthenticate', 'startPulseAnimation'
+
+   /apps/mobile/src/components/social/PostCard.tsx
+     50:6   Missing 'loadBookmarkStatus'
+
+   /apps/mobile/src/contexts/ThemeContext.tsx
+     172:6  Missing 'saveThemePreference'
+
+   /apps/mobile/src/hooks/useSharedContent.ts
+     43:6   Missing 'handleAppStateChange'
+
+   /apps/mobile/src/screens/SocialAnalytics.tsx
+     51:6   Missing 'loadAnalytics'
+
+   /apps/mobile/src/screens/SocialHub.tsx
+     89:6   Missing 'loadData', 'loadSavedFilters'
+     223:6  useCallback missing 'loadCategories', 'loadPosts', 'refresh'
+     344:6  Missing 'handleRefresh', 'loading'
+
+   TOTAL: 26 warnings (13 desktop + 10 mobile)
+
+---
+
+3. security/detect-object-injection (16 warnings) - PRIORITY: MEDIUM
+   Location: Desktop app only
+
+   /apps/desktop/src/components/Foresight.tsx
+     113:19 Generic Object Injection Sink
+
+   /apps/desktop/src/components/OcrManager.tsx
+     206:35 Generic Object Injection Sink
+
+   /apps/desktop/src/components/SpacedRepetition.tsx
+     89:25  Variable Assigned to Object Injection Sink
+     121:13 Generic Object Injection Sink
+     193:25 Variable Assigned to Object Injection Sink
+
+   /apps/desktop/src/components/TemporalGraph.tsx
+     145:24 Function Call Object Injection Sink
+
+   /apps/desktop/src/components/auth/Register.tsx
+     165:58 Generic Object Injection Sink
+
+   /apps/desktop/src/components/settings/BackupRestore.tsx
+     171:73 Generic Object Injection Sink
+     179:46 Generic Object Injection Sink
+
+   /apps/desktop/src/components/widgets/NotesHeatmap.tsx
+     37:7   Generic Object Injection Sink
+     47:11  Generic Object Injection Sink
+     48:9   Generic Object Injection Sink
+     67:11  Generic Object Injection Sink
+     69:18  Generic Object Injection Sink
+
+   /apps/desktop/src/utils/logger.ts
+     60:22  Variable Assigned to Object Injection Sink
+
+   /apps/desktop/src/components/auth/AccountSettings.tsx
+     128:58 Generic Object Injection Sink
+
+   TOTAL: 16 warnings
+
+---
+
+4. @typescript-eslint/no-unsafe-return (11 warnings) - PRIORITY: MEDIUM
+   Location: Desktop app only
+
+   /apps/desktop/src/components/__tests__/UserManagement.qa-fixes.test.tsx
+     15:37  Unsafe return of an `any` typed value
+     166:62 Unsafe return of an `any` typed value
+     198:62 Unsafe return of an `any` typed value
+     227:62 Unsafe return of an `any` typed value
+
+   /apps/desktop/src/components/social/SocialTimeline.tsx
+     121:9  Unsafe return of an `any[]` typed value
+     124:9  Unsafe return of an `any[]` typed value
+     127:9  Unsafe return of an `any[]` typed value
+     131:9  Unsafe return of an `any[]` typed value
+     136:50 Unsafe return of an `any[]` typed value
+
+   /apps/desktop/src/services/auth.ts
+     159:9 Unsafe return of an `any` typed value
+
+   /apps/desktop/src/utils/logger.ts
+     140:9 Unsafe return of an `any` typed value
+
+   TOTAL: 11 warnings
+
+---
+
+5. @typescript-eslint/no-unsafe-assignment (10 warnings) - PRIORITY: MEDIUM
+   Location: Desktop app only
+
+   /apps/desktop/src/components/__tests__/UserManagement.qa-fixes.test.tsx
+     284:13 Unsafe assignment of an `any` value
+     324:17 Unsafe assignment of an `any` value
+
+   /apps/desktop/src/components/social/SocialTimeline.tsx
+     118:21 Unsafe spread of an `any` value in an array
+     180:34 Unsafe assignment of an `any` value
+     180:49 Unsafe assignment of an `any` value
+
+   /apps/desktop/src/components/social/TimelineFilters.tsx
+     52:38 Unsafe assignment of an `any` value
+
+   /apps/desktop/src/hooks/useSessionRefresh.ts
+     40:11 Unsafe assignment of an `any` value
+
+   /apps/desktop/src/services/auth.ts
+     220:9 Unsafe assignment of an `any` value
+
+   /apps/desktop/src/utils/logger.ts
+     154:11 Unsafe assignment of an `any` value
+
+   TOTAL: 10 warnings
+
+---
+
+6. @typescript-eslint/no-explicit-any (10 warnings) - PRIORITY: MEDIUM
+   Location: Desktop app only
+
+   /apps/desktop/src/components/__tests__/UserManagement.qa-fixes.test.tsx
+     15:27 Unexpected any. Specify a different type
+
+   /apps/desktop/src/components/social/SocialTimeline.tsx
+     19:10  Unexpected any. Specify a different type
+     47:35  Unexpected any. Specify a different type
+     117:29 Unexpected any. Specify a different type
+
+   /apps/desktop/src/components/social/TimelineFilters.tsx
+     51:71 Unexpected any. Specify a different type
+
+   /apps/desktop/src/components/widgets/CalendarWidget.tsx
+     84:21 Unexpected any. Specify a different type
+     86:26 Unexpected any. Specify a different type
+     91:42 Unexpected any. Specify a different type
+
+   /apps/desktop/src/hooks/useSessionRefresh.ts
+     40:29 Unexpected any. Specify a different type
+
+   /apps/desktop/src/utils/logger.ts
+     154:17 Unexpected any. Specify a different type
+
+   TOTAL: 10 warnings
+
+---
+
+7. react/no-unescaped-entities (4 warnings) - PRIORITY: LOW
+   Location: Desktop app only
+
+   /apps/desktop/src/components/auth/Login.tsx
+     102:14 Single quote can be escaped
+
+   /apps/desktop/src/components/social/SocialSearch.tsx
+     106:67 Double quote can be escaped
+     106:84 Double quote can be escaped
+
+   /apps/desktop/src/components/social/SocialTimeline.tsx
+     196:20 Single quote can be escaped
+
+   TOTAL: 4 warnings (AUTO-FIXABLE with --fix)
+
+---
+
+8. no-unreachable (4 warnings) - PRIORITY: HIGH
+   Location: Mobile app only
+
+   /apps/mobile/src/lib/sync/sync-client.ts
+     203:7 Unreachable code
+
+   /apps/mobile/src/screens/HealthHub.tsx
+     41:19 Unreachable code
+
+   /apps/mobile/src/screens/MusicHub.tsx
+     35:19 Unreachable code
+     48:19 Unreachable code
+
+   TOTAL: 4 warnings (DELETE/FIX)
+
+---
+
+9. jsx-a11y/label-has-associated-control (4 warnings) - PRIORITY: MEDIUM
+   Location: Desktop app only
+
+   /apps/desktop/src/components/auth/AccountSettings.tsx
+     134:15 Form label must be associated with control
+     138:15 Form label must be associated with control
+     142:15 Form label must be associated with control
+     146:15 Form label must be associated with control
+
+   TOTAL: 4 warnings
+
+---
+
+REMAINING WARNINGS (70+ instances of various rules)
+===================================================
+
+unicorn/numeric-separators-style (2):
+  /apps/desktop/src/__tests__/performance.test.ts: 88:8, 103:8
+
+unicorn/no-array-for-each (2):
+  /apps/desktop/src/components/__tests__/UserManagement.qa-fixes.test.tsx: 146:28, 184:28
+
+unicorn/prefer-array-some (1):
+  /apps/desktop/src/__tests__/performance.test.ts: 349:57
+
+unicorn/no-useless-switch-case (1):
+  /apps/desktop/src/components/social/SocialTimeline.tsx: 129:7
+
+jsx-a11y/click-events-have-key-events (1):
+  /apps/desktop/src/components/settings/BackupRestore.tsx: 215:15
+
+jsx-a11y/no-static-element-interactions (1):
+  /apps/desktop/src/components/settings/BackupRestore.tsx: 215:15
+
+jsx-a11y/media-has-caption (1):
+  /apps/desktop/src/components/social/TimelinePost.tsx: 100:21
+
+import/no-named-as-default (1):
+  /apps/desktop/src/components/project_hub/Timeline.tsx: 2:8
+
+security/detect-possible-timing-attacks (1):
+  /apps/desktop/src/components/auth/Register.tsx: 52:5
+
+security/detect-non-literal-regexp (1):
+  /apps/desktop/src/components/widgets/__tests__/CalendarWidget.test.tsx: 61:29
+
+@typescript-eslint/no-unsafe-call (1):
+  /apps/desktop/src/components/widgets/CalendarWidget.tsx: 84:9
+
+@typescript-eslint/no-unsafe-argument (1):
+  /apps/desktop/src/components/__tests__/UserManagement.qa-fixes.test.tsx: 15:48
+
+@typescript-eslint/no-require-imports (1):
+  /apps/mobile/src/lib/data-utils.ts: 198:27
+
+no-unused-vars (legacy) (2):
+  /apps/mobile/plugins/withShareExtension.js: 12:3, 13:3
+
+================================================================================
+                          SUMMARY BY FILE
+================================================================================
+
+MOBILE APP FILES WITH HIGHEST WARNING COUNT:
+  1. /apps/mobile/src/screens/MusicHub.tsx (11)
+  2. /apps/mobile/src/lib/haptics.ts (9)
+  3. /apps/mobile/src/screens/HealthHub.tsx (7)
+  4. /apps/mobile/app/(tabs)/music.tsx (6)
+  5. /apps/mobile/app/(tabs)/today.tsx (6)
+
+DESKTOP APP FILES WITH HIGHEST WARNING COUNT:
+  1. /apps/desktop/src/components/social/SocialTimeline.tsx (11)
+  2. /apps/desktop/src/components/__tests__/UserManagement.qa-fixes.test.tsx (10)
+  3. /apps/desktop/src/components/widgets/NotesHeatmap.tsx (5)
+  4. /apps/desktop/src/components/SpacedRepetition.tsx (5)
+  5. /apps/desktop/src/components/settings/BackupRestore.tsx (4)
+

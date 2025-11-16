@@ -3,7 +3,7 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { Card, Button, Modal, TextInput, Select, List, ThemeIcon, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconSearch } from '@tabler/icons-react';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 interface SavedSearch {
   id: string;
@@ -37,6 +37,7 @@ const SavedSearches: React.FC<SavedSearchesProperties> = ({ spaceId }) => {
     if (spaceId) {
       void fetchSearches();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaceId]);
 
   const handleCreateSearch = async () => {

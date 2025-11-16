@@ -26,9 +26,7 @@ describe("TimelineItemCard", () => {
   });
 
   it("should render timeline dot with correct color", () => {
-    const { getByTestId } = render(
-      <TimelineItemCard item={mockTimelineItem} />,
-    );
+    render(<TimelineItemCard item={mockTimelineItem} />);
     // In production, add testID to the dot element
   });
 
@@ -38,7 +36,7 @@ describe("TimelineItemCard", () => {
       endTime: mockTimelineItem.time + 1800000, // 30 minutes
     };
 
-    const { getByText } = render(<TimelineItemCard item={itemWithDuration} />);
+    render(<TimelineItemCard item={itemWithDuration} />);
     // Check for duration text (would be "30m")
   });
 });

@@ -9,6 +9,8 @@ import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { Alert } from "react-native";
 import * as SecureStore from "expo-secure-store";
+// Ensure crypto.getRandomValues is available in RN
+import "react-native-get-random-values";
 import { v4 as uuid } from "uuid";
 import { dbExecute, dbQuery } from "./database";
 import type {
@@ -143,7 +145,7 @@ async function exportPosts(spaceId: string): Promise<any[]> {
           (key) => scrubbed[key] === undefined && delete scrubbed[key],
         );
         post.raw_json = JSON.stringify(scrubbed);
-      } catch (e) {
+      } catch {
         // If parsing fails, remove raw_json entirely for safety
         post.raw_json = null;
       }

@@ -58,6 +58,7 @@ describe('CalendarWidget', () => {
     // Mantine Calendar should render with dates
     const today = new Date();
     const currentMonth = today.toLocaleDateString('en-US', { month: 'long' });
+    // eslint-disable-next-line security/detect-non-literal-regexp -- currentMonth is from Date.toLocaleDateString which returns a safe string
     expect(screen.getByText(new RegExp(currentMonth, 'i'))).toBeInTheDocument();
   });
 

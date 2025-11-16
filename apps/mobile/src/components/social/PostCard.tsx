@@ -47,6 +47,7 @@ export function PostCard({
   // Load bookmark status
   React.useEffect(() => {
     loadBookmarkStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [post.id]);
 
   const loadBookmarkStatus = async () => {

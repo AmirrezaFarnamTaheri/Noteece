@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { AppState, AppStateStatus, Platform } from "react-native";
+import { AppState, AppStateStatus } from "react-native";
 import * as Linking from "expo-linking";
 import {
   processSharedItems,
@@ -40,6 +40,7 @@ export function useSharedContent() {
     return () => {
       subscription.remove();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Listen for deep link events (share extension may use deep links)

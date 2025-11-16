@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { format, isToday, isTomorrow, parseISO } from "date-fns";
+import { format } from "date-fns";
 import {
   colors,
   spacing,
@@ -18,14 +18,13 @@ import {
   borderRadius,
   shadows,
 } from "@/lib/theme";
-import { TimelineItem } from "@/types";
 import { useTodayTimeline } from "@/hooks/useTodayTimeline";
 import { DailyBrief } from "@/components/DailyBrief";
 import { TimelineItemCard } from "@/components/TimelineItemCard";
 
 export default function TodayScreen() {
   const [refreshing, setRefreshing] = useState(false);
-  const { timeline, brief, loading, refresh } = useTodayTimeline();
+  const { timeline, brief, refresh } = useTodayTimeline();
   const [scrollY] = useState(new Animated.Value(0));
 
   const onRefresh = useCallback(async () => {

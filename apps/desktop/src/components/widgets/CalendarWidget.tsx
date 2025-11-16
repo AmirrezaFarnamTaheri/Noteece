@@ -80,17 +80,13 @@ export function CalendarWidget() {
         </Group>
       </Group>
 
-      {/* Mantine v8 Calendar API has changed - using any to bypass type errors */}
-      {(Calendar as any)({
-        value: selectedDate,
-        onChange: (date: any) => {
-          if (date) {
-            setSelectedDate(date as unknown as Date);
-          }
-        },
-        getDayProps: getDayProperties as any,
-        size: "sm",
-      })}
+      {/* Mantine v8 Calendar - Display with task/note indicators */}
+      <Calendar
+        defaultValue={selectedDate}
+        onDayClick={setSelectedDate}
+        getDayProps={getDayProperties}
+        size="sm"
+      />
 
       <Stack gap="sm" mt="md">
         <Text size="sm" fw={500}>

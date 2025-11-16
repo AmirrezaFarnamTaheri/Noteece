@@ -14,11 +14,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { typography, spacing } from "@/lib/theme";
 import { useVaultStore } from "@/store/vault";
-import {
-  useAppContext,
-  useSettings,
-  useUpdateSetting,
-} from "@/store/app-context";
+import { useSettings, useUpdateSetting } from "@/store/app-context";
 import { useTheme, useThemeColors } from "@/contexts/ThemeContext";
 import { haptics } from "@/lib/haptics";
 import {
@@ -39,7 +35,6 @@ export default function MoreScreen() {
   const colors = useThemeColors();
   const [backgroundSyncEnabled, setBackgroundSyncEnabled] = useState(false);
   const [nfcEnabled, setNfcEnabled] = useState(false);
-  const [syncing, setSyncing] = useState(false);
 
   const handleLockVault = () => {
     haptics.warning();

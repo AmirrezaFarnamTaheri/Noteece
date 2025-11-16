@@ -31,7 +31,7 @@ import {
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import classes from './SpacedRepetition.module.css';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 interface KnowledgeCard {
   id: string;
@@ -86,6 +86,7 @@ const SpacedRepetition: React.FC = () => {
 
   const handleReview = async (quality: number) => {
     const indexAtStart = currentCardIndex;
+    // eslint-disable-next-line security/detect-object-injection -- indexAtStart is a numeric array index from state
     const currentCard = cards[indexAtStart];
 
     if (!currentCard) {
@@ -118,6 +119,7 @@ const SpacedRepetition: React.FC = () => {
       setIsFlipped(false);
 
       setCurrentCardIndex((previous) => {
+        // eslint-disable-next-line security/detect-object-injection -- previous is a numeric array index from state
         if (cards[previous]?.id === reviewedId) {
           const next = previous + 1;
           if (next < cards.length) return next;
@@ -190,6 +192,7 @@ const SpacedRepetition: React.FC = () => {
       );
     }
 
+    // eslint-disable-next-line security/detect-object-injection -- currentCardIndex is a numeric state value used as array index
     const currentCard = cards[currentCardIndex];
 
     if (!currentCard) {

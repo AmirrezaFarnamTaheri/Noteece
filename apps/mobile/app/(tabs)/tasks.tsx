@@ -70,6 +70,7 @@ export default function TasksScreen() {
 
   useEffect(() => {
     loadTasks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   const toggleTaskStatus = async (task: Task) => {

@@ -18,7 +18,7 @@ import {
   Loader,
 } from '@mantine/core';
 import { IconPlus, IconClock, IconUsers, IconChefHat } from '@tabler/icons-react';
-import logger from '../../utils/logger';
+import { logger } from '../../utils/logger';
 
 interface Recipe {
   id: string;
@@ -46,6 +46,7 @@ const RecipeMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
 
   useEffect(() => {
     void loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaceId]);
 
   const loadData = async () => {

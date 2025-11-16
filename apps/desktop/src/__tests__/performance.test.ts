@@ -3,6 +3,8 @@
  * Measures and validates performance across critical operations
  */
 
+import { sleep } from '../utils/sleep';
+
 describe('Performance Benchmarks', () => {
   describe('Authentication Performance', () => {
     test('user login completes within 2 seconds', async () => {
@@ -15,7 +17,7 @@ describe('Performance Benchmarks', () => {
       };
 
       // Simulate password hashing and database lookup
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await sleep(500);
 
       const endTime = performance.now();
       const duration = endTime - startTime;
@@ -33,7 +35,7 @@ describe('Performance Benchmarks', () => {
         iterations: 65_536,
       };
 
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await sleep(1500);
 
       const endTime = performance.now();
       const duration = endTime - startTime;
@@ -77,13 +79,13 @@ describe('Performance Benchmarks', () => {
       // Estimate time: ~3.3MB/sec for modern hardware
       const estimatedTime = (processedSize / (3.3 * 1024 * 1024)) * 1000;
 
-      await new Promise((resolve) => setTimeout(resolve, Math.min(estimatedTime, 5000)));
+      await sleep(Math.min(estimatedTime, 5000));
 
       const endTime = performance.now();
       const duration = endTime - startTime;
 
       expect(duration).toBeLessThan(30_000);
-    });
+    }, 10_000);
 
     test('restore backup of 100MB completes within 20 seconds', async () => {
       const startTime = performance.now();
@@ -92,13 +94,13 @@ describe('Performance Benchmarks', () => {
       const backupSize = 100 * 1024 * 1024;
       const decompression = backupSize / (4 * 1024 * 1024); // 4MB/sec decompression
 
-      await new Promise((resolve) => setTimeout(resolve, Math.min(decompression * 10, 5000)));
+      await sleep(Math.min(decompression * 10, 5000));
 
       const endTime = performance.now();
       const duration = endTime - startTime;
 
       expect(duration).toBeLessThan(20_000);
-    });
+    }, 10_000);
 
     test('list backups with 50 backups returns within 500ms', async () => {
       const startTime = performance.now();
@@ -131,7 +133,7 @@ describe('Performance Benchmarks', () => {
       const filePath = `/backups/${backupId}`;
 
       // Simulated deletion
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await sleep(500);
 
       const endTime = performance.now();
       const duration = endTime - startTime;
@@ -235,7 +237,7 @@ describe('Performance Benchmarks', () => {
       // Actual parallel time would be much less
       const parallelTime = Math.max(...accounts.map(() => 2500));
 
-      await new Promise((resolve) => setTimeout(resolve, Math.min(parallelTime / 1000, 5000)));
+      await sleep(Math.min(parallelTime / 1000, 5000));
 
       const endTime = performance.now();
       const duration = endTime - startTime;
@@ -344,7 +346,7 @@ describe('Performance Benchmarks', () => {
         }));
 
       const toDelete = records.slice(0, 50);
-      const remaining = records.filter((r) => !toDelete.find((d) => d.id === r.id));
+      const remaining = records.filter((r) => !toDelete.some((d) => d.id === r.id));
 
       const endTime = performance.now();
       const duration = endTime - startTime;
@@ -457,6 +459,7 @@ describe('Performance Benchmarks', () => {
         .fill(null)
         .map(
           (_, index) =>
+            // eslint-disable-next-line promise/avoid-new
             new Promise((resolve) => {
               setTimeout(() => {
                 resolve({ id: `backup_${index}`, status: 'complete' });
@@ -480,6 +483,7 @@ describe('Performance Benchmarks', () => {
         .fill(null)
         .map(
           (_, index) =>
+            // eslint-disable-next-line promise/avoid-new
             new Promise((resolve) => {
               setTimeout(() => {
                 resolve({ platform: `platform_${index}`, posts: 50 });

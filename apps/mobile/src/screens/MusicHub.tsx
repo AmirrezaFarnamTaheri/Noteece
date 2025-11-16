@@ -13,42 +13,27 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
-  ScrollView,
   RefreshControl,
-  TextInput,
-  Dimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import type { Track, Playlist, MusicStats } from "../types/music";
-
-const { width, height } = Dimensions.get("window");
+import type { Track, Playlist } from "../types/music";
 
 // Database helper functions for loading music data
 async function loadTracksFromDatabase(): Promise<Track[]> {
-  try {
-    // Load all tracks from encrypted SQLite database
-    // Tracks are stored with optional artwork and metadata
-    // Currently returns empty array - will be populated when database service is initialized
-    // Database integration: Connect to local encrypted SQLite via React Native SQLite
-    return [];
-  } catch (error) {
-    console.warn("Failed to load tracks from database:", error);
-    return [];
-  }
+  // Load all tracks from encrypted SQLite database
+  // Tracks are stored with optional artwork and metadata
+  // Currently returns empty array - will be populated when database service is initialized
+  // Database integration: Connect to local encrypted SQLite via React Native SQLite
+  return [];
 }
 
 async function loadPlaylistsFromDatabase(): Promise<Playlist[]> {
-  try {
-    // Load all playlists from encrypted SQLite database
-    // Playlists include both user-created and smart playlists
-    // Currently returns empty array - will be populated when database service is initialized
-    // Database integration: Connect to local encrypted SQLite via React Native SQLite
-    return [];
-  } catch (error) {
-    console.warn("Failed to load playlists from database:", error);
-    return [];
-  }
+  // Load all playlists from encrypted SQLite database
+  // Playlists include both user-created and smart playlists
+  // Currently returns empty array - will be populated when database service is initialized
+  // Database integration: Connect to local encrypted SQLite via React Native SQLite
+  return [];
 }
 
 export function MusicHub() {
@@ -57,10 +42,7 @@ export function MusicHub() {
   );
   const [tracks, setTracks] = useState<Track[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [stats, setStats] = useState<MusicStats | null>(null);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 

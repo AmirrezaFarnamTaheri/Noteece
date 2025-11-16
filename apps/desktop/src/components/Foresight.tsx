@@ -26,7 +26,7 @@ import {
   IconTarget,
   IconTrendingUp,
 } from '@tabler/icons-react';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 interface Insight {
   id: string;
@@ -110,6 +110,7 @@ const Foresight: React.FC = () => {
     executingReference.current = true;
     try {
       const requireParameter = (key: string) => {
+        // eslint-disable-next-line security/detect-object-injection -- key is a hardcoded parameter name string passed to this function
         const v = action.parameters?.[key];
         if (v === undefined || v === null || v === '') {
           throw new Error(`Missing required parameter: ${key}`);

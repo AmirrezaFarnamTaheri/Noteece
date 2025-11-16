@@ -20,7 +20,7 @@ import {
 import { DateTimePicker } from '@mantine/dates';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { IconPlus, IconTarget, IconTrendingUp, IconActivity } from '@tabler/icons-react';
-import logger from '../../utils/logger';
+import { logger } from '../../utils/logger';
 
 interface HealthMetric {
   id: string;
@@ -72,6 +72,7 @@ const HealthMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
 
   useEffect(() => {
     void loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaceId]);
 
   const loadData = async () => {

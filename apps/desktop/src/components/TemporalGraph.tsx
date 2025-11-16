@@ -16,7 +16,7 @@ import {
   Paper,
 } from '@mantine/core';
 import { IconPlayerPlay, IconPlayerPause, IconRefresh, IconZoomIn, IconZoomOut } from '@tabler/icons-react';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 interface GraphNode {
   id: string;
@@ -77,6 +77,7 @@ const TemporalGraph: React.FC<{ spaceId: string }> = ({ spaceId }) => {
 
   useEffect(() => {
     void loadGraph();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaceId]);
 
   useEffect(() => {
@@ -142,6 +143,7 @@ const TemporalGraph: React.FC<{ spaceId: string }> = ({ spaceId }) => {
   const handleSliderChange = (value: number) => {
     if (!evolution) return;
     setCurrentIndex(value);
+    // eslint-disable-next-line security/detect-object-injection -- value is a numeric slider value clamped to snapshots array length
     setCurrentSnapshot(evolution.snapshots[value]);
     setPlaying(false);
   };

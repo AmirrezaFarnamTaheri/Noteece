@@ -18,30 +18,19 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { FadeIn, SlideIn, ScaleIn } from "@/components/animations";
-import { SkeletonBox, SkeletonCard } from "@/components/skeletons";
+import { SkeletonBox } from "@/components/skeletons";
 import { haptics } from "@/lib/haptics";
-import type {
-  HealthStats,
-  HealthGoal,
-  Activity,
-  DayStats,
-  METRIC_ICONS,
-} from "../types/health";
+import type { HealthStats } from "../types/health";
 
 const { width } = Dimensions.get("window");
 
 // Helper function to load health data from database or HealthKit
 async function loadHealthDataFromDB(): Promise<HealthStats | null> {
-  try {
-    // Load health stats from encrypted SQLite database
-    // Falls back to native HealthKit integration if available
-    // Currently returns null - will be populated when health database service is initialized
-    // Note: Mobile health integration requires HealthKit (iOS) or Health Connect (Android) setup
-    return null;
-  } catch (error) {
-    console.warn("Failed to load health data from database:", error);
-    return null;
-  }
+  // Load health stats from encrypted SQLite database
+  // Falls back to native HealthKit integration if available
+  // Currently returns null - will be populated when health database service is initialized
+  // Note: Mobile health integration requires HealthKit (iOS) or Health Connect (Android) setup
+  return null;
 }
 
 export function HealthHub() {
@@ -151,7 +140,7 @@ export function HealthHub() {
     try {
       await loadHealthData();
       haptics.success();
-    } catch (error) {
+    } catch {
       haptics.error();
     } finally {
       setRefreshing(false);

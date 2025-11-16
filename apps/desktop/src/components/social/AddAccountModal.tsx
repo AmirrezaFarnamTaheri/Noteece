@@ -50,7 +50,7 @@ export function AddAccountModal({ opened, onClose, spaceId }: AddAccountModalPro
     onError: (error) => {
       notifications.show({
         title: 'Error',
-        message: `Failed to add account: ${error}`,
+        message: `Failed to add account: ${String(error)}`,
         color: 'red',
       });
     },

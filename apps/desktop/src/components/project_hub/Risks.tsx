@@ -4,7 +4,7 @@ import { Table, Button, Modal, TextInput, Select } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { getProjectRisks, createProjectRisk } from '@/services/api';
 import { ProjectRisk } from '@noteece/types';
-import logger from '../../utils/logger';
+import { logger } from '../../utils/logger';
 
 interface RisksContext {
   projectId: string;
@@ -36,6 +36,7 @@ const Risks: React.FC = () => {
 
   useEffect(() => {
     void fetchRisks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
   const handleSubmit = async (values: typeof form.values) => {

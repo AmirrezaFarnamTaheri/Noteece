@@ -6,7 +6,7 @@ import { getUpcomingTasks } from '../services/api';
 import { useStore } from '../store';
 import { Task } from '@noteece/types';
 import { formatRelativeTime, isOverdue } from '../utils/dateUtils';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 interface UpcomingProperties {
   icon: React.ReactNode;

@@ -33,6 +33,7 @@ const FormTemplates: React.FC = () => {
 
   useEffect(() => {
     void fetchTemplates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSpaceId]);
 
   const handleAddField = () => {

@@ -153,7 +153,8 @@ const BackupRestore: React.FC<BackupRestoreProperties> = ({ onBackupComplete, on
     }
   };
 
-  const formatDate = (dateString: string) => {
+  // eslint-disable-next-line unicorn/consistent-function-scoping
+  const formatDateLocal = (dateString: string) => {
     try {
       return new Date(dateString).toLocaleString();
     } catch {
@@ -161,11 +162,13 @@ const BackupRestore: React.FC<BackupRestoreProperties> = ({ onBackupComplete, on
     }
   };
 
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+  // eslint-disable-next-line unicorn/consistent-function-scoping
+  const formatBytesLocal = (bytes: number) => {
+    if (!Number.isFinite(bytes) || bytes <= 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const index = Math.floor(Math.log(bytes) / Math.log(k));
+    const index = Math.min(sizes.length - 1, Math.floor(Math.log(bytes) / Math.log(k)));
+    // eslint-disable-next-line security/detect-object-injection -- index is a calculated numeric value clamped to sizes array length
     return Math.round((bytes / Math.pow(k, index)) * 100) / 100 + ' ' + sizes[index];
   };
 
@@ -174,6 +177,7 @@ const BackupRestore: React.FC<BackupRestoreProperties> = ({ onBackupComplete, on
       <h2>Backup & Restore</h2>
 
       {message && (
+        // eslint-disable-next-line security/detect-object-injection -- messageType is a controlled string 'success' | 'error' | 'info'
         <div className={`${styles.message} ${styles[messageType]}`}>
           <p>{message}</p>
         </div>
@@ -210,21 +214,22 @@ const BackupRestore: React.FC<BackupRestoreProperties> = ({ onBackupComplete, on
         ) : (
           <div className={styles.backupList}>
             {backups.map((backup) => (
-              <div
+              <button
                 key={backup.id}
                 className={`${styles.backupItem} ${selectedBackupId === backup.id ? styles.selected : ''}`}
                 onClick={() => setSelectedBackupId(backup.id)}
+                type="button"
               >
                 <div className={styles.backupHeader}>
                   <h4>
                     {backup.metadata.description || 'Backup'}
                     {backup.metadata.encrypted && <span className={styles.encrypted}>🔒</span>}
                   </h4>
-                  <span className={styles.date}>{formatDate(backup.metadata.created_at)}</span>
+                  <span className={styles.date}>{formatDateLocal(backup.metadata.created_at)}</span>
                 </div>
                 <div className={styles.backupDetails}>
                   <span className={styles.detail}>
-                    Size: <strong>{formatBytes(backup.metadata.size_bytes)}</strong>
+                    Size: <strong>{formatBytesLocal(backup.metadata.size_bytes)}</strong>
                   </span>
                   <span className={styles.detail}>
                     App v<strong>{backup.metadata.app_version}</strong>
@@ -236,7 +241,7 @@ const BackupRestore: React.FC<BackupRestoreProperties> = ({ onBackupComplete, on
                 <div className={styles.backupId}>
                   <code>{backup.id.slice(0, 12)}...</code>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}

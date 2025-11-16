@@ -49,6 +49,7 @@ export default function UnlockScreen() {
     }
 
     checkBiometric();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const shake = () => {

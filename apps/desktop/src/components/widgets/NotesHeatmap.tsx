@@ -34,6 +34,7 @@ export default function NotesHeatmap() {
       const date = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       date.setDate(date.getDate() - index);
       const key = toLocalDateKey(date);
+      // eslint-disable-next-line security/detect-object-injection -- key is a date string in YYYY-MM-DD format from toLocalDateKey
       activityMap[key] = 0;
     }
 
@@ -44,7 +45,9 @@ export default function NotesHeatmap() {
       const created = new Date(createdAt);
       if (Number.isNaN(created.getTime())) continue;
       const key = toLocalDateKey(created);
+      // eslint-disable-next-line security/detect-object-injection -- key is a date string in YYYY-MM-DD format from toLocalDateKey
       if (activityMap[key] !== undefined) {
+        // eslint-disable-next-line security/detect-object-injection -- key is a date string in YYYY-MM-DD format from toLocalDateKey
         activityMap[key]++;
       }
     }
@@ -64,8 +67,10 @@ export default function NotesHeatmap() {
     ).padStart(2, '0')}`;
 
     for (let index = activityData.length - 1; index >= 0; index--) {
+      // eslint-disable-next-line security/detect-object-injection -- index is a numeric loop variable
       if (activityData[index].count > 0) {
         streak++;
+        // eslint-disable-next-line security/detect-object-injection -- index is a numeric loop variable
       } else if (activityData[index].date !== todayLocalKey) {
         break;
       }

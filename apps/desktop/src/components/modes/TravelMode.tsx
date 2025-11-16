@@ -18,7 +18,7 @@ import {
 } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
 import { IconPlus, IconPlane, IconMapPin, IconCalendar } from '@tabler/icons-react';
-import logger from '../../utils/logger';
+import { logger } from '../../utils/logger';
 
 interface Trip {
   id: string;
@@ -54,6 +54,7 @@ const TravelMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
 
   useEffect(() => {
     void loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaceId]);
 
   const loadData = async () => {

@@ -14,7 +14,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Dimensions,
   RefreshControl,
   ActivityIndicator,
   TouchableOpacity,
@@ -33,8 +32,6 @@ import { ErrorFallback } from "../components/errors";
 import { useCurrentSpace } from "../store/app-context";
 import type { PlatformStats, CategoryStats } from "../types/social";
 
-const { width } = Dimensions.get("window");
-
 export function SocialAnalytics() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -48,6 +45,7 @@ export function SocialAnalytics() {
 
   useEffect(() => {
     loadAnalytics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadAnalytics = async () => {

@@ -95,10 +95,13 @@ const AccountSettings: React.FC<AccountSettingsProperties> = ({ onLogout }) => {
     }
   };
 
+  // eslint-disable-next-line unicorn/consistent-function-scoping
   const formatDate = (timestamp: number | undefined | null) => {
-    if (!timestamp) return 'Never';
+    if (timestamp == null) return 'Never';
+    if (!Number.isFinite(timestamp)) return 'Invalid date';
+    const seconds = Math.max(0, timestamp);
     try {
-      return new Date(timestamp * 1000).toLocaleString();
+      return new Date(seconds * 1000).toLocaleString();
     } catch {
       return 'Invalid date';
     }
@@ -122,25 +125,26 @@ const AccountSettings: React.FC<AccountSettingsProperties> = ({ onLogout }) => {
           <p>Manage your Noteece account</p>
         </div>
 
+        {/* eslint-disable-next-line security/detect-object-injection -- messageType is a controlled string 'success' | 'error' */}
         {message && <div className={`${styles.message} ${styles[messageType]}`}>{message}</div>}
 
         <section className={styles.section}>
           <h3>Profile Information</h3>
           <div className={styles.infoGrid}>
             <div className={styles.infoItem}>
-              <label>Username</label>
+              <strong>Username</strong>
               <p className={styles.value}>{user.username}</p>
             </div>
             <div className={styles.infoItem}>
-              <label>Email</label>
+              <strong>Email</strong>
               <p className={styles.value}>{user.email}</p>
             </div>
             <div className={styles.infoItem}>
-              <label>Account Created</label>
+              <strong>Account Created</strong>
               <p className={styles.value}>{formatDate(user.created_at)}</p>
             </div>
             <div className={styles.infoItem}>
-              <label>Last Login</label>
+              <strong>Last Login</strong>
               <p className={styles.value}>{formatDate(user.last_login_at)}</p>
             </div>
           </div>

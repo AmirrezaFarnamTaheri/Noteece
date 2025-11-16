@@ -42,7 +42,7 @@ class HapticManager {
     if (!this.enabled) return;
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (error) {
+    } catch {
       // Silently fail - haptics may not be available on all devices
     }
   }
@@ -55,7 +55,7 @@ class HapticManager {
     if (!this.enabled) return;
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (error) {
+    } catch {
       // Silently fail
     }
   }
@@ -68,7 +68,7 @@ class HapticManager {
     if (!this.enabled) return;
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    } catch (error) {
+    } catch {
       // Silently fail
     }
   }
@@ -81,7 +81,7 @@ class HapticManager {
     if (!this.enabled) return;
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (error) {
+    } catch {
       // Silently fail
     }
   }
@@ -94,7 +94,7 @@ class HapticManager {
     if (!this.enabled) return;
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    } catch (error) {
+    } catch {
       // Silently fail
     }
   }
@@ -107,7 +107,7 @@ class HapticManager {
     if (!this.enabled) return;
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } catch (error) {
+    } catch {
       // Silently fail
     }
   }
@@ -120,7 +120,7 @@ class HapticManager {
     if (!this.enabled) return;
     try {
       await Haptics.selectionAsync();
-    } catch (error) {
+    } catch {
       // Silently fail
     }
   }
@@ -133,7 +133,7 @@ class HapticManager {
     if (!this.enabled) return;
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
-    } catch (error) {
+    } catch {
       // Silently fail
     }
   }
@@ -146,7 +146,7 @@ class HapticManager {
     if (!this.enabled) return;
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
-    } catch (error) {
+    } catch {
       // Silently fail
     }
   }
