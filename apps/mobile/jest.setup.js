@@ -1,4 +1,9 @@
-import "@testing-library/jest-native/extend-expect";
+// Try to import jest-native matchers if available
+try {
+  require("@testing-library/jest-native/extend-expect");
+} catch (e) {
+  // jest-native is optional, continue without it
+}
 
 // Mock AsyncStorage
 jest.mock("@react-native-async-storage/async-storage", () => ({

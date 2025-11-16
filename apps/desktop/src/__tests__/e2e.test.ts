@@ -267,7 +267,7 @@ describe('E2E: Critical User Workflows', () => {
         user_id: 'user_123',
         session_id: 'session_abc',
         created_at: '2025-11-09T10:00:00Z',
-        expires_at: '2025-11-10T10:00:00Z',
+        expires_at: '2025-12-16T10:00:00Z',
         device: 'Desktop',
       };
 

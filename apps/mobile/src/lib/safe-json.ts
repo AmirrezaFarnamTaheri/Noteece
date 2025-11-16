@@ -64,9 +64,20 @@ export function safeJsonParseWithValidation<T>(
  * @param defaultValue - Default string if stringify fails
  * @returns JSON string or default value
  */
-export function safeJsonStringify(data: unknown, defaultValue = "{}"): string {
+export function safeJsonStringify(data: unknown, defaultValue = ""): string {
   try {
-    return JSON.stringify(data);
+    const seen = new WeakSet<object>();
+    const replacer = (_key: string, value: any) => {
+      if (typeof value === 'object' && value !== null) {
+        if (seen.has(value)) {
+          return "[Circular]";
+        }
+        seen.add(value);
+      }
+      return value;
+    };
+    const result = JSON.stringify(data, replacer);
+    return result === undefined ? defaultValue : result;
   } catch (error) {
     console.error("JSON stringify error:", error);
     return defaultValue;
