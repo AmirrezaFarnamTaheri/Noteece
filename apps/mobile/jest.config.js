@@ -1,5 +1,5 @@
 module.exports = {
-  testEnvironment: "node",
+  preset: "jest-expo",
   transform: {
     "^.+\\.(js|jsx|ts|tsx)$": [
       "babel-jest",
@@ -10,7 +10,7 @@ module.exports = {
     ],
   },
   transformIgnorePatterns: [
-    "node_modules/(?!((jest-)?react-native|@react-native|expo|@expo|@react-navigation|react-native-reanimated|react-native-gesture-handler|@tauri-apps))",
+    "node_modules/(?!((jest-)?react-native|@react-native|expo|@expo|@react-navigation|react-native-reanimated|react-native-gesture-handler|@tauri-apps|nanoid))",
   ],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
