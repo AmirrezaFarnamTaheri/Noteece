@@ -12,7 +12,7 @@ import '@testing-library/jest-dom';
 // Mock Tauri invoke
 const mockInvoke = jest.fn();
 jest.mock('@tauri-apps/api/tauri', () => ({
-  invoke: <T = unknown>(...arguments_: unknown[]) => mockInvoke(...arguments_) as Promise<T>,
+  invoke: <T = unknown,>(...arguments_: unknown[]) => mockInvoke(...arguments_) as Promise<T>,
 }));
 
 // Mock store
@@ -281,6 +281,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
           'invite_user_cmd',
           expect.objectContaining({
             email: 'new@example.com',
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.any(String) returns any type in Jest
             role: expect.any(String),
             invitedBy: 'system_user', // Correct audit identity
           }),

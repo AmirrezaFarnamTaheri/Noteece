@@ -1,5 +1,5 @@
 import React from 'react';
-import Timeline, { TimelineHeaders, SidebarHeader, DateHeader } from 'react-calendar-timeline';
+import { Timeline, TimelineHeaders, SidebarHeader, DateHeader } from 'react-calendar-timeline';
 // Note: CSS import removed as react-calendar-timeline@0.30.0-beta.4 doesn't include pre-built CSS
 // Custom styling should be added via Mantine or inline styles if needed
 import moment from 'moment';

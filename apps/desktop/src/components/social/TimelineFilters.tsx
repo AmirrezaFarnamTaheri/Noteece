@@ -48,7 +48,10 @@ export function TimelineFilters({ onFilterChange }: TimelineFiltersProperties) {
     { value: 'year', label: 'This Year' },
   ];
 
-  const handleFilterUpdate = (key: keyof TimelineFilterValues, value: TimelineFilterValues[keyof TimelineFilterValues]) => {
+  const handleFilterUpdate = (
+    key: keyof TimelineFilterValues,
+    value: TimelineFilterValues[keyof TimelineFilterValues],
+  ) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
     onFilterChange(newFilters);

@@ -97,7 +97,9 @@ export function TimelinePost({ post }: TimelinePostProperties) {
                   </AspectRatio>
                 ) : media.type === 'video' ? (
                   <AspectRatio ratio={16 / 9}>
-                    <video src={media.url} controls style={{ width: '100%', borderRadius: '8px' }} />
+                    <video src={media.url} controls style={{ width: '100%', borderRadius: '8px' }}>
+                      <track kind="captions" srcLang="en" label="English" />
+                    </video>
                   </AspectRatio>
                 ) : null}
               </div>

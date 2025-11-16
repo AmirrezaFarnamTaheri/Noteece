@@ -125,6 +125,7 @@ const AccountSettings: React.FC<AccountSettingsProperties> = ({ onLogout }) => {
           <p>Manage your Noteece account</p>
         </div>
 
+        {/* eslint-disable-next-line security/detect-object-injection -- messageType is a controlled string 'success' | 'error' */}
         {message && <div className={`${styles.message} ${styles[messageType]}`}>{message}</div>}
 
         <section className={styles.section}>

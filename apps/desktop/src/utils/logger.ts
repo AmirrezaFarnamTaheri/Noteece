@@ -71,6 +71,7 @@ class Logger {
     };
 
     // Console output by severity
+    // eslint-disable-next-line security/detect-object-injection -- level is a LogLevel enum value
     const levelStr = LogLevel[level];
     const args: unknown[] = [`[${levelStr}] ${message}`];
     if (error) args.push(error);

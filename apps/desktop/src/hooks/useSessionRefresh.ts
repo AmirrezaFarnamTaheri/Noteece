@@ -93,6 +93,7 @@ export const useSessionRefresh = (onSessionExpired?: () => void, onWarning?: (mi
         clearInterval(refreshIntervalReference.current);
       }
       if (warningTimeoutReference.current) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- Refs are safe to access in cleanup
         clearTimeout(warningTimeoutReference.current);
       }
     };
