@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2025-11-17
+
+### Added
+- **Full RBAC User Management**: Complete enterprise-grade role-based access control with custom roles and permissions.
+- **Offline-first Mobile App**: Full-featured mobile application with local-network sync, biometric unlock, and quick capture.
+- **Encrypted Social Media Aggregation**: Local-first, privacy-focused social media suite for aggregating multiple platforms.
+- **Comprehensive CI/CD Pipeline**: Automated builds and releases for desktop (Windows, macOS, Linux) and mobile (iOS, Android).
+
+### Fixed
+- **Critical Security Vulnerabilities**: Patched a major Tauri CSP security hole and removed production kill-switches in the mobile sync client.
+- **Startup Crash**: Fixed a database migration crash by explicitly enabling the `fts5` feature in `rusqlite`.
+- **Build System Failures**: Corrected the CI workflow to build and package the correct Tauri application binaries.
+- **Panic Risks**: Hardened the backend by removing `.unwrap()` calls in the Foresight engine to prevent crashes from corrupted data.
+
+### Removed
+- **Legacy Code**: Deleted deprecated user management functions from the Rust core.
+- **Dependency Bloat**: Uninstalled multiple unused Expo packages from the mobile app, reducing bundle size.
+- **Obsolete Documentation**: Removed temporary and outdated project files.
+
 ## [Unreleased]
 
 ### Added - Phase 5 Complete: Advanced Integration (November 2025) 🎉

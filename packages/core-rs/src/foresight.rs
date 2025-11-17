@@ -95,7 +95,7 @@ impl InsightSeverity {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct InsightContext {
     pub entity_id: Option<String>,
     pub entity_type: Option<String>, // "task", "project", "note", "habit"
@@ -793,9 +793,10 @@ pub fn get_active_insights(conn: &Connection, limit: u32) -> Result<Vec<Insight>
     )?;
 
     let insights = stmt.query_map([limit.to_string()], |row| {
-        let context: InsightContext = serde_json::from_str(&row.get::<_, String>(5)?).unwrap();
+        let context: InsightContext =
+            serde_json::from_str(&row.get::<_, String>(5)?).unwrap_or_default();
         let suggested_actions: Vec<SuggestedAction> =
-            serde_json::from_str(&row.get::<_, String>(6)?).unwrap();
+            serde_json::from_str(&row.get::<_, String>(6)?).unwrap_or_default();
 
         Ok(Insight {
             id: row.get(0)?,

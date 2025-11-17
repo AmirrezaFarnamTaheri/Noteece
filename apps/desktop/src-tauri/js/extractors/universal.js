@@ -272,9 +272,53 @@
         };
     }
 
+    /**
+     * Load and merge remote selectors with local defaults
+     */
+    async function loadSelectors() {
+        const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/your-repo/noteece/main/config/social_selectors.json';
+
+        let remoteSelectors = {};
+        try {
+            const response = await fetch(`${GITHUB_RAW_URL}?t=${new Date().getTime()}`); // Cache bust
+            if (response.ok) {
+                remoteSelectors = await response.json();
+                console.log('[Noteece] Successfully loaded remote selectors');
+            } else {
+                console.warn('[Noteece] Failed to load remote selectors, using defaults. Status:', response.status);
+            }
+        } catch (error) {
+            console.error('[Noteece] Error fetching remote selectors:', error);
+        }
+
+        const defaultSelectors = {
+            twitter: {
+                timeline: 'div[aria-label="Timeline: Your Home Timeline"]',
+                post: 'article[data-testid="tweet"]',
+                author: 'div[data-testid="User-Name"]',
+                content: 'div[data-testid="tweetText"]',
+            },
+            // Add other platform defaults here
+        };
+
+        // Deep merge remote selectors over defaults
+        const mergedSelectors = { ...defaultSelectors };
+        for (const platform in remoteSelectors) {
+            if (remoteSelectors.hasOwnProperty(platform)) {
+                mergedSelectors[platform] = {
+                    ...defaultSelectors[platform],
+                    ...remoteSelectors[platform],
+                };
+            }
+        }
+
+        return mergedSelectors;
+    }
+
     // Export utilities to platform-specific extractors
     window.__NOTEECE__ = {
         config: window.__NOTEECE_CONFIG__,
+        selectors: {}, // Will be populated by loadSelectors
         utils: {
             sendToBackend,
             queueData,
@@ -290,12 +334,17 @@
         },
     };
 
-    console.log('[Noteece] Extractor framework ready');
+    // Initialize selectors and then the platform-specific extractor
+    loadSelectors().then(selectors => {
+        window.__NOTEECE__.selectors = selectors;
+        console.log('[Noteece] Extractor framework ready with selectors:', selectors);
 
-    // Load platform-specific extractor
-    const platform = window.__NOTEECE_CONFIG__.platform;
-    if (platform) {
-        console.log(`[Noteece] Loading ${platform} extractor`);
-        // Platform-specific code will be concatenated after this
-    }
+        // Load platform-specific extractor
+        const platform = window.__NOTEECE_CONFIG__.platform;
+        if (platform) {
+            console.log(`[Noteece] Loading ${platform} extractor`);
+            // Platform-specific code will be concatenated after this
+        }
+    });
+
 })();
