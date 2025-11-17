@@ -1,7 +1,6 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MantineProvider } from '@mantine/core';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { invoke } from '@tauri-apps/api/tauri';
+import { renderWithProviders } from '../../utils/test-utils';
 import UserManagement from '../UserManagement';
 import '@testing-library/jest-dom';
 
@@ -51,14 +50,6 @@ const sampleRoles = [
   { id: 'viewer', name: 'Viewer', description: 'View only', permissions: ['read'], created_at: Date.now() },
 ];
 
-const renderWithProviders = (component: React.ReactElement) => {
-  const queryClient = new QueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MantineProvider>{component}</MantineProvider>
-    </QueryClientProvider>,
-  );
-};
 
 describe('UserManagement', () => {
   beforeEach(() => {

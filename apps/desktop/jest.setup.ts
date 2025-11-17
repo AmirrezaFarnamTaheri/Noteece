@@ -1,6 +1,25 @@
 import React from 'react';
 import '@testing-library/jest-dom';
 
+// Polyfill for window.matchMedia
+if (typeof window.matchMedia !== 'function') {
+  Object.defineProperty(window, 'matchMedia', {
+    enumerable: true,
+    configurable: true,
+    writable: true,
+    value: jest.fn().mockImplementation((query) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(), // deprecated
+      removeListener: jest.fn(), // deprecated
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  });
+}
+
 // Provide stable dimensions for Recharts ResponsiveContainer to avoid warnings in JSDOM
 jest.mock('recharts', () => {
   const actualRecharts = jest.requireActual('recharts');

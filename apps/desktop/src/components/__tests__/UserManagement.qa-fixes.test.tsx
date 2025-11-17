@@ -3,9 +3,8 @@
  * Tests for Session 5 security and functionality fixes
  */
 
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
-import { MantineProvider } from '@mantine/core';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { renderWithProviders } from '../../utils/test-utils';
 import UserManagement from '../UserManagement';
 import '@testing-library/jest-dom';
 
@@ -28,23 +27,6 @@ jest.mock('../../services/auth', () => ({
   },
 }));
 
-const createQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-      },
-    },
-  });
-
-const renderWithProviders = (component: React.ReactElement) => {
-  const queryClient = createQueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MantineProvider>{component}</MantineProvider>
-    </QueryClientProvider>,
-  );
-};
 
 const openEditModalForUser = async (email: string) => {
   const actionsButton = await screen.findByLabelText(new RegExp(`Actions for ${email}`, 'i'));
