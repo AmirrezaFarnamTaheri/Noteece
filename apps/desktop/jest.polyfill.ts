@@ -8,7 +8,13 @@ const importMetaPolyfill = {
 };
 
 // Attach to a non-conflicting global
-Object.defineProperty(globalThis as any, 'importMeta', {
+type GlobalWithImportMeta = typeof globalThis & {
+  importMeta?: typeof importMetaPolyfill;
+};
+
+const globalWithImportMeta = globalThis as GlobalWithImportMeta;
+
+Object.defineProperty(globalWithImportMeta, 'importMeta', {
   value: importMetaPolyfill,
   writable: false,
   configurable: true,
@@ -17,7 +23,7 @@ Object.defineProperty(globalThis as any, 'importMeta', {
 
 // If some code checks `import.meta`, provide it only when not already defined and without overriding a function
 try {
-  const currentImport = (globalThis as any).import;
+  const currentImport = (globalThis as typeof globalThis & { import?: unknown }).import;
   if (currentImport && typeof currentImport === 'function' && !('meta' in currentImport)) {
     Object.defineProperty(currentImport, 'meta', {
       value: importMetaPolyfill,
@@ -31,26 +37,26 @@ try {
 }
 
 // Basic ResizeObserver polyfill for Mantine components in Jest/jsdom
-if (typeof (globalThis as any).ResizeObserver === 'undefined') {
+type GlobalWithResizeObserver = typeof globalThis & {
+  ResizeObserver?: typeof ResizeObserver;
+};
+
+const globalWithResizeObserver = globalThis as GlobalWithResizeObserver;
+
+if (globalWithResizeObserver.ResizeObserver === undefined) {
   class ResizeObserver {
-    callback: ResizeObserverCallback;
-
-    constructor(callback: ResizeObserverCallback) {
-      this.callback = callback;
-    }
-
-    observe(_target: Element) {
+    observe(_target: Element): void {
       // No-op in tests
     }
 
-    unobserve(_target: Element) {
+    unobserve(_target: Element): void {
       // No-op in tests
     }
 
-    disconnect() {
+    disconnect(): void {
       // No-op in tests
     }
   }
 
-  (globalThis as any).ResizeObserver = ResizeObserver;
+  globalWithResizeObserver.ResizeObserver = ResizeObserver;
 }
