@@ -9,7 +9,7 @@ const invokeMock = jest.fn();
 
 // Mock Tauri API
 jest.mock('@tauri-apps/api/tauri', () => ({
-  invoke: (...args: Parameters<typeof invokeMock>) => invokeMock(...args),
+  invoke: (cmd: string, args?: Record<string, unknown>) => invokeMock(cmd, args),
 }));
 
 // Mock hooks
@@ -69,10 +69,12 @@ beforeEach(() => {
       case 'get_recent_notes_cmd':
       case 'get_all_tasks_in_space_cmd':
       case 'get_running_entries_cmd':
-      case 'get_recent_time_entries_cmd':
+      case 'get_recent_time_entries_cmd': {
         return [];
-      default:
+      }
+      default: {
         return null;
+      }
     }
   });
 });

@@ -3,9 +3,8 @@
  * Tests for Session 5 security and functionality fixes
  */
 
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
-import { MantineProvider } from '@mantine/core';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { screen, fireEvent, waitFor, within, render } from '@testing-library/react';
+import { AllTheProviders } from '../../utils/test-utils';
 import UserManagement from '../UserManagement';
 import '@testing-library/jest-dom';
 
@@ -28,26 +27,9 @@ jest.mock('../../services/auth', () => ({
   },
 }));
 
-const createQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-      },
-    },
-  });
-
-const renderWithProviders = (component: React.ReactElement) => {
-  const queryClient = createQueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MantineProvider>{component}</MantineProvider>
-    </QueryClientProvider>,
-  );
-};
-
 const openEditModalForUser = async (email: string) => {
-  const actionsButton = await screen.findByLabelText(new RegExp(`Actions for ${email}`, 'i'));
+  const userRow = await screen.findByText(email);
+  const actionsButton = await within(userRow.closest('tr') as HTMLElement).findByLabelText(/actions for/i);
   fireEvent.click(actionsButton);
   const editMenuItem = await screen.findByRole('menuitem', { name: /edit role/i });
   fireEvent.click(editMenuItem);
@@ -96,7 +78,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
         return defaultInvokeHandler(cmd);
       });
 
-      renderWithProviders(<UserManagement />);
+      render(<UserManagement />, { wrapper: AllTheProviders });
 
       // Open invite modal
       const inviteButton = screen.getByRole('button', { name: /invite user/i });
@@ -163,7 +145,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
     });
 
     it('should revoke permissions when resetting to role defaults (empty custom permissions)', async () => {
-      renderWithProviders(<UserManagement />);
+      render(<UserManagement />, { wrapper: AllTheProviders });
 
       await waitFor(() => {
         expect(screen.getByText('user@example.com')).toBeInTheDocument();
@@ -199,7 +181,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
     });
 
     it('should NOT revoke role permissions when resetting to defaults', async () => {
-      renderWithProviders(<UserManagement />);
+      render(<UserManagement />, { wrapper: AllTheProviders });
 
       await waitFor(() => {
         expect(screen.getByText('user@example.com')).toBeInTheDocument();
@@ -231,7 +213,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
     });
 
     it('should revoke only permissions not in new custom list', async () => {
-      renderWithProviders(<UserManagement />);
+      render(<UserManagement />, { wrapper: AllTheProviders });
 
       await waitFor(() => {
         expect(screen.getByText('user@example.com')).toBeInTheDocument();
@@ -302,7 +284,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
         return defaultInvokeHandler(cmd);
       });
 
-      renderWithProviders(<UserManagement />);
+      render(<UserManagement />, { wrapper: AllTheProviders });
 
       // Invite user
       const inviteButton = screen.getByRole('button', { name: /invite user/i });
@@ -316,14 +298,14 @@ describe('UserManagement QA Fixes (Session 5)', () => {
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-          expect(mockInvoke).toHaveBeenCalledWith(
-            'invite_user_cmd',
-            expect.objectContaining({
-              email: 'new@example.com',
-              roleId: expect.any(String),
-              invitedBy: 'system_user', // Correct audit identity
-            }),
-          );
+        expect(mockInvoke).toHaveBeenCalledWith(
+          'invite_user_cmd',
+          expect.objectContaining({
+            email: 'new@example.com',
+            roleId: expect.any(String),
+            invitedBy: 'system_user', // Correct audit identity
+          }),
+        );
       });
     });
   });
@@ -345,7 +327,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
         return defaultInvokeHandler(cmd);
       });
 
-      renderWithProviders(<UserManagement />);
+      render(<UserManagement />, { wrapper: AllTheProviders });
 
       const inviteButton = screen.getByRole('button', { name: /invite user/i });
       fireEvent.click(inviteButton);
@@ -374,7 +356,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
     });
 
     it('should validate email format before submission', async () => {
-      renderWithProviders(<UserManagement />);
+      render(<UserManagement />, { wrapper: AllTheProviders });
 
       const inviteButton = screen.getByRole('button', { name: /invite user/i });
       fireEvent.click(inviteButton);
@@ -412,7 +394,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
         return defaultInvokeHandler(cmd);
       });
 
-      renderWithProviders(<UserManagement />);
+      render(<UserManagement />, { wrapper: AllTheProviders });
 
       await waitFor(() => {
         expect(screen.getByText(/no users yet/i)).toBeInTheDocument();
@@ -422,7 +404,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
     it('should handle backend errors gracefully', async () => {
       mockInvoke.mockRejectedValue(new Error('Database connection failed'));
 
-      renderWithProviders(<UserManagement />);
+      render(<UserManagement />, { wrapper: AllTheProviders });
 
       await waitFor(() => {
         // Should show error state, not crash
@@ -460,7 +442,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
         return defaultInvokeHandler(cmd);
       });
 
-      renderWithProviders(<UserManagement />);
+      render(<UserManagement />, { wrapper: AllTheProviders });
 
       await waitFor(() => {
         expect(screen.getByText('user1@example.com')).toBeInTheDocument();

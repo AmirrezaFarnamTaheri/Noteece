@@ -1,7 +1,6 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MantineProvider } from '@mantine/core';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { screen, fireEvent, waitFor, render } from '@testing-library/react';
 import { invoke } from '@tauri-apps/api/tauri';
+import { AllTheProviders } from '../../utils/test-utils';
 import UserManagement from '../UserManagement';
 import '@testing-library/jest-dom';
 
@@ -51,14 +50,6 @@ const sampleRoles = [
   { id: 'viewer', name: 'Viewer', description: 'View only', permissions: ['read'], created_at: Date.now() },
 ];
 
-const renderWithProviders = (component: React.ReactElement) => {
-  const queryClient = new QueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MantineProvider>{component}</MantineProvider>
-    </QueryClientProvider>,
-  );
-};
 
 describe('UserManagement', () => {
   beforeEach(() => {
@@ -78,24 +69,24 @@ describe('UserManagement', () => {
   });
 
   it('renders user management page', () => {
-    renderWithProviders(<UserManagement />);
+    render(<UserManagement />, { wrapper: AllTheProviders });
     expect(screen.getByText('User Management')).toBeInTheDocument();
   });
 
   it('displays user count badge', async () => {
-    renderWithProviders(<UserManagement />);
+    render(<UserManagement />, { wrapper: AllTheProviders });
     await waitFor(() => {
       expect(screen.getByText('2 Users')).toBeInTheDocument();
     });
   });
 
   it('shows invite user button', () => {
-    renderWithProviders(<UserManagement />);
+    render(<UserManagement />, { wrapper: AllTheProviders });
     expect(screen.getByRole('button', { name: /invite user/i })).toBeInTheDocument();
   });
 
   it('displays quick stats cards', async () => {
-    renderWithProviders(<UserManagement />);
+    render(<UserManagement />, { wrapper: AllTheProviders });
     expect(await screen.findByText('Active Users', { selector: 'p' })).toBeInTheDocument();
     expect(await screen.findByText('Pending Invites', { selector: 'p' })).toBeInTheDocument();
     const [rolesCardLabel] = await screen.findAllByText('Roles', { selector: 'p' });
@@ -103,20 +94,20 @@ describe('UserManagement', () => {
   });
 
   it('shows three tabs', () => {
-    renderWithProviders(<UserManagement />);
+    render(<UserManagement />, { wrapper: AllTheProviders });
     expect(screen.getByRole('tab', { name: /users/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /roles/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /permissions/i })).toBeInTheDocument();
   });
 
   it('displays user table with mock users', async () => {
-    renderWithProviders(<UserManagement />);
+    render(<UserManagement />, { wrapper: AllTheProviders });
     expect(await screen.findByText('john@example.com')).toBeInTheDocument();
     expect(screen.getByText('jane@example.com')).toBeInTheDocument();
   });
 
   it('opens invite modal when invite button clicked', async () => {
-    renderWithProviders(<UserManagement />);
+    render(<UserManagement />, { wrapper: AllTheProviders });
     const inviteButton = screen.getByRole('button', { name: /invite user/i });
 
     fireEvent.click(inviteButton);
@@ -126,7 +117,7 @@ describe('UserManagement', () => {
   });
 
   it('displays role badges for users', async () => {
-    renderWithProviders(<UserManagement />);
+    render(<UserManagement />, { wrapper: AllTheProviders });
     const ownerRow = await screen.findByText('john@example.com');
     const adminRow = await screen.findByText('jane@example.com');
     expect(ownerRow.closest('tr')).toHaveTextContent(/owner/i);
@@ -134,7 +125,7 @@ describe('UserManagement', () => {
   });
 
   it('shows roles panel when roles tab clicked', async () => {
-    renderWithProviders(<UserManagement />);
+    render(<UserManagement />, { wrapper: AllTheProviders });
     const rolesTab = screen.getByRole('tab', { name: /roles/i });
 
     fireEvent.click(rolesTab);
