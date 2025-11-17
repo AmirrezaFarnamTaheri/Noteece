@@ -160,5 +160,68 @@ jest.mock("expo-linear-gradient", () => {
   };
 });
 
+// Quiet expected console noise during tests while leaving other logs intact
+const SUPPRESSED_ERROR_PATTERNS = [
+  "JSON parse error:",
+  "JSON validation failed for:",
+  "Failed to get data stats:",
+  "🔒 SECURITY WARNING",
+  "Sync failed:",
+];
+
+const SUPPRESSED_LOG_PATTERNS = [
+  "Running migrations",
+  "Running migration v1 -> v2",
+  "Running migration v2 -> v3",
+  "Added space_id column",
+  "Added all_day column",
+  "Added recurrence_rule column",
+  "Added created_at column",
+  "Added updated_at column",
+  "Migration v1 -> v2 completed successfully",
+  "Migration v2 -> v3",
+  "Database migrated to version",
+  "Database initialized successfully",
+  "Database already at version",
+];
+
+const normalizeForMatch = (value) => {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (value instanceof Error) {
+    return value.message;
+  }
+  if (value === undefined || value === null) {
+    return "";
+  }
+  try {
+    return String(value);
+  } catch {
+    return "";
+  }
+};
+
+const shouldSuppress = (value, patterns) => {
+  const normalized = normalizeForMatch(value);
+  return Boolean(normalized) && patterns.some((pattern) => normalized.includes(pattern));
+};
+
+const originalConsoleError = console.error;
+console.error = (...args) => {
+  if (args.length && shouldSuppress(args[0], SUPPRESSED_ERROR_PATTERNS)) {
+    return;
+  }
+  originalConsoleError(...args);
+};
+
+const originalConsoleLog = console.log;
+console.log = (...args) => {
+  if (args.length && shouldSuppress(args[0], SUPPRESSED_LOG_PATTERNS)) {
+    return;
+  }
+  originalConsoleLog(...args);
+};
+
 // Restore to avoid global side effects in tests
 Object.defineProperty = originalDefineProperty;
