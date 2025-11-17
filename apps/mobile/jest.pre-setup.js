@@ -114,19 +114,49 @@ if (typeof global.requestAnimationFrame === "undefined") {
   global.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 0);
 }
 
-// Mock @expo/vector-icons
+// Mock @expo/vector-icons to avoid loading native font modules
 jest.mock("@expo/vector-icons", () => {
+  const React = require("react");
   const { View } = require("react-native");
-  return {
-    // @ts-ignore
-    ...Object.keys(require("@expo/vector-icons/build/Icons")).reduce(
-      (acc, name) => {
-        // @ts-ignore
-        acc[name] = (props) => <View {...props} />;
-        return acc;
+
+  const MockIcon = React.forwardRef((props, ref) =>
+    React.createElement(View, { ref, ...props }),
+  );
+
+  return new Proxy(
+    {},
+    {
+      // Whenever a specific icon set is requested (e.g., AntDesign)
+      get: (_, prop) => {
+        if (prop === "__esModule") {
+          return true;
+        }
+        return MockIcon;
       },
-      {},
-    ),
+    },
+  );
+});
+
+// Provide a lightweight mock for expo-font since @expo/vector-icons depends on it
+jest.mock("expo-font", () => ({
+  loadAsync: jest.fn(() => Promise.resolve()),
+  isLoaded: jest.fn(() => true),
+  unloadAsync: jest.fn(() => Promise.resolve()),
+}));
+
+// Mock expo-linear-gradient which requires native view managers
+jest.mock("expo-linear-gradient", () => {
+  const React = require("react");
+  const { View } = require("react-native");
+
+  const MockLinearGradient = React.forwardRef((props, ref) =>
+    React.createElement(View, { ref, ...props }),
+  );
+
+  return {
+    __esModule: true,
+    LinearGradient: MockLinearGradient,
+    default: MockLinearGradient,
   };
 });
 

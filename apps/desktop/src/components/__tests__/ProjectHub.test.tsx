@@ -17,7 +17,7 @@ describe('ProjectHub', () => {
   it('should render the ProjectHub component', async () => {
     const { getByText } = render(
       <MantineProvider>
-        <MemoryRouter>
+        <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <ProjectHub />
         </MemoryRouter>
       </MantineProvider>,
