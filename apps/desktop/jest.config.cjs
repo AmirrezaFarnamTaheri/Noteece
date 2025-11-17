@@ -22,6 +22,11 @@ module.exports = {
     '^@tauri-apps/api/tauri$': '<rootDir>/__mocks__/@tauri-apps/api/tauri.ts',
     '^@noteece/ui$': '<rootDir>/../../packages/ui/src/index.ts',
     '^@noteece/types$': '<rootDir>/../../packages/types/src/index.ts',
+    // Force peer dependencies to resolve to the app's node_modules
+    '^@mantine/core$': '<rootDir>/node_modules/@mantine/core',
+    '^@mantine/hooks$': '<rootDir>/node_modules/@mantine/hooks',
+    '^react$': '<rootDir>/node_modules/react',
+    '^react-dom$': '<rootDir>/node_modules/react-dom',
   },
   // Avoid altering default resolution; use moduleNameMapper for packages
   // modulePaths: ['<rootDir>/../../packages'], // removed to prevent raw TS resolution
