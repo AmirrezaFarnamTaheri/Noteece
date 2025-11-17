@@ -64,7 +64,7 @@ export function safeJsonParseWithValidation<T>(
  * @param defaultValue - Default string if stringify fails
  * @returns JSON string or default value
  */
-export function safeJsonStringify(data: unknown, defaultValue = ""): string {
+export function safeJsonStringify(data: unknown, defaultValue = "{}"): string {
   try {
     const seen = new WeakSet<object>();
     const replacer = (_key: string, value: any) => {
@@ -77,7 +77,8 @@ export function safeJsonStringify(data: unknown, defaultValue = ""): string {
       return value;
     };
     const result = JSON.stringify(data, replacer);
-    return result === undefined ? defaultValue : result;
+    // JSON.stringify(undefined) returns undefined; fall back to defaultValue in that case
+    return result ?? defaultValue;
   } catch (error) {
     console.error("JSON stringify error:", error);
     return defaultValue;

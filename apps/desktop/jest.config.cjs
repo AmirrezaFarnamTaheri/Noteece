@@ -1,3 +1,5 @@
+const { defaults } = require('jest-config');
+
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
@@ -19,6 +21,12 @@ module.exports = {
   },
   // Avoid altering default resolution; use moduleNameMapper for packages
   // modulePaths: ['<rootDir>/../../packages'], // removed to prevent raw TS resolution
+  moduleDirectories: [
+    'node_modules',
+    '<rootDir>/node_modules',
+    '<rootDir>/../../node_modules',
+    ...defaults.moduleDirectories,
+  ],
   testMatch: ['<rootDir>/src/**/__tests__/**/*.test.ts?(x)'],
   setupFiles: ['<rootDir>/jest.polyfill.ts'],
 };

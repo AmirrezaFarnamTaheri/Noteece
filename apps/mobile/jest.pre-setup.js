@@ -38,8 +38,8 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
-// Mock for nanoid
-jest.mock('nanoid', () => ({
+// Mock for nanoid (non-secure variant used in tests to avoid ESM/CJS issues)
+jest.mock('nanoid/non-secure', () => ({
   nanoid: () => 'test-id',
 }));
 
@@ -89,6 +89,12 @@ if (typeof global.crypto === 'undefined') {
       },
     },
   };
+}
+
+// Provide a no-op requestAnimationFrame for libraries expecting it
+if (typeof global.requestAnimationFrame === 'undefined') {
+  // @ts-ignore
+  global.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 0);
 }
 
 // Mock @expo/vector-icons

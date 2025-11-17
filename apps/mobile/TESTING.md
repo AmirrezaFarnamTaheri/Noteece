@@ -612,14 +612,12 @@ adb install path/to/app.apk
 ### Unit Tests
 
 ```bash
-# Run all tests
+# From the repo root (recommended in monorepo)
+pnpm test:coverage
+
+# Or from apps/mobile using npm (legacy)
 npm test
-
-# Run with coverage
 npm test -- --coverage
-
-# Watch mode
-npm test -- --watch
 ```
 
 **Test Files to Run**:
