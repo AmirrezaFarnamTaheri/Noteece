@@ -1,0 +1,11 @@
+{
+  "twitter": {
+    "timeline": ".timeline-selector",
+    "post": ".post-selector",
+    "likeButton": ".like-button-selector"
+  },
+  "instagram": {
+    "feed": "._main-feed",
+    "story": "._story-item"
+  }
+}
