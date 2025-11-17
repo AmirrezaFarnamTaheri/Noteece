@@ -138,7 +138,6 @@ pub fn init_rbac_tables(conn: &Connection) -> Result<(), rusqlite::Error> {
 
     Ok(())
 }
-
 /// Initialize default system roles
 fn init_default_roles(conn: &Connection) -> Result<(), rusqlite::Error> {
     let roles = vec![
@@ -198,7 +197,6 @@ fn init_default_roles(conn: &Connection) -> Result<(), rusqlite::Error> {
 
     Ok(())
 }
-
 /// Get all user permissions for a space in bulk (optimized to avoid N+1 queries)
 fn get_all_space_user_permissions(
     conn: &Connection,
@@ -612,4 +610,3 @@ pub fn remove_user_from_space(
 
     Ok(())
 }
-
