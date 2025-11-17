@@ -142,10 +142,7 @@ describe('SyncStatus', () => {
     fireEvent.click(syncButton);
 
     await waitFor(() => {
-      expect(mockInvoke).toHaveBeenCalledWith(
-        'record_sync_cmd',
-        expect.objectContaining({ space_id: 'space-123' }),
-      );
+      expect(mockInvoke).toHaveBeenCalledWith('record_sync_cmd', expect.objectContaining({ space_id: 'space-123' }));
     });
   });
 
