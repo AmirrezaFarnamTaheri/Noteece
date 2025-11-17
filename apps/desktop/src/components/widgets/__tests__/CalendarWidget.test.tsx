@@ -59,7 +59,7 @@ describe('CalendarWidget', () => {
     const today = new Date();
     const currentMonth = today.toLocaleDateString('en-US', { month: 'long' });
     // eslint-disable-next-line security/detect-non-literal-regexp -- currentMonth is from Date.toLocaleDateString which returns a safe string
-    expect(screen.getByText(new RegExp(currentMonth, 'i'))).toBeInTheDocument();
+    expect(screen.getAllByText(new RegExp(currentMonth, 'i')).length).toBeGreaterThan(0);
   });
 
   it('shows legend badges', () => {

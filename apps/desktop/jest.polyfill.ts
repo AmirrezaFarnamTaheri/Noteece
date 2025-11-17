@@ -29,3 +29,28 @@ try {
 } catch {
   // Ignore if environment doesn't allow touching globalThis.import
 }
+
+// Basic ResizeObserver polyfill for Mantine components in Jest/jsdom
+if (typeof (globalThis as any).ResizeObserver === 'undefined') {
+  class ResizeObserver {
+    callback: ResizeObserverCallback;
+
+    constructor(callback: ResizeObserverCallback) {
+      this.callback = callback;
+    }
+
+    observe(_target: Element) {
+      // No-op in tests
+    }
+
+    unobserve(_target: Element) {
+      // No-op in tests
+    }
+
+    disconnect() {
+      // No-op in tests
+    }
+  }
+
+  (globalThis as any).ResizeObserver = ResizeObserver;
+}

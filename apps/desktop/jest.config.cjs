@@ -15,7 +15,9 @@ module.exports = {
   },
   moduleNameMapper: {
     // Map CSS modules to a proxy so Jest can import them
-    '\\\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    // Stub logger to avoid import.meta issues in tests
+    'utils/logger$': '<rootDir>/__mocks__/logger.ts',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@tauri-apps/api/tauri$': '<rootDir>/__mocks__/@tauri-apps/api/tauri.ts',
     '^@noteece/ui$': '<rootDir>/../../packages/ui/src/index.ts',
