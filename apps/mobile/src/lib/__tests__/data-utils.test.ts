@@ -12,6 +12,11 @@ jest.mock("expo-secure-store", () => ({
   deleteItemAsync: jest.fn(() => Promise.resolve()),
 }));
 
+jest.mock("expo-sharing", () => ({
+  isAvailableAsync: jest.fn(async () => false),
+  shareAsync: jest.fn(async () => ({})),
+}));
+
 const mockedGetDatabase = getDatabase as jest.MockedFunction<
   typeof getDatabase
 >;

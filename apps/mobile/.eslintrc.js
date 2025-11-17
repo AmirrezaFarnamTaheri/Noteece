@@ -16,6 +16,7 @@ module.exports = {
           "^expo-",
           "^@testing-library/",
           "^@tauri-apps/",
+          "^@jest/globals$",
           "^i18next$",
           "^react-i18next$",
           "^uuid$",

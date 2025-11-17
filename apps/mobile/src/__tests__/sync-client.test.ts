@@ -1,3 +1,8 @@
+jest.mock("@/lib/database", () => ({
+  dbQuery: jest.fn(async () => []),
+  dbExecute: jest.fn(async () => undefined),
+}));
+
 import { SyncClient } from "@/lib/sync/sync-client";
 
 describe("SyncClient", () => {

@@ -3,11 +3,23 @@ module.exports = {
   transform: {
     "^.+\\.(js|jsx|ts|tsx)$": "babel-jest",
   },
-  transformIgnorePatterns: [
-    "node_modules/(?!(jest-)?react-native|@react-native/(js-|community)|@react-native-async-storage|@react-native/js-polyfills|expo(nent)?|@expo(nent)?/.*|react-navigation|@react-navigation/.*|react-native-reanimated|react-native-gesture-handler|react-native-svg|@unimodules/.*|unimodules|sentry-expo)",
-  ],
+  // With pnpm and React Native/Expo, it's more reliable to transform
+  // all modules instead of ignoring node_modules, to avoid Flow/JS syntax
+  // issues in packages like @react-native/js-polyfills.
+  transformIgnorePatterns: [],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
+    "^expo/src/async-require/messageSocket$":
+      "<rootDir>/jest.mocks/expo-messageSocket.js",
+    "^react-native/Libraries/BatchedBridge/NativeModules$":
+      "<rootDir>/jest.mocks/react-native-NativeModules.js",
+    "^expo-modules-core/src/polyfill/dangerous-internal$":
+      "<rootDir>/jest.mocks/expo-modules-core-dangerous-internal.js",
+    "^expo/src/winter/FormData$":
+      "<rootDir>/jest.mocks/expo-winter-FormData.js",
+    "^expo/src/winter$": "<rootDir>/node_modules/expo/build/winter/index.js",
+    "^expo/virtual/streams$":
+      "<rootDir>/jest.mocks/expo-virtual-streams.js",
   },
   setupFiles: ["<rootDir>/jest.pre-setup.js"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],

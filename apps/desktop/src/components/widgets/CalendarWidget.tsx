@@ -53,8 +53,8 @@ export function CalendarWidget() {
     }
   }
 
-  const getDayProperties = (date: string) => {
-    const dateObj = new Date(date);
+  const getDayProperties = (date: string | Date | null) => {
+    const dateObj = date instanceof Date ? date : new Date(date || '');
     const dateString = dateObj.toDateString();
     const hasTasks = datesWithTasks.has(dateString);
     const hasNotes = datesWithNotes.has(dateString);
@@ -67,6 +67,11 @@ export function CalendarWidget() {
       return { style: { backgroundColor: 'var(--mantine-color-green-1)' } };
     }
     return {};
+  };
+
+  const handleDateChange = (date: string | null) => {
+    if (!date) return;
+    setSelectedDate(new Date(date));
   };
 
   return (
@@ -82,8 +87,9 @@ export function CalendarWidget() {
 
       {/* Mantine v8 Calendar - Display with task/note indicators */}
       <Calendar
-        defaultValue={selectedDate}
-        onDayClick={setSelectedDate}
+        defaultDate={selectedDate}
+        date={selectedDate}
+        onDateChange={handleDateChange}
         getDayProps={getDayProperties}
         size="sm"
       />
