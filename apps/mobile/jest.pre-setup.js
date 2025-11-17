@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // jest-pre-setup.js
-import 'react-native-gesture-handler/jest-setup';
+// import 'react-native-gesture-handler/jest-setup';
 import { jest } from '@jest/globals';
 
 // Silence the warning: Animated: `useNativeDriver` is not supported because the native animated module is missing
@@ -16,22 +16,27 @@ if (typeof window !== 'undefined' && typeof window.ResizeObserver === 'undefined
   }));
 }
 
-// Wrap Object.defineProperty to handle null/undefined gracefully during initial module load only
 const originalDefineProperty = Object.defineProperty;
-const guardedDefineProperty = function (obj, prop, descriptor) {
+let isDefining = false;
+
+function safeDefineProperty(obj, prop, descriptor) {
+  if (isDefining) return obj;
   try {
     if (obj === null || obj === undefined || (typeof obj !== 'object' && typeof obj !== 'function')) {
       return obj;
     }
+    isDefining = true;
     return originalDefineProperty.call(Object, obj, prop, descriptor);
   } catch (_error) {
     return obj;
+  } finally {
+    isDefining = false;
   }
-};
+}
 
-// Temporarily swap during early setup (module init time)
-// @ts-ignore
-Object.defineProperty = guardedDefineProperty;
+// Export the helper for modules that need it
+module.exports.safeDefineProperty = safeDefineProperty;
+
 
 // Mock for async storage
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -104,5 +109,6 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
-// Restore to avoid global side effects in tests
-Object.defineProperty = originalDefineProperty;
+if (typeof global.requestAnimationFrame === 'undefined') {
+  global.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 0);
+}

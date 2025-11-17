@@ -3,9 +3,7 @@ module.exports = {
   transform: {
     "^.+\\.(js|jsx|ts|tsx)$": "babel-jest",
   },
-  transformIgnorePatterns: [
-    "node_modules/(?!(jest-)?react-native|@react-native/(js-|community)|@react-native-async-storage|@react-native/js-polyfills|expo(nent)?|@expo(nent)?/.*|react-navigation|@react-navigation/.*|react-native-reanimated|react-native-gesture-handler|react-native-svg|@unimodules/.*|unimodules|sentry-expo)",
-  ],
+  transformIgnorePatterns: [],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },

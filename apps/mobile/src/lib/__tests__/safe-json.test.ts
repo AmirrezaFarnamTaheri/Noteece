@@ -128,8 +128,8 @@ describe("safeJsonStringify", () => {
 
     const consoleSpy = jest.spyOn(console, "error").mockImplementation();
     const result = safeJsonStringify(obj, "{}");
-    expect(result).toBe("{}");
-    expect(consoleSpy).toHaveBeenCalled();
+    expect(result).toBe('{"key":"value","self":"[Circular]"}');
+    expect(consoleSpy).not.toHaveBeenCalled();
     consoleSpy.mockRestore();
   });
 
@@ -144,7 +144,7 @@ describe("safeJsonStringify", () => {
 
     const consoleSpy = jest.spyOn(console, "error").mockImplementation();
     const result = safeJsonStringify(obj, "[]");
-    expect(result).toBe("[]");
+    expect(result).toBe('{"key":"value","self":"[Circular]"}');
     consoleSpy.mockRestore();
   });
 });

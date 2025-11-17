@@ -54,7 +54,7 @@ export function safeJsonParseWithValidation<T>(
     return parsed;
   }
 
-  console.error("JSON validation failed for:", jsonString?.substring(0, 100));
+  console.error("JSON validation failed for:", jsonString?.substring(0, 100) ?? "undefined");
   return defaultValue;
 }
 
@@ -64,22 +64,23 @@ export function safeJsonParseWithValidation<T>(
  * @param defaultValue - Default string if stringify fails
  * @returns JSON string or default value
  */
-export function safeJsonStringify(data: unknown, defaultValue = ""): string {
+export function safeJsonStringify(data: unknown, defaultValue = '{}'): string {
   try {
     const seen = new WeakSet<object>();
     const replacer = (_key: string, value: any) => {
       if (typeof value === 'object' && value !== null) {
         if (seen.has(value)) {
-          return "[Circular]";
+          return '[Circular]';
         }
         seen.add(value);
       }
       return value;
     };
     const result = JSON.stringify(data, replacer);
-    return result === undefined ? defaultValue : result;
+    // JSON.stringify(undefined) yields undefined; return default instead
+    return result ?? defaultValue;
   } catch (error) {
-    console.error("JSON stringify error:", error);
+    console.error('JSON stringify error:', error);
     return defaultValue;
   }
 }

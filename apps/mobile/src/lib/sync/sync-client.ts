@@ -33,7 +33,7 @@
  * See establishSecureConnection() method for implementation notes.
  */
 
-import { nanoid } from "nanoid";
+import { nanoid } from "nanoid/non-secure";
 import * as Crypto from "expo-crypto";
 import { dbQuery, dbExecute } from "@/lib/database";
 import { chacha20poly1305 } from "@noble/ciphers/chacha";

@@ -1,9 +1,11 @@
 import { SyncClient } from "@/lib/sync/sync-client";
+import { initializeDatabase } from "@/lib/database";
 
 describe("SyncClient", () => {
   let syncClient: SyncClient;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await initializeDatabase();
     syncClient = new SyncClient("test-device-id");
   });
 
