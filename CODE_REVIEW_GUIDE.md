@@ -469,29 +469,29 @@ If issues occur:
 ### Code Quality
 
 **Status**: ☐ Approved / ☐ Needs Changes / ☐ Hold
-**Reviewer**: ******\_\_\_\_******
-**Date**: ******\_\_\_\_******
+**Reviewer**: **\*\***\_\_\_\_**\*\***
+**Date**: **\*\***\_\_\_\_**\*\***
 **Comments**:
 
 ### Security
 
 **Status**: ☐ Approved / ☐ Needs Changes / ☐ Hold
-**Reviewer**: ******\_\_\_\_******
-**Date**: ******\_\_\_\_******
+**Reviewer**: **\*\***\_\_\_\_**\*\***
+**Date**: **\*\***\_\_\_\_**\*\***
 **Comments**:
 
 ### Testing
 
 **Status**: ☐ Approved / ☐ Needs Changes / ☐ Hold
-**Reviewer**: ******\_\_\_\_******
-**Date**: ******\_\_\_\_******
+**Reviewer**: **\*\***\_\_\_\_**\*\***
+**Date**: **\*\***\_\_\_\_**\*\***
 **Comments**:
 
 ### Final Approval
 
 **Status**: ☐ APPROVED FOR DEPLOYMENT / ☐ NEEDS WORK
-**Reviewer**: ******\_\_\_\_******
-**Date**: ******\_\_\_\_******
+**Reviewer**: **\*\***\_\_\_\_**\*\***
+**Date**: **\*\***\_\_\_\_**\*\***
 **Comments**:
 
 ---

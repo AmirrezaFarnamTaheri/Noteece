@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MantineProvider } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
 import { invoke } from '@tauri-apps/api/tauri';
 import SyncStatus from '../SyncStatus';
 import '@testing-library/jest-dom';
@@ -21,7 +22,9 @@ const renderWithProviders = (component: React.ReactElement) => {
   const queryClient = new QueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
-      <MantineProvider>{component}</MantineProvider>
+      <MemoryRouter>
+        <MantineProvider>{component}</MantineProvider>
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 };

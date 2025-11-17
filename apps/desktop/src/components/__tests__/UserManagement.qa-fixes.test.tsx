@@ -6,6 +6,7 @@
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { MantineProvider } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
 import UserManagement from '../UserManagement';
 import '@testing-library/jest-dom';
 
@@ -41,7 +42,9 @@ const renderWithProviders = (component: React.ReactElement) => {
   const queryClient = createQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
-      <MantineProvider>{component}</MantineProvider>
+      <MemoryRouter>
+        <MantineProvider>{component}</MantineProvider>
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 };

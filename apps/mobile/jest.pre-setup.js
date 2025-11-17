@@ -122,6 +122,7 @@ jest.mock("@expo/vector-icons", () => {
   const MockIcon = React.forwardRef((props, ref) =>
     React.createElement(View, { ref, ...props }),
   );
+  MockIcon.displayName = "MockIcon";
 
   return new Proxy(
     {},
@@ -152,6 +153,7 @@ jest.mock("expo-linear-gradient", () => {
   const MockLinearGradient = React.forwardRef((props, ref) =>
     React.createElement(View, { ref, ...props }),
   );
+  MockLinearGradient.displayName = "MockLinearGradient";
 
   return {
     __esModule: true,
@@ -204,7 +206,10 @@ const normalizeForMatch = (value) => {
 
 const shouldSuppress = (value, patterns) => {
   const normalized = normalizeForMatch(value);
-  return Boolean(normalized) && patterns.some((pattern) => normalized.includes(pattern));
+  return (
+    Boolean(normalized) &&
+    patterns.some((pattern) => normalized.includes(pattern))
+  );
 };
 
 const originalConsoleError = console.error;

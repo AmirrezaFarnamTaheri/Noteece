@@ -40,13 +40,13 @@
 
 ### 📋 Future Enhancements (Not Required)
 
-| Feature                  | Priority | Estimated Effort | Notes                                      |
-| ------------------------ | -------- | ---------------- | ------------------------------------------ |
-| Automation DSL           | Medium   | 2-3 weeks        |                                            |
-| Habit Tracking System    | Medium   | 1-2 weeks        | Placeholder exists in foresight.rs:506     |
-| Recurring Events (RRULE) | Low      | 1 week           |                                            |
-| CalDAV Push Sync         | Low      | 3-4 days         |                                            |
-| VTODO Support            | Low      | 1 week           |                                            |
+| Feature                  | Priority | Estimated Effort | Notes                                  |
+| ------------------------ | -------- | ---------------- | -------------------------------------- |
+| Automation DSL           | Medium   | 2-3 weeks        |                                        |
+| Habit Tracking System    | Medium   | 1-2 weeks        | Placeholder exists in foresight.rs:506 |
+| Recurring Events (RRULE) | Low      | 1 week           |                                        |
+| CalDAV Push Sync         | Low      | 3-4 days         |                                        |
+| VTODO Support            | Low      | 1 week           |                                        |
 
 ---
 
