@@ -2,7 +2,7 @@
 
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
-![Status](https://img.shields.io/badge/status-production%20ready-brightgreen)
+![Status](https://img.shields.io/badge/status-v1.0.0-blue)
 
 A **local-first**, **end-to-end encrypted**, **Markdown-centric** workspace designed for speed-of-thought productivity. Notes, tasks, projects, and knowledge live in a single unified, encrypted vault. **Modes** (View + Template + Automation) sit atop this unified data model, enabling flexible workflows without silos.
 
@@ -86,7 +86,7 @@ A **local-first**, **end-to-end encrypted**, **Markdown-centric** workspace desi
 
 ### Collaboration & Sync ✅
 
-- **Sync Status Dashboard:** Real-time sync monitoring with device tracking, conflict detection, and resolution (100% complete)
+- **Sync Status Dashboard:** Real-time sync monitoring with device tracking, conflict detection, and resolution (Manual IP Entry for v1.0.0)
 - **Device Management:** View and manage all synced devices with online/offline status and last seen tracking
 - **Conflict Resolution:** Comprehensive UI for detecting and resolving sync conflicts with CRDT vector clocks
 - **Sync History:** Timeline view of all sync events (push, pull, conflicts, errors) with detailed metrics
@@ -116,7 +116,7 @@ A **local-first**, **end-to-end encrypted**, **Markdown-centric** workspace desi
 - **NFC Triggers:** Physical tag interactions for instant actions (time tracking, habit logging, note opening)
 - **Location-Based Reminders:** Geofencing for contextual task reminders
 - **Biometric Unlock:** Face ID, Touch ID, and Fingerprint authentication
-- **Offline-First Sync:** Zero-server architecture with local-network sync via mDNS device discovery
+- **Offline-First Sync:** Zero-server architecture with local-network sync (requires manual peer IP entry)
 - **Background Sync:** Automatic synchronization every 15 minutes over WiFi
 - **Data Management:** Export all data to JSON, change vault password, securely wipe local data
 
@@ -129,7 +129,7 @@ A **local-first**, **end-to-end encrypted**, **Markdown-centric** workspace desi
 - **Comprehensive Testing:** 8+ test suites covering components, widgets, and user flows
 - **Accessible Design:** ARIA labels, keyboard navigation, and semantic HTML throughout
 
-### Social Media Suite 🆕 (In Development)
+### Social Media Suite 🆕 (Beta - Scraping Based)
 
 A comprehensive local-first social media aggregation and management system with zero infrastructure costs:
 

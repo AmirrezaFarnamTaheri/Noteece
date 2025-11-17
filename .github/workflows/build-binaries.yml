@@ -128,51 +128,32 @@ jobs:
         working-directory: apps/desktop
         run: |
           pnpm install
-          pnpm build
+          pnpm build:tauri
 
-      - name: Package binaries (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          mkdir -p dist/linux
-          cp packages/core-rs/target/release/noteece-core dist/linux/
-          tar -czf noteece-linux-x64.tar.gz -C dist/linux .
-
-      - name: Package binaries (macOS)
-        if: matrix.os == 'macos-latest'
-        run: |
-          mkdir -p dist/macos
-          cp packages/core-rs/target/release/noteece-core dist/macos/
-          tar -czf noteece-macos-x64.tar.gz -C dist/macos .
-
-      - name: Package binaries (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          mkdir -p dist/windows
-          cp packages/core-rs/target/release/noteece-core.exe dist/windows/
-          Compress-Archive -Path dist/windows/* -DestinationPath noteece-windows-x64.zip
-
-      - name: Upload artifacts (Linux)
+      - name: Upload Linux Artifacts
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: noteece-linux-x64
-          path: noteece-linux-x64.tar.gz
+          name: noteece-linux
+          path: |
+            apps/desktop/src-tauri/target/release/bundle/deb/*.deb
+            apps/desktop/src-tauri/target/release/bundle/appimage/*.AppImage
           retention-days: 30
 
-      - name: Upload artifacts (macOS)
+      - name: Upload macOS Artifact
         if: matrix.os == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: noteece-macos-x64
-          path: noteece-macos-x64.tar.gz
+          name: noteece-macos
+          path: apps/desktop/src-tauri/target/release/bundle/dmg/*.dmg
           retention-days: 30
 
-      - name: Upload artifacts (Windows)
+      - name: Upload Windows Artifact
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: noteece-windows-x64
-          path: noteece-windows-x64.zip
+          name: noteece-windows
+          path: apps/desktop/src-tauri/target/release/bundle/nsis/*.exe
           retention-days: 30
 
   create_release:
@@ -194,9 +175,9 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            artifacts/noteece-linux-x64/*
-            artifacts/noteece-macos-x64/*
-            artifacts/noteece-windows-x64/*
+            artifacts/noteece-linux/*
+            artifacts/noteece-macos/*
+            artifacts/noteece-windows/*
           draft: false
           prerelease: false
           generate_release_notes: true
