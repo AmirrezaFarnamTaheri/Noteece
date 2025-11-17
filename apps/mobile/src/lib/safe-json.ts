@@ -68,7 +68,7 @@ export function safeJsonStringify(data: unknown, defaultValue = "{}"): string {
   try {
     const seen = new WeakSet<object>();
     const replacer = (_key: string, value: any) => {
-      if (typeof value === 'object' && value !== null) {
+      if (typeof value === "object" && value !== null) {
         if (seen.has(value)) {
           return "[Circular]";
         }

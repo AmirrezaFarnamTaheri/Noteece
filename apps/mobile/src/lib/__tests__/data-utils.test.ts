@@ -12,7 +12,9 @@ jest.mock("expo-secure-store", () => ({
   deleteItemAsync: jest.fn(() => Promise.resolve()),
 }));
 
-const mockedGetDatabase = getDatabase as jest.MockedFunction<typeof getDatabase>;
+const mockedGetDatabase = getDatabase as jest.MockedFunction<
+  typeof getDatabase
+>;
 const mockedSecureStore = SecureStore as jest.Mocked<typeof SecureStore>;
 
 describe("data-utils", () => {
@@ -78,9 +80,7 @@ describe("data-utils", () => {
       asyncStorageMock.getAllKeys = jest
         .fn()
         .mockResolvedValue(["foo", "expo-system", "has_completed_onboarding"]);
-      asyncStorageMock.multiRemove = jest
-        .fn()
-        .mockResolvedValue(undefined);
+      asyncStorageMock.multiRemove = jest.fn().mockResolvedValue(undefined);
 
       const result = await clearAllData();
 
@@ -94,5 +94,3 @@ describe("data-utils", () => {
     });
   });
 });
-
-

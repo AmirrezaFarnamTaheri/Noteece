@@ -1,7 +1,7 @@
 // Try to import jest-native matchers if available
 try {
   require("@testing-library/jest-native/extend-expect");
-} catch (e) {
+} catch {
   // jest-native is optional, continue without it
 }
 
