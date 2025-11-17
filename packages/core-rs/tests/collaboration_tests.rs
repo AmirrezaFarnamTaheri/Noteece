@@ -63,15 +63,21 @@ fn test_collaboration_add_and_remove_user() {
             |row| row.get(0),
         )
         .unwrap();
-    assert!(!user_exists_after_remove, "User should not exist in space_users table after removal");
+    assert!(
+        !user_exists_after_remove,
+        "User should not exist in space_users table after removal"
+    );
 
     // Verify the role assignment was removed
-     let role_exists_after_remove: bool = conn
+    let role_exists_after_remove: bool = conn
         .query_row(
             "SELECT EXISTS(SELECT 1 FROM space_user_roles WHERE space_id = ? AND user_id = ?)",
             &[&space_id, &user_id],
             |row| row.get(0),
         )
         .unwrap();
-    assert!(!role_exists_after_remove, "User role assignment should be removed");
+    assert!(
+        !role_exists_after_remove,
+        "User role assignment should be removed"
+    );
 }
