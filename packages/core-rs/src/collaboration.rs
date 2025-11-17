@@ -613,39 +613,3 @@ pub fn remove_user_from_space(
     Ok(())
 }
 
-// Legacy functions (kept for backwards compatibility)
-pub fn add_person_to_space(
-    conn: &Connection,
-    space_id: Ulid,
-    person_id: Ulid,
-    role: &str,
-) -> Result<(), CollaborationError> {
-    log::info!(
-        "[collaboration] Adding person {} to space {} with role {}",
-        person_id,
-        space_id,
-        role
-    );
-    // Create dummy email for legacy function
-    let email = format!("user_{}@noteece.local", person_id);
-    add_user_to_space(
-        conn,
-        &space_id.to_string(),
-        &person_id.to_string(),
-        &email,
-        role,
-    )
-}
-
-pub fn remove_person_from_space(
-    conn: &Connection,
-    space_id: Ulid,
-    person_id: Ulid,
-) -> Result<(), CollaborationError> {
-    log::info!(
-        "[collaboration] Removing person {} from space {}",
-        person_id,
-        space_id
-    );
-    remove_user_from_space(conn, &space_id.to_string(), &person_id.to_string())
-}
