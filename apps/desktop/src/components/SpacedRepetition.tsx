@@ -31,7 +31,7 @@ import {
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import classes from './SpacedRepetition.module.css';
-import { logger } from '../utils/logger';
+import { logger } from '@/utils/logger';
 
 interface KnowledgeCard {
   id: string;

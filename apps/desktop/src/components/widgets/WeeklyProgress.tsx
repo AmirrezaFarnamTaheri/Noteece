@@ -6,7 +6,7 @@ import { Task } from '@noteece/types';
 import { useActiveSpace } from '../../hooks/useActiveSpace';
 import { getStartOfToday, getEndOfToday } from '../../utils/dateUtils';
 import classes from '../Dashboard.module.css';
-import { logger } from '../../utils/logger';
+import { logger } from '@/utils/logger';
 
 export const WeeklyProgress: React.FC = () => {
   const theme = useMantineTheme();

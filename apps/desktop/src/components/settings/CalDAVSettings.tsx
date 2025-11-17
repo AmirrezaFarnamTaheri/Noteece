@@ -22,7 +22,7 @@ import {
   Table,
 } from '@mantine/core';
 import { IconPlus, IconRefresh, IconTrash, IconCheck, IconAlertCircle, IconClock } from '@tabler/icons-react';
-import { logger } from '../../utils/logger';
+import { logger } from '@/utils/logger';
 
 interface CalDavAccount {
   id: string;

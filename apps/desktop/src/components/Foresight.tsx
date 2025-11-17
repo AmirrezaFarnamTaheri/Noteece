@@ -26,7 +26,7 @@ import {
   IconTarget,
   IconTrendingUp,
 } from '@tabler/icons-react';
-import { logger } from '../utils/logger';
+import { logger } from '@/utils/logger';
 
 interface Insight {
   id: string;

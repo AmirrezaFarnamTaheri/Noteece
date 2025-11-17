@@ -4,7 +4,7 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { Note, Tag } from '@noteece/types';
 import { useStore } from '../store';
 import { getAllTagsInSpace } from '@/services/api';
-import { logger } from '../utils/logger';
+import { logger } from '@/utils/logger';
 
 const EnhancedSearch: React.FC = () => {
   const [query, setQuery] = useState('');

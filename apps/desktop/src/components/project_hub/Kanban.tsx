@@ -11,7 +11,7 @@ import { useStore } from '../../store';
 import { startTimeEntry, stopTimeEntry, getRunningEntries } from '../../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notifications } from '@mantine/notifications';
-import { logger } from '../../utils/logger';
+import { logger } from '@/utils/logger';
 
 interface KanbanContext {
   tasks: Task[];

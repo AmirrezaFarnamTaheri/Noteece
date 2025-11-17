@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button, TextInput, Paper, Title, Container } from '@mantine/core';
 import { invoke } from '@tauri-apps/api/tauri';
 import { useNavigate } from 'react-router-dom';
-import { logger } from '../utils/logger';
+import { logger } from '@/utils/logger';
 
 const VaultManagement: React.FC = () => {
   const [path, setPath] = useState('');

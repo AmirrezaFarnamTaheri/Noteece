@@ -1,21 +1,92 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MantineProvider } from '@mantine/core';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { invoke } from '@tauri-apps/api/tauri';
 import UserManagement from '../UserManagement';
 import '@testing-library/jest-dom';
 
+jest.mock('@tauri-apps/api/tauri', () => ({
+  invoke: jest.fn(),
+}));
+
+jest.mock('../../store', () => ({
+  useStore: () => ({
+    activeSpaceId: 'test-space-123',
+  }),
+}));
+
+jest.mock('../../services/auth', () => ({
+  authService: {
+    getCurrentUserId: jest.fn(() => 'system_user'),
+  },
+}));
+
+const mockInvoke = invoke as jest.MockedFunction<typeof invoke>;
+
+const sampleUsers = [
+  {
+    user_id: '1',
+    email: 'john@example.com',
+    role: 'owner',
+    status: 'active',
+    permissions: ['read', 'write'],
+    last_active: Math.floor(Date.now() / 1000),
+    joined_at: Math.floor(Date.now() / 1000),
+  },
+  {
+    user_id: '2',
+    email: 'jane@example.com',
+    role: 'admin',
+    status: 'invited',
+    permissions: ['read', 'write'],
+    last_active: Math.floor(Date.now() / 1000),
+    joined_at: Math.floor(Date.now() / 1000),
+  },
+];
+
+const sampleRoles = [
+  { id: 'owner', name: 'Owner', description: 'Full access', permissions: ['read', 'write'], created_at: Date.now() },
+  { id: 'admin', name: 'Administrator', description: 'Admin access', permissions: ['read', 'write'], created_at: Date.now() },
+  { id: 'editor', name: 'Editor', description: 'Edit content', permissions: ['read', 'write'], created_at: Date.now() },
+  { id: 'viewer', name: 'Viewer', description: 'View only', permissions: ['read'], created_at: Date.now() },
+];
+
 const renderWithProviders = (component: React.ReactElement) => {
-  return render(<MantineProvider>{component}</MantineProvider>);
+  const queryClient = new QueryClient();
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MantineProvider>{component}</MantineProvider>
+    </QueryClientProvider>,
+  );
 };
 
 describe('UserManagement', () => {
+  beforeEach(() => {
+    mockInvoke.mockReset();
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'get_space_users_cmd') {
+        return Promise.resolve(sampleUsers);
+      }
+      if (cmd === 'get_roles_cmd') {
+        return Promise.resolve(sampleRoles);
+      }
+      if (cmd === 'get_space_invitations_cmd') {
+        return Promise.resolve([]);
+      }
+      return Promise.resolve({});
+    });
+  });
+
   it('renders user management page', () => {
     renderWithProviders(<UserManagement />);
     expect(screen.getByText('User Management')).toBeInTheDocument();
   });
 
-  it('displays user count badge', () => {
+  it('displays user count badge', async () => {
     renderWithProviders(<UserManagement />);
-    expect(screen.getByText('4 Users')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('2 Users')).toBeInTheDocument();
+    });
   });
 
   it('shows invite user button', () => {
@@ -23,11 +94,12 @@ describe('UserManagement', () => {
     expect(screen.getByRole('button', { name: /invite user/i })).toBeInTheDocument();
   });
 
-  it('displays quick stats cards', () => {
+  it('displays quick stats cards', async () => {
     renderWithProviders(<UserManagement />);
-    expect(screen.getByText('Active Users')).toBeInTheDocument();
-    expect(screen.getByText('Pending Invites')).toBeInTheDocument();
-    expect(screen.getByText('Roles')).toBeInTheDocument();
+    expect(await screen.findByText('Active Users', { selector: 'p' })).toBeInTheDocument();
+    expect(await screen.findByText('Pending Invites', { selector: 'p' })).toBeInTheDocument();
+    const [rolesCardLabel] = await screen.findAllByText('Roles', { selector: 'p' });
+    expect(rolesCardLabel).toBeInTheDocument();
   });
 
   it('shows three tabs', () => {
@@ -37,42 +109,41 @@ describe('UserManagement', () => {
     expect(screen.getByRole('tab', { name: /permissions/i })).toBeInTheDocument();
   });
 
-  it('displays user table with mock users', () => {
+  it('displays user table with mock users', async () => {
     renderWithProviders(<UserManagement />);
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
-    expect(screen.getByText('john@example.com')).toBeInTheDocument();
-    expect(screen.getByText('Jane Smith')).toBeInTheDocument();
-    expect(screen.getByText('Bob Johnson')).toBeInTheDocument();
-    expect(screen.getByText('Alice Williams')).toBeInTheDocument();
+    expect(await screen.findByText('john@example.com')).toBeInTheDocument();
+    expect(screen.getByText('jane@example.com')).toBeInTheDocument();
   });
 
-  it('opens invite modal when invite button clicked', () => {
+  it('opens invite modal when invite button clicked', async () => {
     renderWithProviders(<UserManagement />);
     const inviteButton = screen.getByRole('button', { name: /invite user/i });
 
     fireEvent.click(inviteButton);
 
     expect(screen.getByText('Invite User')).toBeInTheDocument();
-    expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+    expect(await screen.findByLabelText(/email address/i)).toBeInTheDocument();
   });
 
-  it('displays role badges for users', () => {
+  it('displays role badges for users', async () => {
     renderWithProviders(<UserManagement />);
-    expect(screen.getByText('owner')).toBeInTheDocument();
-    expect(screen.getByText('admin')).toBeInTheDocument();
-    expect(screen.getByText('editor')).toBeInTheDocument();
-    expect(screen.getByText('viewer')).toBeInTheDocument();
+    const ownerRow = await screen.findByText('john@example.com');
+    const adminRow = await screen.findByText('jane@example.com');
+    expect(ownerRow.closest('tr')).toHaveTextContent(/owner/i);
+    expect(adminRow.closest('tr')).toHaveTextContent(/admin/i);
   });
 
-  it('shows roles panel when roles tab clicked', () => {
+  it('shows roles panel when roles tab clicked', async () => {
     renderWithProviders(<UserManagement />);
     const rolesTab = screen.getByRole('tab', { name: /roles/i });
 
     fireEvent.click(rolesTab);
 
-    expect(screen.getByText('Owner')).toBeInTheDocument();
-    expect(screen.getByText('Administrator')).toBeInTheDocument();
-    expect(screen.getByText('Editor')).toBeInTheDocument();
-    expect(screen.getByText('Viewer')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Owner')).toBeInTheDocument();
+      expect(screen.getByText('Administrator')).toBeInTheDocument();
+      expect(screen.getByText('Editor')).toBeInTheDocument();
+      expect(screen.getByText('Viewer')).toBeInTheDocument();
+    });
   });
 });

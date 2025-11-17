@@ -4,7 +4,7 @@ import { Textarea, TextInput, Button, Card, Text, Stack, Group, Badge, List, Ale
 import { IconCheck } from '@tabler/icons-react';
 import { showSuccess, showError } from '../utils/notifications';
 import { useActiveSpace } from '../hooks/useActiveSpace';
-import { logger } from '../utils/logger';
+import { logger } from '@/utils/logger';
 
 interface MeetingNotesProperties {
   noteId?: string; // Optional: editing an existing note

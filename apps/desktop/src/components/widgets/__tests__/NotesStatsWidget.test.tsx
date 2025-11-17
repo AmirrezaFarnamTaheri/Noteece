@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MantineProvider } from '@mantine/core';
 import { NotesStatsWidget } from '../NotesStatsWidget';
@@ -58,8 +58,12 @@ describe('NotesStatsWidget', () => {
 
   it('displays total notes count excluding trashed', () => {
     renderWithProviders(<NotesStatsWidget />);
-    expect(screen.getByText('Total Notes')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
+    const totalNotesLabel = screen.getByText('Total Notes');
+    expect(totalNotesLabel).toBeInTheDocument();
+    const totalNotesCard = totalNotesLabel.closest('div');
+    expect(totalNotesCard).not.toBeNull();
+    const countMatches = within(totalNotesCard as HTMLElement).getAllByText('2');
+    expect(countMatches.length).toBeGreaterThan(0);
   });
 
   it('shows total words label', () => {

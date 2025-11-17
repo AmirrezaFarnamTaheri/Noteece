@@ -3,7 +3,7 @@
  * Tests for Session 5 security and functionality fixes
  */
 
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { MantineProvider } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import UserManagement from '../UserManagement';
@@ -20,6 +20,12 @@ jest.mock('../../store', () => ({
   useStore: () => ({
     activeSpaceId: 'test-space-123',
   }),
+}));
+
+jest.mock('../../services/auth', () => ({
+  authService: {
+    getCurrentUserId: jest.fn(() => 'system_user'),
+  },
 }));
 
 const createQueryClient = () =>
@@ -40,9 +46,36 @@ const renderWithProviders = (component: React.ReactElement) => {
   );
 };
 
+const openEditModalForUser = async (email: string) => {
+  const actionsButton = await screen.findByLabelText(new RegExp(`Actions for ${email}`, 'i'));
+  fireEvent.click(actionsButton);
+  const editMenuItem = await screen.findByRole('menuitem', { name: /edit role/i });
+  fireEvent.click(editMenuItem);
+  return screen.findByRole('dialog', { name: /edit user/i });
+};
+
+const defaultInvokeHandler = (cmd: string) => {
+  if (cmd === 'get_space_users_cmd') {
+    return Promise.resolve([]);
+  }
+  if (cmd === 'get_roles_cmd') {
+    return Promise.resolve([
+      {
+        id: 'viewer',
+        name: 'Viewer',
+        description: 'View only',
+        permissions: ['read'],
+        created_at: Date.now(),
+      },
+    ]);
+  }
+  return Promise.resolve({});
+};
+
 describe('UserManagement QA Fixes (Session 5)', () => {
   beforeEach(() => {
-    mockInvoke.mockClear();
+    mockInvoke.mockReset();
+    mockInvoke.mockImplementation(defaultInvokeHandler);
   });
 
   // ============== AUTHENTICATION HELPER TESTS ==============
@@ -50,15 +83,18 @@ describe('UserManagement QA Fixes (Session 5)', () => {
   describe('getCurrentUserId helper', () => {
     it('should use documented system_user placeholder', async () => {
       // Mock successful invite
-      mockInvoke.mockResolvedValueOnce({
-        id: 'inv-123',
-        email: 'new@example.com',
-        role: 'editor',
-        token: 'abc123',
-        status: 'pending',
+      mockInvoke.mockImplementation((cmd: string) => {
+        if (cmd === 'invite_user_cmd') {
+          return Promise.resolve({
+            id: 'inv-123',
+            email: 'new@example.com',
+            role: 'editor',
+            token: 'abc123',
+            status: 'pending',
+          });
+        }
+        return defaultInvokeHandler(cmd);
       });
-
-      mockInvoke.mockResolvedValueOnce([]); // get_space_invitations_cmd
 
       renderWithProviders(<UserManagement />);
 
@@ -67,11 +103,11 @@ describe('UserManagement QA Fixes (Session 5)', () => {
       fireEvent.click(inviteButton);
 
       // Fill form
-      const emailInput = screen.getByLabelText(/email address/i);
+      const emailInput = await screen.findByLabelText(/email address/i);
       fireEvent.change(emailInput, { target: { value: 'new@example.com' } });
 
       // Submit
-      const submitButton = screen.getByRole('button', { name: /send invitation/i });
+      const submitButton = screen.getByRole('button', { name: /send invite/i });
       fireEvent.click(submitButton);
 
       await waitFor(() => {
@@ -105,7 +141,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
               email: 'user@example.com',
               role: 'editor',
               status: 'active',
-              permissions: ['read_notes', 'write_notes', 'custom_perm_1', 'custom_perm_2'],
+              permissions: ['read', 'write', 'manage_users', 'manage_billing'],
               joined_at: Date.now(),
               last_active: Date.now(),
             },
@@ -114,15 +150,15 @@ describe('UserManagement QA Fixes (Session 5)', () => {
         if (cmd === 'get_roles_cmd') {
           return Promise.resolve([
             {
-              id: 'role-editor',
+              id: 'editor',
               name: 'editor',
               description: 'Can edit',
-              permissions: ['read_notes', 'write_notes'],
+              permissions: ['read', 'write'],
               created_at: Date.now(),
             },
           ]);
         }
-        return Promise.resolve([]);
+        return defaultInvokeHandler(cmd);
       });
     });
 
@@ -133,16 +169,10 @@ describe('UserManagement QA Fixes (Session 5)', () => {
         expect(screen.getByText('user@example.com')).toBeInTheDocument();
       });
 
-      // Click edit button for user
-      const editButtons = screen.getAllByRole('button', { name: /edit/i });
-      fireEvent.click(editButtons[0]);
-
-      await waitFor(() => {
-        expect(screen.getByText(/edit user role/i)).toBeInTheDocument();
-      });
+      const editModal = await openEditModalForUser('user@example.com');
 
       // Clear all custom permissions (reset to role defaults)
-      const customPermCheckboxes = screen.getAllByRole('checkbox');
+      const customPermCheckboxes = within(editModal).getAllByRole('checkbox');
       for (const checkbox of customPermCheckboxes) {
         if ((checkbox as HTMLInputElement).checked) {
           fireEvent.click(checkbox);
@@ -150,22 +180,21 @@ describe('UserManagement QA Fixes (Session 5)', () => {
       }
 
       // Save
-      const saveButton = screen.getByRole('button', { name: /save/i });
-      mockInvoke.mockResolvedValueOnce({}); // update_user_role_cmd
-      mockInvoke.mockResolvedValueOnce({}); // revoke_permission_cmd
+      const saveButton = within(editModal).getByRole('button', { name: /save changes/i });
       fireEvent.click(saveButton);
 
       await waitFor(() => {
-        // CRITICAL TEST: Should call revoke for permissions not in custom list
-        // This tests the Session 5 fix where we removed `length > 0` check
-        const revokeCalls = mockInvoke.mock.calls.filter((call) => call[0] === 'revoke_permission_cmd');
+        expect(mockInvoke).toHaveBeenCalledWith(
+          'revoke_permission_cmd',
+          expect.objectContaining({ permission: 'manage_users' }),
+        );
+      });
 
-        expect(revokeCalls.length).toBeGreaterThan(0);
-
-        // Should revoke custom_perm_1 and custom_perm_2
-        const revokedPermissions = revokeCalls.map((call) => (call[1] as { permission: string }).permission);
-        expect(revokedPermissions).toContain('custom_perm_1');
-        expect(revokedPermissions).toContain('custom_perm_2');
+      await waitFor(() => {
+        expect(mockInvoke).toHaveBeenCalledWith(
+          'revoke_permission_cmd',
+          expect.objectContaining({ permission: 'manage_billing' }),
+        );
       });
     });
 
@@ -176,29 +205,29 @@ describe('UserManagement QA Fixes (Session 5)', () => {
         expect(screen.getByText('user@example.com')).toBeInTheDocument();
       });
 
-      const editButtons = screen.getAllByRole('button', { name: /edit/i });
-      fireEvent.click(editButtons[0]);
+      const editModal = await openEditModalForUser('user@example.com');
 
       // Clear custom permissions
-      const customPermCheckboxes = screen.getAllByRole('checkbox');
+      const customPermCheckboxes = within(editModal).getAllByRole('checkbox');
       for (const checkbox of customPermCheckboxes) {
         if ((checkbox as HTMLInputElement).checked) {
           fireEvent.click(checkbox);
         }
       }
 
-      const saveButton = screen.getByRole('button', { name: /save/i });
-      mockInvoke.mockResolvedValue({});
+      const saveButton = within(editModal).getByRole('button', { name: /save changes/i });
       fireEvent.click(saveButton);
 
       await waitFor(() => {
-        const revokeCalls = mockInvoke.mock.calls.filter((call) => call[0] === 'revoke_permission_cmd');
-
-        // Should NOT revoke read_notes or write_notes (role permissions)
-        const revokedPermissions = revokeCalls.map((call) => (call[1] as { permission: string }).permission);
-        expect(revokedPermissions).not.toContain('read_notes');
-        expect(revokedPermissions).not.toContain('write_notes');
+        expect(mockInvoke).toHaveBeenCalledWith('revoke_permission_cmd', expect.anything());
       });
+
+      const revokeCalls = mockInvoke.mock.calls.filter((call) => call[0] === 'revoke_permission_cmd');
+      const revokedPermissions = revokeCalls.map((call) => (call[1] as { permission: string }).permission);
+
+      // Should NOT revoke read or write (role permissions)
+      expect(revokedPermissions).not.toContain('read');
+      expect(revokedPermissions).not.toContain('write');
     });
 
     it('should revoke only permissions not in new custom list', async () => {
@@ -208,28 +237,30 @@ describe('UserManagement QA Fixes (Session 5)', () => {
         expect(screen.getByText('user@example.com')).toBeInTheDocument();
       });
 
-      const editButtons = screen.getAllByRole('button', { name: /edit/i });
-      fireEvent.click(editButtons[0]);
+      const editModal = await openEditModalForUser('user@example.com');
 
-      // Keep only custom_perm_1, remove custom_perm_2
-      const checkbox2 = screen.getByLabelText('custom_perm_2');
+      // Keep only Manage Users, remove Manage Billing
+      const checkbox2 = within(editModal).getByLabelText('Manage Billing');
       if ((checkbox2 as HTMLInputElement).checked) {
         fireEvent.click(checkbox2);
       }
 
-      const saveButton = screen.getByRole('button', { name: /save/i });
-      mockInvoke.mockResolvedValue({});
+      const saveButton = within(editModal).getByRole('button', { name: /save changes/i });
       fireEvent.click(saveButton);
 
       await waitFor(() => {
-        const revokeCalls = mockInvoke.mock.calls.filter((call) => call[0] === 'revoke_permission_cmd');
-
-        const revokedPermissions = revokeCalls.map((call) => (call[1] as { permission: string }).permission);
-
-        // Should revoke custom_perm_2 but not custom_perm_1
-        expect(revokedPermissions).toContain('custom_perm_2');
-        expect(revokedPermissions).not.toContain('custom_perm_1');
+        expect(mockInvoke).toHaveBeenCalledWith(
+          'revoke_permission_cmd',
+          expect.objectContaining({ permission: 'manage_billing' }),
+        );
       });
+
+      const revokeCalls = mockInvoke.mock.calls.filter((call) => call[0] === 'revoke_permission_cmd');
+      const revokedPermissions = revokeCalls.map((call) => (call[1] as { permission: string }).permission);
+
+      // Should revoke manage_billing but not manage_users
+      expect(revokedPermissions).toContain('manage_billing');
+      expect(revokedPermissions).not.toContain('manage_users');
     });
   });
 
@@ -244,10 +275,17 @@ describe('UserManagement QA Fixes (Session 5)', () => {
         if (cmd === 'get_roles_cmd') {
           return Promise.resolve([
             {
-              id: 'role-editor',
+              id: 'viewer',
+              name: 'Viewer',
+              description: 'Viewer',
+              permissions: ['read'],
+              created_at: Date.now(),
+            },
+            {
+              id: 'editor',
               name: 'editor',
               description: 'Editor',
-              permissions: ['read_notes', 'write_notes'],
+              permissions: ['read', 'write'],
               created_at: Date.now(),
             },
           ]);
@@ -261,7 +299,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
             status: 'pending',
           });
         }
-        return Promise.resolve([]);
+        return defaultInvokeHandler(cmd);
       });
 
       renderWithProviders(<UserManagement />);
@@ -270,22 +308,22 @@ describe('UserManagement QA Fixes (Session 5)', () => {
       const inviteButton = screen.getByRole('button', { name: /invite user/i });
       fireEvent.click(inviteButton);
 
-      const emailInput = screen.getByLabelText(/email address/i);
+      const inviteModal = await screen.findByRole('dialog', { name: /invite user/i });
+      const emailInput = within(inviteModal).getByLabelText(/email address/i);
       fireEvent.change(emailInput, { target: { value: 'new@example.com' } });
 
-      const submitButton = screen.getByRole('button', { name: /send invitation/i });
+      const submitButton = within(inviteModal).getByRole('button', { name: /send invite/i });
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(mockInvoke).toHaveBeenCalledWith(
-          'invite_user_cmd',
-          expect.objectContaining({
-            email: 'new@example.com',
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.any(String) returns any type in Jest
-            role: expect.any(String),
-            invitedBy: 'system_user', // Correct audit identity
-          }),
-        );
+          expect(mockInvoke).toHaveBeenCalledWith(
+            'invite_user_cmd',
+            expect.objectContaining({
+              email: 'new@example.com',
+              roleId: expect.any(String),
+              invitedBy: 'system_user', // Correct audit identity
+            }),
+          );
       });
     });
   });
@@ -294,12 +332,17 @@ describe('UserManagement QA Fixes (Session 5)', () => {
 
   describe('Security validations', () => {
     it('should prevent XSS in email input', async () => {
-      mockInvoke.mockResolvedValue({
-        id: 'inv-1',
-        email: 'test@example.com',
-        role: 'editor',
-        token: 'token',
-        status: 'pending',
+      mockInvoke.mockImplementation((cmd: string) => {
+        if (cmd === 'invite_user_cmd') {
+          return Promise.resolve({
+            id: 'inv-1',
+            email: 'test@example.com',
+            role: 'editor',
+            token: 'token',
+            status: 'pending',
+          });
+        }
+        return defaultInvokeHandler(cmd);
       });
 
       renderWithProviders(<UserManagement />);
@@ -307,13 +350,14 @@ describe('UserManagement QA Fixes (Session 5)', () => {
       const inviteButton = screen.getByRole('button', { name: /invite user/i });
       fireEvent.click(inviteButton);
 
-      const emailInput = screen.getByLabelText(/email address/i);
+      const inviteModal = await screen.findByRole('dialog', { name: /invite user/i });
+      const emailInput = within(inviteModal).getByLabelText(/email address/i);
 
       // Try XSS payload
       const xssPayload = '<script>alert("xss")</script>@example.com';
       fireEvent.change(emailInput, { target: { value: xssPayload } });
 
-      const submitButton = screen.getByRole('button', { name: /send invitation/i });
+      const submitButton = within(inviteModal).getByRole('button', { name: /send invite/i });
       fireEvent.click(submitButton);
 
       await waitFor(() => {
@@ -335,12 +379,13 @@ describe('UserManagement QA Fixes (Session 5)', () => {
       const inviteButton = screen.getByRole('button', { name: /invite user/i });
       fireEvent.click(inviteButton);
 
-      const emailInput = screen.getByLabelText(/email address/i);
+      const inviteModal = await screen.findByRole('dialog', { name: /invite user/i });
+      const emailInput = within(inviteModal).getByLabelText(/email address/i);
 
       // Invalid email
       fireEvent.change(emailInput, { target: { value: 'not-an-email' } });
 
-      const submitButton = screen.getByRole('button', { name: /send invitation/i });
+      const submitButton = within(inviteModal).getByRole('button', { name: /send invite/i });
       fireEvent.click(submitButton);
 
       // Should show validation error
@@ -364,13 +409,13 @@ describe('UserManagement QA Fixes (Session 5)', () => {
         if (cmd === 'get_roles_cmd') {
           return Promise.resolve([]);
         }
-        return Promise.resolve([]);
+        return defaultInvokeHandler(cmd);
       });
 
       renderWithProviders(<UserManagement />);
 
       await waitFor(() => {
-        expect(screen.getByText(/no users found/i)).toBeInTheDocument();
+        expect(screen.getByText(/no users yet/i)).toBeInTheDocument();
       });
     });
 
@@ -394,7 +439,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
               email: 'user1@example.com',
               role: 'editor',
               status: 'active',
-              permissions: ['read_notes'],
+              permissions: ['read'],
               joined_at: Date.now(),
               last_active: Date.now(),
             },
@@ -403,7 +448,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
               email: 'user2@example.com',
               role: 'editor',
               status: 'active',
-              permissions: ['read_notes'],
+              permissions: ['read'],
               joined_at: Date.now(),
               last_active: Date.now(),
             },
@@ -412,7 +457,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
         if (cmd === 'grant_permission_cmd') {
           return Promise.resolve();
         }
-        return Promise.resolve([]);
+        return defaultInvokeHandler(cmd);
       });
 
       renderWithProviders(<UserManagement />);
@@ -421,16 +466,13 @@ describe('UserManagement QA Fixes (Session 5)', () => {
         expect(screen.getByText('user1@example.com')).toBeInTheDocument();
       });
 
-      // Edit both users simultaneously
-      const editButtons = screen.getAllByRole('button', { name: /edit/i });
+      // Edit both users sequentially to simulate concurrent updates
+      await openEditModalForUser('user1@example.com');
+      fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+      await waitFor(() => expect(screen.queryByText(/edit user/i)).not.toBeInTheDocument());
 
-      fireEvent.click(editButtons[0]);
-      // Add permission to user 1
-      // ... (would need to add permission and save)
-
-      fireEvent.click(editButtons[1]);
-      // Add permission to user 2
-      // ... (would need to add permission and save)
+      await openEditModalForUser('user2@example.com');
+      fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
 
       // Both should succeed without conflicts
       await waitFor(() => {

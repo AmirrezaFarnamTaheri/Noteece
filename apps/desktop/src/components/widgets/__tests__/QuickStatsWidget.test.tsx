@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MantineProvider } from '@mantine/core';
 import { QuickStatsWidget } from '../QuickStatsWidget';
@@ -55,31 +55,50 @@ describe('QuickStatsWidget', () => {
 
   it('displays notes count', () => {
     renderWithProviders(<QuickStatsWidget />);
-    expect(screen.getByText('Notes')).toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument();
+    const notesLabel = screen.getByText('Notes');
+    expect(notesLabel).toBeInTheDocument();
+    const notesCard = notesLabel.closest('div');
+    expect(notesCard).not.toBeNull();
+    expect(within(notesCard as HTMLElement).getAllByText('3').length).toBeGreaterThan(0);
   });
 
   it('shows active tasks count', () => {
     renderWithProviders(<QuickStatsWidget />);
-    expect(screen.getByText('Active Tasks')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument(); // in_progress and next
+    const activeTasksLabel = screen.getByText('Active Tasks');
+    expect(activeTasksLabel).toBeInTheDocument();
+    const activeTasksCard = activeTasksLabel.closest('div');
+    expect(activeTasksCard).not.toBeNull();
+    const activeCounts = within(activeTasksCard as HTMLElement).getAllByText('2');
+    expect(activeCounts.length).toBeGreaterThan(0); // in_progress and next
   });
 
   it('displays completed tasks count', () => {
     renderWithProviders(<QuickStatsWidget />);
-    expect(screen.getByText('Completed')).toBeInTheDocument();
-    expect(screen.getByText('1')).toBeInTheDocument();
+    const completedLabel = screen.getByText('Completed');
+    expect(completedLabel).toBeInTheDocument();
+    const completedCard = completedLabel.closest('div');
+    expect(completedCard).not.toBeNull();
+    const completedCounts = within(completedCard as HTMLElement).getAllByText('1');
+    expect(completedCounts.length).toBeGreaterThan(0);
   });
 
   it('shows projects count', () => {
     renderWithProviders(<QuickStatsWidget />);
-    expect(screen.getByText('Projects')).toBeInTheDocument();
-    expect(screen.getByText('1')).toBeInTheDocument(); // Only active project
+    const projectsLabel = screen.getByText('Projects');
+    expect(projectsLabel).toBeInTheDocument();
+    const projectsCard = projectsLabel.closest('div');
+    expect(projectsCard).not.toBeNull();
+    const projectCounts = within(projectsCard as HTMLElement).getAllByText('1');
+    expect(projectCounts.length).toBeGreaterThan(0); // Only active project
   });
 
   it('displays tags count', () => {
     renderWithProviders(<QuickStatsWidget />);
-    expect(screen.getByText('Tags')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument(); // #tag1 and #tag2
+    const tagsLabel = screen.getByText('Tags');
+    expect(tagsLabel).toBeInTheDocument();
+    const tagsCard = tagsLabel.closest('div');
+    expect(tagsCard).not.toBeNull();
+    const tagCounts = within(tagsCard as HTMLElement).getAllByText('2');
+    expect(tagCounts.length).toBeGreaterThan(0); // #tag1 and #tag2
   });
 });

@@ -22,7 +22,7 @@ import {
 import { DatePicker } from '@mantine/dates';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { IconPlus, IconTrendingUp, IconWallet, IconReceipt } from '@tabler/icons-react';
-import { logger } from '../../utils/logger';
+import { logger } from '@/utils/logger';
 
 interface Transaction {
   id: string;

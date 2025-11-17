@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import { Button, Card, Select, Group, TextInput } from '@mantine/core';
-import { logger } from '../utils/logger';
+import { logger } from '@/utils/logger';
 
 interface AdvancedImportProperties {
   spaceId: string;

@@ -1,7 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Alert, Button, Container, Text, Stack, Code } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
-import { logger } from '../utils/logger';
+import { logger } from '@/utils/logger';
 
 interface Properties {
   children: ReactNode;

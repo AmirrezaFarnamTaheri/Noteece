@@ -12,7 +12,7 @@ import {
   Modal,
   TextInput,
   Select,
-  MultiSelect,
+  Checkbox,
   Switch,
   ActionIcon,
   Menu,
@@ -41,7 +41,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notifications } from '@mantine/notifications';
 import { useStore } from '../store';
 import { authService } from '../services/auth';
-import { logger } from '../utils/logger';
+import { logger } from '@/utils/logger';
 
 interface SpaceUser {
   user_id: string;
@@ -212,12 +212,16 @@ const UserManagement: React.FC = () => {
       });
 
       // Handle custom permissions
-      // Get the role's default permissions
       const role = roles.find((r) => r.id === values.roleId);
       const rolePermissions = role?.permissions || [];
+      const currentPermissions = selectedUser?.permissions || [];
 
-      // Grant custom permissions not in the role
-      const permissionsToGrant = values.customPermissions.filter((p) => !rolePermissions.includes(p));
+      const currentCustomPermissions = currentPermissions.filter((permission) => !rolePermissions.includes(permission));
+
+      // Grant newly added custom permissions
+      const permissionsToGrant = values.customPermissions.filter(
+        (permission) => !currentCustomPermissions.includes(permission),
+      );
       for (const permission of permissionsToGrant) {
         await invoke('grant_permission_cmd', {
           space_id: activeSpaceId,
@@ -226,8 +230,10 @@ const UserManagement: React.FC = () => {
         });
       }
 
-      // Revoke role permissions not in custom permissions
-      const permissionsToRevoke = rolePermissions.filter((p) => !values.customPermissions.includes(p));
+      // Revoke custom permissions that were removed
+      const permissionsToRevoke = currentCustomPermissions.filter(
+        (permission) => !values.customPermissions.includes(permission),
+      );
       for (const permission of permissionsToRevoke) {
         await invoke('revoke_permission_cmd', {
           space_id: activeSpaceId,
@@ -695,12 +701,17 @@ const UserManagement: React.FC = () => {
               data={roles.map((r) => ({ value: r.id, label: r.name }))}
               {...inviteForm.getInputProps('roleId')}
             />
-            <MultiSelect
+            <Checkbox.Group
               label="Custom Permissions (Optional)"
               description="Override role permissions with custom selection"
-              data={allPermissions}
               {...inviteForm.getInputProps('customPermissions')}
-            />
+            >
+              <Stack gap={4}>
+                {allPermissions.map((perm) => (
+                  <Checkbox key={perm.value} value={perm.value} label={perm.label} />
+                ))}
+              </Stack>
+            </Checkbox.Group>
             <Group justify="flex-end" mt="md">
               <Button
                 variant="default"
@@ -757,12 +768,17 @@ const UserManagement: React.FC = () => {
                 data={roles.map((r) => ({ value: r.id, label: r.name }))}
                 {...editForm.getInputProps('roleId')}
               />
-              <MultiSelect
+              <Checkbox.Group
                 label="Custom Permissions"
                 description="Override role permissions"
-                data={allPermissions}
                 {...editForm.getInputProps('customPermissions')}
-              />
+              >
+                <Stack gap={4}>
+                  {allPermissions.map((perm) => (
+                    <Checkbox key={perm.value} value={perm.value} label={perm.label} />
+                  ))}
+                </Stack>
+              </Checkbox.Group>
               <Group justify="flex-end" mt="md">
                 <Button
                   variant="default"

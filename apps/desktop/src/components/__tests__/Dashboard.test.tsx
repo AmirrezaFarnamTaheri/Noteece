@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MantineProvider } from '@mantine/core';
+import { MemoryRouter } from 'react-router-dom';
 import Dashboard from '../Dashboard';
 import '@testing-library/jest-dom';
 
@@ -26,6 +27,11 @@ jest.mock('../../hooks/useQueries', () => ({
     data: [],
     isLoading: false,
   })),
+  useUpdateTask: jest.fn(() => ({
+    mutate: jest.fn(),
+    mutateAsync: jest.fn(),
+    isPending: false,
+  })),
 }));
 
 // Mock store
@@ -43,13 +49,14 @@ const queryClient = new QueryClient({
   },
 });
 
-const renderWithProviders = (component: React.ReactElement) => {
-  return render(
+const renderWithProviders = (component: React.ReactElement) =>
+  render(
     <QueryClientProvider client={queryClient}>
-      <MantineProvider>{component}</MantineProvider>
+      <MemoryRouter>
+        <MantineProvider>{component}</MantineProvider>
+      </MemoryRouter>
     </QueryClientProvider>,
   );
-};
 
 describe('Dashboard', () => {
   it('renders dashboard title', () => {
@@ -64,10 +71,15 @@ describe('Dashboard', () => {
 
   it('displays correct project counts', () => {
     renderWithProviders(<Dashboard />);
-    // Should show 2 total projects
-    expect(screen.getByText('2')).toBeInTheDocument();
-    // Should show 1 completed project
-    expect(screen.getByText('1')).toBeInTheDocument();
+    const [allProjectsLabel] = screen.getAllByText('All Projects');
+    const allProjectsCard = allProjectsLabel.closest('div')?.parentElement?.parentElement;
+    expect(allProjectsCard).not.toBeNull();
+    expect(allProjectsCard?.textContent).toContain('2');
+
+    const [completedLabel] = screen.getAllByText('Completed');
+    const completedCard = completedLabel.closest('div')?.parentElement?.parentElement;
+    expect(completedCard).not.toBeNull();
+    expect(completedCard?.textContent).toContain('1');
   });
 
   it('renders multiple widgets', () => {

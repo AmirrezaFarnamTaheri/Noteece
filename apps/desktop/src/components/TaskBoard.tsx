@@ -6,7 +6,7 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { Task } from './types';
 import { useStore } from '../store';
 import { IconPlus, IconGripVertical, IconCalendar, IconFlag } from '@tabler/icons-react';
-import { logger } from '../utils/logger';
+import { logger } from '@/utils/logger';
 
 // Whitelist of safe Mantine color tokens to prevent CSS injection
 const SAFE_COLORS = new Set([

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import { Button, Card, Text, Loader, Alert } from '@mantine/core';
 import { IconInfoCircle } from '@tabler/icons-react';
-import { logger } from '../utils/logger';
+import { logger } from '@/utils/logger';
 
 interface Note {
   id: string;

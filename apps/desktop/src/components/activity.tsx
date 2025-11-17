@@ -6,7 +6,7 @@ import { getRecentNotes } from '../services/api';
 import { useStore } from '../store';
 import { Note } from '@noteece/types';
 import { formatTimestamp } from '../utils/dateUtils';
-import { logger } from '../utils/logger';
+import { logger } from '@/utils/logger';
 
 interface ActivityProperties {
   icon: React.ReactNode;

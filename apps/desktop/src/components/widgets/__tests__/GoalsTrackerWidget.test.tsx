@@ -39,13 +39,13 @@ describe('GoalsTrackerWidget', () => {
     expect(screen.getByText('Health')).toBeInTheDocument();
   });
 
-  it('opens modal when add goal clicked', () => {
+  it('opens modal when add goal clicked', async () => {
     renderWithProviders(<GoalsTrackerWidget />);
     const addButton = screen.getByRole('button', { name: /add goal/i });
 
     fireEvent.click(addButton);
 
-    expect(screen.getByText('Add New Goal')).toBeInTheDocument();
+    expect(await screen.findByText('Add New Goal')).toBeInTheDocument();
   });
 
   it('displays completed badge for finished goals', () => {
