@@ -12,11 +12,13 @@ use core_rs::caldav::{
     CalDavAccount, ConflictResolution as CalDavConflictResolution,
     SyncConflict as CalDavSyncConflict, SyncDirection, SyncResult,
 };
+use core_rs::db::get_sync_port;
 use core_rs::collaboration::{
     activate_user, add_user_to_space, check_permission, get_roles, get_space_users,
     grant_permission, init_rbac_tables, invite_user, remove_user_from_space, revoke_permission,
     suspend_user, update_user_role, CollaborationError, Role, SpaceUser, UserInvitation,
 };
+use core_rs::sync::discovery::{DiscoveryService, DiscoveredDevice};
 use core_rs::foresight::{
     dismiss_insight, generate_insights, get_active_insights, record_feedback, FeedbackType, Insight,
 };
@@ -78,6 +80,7 @@ use core_rs::time_tracking::{
     start_time_entry, stop_time_entry, TimeEntry, TimeStats,
 };
 use core_rs::vault::{create_vault, unlock_vault};
+use core_rs::db::get_or_create_user_id;
 use core_rs::weekly_review::generate_weekly_review;
 use core_rs::auth::{AuthService, User, Session, AuthError};
 use core_rs::social::backup::{BackupService, BackupMetadata};
@@ -1111,7 +1114,7 @@ fn get_sync_devices_cmd(db: State<DbConnection>) -> Result<Vec<DeviceInfo>, Stri
         let agent = SyncAgent::new(
             get_local_device_id(),
             get_local_device_name(),
-            AppConfig::server_port(),
+            get_sync_port(conn).unwrap_or(8765),
         );
         agent.get_devices(conn).map_err(|e| e.to_string())
     } else {
@@ -1133,7 +1136,7 @@ fn register_sync_device_cmd(
         let agent = SyncAgent::new(
             get_local_device_id(),
             get_local_device_name(),
-            AppConfig::server_port(),
+            get_sync_port(conn).unwrap_or(8765),
         );
 
         let device_type_enum = match device_type.as_str() {
@@ -1176,7 +1179,7 @@ fn get_sync_history_for_space_cmd(
         let agent = SyncAgent::new(
             get_local_device_id(),
             get_local_device_name(),
-            AppConfig::server_port(),
+            get_sync_port(conn).unwrap_or(8765),
         );
         agent
             .get_sync_history(conn, &space_id, limit)
@@ -1193,7 +1196,7 @@ fn get_sync_conflicts_cmd(db: State<DbConnection>) -> Result<Vec<SyncConflict>, 
         let agent = SyncAgent::new(
             get_local_device_id(),
             get_local_device_name(),
-            AppConfig::server_port(),
+            get_sync_port(conn).unwrap_or(8765),
         );
         agent
             .get_unresolved_conflicts(conn)
@@ -1214,7 +1217,7 @@ fn resolve_sync_conflict_cmd(
         let agent = SyncAgent::new(
             get_local_device_id(),
             get_local_device_name(),
-            AppConfig::server_port(),
+            get_sync_port(conn).unwrap_or(8765),
         );
 
         // Get the conflict from database
@@ -1252,16 +1255,15 @@ fn resolve_sync_conflict_cmd(
         };
 
         // Retrieve DEK from secure state management
-        // The DEK is stored in encrypted application state and derived from user password
-        let dek = crate::state::get_encryption_key()
-            .map_err(|e| format!("Failed to retrieve encryption key: {}", e))?;
+        let dek_guard = db.dek.lock().map_err(|_| "Failed to lock DEK".to_string())?;
 
-        if dek.is_empty() {
-            return Err("Encryption key not initialized. Please log in first.".to_string());
-        }
+        let dek = match dek_guard.as_ref() {
+            Some(k) if !k.as_slice().is_empty() => k.as_slice(),
+            _ => return Err("Encryption key not initialized. Please log in first.".to_string()),
+        };
 
         agent
-            .resolve_conflict(conn, &conflict, resolution_type, &dek)
+            .resolve_conflict(conn, &conflict, resolution_type, dek)
             .map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
@@ -1284,7 +1286,7 @@ fn record_sync_cmd(
         let agent = SyncAgent::new(
             get_local_device_id(),
             get_local_device_name(),
-            AppConfig::server_port(),
+            get_sync_port(conn).unwrap_or(8765),
         );
         agent
             .record_sync_history(
@@ -2528,30 +2530,22 @@ fn get_current_user_cmd(
 // ============================================================================
 
 #[tauri::command]
-fn discover_devices_cmd() -> Result<Vec<serde_json::Value>, String> {
-    // Discover devices on local network using mDNS (Multicast DNS)
-    // Returns list of discovered Noteece devices available for syncing
+fn discover_devices_cmd(db: State<DbConnection>) -> Result<Vec<DiscoveredDevice>, String> {
+    let discovery_service = DiscoveryService::new().map_err(|e| e.to_string())?;
 
-    // Production implementation uses mdns-sd crate for cross-platform device discovery
-    // This searches the local network for _noteece-sync._tcp.local services
+    // Register the current device so others can find it.
+    let conn_guard = db.conn.lock().map_err(|_| "Database lock error".to_string())?;
+    if let Some(conn) = conn_guard.as_ref() {
+        let user_id = get_or_create_user_id(conn).map_err(|e| e.to_string())?;
+        let port = get_sync_port(conn).unwrap_or(8765);
+        let device_name = get_local_device_name();
+        discovery_service.register(&user_id, &device_name, port).map_err(|e| e.to_string())?;
+    }
 
-    // Currently returns empty list - mDNS discovery service will populate this
-    // when network connectivity and peer detection is fully initialized
-    // Development: Manually configure peer devices via sync settings
+    // Discover other devices on the network for 5 seconds.
+    let devices = discovery_service.discover(std::time::Duration::from_secs(5)).map_err(|e| e.to_string())?;
 
-    let discovered_devices = vec![];
-    // Example device format for reference:
-    // {
-    //     "device_id": "desktop_001",
-    //     "device_name": "Home Desktop",
-    //     "device_type": "desktop",
-    //     "ip_address": "192.168.1.100",
-    //     "port": 8765,
-    //     "os_version": "macOS 14.0",
-    //     "app_version": "1.0.0"
-    // }
-
-    Ok(discovered_devices)
+    Ok(devices)
 }
 
 #[tauri::command]
@@ -2631,6 +2625,7 @@ fn get_sync_progress_cmd(device_id: String) -> Result<serde_json::Value, String>
 
 #[tauri::command]
 fn cancel_sync_cmd(device_id: String) -> Result<bool, String> {
+            get_or_create_user_id_cmd,
     // Cancel ongoing synchronization with device
     // Cleans up sync session state
 
@@ -2642,6 +2637,16 @@ fn cancel_sync_cmd(device_id: String) -> Result<bool, String> {
 
     log::info!("[sync] Cancelled sync with device: {}", device_id);
     Ok(true)
+}
+
+#[tauri::command]
+fn get_or_create_user_id_cmd(db: State<DbConnection>) -> Result<String, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_or_create_user_id(conn).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
 }
 
 fn main() {
@@ -2829,6 +2834,7 @@ fn main() {
             start_sync_cmd,
             get_sync_progress_cmd,
             cancel_sync_cmd
+            get_or_create_user_id_cmd,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

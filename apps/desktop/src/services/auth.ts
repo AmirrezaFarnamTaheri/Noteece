@@ -5,6 +5,7 @@
 
 import { invoke } from '@tauri-apps/api/tauri';
 import { logger } from '@/utils/logger';
+import { identityService } from './identity';
 
 export interface Session {
   id: string;
@@ -118,8 +119,8 @@ class AuthService {
   /**
    * Get current user ID
    */
-  getCurrentUserId(): string | null {
-    return this.currentUser?.id || null;
+  async getCurrentUserId(): Promise<string> {
+    return identityService.getUserId();
   }
 
   /**

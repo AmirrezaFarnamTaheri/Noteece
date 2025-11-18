@@ -16,7 +16,7 @@ jest.mock('../../store', () => ({
 
 jest.mock('../../services/auth', () => ({
   authService: {
-    getCurrentUserId: jest.fn(() => 'system_user'),
+    getCurrentUserId: jest.fn(() => Promise.resolve('01H8XGJWBWBAQ4Z4Q4Z4Q4Z4Q4')),
   },
 }));
 

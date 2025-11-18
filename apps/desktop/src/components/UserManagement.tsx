@@ -88,21 +88,6 @@ const statusColors: Record<string, string> = {
 };
 
 /**
- * Get current user ID for audit logging
- * Returns null if user is not authenticated or on error
- * Wraps call in try-catch to handle runtime errors gracefully
- */
-function getCurrentUserId(): string | null {
-  try {
-    return authService.getCurrentUserId();
-  } catch (error) {
-    // Log error for debugging but return null instead of crashing
-    logger.error('Failed to get current user ID:', error as Error);
-    return null;
-  }
-}
-
-/**
  * User Management Component - Manage users, roles, and permissions
  * Features:
  * - User listing with roles and status
@@ -145,9 +130,9 @@ const UserManagement: React.FC = () => {
     mutationFn: async (values: { email: string; roleId: string; customPermissions: string[] }) => {
       if (!activeSpaceId) throw new Error('No active space');
 
-      const currentUserId = getCurrentUserId();
+      const currentUserId = await authService.getCurrentUserId();
       if (!currentUserId) {
-        throw new Error('User not authenticated. Please log in first.');
+        throw new Error('Could not retrieve user ID.');
       }
 
       // Invite user
@@ -193,9 +178,9 @@ const UserManagement: React.FC = () => {
     mutationFn: async (values: { userId: string; roleId: string; customPermissions: string[] }) => {
       if (!activeSpaceId) throw new Error('No active space');
 
-      const currentUserId = getCurrentUserId();
+      const currentUserId = await authService.getCurrentUserId();
       if (!currentUserId) {
-        throw new Error('User not authenticated. Please log in first.');
+        throw new Error('Could not retrieve user ID.');
       }
 
       // Prevent users from modifying their own role

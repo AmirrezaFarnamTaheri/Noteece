@@ -95,20 +95,20 @@ export default function CaptureScreen() {
       label: "Task",
       description: "Add a quick task",
     },
-    {
-      type: "voice" as CaptureType,
-      icon: "mic-outline",
-      label: "Voice",
-      description: "Record voice memo",
-      disabled: true,
-    },
-    {
-      type: "photo" as CaptureType,
-      icon: "camera-outline",
-      label: "Photo",
-      description: "Capture with OCR",
-      disabled: true,
-    },
+    // {
+    //   type: "voice" as CaptureType,
+    //   icon: "mic-outline",
+    //   label: "Voice",
+    //   description: "Record voice memo (Coming Soon)",
+    //   disabled: true,
+    // },
+    // {
+    //   type: "photo" as CaptureType,
+    //   icon: "camera-outline",
+    //   label: "Photo",
+    //   description: "Capture with OCR (Coming Soon)",
+    //   disabled: true,
+    // },
   ];
 
   return (
