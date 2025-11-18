@@ -23,7 +23,7 @@ jest.mock('../../store', () => ({
 
 jest.mock('../../services/auth', () => ({
   authService: {
-    getCurrentUserId: jest.fn(() => 'system_user'),
+    getCurrentUserId: jest.fn(() => 'local-user-_SYSTEM_'),
   },
 }));
 
@@ -96,7 +96,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
         expect(mockInvoke).toHaveBeenCalledWith(
           'invite_user_cmd',
           expect.objectContaining({
-            invitedBy: 'system_user', // Session 5 fix: documented placeholder
+            invitedBy: 'local-user-_SYSTEM_', // Session 5 fix: documented placeholder
           }),
         );
       });
@@ -106,7 +106,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
       // This test verifies the documentation exists in code
       // In a real scenario, we'd read the source file and check for the comment
       // For now, we just verify the placeholder value is used consistently
-      expect('system_user').toBe('system_user');
+      expect('local-user-_SYSTEM_').toBe('local-user-_SYSTEM_');
     });
   });
 
@@ -303,7 +303,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
           expect.objectContaining({
             email: 'new@example.com',
             roleId: expect.any(String),
-            invitedBy: 'system_user', // Correct audit identity
+            invitedBy: 'local-user-_SYSTEM_', // Correct audit identity
           }),
         );
       });

@@ -42,7 +42,7 @@ impl Default for AppConfig {
     fn default() -> Self {
         AppConfig {
             server: ServerConfig {
-                port: 8765,
+                port: 0,
                 host: "127.0.0.1".to_string(),
                 enable_cors: true,
             },
@@ -134,7 +134,7 @@ mod tests {
     #[test]
     fn test_default_config() {
         let config = AppConfig::default();
-        assert_eq!(config.server.port, 8765);
+        assert_eq!(config.server.port, 0);
         assert_eq!(config.sync.port, 8443);
         assert_eq!(config.server.host, "127.0.0.1");
     }

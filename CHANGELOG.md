@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Critical Security Vulnerabilities**: Patched a major Tauri CSP security hole and removed production kill-switches in the mobile sync client.
-- **Startup Crash**: Fixed a database migration crash by explicitly enabling the `fts5` feature in `rusqlite`.
+- **Startup Crash**: Temporarily averted a database migration crash by disabling the `fts5` feature in `rusqlite`. A permanent fix is blocked by a build issue (see `BUILD_ISSUES.md`).
 - **Build System Failures**: Corrected the CI workflow to build and package the correct Tauri application binaries.
 - **Panic Risks**: Hardened the backend by removing `.unwrap()` calls in the Foresight engine to prevent crashes from corrupted data.
 

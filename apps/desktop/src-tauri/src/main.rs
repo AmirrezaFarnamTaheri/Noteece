@@ -1251,18 +1251,14 @@ fn resolve_sync_conflict_cmd(
             _ => return Err("Invalid resolution type".to_string()),
         };
 
-        // Retrieve DEK from secure state management
-        // The DEK is stored in encrypted application state and derived from user password
-        let dek = crate::state::get_encryption_key()
-            .map_err(|e| format!("Failed to retrieve encryption key: {}", e))?;
-
-        if dek.is_empty() {
-            return Err("Encryption key not initialized. Please log in first.".to_string());
+        let dek_lock = db.dek.lock().unwrap();
+        if let Some(dek) = dek_lock.as_ref() {
+            agent
+                .resolve_conflict(conn, &conflict, resolution_type, dek.as_slice())
+                .map_err(|e| e.to_string())
+        } else {
+            Err("DEK not available".to_string())
         }
-
-        agent
-            .resolve_conflict(conn, &conflict, resolution_type, &dek)
-            .map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
@@ -2529,119 +2525,36 @@ fn get_current_user_cmd(
 
 #[tauri::command]
 fn discover_devices_cmd() -> Result<Vec<serde_json::Value>, String> {
-    // Discover devices on local network using mDNS (Multicast DNS)
-    // Returns list of discovered Noteece devices available for syncing
-
-    // Production implementation uses mdns-sd crate for cross-platform device discovery
-    // This searches the local network for _noteece-sync._tcp.local services
-
-    // Currently returns empty list - mDNS discovery service will populate this
-    // when network connectivity and peer detection is fully initialized
-    // Development: Manually configure peer devices via sync settings
-
-    let discovered_devices = vec![];
-    // Example device format for reference:
-    // {
-    //     "device_id": "desktop_001",
-    //     "device_name": "Home Desktop",
-    //     "device_type": "desktop",
-    //     "ip_address": "192.168.1.100",
-    //     "port": 8765,
-    //     "os_version": "macOS 14.0",
-    //     "app_version": "1.0.0"
-    // }
-
-    Ok(discovered_devices)
+    // mDNS discovery is not yet implemented.
+    Err("Device discovery is not yet available in this version.".to_string())
 }
 
 #[tauri::command]
-fn initiate_pairing_cmd(device_id: String) -> Result<bool, String> {
-    // Initiate pairing with remote device
-    // Generates ECDH key pair and sends public key
-
-    // In production:
-    // 1. Create pairing manager for this device
-    // 2. Generate ECDH key pair
-    // 3. Send PairingRequest to device with our public key
-    // 4. Wait for PairingResponse
-
-    log::info!("[sync] Initiated pairing with device: {}", device_id);
-    Ok(true)
+fn initiate_pairing_cmd(_device_id: String) -> Result<bool, String> {
+    Err("Device pairing is not yet available in this version.".to-string())
 }
 
 #[tauri::command]
-fn exchange_keys_cmd(device_id: String) -> Result<bool, String> {
-    // Exchange ECDH public keys with remote device
-    // Completes key exchange handshake
-
-    // In production:
-    // 1. Send our public key to device
-    // 2. Receive device's public key
-    // 3. Compute shared secret
-    // 4. Derive encryption key from shared secret
-
-    log::info!("[sync] Exchanged keys with device: {}", device_id);
-    Ok(true)
+fn exchange_keys_cmd(_device_id: String) -> Result<bool, String> {
+    Err("Key exchange is not yet available in this version.".to-string())
 }
 
 #[tauri::command]
 fn start_sync_cmd(
-    device_id: String,
-    categories: Vec<String>,
+    _device_id: String,
+    _categories: Vec<String>,
 ) -> Result<bool, String> {
-    // Start synchronization with paired device
-    // Sends SyncRequest with categories to sync
-
-    // In production:
-    // 1. Create sync session with vector clock
-    // 2. Compute delta from last sync
-    // 3. Compress and encrypt delta
-    // 4. Send in batches with sequence numbers
-    // 5. Monitor for conflicts using vector clocks
-
-    log::info!(
-        "[sync] Started sync with device: {} for categories: {:?}",
-        device_id,
-        categories
-    );
-    Ok(true)
+    Err("Sync is not yet available in this version.".to-string())
 }
 
 #[tauri::command]
-fn get_sync_progress_cmd(device_id: String) -> Result<serde_json::Value, String> {
-    // Get current sync progress for a device
-    // Returns progress percentage and status message
-
-    // In production:
-    // 1. Query sync session state from database
-    // 2. Calculate progress based on bytes/records processed
-    // 3. Return current batch number and total batches
-
-    let progress = serde_json::json!({
-        "progress": 75,
-        "message": "Syncing accounts and posts",
-        "batch": 3,
-        "total_batches": 4,
-        "bytes_transferred": 524288,
-        "total_bytes": 699050
-    });
-
-    Ok(progress)
+fn get_sync_progress_cmd(_device_id: String) -> Result<serde_json::Value, String> {
+    Err("Sync progress is not yet available in this version.".to-string())
 }
 
 #[tauri::command]
-fn cancel_sync_cmd(device_id: String) -> Result<bool, String> {
-    // Cancel ongoing synchronization with device
-    // Cleans up sync session state
-
-    // In production:
-    // 1. Send CancelSync message to device
-    // 2. Close encrypted connection
-    // 3. Clean up sync session database record
-    // 4. Mark as incomplete for resume on next sync
-
-    log::info!("[sync] Cancelled sync with device: {}", device_id);
-    Ok(true)
+fn cancel_sync_cmd(_device_id: String) -> Result<bool, String> {
+    Err("Sync cancellation is not yet available in this version.".to-string())
 }
 
 fn main() {

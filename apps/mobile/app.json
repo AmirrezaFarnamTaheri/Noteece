@@ -16,11 +16,6 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.noteece.app",
       "infoPlist": {
-        "NSCameraUsageDescription": "Noteece uses your camera to capture and OCR images for quick notes.",
-        "NSLocationWhenInUseUsageDescription": "Noteece uses your location for location-based task reminders.",
-        "NFCReaderUsageDescription": "Noteece uses NFC to trigger quick actions via NFC tags.",
-        "NSSpeechRecognitionUsageDescription": "Noteece uses speech recognition for voice capture.",
-        "NSMicrophoneUsageDescription": "Noteece uses your microphone for voice notes.",
         "NSFaceIDUsageDescription": "Noteece uses Face ID to unlock your encrypted vault securely."
       },
       "config": {
@@ -32,12 +27,6 @@
     "android": {
       "package": "com.noteece.app",
       "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_BACKGROUND_LOCATION",
-        "CAMERA",
-        "RECORD_AUDIO",
-        "NFC",
         "VIBRATE",
         "USE_BIOMETRIC",
         "USE_FINGERPRINT"
@@ -52,10 +41,8 @@
     },
     "plugins": [
       "expo-router",
-      "expo-location",
       "expo-notifications",
       "expo-task-manager",
-      "expo-camera",
       [
         "expo-build-properties",
         {

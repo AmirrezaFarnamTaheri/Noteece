@@ -91,18 +91,18 @@ A **local-first**, **end-to-end encrypted**, **Markdown-centric** workspace desi
 - **Conflict Resolution:** Comprehensive UI for detecting and resolving sync conflicts with CRDT vector clocks
 - **Sync History:** Timeline view of all sync events (push, pull, conflicts, errors) with detailed metrics
 - **Sync Settings:** Configure auto-sync, sync frequency, and server URLs
-- **User Management (RBAC):** Complete enterprise-grade role-based access control (100% complete)
+- **User Management (RBAC):** Backend logic for enterprise-grade role-based access control is implemented. The UI is connected for most operations.
 - **Role Management:** Owner, Admin, Editor, and Viewer roles with 4 system roles and custom permissions
 - **Permission System:** Granular permissions (read, write, delete, admin, manage users, manage billing)
 - **User Invitations:** Email-based invitations with role assignment and 7-day expiry
 - **Activity Tracking:** Monitor user activity, last active times, and user status (active/invited/suspended)
-- **CalDAV Sync:** Full CalDAV/WebDAV protocol support for calendar synchronization (100% complete)
+- **CalDAV Sync:** Backend logic for CalDAV/WebDAV protocol support for calendar synchronization is implemented.
   - Real HTTP operations (REPORT, PUT, DELETE)
   - iCalendar parsing and generation (RFC 5545 compliant)
   - ETag-based conflict detection
   - Compatible with NextCloud, Google Calendar, iCloud, Baikal, Radicale
   - Authentication error handling with encrypted credentials
-- **OCR Integration:** Complete text extraction from images (100% complete)
+- **OCR Integration:** Backend for text extraction from images is implemented and connected to the UI.
   - Tesseract OCR engine with multi-language support
   - Full-text search across extracted text
   - Image upload with real-time processing status
@@ -179,10 +179,9 @@ Pre-built binaries are automatically generated via GitHub Actions for each relea
   - macOS: `noteece-macos-x64.tar.gz`
   - Linux: `noteece-linux-x64.tar.gz`
 
-- **Mobile Apps**: Built via Expo Application Services (EAS) - **FULLY IMPLEMENTED**
-  - iOS: Ready for TestFlight (preview) or App Store (production) deployment
-  - Android: Ready for APK (preview) or AAB (production) deployment
-  - Complete feature parity with desktop app
+- **Mobile Apps**: The mobile app is in active development using Expo.
+  - Core note-taking and task management features are functional.
+  - Advanced features like sync, NFC, and location-based reminders are planned for a future release.
   - See [apps/mobile/README.md](apps/mobile/README.md) for full details
 
 To trigger a build, maintainers can use the **Build Binaries** workflow in GitHub Actions.
@@ -272,7 +271,7 @@ Noteece is currently in **active development**. The following phases have been c
 - ✅ **Mobile App**: React Native/Expo app fully implemented with feature parity
 - ✅ **Phase 5**: Advanced Integration (Complete - OCR, CalDAV, Sync Status, User Management)
 
-**Current Status**: 🎉 **All core features 100% complete** - Desktop app production-ready, mobile app ready for deployment, all sync and collaboration features fully functional.
+**Current Status**: The backend for most core features is complete. The desktop UI is partially connected, and the mobile app is in early development. The project is not yet production-ready. See `STATUS.md` for a detailed feature breakdown.
 
 > 📋 **[Final Cleanup Report](docs/FINAL_CLEANUP_REPORT.md)** - Comprehensive report on all bug fixes, CI/CD improvements, and production readiness validation (November 2025)
 >
