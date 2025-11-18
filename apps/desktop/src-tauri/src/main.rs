@@ -1252,16 +1252,15 @@ fn resolve_sync_conflict_cmd(
         };
 
         // Retrieve DEK from secure state management
-        // The DEK is stored in encrypted application state and derived from user password
-        let dek = crate::state::get_encryption_key()
-            .map_err(|e| format!("Failed to retrieve encryption key: {}", e))?;
+        let dek_guard = db.dek.lock().map_err(|_| "Failed to lock DEK".to_string())?;
 
-        if dek.is_empty() {
-            return Err("Encryption key not initialized. Please log in first.".to_string());
-        }
+        let dek = match dek_guard.as_ref() {
+            Some(k) if !k.as_slice().is_empty() => k.as_slice(),
+            _ => return Err("Encryption key not initialized. Please log in first.".to_string()),
+        };
 
         agent
-            .resolve_conflict(conn, &conflict, resolution_type, &dek)
+            .resolve_conflict(conn, &conflict, resolution_type, dek)
             .map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
