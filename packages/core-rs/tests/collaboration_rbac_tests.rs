@@ -450,9 +450,9 @@ fn test_role_permission_hierarchy() {
     let (conn, _dir) = setup_db();
     let roles = get_roles(&conn).expect("Failed to get roles");
 
-    let admin = roles.iter().find(|r| r.name == "admin").unwrap();
-    let editor = roles.iter().find(|r| r.name == "editor").unwrap();
-    let viewer = roles.iter().find(|r| r.name == "viewer").unwrap();
+    let admin = roles.iter().find(|r| r.name == "Administrator").unwrap();
+    let editor = roles.iter().find(|r| r.name == "Editor").unwrap();
+    let viewer = roles.iter().find(|r| r.name == "Viewer").unwrap();
 
     // Admin should have most permissions
     assert!(admin.permissions.len() > editor.permissions.len());
