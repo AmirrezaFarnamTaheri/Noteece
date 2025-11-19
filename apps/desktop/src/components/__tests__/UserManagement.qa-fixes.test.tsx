@@ -198,7 +198,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
         expect(mockInvoke).toHaveBeenCalledWith('revoke_permission_cmd', expect.anything());
       });
 
-      const revokeCalls = mockInvoke.mock.calls.filter((call) => call[0] === 'revoke_permission_cmd');
+      const revokeCalls = mockInvoke.mock.calls.filter((call: [string, any]) => call[0] === 'revoke_permission_cmd');
       const revokedPermissions = revokeCalls.map((call: [string, { permission: string }]) => call[1].permission);
 
       // Should NOT revoke read or write (role permissions)

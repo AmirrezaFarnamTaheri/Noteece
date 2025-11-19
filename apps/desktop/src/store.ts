@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create, StateCreator } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Space } from '@noteece/types';
 
@@ -10,11 +10,12 @@ export interface AppState {
   clearStorage: () => void;
 }
 
-const store = (set: any) => ({
+const store: StateCreator<AppState> = (set) => ({
   spaces: [],
   activeSpaceId: null,
-  setSpaces: (spaces: Space[]) => set({ spaces }),
-  setActiveSpaceId: (spaceId: string) => set({ activeSpaceId: spaceId }),
+  setSpaces: (spaces) => set({ spaces }),
+  setActiveSpaceId: (spaceId) => set({ activeSpaceId: spaceId }),
+  clearStorage: () => set({}, true),
 });
 
 // Only use persist middleware in browser environment

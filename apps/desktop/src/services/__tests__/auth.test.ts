@@ -39,7 +39,7 @@ describe('AuthService', () => {
   });
 
   it('should logout user', async () => {
-    (invoke as jest.Mock).mockResolvedValue(undefined);
+    (invoke as jest.Mock).mockResolvedValue();
 
     await authService.logout();
 
