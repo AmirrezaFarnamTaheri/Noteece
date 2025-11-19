@@ -222,7 +222,7 @@ pub fn init_personal_modes_tables(conn: &Connection) -> Result<(), PersonalModeE
 
     // Finance Mode Tables
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS transaction (
+        "CREATE TABLE IF NOT EXISTS `transaction` (
             id TEXT PRIMARY KEY,
             space_id TEXT NOT NULL,
             note_id TEXT,
@@ -379,7 +379,7 @@ pub fn init_personal_modes_tables(conn: &Connection) -> Result<(), PersonalModeE
         [],
     )?;
     conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_transaction_space ON transaction(space_id, date DESC)",
+        "CREATE INDEX IF NOT EXISTS idx_transaction_space ON `transaction`(space_id, date DESC)",
         [],
     )?;
     conn.execute(
@@ -600,7 +600,7 @@ pub fn create_transaction(
     let now = Utc::now().timestamp();
 
     conn.execute(
-        "INSERT INTO transaction (id, space_id, transaction_type, amount, currency, category, account, description, date, created_at)
+        "INSERT INTO `transaction` (id, space_id, transaction_type, amount, currency, category, account, description, date, created_at)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
         [
             &id,
@@ -642,7 +642,7 @@ pub fn get_transactions(
     let mut stmt = conn.prepare(
         "SELECT id, space_id, note_id, transaction_type, amount, currency, category, account,
                 description, date, recurring, recurring_frequency, blob_id, created_at
-         FROM transaction WHERE space_id = ?1
+         FROM `transaction` WHERE space_id = ?1
          ORDER BY date DESC LIMIT ?2",
     )?;
 
@@ -680,7 +680,7 @@ pub fn get_transactions_since(
     let mut stmt = conn.prepare(
         "SELECT id, space_id, note_id, transaction_type, amount, currency, category, account,
                 description, date, recurring, recurring_frequency, blob_id, created_at
-         FROM transaction WHERE space_id = ?1 AND date >= ?2
+         FROM `transaction` WHERE space_id = ?1 AND date >= ?2
          ORDER BY date DESC",
     )?;
 
