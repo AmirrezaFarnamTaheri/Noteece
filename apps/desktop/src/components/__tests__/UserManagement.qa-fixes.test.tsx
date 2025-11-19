@@ -232,7 +232,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
       });
 
       const revokeCalls = mockInvoke.mock.calls.filter((call) => call[0] === 'revoke_permission_cmd');
-      const revokedPermissions = revokeCalls.map((call) => (call[1] as { permission: string }).permission);
+      const revokedPermissions = revokeCalls.map((call: [string, { permission: string }]) => call[1].permission);
 
       // Should revoke manage_billing but not manage_users
       expect(revokedPermissions).toContain('manage_billing');
