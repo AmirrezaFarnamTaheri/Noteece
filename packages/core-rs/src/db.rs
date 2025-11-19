@@ -3,6 +3,7 @@ use rusqlite::{Connection, OptionalExtension, Result};
 use thiserror::Error;
 
 use serde_json;
+use ulid::Ulid;
 
 #[derive(Error, Debug)]
 pub enum DbError {
@@ -121,7 +122,7 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
               title TEXT NOT NULL,
               description TEXT,
               status TEXT NOT NULL CHECK(status IN('inbox','next','in_progress','waiting','done','cancelled')),
-              due_at INTEGER, start_at INTEGER, completed_at INTEGER,
+              due_at INTEGER, start_at INTEGER, completed_at INTEGER DEFAULT NULL,
               priority INTEGER CHECK(priority BETWEEN 1 AND 4),
               estimate_minutes INTEGER, recur_rule TEXT,
               context TEXT, area TEXT
@@ -524,3 +525,65 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
     log::info!("[db] Migration finished");
     Ok(())
 }
+
+/// Get or create a unique user ID for this vault
+pub fn get_or_create_user_id(conn: &Connection) -> Result<String, DbError> {
+    let setting_key = "user_id";
+    match get_setting(conn, setting_key)? {
+        Some(user_id) => {
+            log::info!("[db] Found user ID: {}", user_id);
+            Ok(user_id)
+        }
+        None => {
+            let new_user_id = Ulid::new().to_string();
+            log::info!("[db] No user ID found, creating new one: {}", new_user_id);
+            set_setting(
+                conn,
+                setting_key,
+                &new_user_id,
+                Some("Unique identifier for this vault's user."),
+            )?;
+            Ok(new_user_id)
+        }
+    }
+}
+
+    if current_version < 9 {
+        log::info!("[db] Migrating to version 9 - Update task.completed_at to use NULL");
+        tx.execute_batch(
+            "
+            -- Step 1: Create a new table with the desired schema
+            CREATE TABLE task_new (
+              id TEXT PRIMARY KEY, space_id TEXT NOT NULL REFERENCES space(id),
+              note_id TEXT REFERENCES note(id), project_id TEXT REFERENCES project(id),
+              parent_task_id TEXT REFERENCES task(id),
+              title TEXT NOT NULL,
+              description TEXT,
+              status TEXT NOT NULL CHECK(status IN('inbox','next','in_progress','waiting','done','cancelled')),
+              due_at INTEGER, start_at INTEGER, completed_at INTEGER DEFAULT NULL,
+              priority INTEGER CHECK(priority BETWEEN 1 AND 4),
+              estimate_minutes INTEGER, recur_rule TEXT,
+              context TEXT, area TEXT
+            );
+
+            -- Step 2: Copy data from the old table to the new table, converting 0 to NULL
+            INSERT INTO task_new (id, space_id, note_id, project_id, parent_task_id, title, description, status, due_at, start_at, completed_at, priority, estimate_minutes, recur_rule, context, area)
+            SELECT id, space_id, note_id, project_id, parent_task_id, title, description, status, due_at, start_at,
+                   CASE WHEN completed_at = 0 THEN NULL ELSE completed_at END,
+                   priority, estimate_minutes, recur_rule, context, area
+            FROM task;
+
+            -- Step 3: Drop the old table
+            DROP TABLE task;
+
+            -- Step 4: Rename the new table to the original table name
+            ALTER TABLE task_new RENAME TO task;
+
+            -- Recreate indexes on the new table
+            CREATE INDEX task_due   ON task(due_at)   WHERE status IN('inbox','next','in_progress','waiting');
+            CREATE INDEX task_start ON task(start_at);
+
+            INSERT INTO schema_version (version) VALUES (9);
+            "
+        )?;
+    }
