@@ -348,7 +348,7 @@ fn detect_project_stagnation(
     conn: &Connection,
     space_id: Ulid,
 ) -> Result<Vec<Insight>, ForesightError> {
-    let mut insights = Vec::new();
+    let mut insights: Vec<Insight> = Vec::new();
     let now = Utc::now().timestamp();
     let seven_days_ago = (Utc::now() - Duration::days(7)).timestamp();
 

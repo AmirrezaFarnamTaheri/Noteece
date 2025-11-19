@@ -655,6 +655,7 @@ mod tests {
             mobile_device: mobile_device.clone(),
             pairing_code: "123456".to_string(),
             timestamp: Utc::now(),
+            public_key: vec![0; 32], // Dummy key for test
         };
 
         // This would normally be async
@@ -675,6 +676,7 @@ mod tests {
             mobile_device: mobile_device.clone(),
             pairing_code: "999999".to_string(),
             timestamp: Utc::now(),
+            public_key: vec![0; 32], // Dummy key for test
         };
 
         // This would normally be async
