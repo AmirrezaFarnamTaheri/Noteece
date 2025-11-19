@@ -3,7 +3,7 @@ use core_rs::import::*;
 use core_rs::space::create_space;
 use rusqlite::Connection;
 use std::fs::File;
-use std::io::Write;
+use std::io::{Read, Write};
 use tempfile::tempdir;
 
 fn setup_db() -> (tempfile::TempDir, Connection) {

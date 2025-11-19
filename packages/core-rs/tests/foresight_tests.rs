@@ -1,33 +1,37 @@
+use core_rs::db::migrate;
 use core_rs::foresight::*;
 use core_rs::project::*;
 use core_rs::task::*;
 use core_rs::vault::*;
 use rusqlite::Connection;
+use std::path::PathBuf;
 use ulid::Ulid;
 
-fn create_test_vault() -> (Connection, Vec<u8>) {
-    let temp_path = std::env::temp_dir().join(format!("test_vault_{}.db", Ulid::new()));
+fn create_test_vault() -> Connection {
+    let temp_dir = tempfile::tempdir().unwrap();
+    let db_path = temp_dir.path().join("test.db");
     let password = "test_password_123";
-
-    let vault =
-        create_vault(temp_path.to_str().unwrap(), password).expect("Failed to create test vault");
-
-    (vault.conn, vault.dek)
+    create_vault(db_path.to_str().unwrap(), password).expect("Failed to create vault");
+    let mut conn = Connection::open(db_path).unwrap();
+    migrate(&mut conn).unwrap();
+    conn
 }
 
 fn cleanup_vault(conn: Connection) {
-    let path = conn.path().unwrap().to_path_buf();
-    drop(conn);
-    let _ = std::fs::remove_file(path);
+    if let Some(path) = conn.path() {
+        let path_buf = PathBuf::from(path);
+        drop(conn);
+        let _ = std::fs::remove_file(path_buf);
+    }
 }
 
 #[test]
 fn test_generate_insights() {
-    let (conn, dek) = create_test_vault();
-    let space_id = Ulid::new();
+    let mut conn = create_test_vault();
+    let space_id = Ulid::new().to_string();
 
     // Create some test data
-    let project = create_project(&conn, space_id, "Test Project", Some("Test description"))
+    let project = create_project(&mut conn, &space_id, "Test Project")
         .expect("Failed to create project");
 
     // Create a task with upcoming deadline
@@ -37,18 +41,19 @@ fn test_generate_insights() {
         .as_secs() as i64;
     let tomorrow = now + 86400;
 
-    let task = create_task(
+    let mut task = create_task(
         &conn,
-        space_id,
+        Ulid::from_string(&space_id).unwrap(),
         "Urgent Task",
-        Some("Test description"),
-        Some(tomorrow),
-        Some(project.id),
+        Some("Test description".to_string()),
     )
     .expect("Failed to create task");
+    task.due_at = Some(tomorrow);
+    task.project_id = Some(Ulid::from_string(&project.id).unwrap());
+    update_task(&conn, &task).unwrap();
 
     // Generate insights
-    let insights = generate_insights(&conn, space_id).expect("Failed to generate insights");
+    let insights = generate_insights(&conn, Ulid::from_string(&space_id).unwrap()).expect("Failed to generate insights");
 
     // Should have at least one insight (deadline pressure)
     assert!(
@@ -61,7 +66,7 @@ fn test_generate_insights() {
 
 #[test]
 fn test_insight_severity() {
-    let (conn, dek) = create_test_vault();
+    let conn = create_test_vault();
     let space_id = Ulid::new();
 
     // Create overdue tasks to trigger high severity insight
@@ -71,25 +76,16 @@ fn test_insight_severity() {
         .as_secs() as i64;
     let yesterday = now - 86400;
 
-    create_task(
-        &conn,
-        space_id,
-        "Overdue Task 1",
-        None,
-        Some(yesterday),
-        None,
-    )
-    .expect("Failed to create task");
+    let mut task1 = create_task(&conn, space_id, "Overdue Task 1", None)
+        .expect("Failed to create task");
+    task1.due_at = Some(yesterday);
+    update_task(&conn, &task1).unwrap();
 
-    create_task(
-        &conn,
-        space_id,
-        "Overdue Task 2",
-        None,
-        Some(yesterday),
-        None,
-    )
-    .expect("Failed to create task");
+    let mut task2 = create_task(&conn, space_id, "Overdue Task 2", None)
+        .expect("Failed to create task");
+    task2.due_at = Some(yesterday);
+    update_task(&conn, &task2).unwrap();
+
 
     let insights = generate_insights(&conn, space_id).expect("Failed to generate insights");
 
@@ -108,8 +104,8 @@ fn test_insight_severity() {
 
 #[test]
 fn test_project_stagnation_detection() {
-    let (conn, dek) = create_test_vault();
-    let space_id = Ulid::new();
+    let mut conn = create_test_vault();
+    let space_id = Ulid::new().to_string();
 
     // Create a project with old updated_at
     let old_timestamp = std::time::SystemTime::now()
@@ -118,22 +114,22 @@ fn test_project_stagnation_detection() {
         .as_secs() as i64
         - (15 * 86400); // 15 days ago
 
-    let project = create_project(&conn, space_id, "Stagnant Project", Some("Old project"))
+    let project = create_project(&mut conn, &space_id, "Stagnant Project")
         .expect("Failed to create project");
 
     // Manually update the project's timestamp to be old
     conn.execute(
-        "UPDATE projects SET updated_at = ?1 WHERE id = ?2",
+        "UPDATE project SET updated_at = ?1 WHERE id = ?2",
         rusqlite::params![old_timestamp, &project.id],
     )
     .expect("Failed to update project timestamp");
 
-    let insights = generate_insights(&conn, space_id).expect("Failed to generate insights");
+    let insights = generate_insights(&conn, Ulid::from_string(&space_id).unwrap()).expect("Failed to generate insights");
 
     // Should detect project stagnation
     let has_stagnation = insights
         .iter()
-        .any(|i| matches!(i.insight_type, InsightType::ProjectStagnation));
+        .any(|i| matches!(i.insight_type, InsightType::ProjectStagnant));
 
     assert!(has_stagnation, "Should detect stagnant projects");
 
@@ -142,7 +138,7 @@ fn test_project_stagnation_detection() {
 
 #[test]
 fn test_suggested_actions() {
-    let (conn, dek) = create_test_vault();
+    let conn = create_test_vault();
     let space_id = Ulid::new();
 
     // Create data that triggers insights with actions
@@ -152,8 +148,10 @@ fn test_suggested_actions() {
         .as_secs() as i64;
     let soon = now + 7200; // 2 hours from now
 
-    create_task(&conn, space_id, "Urgent Task", None, Some(soon), None)
+    let mut task = create_task(&conn, space_id, "Urgent Task", None)
         .expect("Failed to create task");
+    task.due_at = Some(soon);
+    update_task(&conn, &task).unwrap();
 
     let insights = generate_insights(&conn, space_id).expect("Failed to generate insights");
 
@@ -167,12 +165,12 @@ fn test_suggested_actions() {
 
 #[test]
 fn test_insight_context() {
-    let (conn, dek) = create_test_vault();
-    let space_id = Ulid::new();
+    let mut conn = create_test_vault();
+    let space_id = Ulid::new().to_string();
 
     // Create test data
     let project =
-        create_project(&conn, space_id, "Test Project", None).expect("Failed to create project");
+        create_project(&mut conn, &space_id, "Test Project").expect("Failed to create project");
 
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -180,17 +178,14 @@ fn test_insight_context() {
         .as_secs() as i64;
     let tomorrow = now + 86400;
 
-    create_task(
-        &conn,
-        space_id,
-        "Task 1",
-        None,
-        Some(tomorrow),
-        Some(project.id),
-    )
-    .expect("Failed to create task");
+    let mut task = create_task(&conn, Ulid::from_string(&space_id).unwrap(), "Task 1", None)
+        .expect("Failed to create task");
+    task.due_at = Some(tomorrow);
+    task.project_id = Some(Ulid::from_string(&project.id).unwrap());
+    update_task(&conn, &task).unwrap();
 
-    let insights = generate_insights(&conn, space_id).expect("Failed to generate insights");
+
+    let insights = generate_insights(&conn, Ulid::from_string(&space_id).unwrap()).expect("Failed to generate insights");
 
     // Insights should have context with entity information
     for insight in insights {

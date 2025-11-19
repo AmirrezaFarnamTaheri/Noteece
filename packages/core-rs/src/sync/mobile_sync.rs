@@ -257,6 +257,12 @@ pub struct PairingResponse {
     /// Error message if failed
     pub error_message: Option<String>,
 
+    // SECURITY WARNING: Sending the shared_key directly is a significant security risk.
+    // This implementation is a temporary measure for simplified setup and is NOT SAFE
+    // for production. In a real-world scenario, the server (desktop) should send its
+    // public key, and the client (mobile) should derive the shared secret independently
+    // using ECDH. This prevents the secret from ever being transmitted over the wire.
+    // TODO: Redesign pairing to use a proper ECDH key exchange.
     /// Shared encryption key
     pub shared_key: Option<Vec<u8>>,
 
