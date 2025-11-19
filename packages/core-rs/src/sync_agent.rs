@@ -339,7 +339,7 @@ impl SyncAgent {
                     // Log successful sync
                     self.log_entity_sync(conn, &delta)?;
                 }
-                Err(SyncError::ConflictError(msg)) => {
+                Err(SyncError::ConflictError(_msg)) => {
                     // Detect and record conflict
                     if let Some(conflict) = self.detect_conflict(conn, &delta)? {
                         conflicts.push(conflict);

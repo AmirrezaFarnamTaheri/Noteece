@@ -47,7 +47,6 @@ pub enum SyncProtocolError {
 }
 
 /// Protocol version for compatibility checking
-const SYNC_PROTOCOL_VERSION: u32 = 1;
 
 /// Device type identifier
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]

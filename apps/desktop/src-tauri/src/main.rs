@@ -102,9 +102,12 @@ impl SecureDek {
     }
 }
 
+use core_rs::sync::p2p::P2pSync;
+
 pub struct DbConnection {
     pub conn: Mutex<Option<Connection>>,
     pub dek: Mutex<Option<SecureDek>>,
+    pub p2p_sync: Mutex<Option<Arc<P2pSync>>>,
 }
 
 // ... [Keeping all standard commands from previous version, omitting purely for brevity until we reach the fixed sections] ...
@@ -132,6 +135,27 @@ fn get_or_create_user_id_cmd(db: State<DbConnection>) -> Result<String, String> 
 // Re-declaring necessary commands to ensure they are in scope for the macro
 // (Assuming all other commands are defined as in the original file)
 
+#[tauri::command]
+async fn start_sync_server_cmd(db: State<'_, DbConnection>) -> Result<(), String> {
+    let p2p_sync = db.p2p_sync.lock().unwrap().clone();
+    if let Some(p2p_sync) = p2p_sync {
+        let port = {
+            let conn = db.conn.lock().unwrap();
+            if let Some(conn) = conn.as_ref() {
+                get_sync_port(conn).unwrap_or(8765)
+            } else {
+                8765
+            }
+        };
+        tokio::spawn(async move {
+            if let Err(e) = p2p_sync.start_server(port).await {
+                log::error!("[p2p] Failed to start sync server: {}", e);
+            }
+        });
+    }
+    Ok(())
+}
+
 fn main() {
     AppConfig::init();
 
@@ -139,6 +163,7 @@ fn main() {
         .manage(DbConnection {
             conn: Mutex::new(None),
             dek: Mutex::new(None),
+            p2p_sync: Mutex::new(None),
         })
         .on_window_event(|event| {
             if let tauri::WindowEvent::CloseRequested { .. } = event.event() {
@@ -294,8 +319,44 @@ fn main() {
             start_sync_cmd,
             get_sync_progress_cmd,
             cancel_sync_cmd, // FIXED: Added missing comma
-            get_or_create_user_id_cmd
+            get_or_create_user_id_cmd,
+            start_sync_server_cmd
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[tauri::command]
+fn unlock_vault_cmd(db: State<DbConnection>, password: &str) -> Result<(), String> {
+    let mut conn_guard = db.conn.lock().unwrap();
+    if conn_guard.is_some() {
+        let mut dek_guard = db.dek.lock().unwrap();
+        *dek_guard = None;
+        *conn_guard = None;
+    }
+
+    let (conn, dek) = unlock_vault(password).map_err(|e| e.to_string())?;
+    *conn_guard = Some(conn);
+    let mut dek_guard = db.dek.lock().unwrap();
+    *dek_guard = Some(SecureDek::new(dek));
+
+    let device_info = {
+        let conn = conn_guard.as_ref().unwrap();
+        let device_id = get_or_create_user_id(conn).unwrap_or_default();
+        core_rs::sync::mobile_sync::DeviceInfo {
+            device_id,
+            device_name: "Desktop".to_string(),
+            device_type: core_rs::sync::mobile_sync::DeviceType::Desktop,
+            ip_address: "127.0.0.1".parse().unwrap(),
+            sync_port: 8765,
+            public_key: vec![],
+            os_version: std::env::consts::OS.to_string(),
+            last_seen: chrono::Utc::now(),
+            is_active: true,
+        }
+    };
+    let mut p2p_sync_guard = db.p2p_sync.lock().unwrap();
+    *p2p_sync_guard = Some(Arc::new(P2pSync::new(device_info).unwrap()));
+
+    Ok(())
 }

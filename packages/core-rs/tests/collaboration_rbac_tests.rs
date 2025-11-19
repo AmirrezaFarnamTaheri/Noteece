@@ -502,7 +502,7 @@ fn test_user_suspension() {
     let (conn, _dir) = setup_db();
     let space_id = Ulid::new().to_string();
     let user_id = Ulid::new().to_string();
-    let admin_id = Ulid::new().to_string();
+    let _admin_id = Ulid::new().to_string();
 
     conn.execute(
         "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",

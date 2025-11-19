@@ -624,7 +624,7 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
         }
     }
 
-pub fn init_llm_tables(conn: &Connection) -> Result<(), DbError> {
+pub fn init_llm_tables(_conn: &Connection) -> Result<(), DbError> {
     // Placeholder implementation
     Ok(())
 }
