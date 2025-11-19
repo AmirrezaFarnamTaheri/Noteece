@@ -3,8 +3,7 @@ import { useTodayTimeline } from '../useTodayTimeline';
 import * as Database from '../../lib/database';
 
 jest.mock('../../lib/database', () => ({
-  getTasksForDay: jest.fn(),
-  getNotesForDay: jest.fn(),
+  dbQuery: jest.fn().mockResolvedValue([]),
 }));
 
 describe('useTodayTimeline', () => {
@@ -16,8 +15,9 @@ describe('useTodayTimeline', () => {
     const mockTasks = [{ id: 't1', title: 'Task 1', completed: false }];
     const mockNotes = [{ id: 'n1', title: 'Note 1' }];
 
-    (Database.getTasksForDay as jest.Mock).mockResolvedValue(mockTasks);
-    (Database.getNotesForDay as jest.Mock).mockResolvedValue(mockNotes);
+    (Database.dbQuery as jest.Mock)
+      .mockResolvedValueOnce(mockTasks) // tasks
+      .mockResolvedValueOnce(mockNotes); // events (mocking notes as events for simplicity)
 
     const { result } = renderHook(() => useTodayTimeline());
 
@@ -28,8 +28,8 @@ describe('useTodayTimeline', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.timelineItems).toHaveLength(2);
-    expect(result.current.timelineItems).toEqual(
+    expect(result.current.timeline).toHaveLength(2);
+    expect(result.current.timeline).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ title: 'Task 1' }),
         expect.objectContaining({ title: 'Note 1' }),
@@ -38,7 +38,7 @@ describe('useTodayTimeline', () => {
   });
 
   it('handles errors gracefully', async () => {
-    (Database.getTasksForDay as jest.Mock).mockRejectedValue(new Error('DB Error'));
+    (Database.dbQuery as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
     const { result } = renderHook(() => useTodayTimeline());
 
@@ -48,6 +48,7 @@ describe('useTodayTimeline', () => {
 
     // Should return empty or partial results depending on implementation
     // but shouldn't crash
-    expect(result.current.timelineItems).toBeDefined();
+    expect(result.current.timeline).toBeDefined();
+    expect(result.current.timeline).toHaveLength(0);
   });
 });

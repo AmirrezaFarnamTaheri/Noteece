@@ -1,12 +1,16 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import SocialHub from '../../screens/SocialHub';
+import { SocialHub } from '../../screens/SocialHub';
 import * as SocialDatabase from '../../lib/social-database';
 
 // Mock the database and navigation
 jest.mock('../../lib/social-database', () => ({
   getUnifiedTimeline: jest.fn(),
   getSocialAccounts: jest.fn(),
+}));
+
+jest.mock('expo-haptics', () => ({
+  impactAsync: jest.fn(),
 }));
 
 const mockNavigation = {
