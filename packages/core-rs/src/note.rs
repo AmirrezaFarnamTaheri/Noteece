@@ -87,7 +87,11 @@ pub fn create_note(
 
     conn.execute(
         "INSERT INTO fts_note (note_id, title, content_md) VALUES (?1, ?2, ?3)",
-        rusqlite::params![&note.id.0.to_string(), &note.title, &note.content_md],
+        rusqlite::params![
+            &note.id.0.to_string(),
+            &note.title.to_lowercase(),
+            &note.content_md
+        ],
     )?;
 
     Ok(note)
@@ -154,7 +158,12 @@ pub fn update_note_content(
 
     tx.execute(
         "INSERT INTO fts_note(rowid, title, content_md, note_id) VALUES (?1, ?2, ?3, ?4)",
-        rusqlite::params![rowid, title, content_md, id.0.to_string()],
+        rusqlite::params![
+            rowid,
+            title.to_lowercase(),
+            content_md,
+            id.0.to_string()
+        ],
     )?;
 
     tx.commit()?;

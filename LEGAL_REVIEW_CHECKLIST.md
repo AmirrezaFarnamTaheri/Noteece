@@ -410,8 +410,8 @@ Once legal review is complete, document it:
 
 **Next Review Due**: [Date - typically 1 year later]
 
-**Signature**: ******\_\_\_\_******
-**Date**: ******\_\_\_\_******
+**Signature**: **\*\***\_\_\_\_**\*\***
+**Date**: **\*\***\_\_\_\_**\*\***
 ```
 
 ---

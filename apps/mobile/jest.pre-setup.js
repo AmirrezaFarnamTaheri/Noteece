@@ -119,6 +119,7 @@ jest.mock("@expo/vector-icons", () => {
   const React = require("react");
   const { View } = require("react-native");
 
+  // eslint-disable-next-line react/display-name
   const MockIcon = React.forwardRef((props, ref) =>
     React.createElement(View, { ref, ...props }),
   );
@@ -149,6 +150,7 @@ jest.mock("expo-linear-gradient", () => {
   const React = require("react");
   const { View } = require("react-native");
 
+  // eslint-disable-next-line react/display-name
   const MockLinearGradient = React.forwardRef((props, ref) =>
     React.createElement(View, { ref, ...props }),
   );
@@ -204,7 +206,10 @@ const normalizeForMatch = (value) => {
 
 const shouldSuppress = (value, patterns) => {
   const normalized = normalizeForMatch(value);
-  return Boolean(normalized) && patterns.some((pattern) => normalized.includes(pattern));
+  return (
+    Boolean(normalized) &&
+    patterns.some((pattern) => normalized.includes(pattern))
+  );
 };
 
 const originalConsoleError = console.error;

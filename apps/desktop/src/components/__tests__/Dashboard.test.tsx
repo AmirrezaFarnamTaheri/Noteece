@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import Dashboard from '../Dashboard';
 import '@testing-library/jest-dom';
 
-const invokeMock = jest.fn();
+const invokeMock = jest.fn<Promise<unknown>, [string, Record<string, unknown> | undefined]>();
 
 // Mock Tauri API
 jest.mock('@tauri-apps/api/tauri', () => ({
@@ -51,14 +51,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const renderWithProviders = (component: React.ReactElement) =>
-  render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <MantineProvider>{component}</MantineProvider>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
+import { renderWithProviders } from '../../utils/test-render';
 
 beforeEach(() => {
   queryClient.clear();

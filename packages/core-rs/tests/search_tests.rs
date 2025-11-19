@@ -87,11 +87,12 @@ fn test_search_does_not_expose_encrypted_content() -> Result<(), DbError> {
     let encrypted = encrypt_string(plaintext, &dek).unwrap();
 
     // Insert note with encrypted content directly
+    let note_id = ulid::Ulid::new().to_string();
     conn.execute(
-        "INSERT INTO note (id, space_id, title, encrypted_content, created_at, updated_at)
+        "INSERT INTO note (id, space_id, title, content_md, created_at, modified_at)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         rusqlite::params![
-            ulid::Ulid::new().to_string(),
+            note_id,
             space_id.to_string(),
             "Public Title",
             encrypted,
@@ -101,8 +102,18 @@ fn test_search_does_not_expose_encrypted_content() -> Result<(), DbError> {
     )
     .unwrap();
 
+    conn.execute(
+        "INSERT INTO fts_note (note_id, title, content_md) VALUES (?1, ?2, ?3)",
+        rusqlite::params![
+            note_id,
+            "Public Title".to_lowercase(),
+            ""
+        ],
+    )
+    .unwrap();
+
     // Perform search by title
-    let results = search_notes(&conn, "Public", &space_id.to_string()).unwrap();
+    let results = search_notes(&conn, "public title", &space_id.to_string()).unwrap();
 
     // Should find the note by title
     assert_eq!(results.len(), 1, "Should find note by title");
@@ -130,16 +141,27 @@ fn test_search_does_not_match_encrypted_content() -> Result<(), DbError> {
     let plaintext = "This contains the word secret";
     let encrypted = encrypt_string(plaintext, &dek).unwrap();
 
+    let note_id = ulid::Ulid::new().to_string();
     conn.execute(
-        "INSERT INTO note (id, space_id, title, encrypted_content, created_at, updated_at)
+        "INSERT INTO note (id, space_id, title, content_md, created_at, modified_at)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         rusqlite::params![
-            ulid::Ulid::new().to_string(),
+            note_id,
             space_id.to_string(),
             "Public Title",
             encrypted,
             chrono::Utc::now().timestamp(),
             chrono::Utc::now().timestamp(),
+        ],
+    )
+    .unwrap();
+
+    conn.execute(
+        "INSERT INTO fts_note (note_id, title, content_md) VALUES (?1, ?2, ?3)",
+        rusqlite::params![
+            note_id,
+            "Public Title".to_lowercase(),
+            ""
         ],
     )
     .unwrap();

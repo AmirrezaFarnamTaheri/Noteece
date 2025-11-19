@@ -1,4 +1,5 @@
 # Noteece Monorepo - Comprehensive Lint Analysis
+
 ## 156 Total Warnings Across Desktop & Mobile
 
 ---
@@ -6,6 +7,7 @@
 ## EXECUTIVE SUMMARY
 
 **Total Warnings: 156**
+
 - Desktop App (tauri-react-typescript-tailwind): 83 warnings (2 auto-fixable)
 - Mobile App (@noteece/mobile): 73 warnings (0 auto-fixable)
 - Other Packages: 0 warnings
@@ -16,34 +18,35 @@
 
 ### All Warning Types (23 categories)
 
-| Rank | Rule | Count | Fixable | Priority |
-|------|------|-------|---------|----------|
-| 1 | @typescript-eslint/no-unused-vars | 54 | YES* | HIGH |
-| 2 | react-hooks/exhaustive-deps | 26 | PARTIAL | HIGH |
-| 3 | security/detect-object-injection | 16 | MANUAL | MEDIUM |
-| 4 | @typescript-eslint/no-unsafe-return | 11 | PARTIAL | MEDIUM |
-| 5 | @typescript-eslint/no-unsafe-assignment | 10 | PARTIAL | MEDIUM |
-| 6 | @typescript-eslint/no-explicit-any | 10 | MANUAL | MEDIUM |
-| 7 | react/no-unescaped-entities | 4 | YES | LOW |
-| 8 | no-unreachable | 4 | YES | HIGH |
-| 9 | jsx-a11y/label-has-associated-control | 4 | MANUAL | MEDIUM |
-| 10 | unicorn/numeric-separators-style | 2 | YES | LOW |
-| 11 | unicorn/no-array-for-each | 2 | YES | LOW |
-| 12 | no-unused-vars | 2 | YES | HIGH |
-| 13 | unicorn/prefer-array-some | 1 | YES | LOW |
-| 14 | unicorn/no-useless-switch-case | 1 | YES | LOW |
-| 15 | security/detect-possible-timing-attacks | 1 | MANUAL | HIGH |
-| 16 | security/detect-non-literal-regexp | 1 | MANUAL | MEDIUM |
-| 17 | jsx-a11y/no-static-element-interactions | 1 | MANUAL | MEDIUM |
-| 18 | jsx-a11y/media-has-caption | 1 | MANUAL | MEDIUM |
-| 19 | jsx-a11y/click-events-have-key-events | 1 | MANUAL | MEDIUM |
-| 20 | import/no-named-as-default | 1 | MANUAL | LOW |
-| 21 | @typescript-eslint/no-unsafe-call | 1 | PARTIAL | MEDIUM |
-| 22 | @typescript-eslint/no-unsafe-argument | 1 | PARTIAL | MEDIUM |
-| 23 | @typescript-eslint/no-require-imports | 1 | MANUAL | LOW |
+| Rank | Rule                                    | Count | Fixable | Priority |
+| ---- | --------------------------------------- | ----- | ------- | -------- |
+| 1    | @typescript-eslint/no-unused-vars       | 54    | YES\*   | HIGH     |
+| 2    | react-hooks/exhaustive-deps             | 26    | PARTIAL | HIGH     |
+| 3    | security/detect-object-injection        | 16    | MANUAL  | MEDIUM   |
+| 4    | @typescript-eslint/no-unsafe-return     | 11    | PARTIAL | MEDIUM   |
+| 5    | @typescript-eslint/no-unsafe-assignment | 10    | PARTIAL | MEDIUM   |
+| 6    | @typescript-eslint/no-explicit-any      | 10    | MANUAL  | MEDIUM   |
+| 7    | react/no-unescaped-entities             | 4     | YES     | LOW      |
+| 8    | no-unreachable                          | 4     | YES     | HIGH     |
+| 9    | jsx-a11y/label-has-associated-control   | 4     | MANUAL  | MEDIUM   |
+| 10   | unicorn/numeric-separators-style        | 2     | YES     | LOW      |
+| 11   | unicorn/no-array-for-each               | 2     | YES     | LOW      |
+| 12   | no-unused-vars                          | 2     | YES     | HIGH     |
+| 13   | unicorn/prefer-array-some               | 1     | YES     | LOW      |
+| 14   | unicorn/no-useless-switch-case          | 1     | YES     | LOW      |
+| 15   | security/detect-possible-timing-attacks | 1     | MANUAL  | HIGH     |
+| 16   | security/detect-non-literal-regexp      | 1     | MANUAL  | MEDIUM   |
+| 17   | jsx-a11y/no-static-element-interactions | 1     | MANUAL  | MEDIUM   |
+| 18   | jsx-a11y/media-has-caption              | 1     | MANUAL  | MEDIUM   |
+| 19   | jsx-a11y/click-events-have-key-events   | 1     | MANUAL  | MEDIUM   |
+| 20   | import/no-named-as-default              | 1     | MANUAL  | LOW      |
+| 21   | @typescript-eslint/no-unsafe-call       | 1     | PARTIAL | MEDIUM   |
+| 22   | @typescript-eslint/no-unsafe-argument   | 1     | PARTIAL | MEDIUM   |
+| 23   | @typescript-eslint/no-require-imports   | 1     | MANUAL  | LOW      |
 
 **Legend:**
-- YES* = Often auto-fixable with --fix, but requires careful review
+
+- YES\* = Often auto-fixable with --fix, but requires careful review
 - YES = Auto-fixable with --fix
 - PARTIAL = Some instances may be auto-fixable
 - MANUAL = Requires manual intervention
@@ -53,13 +56,16 @@
 ## PART 2: TOP 10 MOST FREQUENT WARNINGS WITH EXAMPLES
 
 ### 1. @typescript-eslint/no-unused-vars (54 warnings)
+
 **Category:** Code Quality | **Fixable:** YES | **Impact:** High
 
 **Distribution:**
+
 - Mobile App: 59 instances
 - Desktop App: varies
 
 **Top Examples:**
+
 ```
 /home/user/Noteece/apps/mobile/src/lib/haptics.ts
   45:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
@@ -101,14 +107,17 @@
 ---
 
 ### 2. react-hooks/exhaustive-deps (26 warnings)
+
 **Category:** React Best Practices | **Fixable:** PARTIAL | **Impact:** High
 
 **Distribution:**
+
 - Mobile App: 10 instances
-- Desktop App: 13 instances  
+- Desktop App: 13 instances
 - Other: 3 instances
 
 **Top Examples:**
+
 ```
 /home/user/Noteece/apps/desktop/src/components/FormTemplates.tsx
   36:6  warning  React Hook useEffect has a missing dependency: 'fetchTemplates'
@@ -138,13 +147,16 @@
 ---
 
 ### 3. security/detect-object-injection (16 warnings)
+
 **Category:** Security | **Fixable:** MANUAL | **Impact:** Medium
 
 **Distribution:**
-- Desktop App: 14 instances  
+
+- Desktop App: 14 instances
 - Mobile App: 0 instances
 
 **Top Examples:**
+
 ```
 /home/user/Noteece/apps/desktop/src/components/widgets/NotesHeatmap.tsx
   37:7   warning  Generic Object Injection Sink
@@ -166,9 +178,11 @@
 ---
 
 ### 4. @typescript-eslint/no-unsafe-return (11 warnings)
+
 **Category:** Type Safety | **Fixable:** PARTIAL | **Impact:** Medium
 
 **Key Files:**
+
 - `/home/user/Noteece/apps/desktop/src/components/__tests__/UserManagement.qa-fixes.test.tsx`: 4 instances
 - `/home/user/Noteece/apps/desktop/src/components/social/SocialTimeline.tsx`: 5 instances
 - `/home/user/Noteece/apps/desktop/src/services/auth.ts`: 1 instance
@@ -177,9 +191,11 @@
 ---
 
 ### 5. @typescript-eslint/no-unsafe-assignment (10 warnings)
+
 **Category:** Type Safety | **Fixable:** PARTIAL | **Impact:** Medium
 
 **Key Files:**
+
 - `/home/user/Noteece/apps/desktop/src/components/__tests__/UserManagement.qa-fixes.test.tsx`: 2 instances
 - `/home/user/Noteece/apps/desktop/src/components/social/SocialTimeline.tsx`: 2 instances
 - `/home/user/Noteece/apps/desktop/src/components/social/TimelineFilters.tsx`: 1 instance
@@ -191,9 +207,11 @@
 ---
 
 ### 6. @typescript-eslint/no-explicit-any (10 warnings)
+
 **Category:** Type Safety | **Fixable:** MANUAL | **Impact:** Medium
 
 **Key Files:**
+
 - `/home/user/Noteece/apps/desktop/src/components/__tests__/UserManagement.qa-fixes.test.tsx`: 1 instance
 - `/home/user/Noteece/apps/desktop/src/components/social/SocialTimeline.tsx`: 3 instances
 - `/home/user/Noteece/apps/desktop/src/components/social/TimelineFilters.tsx`: 1 instance
@@ -204,9 +222,11 @@
 ---
 
 ### 7. react/no-unescaped-entities (4 warnings)
+
 **Category:** React/JSX | **Fixable:** YES | **Impact:** Low
 
 **Examples:**
+
 ```
 /home/user/Noteece/apps/desktop/src/components/auth/Login.tsx
   102:14  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`
@@ -222,9 +242,11 @@
 ---
 
 ### 8. no-unreachable (4 warnings)
+
 **Category:** Code Quality | **Fixable:** YES (Delete) | **Impact:** High
 
 **Examples:**
+
 ```
 /home/user/Noteece/apps/mobile/src/lib/sync/sync-client.ts
   203:7   warning  Unreachable code
@@ -240,9 +262,11 @@
 ---
 
 ### 9. jsx-a11y/label-has-associated-control (4 warnings)
+
 **Category:** Accessibility | **Fixable:** MANUAL | **Impact:** Medium
 
 **Examples:**
+
 ```
 /home/user/Noteece/apps/desktop/src/components/auth/AccountSettings.tsx
   134:15  warning  A form label must be associated with a control
@@ -254,9 +278,11 @@
 ---
 
 ### 10. unicorn/numeric-separators-style (2 warnings)
+
 **Category:** Style | **Fixable:** YES | **Impact:** Low
 
 **Examples:**
+
 ```
 /home/user/Noteece/apps/desktop/src/__tests__/performance.test.ts
   88:8   warning  Invalid group length in numeric value
@@ -272,6 +298,7 @@
 The linter reports **2 warnings potentially fixable with the `--fix` option** for the desktop app.
 
 **Can Be Auto-Fixed with `eslint --fix`:**
+
 1. react/no-unescaped-entities (4 warnings) - YES
 2. unicorn/numeric-separators-style (2 warnings) - YES
 3. unicorn/no-array-for-each (2 warnings) - YES
@@ -283,14 +310,15 @@ The linter reports **2 warnings potentially fixable with the `--fix` option** fo
 **Estimated Auto-Fixable: 16-20 warnings (~13-15%)**
 
 **Should NOT be Auto-Fixed (Manual Intervention Required):**
+
 1. @typescript-eslint/no-unused-vars (54) - Review before deletion
 2. react-hooks/exhaustive-deps (26) - Complex logic required
 3. security/detect-object-injection (16) - Security review needed
 4. @typescript-eslint/no-unsafe-return (11) - Type safety required
 5. @typescript-eslint/no-unsafe-assignment (10) - Type safety required
 6. @typescript-eslint/no-explicit-any (10) - Type definitions needed
-7. All jsx-a11y/* rules (6) - Accessibility context required
-8. security/* rules (2) - Security assessment needed
+7. All jsx-a11y/\* rules (6) - Accessibility context required
+8. security/\* rules (2) - Security assessment needed
 
 **Estimated Manual Fixes: 136-140 warnings (~85-87%)**
 
@@ -299,6 +327,7 @@ The linter reports **2 warnings potentially fixable with the `--fix` option** fo
 ## PART 4: RECOMMENDED FIX ORDER FOR MAXIMUM IMPACT
 
 ### Phase 1: Quick Wins (2-3 hours) - Auto-Fixable
+
 **16-20 warnings (~13%)**
 
 1. **react/no-unescaped-entities** (4 warnings)
@@ -339,26 +368,26 @@ The linter reports **2 warnings potentially fixable with the `--fix` option** fo
 ---
 
 ### Phase 2: High-Impact Manual Fixes (6-8 hours) - Unused Variables
+
 **54 warnings (~35%)**
 
 **@typescript-eslint/no-unused-vars**
+
 - Priority: HIGH (removes dead code)
 - Estimated Time: 2-3 hours
 - Approach: Review each file, delete or use variables
 
 **Hotspot Files (Mobile App):**
+
 1. `/home/user/Noteece/apps/mobile/src/lib/haptics.ts` (9 error params)
    - Pattern: All 'error' params in catch blocks never used
    - Fix: Use `catch (_error)` or `catch (_)` or review logic
-   
 2. `/home/user/Noteece/apps/mobile/app/(tabs)/today.tsx` (6 imports)
    - Imports: useEffect, isToday, isTomorrow, parseISO, TimelineItem, loading
    - Fix: Remove unused imports or refactor component
-   
 3. `/home/user/Noteece/apps/mobile/src/screens/MusicHub.tsx` (10 variables)
    - Unused: ScrollView, TextInput, width, height, stats, setStats, loading, searchQuery, setSearchQuery
    - Fix: Remove or implement functionality
-   
 4. `/home/user/Noteece/apps/mobile/src/lib/social-database.ts` (4 types)
    - Unused: SocialPost, PostCategory, AutomationRule, SyncHistory
    - Fix: Remove if truly unused or mark as exported for external use
@@ -368,14 +397,17 @@ The linter reports **2 warnings potentially fixable with the `--fix` option** fo
 ---
 
 ### Phase 3: React Hooks Dependencies (4-6 hours) - Type Safety
+
 **26 warnings (~17%)**
 
 **react-hooks/exhaustive-deps**
+
 - Priority: HIGH (prevents bugs)
 - Estimated Time: 2-3 hours
 - Approach: Add dependencies or wrap functions with useCallback
 
 **Pattern Analysis:**
+
 - Most common: Missing `loadData`, `fetchTemplates`, `fetchTasks`, `loadGraph` etc.
 - Fix Strategy:
   1. Add dependency if function is stable
@@ -383,6 +415,7 @@ The linter reports **2 warnings potentially fixable with the `--fix` option** fo
   3. Use ESLint's autofix suggestion (semi-automated)
 
 **Desktop Files (8 instances):**
+
 - FormTemplates.tsx:36 - add 'fetchTemplates'
 - ModeStore.tsx:37 - add 'fetchEnabledModes'
 - SavedSearches.tsx:40 - add 'fetchSearches'
@@ -397,6 +430,7 @@ The linter reports **2 warnings potentially fixable with the `--fix` option** fo
 - useFetch.tsx:54 - add 'fetch'
 
 **Mobile Files (6 instances):**
+
 - music.tsx:67, 88
 - tasks.tsx:73
 - unlock.tsx:52
@@ -410,21 +444,25 @@ The linter reports **2 warnings potentially fixable with the `--fix` option** fo
 ---
 
 ### Phase 4: Type Safety Issues (8-10 hours) - Complex
+
 **32 warnings (~20%)**
 
 **@typescript-eslint/no-unsafe-return** (11 warnings)
+
 - Priority: MEDIUM
 - Time: 1.5-2 hours
 - Fix: Add proper return types to functions
 - Files: UserManagement.qa-fixes.test.tsx, SocialTimeline.tsx, auth.ts, logger.ts
 
 **@typescript-eslint/no-unsafe-assignment** (10 warnings)
+
 - Priority: MEDIUM
 - Time: 1.5-2 hours
 - Fix: Type annotations, proper casting
 - Files: UserManagement.qa-fixes.test.tsx, SocialTimeline.tsx, TimelineFilters.tsx
 
 **@typescript-eslint/no-explicit-any** (10 warnings)
+
 - Priority: MEDIUM
 - Time: 1.5-2 hours
 - Fix: Replace `any` with specific types
@@ -435,41 +473,49 @@ The linter reports **2 warnings potentially fixable with the `--fix` option** fo
 ---
 
 ### Phase 5: Security & Accessibility (4-5 hours) - Important
+
 **22 warnings (~14%)**
 
 **security/detect-object-injection** (16 warnings)
+
 - Priority: MEDIUM (Security)
 - Time: 2-3 hours
 - Fix: Use type guards, constants instead of string keys
 - Main File: NotesHeatmap.tsx (5), SpacedRepetition.tsx (3), BackupRestore.tsx (2), others
 
 **jsx-a11y/label-has-associated-control** (4 warnings)
+
 - Priority: MEDIUM (Accessibility)
 - Time: 30 min
 - Fix: Add htmlFor to labels
 - File: AccountSettings.tsx:134-146
 
 **jsx-a11y/click-events-have-key-events** (1 warning)
+
 - Priority: MEDIUM
 - Time: 15 min
 - File: BackupRestore.tsx:215
 
 **jsx-a11y/no-static-element-interactions** (1 warning)
+
 - Priority: MEDIUM
 - Time: 15 min
 - File: BackupRestore.tsx:215
 
 **jsx-a11y/media-has-caption** (1 warning)
+
 - Priority: MEDIUM
 - Time: 15 min
 - File: TimelinePost.tsx:100
 
 **security/detect-possible-timing-attacks** (1 warning)
+
 - Priority: HIGH (Security)
 - Time: 30 min
 - File: Register.tsx:52
 
 **security/detect-non-literal-regexp** (1 warning)
+
 - Priority: MEDIUM
 - Time: 15 min
 - File: CalendarWidget.test.tsx:61
@@ -479,6 +525,7 @@ The linter reports **2 warnings potentially fixable with the `--fix` option** fo
 ---
 
 ### Phase 6: Final Polish (1-2 hours) - Edge Cases
+
 **6 warnings (~4%)**
 
 1. **import/no-named-as-default** (1 warning)
@@ -490,7 +537,7 @@ The linter reports **2 warnings potentially fixable with the `--fix` option** fo
    - Fix: Add type annotation
 
 3. **@typescript-eslint/no-unsafe-argument** (1 warning)
-   - File: __tests__/UserManagement.qa-fixes.test.tsx:15
+   - File: **tests**/UserManagement.qa-fixes.test.tsx:15
    - Fix: Type function arguments
 
 4. **@typescript-eslint/no-require-imports** (1 warning)
@@ -505,15 +552,15 @@ The linter reports **2 warnings potentially fixable with the `--fix` option** fo
 
 ## IMPLEMENTATION TIMELINE
 
-| Phase | Task | Warnings | Time | Difficulty |
-|-------|------|----------|------|------------|
-| 1 | Auto-fix (--fix) | 16-20 | 2-3h | Easy |
-| 2 | Remove unused vars | 54 | 3-4h | Easy-Med |
-| 3 | React hooks deps | 26 | 2-3h | Medium |
-| 4 | Type safety | 32 | 4-5h | Hard |
-| 5 | Security/A11y | 22 | 3-4h | Medium |
-| 6 | Final polish | 6 | 1-2h | Easy-Med |
-| **TOTAL** | **All Warnings** | **156** | **15-21h** | **Varied** |
+| Phase     | Task               | Warnings | Time       | Difficulty |
+| --------- | ------------------ | -------- | ---------- | ---------- |
+| 1         | Auto-fix (--fix)   | 16-20    | 2-3h       | Easy       |
+| 2         | Remove unused vars | 54       | 3-4h       | Easy-Med   |
+| 3         | React hooks deps   | 26       | 2-3h       | Medium     |
+| 4         | Type safety        | 32       | 4-5h       | Hard       |
+| 5         | Security/A11y      | 22       | 3-4h       | Medium     |
+| 6         | Final polish       | 6        | 1-2h       | Easy-Med   |
+| **TOTAL** | **All Warnings**   | **156**  | **15-21h** | **Varied** |
 
 ---
 
@@ -530,6 +577,7 @@ The linter reports **2 warnings potentially fixable with the `--fix` option** fo
 ## RECOMMENDED EXECUTION STRATEGY
 
 1. **Day 1 (2-3 hours):** Run auto-fix, review and commit
+
    ```bash
    eslint --fix apps/desktop/src
    eslint --fix apps/mobile
@@ -561,4 +609,3 @@ The linter reports **2 warnings potentially fixable with the `--fix` option** fo
    - Commit final changes
 
 **Total Estimated Time: 15-21 hours (2-3 days intensive work)**
-

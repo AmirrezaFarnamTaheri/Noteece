@@ -37,7 +37,6 @@ import { nanoid } from "nanoid/non-secure";
 import * as Crypto from "expo-crypto";
 import { dbQuery, dbExecute } from "@/lib/database";
 import { chacha20poly1305 } from "@noble/ciphers/chacha";
-import { p256 } from "@noble/curves/p256";
 import { sha256 } from "@noble/hashes/sha256";
 import { hmac } from "@noble/hashes/hmac";
 
@@ -144,7 +143,7 @@ export class SyncClient {
 
     try {
       // STEP 1: Generate ephemeral ECDH key pair (P-256)
-      const privateKey = p256.utils.randomPrivateKey();
+      // const privateKey = p256.utils.randomPrivateKey();
       // const publicKey = p256.getPublicKey(privateKey);
       // Public key will be used when implementing server component with WebSocket integration
 

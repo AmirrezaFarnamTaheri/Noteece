@@ -36,14 +36,8 @@ jest.mock('recharts', () => {
     const numericWidth = typeof width === 'number' ? width : 800;
     const numericHeight = typeof height === 'number' ? height : 400;
     const content =
-      typeof children === 'function'
-        ? children({ width: numericWidth, height: numericHeight })
-        : children;
-    return React.createElement(
-      'div',
-      { style: { width: numericWidth, height: numericHeight } },
-      content,
-    );
+      typeof children === 'function' ? children({ width: numericWidth, height: numericHeight }) : children;
+    return React.createElement('div', { style: { width: numericWidth, height: numericHeight } }, content);
   };
 
   return {

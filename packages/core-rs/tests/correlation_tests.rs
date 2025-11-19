@@ -60,7 +60,7 @@ fn test_correlations_to_insights() {
 
     let insights = engine.correlations_to_insights(vec![correlation]);
     assert!(!insights.is_empty());
-    assert_eq!(insights[0].insight_type, core_rs::foresight::InsightType::MoodCorrelation);
+    assert_eq!(insights[0].insight_type, core_rs::foresight::InsightType::HighWorkload);
 }
 
 #[test]

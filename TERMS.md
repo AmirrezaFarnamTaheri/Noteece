@@ -29,5 +29,6 @@ In no event shall the developers of Noteece be liable for any damages (including
 These terms shall be governed by the laws of **[Your Jurisdiction]** without regard to its conflict of law provisions.
 
 ---
+
 **Company Name:** [Your Company Name]
 **Contact:** [Your Contact Information]

@@ -563,6 +563,40 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
             )?;
         }
 
+        if current_version < 10 {
+            log::info!("[db] Migrating to version 10 - Sync Tables");
+            tx.execute_batch(
+                "
+                CREATE TABLE sync_history (
+                    id TEXT PRIMARY KEY,
+                    device_id TEXT NOT NULL,
+                    space_id TEXT NOT NULL REFERENCES space(id),
+                    sync_time INTEGER NOT NULL,
+                    direction TEXT NOT NULL,
+                    entities_pushed INTEGER NOT NULL,
+                    entities_pulled INTEGER NOT NULL,
+                    conflicts_detected INTEGER NOT NULL,
+                    success INTEGER NOT NULL,
+                    error_message TEXT
+                );
+
+                CREATE TABLE sync_conflict (
+                    id TEXT PRIMARY KEY,
+                    entity_type TEXT NOT NULL,
+                    entity_id TEXT NOT NULL,
+                    local_version BLOB NOT NULL,
+                    remote_version BLOB NOT NULL,
+                    conflict_type TEXT NOT NULL,
+                    detected_at INTEGER NOT NULL,
+                    resolved INTEGER NOT NULL,
+                    resolved_at INTEGER,
+                    device_id TEXT NOT NULL,
+                    space_id TEXT NOT NULL REFERENCES space(id)
+                );
+                ",
+            )?;
+        }
+
         tx.commit()?;
         log::info!("[db] Migration finished");
         Ok(())

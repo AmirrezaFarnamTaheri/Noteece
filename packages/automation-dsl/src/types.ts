@@ -20,7 +20,11 @@ export interface AutomationContext {
 }
 
 export interface NoteeceAPI {
-  createNote: (title: string, content: string, tags?: string[]) => Promise<string>;
+  createNote: (
+    title: string,
+    content: string,
+    tags?: string[],
+  ) => Promise<string>;
   updateNote: (id: string, updates: Record<string, unknown>) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
   searchNotes: (query: string) => Promise<Note[]>;
@@ -61,93 +65,93 @@ export type ASTNode =
   | BinaryExpressionNode;
 
 export interface ProgramNode {
-  type: 'Program';
+  type: "Program";
   triggers: TriggerNode[];
   actions: ActionNode[];
 }
 
 export interface TriggerNode {
-  type: 'Trigger';
+  type: "Trigger";
   event: TriggerEvent;
   conditions: ConditionNode[];
   actions: ActionNode[];
 }
 
 export type TriggerEvent =
-  | { type: 'NoteCreated'; filters?: Record<string, unknown> }
-  | { type: 'NoteUpdated'; filters?: Record<string, unknown> }
-  | { type: 'NoteDeleted'; filters?: Record<string, unknown> }
-  | { type: 'TaskCompleted'; filters?: Record<string, unknown> }
-  | { type: 'TagAdded'; tag?: string }
-  | { type: 'Schedule'; cron: string }
-  | { type: 'Manual' };
+  | { type: "NoteCreated"; filters?: Record<string, unknown> }
+  | { type: "NoteUpdated"; filters?: Record<string, unknown> }
+  | { type: "NoteDeleted"; filters?: Record<string, unknown> }
+  | { type: "TaskCompleted"; filters?: Record<string, unknown> }
+  | { type: "TagAdded"; tag?: string }
+  | { type: "Schedule"; cron: string }
+  | { type: "Manual" };
 
 export interface ConditionNode {
-  type: 'Condition';
+  type: "Condition";
   expression: ExpressionNode;
 }
 
 export interface ActionNode {
-  type: 'Action';
+  type: "Action";
   action: ActionType;
   parameters: Record<string, ExpressionNode>;
 }
 
 export type ActionType =
-  | 'CreateNote'
-  | 'UpdateNote'
-  | 'DeleteNote'
-  | 'CreateTask'
-  | 'CompleteTask'
-  | 'AddTag'
-  | 'RemoveTag'
-  | 'SendNotification'
-  | 'Wait'
-  | 'Log';
+  | "CreateNote"
+  | "UpdateNote"
+  | "DeleteNote"
+  | "CreateTask"
+  | "CompleteTask"
+  | "AddTag"
+  | "RemoveTag"
+  | "SendNotification"
+  | "Wait"
+  | "Log";
 
 export interface VariableDeclarationNode {
-  type: 'VariableDeclaration';
+  type: "VariableDeclaration";
   name: string;
   value: ExpressionNode;
 }
 
 export interface FunctionCallNode {
-  type: 'FunctionCall';
+  type: "FunctionCall";
   name: string;
   arguments: ExpressionNode[];
 }
 
 export interface LiteralNode {
-  type: 'Literal';
+  type: "Literal";
   value: string | number | boolean | null;
 }
 
 export interface IdentifierNode {
-  type: 'Identifier';
+  type: "Identifier";
   name: string;
 }
 
 export interface BinaryExpressionNode {
-  type: 'BinaryExpression';
+  type: "BinaryExpression";
   operator: BinaryOperator;
   left: ExpressionNode;
   right: ExpressionNode;
 }
 
 export type BinaryOperator =
-  | '+'
-  | '-'
-  | '*'
-  | '/'
-  | '%'
-  | '=='
-  | '!='
-  | '<'
-  | '>'
-  | '<='
-  | '>='
-  | '&&'
-  | '||';
+  | "+"
+  | "-"
+  | "*"
+  | "/"
+  | "%"
+  | "=="
+  | "!="
+  | "<"
+  | ">"
+  | "<="
+  | ">="
+  | "&&"
+  | "||";
 
 export type ExpressionNode =
   | LiteralNode
@@ -169,23 +173,23 @@ export class AutomationError extends Error {
   constructor(
     message: string,
     public code: string,
-    public details?: unknown
+    public details?: unknown,
   ) {
     super(message);
-    this.name = 'AutomationError';
+    this.name = "AutomationError";
   }
 }
 
 export class ParseError extends AutomationError {
   constructor(message: string, details?: unknown) {
-    super(message, 'PARSE_ERROR', details);
-    this.name = 'ParseError';
+    super(message, "PARSE_ERROR", details);
+    this.name = "ParseError";
   }
 }
 
 export class RuntimeError extends AutomationError {
   constructor(message: string, details?: unknown) {
-    super(message, 'RUNTIME_ERROR', details);
-    this.name = 'RuntimeError';
+    super(message, "RUNTIME_ERROR", details);
+    this.name = "RuntimeError";
   }
 }

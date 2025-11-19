@@ -65,6 +65,8 @@ fn test_migrations() -> Result<(), DbError> {
             "social_webview_session",
             "space",
             "space_people",
+            "sync_conflict",
+            "sync_history",
             "tag",
             "task",
             "task_people",

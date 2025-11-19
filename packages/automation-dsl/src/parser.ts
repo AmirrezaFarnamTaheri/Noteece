@@ -12,7 +12,7 @@ import {
   ParseError,
   TriggerEvent,
   ActionType,
-} from './types';
+} from "./types";
 
 /**
  * Simple recursive descent parser for automation scripts
@@ -29,9 +29,9 @@ export class AutomationParser {
     const actions: ActionNode[] = [];
 
     while (!this.isAtEnd()) {
-      if (this.match('TRIGGER')) {
+      if (this.match("TRIGGER")) {
         triggers.push(this.parseTrigger());
-      } else if (this.match('ACTION')) {
+      } else if (this.match("ACTION")) {
         actions.push(this.parseAction());
       } else {
         this.advance();
@@ -39,7 +39,7 @@ export class AutomationParser {
     }
 
     return {
-      type: 'Program',
+      type: "Program",
       triggers,
       actions,
     };
@@ -47,7 +47,8 @@ export class AutomationParser {
 
   private tokenize(input: string): Token[] {
     const tokens: Token[] = [];
-    const regex = /\s*(=>|==|!=|<=|>=|&&|\|\||[+\-*/%<>(){}[\],;:]|"[^"]*"|'[^']*'|\d+|\w+)\s*/g;
+    const regex =
+      /\s*(=>|==|!=|<=|>=|&&|\|\||[+\-*/%<>(){}[\],;:]|"[^"]*"|'[^']*'|\d+|\w+)\s*/g;
 
     let match;
     while ((match = regex.exec(input)) !== null) {
@@ -67,53 +68,53 @@ export class AutomationParser {
 
   private getTokenType(value: string): TokenType {
     const keywords = [
-      'TRIGGER',
-      'ON',
-      'WHEN',
-      'DO',
-      'IF',
-      'THEN',
-      'ELSE',
-      'AND',
-      'OR',
-      'NOT',
+      "TRIGGER",
+      "ON",
+      "WHEN",
+      "DO",
+      "IF",
+      "THEN",
+      "ELSE",
+      "AND",
+      "OR",
+      "NOT",
     ];
 
     if (keywords.includes(value.toUpperCase())) {
       return value.toUpperCase() as TokenType;
     }
 
-    if (/^\d+$/.test(value)) return 'NUMBER';
-    if (/^["']/.test(value)) return 'STRING';
-    if (/^[a-zA-Z_]\w*$/.test(value)) return 'IDENTIFIER';
+    if (/^\d+$/.test(value)) return "NUMBER";
+    if (/^["']/.test(value)) return "STRING";
+    if (/^[a-zA-Z_]\w*$/.test(value)) return "IDENTIFIER";
 
     return value as TokenType;
   }
 
   private parseTrigger(): TriggerNode {
-    this.consume('ON', 'Expected ON after TRIGGER');
+    this.consume("ON", "Expected ON after TRIGGER");
 
     const event = this.parseTriggerEvent();
     const conditions = [];
     const actions = [];
 
-    if (this.match('WHEN')) {
+    if (this.match("WHEN")) {
       conditions.push({
-        type: 'Condition' as const,
+        type: "Condition" as const,
         expression: this.parseExpression(),
       });
     }
 
-    this.consume('DO', 'Expected DO');
+    this.consume("DO", "Expected DO");
 
-    this.consume('{', 'Expected {');
-    while (!this.check('}') && !this.isAtEnd()) {
+    this.consume("{", "Expected {");
+    while (!this.check("}") && !this.isAtEnd()) {
       actions.push(this.parseAction());
     }
-    this.consume('}', 'Expected }');
+    this.consume("}", "Expected }");
 
     return {
-      type: 'Trigger',
+      type: "Trigger",
       event,
       conditions,
       actions,
@@ -124,30 +125,32 @@ export class AutomationParser {
     const eventType = this.advance().value;
 
     switch (eventType) {
-      case 'NoteCreated':
-        return { type: 'NoteCreated' };
-      case 'NoteUpdated':
-        return { type: 'NoteUpdated' };
-      case 'NoteDeleted':
-        return { type: 'NoteDeleted' };
-      case 'TaskCompleted':
-        return { type: 'TaskCompleted' };
-      case 'TagAdded':
-        return { type: 'TagAdded' };
-      case 'Schedule': {
-        this.consume('(', 'Expected (');
-        if (!this.check('STRING')) {
-          throw new ParseError('Expected cron string literal for Schedule(...)');
+      case "NoteCreated":
+        return { type: "NoteCreated" };
+      case "NoteUpdated":
+        return { type: "NoteUpdated" };
+      case "NoteDeleted":
+        return { type: "NoteDeleted" };
+      case "TaskCompleted":
+        return { type: "TaskCompleted" };
+      case "TagAdded":
+        return { type: "TagAdded" };
+      case "Schedule": {
+        this.consume("(", "Expected (");
+        if (!this.check("STRING")) {
+          throw new ParseError(
+            "Expected cron string literal for Schedule(...)",
+          );
         }
         const cronStr = this.advance().value.slice(1, -1);
         if (!cronStr || cronStr.trim().length === 0) {
-          throw new ParseError('Cron string cannot be empty');
+          throw new ParseError("Cron string cannot be empty");
         }
-        this.consume(')', 'Expected )');
-        return { type: 'Schedule', cron: cronStr };
+        this.consume(")", "Expected )");
+        return { type: "Schedule", cron: cronStr };
       }
-      case 'Manual':
-        return { type: 'Manual' };
+      case "Manual":
+        return { type: "Manual" };
       default:
         throw new ParseError(`Unknown trigger event: ${eventType}`);
     }
@@ -158,27 +161,29 @@ export class AutomationParser {
 
     const parameters: Record<string, ExpressionNode> = {};
 
-    if (this.match('(')) {
-      while (!this.check(')') && !this.isAtEnd()) {
+    if (this.match("(")) {
+      while (!this.check(")") && !this.isAtEnd()) {
         // Ensure parameter name is a valid identifier
-        if (!this.check('IDENTIFIER')) {
-          throw new ParseError(`Expected parameter name (identifier), got: ${this.peek().value}`);
+        if (!this.check("IDENTIFIER")) {
+          throw new ParseError(
+            `Expected parameter name (identifier), got: ${this.peek().value}`,
+          );
         }
         const paramName = this.advance().value;
-        this.consume(':', 'Expected :');
+        this.consume(":", "Expected :");
         parameters[paramName] = this.parseExpression();
 
-        if (!this.check(')')) {
-          this.consume(',', 'Expected ,');
+        if (!this.check(")")) {
+          this.consume(",", "Expected ,");
         }
       }
-      this.consume(')', 'Expected )');
+      this.consume(")", "Expected )");
     }
 
-    this.match(';');
+    this.match(";");
 
     return {
-      type: 'Action',
+      type: "Action",
       action: actionName as ActionType,
       parameters,
     };
@@ -191,12 +196,12 @@ export class AutomationParser {
   private parseEquality(): ExpressionNode {
     let expr = this.parseComparison();
 
-    while (this.match('==', '!=')) {
+    while (this.match("==", "!=")) {
       const operator = this.previous().value;
       const right = this.parseComparison();
       expr = {
-        type: 'BinaryExpression',
-        operator: operator as '==' | '!=',
+        type: "BinaryExpression",
+        operator: operator as "==" | "!=",
         left: expr,
         right,
       };
@@ -208,12 +213,12 @@ export class AutomationParser {
   private parseComparison(): ExpressionNode {
     let expr = this.parseTerm();
 
-    while (this.match('<', '>', '<=', '>=')) {
+    while (this.match("<", ">", "<=", ">=")) {
       const operator = this.previous().value;
       const right = this.parseTerm();
       expr = {
-        type: 'BinaryExpression',
-        operator: operator as '<' | '>' | '<=' | '>=',
+        type: "BinaryExpression",
+        operator: operator as "<" | ">" | "<=" | ">=",
         left: expr,
         right,
       };
@@ -225,12 +230,12 @@ export class AutomationParser {
   private parseTerm(): ExpressionNode {
     let expr = this.parseFactor();
 
-    while (this.match('+', '-')) {
+    while (this.match("+", "-")) {
       const operator = this.previous().value;
       const right = this.parseFactor();
       expr = {
-        type: 'BinaryExpression',
-        operator: operator as '+' | '-',
+        type: "BinaryExpression",
+        operator: operator as "+" | "-",
         left: expr,
         right,
       };
@@ -242,12 +247,12 @@ export class AutomationParser {
   private parseFactor(): ExpressionNode {
     let expr = this.parsePrimary();
 
-    while (this.match('*', '/', '%')) {
+    while (this.match("*", "/", "%")) {
       const operator = this.previous().value;
       const right = this.parsePrimary();
       expr = {
-        type: 'BinaryExpression',
-        operator: operator as '*' | '/' | '%',
+        type: "BinaryExpression",
+        operator: operator as "*" | "/" | "%",
         left: expr,
         right,
       };
@@ -257,56 +262,56 @@ export class AutomationParser {
   }
 
   private parsePrimary(): ExpressionNode {
-    if (this.match('NUMBER')) {
+    if (this.match("NUMBER")) {
       return {
-        type: 'Literal',
+        type: "Literal",
         value: Number.parseFloat(this.previous().value),
       };
     }
 
-    if (this.match('STRING')) {
+    if (this.match("STRING")) {
       return {
-        type: 'Literal',
+        type: "Literal",
         value: this.previous().value.slice(1, -1),
       };
     }
 
-    if (this.match('IDENTIFIER')) {
+    if (this.match("IDENTIFIER")) {
       const name = this.previous().value;
       // Recognize boolean and null literals
-      if (name === 'true' || name === 'false') {
-        return { type: 'Literal', value: name === 'true' };
+      if (name === "true" || name === "false") {
+        return { type: "Literal", value: name === "true" };
       }
-      if (name === 'null') {
-        return { type: 'Literal', value: null };
+      if (name === "null") {
+        return { type: "Literal", value: null };
       }
 
-      if (this.match('(')) {
+      if (this.match("(")) {
         const args: ExpressionNode[] = [];
-        while (!this.check(')') && !this.isAtEnd()) {
+        while (!this.check(")") && !this.isAtEnd()) {
           args.push(this.parseExpression());
-          if (!this.check(')')) {
-            this.consume(',', 'Expected ,');
+          if (!this.check(")")) {
+            this.consume(",", "Expected ,");
           }
         }
-        this.consume(')', 'Expected )');
+        this.consume(")", "Expected )");
 
         return {
-          type: 'FunctionCall',
+          type: "FunctionCall",
           name,
           arguments: args,
         };
       }
 
       return {
-        type: 'Identifier',
+        type: "Identifier",
         name,
       };
     }
 
-    if (this.match('(')) {
+    if (this.match("(")) {
       const expr = this.parseExpression();
-      this.consume(')', 'Expected )');
+      this.consume(")", "Expected )");
       return expr;
     }
 
@@ -339,7 +344,14 @@ export class AutomationParser {
   }
 
   private peek(): Token {
-    return this.tokens[this.current] || { type: 'EOF', value: '', line: 0, column: 0 };
+    return (
+      this.tokens[this.current] || {
+        type: "EOF",
+        value: "",
+        line: 0,
+        column: 0,
+      }
+    );
   }
 
   private previous(): Token {
@@ -353,20 +365,20 @@ export class AutomationParser {
 }
 
 type TokenType =
-  | 'TRIGGER'
-  | 'ON'
-  | 'WHEN'
-  | 'DO'
-  | 'IF'
-  | 'THEN'
-  | 'ELSE'
-  | 'AND'
-  | 'OR'
-  | 'NOT'
-  | 'NUMBER'
-  | 'STRING'
-  | 'IDENTIFIER'
-  | 'EOF'
+  | "TRIGGER"
+  | "ON"
+  | "WHEN"
+  | "DO"
+  | "IF"
+  | "THEN"
+  | "ELSE"
+  | "AND"
+  | "OR"
+  | "NOT"
+  | "NUMBER"
+  | "STRING"
+  | "IDENTIFIER"
+  | "EOF"
   | string;
 
 interface Token {

@@ -5,6 +5,7 @@
 
 import { screen, fireEvent, waitFor, within, render } from '@testing-library/react';
 import { AllTheProviders } from '../../utils/test-utils';
+import { renderWithProviders } from '../../utils/test-render';
 import UserManagement from '../UserManagement';
 import '@testing-library/jest-dom';
 
@@ -198,7 +199,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
       });
 
       const revokeCalls = mockInvoke.mock.calls.filter((call) => call[0] === 'revoke_permission_cmd');
-      const revokedPermissions = revokeCalls.map((call) => (call[1] as { permission: string }).permission);
+      const revokedPermissions = revokeCalls.map((call: [string, { permission: string }]) => call[1].permission);
 
       // Should NOT revoke read or write (role permissions)
       expect(revokedPermissions).not.toContain('read');
@@ -231,7 +232,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
       });
 
       const revokeCalls = mockInvoke.mock.calls.filter((call) => call[0] === 'revoke_permission_cmd');
-      const revokedPermissions = revokeCalls.map((call) => (call[1] as { permission: string }).permission);
+      const revokedPermissions = revokeCalls.map((call: [string, { permission: string }]) => call[1].permission);
 
       // Should revoke manage_billing but not manage_users
       expect(revokedPermissions).toContain('manage_billing');

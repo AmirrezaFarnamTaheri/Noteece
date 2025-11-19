@@ -1,6 +1,6 @@
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { invoke } from '@tauri-apps/api/tauri';
-import { renderWithProviders } from '../../utils/test-utils';
+import { renderWithProviders } from '../../utils/test-render';
 import UserManagement from '../UserManagement';
 import '@testing-library/jest-dom';
 
@@ -45,11 +45,16 @@ const sampleUsers = [
 
 const sampleRoles = [
   { id: 'owner', name: 'Owner', description: 'Full access', permissions: ['read', 'write'], created_at: Date.now() },
-  { id: 'admin', name: 'Administrator', description: 'Admin access', permissions: ['read', 'write'], created_at: Date.now() },
+  {
+    id: 'admin',
+    name: 'Administrator',
+    description: 'Admin access',
+    permissions: ['read', 'write'],
+    created_at: Date.now(),
+  },
   { id: 'editor', name: 'Editor', description: 'Edit content', permissions: ['read', 'write'], created_at: Date.now() },
   { id: 'viewer', name: 'Viewer', description: 'View only', permissions: ['read'], created_at: Date.now() },
 ];
-
 
 describe('UserManagement', () => {
   beforeEach(() => {
