@@ -2,7 +2,7 @@
 
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
-![Status](https://img.shields.io/badge/status-Beta-blue)
+![Status](httpss://img.shields.io/badge/status-Beta-blue)
 
 A **local-first**, **end-to-end encrypted**, **Markdown-centric** workspace designed for speed-of-thought productivity. Notes, tasks, projects, and knowledge live in a single unified, encrypted vault.
 
@@ -16,11 +16,14 @@ A **local-first**, **end-to-end encrypted**, **Markdown-centric** workspace desi
 
 ## Project Status
 
-Noteece is currently in **`Beta`**. The core functionality is stable, but some advanced features are still under active development. For a detailed breakdown of feature maturity and known issues, please refer to [STATUS.md](STATUS.md).
+Noteece is currently in **`Beta`**. The core functionality is implemented, but the project has several known issues in its test suites that prevent a stable release. For a detailed breakdown of feature maturity and a full list of tracked issues, please refer to:
+
+- **[STATUS.md](STATUS.md)**: For a high-level overview of feature maturity.
+- **[ISSUES.md](ISSUES.md)**: For a detailed list of known bugs and build problems.
 
 ## Features
 
-### Core Features (Stable)
+### Core Features (Stable Backend)
 
 - **Local-First & E2EE:** Your data is stored locally in a SQLCipher-encrypted vault.
 - **Markdown-Centric:** Write in a familiar, portable format, enhanced with backlinking.
@@ -28,14 +31,14 @@ Noteece is currently in **`Beta`**. The core functionality is stable, but some a
 - **Cross-Platform:** Available on all major desktop platforms (Windows, macOS, Linux).
 - **Note Management:** Create, edit, and organize notes with support for daily notes, version history, and backlinking.
 - **Task & Project Management:** Basic support for tasks and projects, including Kanban-style boards.
-- **Full-Text Search:** Fast, encrypted search for your notes and content.
+- **Full-Text Search:** The backend supports fast, encrypted search, though this is temporarily disabled due to a build issue (see `ISSUES.md`).
 - **Import/Export:** Import from Obsidian and Notion, and export your data to Markdown.
 - **Backup/Restore:** Create and restore from local, encrypted backups.
 
 ### In-Development Features (Alpha/Beta)
 
-- **Local Network Sync:** Peer-to-peer sync between devices on your local network is under development. The underlying logic is in place, but the network transport is not yet complete.
-- **Mobile App (iOS/Android):** A mobile app is available and supports core note-taking and task management, but does not yet have feature parity with the desktop app.
+- **Local Network Sync:** Peer-to-peer sync between devices on your local network is implemented in the backend but is not yet fully exposed in the UI.
+- **Mobile App (iOS/Android):** A mobile app is available and supports core note-taking and task management, but its test suite is currently non-functional.
 - **Spaced Repetition System (SRS):** A system for creating and reviewing knowledge cards from your notes.
 - **Social Media Suite (Beta):** A local-first social media aggregator. This feature is experimental and relies on scraping.
 
@@ -62,6 +65,8 @@ pnpm install
 cd apps/desktop
 pnpm dev:tauri
 ```
+
+**Note:** The project currently has several known test failures. Please consult [ISSUES.md](ISSUES.md) for a full list. The `core-rs` crate may require disabling the `fts5` feature in its `Cargo.toml` to build successfully.
 
 ## Architecture
 
