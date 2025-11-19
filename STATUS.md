@@ -6,7 +6,7 @@ This document provides a high-level summary of the current project status, featu
 
 ## Overall Status: `Beta`
 
-The application is in a beta phase. The core functionality is implemented, but the project is not yet stable for release due to persistent test failures and a disabled feature.
+The application is in a beta phase. The core functionality is implemented, but one feature is disabled due to a build conflict.
 
 ## Feature Maturity
 
@@ -25,7 +25,5 @@ The application is in a beta phase. The core functionality is implemented, but t
 ## Known Critical Issues
 
 1.  **FTS5/SQLCipher Conflict:** There is a persistent build failure when both the `fts5` and `bundled-sqlcipher-vendored-openssl` features are enabled. This is a blocking issue for enabling full-text search.
-2.  **Desktop Test Failures:** The desktop frontend test suite is suffering from cascading failures due to a lack of test isolation in the Zustand store.
-3.  **Mobile Test Failures:** The mobile frontend test suite has persistent failures related to mocking native modules.
 
 For a detailed list of smaller bugs and feature requests, please refer to the `ISSUES.md` file.

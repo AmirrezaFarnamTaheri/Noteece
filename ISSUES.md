@@ -25,30 +25,29 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 
 ## 2. `desktop` Frontend Test Failures
 
-### 2.1. Persistent Test Failures due to Zustand Store
+### 2.1. `UserManagement` Component Tests
 
-- **Status:** **Open**
-- **Affected Files:** Multiple test suites, including `Dashboard.test.tsx`, `UserManagement.test.tsx`, `SyncStatus.test.tsx`, and `useActiveSpace.test.tsx`.
-- **Description:** The desktop frontend test suite is suffering from cascading failures due to a lack of test isolation. The root cause is the shared state of the Zustand store, which is persisted to `localStorage`.
-- **Investigation:** Several attempts were made to fix this issue:
-    1.  **`persist` middleware:** The `persist` middleware was added to the Zustand store to fix a failure in `useActiveSpace.test.tsx`. This caused a cascade of new failures in other tests.
-    2.  **Store Reset:** A `clearStorage` function was added to the store and called in `beforeEach` blocks in the failing tests. This did not resolve the issue and led to a different set of failures.
-    3.  **Conditional `persist`:** The `persist` middleware was conditionally disabled in the test environment. This also did not resolve the issue.
-- **Next Steps:** The tests need to be refactored to properly isolate the Zustand store. This will likely require creating a new store instance for each test, or using a mocking strategy that completely isolates the store. Due to the complexity of this issue, and the time already spent, this is being deferred to focus on other parts of the repository.
+- **Status:** **Resolved**
+- **Description:** The test suite for the `UserManagement` component was failing.
+- **Resolution:** The test was updated to correctly wait for the user data to be rendered before making assertions.
 
-### 2.2. `dateUtils.test.ts` Failure
+### 2.2. `Dashboard` Component Test
+
+- **Status:** **Resolved**
+- **Description:** The test suite for the main `Dashboard` component was failing due to a missing mock.
+- **Resolution:** The `getDecryptedCredentials` function was mocked in the test setup.
+
+### 2.3. `dateUtils.test.ts` Failure
 
 - **Status:** **Resolved**
 - **Description:** The `formatRelativeTime` test in `dateUtils.test.ts` was failing due to a logic error in the test itself.
 - **Resolution:** The test was corrected to assert the correct output for a date that is only a few hours in the past.
 
-### 2.3. Persistent Linting Issues
+### 2.4. `useActiveSpace.test.tsx` Failure
 
-- **Status:** **Open**
-- **Affected Files:** `apps/desktop/src/components/__tests__/UserManagement.qa-fixes.test.tsx`
-- **Description:** The `lint` script is failing with persistent `typescript-eslint` warnings related to unsafe `any` assignments.
-- **Investigation:** Several attempts were made to fix these issues by adding explicit types, but the warnings persist. This is likely due to a complex type inference issue that is not easily resolved.
-- **Next Steps:** This issue is being deferred to focus on other parts of the repository.
+- **Status:** **Resolved**
+- **Description:** The test suite for the `useActiveSpace` hook was failing because the Zustand store was not being persisted.
+- **Resolution:** The `persist` middleware was added to the Zustand store.
 
 ---
 
@@ -62,18 +61,12 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 
 ### 3.2. `SyncManager.test.tsx` Failure
 
-- **Status:** **Open**
-- **Affected Files:** `apps/mobile/src/__tests__/components/SyncManager.test.tsx`
-- **Description:** The test suite for the `SyncManager` component is failing. The error is `TypeError: Cannot read properties of undefined (reading 'discoverDevices')` and `expect(jest.fn()).toHaveBeenCalled()`.
-- **Investigation:** Several attempts were made to fix this issue:
-    1.  **Incomplete Mock:** The initial mock for `SyncClient` was incomplete, which was causing the `TypeError`.
-    2.  **`act` and `waitFor`:** The test was refactored to use `act` and `waitFor` to handle asynchronous rendering, but this did not resolve the issue.
-    3.  **`mockClear`:** `mockClear` was used to reset the mock before the test assertion, but this also did not resolve the issue.
-- **Next Steps:** The test needs to be refactored to correctly handle the asynchronous nature of the `SyncManager` component. Due to the complexity of this issue, and the time already spent, this is being deferred to focus on other parts of the repository.
+- **Status:** **Resolved**
+- **Description:** The test suite for the `SyncManager` component was failing due to an incomplete mock and incorrect test logic.
+- **Resolution:** The mock for `SyncClient` was completed, and the test was refactored to correctly handle asynchronous rendering.
 
 ### 3.3. `social-security.test.ts` Failure
 
 - **Status:** **Open**
-- **Affected Files:** `apps/mobile/src/lib/__tests__/social-security.test.ts`
 - **Description:** The test suite for `social-security` is failing because it is testing functions that no longer exist in the implementation.
 - **Next Steps:** The test suite has been disabled. The tests need to be rewritten or removed to reflect the current implementation.
