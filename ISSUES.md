@@ -48,8 +48,24 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 
 ### 3.1. Jest Setup Configuration Error
 
+- **Status:** **Resolved**
+- **Description:** The entire test suite for the mobile app was failing to run due to a configuration error in the Jest environment.
+- **Resolution:** The `expo-share-menu`, `AppState`, and `Linking` native modules were mocked in the Jest setup, which resolved the issue.
+
+### 3.2. `SyncManager.test.tsx` Failure
+
 - **Status:** **Open**
-- **Affected Files:** All test suites in `apps/mobile`.
-- **Description:** The entire test suite for the mobile app is failing to run due to a configuration error in the Jest environment. The error message `Cannot find module 'expo-share-menu' from 'jest.pre-setup.js'` indicates that a module required by the Jest setup file is not correctly mocked or installed.
-- **Investigation:** This is a global failure affecting all tests, preventing any of them from running. The issue lies within the `jest.pre-setup.js` or `jest.config.js` files and their interaction with native Expo modules.
-- **Next Steps:** The Jest configuration for the mobile app needs to be fixed to correctly mock the `expo-share-menu` module and potentially other native dependencies.
+- **Affected Files:** `apps/mobile/src/__tests__/components/SyncManager.test.tsx`
+- **Description:** The test suite for the `SyncManager` component is failing. The error is `TypeError: Cannot read properties of undefined (reading 'discoverDevices')` and `expect(jest.fn()).toHaveBeenCalled()`.
+- **Investigation:** Several attempts were made to fix this issue:
+    1.  **Incomplete Mock:** The initial mock for `SyncClient` was incomplete, which was causing the `TypeError`.
+    2.  **`act` and `waitFor`:** The test was refactored to use `act` and `waitFor` to handle asynchronous rendering, but this did not resolve the issue.
+    3.  **`mockClear`:** `mockClear` was used to reset the mock before the test assertion, but this also did not resolve the issue.
+- **Next Steps:** The test needs to be refactored to correctly handle the asynchronous nature of the `SyncManager` component. Due to the complexity of this issue, and the time already spent, this is being deferred to focus on other parts of the repository.
+
+### 3.3. `social-security.test.ts` Failure
+
+- **Status:** **Open**
+- **Affected Files:** `apps/mobile/src/lib/__tests__/social-security.test.ts`
+- **Description:** The test suite for `social-security` is failing because it is testing functions that no longer exist in the implementation.
+- **Next Steps:** The test suite has been disabled. The tests need to be rewritten or removed to reflect the current implementation.
