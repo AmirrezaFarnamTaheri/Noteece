@@ -150,6 +150,42 @@ pub fn get_time_entry(conn: &Connection, id: Ulid) -> Result<Option<TimeEntry>, 
     Ok(entry)
 }
 
+pub fn get_time_entries(
+    conn: &Connection,
+    space_id: &str,
+) -> Result<Vec<TimeEntry>, DbError> {
+    let mut stmt = conn.prepare(
+        "SELECT id, space_id, task_id, project_id, note_id, description, started_at, ended_at, duration_seconds, is_running
+         FROM time_entry WHERE space_id = ?1 ORDER BY started_at DESC"
+    )?;
+
+    let entries = stmt
+        .query_map([space_id], |row| {
+            Ok(TimeEntry {
+                id: Ulid::from_string(&row.get::<_, String>(0)?).unwrap(),
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?).unwrap(),
+                task_id: row
+                    .get::<_, Option<String>>(2)?
+                    .map(|s| Ulid::from_string(&s).unwrap()),
+                project_id: row
+                    .get::<_, Option<String>>(3)?
+                    .map(|s| Ulid::from_string(&s).unwrap()),
+                note_id: row
+                    .get::<_, Option<String>>(4)?
+                    .map(|s| Ulid::from_string(&s).unwrap()),
+                description: row.get(5)?,
+                started_at: row.get(6)?,
+                ended_at: row.get(7)?,
+                duration_seconds: row.get(8)?,
+                is_running: row.get::<_, i64>(9)? == 1,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(entries)
+}
+
+
 /// Get all time entries for a task
 pub fn get_task_time_entries(conn: &Connection, task_id: Ulid) -> Result<Vec<TimeEntry>, DbError> {
     let mut stmt = conn.prepare(
@@ -288,6 +324,44 @@ pub fn get_recent_time_entries(
 
     Ok(entries)
 }
+
+pub fn get_time_entries_since(
+    conn: &Connection,
+    space_id: &str,
+    since_timestamp: i64,
+) -> Result<Vec<TimeEntry>, DbError> {
+    let mut stmt = conn.prepare(
+        "SELECT id, space_id, task_id, project_id, note_id, description, started_at, ended_at, duration_seconds, is_running
+         FROM time_entry WHERE space_id = ?1 AND started_at >= ?2
+         ORDER BY started_at DESC"
+    )?;
+
+    let entries = stmt
+        .query_map(rusqlite::params![space_id, since_timestamp], |row| {
+            Ok(TimeEntry {
+                id: Ulid::from_string(&row.get::<_, String>(0)?).unwrap(),
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?).unwrap(),
+                task_id: row
+                    .get::<_, Option<String>>(2)?
+                    .map(|s| Ulid::from_string(&s).unwrap()),
+                project_id: row
+                    .get::<_, Option<String>>(3)?
+                    .map(|s| Ulid::from_string(&s).unwrap()),
+                note_id: row
+                    .get::<_, Option<String>>(4)?
+                    .map(|s| Ulid::from_string(&s).unwrap()),
+                description: row.get(5)?,
+                started_at: row.get(6)?,
+                ended_at: row.get(7)?,
+                duration_seconds: row.get(8)?,
+                is_running: row.get::<_, i64>(9)? == 1,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(entries)
+}
+
 
 /// Get time statistics for a task
 pub fn get_task_time_stats(conn: &Connection, task_id: Ulid) -> Result<TimeStats, DbError> {

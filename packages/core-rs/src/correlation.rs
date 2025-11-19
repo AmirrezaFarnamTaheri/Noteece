@@ -66,10 +66,10 @@ impl CorrelationEngine {
         let now = Utc::now().timestamp();
         let start_time = now - (time_window_days * 86400);
 
-        let health_data = self.fetch_health_metrics(conn, space_id)?;
-        let time_entries = self.fetch_time_entries(conn, space_id)?;
+        let health_data = self.fetch_health_metrics(conn, &space_id.to_string(), start_time)?;
+        let time_entries = self.fetch_time_entries(conn, &space_id.to_string(), start_time)?;
         let tasks = self.fetch_tasks(conn, space_id)?;
-        let transactions = self.fetch_transactions(conn, space_id)?;
+        let transactions = self.fetch_transactions(conn, &space_id.to_string(), start_time)?;
 
         Ok(CorrelationContext {
             space_id,
@@ -165,14 +165,14 @@ impl CorrelationEngine {
         }
     }
 
-    // Corrected function calls based on compiler feedback
-    fn fetch_health_metrics(&self, conn: &Connection, space_id: Ulid) -> Result<Vec<HealthMetric>, CorrelationError> {
-        crate::personal_modes::get_health_metrics(conn, space_id, 1000, None)
+    // FINALIZED: Functions match the now-corrected signatures in other modules.
+    fn fetch_health_metrics(&self, conn: &Connection, space_id: &str, since: i64) -> Result<Vec<HealthMetric>, CorrelationError> {
+        crate::personal_modes::get_health_metrics_since(conn, space_id, since)
             .map_err(|e| CorrelationError::Analysis(e.to_string()))
     }
 
-    fn fetch_time_entries(&self, conn: &Connection, space_id: Ulid) -> Result<Vec<TimeEntry>, CorrelationError> {
-        crate::time_tracking::get_time_entries(conn, &space_id.to_string())
+    fn fetch_time_entries(&self, conn: &Connection, space_id: &str, since: i64) -> Result<Vec<TimeEntry>, CorrelationError> {
+        crate::time_tracking::get_time_entries_since(conn, space_id, since)
             .map_err(|e| CorrelationError::Analysis(e.to_string()))
     }
 
@@ -181,8 +181,8 @@ impl CorrelationEngine {
             .map_err(|e| CorrelationError::Analysis(e.to_string()))
     }
 
-    fn fetch_transactions(&self, conn: &Connection, space_id: Ulid) -> Result<Vec<Transaction>, CorrelationError> {
-        crate::personal_modes::get_transactions(conn, space_id, 1000)
+    fn fetch_transactions(&self, conn: &Connection, space_id: &str, since: i64) -> Result<Vec<Transaction>, CorrelationError> {
+        crate::personal_modes::get_transactions_since(conn, space_id, since)
             .map_err(|e| CorrelationError::Analysis(e.to_string()))
     }
 }
