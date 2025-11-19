@@ -43,6 +43,14 @@ jest.mock('../../store', () => ({
   })),
 }));
 
+// Mock auth service
+jest.mock('../../services/auth', () => ({
+  getDecryptedCredentials: jest.fn(() => Promise.resolve({
+    username: 'test-user',
+    password: 'test-password',
+  })),
+}));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -53,7 +61,14 @@ const queryClient = new QueryClient({
 
 import { renderWithProviders } from '../../utils/test-render';
 
+import { useStore } from '../../store';
+
 beforeEach(() => {
+  // Reset the Zustand store and localStorage before each test
+  const { clearStorage } = useStore.getState();
+  clearStorage();
+  localStorage.clear();
+
   queryClient.clear();
   invokeMock.mockReset();
   invokeMock.mockImplementation(async (cmd: string) => {

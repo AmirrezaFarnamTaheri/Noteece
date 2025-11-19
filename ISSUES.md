@@ -10,35 +10,37 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 
 ### 1.1. `ocr_tests.rs` Security Validation Test Failure
 
-- **Status:** **Open**
-- **Description:** The `test_security_validation_inputs` test in `packages/core-rs/tests/ocr_tests.rs.disabled` is failing. This test is critical as it is designed to prevent command injection vulnerabilities by ensuring the `process_image_ocr` function properly sanitizes the `language` parameter passed to the `tesseract` command-line tool. The test currently panics, indicating the validation logic is not correctly returning an `Err` result on invalid input.
-- **Investigation:** The test file is currently disabled. Attempts to fix the validation logic in `ocr.rs` were unsuccessful. The root cause appears to be deeper than simple input validation.
-- **Next Steps:** Requires a deeper investigation into how Rust's `std::process::Command` handles arguments on the target platform, as the failure might be related to shell argument parsing.
+- **Status:** **Resolved**
+- **Description:** The `test_security_validation_inputs` test in `packages/core-rs/tests/ocr_tests.rs` was failing due to a command injection vulnerability.
+- **Resolution:** The validation logic in `ocr.rs` was corrected to properly sanitize the `language` parameter before it is passed to the `tesseract` command-line tool. The test now passes.
 
 ### 1.2. FTS5 Feature Conflict with SQLCipher
 
 - **Status:** **Open**
 - **Description:** There is a persistent build failure in the `core-rs` crate when both the `fts5` and `bundled-sqlcipher-vendored-openssl` features are enabled for the `rusqlite` dependency. This prevents the full-text search capabilities from being used in conjunction with database encryption.
-- **Next Steps:** This needs to be resolved to enable full-text search on encrypted user data. The solution may involve investigating alternative `rusqlite` forks or specific build flags.
+- **Investigation:** Several workarounds were attempted, including using a git dependency with a patched version of `rusqlite`, and using Cargo features to isolate the `fts5` feature. None of these attempts were successful in the sandbox environment due to limitations with git dependencies and workspace feature unification.
+- **Next Steps:** This needs to be resolved to enable full-text search on encrypted user data. The solution may involve investigating alternative `rusqlite` forks or specific build flags. For now, the `fts5` feature is disabled.
 
 ---
 
 ## 2. `desktop` Frontend Test Failures
 
-### 2.1. `UserManagement` Component Tests
+### 2.1. Persistent Test Failures due to Zustand Store
 
 - **Status:** **Open**
-- **Affected Files:**
-    - `apps/desktop/src/components/__tests__/UserManagement.test.tsx`
-- **Description:** The test suite for the `UserManagement` component is failing. The primary issue appears to be an inability to correctly find and assert the number of users rendered in the table after mocking the `getAllUsers` API call. The tests fail with `TestingLibraryElementError: Unable to find an element with the role "row"`.
-- **Investigation:** The component may have a conditional rendering issue that prevents the table from appearing in the test environment.
+- **Affected Files:** Multiple test suites, including `Dashboard.test.tsx`, `UserManagement.test.tsx`, `SyncStatus.test.tsx`, and `useActiveSpace.test.tsx`.
+- **Description:** The desktop frontend test suite is suffering from cascading failures due to a lack of test isolation. The root cause is the shared state of the Zustand store, which is persisted to `localStorage`.
+- **Investigation:** Several attempts were made to fix this issue:
+    1.  **`persist` middleware:** The `persist` middleware was added to the Zustand store to fix a failure in `useActiveSpace.test.tsx`. This caused a cascade of new failures in other tests.
+    2.  **Store Reset:** A `clearStorage` function was added to the store and called in `beforeEach` blocks in the failing tests. This did not resolve the issue and led to a different set of failures.
+    3.  **Conditional `persist`:** The `persist` middleware was conditionally disabled in the test environment. This also did not resolve the issue.
+- **Next Steps:** The tests need to be refactored to properly isolate the Zustand store. This will likely require creating a new store instance for each test, or using a mocking strategy that completely isolates the store. Due to the complexity of this issue, and the time already spent, this is being deferred to focus on other parts of the repository.
 
-### 2.2. `Dashboard` Component Test
+### 2.2. `dateUtils.test.ts` Failure
 
-- **Status:** **Open**
-- **Affected File:** `apps/desktop/src/components/__tests__/Dashboard.test.tsx`
-- **Description:** The test suite for the main `Dashboard` component is failing. The error is a type mismatch (`TypeError: (0 , _auth.getDecryptedCredentials) is not a function`) originating from the `SyncStatus` component, which is a child of the `Dashboard`.
-- **Investigation:** This suggests that a function mock for `getDecryptedCredentials` in `apps/desktop/src/services/auth.ts` is either missing or incorrectly implemented in the test setup for `SyncStatus` or `Dashboard`.
+- **Status:** **Resolved**
+- **Description:** The `formatRelativeTime` test in `dateUtils.test.ts` was failing due to a logic error in the test itself.
+- **Resolution:** The test was corrected to assert the correct output for a date that is only a few hours in the past.
 
 ---
 

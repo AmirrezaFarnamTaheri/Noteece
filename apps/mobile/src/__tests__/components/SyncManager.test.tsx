@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import SyncManager from '../../components/SyncManager';
 import { SyncClient } from '../../lib/sync/sync-client';
 
@@ -9,19 +9,32 @@ describe('SyncManager Component', () => {
   let mockSyncClient: jest.Mocked<SyncClient>;
 
   beforeEach(() => {
-    mockSyncClient = new SyncClient() as jest.Mocked<SyncClient>;
+    mockSyncClient = {
+      discoverDevices: jest.fn().mockResolvedValue([]),
+      getSyncStatus: jest.fn().mockReturnValue({
+        status: 'idle',
+        message: 'Ready to sync',
+        progress: 0,
+      }),
+      initiateSync: jest.fn().mockResolvedValue(undefined),
+      cancelSync: jest.fn(),
+    } as unknown as jest.Mocked<SyncClient>;
     (SyncClient as jest.Mock).mockReturnValue(mockSyncClient);
   });
 
-  it('renders sync button', () => {
-    const { getByText } = render(<SyncManager />);
-    expect(getByText(/Scan/i)).toBeTruthy();
+  it('renders sync button', async () => {
+    const { findByText } = render(<SyncManager />);
+    expect(await findByText(/Scan/i)).toBeTruthy();
   });
 
-  it('triggers discovery on press', () => {
-    const { getByText } = render(<SyncManager />);
-    const button = getByText(/Scan/i);
+  it('triggers discovery on press', async () => {
+    const { findByText } = render(<SyncManager />);
+    const button = await findByText(/Scan/i);
+    // Clear the mock from the initial useEffect call
+    mockSyncClient.discoverDevices.mockClear();
     fireEvent.press(button);
-    expect(mockSyncClient.discoverDevices).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(mockSyncClient.discoverDevices).toHaveBeenCalled();
+    });
   });
 });

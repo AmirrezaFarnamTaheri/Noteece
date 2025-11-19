@@ -20,6 +20,7 @@ module.exports = {
     "^expo/src/winter$": "<rootDir>/node_modules/expo/build/winter/index.js",
     "^expo/virtual/streams$":
       "<rootDir>/jest.mocks/expo-virtual-streams.js",
+    "^expo-share-menu$": "<rootDir>/jest.mocks/expo-share-menu.js",
   },
   setupFiles: ["<rootDir>/jest.pre-setup.js"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],

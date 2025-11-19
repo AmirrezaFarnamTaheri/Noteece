@@ -107,8 +107,15 @@ describe('UserManagement', () => {
 
   it('displays user table with mock users', async () => {
     renderWithProviders(<UserManagement />);
-    expect(await screen.findByText('john@example.com')).toBeInTheDocument();
-    expect(screen.getByText('jane@example.com')).toBeInTheDocument();
+    await waitFor(async () => {
+      expect(await screen.findByText('john@example.com')).toBeInTheDocument();
+      expect(screen.getByText('jane@example.com')).toBeInTheDocument();
+
+      // Explicitly check for rows
+      const rows = await screen.findAllByRole('row');
+      // The header row + 2 user rows
+      expect(rows).toHaveLength(3);
+    });
   });
 
   it('opens invite modal when invite button clicked', async () => {

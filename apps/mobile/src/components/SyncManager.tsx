@@ -8,7 +8,7 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import { SyncClient, DiscoveredDevice, SyncStatus } from "../../lib/sync/sync-client";
+import { SyncClient, DiscoveredDevice, SyncStatus } from "../lib/sync/sync-client";
 
 const syncClient = new SyncClient();
 

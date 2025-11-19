@@ -3,11 +3,6 @@ use chrono::{DateTime, Utc};
 /// Enables synchronization of social media data between desktop and mobile devices
 /// Uses encrypted protocol with local network discovery
 use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
-/// Desktop-Mobile Sync Protocol for SocialHub
-/// Enables synchronization of social media data between desktop and mobile devices
-/// Uses encrypted protocol with local network discovery
-use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
 use std::sync::Arc;
 use thiserror::Error;

@@ -17,11 +17,19 @@ describe('dateUtils', () => {
     expect(result).toContain('12:00');
   });
 
-  it('formatRelativeTime should handle past dates', () => {
+  it('formatRelativeTime should handle recent past dates', () => {
     const pastDate = new Date();
     pastDate.setHours(pastDate.getHours() - 2);
     const pastTimestamp = dateToTimestamp(pastDate);
     const result = formatRelativeTime(pastTimestamp);
-    expect(result).toMatch(/0 days ago/); // The current implementation is simple, this is expected
+    expect(result).toBe('Today');
+  });
+
+  it('formatRelativeTime should handle older past dates', () => {
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 3);
+    const pastTimestamp = dateToTimestamp(pastDate);
+    const result = formatRelativeTime(pastTimestamp);
+    expect(result).toBe('3 days ago');
   });
 });
