@@ -53,20 +53,20 @@ fn test_insight_severity() {
     .unwrap();
 
     let now = chrono::Utc::now().timestamp();
-    let yesterday = now - 86400;
+    let tomorrow = now + 86400; // 1 day from now
 
-    let mut task1 = task::create_task(&conn, space_id, "Overdue Task 1", None).unwrap();
-    task1.due_at = Some(yesterday);
+    let mut task1 = task::create_task(&conn, space_id, "Due Tomorrow Task", None).unwrap();
+    task1.due_at = Some(tomorrow);
     task::update_task(&conn, &task1).unwrap();
 
     let insights = generate_insights(&conn, space_id).unwrap();
     let deadline_insight = insights
         .iter()
-        .find(|i| i.insight_type == InsightType::DeadlineApproaching);
+        .find(|i| i.insight_type == InsightType::DeadlineApproaching)
+        .expect("Deadline insight should have been generated");
 
-    // This is a bit weak as a test since "Critical" is for <=1 day away,
-    // but yesterday is -1 days away, so it should be critical.
-    assert!(deadline_insight.is_some());
+    // A task due in 1 day should be of Critical severity.
+    assert_eq!(deadline_insight.severity, InsightSeverity::Critical);
 }
 
 #[test]

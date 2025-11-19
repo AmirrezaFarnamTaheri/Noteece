@@ -149,7 +149,7 @@ fn test_export_to_json_decrypts_content() -> Result<(), DbError> {
 
     // Insert note with encrypted content directly
     conn.execute(
-        "INSERT INTO note (id, space_id, title, encrypted_content, created_at, updated_at)
+        "INSERT INTO note (id, space_id, title, content_md, created_at, modified_at)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         rusqlite::params![
             ulid::Ulid::new().to_string(),
@@ -192,7 +192,7 @@ fn test_export_to_json_handles_decryption_failure() -> Result<(), DbError> {
 
     // Insert note with invalid "encrypted" content
     conn.execute(
-        "INSERT INTO note (id, space_id, title, encrypted_content, created_at, updated_at)
+        "INSERT INTO note (id, space_id, title, content_md, created_at, modified_at)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         rusqlite::params![
             ulid::Ulid::new().to_string(),
@@ -270,7 +270,7 @@ fn test_export_to_zip_filename_sanitization() -> Result<(), DbError> {
 
 #[test]
 fn test_export_to_zip_preserves_content() -> Result<(), DbError> {
-    use core_rs::crypto::{decrypt_string, derive_key, encrypt_string};
+    use core_rs::crypto::{derive_key, encrypt_string};
     use core_rs::note::create_note;
 
     let (_dir, mut conn) = setup_db();
@@ -279,7 +279,14 @@ fn test_export_to_zip_preserves_content() -> Result<(), DbError> {
 
     // Create note
     let plaintext = "Original content with unicode: 日本語 🚀";
-    let note = create_note(&conn, &space_id.to_string(), "Test Note", plaintext).unwrap();
+    let encrypted_content = encrypt_string(plaintext, &dek).unwrap();
+    let note = create_note(
+        &conn,
+        &space_id.to_string(),
+        "Test Note",
+        &encrypted_content,
+    )
+    .unwrap();
 
     // Export to ZIP
     let export_dir = tempdir().unwrap();

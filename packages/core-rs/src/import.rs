@@ -110,20 +110,19 @@ pub struct ExportTask {
     pub title: String,
     pub description: Option<String>,
     pub status: String,
-    pub priority: Option<String>,
-    pub deadline: Option<i64>,
-    pub created_at: i64,
-    pub updated_at: i64,
+    pub priority: Option<i32>,
+    pub due_at: Option<i64>,
+    pub completed_at: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExportProject {
     pub id: String,
-    pub name: String,
-    pub description: Option<String>,
+    pub title: String,
+    pub goal_outcome: Option<String>,
     pub status: String,
-    pub created_at: i64,
-    pub updated_at: i64,
+    pub start_at: Option<i64>,
+    pub target_end_at: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -193,8 +192,8 @@ pub fn export_to_zip(
 
     // Export notes as markdown files
     let mut stmt = conn.prepare(
-        "SELECT id, title, encrypted_content, created_at
-         FROM notes
+        "SELECT id, title, content_md, created_at
+         FROM note
          WHERE space_id = ?1",
     )?;
 
@@ -283,8 +282,8 @@ pub fn export_to_markdown(
     fs::create_dir_all(&notes_dir)?;
 
     let mut stmt = conn.prepare(
-        "SELECT id, title, encrypted_content, created_at
-         FROM notes
+        "SELECT id, title, content_md, created_at
+         FROM note
          WHERE space_id = ?1",
     )?;
 
@@ -356,8 +355,8 @@ fn gather_export_data(
 
     // Gather notes
     let mut stmt = conn.prepare(
-        "SELECT id, title, encrypted_content, created_at, updated_at
-         FROM notes
+        "SELECT id, title, content_md, created_at, modified_at
+         FROM note
          WHERE space_id = ?1",
     )?;
 
@@ -378,8 +377,8 @@ fn gather_export_data(
 
     // Gather tasks
     let mut stmt = conn.prepare(
-        "SELECT id, title, description, status, priority, deadline, created_at, updated_at
-         FROM tasks
+        "SELECT id, title, description, status, priority, due_at, completed_at
+         FROM task
          WHERE space_id = ?1",
     )?;
 
@@ -390,9 +389,8 @@ fn gather_export_data(
             description: row.get(2).ok(),
             status: row.get(3)?,
             priority: row.get(4).ok(),
-            deadline: row.get(5).ok(),
-            created_at: row.get(6)?,
-            updated_at: row.get(7)?,
+            due_at: row.get(5).ok(),
+            completed_at: row.get(6).ok(),
         })
     })?;
 
@@ -402,19 +400,19 @@ fn gather_export_data(
 
     // Gather projects
     let mut stmt = conn.prepare(
-        "SELECT id, name, description, status, created_at, updated_at
-         FROM projects
+        "SELECT id, title, goal_outcome, status, start_at, target_end_at
+         FROM project
          WHERE space_id = ?1",
     )?;
 
     let project_rows = stmt.query_map([space_id.to_string()], |row| {
         Ok(ExportProject {
             id: row.get(0)?,
-            name: row.get(1)?,
-            description: row.get(2).ok(),
+            title: row.get(1)?,
+            goal_outcome: row.get(2).ok(),
             status: row.get(3)?,
-            created_at: row.get(4)?,
-            updated_at: row.get(5)?,
+            start_at: row.get(4).ok(),
+            target_end_at: row.get(5).ok(),
         })
     })?;
 
@@ -442,8 +440,8 @@ fn export_tasks_json(conn: &Connection, space_id: Ulid) -> Result<String, Import
     let mut tasks = Vec::new();
 
     let mut stmt = conn.prepare(
-        "SELECT id, title, description, status, priority, deadline, created_at, updated_at
-         FROM tasks
+        "SELECT id, title, description, status, priority, due_at, completed_at
+         FROM task
          WHERE space_id = ?1",
     )?;
 
@@ -454,9 +452,8 @@ fn export_tasks_json(conn: &Connection, space_id: Ulid) -> Result<String, Import
             description: row.get(2).ok(),
             status: row.get(3)?,
             priority: row.get(4).ok(),
-            deadline: row.get(5).ok(),
-            created_at: row.get(6)?,
-            updated_at: row.get(7)?,
+            due_at: row.get(5).ok(),
+            completed_at: row.get(6).ok(),
         })
     })?;
 
@@ -472,19 +469,19 @@ fn export_projects_json(conn: &Connection, space_id: Ulid) -> Result<String, Imp
     let mut projects = Vec::new();
 
     let mut stmt = conn.prepare(
-        "SELECT id, name, description, status, created_at, updated_at
-         FROM projects
+        "SELECT id, title, goal_outcome, status, start_at, target_end_at
+         FROM project
          WHERE space_id = ?1",
     )?;
 
     let rows = stmt.query_map([space_id.to_string()], |row| {
         Ok(ExportProject {
             id: row.get(0)?,
-            name: row.get(1)?,
-            description: row.get(2).ok(),
+            title: row.get(1)?,
+            goal_outcome: row.get(2).ok(),
             status: row.get(3)?,
-            created_at: row.get(4)?,
-            updated_at: row.get(5)?,
+            start_at: row.get(4).ok(),
+            target_end_at: row.get(5).ok(),
         })
     })?;
 

@@ -219,8 +219,8 @@ fn search_notes_advanced(
 ) -> Result<Vec<SearchResult>, DbError> {
     // Exclude encrypted_content from SELECT for security and performance
     let mut sql = String::from(
-        "SELECT n.id, n.title, n.created_at, n.updated_at
-         FROM notes n",
+        "SELECT n.id, n.title, n.created_at, n.modified_at
+         FROM note n",
     );
     let mut where_clauses = Vec::new();
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
@@ -293,8 +293,8 @@ fn search_tasks_advanced(
     query: &SearchQuery,
 ) -> Result<Vec<SearchResult>, DbError> {
     let mut sql = String::from(
-        "SELECT t.id, t.title, t.description, t.status, t.priority, t.created_at, t.updated_at, t.deadline
-         FROM tasks t",
+        "SELECT t.id, t.title, t.description, t.status, t.priority, t.start_at, t.completed_at, t.due_at
+         FROM task t",
     );
     let mut where_clauses = Vec::new();
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
@@ -386,8 +386,8 @@ fn search_projects_advanced(
     query: &SearchQuery,
 ) -> Result<Vec<SearchResult>, DbError> {
     let mut sql = String::from(
-        "SELECT p.id, p.name, p.description, p.status, p.created_at, p.updated_at
-         FROM projects p",
+        "SELECT p.id, p.title, p.goal_outcome, p.status, p.start_at, p.target_end_at
+         FROM project p",
     );
     let mut where_clauses = Vec::new();
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();

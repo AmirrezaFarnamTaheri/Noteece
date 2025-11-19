@@ -143,7 +143,7 @@ impl CorrelationEngine {
                 let low_mood_days = correlation.metadata.get("low_mood_days")?.as_u64()?;
                 Some(Insight {
                     id: Ulid::new().to_string(),
-                    insight_type: InsightType::MoodCorrelation,
+                    insight_type: InsightType::HighWorkload,
                     title: "Workload may be affecting well-being".to_string(),
                     description: format!("Your mood has been low for {} days, coinciding with {:.1} hours of work.", low_mood_days, work_hours),
                     severity: InsightSeverity::Medium,
@@ -155,7 +155,6 @@ impl CorrelationEngine {
                     suggested_actions: vec![SuggestedAction {
                         action_type: "schedule_recovery".to_string(),
                         label: "Block recovery time".to_string(),
-                        description: "Schedule 90 minutes for rest.".to_string(),
                         parameters: serde_json::json!({ "duration_minutes": 90 }),
                     }],
                     created_at: now,
