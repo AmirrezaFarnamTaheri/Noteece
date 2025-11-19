@@ -93,7 +93,12 @@ class Logger {
     const errorObj = error instanceof Error ? error : undefined;
     const errorContext = error instanceof Error ? {} : { error };
 
-    this.log(LogLevel.ERROR, message, { ...context, ...errorContext }, errorObj);
+    this.log(
+      LogLevel.ERROR,
+      message,
+      { ...context, ...errorContext },
+      errorObj,
+    );
   }
 
   /**
@@ -103,7 +108,12 @@ class Logger {
     const errorObj = error instanceof Error ? error : undefined;
     const errorContext = error instanceof Error ? {} : { error };
 
-    this.log(LogLevel.FATAL, message, { ...context, ...errorContext }, errorObj);
+    this.log(
+      LogLevel.FATAL,
+      message,
+      { ...context, ...errorContext },
+      errorObj,
+    );
   }
 
   /**
@@ -114,11 +124,15 @@ class Logger {
     try {
       const result = await fn();
       const duration = performance.now() - start;
-      this.debug(`${label} completed`, { duration: `${duration.toFixed(2)}ms` });
+      this.debug(`${label} completed`, {
+        duration: `${duration.toFixed(2)}ms`,
+      });
       return result;
     } catch (error) {
       const duration = performance.now() - start;
-      this.error(`${label} failed`, error, { duration: `${duration.toFixed(2)}ms` });
+      this.error(`${label} failed`, error, {
+        duration: `${duration.toFixed(2)}ms`,
+      });
       throw error;
     }
   }
@@ -131,11 +145,15 @@ class Logger {
     try {
       const result = fn();
       const duration = performance.now() - start;
-      this.debug(`${label} completed`, { duration: `${duration.toFixed(2)}ms` });
+      this.debug(`${label} completed`, {
+        duration: `${duration.toFixed(2)}ms`,
+      });
       return result;
     } catch (error) {
       const duration = performance.now() - start;
-      this.error(`${label} failed`, error, { duration: `${duration.toFixed(2)}ms` });
+      this.error(`${label} failed`, error, {
+        duration: `${duration.toFixed(2)}ms`,
+      });
       throw error;
     }
   }
@@ -155,7 +173,7 @@ class Logger {
     level: LogLevel,
     message: string,
     context?: LogContext,
-    error?: Error
+    error?: Error,
   ): void {
     if (level < this.minLevel) {
       return;
@@ -178,19 +196,19 @@ class Logger {
       try {
         listener(entry);
       } catch (err) {
-        console.error('Error in log listener:', err);
+        console.error("Error in log listener:", err);
       }
     }
   }
 
   private logToConsole(entry: LogEntry): void {
     const levelStr = LogLevel[entry.level];
-    let contextStr = '';
+    let contextStr = "";
     if (entry.context && Object.keys(entry.context).length > 0) {
       try {
         contextStr = JSON.stringify(entry.context);
       } catch {
-        contextStr = '[unserializable context]';
+        contextStr = "[unserializable context]";
       }
     }
 
@@ -201,21 +219,21 @@ class Logger {
       contextStr,
     ].filter(Boolean);
 
-    const message = parts.join(' ');
+    const message = parts.join(" ");
 
     switch (entry.level) {
       case LogLevel.DEBUG:
-        console.debug(message, entry.error || '');
+        console.debug(message, entry.error || "");
         break;
       case LogLevel.INFO:
-        console.info(message, entry.error || '');
+        console.info(message, entry.error || "");
         break;
       case LogLevel.WARN:
-        console.warn(message, entry.error || '');
+        console.warn(message, entry.error || "");
         break;
       case LogLevel.ERROR:
       case LogLevel.FATAL:
-        console.error(message, entry.error || '');
+        console.error(message, entry.error || "");
         if (entry.stack) {
           console.error(entry.stack);
         }
@@ -229,7 +247,8 @@ export const logger = new Logger();
 
 // Convenience exports
 export const setLogLevel = (level: LogLevel) => logger.setLevel(level);
-export const setLogContext = (context: LogContext) => logger.setContext(context);
+export const setLogContext = (context: LogContext) =>
+  logger.setContext(context);
 export const clearLogContext = () => logger.clearContext();
 export const addLogListener = (listener: (entry: LogEntry) => void) =>
   logger.addListener(listener);
@@ -241,10 +260,16 @@ export const info = (message: string, context?: LogContext) =>
   logger.info(message, context);
 export const warn = (message: string, context?: LogContext) =>
   logger.warn(message, context);
-export const error = (message: string, err?: Error | unknown, context?: LogContext) =>
-  logger.error(message, err, context);
-export const fatal = (message: string, err?: Error | unknown, context?: LogContext) =>
-  logger.fatal(message, err, context);
+export const error = (
+  message: string,
+  err?: Error | unknown,
+  context?: LogContext,
+) => logger.error(message, err, context);
+export const fatal = (
+  message: string,
+  err?: Error | unknown,
+  context?: LogContext,
+) => logger.fatal(message, err, context);
 export const time = <T>(label: string, fn: () => Promise<T>) =>
   logger.time(label, fn);
 export const timeSync = <T>(label: string, fn: () => T) =>

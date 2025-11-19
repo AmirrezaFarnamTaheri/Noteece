@@ -12,9 +12,9 @@ Your privacy is critically important to us. Noteece is designed from the ground 
 
 ## 1. Data Collection
 
--   **No Personal Data:** We do not collect, store, or transmit any of your personal content. All notes, tasks, and other data you create are stored exclusively on your local devices.
--   **No Telemetry or Analytics:** The application does not collect any usage data, analytics, or telemetry.
--   **No Accounts or Servers:** Noteece is a server-less application. There are no user accounts to sign up for, and your data never passes through a central server.
+- **No Personal Data:** We do not collect, store, or transmit any of your personal content. All notes, tasks, and other data you create are stored exclusively on your local devices.
+- **No Telemetry or Analytics:** The application does not collect any usage data, analytics, or telemetry.
+- **No Accounts or Servers:** Noteece is a server-less application. There are no user accounts to sign up for, and your data never passes through a central server.
 
 ## 2. Encryption
 
@@ -33,5 +33,6 @@ The mobile application will request certain permissions to enable specific featu
 We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page.
 
 ---
+
 **Company Name:** [Your Company Name]
 **Contact:** [Your Contact Information]
