@@ -347,7 +347,7 @@ pub fn export_to_markdown(
 fn gather_export_data(
     conn: &Connection,
     space_id: Ulid,
-    dek: &[u8],
+    _dek: &[u8],
 ) -> Result<ExportData, ImportError> {
     let mut notes = Vec::new();
     let mut tasks = Vec::new();

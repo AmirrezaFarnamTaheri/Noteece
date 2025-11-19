@@ -483,7 +483,7 @@ mod tests {
         auth.create_user("testuser", "test@example.com", "password123")
             .unwrap();
 
-        let mut session = auth.authenticate("testuser", "password123").unwrap();
+        let session = auth.authenticate("testuser", "password123").unwrap();
 
         // Set expiration to past
         let conn_lock = conn.lock().unwrap();

@@ -1,8 +1,7 @@
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use reqwest::blocking::Client;
 use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use thiserror::Error;
 use ulid::Ulid;
 
@@ -715,161 +714,6 @@ fn fetch_calendar_events(
     parse_calendar_response(&response_text)
 }
 
-/// Sanitize event UID to prevent path traversal attacks
-///
-/// SECURITY: UIDs are used to construct filesystem-like paths in CalDAV URLs.
-/// Malicious UIDs containing path traversal sequences (../, //, etc.) could
-/// potentially access or modify unintended calendar resources.
-fn sanitize_event_uid(uid: &str) -> Result<String, CalDavError> {
-    // Remove all forward and backward slashes
-    let sanitized = uid.replace('/', "").replace('\\', "").trim().to_string();
-
-    // Reject if empty after sanitization
-    if sanitized.is_empty() {
-        return Err(CalDavError::Parse(
-            "Invalid event UID: empty after sanitization".to_string(),
-        ));
-    }
-
-    // Reject if contains path traversal sequences
-    if sanitized.contains("..") {
-        return Err(CalDavError::Parse(
-            "Invalid event UID: contains path traversal sequence (..)".to_string(),
-        ));
-    }
-
-    // Reject control characters and other dangerous characters
-    if sanitized.chars().any(|c| c.is_control() || c == '\0') {
-        return Err(CalDavError::Parse(
-            "Invalid event UID: contains control characters".to_string(),
-        ));
-    }
-
-    // Limit UID length to prevent excessive URL lengths
-    if sanitized.len() > 255 {
-        return Err(CalDavError::Parse(
-            "Invalid event UID: exceeds maximum length (255 characters)".to_string(),
-        ));
-    }
-
-    Ok(sanitized)
-}
-
-/// Push calendar event to CalDAV server using PUT request
-fn push_calendar_event(
-    url: &str,
-    username: &str,
-    password: &str,
-    event: &CalDavEvent,
-) -> Result<String, CalDavError> {
-    // SECURITY: Enforce HTTPS
-    if !url.starts_with("https://")
-        && !url.starts_with("http://localhost")
-        && !url.starts_with("http://127.0.0.1")
-    {
-        return Err(CalDavError::Network(
-            "CalDAV URL must use HTTPS (or localhost for testing). HTTP is insecure for credential transmission.".to_string()
-        ));
-    }
-
-    let client = Client::builder()
-        .timeout(std::time::Duration::from_secs(30))
-        .redirect(reqwest::redirect::Policy::none())
-        .build()?;
-
-    let ical_data = generate_icalendar(event)?;
-
-    // SECURITY: Sanitize UID to prevent path traversal
-    let safe_uid = sanitize_event_uid(&event.uid)?;
-    let event_url = format!("{}/{}.ics", url.trim_end_matches('/'), safe_uid);
-
-    let response = client
-        .put(&event_url)
-        .basic_auth(username, Some(password))
-        .header("Content-Type", "text/calendar; charset=utf-8")
-        .body(ical_data)
-        .send()?;
-
-    if response.status().is_redirection() {
-        return Err(CalDavError::Network(format!(
-            "Unexpected redirect ({}). Redirects are disabled for security.",
-            response.status()
-        )));
-    }
-
-    if response.status() == reqwest::StatusCode::UNAUTHORIZED {
-        return Err(CalDavError::Authentication);
-    }
-
-    if !response.status().is_success() {
-        return Err(CalDavError::Network(format!(
-            "CalDAV PUT failed: {}",
-            response.status()
-        )));
-    }
-
-    // Extract ETag from response headers
-    let etag = response
-        .headers()
-        .get("etag")
-        .and_then(|v| v.to_str().ok())
-        .map(|s| s.to_string())
-        .unwrap_or_default();
-
-    Ok(etag)
-}
-
-/// Delete calendar event from CalDAV server using DELETE request
-fn delete_calendar_event(
-    url: &str,
-    username: &str,
-    password: &str,
-    event_uid: &str,
-) -> Result<(), CalDavError> {
-    // SECURITY: Enforce HTTPS
-    if !url.starts_with("https://")
-        && !url.starts_with("http://localhost")
-        && !url.starts_with("http://127.0.0.1")
-    {
-        return Err(CalDavError::Network(
-            "CalDAV URL must use HTTPS (or localhost for testing). HTTP is insecure for credential transmission.".to_string()
-        ));
-    }
-
-    let client = Client::builder()
-        .timeout(std::time::Duration::from_secs(30))
-        .redirect(reqwest::redirect::Policy::none())
-        .build()?;
-
-    // SECURITY: Sanitize UID to prevent path traversal
-    let safe_uid = sanitize_event_uid(event_uid)?;
-    let event_url = format!("{}/{}.ics", url.trim_end_matches('/'), safe_uid);
-
-    let response = client
-        .delete(&event_url)
-        .basic_auth(username, Some(password))
-        .send()?;
-
-    if response.status().is_redirection() {
-        return Err(CalDavError::Network(format!(
-            "Unexpected redirect ({}). Redirects are disabled for security.",
-            response.status()
-        )));
-    }
-
-    if response.status() == reqwest::StatusCode::UNAUTHORIZED {
-        return Err(CalDavError::Authentication);
-    }
-
-    if !response.status().is_success() && response.status() != reqwest::StatusCode::NOT_FOUND {
-        return Err(CalDavError::Network(format!(
-            "CalDAV DELETE failed: {}",
-            response.status()
-        )));
-    }
-
-    Ok(())
-}
 
 /// Parse CalDAV XML response and extract calendar events
 ///
@@ -933,7 +777,7 @@ fn parse_calendar_response(xml_data: &str) -> Result<Vec<CalDavEvent>, CalDavErr
 /// SECURITY: Skip events with missing or unparsable required fields (UID, DTSTART)
 /// instead of defaulting to sentinel values like 0, which could cause data corruption.
 fn parse_icalendar(ical_data: &str) -> Result<Vec<CalDavEvent>, CalDavError> {
-    use ical::parser::Component;
+
     use std::io::BufReader;
 
     let buf = BufReader::new(ical_data.as_bytes());
@@ -1179,60 +1023,6 @@ fn parse_ical_datetime(datetime_str: &str) -> Result<i64, CalDavError> {
     Ok(datetime.and_utc().timestamp())
 }
 
-/// Generate iCalendar format from CalDavEvent
-fn generate_icalendar(event: &CalDavEvent) -> Result<String, CalDavError> {
-    use chrono::TimeZone;
-
-    let start_dt = Utc
-        .timestamp_opt(event.start_time, 0)
-        .single()
-        .ok_or_else(|| CalDavError::Parse("Invalid start time".to_string()))?;
-
-    let start_str = start_dt.format("%Y%m%dT%H%M%SZ").to_string();
-
-    let end_str = if let Some(end_time) = event.end_time {
-        let end_dt = Utc
-            .timestamp_opt(end_time, 0)
-            .single()
-            .ok_or_else(|| CalDavError::Parse("Invalid end time".to_string()))?;
-        end_dt.format("%Y%m%dT%H%M%SZ").to_string()
-    } else {
-        // Default to 1 hour after start
-        start_dt
-            .checked_add_signed(chrono::Duration::hours(1))
-            .unwrap_or(start_dt)
-            .format("%Y%m%dT%H%M%SZ")
-            .to_string()
-    };
-
-    let now_str = Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
-
-    let mut ical = format!(
-        "BEGIN:VCALENDAR\r\n\
-         VERSION:2.0\r\n\
-         PRODID:-//Noteece//CalDAV Sync//EN\r\n\
-         BEGIN:VEVENT\r\n\
-         UID:{}\r\n\
-         DTSTAMP:{}\r\n\
-         DTSTART:{}\r\n\
-         DTEND:{}\r\n\
-         SUMMARY:{}\r\n",
-        event.uid, now_str, start_str, end_str, event.summary
-    );
-
-    if let Some(desc) = &event.description {
-        ical.push_str(&format!("DESCRIPTION:{}\r\n", desc.replace('\n', "\\n")));
-    }
-
-    if let Some(loc) = &event.location {
-        ical.push_str(&format!("LOCATION:{}\r\n", loc));
-    }
-
-    ical.push_str(&format!("STATUS:{}\r\n", event.status));
-    ical.push_str("END:VEVENT\r\nEND:VCALENDAR\r\n");
-
-    Ok(ical)
-}
 
 /// Sync CalDAV account with real HTTP implementation
 pub fn sync_caldav_account(
@@ -1250,7 +1040,7 @@ pub fn sync_caldav_account(
 
     let now = Utc::now().timestamp();
     let mut events_pulled = 0u32;
-    let mut events_pushed = 0u32;
+    let events_pushed = 0u32;
     let mut conflicts = 0u32;
     let mut errors = Vec::new();
     let mut success = true;

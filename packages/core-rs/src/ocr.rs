@@ -108,7 +108,7 @@ fn find_tesseract() -> Option<String> {
 /// SECURITY: This function validates the language parameter to prevent command injection
 /// and enforces size limits on the output to prevent memory exhaustion.
 pub fn process_image_ocr(image_path: &Path, language: Option<&str>) -> Result<String, OcrError> {
-    use std::time::Duration;
+
 
     let tesseract_path = find_tesseract().ok_or(OcrError::TesseractNotFound)?;
 

@@ -55,7 +55,7 @@ impl ResponseCache {
     }
 
     /// Get a cached response
-    pub fn get(&self, request: &LLMRequest) -> Result<Option<LLMResponse>, LLMError> {
+    pub fn get(&self, _request: &LLMRequest) -> Result<Option<LLMResponse>, LLMError> {
         // Note: This function signature implies we need to pass conn
         // For now, returning None to satisfy the type checker
         // In practice, we'd need to restructure to pass Connection
@@ -118,7 +118,7 @@ impl ResponseCache {
     }
 
     /// Set a cache entry
-    pub fn set(&self, request: &LLMRequest, response: &LLMResponse) -> Result<(), LLMError> {
+    pub fn set(&self, _request: &LLMRequest, _response: &LLMResponse) -> Result<(), LLMError> {
         Ok(())
     }
 
