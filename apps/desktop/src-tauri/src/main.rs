@@ -79,16 +79,17 @@ use core_rs::time_tracking::{
     get_recent_time_entries, get_running_entries, get_task_time_entries, get_task_time_stats,
     start_time_entry, stop_time_entry, TimeEntry, TimeStats,
 };
-use core_rs::vault::{create_vault, unlock_vault};
+use core_rs::vault::{create_vault, unlock_vault, Vault};
 use core_rs::db::get_or_create_user_id;
 use core_rs::weekly_review::generate_weekly_review;
 use core_rs::auth::{AuthService, User, Session};
 use core_rs::social::backup::{BackupService, BackupMetadata};
 use rusqlite::Connection;
-use std::sync::Mutex;
-use tauri::State;
+use std::sync::{Arc, Mutex};
+use tauri::{Manager, State};
 use ulid::Ulid;
 use zeroize::{Zeroize, Zeroizing};
+use core_rs::sync::p2p::P2pSync;
 
 struct SecureDek(Zeroizing<Vec<u8>>);
 
@@ -102,22 +103,62 @@ impl SecureDek {
     }
 }
 
-use core_rs::sync::p2p::P2pSync;
-
 pub struct DbConnection {
     pub conn: Mutex<Option<Connection>>,
     pub dek: Mutex<Option<SecureDek>>,
     pub p2p_sync: Mutex<Option<Arc<P2pSync>>>,
 }
 
-// ... [Keeping all standard commands from previous version, omitting purely for brevity until we reach the fixed sections] ...
+#[tauri::command]
+fn create_vault_cmd(db: State<DbConnection>, path: &str, password: &str) -> Result<(), String> {
+    let mut conn_guard = db.conn.lock().unwrap();
+    if conn_guard.is_some() {
+        let mut dek_guard = db.dek.lock().unwrap();
+        *dek_guard = None;
+        *conn_guard = None;
+    }
 
-// NOTE: Re-inserting all commands from previous file here to ensure completeness,
-// but focusing on the specific fixes in `cancel_sync_cmd` and `main`.
+    let vault = create_vault(path, password).map_err(|e| e.to_string())?;
+    *conn_guard = Some(vault.conn);
+
+    Ok(())
+}
+
+#[tauri::command]
+fn unlock_vault_cmd(db: State<DbConnection>, path: &str, password: &str) -> Result<(), String> {
+    let mut conn_guard = db.conn.lock().unwrap();
+    if conn_guard.is_some() {
+        let mut dek_guard = db.dek.lock().unwrap();
+        *dek_guard = None;
+        *conn_guard = None;
+    }
+
+    let vault = unlock_vault(path, password).map_err(|e| e.to_string())?;
+    *conn_guard = Some(vault.conn);
+
+    let device_info = {
+        let conn = conn_guard.as_ref().unwrap();
+        let device_id = get_or_create_user_id(conn).unwrap_or_default();
+        core_rs::sync::mobile_sync::DeviceInfo {
+            device_id,
+            device_name: "Desktop".to_string(),
+            device_type: core_rs::sync::mobile_sync::DeviceType::Desktop,
+            ip_address: "127.0.0.1".parse().unwrap(),
+            sync_port: 8765,
+            public_key: vec![],
+            os_version: std::env::consts::OS.to_string(),
+            last_seen: chrono::Utc::now(),
+            is_active: true,
+        }
+    };
+    let mut p2p_sync_guard = db.p2p_sync.lock().unwrap();
+    *p2p_sync_guard = Some(Arc::new(P2pSync::new(device_info).unwrap()));
+
+    Ok(())
+}
 
 #[tauri::command]
 fn cancel_sync_cmd(device_id: String) -> Result<bool, String> {
-    // FIXED: Removed stray identifier 'get_or_create_user_id_cmd,'
     log::info!("[sync] Cancelled sync with device: {}", device_id);
     Ok(true)
 }
@@ -131,9 +172,6 @@ fn get_or_create_user_id_cmd(db: State<DbConnection>) -> Result<String, String> 
         Err("Database connection not available".to_string())
     }
 }
-
-// Re-declaring necessary commands to ensure they are in scope for the macro
-// (Assuming all other commands are defined as in the original file)
 
 #[tauri::command]
 async fn start_sync_server_cmd(db: State<'_, DbConnection>) -> Result<(), String> {
@@ -318,45 +356,10 @@ fn main() {
             exchange_keys_cmd,
             start_sync_cmd,
             get_sync_progress_cmd,
-            cancel_sync_cmd, // FIXED: Added missing comma
+            cancel_sync_cmd,
             get_or_create_user_id_cmd,
             start_sync_server_cmd
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-}
-
-#[tauri::command]
-fn unlock_vault_cmd(db: State<DbConnection>, password: &str) -> Result<(), String> {
-    let mut conn_guard = db.conn.lock().unwrap();
-    if conn_guard.is_some() {
-        let mut dek_guard = db.dek.lock().unwrap();
-        *dek_guard = None;
-        *conn_guard = None;
-    }
-
-    let (conn, dek) = unlock_vault(password).map_err(|e| e.to_string())?;
-    *conn_guard = Some(conn);
-    let mut dek_guard = db.dek.lock().unwrap();
-    *dek_guard = Some(SecureDek::new(dek));
-
-    let device_info = {
-        let conn = conn_guard.as_ref().unwrap();
-        let device_id = get_or_create_user_id(conn).unwrap_or_default();
-        core_rs::sync::mobile_sync::DeviceInfo {
-            device_id,
-            device_name: "Desktop".to_string(),
-            device_type: core_rs::sync::mobile_sync::DeviceType::Desktop,
-            ip_address: "127.0.0.1".parse().unwrap(),
-            sync_port: 8765,
-            public_key: vec![],
-            os_version: std::env::consts::OS.to_string(),
-            last_seen: chrono::Utc::now(),
-            is_active: true,
-        }
-    };
-    let mut p2p_sync_guard = db.p2p_sync.lock().unwrap();
-    *p2p_sync_guard = Some(Arc::new(P2pSync::new(device_info).unwrap()));
-
-    Ok(())
 }
