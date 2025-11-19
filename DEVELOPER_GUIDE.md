@@ -1725,7 +1725,34 @@ hdiutil create -volname Noteece -srcfolder target/release/bundle/macos/Noteece.a
 
 ## Troubleshooting
 
-### Common Issues
+### Known Issues & Workarounds
+
+The project has several known issues that developers should be aware of. For a full, up-to-date list, please see the [ISSUES.md](ISSUES.md) file at the root of the project.
+
+#### `core-rs`: FTS5 Build Failure
+
+- **Symptom**: `cargo test` or `cargo build` in `packages/core-rs` fails with errors related to the `fts5` feature of `rusqlite` when `bundled-sqlcipher-vendored-openssl` is enabled.
+- **Workaround**: To build the project or run non-FTS tests, you must temporarily disable the `fts5` feature in `packages/core-rs/Cargo.toml`:
+  ```toml
+  # in packages/core-rs/Cargo.toml
+  [dependencies]
+  rusqlite = { version = "0.37.0", features = ["bundled-sqlcipher-vendored-openssl"] } #, "fts5"]
+  ```
+- **Impact**: Full-text search will not be available when this feature is disabled.
+
+#### `desktop`: Test Suite Failures
+
+- **Symptom**: Running `pnpm test` in `apps/desktop` results in multiple test failures, particularly for the `UserManagement` and `Dashboard` components.
+- **Workaround**: There is no current workaround. These tests must be fixed or skipped to achieve a passing test suite.
+- **Impact**: Pull requests may fail CI checks until these are resolved.
+
+#### `mobile`: Test Suite Global Failure
+
+- **Symptom**: Running `pnpm test` in `apps/mobile` fails for all test suites with a Jest setup error: `Cannot find module 'expo-share-menu'`.
+- **Workaround**: The Jest configuration needs to be fixed to properly mock native Expo modules.
+- **Impact**: No mobile tests can be run until the Jest environment is repaired.
+
+### Common Build & Runtime Issues
 
 #### Build Fails with "SQLCipher not found"
 
