@@ -222,7 +222,7 @@ pub fn init_personal_modes_tables(conn: &Connection) -> Result<(), PersonalModeE
 
     // Finance Mode Tables
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS transaction (
+        "CREATE TABLE IF NOT EXISTS `transaction` (
             id TEXT PRIMARY KEY,
             space_id TEXT NOT NULL,
             note_id TEXT,
@@ -379,7 +379,7 @@ pub fn init_personal_modes_tables(conn: &Connection) -> Result<(), PersonalModeE
         [],
     )?;
     conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_transaction_space ON transaction(space_id, date DESC)",
+        "CREATE INDEX IF NOT EXISTS idx_transaction_space ON `transaction`(space_id, date DESC)",
         [],
     )?;
     conn.execute(
@@ -453,8 +453,8 @@ pub fn create_health_metric(
 pub fn get_health_metrics(
     conn: &Connection,
     space_id: Ulid,
-    metric_type: Option<&str>,
     limit: u32,
+    metric_type: Option<&str>,
 ) -> Result<Vec<HealthMetric>, PersonalModeError> {
     let sid = space_id.to_string();
     let lim = limit as i64;
@@ -507,6 +507,36 @@ pub fn get_health_metrics(
         }
     }
 
+    Ok(result)
+}
+
+pub fn get_health_metrics_since(
+    conn: &Connection,
+    space_id: &str,
+    since_timestamp: i64,
+) -> Result<Vec<HealthMetric>, PersonalModeError> {
+    let mut stmt = conn.prepare(
+        "SELECT id, space_id, note_id, metric_type, value, unit, notes, recorded_at, created_at
+         FROM health_metric WHERE space_id = ?1 AND recorded_at >= ?2
+         ORDER BY recorded_at DESC",
+    )?;
+    let metrics = stmt.query_map(params![space_id, since_timestamp], |row| {
+        Ok(HealthMetric {
+            id: row.get(0)?,
+            space_id: row.get(1)?,
+            note_id: row.get(2)?,
+            metric_type: row.get(3)?,
+            value: row.get(4)?,
+            unit: row.get(5)?,
+            notes: row.get(6)?,
+            recorded_at: row.get(7)?,
+            created_at: row.get(8)?,
+        })
+    })?;
+    let mut result = Vec::new();
+    for metric in metrics {
+        result.push(metric?);
+    }
     Ok(result)
 }
 
@@ -570,7 +600,7 @@ pub fn create_transaction(
     let now = Utc::now().timestamp();
 
     conn.execute(
-        "INSERT INTO transaction (id, space_id, transaction_type, amount, currency, category, account, description, date, created_at)
+        "INSERT INTO `transaction` (id, space_id, transaction_type, amount, currency, category, account, description, date, created_at)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
         [
             &id,
@@ -612,7 +642,7 @@ pub fn get_transactions(
     let mut stmt = conn.prepare(
         "SELECT id, space_id, note_id, transaction_type, amount, currency, category, account,
                 description, date, recurring, recurring_frequency, blob_id, created_at
-         FROM transaction WHERE space_id = ?1
+         FROM `transaction` WHERE space_id = ?1
          ORDER BY date DESC LIMIT ?2",
     )?;
 
@@ -641,6 +671,45 @@ pub fn get_transactions(
     }
     Ok(result)
 }
+
+pub fn get_transactions_since(
+    conn: &Connection,
+    space_id: &str,
+    since_timestamp: i64,
+) -> Result<Vec<Transaction>, PersonalModeError> {
+    let mut stmt = conn.prepare(
+        "SELECT id, space_id, note_id, transaction_type, amount, currency, category, account,
+                description, date, recurring, recurring_frequency, blob_id, created_at
+         FROM `transaction` WHERE space_id = ?1 AND date >= ?2
+         ORDER BY date DESC",
+    )?;
+
+    let transactions = stmt.query_map(params![space_id, since_timestamp], |row| {
+        Ok(Transaction {
+            id: row.get(0)?,
+            space_id: row.get(1)?,
+            note_id: row.get(2)?,
+            transaction_type: row.get(3)?,
+            amount: row.get(4)?,
+            currency: row.get(5)?,
+            category: row.get(6)?,
+            account: row.get(7)?,
+            description: row.get(8)?,
+            date: row.get(9)?,
+            recurring: row.get::<_, i32>(10)? == 1,
+            recurring_frequency: row.get(11)?,
+            blob_id: row.get(12)?,
+            created_at: row.get(13)?,
+        })
+    })?;
+
+    let mut result = Vec::new();
+    for transaction in transactions {
+        result.push(transaction?);
+    }
+    Ok(result)
+}
+
 
 // ============================================================================
 // RECIPE MODE FUNCTIONS

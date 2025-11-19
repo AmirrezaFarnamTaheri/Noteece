@@ -534,12 +534,12 @@ impl BackupService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::tempdir;
+    use tempfile::TempDir;
 
-    fn setup_backup_service() -> (BackupService, PathBuf) {
-        let dir = tempdir().unwrap();
+    fn setup_backup_service() -> (BackupService, TempDir) {
+        let dir = TempDir::new().unwrap();
         let service = BackupService::new(dir.path()).unwrap();
-        (service, dir.path().to_path_buf())
+        (service, dir)
     }
 
     #[test]

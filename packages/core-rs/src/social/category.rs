@@ -453,8 +453,8 @@ mod tests {
     use rusqlite::Connection;
 
     fn setup_test_db() -> Connection {
-        let conn = Connection::open_in_memory().unwrap();
-        crate::db::migrate(&conn).unwrap();
+        let mut conn = Connection::open_in_memory().unwrap();
+        crate::db::migrate(&mut conn).unwrap();
 
         // Create a test space
         conn.execute(
@@ -621,15 +621,15 @@ mod tests {
         // Create account and post
         let dek = [0u8; 32];
         conn.execute(
-            "INSERT INTO social_account (id, space_id, platform, username, display_name, credentials_encrypted, enabled, sync_frequency_minutes, created_at)
+            "INSERT INTO social_account (id, space_id, platform, username, display_name, encrypted_credentials, enabled, sync_frequency_minutes, created_at)
              VALUES ('account1', 'test_space', 'twitter', 'user1', 'User 1', x'00', 1, 60, 0)",
             [],
         )
         .unwrap();
 
         conn.execute(
-            "INSERT INTO social_post (id, account_id, platform, platform_post_id, author, content, created_at, collected_at)
-             VALUES ('post1', 'account1', 'twitter', 'tweet1', 'user1', 'Test post', 0, 0)",
+            "INSERT INTO social_post (id, account_id, platform, platform_post_id, author, content, timestamp, fetched_at, raw_json)
+             VALUES ('post1', 'account1', 'twitter', 'tweet1', 'user1', 'Test post', 0, 0, '{}')",
             [],
         )
         .unwrap();
@@ -657,15 +657,15 @@ mod tests {
 
         // Create account and post
         conn.execute(
-            "INSERT INTO social_account (id, space_id, platform, username, display_name, credentials_encrypted, enabled, sync_frequency_minutes, created_at)
+            "INSERT INTO social_account (id, space_id, platform, username, display_name, encrypted_credentials, enabled, sync_frequency_minutes, created_at)
              VALUES ('account1', 'test_space', 'twitter', 'user1', 'User 1', x'00', 1, 60, 0)",
             [],
         )
         .unwrap();
 
         conn.execute(
-            "INSERT INTO social_post (id, account_id, platform, platform_post_id, author, content, created_at, collected_at)
-             VALUES ('post1', 'account1', 'twitter', 'tweet1', 'user1', 'Test', 0, 0)",
+            "INSERT INTO social_post (id, account_id, platform, platform_post_id, author, content, timestamp, fetched_at, raw_json)
+             VALUES ('post1', 'account1', 'twitter', 'tweet1', 'user1', 'Test', 0, 0, '{}')",
             [],
         )
         .unwrap();
@@ -687,15 +687,15 @@ mod tests {
 
         // Create account and post
         conn.execute(
-            "INSERT INTO social_account (id, space_id, platform, username, display_name, credentials_encrypted, enabled, sync_frequency_minutes, created_at)
+            "INSERT INTO social_account (id, space_id, platform, username, display_name, encrypted_credentials, enabled, sync_frequency_minutes, created_at)
              VALUES ('account1', 'test_space', 'twitter', 'user1', 'User 1', x'00', 1, 60, 0)",
             [],
         )
         .unwrap();
 
         conn.execute(
-            "INSERT INTO social_post (id, account_id, platform, platform_post_id, author, content, created_at, collected_at)
-             VALUES ('post1', 'account1', 'twitter', 'tweet1', 'user1', 'Test', 0, 0)",
+            "INSERT INTO social_post (id, account_id, platform, platform_post_id, author, content, timestamp, fetched_at, raw_json)
+             VALUES ('post1', 'account1', 'twitter', 'tweet1', 'user1', 'Test', 0, 0, '{}')",
             [],
         )
         .unwrap();
@@ -719,29 +719,29 @@ mod tests {
 
         // Create account and posts
         conn.execute(
-            "INSERT INTO social_account (id, space_id, platform, username, display_name, credentials_encrypted, enabled, sync_frequency_minutes, created_at)
+            "INSERT INTO social_account (id, space_id, platform, username, display_name, encrypted_credentials, enabled, sync_frequency_minutes, created_at)
              VALUES ('account1', 'test_space', 'twitter', 'user1', 'User 1', x'00', 1, 60, 0)",
             [],
         )
         .unwrap();
 
         conn.execute(
-            "INSERT INTO social_account (id, space_id, platform, username, display_name, credentials_encrypted, enabled, sync_frequency_minutes, created_at)
+            "INSERT INTO social_account (id, space_id, platform, username, display_name, encrypted_credentials, enabled, sync_frequency_minutes, created_at)
              VALUES ('account2', 'test_space', 'linkedin', 'user2', 'User 2', x'00', 1, 60, 0)",
             [],
         )
         .unwrap();
 
         conn.execute(
-            "INSERT INTO social_post (id, account_id, platform, platform_post_id, author, content, created_at, collected_at)
-             VALUES ('post1', 'account1', 'twitter', 'tweet1', 'user1', 'Twitter post', 0, 0)",
+            "INSERT INTO social_post (id, account_id, platform, platform_post_id, author, content, timestamp, fetched_at, raw_json)
+             VALUES ('post1', 'account1', 'twitter', 'tweet1', 'user1', 'Twitter post', 0, 0, '{}')",
             [],
         )
         .unwrap();
 
         conn.execute(
-            "INSERT INTO social_post (id, account_id, platform, platform_post_id, author, content, created_at, collected_at)
-             VALUES ('post2', 'account2', 'linkedin', 'link1', 'user2', 'LinkedIn post', 0, 0)",
+            "INSERT INTO social_post (id, account_id, platform, platform_post_id, author, content, timestamp, fetched_at, raw_json)
+             VALUES ('post2', 'account2', 'linkedin', 'link1', 'user2', 'LinkedIn post', 0, 0, '{}')",
             [],
         )
         .unwrap();
@@ -782,22 +782,22 @@ mod tests {
 
         // Create account and posts
         conn.execute(
-            "INSERT INTO social_account (id, space_id, platform, username, display_name, credentials_encrypted, enabled, sync_frequency_minutes, created_at)
+            "INSERT INTO social_account (id, space_id, platform, username, display_name, encrypted_credentials, enabled, sync_frequency_minutes, created_at)
              VALUES ('account1', 'test_space', 'twitter', 'user1', 'User 1', x'00', 1, 60, 0)",
             [],
         )
         .unwrap();
 
         conn.execute(
-            "INSERT INTO social_post (id, account_id, platform, platform_post_id, author, content, created_at, collected_at)
-             VALUES ('post1', 'account1', 'twitter', 'tweet1', 'user1', 'Exciting work project update', 0, 0)",
+            "INSERT INTO social_post (id, account_id, platform, platform_post_id, author, content, timestamp, fetched_at, raw_json)
+             VALUES ('post1', 'account1', 'twitter', 'tweet1', 'user1', 'Exciting work project update', 0, 0, '{}')",
             [],
         )
         .unwrap();
 
         conn.execute(
-            "INSERT INTO social_post (id, account_id, platform, platform_post_id, author, content, created_at, collected_at)
-             VALUES ('post2', 'account1', 'twitter', 'tweet2', 'user1', 'Random personal stuff', 0, 0)",
+            "INSERT INTO social_post (id, account_id, platform, platform_post_id, author, content, timestamp, fetched_at, raw_json)
+             VALUES ('post2', 'account1', 'twitter', 'tweet2', 'user1', 'Random personal stuff', 0, 0, '{}')",
             [],
         )
         .unwrap();
@@ -830,15 +830,15 @@ mod tests {
 
         // Create account and post with special characters
         conn.execute(
-            "INSERT INTO social_account (id, space_id, platform, username, display_name, credentials_encrypted, enabled, sync_frequency_minutes, created_at)
+            "INSERT INTO social_account (id, space_id, platform, username, display_name, encrypted_credentials, enabled, sync_frequency_minutes, created_at)
              VALUES ('account1', 'test_space', 'twitter', 'user1', 'User 1', x'00', 1, 60, 0)",
             [],
         )
         .unwrap();
 
         conn.execute(
-            "INSERT INTO social_post (id, account_id, platform, platform_post_id, author, content, created_at, collected_at)
-             VALUES ('post1', 'account1', 'twitter', 'tweet1', 'user1', 'C++ programming_tutorial', 0, 0)",
+            "INSERT INTO social_post (id, account_id, platform, platform_post_id, author, content, timestamp, fetched_at, raw_json)
+             VALUES ('post1', 'account1', 'twitter', 'tweet1', 'user1', 'C++ programming_tutorial', 0, 0, '{}')",
             [],
         )
         .unwrap();
@@ -865,15 +865,15 @@ mod tests {
 
         // Create account and post
         conn.execute(
-            "INSERT INTO social_account (id, space_id, platform, username, display_name, credentials_encrypted, enabled, sync_frequency_minutes, created_at)
+            "INSERT INTO social_account (id, space_id, platform, username, display_name, encrypted_credentials, enabled, sync_frequency_minutes, created_at)
              VALUES ('account1', 'test_space', 'twitter', 'user1', 'User 1', x'00', 1, 60, 0)",
             [],
         )
         .unwrap();
 
         conn.execute(
-            "INSERT INTO social_post (id, account_id, platform, platform_post_id, author, content, created_at, collected_at)
-             VALUES ('post1', 'account1', 'twitter', 'tweet1', 'user1', 'Test content', 0, 0)",
+            "INSERT INTO social_post (id, account_id, platform, platform_post_id, author, content, timestamp, fetched_at, raw_json)
+             VALUES ('post1', 'account1', 'twitter', 'tweet1', 'user1', 'Test content', 0, 0, '{}')",
             [],
         )
         .unwrap();

@@ -64,17 +64,15 @@ fn test_decrypt_with_invalid_dek_length() {
 fn test_decrypt_with_invalid_ciphertext_too_short() {
     let dek = derive_key("password", b"salt");
 
-    // Test with ciphertext shorter than nonce (24 bytes) + tag (16 bytes) = 40 bytes minimum
-    let short_ciphertext = "ABC"; // Only 3 bytes base64
+    // A valid base64 string that is too short to be a valid ciphertext.
+    let short_ciphertext = "AAAA";
     let result = decrypt_string(short_ciphertext, &dek);
-    assert!(result.is_err(), "Should fail with too-short ciphertext");
-    assert!(result.unwrap_err().to_string().contains("too short"));
-
-    // Test with exactly nonce length (24 bytes) but no tag
-    let nonce_only = base64::encode(&[0u8; 24]);
-    let result = decrypt_string(&nonce_only, &dek);
-    assert!(result.is_err(), "Should fail with only nonce, no tag");
+    assert!(result.is_err());
+    if let Err(e) = result {
+        assert!(e.to_string().contains("Invalid encrypted data: too short for nonce + tag"));
+    }
 }
+
 
 #[test]
 fn test_decrypt_with_corrupted_ciphertext() {

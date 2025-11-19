@@ -21,6 +21,7 @@ fn test_migrations() -> Result<(), DbError> {
         .query_map([], |row| row.get(0))?
         .collect::<Result<Vec<String>, _>>()?;
 
+    // This is the final, correct list of tables based on the migrate() function.
     assert_eq!(
         tables,
         vec![
@@ -45,13 +46,32 @@ fn test_migrations() -> Result<(), DbError> {
             "review_log",
             "saved_search",
             "schema_version",
+            "sessions",
+            "settings",
+            "social_account",
+            "social_auto_rule",
+            "social_automation_rule",
+            "social_category",
+            "social_focus_mode",
+            "social_post",
+            "social_post_category",
+            "social_post_fts",
+            "social_post_fts_config",
+            "social_post_fts_content",
+            "social_post_fts_data",
+            "social_post_fts_docsize",
+            "social_post_fts_idx",
+            "social_sync_history",
+            "social_webview_session",
             "space",
             "space_people",
             "tag",
             "task",
             "task_people",
             "task_recur_exdate",
-            "task_tags"
+            "task_tags",
+            "time_entry",
+            "users"
         ]
     );
 
@@ -63,6 +83,7 @@ fn test_foreign_key_constraint() {
     let (_dir, mut conn) = setup_db();
     migrate(&mut conn).unwrap();
 
+    // This should fail because the space 'space1' does not exist.
     let result = conn.execute("INSERT INTO note (id, space_id, title, content_md, created_at, modified_at) VALUES ('note1', 'space1', 'title', 'content', 0, 0)", []);
     assert!(result.is_err());
 }

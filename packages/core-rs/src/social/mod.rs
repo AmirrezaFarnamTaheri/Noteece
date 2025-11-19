@@ -9,7 +9,6 @@ pub mod backup;
 pub mod category;
 pub mod focus;
 pub mod intelligence;
-pub mod mobile_sync;
 pub mod post;
 pub mod sync;
 pub mod timeline;
@@ -22,11 +21,6 @@ pub use account::{
 };
 
 pub use backup::{Backup, BackupError, BackupMetadata, BackupService};
-
-pub use mobile_sync::{
-    DeviceInfo, DeviceType, PairingRequest, PairingResponse, SyncBatchProcessor, SyncCategory,
-    SyncDelta, SyncProtocol, SyncProtocolError, SyncRequest, SyncResponse, SyncState,
-};
 
 pub use post::{
     delete_old_posts, get_post_statistics, get_social_posts, search_social_posts,

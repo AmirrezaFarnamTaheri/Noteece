@@ -368,7 +368,7 @@ fn test_get_sync_history() {
     }
 
     let history = agent
-        .get_sync_history(&conn, &space_id, Some(5))
+        .get_sync_history(&conn, &space_id, 5)
         .expect("Failed to get history");
 
     assert_eq!(history.len(), 5, "Should limit to 5 most recent");
@@ -609,7 +609,7 @@ fn test_bulk_sync_history_query() {
 
     let start = std::time::Instant::now();
     let history = agent
-        .get_sync_history(&conn, &space_id, Some(50))
+        .get_sync_history(&conn, &space_id, 50)
         .expect("Failed to get history");
     let duration = start.elapsed();
 

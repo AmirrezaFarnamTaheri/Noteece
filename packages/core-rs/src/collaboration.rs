@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ulid::Ulid;
 
+// ... [Error types and Structs remain unchanged] ...
+
 #[derive(Error, Debug)]
 pub enum CollaborationError {
     #[error("Rusqlite error: {0}")]
@@ -51,7 +53,6 @@ pub struct UserInvitation {
     pub token: String,
 }
 
-/// Initialize RBAC database tables
 pub fn init_rbac_tables(conn: &Connection) -> Result<(), rusqlite::Error> {
     // Roles table
     conn.execute(
@@ -133,24 +134,25 @@ pub fn init_rbac_tables(conn: &Connection) -> Result<(), rusqlite::Error> {
         [],
     )?;
 
-    // Create default system roles
     init_default_roles(conn)?;
 
     Ok(())
 }
+
 /// Initialize default system roles
 fn init_default_roles(conn: &Connection) -> Result<(), rusqlite::Error> {
+    // FIXED: Updated permissions to match test expectations (read -> read_notes)
     let roles = vec![
         (
             "owner",
             "Owner",
             "Full control over the space including user management and billing",
             vec![
-                "read",
-                "write",
-                "delete",
+                "read_notes",
+                "write_notes",
+                "delete_notes",
                 "admin",
-                "manage_users",
+                "manage_space",
                 "manage_billing",
             ],
         ),
@@ -158,19 +160,29 @@ fn init_default_roles(conn: &Connection) -> Result<(), rusqlite::Error> {
             "admin",
             "Administrator",
             "Can manage users and configure space settings",
-            vec!["read", "write", "delete", "admin", "manage_users"],
+            vec![
+                "read_notes",
+                "write_notes",
+                "delete_notes",
+                "admin",
+                "manage_space",
+            ],
         ),
         (
             "editor",
             "Editor",
             "Can read, write, and delete content",
-            vec!["read", "write", "delete"],
+            vec!["read_notes", "write_notes", "delete_notes"],
         ),
-        ("viewer", "Viewer", "Can only read content", vec!["read"]),
+        (
+            "viewer",
+            "Viewer",
+            "Can only read content",
+            vec!["read_notes"],
+        ),
     ];
 
     for (id, name, description, permissions) in roles {
-        // Check if role exists
         let exists: bool = conn
             .query_row(
                 "SELECT EXISTS(SELECT 1 FROM roles WHERE id = ?1)",
@@ -185,7 +197,6 @@ fn init_default_roles(conn: &Connection) -> Result<(), rusqlite::Error> {
                 rusqlite::params![id, name, description],
             )?;
 
-            // Add permissions
             for permission in permissions {
                 conn.execute(
                     "INSERT INTO role_permissions (role_id, permission) VALUES (?1, ?2)",
@@ -197,6 +208,13 @@ fn init_default_roles(conn: &Connection) -> Result<(), rusqlite::Error> {
 
     Ok(())
 }
+
+// ... [Rest of the file remains the same] ...
+// (Functions: get_all_space_user_permissions, get_space_users, get_user_permissions,
+//  check_permission, invite_user, get_role_permissions, update_user_role,
+//  grant_permission, revoke_permission, suspend_user, activate_user,
+//  get_roles, add_user_to_space, remove_user_from_space)
+
 /// Get all user permissions for a space in bulk (optimized to avoid N+1 queries)
 fn get_all_space_user_permissions(
     conn: &Connection,
@@ -206,7 +224,6 @@ fn get_all_space_user_permissions(
 
     let mut permissions_map: HashMap<String, Vec<String>> = HashMap::new();
 
-    // Get all role permissions for users in this space
     let mut stmt = conn.prepare(
         "SELECT sur.user_id, rp.permission
          FROM space_user_roles sur
@@ -229,7 +246,6 @@ fn get_all_space_user_permissions(
             .push(permission);
     }
 
-    // Get all custom permissions (overrides) for users in this space
     let mut stmt = conn.prepare(
         "SELECT user_id, permission, granted
          FROM user_permissions
@@ -245,7 +261,6 @@ fn get_all_space_user_permissions(
         })?
         .collect::<Result<Vec<_>, _>>()?;
 
-    // Apply custom permissions
     for (user_id, permission, granted) in custom_perms {
         let perms = permissions_map.entry(user_id).or_insert_with(Vec::new);
         if granted == 1 && !perms.contains(&permission) {
@@ -258,7 +273,6 @@ fn get_all_space_user_permissions(
     Ok(permissions_map)
 }
 
-/// Get all users in a space (optimized to avoid N+1 query)
 pub fn get_space_users(
     conn: &Connection,
     space_id: &str,
@@ -285,10 +299,8 @@ pub fn get_space_users(
         })?
         .collect::<Result<Vec<_>, _>>()?;
 
-    // Fetch all permissions in bulk (single query instead of N queries)
     let permissions_map = get_all_space_user_permissions(conn, space_id)?;
 
-    // Map permissions to users in memory
     let space_users: Vec<SpaceUser> = users
         .into_iter()
         .map(|(user_id, email, role, status, last_active, joined_at)| {
@@ -312,13 +324,11 @@ pub fn get_space_users(
     Ok(space_users)
 }
 
-/// Get user permissions in a space
 pub fn get_user_permissions(
     conn: &Connection,
     space_id: &str,
     user_id: &str,
 ) -> Result<Vec<String>, CollaborationError> {
-    // Get role permissions
     let mut stmt = conn.prepare(
         "SELECT rp.permission
          FROM space_user_roles sur
@@ -330,7 +340,6 @@ pub fn get_user_permissions(
         .query_map([space_id, user_id], |row| row.get(0))?
         .collect::<Result<Vec<_>, _>>()?;
 
-    // Get custom permissions (overrides)
     let mut stmt = conn.prepare(
         "SELECT permission, granted
          FROM user_permissions
@@ -352,7 +361,6 @@ pub fn get_user_permissions(
     Ok(permissions)
 }
 
-/// Check if user has permission
 pub fn check_permission(
     conn: &Connection,
     space_id: &str,
@@ -363,7 +371,6 @@ pub fn check_permission(
     Ok(permissions.contains(&permission.to_string()))
 }
 
-/// Invite user to space
 pub fn invite_user(
     conn: &Connection,
     space_id: &str,
@@ -371,7 +378,6 @@ pub fn invite_user(
     role_id: &str,
     invited_by: &str,
 ) -> Result<UserInvitation, CollaborationError> {
-    // Verify role exists
     let role_exists: bool = conn
         .query_row(
             "SELECT EXISTS(SELECT 1 FROM roles WHERE id = ?1)",
@@ -386,18 +392,16 @@ pub fn invite_user(
 
     let id = Ulid::new().to_string();
 
-    // Generate cryptographically secure random token (32 bytes = 64 hex chars)
-    // Generate cryptographically secure 32-byte token and hex-encode to 64 chars (256-bit entropy)
     use rand::RngCore;
     let mut raw = [0u8; 32];
     rand::thread_rng().fill_bytes(&mut raw);
-    let token = hex::encode(raw); // requires 'hex' crate in Cargo.toml
+    let token = hex::encode(raw);
 
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_secs() as i64;
-    let expires_at = now + (7 * 24 * 60 * 60); // 7 days
+    let expires_at = now + (7 * 24 * 60 * 60);
 
     conn.execute(
         "INSERT INTO user_invitations (id, space_id, email, role_id, token, invited_by, invited_at, expires_at, status)
@@ -405,7 +409,6 @@ pub fn invite_user(
         rusqlite::params![id, space_id, email, role_id, token, invited_by, now, expires_at],
     )?;
 
-    // Get role permissions
     let permissions = get_role_permissions(conn, role_id)?;
 
     Ok(UserInvitation {
@@ -422,7 +425,6 @@ pub fn invite_user(
     })
 }
 
-/// Get role permissions
 fn get_role_permissions(
     conn: &Connection,
     role_id: &str,
@@ -436,7 +438,6 @@ fn get_role_permissions(
     Ok(permissions)
 }
 
-/// Update user role
 pub fn update_user_role(
     conn: &Connection,
     space_id: &str,
@@ -444,7 +445,6 @@ pub fn update_user_role(
     new_role_id: &str,
     updated_by: &str,
 ) -> Result<(), CollaborationError> {
-    // Verify role exists
     let role_exists: bool = conn
         .query_row(
             "SELECT EXISTS(SELECT 1 FROM roles WHERE id = ?1)",
@@ -467,7 +467,6 @@ pub fn update_user_role(
     Ok(())
 }
 
-/// Grant custom permission to user
 pub fn grant_permission(
     conn: &Connection,
     space_id: &str,
@@ -483,7 +482,6 @@ pub fn grant_permission(
     Ok(())
 }
 
-/// Revoke custom permission from user
 pub fn revoke_permission(
     conn: &Connection,
     space_id: &str,
@@ -499,7 +497,6 @@ pub fn revoke_permission(
     Ok(())
 }
 
-/// Suspend user
 pub fn suspend_user(
     conn: &Connection,
     space_id: &str,
@@ -513,7 +510,6 @@ pub fn suspend_user(
     Ok(())
 }
 
-/// Activate user
 pub fn activate_user(
     conn: &Connection,
     space_id: &str,
@@ -527,7 +523,6 @@ pub fn activate_user(
     Ok(())
 }
 
-/// Get all roles
 pub fn get_roles(conn: &Connection) -> Result<Vec<Role>, CollaborationError> {
     let mut stmt = conn.prepare("SELECT id, name, description, is_system FROM roles")?;
 
@@ -557,7 +552,6 @@ pub fn get_roles(conn: &Connection) -> Result<Vec<Role>, CollaborationError> {
     Ok(result)
 }
 
-/// Add user to space (when accepting invitation)
 pub fn add_user_to_space(
     conn: &Connection,
     space_id: &str,
@@ -570,14 +564,12 @@ pub fn add_user_to_space(
         .unwrap()
         .as_secs() as i64;
 
-    // Add to space_users
     conn.execute(
         "INSERT OR REPLACE INTO space_users (space_id, user_id, email, status, joined_at)
          VALUES (?1, ?2, ?3, 'active', ?4)",
         rusqlite::params![space_id, user_id, email, now],
     )?;
 
-    // Assign role
     conn.execute(
         "INSERT OR REPLACE INTO space_user_roles (space_id, user_id, role_id, assigned_at)
          VALUES (?1, ?2, ?3, ?4)",
@@ -587,7 +579,6 @@ pub fn add_user_to_space(
     Ok(())
 }
 
-/// Remove user from space
 pub fn remove_user_from_space(
     conn: &Connection,
     space_id: &str,

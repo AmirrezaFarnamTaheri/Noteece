@@ -32,7 +32,7 @@ fn test_invitation_token_security_uniqueness() {
     let inviter_id = Ulid::new().to_string();
 
     conn.execute(
-        "INSERT INTO space (id, name, created_at, updated_at) VALUES (?1, 'Test Space', datetime('now'), datetime('now'))",
+        "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
         [&space_id],
     )
     .unwrap();
@@ -70,7 +70,7 @@ fn test_invitation_token_length() {
     let inviter_id = Ulid::new().to_string();
 
     conn.execute(
-        "INSERT INTO space (id, name, created_at, updated_at) VALUES (?1, 'Test Space', datetime('now'), datetime('now'))",
+        "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
         [&space_id],
     )
     .unwrap();
@@ -93,7 +93,7 @@ fn test_invitation_token_alphanumeric_only() {
     let inviter_id = Ulid::new().to_string();
 
     conn.execute(
-        "INSERT INTO space (id, name, created_at, updated_at) VALUES (?1, 'Test Space', datetime('now'), datetime('now'))",
+        "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
         [&space_id],
     )
     .unwrap();
@@ -124,7 +124,7 @@ fn test_invitation_token_high_entropy() {
     let inviter_id = Ulid::new().to_string();
 
     conn.execute(
-        "INSERT INTO space (id, name, created_at, updated_at) VALUES (?1, 'Test Space', datetime('now'), datetime('now'))",
+        "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
         [&space_id],
     )
     .unwrap();
@@ -157,7 +157,7 @@ fn test_invitation_token_not_ulid() {
     let inviter_id = Ulid::new().to_string();
 
     conn.execute(
-        "INSERT INTO space (id, name, created_at, updated_at) VALUES (?1, 'Test Space', datetime('now'), datetime('now'))",
+        "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
         [&space_id],
     )
     .unwrap();
@@ -186,7 +186,7 @@ fn test_invitation_token_distribution() {
     let inviter_id = Ulid::new().to_string();
 
     conn.execute(
-        "INSERT INTO space (id, name, created_at, updated_at) VALUES (?1, 'Test Space', datetime('now'), datetime('now'))",
+        "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
         [&space_id],
     )
     .unwrap();
@@ -229,7 +229,7 @@ fn test_get_space_users_bulk_fetch_small() {
     let space_id = Ulid::new().to_string();
 
     conn.execute(
-        "INSERT INTO space (id, name, created_at, updated_at) VALUES (?1, 'Test Space', datetime('now'), datetime('now'))",
+        "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
         [&space_id],
     )
     .unwrap();
@@ -264,7 +264,7 @@ fn test_get_space_users_bulk_fetch_large() {
     let space_id = Ulid::new().to_string();
 
     conn.execute(
-        "INSERT INTO space (id, name, created_at, updated_at) VALUES (?1, 'Test Space', datetime('now'), datetime('now'))",
+        "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
         [&space_id],
     )
     .unwrap();
@@ -322,7 +322,7 @@ fn test_get_space_users_mixed_permissions() {
     let user_id = Ulid::new().to_string();
 
     conn.execute(
-        "INSERT INTO space (id, name, created_at, updated_at) VALUES (?1, 'Test Space', datetime('now'), datetime('now'))",
+        "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
         [&space_id],
     )
     .unwrap();
@@ -369,7 +369,7 @@ fn test_permission_revocation_with_empty_custom_permissions() {
     let user_id = Ulid::new().to_string();
 
     conn.execute(
-        "INSERT INTO space (id, name, created_at, updated_at) VALUES (?1, 'Test Space', datetime('now'), datetime('now'))",
+        "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
         [&space_id],
     )
     .unwrap();
@@ -411,7 +411,7 @@ fn test_reset_to_role_defaults() {
     let user_id = Ulid::new().to_string();
 
     conn.execute(
-        "INSERT INTO space (id, name, created_at, updated_at) VALUES (?1, 'Test Space', datetime('now'), datetime('now'))",
+        "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
         [&space_id],
     )
     .unwrap();
@@ -450,9 +450,9 @@ fn test_role_permission_hierarchy() {
     let (conn, _dir) = setup_db();
     let roles = get_roles(&conn).expect("Failed to get roles");
 
-    let admin = roles.iter().find(|r| r.name == "admin").unwrap();
-    let editor = roles.iter().find(|r| r.name == "editor").unwrap();
-    let viewer = roles.iter().find(|r| r.name == "viewer").unwrap();
+    let admin = roles.iter().find(|r| r.name == "Administrator").unwrap();
+    let editor = roles.iter().find(|r| r.name == "Editor").unwrap();
+    let viewer = roles.iter().find(|r| r.name == "Viewer").unwrap();
 
     // Admin should have most permissions
     assert!(admin.permissions.len() > editor.permissions.len());
@@ -479,7 +479,7 @@ fn test_custom_permission_override() {
     let user_id = Ulid::new().to_string();
 
     conn.execute(
-        "INSERT INTO space (id, name, created_at, updated_at) VALUES (?1, 'Test Space', datetime('now'), datetime('now'))",
+        "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
         [&space_id],
     )
     .unwrap();
@@ -505,7 +505,7 @@ fn test_user_suspension() {
     let admin_id = Ulid::new().to_string();
 
     conn.execute(
-        "INSERT INTO space (id, name, created_at, updated_at) VALUES (?1, 'Test Space', datetime('now'), datetime('now'))",
+        "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
         [&space_id],
     )
     .unwrap();
@@ -514,13 +514,13 @@ fn test_user_suspension() {
         .expect("Failed to add user");
 
     // Suspend user
-    suspend_user(&conn, &space_id, &user_id, &admin_id).expect("Failed to suspend");
+    suspend_user(&conn, &space_id, &user_id).expect("Failed to suspend");
 
     let users = get_space_users(&conn, &space_id).expect("Failed to get users");
     assert_eq!(users[0].status, "suspended");
 
     // Reactivate
-    activate_user(&conn, &space_id, &user_id, &admin_id).expect("Failed to activate");
+    activate_user(&conn, &space_id, &user_id).expect("Failed to activate");
 
     let users = get_space_users(&conn, &space_id).expect("Failed to get users");
     assert_eq!(users[0].status, "active");
@@ -548,7 +548,7 @@ fn test_empty_space_users_list() {
     let space_id = Ulid::new().to_string();
 
     conn.execute(
-        "INSERT INTO space (id, name, created_at, updated_at) VALUES (?1, 'Empty Space', datetime('now'), datetime('now'))",
+        "INSERT INTO space (id, name) VALUES (?1, 'Empty Space')",
         [&space_id],
     )
     .unwrap();
@@ -564,7 +564,7 @@ fn test_remove_nonexistent_user() {
     let fake_user = Ulid::new().to_string();
 
     conn.execute(
-        "INSERT INTO space (id, name, created_at, updated_at) VALUES (?1, 'Test Space', datetime('now'), datetime('now'))",
+        "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
         [&space_id],
     )
     .unwrap();

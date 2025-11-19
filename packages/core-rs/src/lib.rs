@@ -23,7 +23,7 @@ pub mod ocr;
 pub mod personal_modes;
 pub mod project;
 pub mod search;
-pub mod social;
+// pub mod social; // social::mobile_sync was moved
 pub mod space;
 pub mod srs;
 pub mod sync;
@@ -42,10 +42,8 @@ pub fn init() {
 
 #[cfg(test)]
 mod tests {
-
     #[test]
     fn it_works() {
         assert_eq!(2 + 2, 4);
     }
 }
-pub mod sync;

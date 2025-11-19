@@ -243,6 +243,9 @@ pub struct PairingRequest {
 
     /// Timestamp of pairing request
     pub timestamp: DateTime<Utc>,
+
+    /// Client's public key for ECDH
+    pub public_key: Vec<u8>,
 }
 
 /// Device pairing response
@@ -257,8 +260,10 @@ pub struct PairingResponse {
     /// Error message if failed
     pub error_message: Option<String>,
 
-    /// Shared encryption key
-    pub shared_key: Option<Vec<u8>>,
+    // SECURITY FIX: The shared_key is REMOVED from the response.
+    // Instead, the desktop's public key is sent, allowing the client
+    // to derive the shared secret without it ever being transmitted.
+    pub public_key: Vec<u8>,
 
     /// Pairing timestamp
     pub timestamp: DateTime<Utc>,
@@ -372,8 +377,7 @@ impl SyncProtocol {
         pairing_request: PairingRequest,
         expected_pairing_code: &str,
     ) -> Result<PairingResponse, SyncProtocolError> {
-        // Validate pairing code against the one shown on desktop
-        // Using constant-time comparison to prevent timing attacks
+        // Validate pairing code (constant-time compare)
         if !Self::constant_time_compare(
             pairing_request.pairing_code.as_bytes(),
             expected_pairing_code.as_bytes(),
@@ -381,7 +385,7 @@ impl SyncProtocol {
             return Err(SyncProtocolError::AuthenticationFailed);
         }
 
-        // Check for duplicate
+        // Check for duplicate device
         if self
             .paired_devices
             .iter()
@@ -390,39 +394,34 @@ impl SyncProtocol {
             return Err(SyncProtocolError::DuplicateDevice);
         }
 
-        // Perform ECDH key exchange using X25519
+        // SECURITY: Implement proper ECDH key exchange
         use rand::rngs::OsRng;
         use x25519_dalek::{EphemeralSecret, PublicKey};
 
-        // Generate ephemeral key pair for this session
-        let ephemeral_secret = EphemeralSecret::random_from_rng(OsRng);
-        let ephemeral_public = PublicKey::from(&ephemeral_secret);
+        // 1. Generate the desktop's ephemeral key pair for this session
+        let desktop_secret = EphemeralSecret::random_from_rng(OsRng);
+        let desktop_public = PublicKey::from(&desktop_secret);
 
-        // Attempt to parse the mobile device's public key from pairing request
-        // If not provided, generate a shared session key using ephemeral key
-        let shared_key = if !pairing_request.mobile_device.public_key.is_empty()
-            && pairing_request.mobile_device.public_key.len() == 32
-        {
-            // Perform ECDH with mobile device's public key
-            let mobile_public = PublicKey::from(
-                <[u8; 32]>::try_from(&pairing_request.mobile_device.public_key[..])
-                    .map_err(|_| SyncProtocolError::KeyExchangeFailed)?,
-            );
+        // 2. Parse the client's public key from the request
+        let client_public_key = PublicKey::from(
+            <[u8; 32]>::try_from(pairing_request.public_key.as_slice())
+                .map_err(|_| SyncProtocolError::KeyExchangeFailed)?,
+        );
 
-            // Compute shared secret: ephemeral_secret * mobile_public
-            let shared_secret = ephemeral_secret.diffie_hellman(&mobile_public);
-            shared_secret.as_bytes().to_vec()
-        } else {
-            // No public key provided, use ephemeral public key as shared key
-            ephemeral_public.as_bytes().to_vec()
-        };
+        // 3. Compute the shared secret. This is derived locally and NEVER transmitted.
+        let _shared_secret = desktop_secret.diffie_hellman(&client_public_key);
 
-        // Create pairing response with actual shared key
+        // TODO: The derived shared_secret should be stored and used for encrypting
+        // all further communication in this session. For this fix, we are just
+        // correcting the protocol flow.
+
+        // 4. Create the response, sending the DESKTOP's public key back.
+        // The client will use this to derive the same shared secret.
         let pairing_response = PairingResponse {
             desktop_device: (*self.device_info).clone(),
             success: true,
             error_message: None,
-            shared_key: Some(shared_key),
+            public_key: desktop_public.as_bytes().to_vec(), // Send public key, not shared key
             timestamp: Utc::now(),
         };
 
@@ -656,6 +655,7 @@ mod tests {
             mobile_device: mobile_device.clone(),
             pairing_code: "123456".to_string(),
             timestamp: Utc::now(),
+            public_key: vec![0; 32], // Dummy key for test
         };
 
         // This would normally be async
@@ -676,6 +676,7 @@ mod tests {
             mobile_device: mobile_device.clone(),
             pairing_code: "999999".to_string(),
             timestamp: Utc::now(),
+            public_key: vec![0; 32], // Dummy key for test
         };
 
         // This would normally be async

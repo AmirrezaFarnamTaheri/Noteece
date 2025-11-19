@@ -67,14 +67,16 @@ impl DiscoveryService {
                     let name = info.get_property("name").map(|s| s.to_string()).unwrap_or_default();
 
                     if !id.is_empty() {
-                        let device = DiscoveredDevice {
-                            id,
-                            name,
-                            address: info.get_ip().to_string(),
-                            port: info.get_port(),
-                        };
-                        log::info!("[discovery] Found device: {:?}", device);
-                        discovered_devices.push(device);
+                        if let Some(address) = info.get_addresses().iter().next() {
+                            let device = DiscoveredDevice {
+                                id,
+                                name,
+                                address: address.to_string(),
+                                port: info.get_port(),
+                            };
+                            log::info!("[discovery] Found device: {:?}", device);
+                            discovered_devices.push(device);
+                        }
                     }
                 }
             }
