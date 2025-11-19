@@ -1,8 +1,7 @@
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use reqwest::blocking::Client;
 use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use thiserror::Error;
 use ulid::Ulid;
 
@@ -933,7 +932,7 @@ fn parse_calendar_response(xml_data: &str) -> Result<Vec<CalDavEvent>, CalDavErr
 /// SECURITY: Skip events with missing or unparsable required fields (UID, DTSTART)
 /// instead of defaulting to sentinel values like 0, which could cause data corruption.
 fn parse_icalendar(ical_data: &str) -> Result<Vec<CalDavEvent>, CalDavError> {
-    use ical::parser::Component;
+
     use std::io::BufReader;
 
     let buf = BufReader::new(ical_data.as_bytes());
@@ -1250,7 +1249,7 @@ pub fn sync_caldav_account(
 
     let now = Utc::now().timestamp();
     let mut events_pulled = 0u32;
-    let mut events_pushed = 0u32;
+    let events_pushed = 0u32;
     let mut conflicts = 0u32;
     let mut errors = Vec::new();
     let mut success = true;

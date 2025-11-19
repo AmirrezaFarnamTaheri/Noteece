@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 /// Enables synchronization of social media data between desktop and mobile devices
 /// Uses encrypted protocol with local network discovery
 use serde::{Deserialize, Serialize};
-use std::net::{IpAddr, SocketAddr};
+use std::net::IpAddr;
 use std::sync::Arc;
 use thiserror::Error;
 
@@ -299,7 +299,7 @@ impl SyncProtocol {
     /// Searches for _socialhub-sync._tcp.local services on the network
     pub async fn discover_devices(&self) -> Result<Vec<DeviceInfo>, SyncProtocolError> {
         use mdns_sd::ServiceDaemon;
-        use std::net::IpAddr;
+
 
         // Create mDNS service daemon
         let mdns =

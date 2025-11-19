@@ -211,7 +211,7 @@ macro_rules! log_error {
 mod tests {
     use super::*;
     use std::fs;
-    use std::path::Path;
+
 
     #[test]
     fn test_logger_creation() {

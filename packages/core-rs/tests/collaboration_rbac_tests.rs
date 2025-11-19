@@ -4,7 +4,7 @@
 use core_rs::collaboration::{
     activate_user, add_user_to_space, check_permission, get_roles, get_space_users,
     grant_permission, init_rbac_tables, invite_user, remove_user_from_space, revoke_permission,
-    suspend_user, update_user_role,
+    suspend_user,
 };
 use core_rs::db;
 use rusqlite::Connection;

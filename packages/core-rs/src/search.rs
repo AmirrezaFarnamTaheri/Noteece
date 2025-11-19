@@ -1,7 +1,5 @@
 use crate::db::DbError;
 use crate::note::Note;
-use crate::project::Project;
-use crate::task::Task;
 use rusqlite::{Connection, Result};
 use serde::{Deserialize, Serialize};
 use ulid::Ulid;

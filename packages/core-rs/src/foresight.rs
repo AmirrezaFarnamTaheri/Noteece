@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ulid::Ulid;
 
-use crate::correlation::CorrelationEngine;
 
 #[derive(Error, Debug)]
 pub enum ForesightError {
