@@ -3,9 +3,15 @@ use chrono::{DateTime, Utc};
 /// Enables synchronization of social media data between desktop and mobile devices
 /// Uses encrypted protocol with local network discovery
 use serde::{Deserialize, Serialize};
+use chrono::{DateTime, Utc};
+/// Desktop-Mobile Sync Protocol for SocialHub
+/// Enables synchronization of social media data between desktop and mobile devices
+/// Uses encrypted protocol with local network discovery
+use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
 use std::sync::Arc;
 use thiserror::Error;
+use std::collections::HashMap;
 
 #[derive(Error, Debug)]
 pub enum SyncProtocolError {
@@ -281,6 +287,9 @@ pub struct SyncProtocol {
 
     /// Last sync timestamp
     last_sync: Option<DateTime<Utc>>,
+
+    /// Active shared secrets for paired devices (device_id -> shared_secret)
+    shared_secrets: HashMap<String, [u8; 32]>,
 }
 
 impl SyncProtocol {
@@ -291,6 +300,7 @@ impl SyncProtocol {
             paired_devices: Vec::new(),
             sync_state: SyncState::Idle,
             last_sync: None,
+            shared_secrets: HashMap::new(),
         }
     }
 
@@ -408,11 +418,13 @@ impl SyncProtocol {
         );
 
         // 3. Compute the shared secret. This is derived locally and NEVER transmitted.
-        let _shared_secret = desktop_secret.diffie_hellman(&client_public_key);
+        let shared_secret = desktop_secret.diffie_hellman(&client_public_key);
 
-        // TODO: The derived shared_secret should be stored and used for encrypting
-        // all further communication in this session. For this fix, we are just
-        // correcting the protocol flow.
+        // Store the shared secret for this device
+        self.shared_secrets.insert(
+            pairing_request.mobile_device.device_id.clone(),
+            shared_secret.to_bytes()
+        );
 
         // 4. Create the response, sending the DESKTOP's public key back.
         // The client will use this to derive the same shared secret.
@@ -497,11 +509,11 @@ impl SyncProtocol {
         );
 
         // Begin delta transmission for selected categories
-        // For each category, prepare sync deltas and transmit to device
+        // Here we would utilize the shared_secret stored in self.shared_secrets.get(device_id)
+        // to encrypt the communication channel for the actual sync process.
+
         for category in categories {
             log::debug!("[sync_protocol] Syncing category: {:?}", category);
-            // Deltas would be prepared based on last_sync timestamp
-            // and transmitted in batches using SyncBatchProcessor
         }
 
         self.sync_state = SyncState::Syncing;
@@ -530,6 +542,7 @@ impl SyncProtocol {
     pub fn remove_paired_device(&mut self, device_id: &str) -> Result<(), SyncProtocolError> {
         let initial_len = self.paired_devices.len();
         self.paired_devices.retain(|d| d.device_id != device_id);
+        self.shared_secrets.remove(device_id); // Also remove the secret
 
         if self.paired_devices.len() == initial_len {
             return Err(SyncProtocolError::DeviceNotFound);
