@@ -31,9 +31,9 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 - **Affected Files:** Multiple test suites, including `Dashboard.test.tsx`, `UserManagement.test.tsx`, `SyncStatus.test.tsx`, and `useActiveSpace.test.tsx`.
 - **Description:** The desktop frontend test suite is suffering from cascading failures due to a lack of test isolation. The root cause is the shared state of the Zustand store, which is persisted to `localStorage`.
 - **Investigation:** Several attempts were made to fix this issue:
-    1.  **`persist` middleware:** The `persist` middleware was added to the Zustand store to fix a failure in `useActiveSpace.test.tsx`. This caused a cascade of new failures in other tests.
-    2.  **Store Reset:** A `clearStorage` function was added to the store and called in `beforeEach` blocks in the failing tests. This did not resolve the issue and led to a different set of failures.
-    3.  **Conditional `persist`:** The `persist` middleware was conditionally disabled in the test environment. This also did not resolve the issue.
+  1.  **`persist` middleware:** The `persist` middleware was added to the Zustand store to fix a failure in `useActiveSpace.test.tsx`. This caused a cascade of new failures in other tests.
+  2.  **Store Reset:** A `clearStorage` function was added to the store and called in `beforeEach` blocks in the failing tests. This did not resolve the issue and led to a different set of failures.
+  3.  **Conditional `persist`:** The `persist` middleware was conditionally disabled in the test environment. This also did not resolve the issue.
 - **Next Steps:** The tests need to be refactored to properly isolate the Zustand store. This will likely require creating a new store instance for each test, or using a mocking strategy that completely isolates the store. Due to the complexity of this issue, and the time already spent, this is being deferred to focus on other parts of the repository.
 
 ### 2.2. `dateUtils.test.ts` Failure
@@ -58,9 +58,9 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 - **Affected Files:** `apps/mobile/src/__tests__/components/SyncManager.test.tsx`
 - **Description:** The test suite for the `SyncManager` component is failing. The error is `TypeError: Cannot read properties of undefined (reading 'discoverDevices')` and `expect(jest.fn()).toHaveBeenCalled()`.
 - **Investigation:** Several attempts were made to fix this issue:
-    1.  **Incomplete Mock:** The initial mock for `SyncClient` was incomplete, which was causing the `TypeError`.
-    2.  **`act` and `waitFor`:** The test was refactored to use `act` and `waitFor` to handle asynchronous rendering, but this did not resolve the issue.
-    3.  **`mockClear`:** `mockClear` was used to reset the mock before the test assertion, but this also did not resolve the issue.
+  1.  **Incomplete Mock:** The initial mock for `SyncClient` was incomplete, which was causing the `TypeError`.
+  2.  **`act` and `waitFor`:** The test was refactored to use `act` and `waitFor` to handle asynchronous rendering, but this did not resolve the issue.
+  3.  **`mockClear`:** `mockClear` was used to reset the mock before the test assertion, but this also did not resolve the issue.
 - **Next Steps:** The test needs to be refactored to correctly handle the asynchronous nature of the `SyncManager` component. Due to the complexity of this issue, and the time already spent, this is being deferred to focus on other parts of the repository.
 
 ### 3.3. `social-security.test.ts` Failure

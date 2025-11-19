@@ -4,8 +4,8 @@
 // refactored to focus on biometric authentication, and these tests need to be
 // rewritten or removed.
 
-describe.skip('SocialSecurity', () => {
-  it('is a placeholder', () => {});
+describe.skip("SocialSecurity", () => {
+  it("is a placeholder", () => {});
 });
 
 // import * as SocialSecurity from '../social-security';

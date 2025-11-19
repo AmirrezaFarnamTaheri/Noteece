@@ -6,7 +6,7 @@ export interface AppState {
   spaces: Space[];
   activeSpaceId: string | null;
   setSpaces: (spaces: Space[]) => void;
-  setActiveSpaceId: (spaceId:string) => void;
+  setActiveSpaceId: (spaceId: string) => void;
   clearStorage: () => void;
 }
 

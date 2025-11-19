@@ -45,10 +45,12 @@ jest.mock('../../store', () => ({
 
 // Mock auth service
 jest.mock('../../services/auth', () => ({
-  getDecryptedCredentials: jest.fn(() => Promise.resolve({
-    username: 'test-user',
-    password: 'test-password',
-  })),
+  getDecryptedCredentials: jest.fn(() =>
+    Promise.resolve({
+      username: 'test-user',
+      password: 'test-password',
+    }),
+  ),
 }));
 
 const queryClient = new QueryClient({
