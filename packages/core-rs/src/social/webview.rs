@@ -22,7 +22,7 @@ pub fn create_webview_session(
     conn: &Connection,
     account_id: &str,
     platform: &str,
-    dek: &[u8],
+    _dek: &[u8],
 ) -> Result<WebViewSession, SocialError> {
     log::debug!(
         "[Social::WebView] Creating session for account {} on platform {}",

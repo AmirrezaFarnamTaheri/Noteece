@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Backend Test Suite:** Fixed a critical security vulnerability in the OCR module and resolved a panic in the analytics module. The backend test suite now passes completely.
+- **Mobile Test Suite:** Resolved a Jest setup issue that was preventing the mobile test suite from running.
+- **Linting Issues:** Fixed a large number of linting errors and warnings across the entire codebase.
+
+### Changed
+
+- **Build Configuration:** Temporarily disabled the `fts5` feature to resolve a build conflict with SQLCipher. Full-text search is currently disabled.
+- **Test Infrastructure:** Refactored the mobile test suite to correctly mock native modules.
+
 ### Changed
 
 - **Project Documentation Overhaul:** Replaced outdated and misleading documentation with a new, accurate `ARCHITECTURE.md` and `STATUS.md`. The `README.md` has been rewritten to reflect the project's true beta status.

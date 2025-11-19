@@ -7,7 +7,7 @@ use chrono::Utc;
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 
-use super::account::{SocialAccount, SocialError};
+use super::account::SocialError;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncTask {

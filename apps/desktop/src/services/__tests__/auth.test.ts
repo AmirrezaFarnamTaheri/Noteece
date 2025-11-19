@@ -1,4 +1,4 @@
-import { AuthService } from '../auth';
+import { authService } from '../auth';
 import { invoke } from '@tauri-apps/api/tauri';
 
 // Mock Tauri invoke
@@ -15,9 +15,9 @@ describe('AuthService', () => {
     const mockResponse = { token: 'test-token', user: { id: '1', username: 'test' } };
     (invoke as jest.Mock).mockResolvedValue(mockResponse);
 
-    const result = await AuthService.login('testuser', 'password');
+    const result = await authService.login('testuser', 'password');
 
-    expect(invoke).toHaveBeenCalledWith('authenticate_user', {
+    expect(invoke).toHaveBeenCalledWith('authenticate_user_cmd', {
       username: 'testuser',
       password: 'password',
     });
@@ -28,9 +28,9 @@ describe('AuthService', () => {
     const mockUser = { id: '1', username: 'newuser' };
     (invoke as jest.Mock).mockResolvedValue(mockUser);
 
-    const result = await AuthService.register('newuser', 'new@example.com', 'password');
+    const result = await authService.register('newuser', 'new@example.com', 'password');
 
-    expect(invoke).toHaveBeenCalledWith('create_user', {
+    expect(invoke).toHaveBeenCalledWith('create_user_cmd', {
       username: 'newuser',
       email: 'new@example.com',
       password: 'password',
@@ -39,10 +39,10 @@ describe('AuthService', () => {
   });
 
   it('should logout user', async () => {
-    (invoke as jest.Mock).mockResolvedValue(undefined);
+    (invoke as jest.Mock).mockResolvedValue();
 
-    await AuthService.logout('test-token');
+    await authService.logout();
 
-    expect(invoke).toHaveBeenCalledWith('logout_user', { token: 'test-token' });
+    expect(invoke).toHaveBeenCalledWith('logout_user_cmd', { token: undefined });
   });
 });

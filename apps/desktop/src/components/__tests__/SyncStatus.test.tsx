@@ -9,13 +9,17 @@ jest.mock('@tauri-apps/api/tauri', () => ({
   invoke: jest.fn(),
 }));
 
-jest.mock('../../store', () => ({
-  useStore: () => ({
-    activeSpaceId: 'space-123',
-  }),
-}));
-
 const mockInvoke = invoke as jest.MockedFunction<typeof invoke>;
+
+import { useStore } from '../../store';
+
+beforeEach(() => {
+  // Reset the Zustand store and localStorage before each test
+  const { clearStorage, setActiveSpaceId } = useStore.getState();
+  clearStorage();
+  localStorage.clear();
+  setActiveSpaceId('space-123'); // Set a default for the tests
+});
 
 const renderWithProviders = (component: React.ReactElement) => {
   const queryClient = new QueryClient();

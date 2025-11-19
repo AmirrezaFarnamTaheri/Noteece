@@ -1,8 +1,13 @@
 import { renderHook, act } from '@testing-library/react';
 import { useActiveSpace } from '../useActiveSpace';
 
+import { useStore } from '../../store';
+
 describe('useActiveSpace', () => {
   beforeEach(() => {
+    // Reset the Zustand store and localStorage before each test
+    const { clearStorage } = useStore.getState();
+    clearStorage();
     localStorage.clear();
   });
 

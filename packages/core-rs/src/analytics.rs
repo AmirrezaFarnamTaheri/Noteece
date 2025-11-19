@@ -36,7 +36,7 @@ pub fn get_analytics_data(conn: &Connection) -> Result<AnalyticsData, DbError> {
         });
     }
 
-    let mut stmt = conn.prepare("SELECT strftime('%Y-%W', datetime(created_at, 'unixepoch')) as week, COUNT(*) FROM note GROUP BY week ORDER BY week DESC LIMIT 12")?;
+    let mut stmt = conn.prepare("SELECT strftime('%Y-%W', datetime(created_at, 'unixepoch')) as week, COUNT(*) FROM note WHERE created_at IS NOT NULL GROUP BY week ORDER BY week DESC LIMIT 12")?;
     let mut rows = stmt.query([])?;
     let mut notes_created_by_week = Vec::new();
     while let Some(row) = rows.next()? {

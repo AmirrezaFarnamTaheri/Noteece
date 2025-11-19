@@ -8,7 +8,11 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import { SyncClient, DiscoveredDevice, SyncStatus } from "../../lib/sync/sync-client";
+import {
+  SyncClient,
+  DiscoveredDevice,
+  SyncStatus,
+} from "../lib/sync/sync-client";
 
 const syncClient = new SyncClient();
 
@@ -18,7 +22,9 @@ const SyncManager: React.FC = () => {
     message: "Ready to sync",
     progress: 0,
   });
-  const [discoveredDevices, setDiscoveredDevices] = useState<DiscoveredDevice[]>([]);
+  const [discoveredDevices, setDiscoveredDevices] = useState<
+    DiscoveredDevice[]
+  >([]);
   const [isScanning, setIsScanning] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
 
@@ -38,7 +44,10 @@ const SyncManager: React.FC = () => {
       const devices = await syncClient.discoverDevices();
       setDiscoveredDevices(devices);
     } catch (error) {
-      Alert.alert("Discovery Error", error instanceof Error ? error.message : "Unknown error");
+      Alert.alert(
+        "Discovery Error",
+        error instanceof Error ? error.message : "Unknown error",
+      );
     } finally {
       setIsScanning(false);
     }
@@ -49,7 +58,10 @@ const SyncManager: React.FC = () => {
       setSelectedDevice(deviceId);
       await syncClient.initiateSync(deviceId, ["posts", "accounts"]);
     } catch (error) {
-      Alert.alert("Sync Error", error instanceof Error ? error.message : "Sync failed");
+      Alert.alert(
+        "Sync Error",
+        error instanceof Error ? error.message : "Sync failed",
+      );
     }
   };
 

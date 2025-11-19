@@ -59,6 +59,21 @@ jest.mock("@tauri-apps/api/fs", () => ({
   removeDir: jest.fn(),
 }));
 
+// Mock for AppState
+jest.mock("react-native/Libraries/AppState/AppState", () => ({
+  addEventListener: jest.fn(() => ({
+    remove: jest.fn(),
+  })),
+}));
+
+// Mock for Linking
+jest.mock("expo-linking", () => ({
+  addEventListener: jest.fn(() => ({
+    remove: jest.fn(),
+  })),
+  getInitialURL: jest.fn(() => Promise.resolve("")),
+}));
+
 // Mock crypto if needed
 if (typeof global.crypto === "undefined") {
   // @ts-ignore
@@ -162,11 +177,6 @@ jest.mock("expo-linear-gradient", () => {
   };
 });
 
-// Mock expo-share-menu
-jest.mock("expo-share-menu", () => ({
-  addShareListener: jest.fn(() => ({ remove: jest.fn() })),
-  getInitialShare: jest.fn().mockResolvedValue(null),
-}));
 
 // Quiet expected console noise during tests while leaving other logs intact
 const SUPPRESSED_ERROR_PATTERNS = [

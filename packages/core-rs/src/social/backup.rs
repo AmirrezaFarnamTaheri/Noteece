@@ -312,108 +312,112 @@ impl BackupService {
         Ok(serde_json::to_vec(&export)?)
     }
 
-    /// Import database from JSON format
-    fn import_database(
-        &self,
-        conn: &mut Connection,
-        data: &serde_json::Value,
-    ) -> Result<(), BackupError> {
-        let tables = data
-            .get("tables")
-            .ok_or(BackupError::InvalidBackup("No tables found".to_string()))?;
-
-        // Start transaction
-        let tx = conn
-            .transaction()
-            .map_err(|e| BackupError::RestoreFailed(e.to_string()))?;
-
-        // Import each table
-        for (table_name, rows) in tables.as_object().unwrap() {
-            let rows = rows
-                .as_array()
-                .ok_or(BackupError::InvalidBackup("Invalid rows".to_string()))?;
-
-            for row in rows {
-                let obj = row
-                    .as_object()
-                    .ok_or(BackupError::InvalidBackup("Invalid row object".to_string()))?;
-
-                let cols: Vec<&String> = obj.keys().collect();
-                let col_names = cols
-                    .iter()
-                    .map(|s| s.as_str())
-                    .collect::<Vec<_>>()
-                    .join(",");
-                let placeholders = (0..cols.len()).map(|_| "?").collect::<Vec<_>>().join(",");
-
-                let query = format!(
-                    "INSERT INTO {} ({}) VALUES ({})",
-                    table_name, col_names, placeholders
-                );
-
-                let mut stmt = tx
-                    .prepare(&query)
-                    .map_err(|e| BackupError::RestoreFailed(e.to_string()))?;
-
-                let param_values: Vec<Box<dyn rusqlite::ToSql>> = cols
-                    .iter()
-                    .map(|col| {
-                        let val = &obj[col.as_str()];
-                        match val {
-                            serde_json::Value::String(s) => {
-                                Box::new(s.clone()) as Box<dyn rusqlite::ToSql>
-                            }
-                            serde_json::Value::Number(n) => {
-                                if let Some(i) = n.as_i64() {
-                                    Box::new(i) as Box<dyn rusqlite::ToSql>
-                                } else if let Some(f) = n.as_f64() {
-                                    Box::new(f) as Box<dyn rusqlite::ToSql>
-                                } else {
-                                    Box::new(rusqlite::types::Null) as Box<dyn rusqlite::ToSql>
-                                }
-                            }
-                            serde_json::Value::Bool(b) => Box::new(*b) as Box<dyn rusqlite::ToSql>,
-                            serde_json::Value::Null => {
-                                Box::new(rusqlite::types::Null) as Box<dyn rusqlite::ToSql>
-                            }
-                            _ => Box::new(val.to_string()) as Box<dyn rusqlite::ToSql>,
-                        }
-                    })
-                    .collect();
-
-                let params: Vec<&dyn rusqlite::ToSql> =
-                    param_values.iter().map(|p| p.as_ref()).collect();
-
-                stmt.execute(rusqlite::params_from_iter(params.iter()))
-                    .map_err(|e| BackupError::RestoreFailed(e.to_string()))?;
-            }
-        }
-
-        tx.commit()
-            .map_err(|e| BackupError::RestoreFailed(e.to_string()))?;
-
-        Ok(())
-    }
-
-    /// Clear all social-related tables
-    fn clear_database(&self, conn: &Connection) -> Result<(), BackupError> {
-        let tables = vec![
-            "social_post_category", // Must delete junction table first
-            "social_auto_rule_action",
-            "social_auto_rule",
-            "social_post",
-            "social_category",
-            "social_focus_mode",
-            "social_sync_history",
-            "social_account",
-        ];
-
-        for table in tables {
-            conn.execute(&format!("DELETE FROM {}", table), [])?;
-        }
-
-        Ok(())
-    }
+    // TODO: These methods are currently unused. The transactional versions
+    // `import_database_tx` and `clear_database_tx` are used instead to ensure
+    // atomic restore operations. These are kept for now for reference.
+    //
+    // /// Import database from JSON format
+    // fn import_database(
+    //     &self,
+    //     conn: &mut Connection,
+    //     data: &serde_json::Value,
+    // ) -> Result<(), BackupError> {
+    //     let tables = data
+    //         .get("tables")
+    //         .ok_or(BackupError::InvalidBackup("No tables found".to_string()))?;
+    //
+    //     // Start transaction
+    //     let tx = conn
+    //         .transaction()
+    //         .map_err(|e| BackupError::RestoreFailed(e.to_string()))?;
+    //
+    //     // Import each table
+    //     for (table_name, rows) in tables.as_object().unwrap() {
+    //         let rows = rows
+    //             .as_array()
+    //             .ok_or(BackupError::InvalidBackup("Invalid rows".to_string()))?;
+    //
+    //         for row in rows {
+    //             let obj = row
+    //                 .as_object()
+    //                 .ok_or(BackupError::InvalidBackup("Invalid row object".to_string()))?;
+    //
+    //             let cols: Vec<&String> = obj.keys().collect();
+    //             let col_names = cols
+    //                 .iter()
+    //                 .map(|s| s.as_str())
+    //                 .collect::<Vec<_>>()
+    //                 .join(",");
+    //             let placeholders = (0..cols.len()).map(|_| "?").collect::<Vec<_>>().join(",");
+    //
+    //             let query = format!(
+    //                 "INSERT INTO {} ({}) VALUES ({})",
+    //                 table_name, col_names, placeholders
+    //             );
+    //
+    //             let mut stmt = tx
+    //                 .prepare(&query)
+    //                 .map_err(|e| BackupError::RestoreFailed(e.to_string()))?;
+    //
+    //             let param_values: Vec<Box<dyn rusqlite::ToSql>> = cols
+    //                 .iter()
+    //                 .map(|col| {
+    //                     let val = &obj[col.as_str()];
+    //                     match val {
+    //                         serde_json::Value::String(s) => {
+    //                             Box::new(s.clone()) as Box<dyn rusqlite::ToSql>
+    //                         }
+    //                         serde_json::Value::Number(n) => {
+    //                             if let Some(i) = n.as_i64() {
+    //                                 Box::new(i) as Box<dyn rusqlite::ToSql>
+    //                             } else if let Some(f) = n.as_f64() {
+    //                                 Box::new(f) as Box<dyn rusqlite::ToSql>
+    //                             } else {
+    //                                 Box::new(rusqlite::types::Null) as Box<dyn rusqlite::ToSql>
+    //                             }
+    //                         }
+    //                         serde_json::Value::Bool(b) => Box::new(*b) as Box<dyn rusqlite::ToSql>,
+    //                         serde_json::Value::Null => {
+    //                             Box::new(rusqlite::types::Null) as Box<dyn rusqlite::ToSql>
+    //                         }
+    //                         _ => Box::new(val.to_string()) as Box<dyn rusqlite::To.Sql>,
+    //                     }
+    //                 })
+    //                 .collect();
+    //
+    //             let params: Vec<&dyn rusqlite::ToSql> =
+    //                 param_values.iter().map(|p| p.as_ref()).collect();
+    //
+    //             stmt.execute(rusqlite::params_from_iter(params.iter()))
+    //                 .map_err(|e| BackupError::RestoreFailed(e.to_string()))?;
+    //         }
+    //     }
+    //
+    //     tx.commit()
+    //         .map_err(|e| BackupError::RestoreFailed(e.to_string()))?;
+    //
+    //     Ok(())
+    // }
+    //
+    // /// Clear all social-related tables
+    // fn clear_database(&self, conn: &Connection) -> Result<(), BackupError> {
+    //     let tables = vec![
+    //         "social_post_category", // Must delete junction table first
+    //         "social_auto_rule_action",
+    //         "social_auto_rule",
+    //         "social_post",
+    //         "social_category",
+    //         "social_focus_mode",
+    //         "social_sync_history",
+    //         "social_account",
+    //     ];
+    //
+    //     for table in tables {
+    //         conn.execute(&format!("DELETE FROM {}", table), [])?;
+    //     }
+    //
+    //     Ok(())
+    // }
 
     /// Clear all social-related tables within a transaction
     fn clear_database_tx(&self, tx: &rusqlite::Transaction) -> Result<(), BackupError> {
