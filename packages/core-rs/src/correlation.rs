@@ -14,8 +14,6 @@ use crate::time_tracking::TimeEntry;
 const MIN_LOW_MOOD_DAYS: usize = 3;
 const MOOD_THRESHOLD: f64 = 3.0;
 const OVERWORK_RATIO_THRESHOLD: f64 = 1.3;
-const BUDGET_PRESSURE_THRESHOLD: f64 = 0.85;
-const TIME_ESTIMATE_RATIO_THRESHOLD: f64 = 1.5;
 const CORRELATION_STRONG_THRESHOLD: f64 = 0.7;
 
 #[derive(Error, Debug)]
@@ -62,7 +60,6 @@ impl CorrelationEngine {
         Self {}
     }
 
-    /// Gather all relevant data for correlation analysis
     pub fn gather_context(
         &self,
         conn: &Connection,
@@ -72,10 +69,10 @@ impl CorrelationEngine {
         let now = Utc::now().timestamp();
         let start_time = now - (time_window_days * 86400);
 
-        let health_data = self.fetch_health_metrics(conn, space_id, start_time)?;
-        let time_entries = self.fetch_time_entries(conn, space_id, start_time)?;
+        let health_data = self.fetch_health_metrics(conn, space_id)?;
+        let time_entries = self.fetch_time_entries(conn, space_id)?;
         let tasks = self.fetch_tasks(conn, space_id)?;
-        let transactions = self.fetch_transactions(conn, space_id, start_time)?;
+        let transactions = self.fetch_transactions(conn, space_id)?;
 
         Ok(CorrelationContext {
             space_id,
@@ -93,12 +90,6 @@ impl CorrelationEngine {
         if let Some(corr) = self.detect_health_workload(context) {
             correlations.push(corr);
         }
-        if let Some(corr) = self.detect_finance_tasks(context) {
-            correlations.push(corr);
-        }
-        if let Some(corr) = self.detect_time_productivity(context) {
-            correlations.push(corr);
-        }
         correlations
     }
 
@@ -110,7 +101,6 @@ impl CorrelationEngine {
             .collect()
     }
 
-    // Correlation detection logic...
     fn detect_health_workload(&self, context: &CorrelationContext) -> Option<Correlation> {
         let low_mood_days: Vec<i64> = context
             .health_data
@@ -136,7 +126,7 @@ impl CorrelationEngine {
                 correlation_type: CorrelationType::HealthWorkload,
                 strength: (overwork_ratio - 1.0).min(1.0),
                 entities: vec![],
-                pattern_description: format!("Low mood correlates with high workload."),
+                pattern_description: "Low mood correlates with high workload.".to_string(),
                 metadata: [
                     ("low_mood_days".to_string(), serde_json::json!(low_mood_days.len())),
                     ("work_hours".to_string(), serde_json::json!(work_hours)),
@@ -146,15 +136,6 @@ impl CorrelationEngine {
         } else { None }
     }
 
-    fn detect_finance_tasks(&self, context: &CorrelationContext) -> Option<Correlation> {
-        None // Placeholder
-    }
-
-    fn detect_time_productivity(&self, context: &CorrelationContext) -> Option<Correlation> {
-        None // Placeholder
-    }
-
-    // Insight generation...
     fn correlation_to_insight(&self, correlation: Correlation) -> Option<Insight> {
         let now = Utc::now().timestamp();
         match correlation.correlation_type {
@@ -186,23 +167,23 @@ impl CorrelationEngine {
         }
     }
 
-    // Data fetching helpers...
-    fn fetch_health_metrics(&self, conn: &Connection, space_id: Ulid, since: i64) -> Result<Vec<HealthMetric>, CorrelationError> {
-        crate::personal_modes::get_health_metrics_since(conn, &space_id.to_string(), since)
+    // FIXED: Corrected function names and parameters
+    fn fetch_health_metrics(&self, conn: &Connection, space_id: Ulid) -> Result<Vec<HealthMetric>, CorrelationError> {
+        crate::personal_modes::get_health_metrics(conn, space_id, 1000, 0)
             .map_err(|e| CorrelationError::Analysis(e.to_string()))
     }
 
-    fn fetch_time_entries(&self, conn: &Connection, space_id: Ulid, since: i64) -> Result<Vec<TimeEntry>, CorrelationError> {
-        crate::time_tracking::get_time_entries_since(conn, &space_id.to_string(), since)
+    fn fetch_time_entries(&self, conn: &Connection, space_id: Ulid) -> Result<Vec<TimeEntry>, CorrelationError> {
+        crate::time_tracking::get_time_entries(conn, &space_id.to_string())
             .map_err(|e| CorrelationError::Analysis(e.to_string()))
     }
 
     fn fetch_tasks(&self, conn: &Connection, space_id: Ulid) -> Result<Vec<Task>, CorrelationError> {
-        crate::task::get_tasks_by_space(conn, space_id).map_err(CorrelationError::Database)
+        crate::task::get_all_tasks_in_space(conn, space_id).map_err(CorrelationError::Database)
     }
 
-    fn fetch_transactions(&self, conn: &Connection, space_id: Ulid, since: i64) -> Result<Vec<Transaction>, CorrelationError> {
-        crate::personal_modes::get_transactions_since(conn, &space_id.to_string(), since)
+    fn fetch_transactions(&self, conn: &Connection, space_id: Ulid) -> Result<Vec<Transaction>, CorrelationError> {
+        crate::personal_modes::get_transactions(conn, space_id, 1000, 0)
             .map_err(|e| CorrelationError::Analysis(e.to_string()))
     }
 }
