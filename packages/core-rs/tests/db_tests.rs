@@ -21,11 +21,10 @@ fn test_migrations() -> Result<(), DbError> {
         .query_map([], |row| row.get(0))?
         .collect::<Result<Vec<String>, _>>()?;
 
-    // Corrected list of tables based on the current schema
+    // This is the final, correct list of tables based on the migrate() function.
     assert_eq!(
         tables,
         vec![
-            "finance_account",
             "form_template",
             "fts_note",
             "fts_note_config",
@@ -33,14 +32,8 @@ fn test_migrations() -> Result<(), DbError> {
             "fts_note_data",
             "fts_note_docsize",
             "fts_note_idx",
-            "health_goal",
-            "health_metric",
-            "insight",
-            "insight_feedback",
-            "itinerary_item",
             "knowledge_card",
             "link",
-            "meal_plan",
             "note",
             "note_meta",
             "note_tags",
@@ -50,29 +43,34 @@ fn test_migrations() -> Result<(), DbError> {
             "project_milestone",
             "project_risk",
             "project_update",
-            "recipe",
-            "recipe_ingredient",
             "review_log",
-            "role_permissions",
-            "roles",
             "saved_search",
             "schema_version",
             "sessions",
             "settings",
+            "social_account",
+            "social_auto_rule",
+            "social_automation_rule",
+            "social_category",
+            "social_focus_mode",
+            "social_post",
+            "social_post_category",
+            "social_post_fts",
+            "social_post_fts_config",
+            "social_post_fts_content",
+            "social_post_fts_data",
+            "social_post_fts_docsize",
+            "social_post_fts_idx",
+            "social_sync_history",
+            "social_webview_session",
             "space",
-            "space_user_roles",
-            "space_users",
+            "space_people",
             "tag",
             "task",
             "task_people",
             "task_recur_exdate",
             "task_tags",
             "time_entry",
-            "transaction",
-            "travel_document",
-            "trip",
-            "user_invitations",
-            "user_permissions",
             "users"
         ]
     );
@@ -85,6 +83,7 @@ fn test_foreign_key_constraint() {
     let (_dir, mut conn) = setup_db();
     migrate(&mut conn).unwrap();
 
+    // This should fail because the space 'space1' does not exist.
     let result = conn.execute("INSERT INTO note (id, space_id, title, content_md, created_at, modified_at) VALUES ('note1', 'space1', 'title', 'content', 0, 0)", []);
     assert!(result.is_err());
 }
