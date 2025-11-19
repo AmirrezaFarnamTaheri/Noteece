@@ -10,7 +10,6 @@ use crate::personal_modes::{HealthMetric, Transaction};
 use crate::task::Task;
 use crate::time_tracking::TimeEntry;
 
-// Extracted magic numbers into constants for maintainability
 const MIN_LOW_MOOD_DAYS: usize = 3;
 const MOOD_THRESHOLD: f64 = 3.0;
 const OVERWORK_RATIO_THRESHOLD: f64 = 1.3;
@@ -20,7 +19,7 @@ const CORRELATION_STRONG_THRESHOLD: f64 = 0.7;
 pub enum CorrelationError {
     #[error("Database error: {0}")]
     Database(#[from] rusqlite::Error),
-    #[error("Correlation analysis error: {0}")]
+    #[error("Analysis error: {0}")]
     Analysis(String),
 }
 
@@ -29,8 +28,6 @@ pub type CorrelationStrength = f64;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CorrelationType {
     HealthWorkload,
-    FinanceTasks,
-    TimeProductivity,
 }
 
 #[derive(Debug, Clone)]
@@ -110,15 +107,17 @@ impl CorrelationEngine {
             .collect();
 
         if low_mood_days.len() < MIN_LOW_MOOD_DAYS { return None; }
-        let low_mood_start = low_mood_days.iter().min()? * 86400;
-        let low_mood_end = low_mood_days.iter().max()? * 86400 + 86400;
+        let low_mood_start = *low_mood_days.iter().min()?;
+        let low_mood_end = *low_mood_days.iter().max()?;
 
         let work_hours: f64 = context.time_entries.iter()
-            .filter(|e| e.started_at >= low_mood_start && e.started_at <= low_mood_end && e.ended_at.is_some())
+            .filter(|e| (e.started_at / 86400) >= low_mood_start && (e.started_at / 86400) <= low_mood_end && e.ended_at.is_some())
             .map(|e| (e.ended_at.unwrap() - e.started_at) as f64 / 3600.0)
             .sum();
 
-        let expected_hours = low_mood_days.len() as f64 * 8.0;
+        let num_days = (low_mood_end - low_mood_start + 1) as f64;
+        if num_days == 0.0 { return None; }
+        let expected_hours = num_days * 8.0;
         let overwork_ratio = work_hours / expected_hours;
 
         if overwork_ratio > OVERWORK_RATIO_THRESHOLD {
@@ -163,13 +162,12 @@ impl CorrelationEngine {
                     dismissed: false,
                 })
             }
-            _ => None,
         }
     }
 
-    // FIXED: Corrected function names and parameters
+    // Corrected function calls based on compiler feedback
     fn fetch_health_metrics(&self, conn: &Connection, space_id: Ulid) -> Result<Vec<HealthMetric>, CorrelationError> {
-        crate::personal_modes::get_health_metrics(conn, space_id, 1000, 0)
+        crate::personal_modes::get_health_metrics(conn, space_id, 1000, None)
             .map_err(|e| CorrelationError::Analysis(e.to_string()))
     }
 
@@ -179,11 +177,12 @@ impl CorrelationEngine {
     }
 
     fn fetch_tasks(&self, conn: &Connection, space_id: Ulid) -> Result<Vec<Task>, CorrelationError> {
-        crate::task::get_all_tasks_in_space(conn, space_id).map_err(CorrelationError::Database)
+        crate::task::get_all_tasks_in_space(conn, space_id)
+            .map_err(|e| CorrelationError::Analysis(e.to_string()))
     }
 
     fn fetch_transactions(&self, conn: &Connection, space_id: Ulid) -> Result<Vec<Transaction>, CorrelationError> {
-        crate::personal_modes::get_transactions(conn, space_id, 1000, 0)
+        crate::personal_modes::get_transactions(conn, space_id, 1000)
             .map_err(|e| CorrelationError::Analysis(e.to_string()))
     }
 }
