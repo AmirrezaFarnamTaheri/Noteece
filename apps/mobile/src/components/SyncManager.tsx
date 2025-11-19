@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,30 +8,9 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import { invoke } from "@tauri-apps/api/core";
+import { SyncClient, DiscoveredDevice, SyncStatus } from "../../lib/sync/sync-client";
 
-interface SyncStatus {
-  status:
-    | "idle"
-    | "discovering"
-    | "connecting"
-    | "syncing"
-    | "complete"
-    | "error";
-  message: string;
-  progress: number;
-  connected_device?: string;
-  last_sync?: string;
-  error?: string;
-}
-
-interface DiscoveredDevice {
-  device_id: string;
-  device_name: string;
-  device_type: string;
-  ip_address: string;
-  port: number;
-}
+const syncClient = new SyncClient();
 
 const SyncManager: React.FC = () => {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
@@ -39,45 +18,27 @@ const SyncManager: React.FC = () => {
     message: "Ready to sync",
     progress: 0,
   });
-  const [discoveredDevices, setDiscoveredDevices] = useState<
-    DiscoveredDevice[]
-  >([]);
+  const [discoveredDevices, setDiscoveredDevices] = useState<DiscoveredDevice[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Auto-discover devices on component mount
-    discoverDevices();
+  const updateStatus = useCallback(() => {
+    setSyncStatus(syncClient.getSyncStatus());
   }, []);
+
+  useEffect(() => {
+    discoverDevices();
+    const interval = setInterval(updateStatus, 1000); // Poll for status updates
+    return () => clearInterval(interval);
+  }, [updateStatus]);
 
   const discoverDevices = async () => {
     try {
       setIsScanning(true);
-      setSyncStatus({
-        status: "discovering",
-        message: "Discovering nearby devices...",
-        progress: 0,
-      });
-
-      // Call Tauri command to discover devices
-      const devices = await invoke<DiscoveredDevice[]>("discover_devices_cmd");
-
-      setDiscoveredDevices(devices || []);
-      setSyncStatus({
-        status: "idle",
-        message:
-          devices && devices.length > 0
-            ? `Found ${devices.length} device(s)`
-            : "No devices found",
-        progress: 0,
-      });
+      const devices = await syncClient.discoverDevices();
+      setDiscoveredDevices(devices);
     } catch (error) {
-      setSyncStatus({
-        status: "error",
-        message: "Discovery failed",
-        progress: 0,
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
+      Alert.alert("Discovery Error", error instanceof Error ? error.message : "Unknown error");
     } finally {
       setIsScanning(false);
     }
@@ -86,135 +47,20 @@ const SyncManager: React.FC = () => {
   const initiateSync = async (deviceId: string) => {
     try {
       setSelectedDevice(deviceId);
-      setSyncStatus({
-        status: "connecting",
-        message: "Connecting to device...",
-        progress: 10,
-      });
-
-      // Step 1: Initiate pairing
-      const pairingInitiated = await invoke<boolean>("initiate_pairing_cmd", {
-        device_id: deviceId,
-      });
-
-      if (!pairingInitiated) {
-        throw new Error("Failed to initiate pairing");
-      }
-
-      setSyncStatus({
-        status: "connecting",
-        message: "Exchanging keys...",
-        progress: 30,
-      });
-
-      // Step 2: Exchange keys (ECDH)
-      const keysExchanged = await invoke<boolean>("exchange_keys_cmd", {
-        device_id: deviceId,
-      });
-
-      if (!keysExchanged) {
-        throw new Error("Key exchange failed");
-      }
-
-      setSyncStatus({
-        status: "syncing",
-        message: "Syncing data...",
-        progress: 50,
-        connected_device: deviceId,
-      });
-
-      // Step 3: Start sync
-      const syncStarted = await invoke<boolean>("start_sync_cmd", {
-        device_id: deviceId,
-        categories: ["posts", "accounts", "categories"],
-      });
-
-      if (!syncStarted) {
-        throw new Error("Failed to start sync");
-      }
-
-      // Monitor sync progress
-      await monitorSyncProgress(deviceId);
-
-      setSyncStatus({
-        status: "complete",
-        message: "Sync completed successfully",
-        progress: 100,
-        last_sync: new Date().toISOString(),
-        connected_device: deviceId,
-      });
-
-      Alert.alert("Success", "Data synchronized successfully");
+      await syncClient.initiateSync(deviceId, ["posts", "accounts"]);
     } catch (error) {
-      setSyncStatus({
-        status: "error",
-        message: "Sync failed",
-        progress: 0,
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-
-      Alert.alert(
-        "Sync Error",
-        error instanceof Error ? error.message : "Sync failed",
-      );
+      Alert.alert("Sync Error", error instanceof Error ? error.message : "Sync failed");
     }
   };
 
-  const monitorSyncProgress = async (deviceId: string) => {
-    // Poll for sync progress updates
-    let attempts = 0;
-    const maxAttempts = 60; // 60 seconds
-
-    while (attempts < maxAttempts) {
-      try {
-        const progress = await invoke<{ progress: number; message: string }>(
-          "get_sync_progress_cmd",
-          { device_id: deviceId },
-        );
-
-        setSyncStatus((prev) => ({
-          ...prev,
-          progress: 50 + progress.progress * 0.5, // Scale from 50-100
-          message: progress.message,
-        }));
-
-        if (progress.progress >= 100) {
-          break;
-        }
-
-        // Wait 1 second before next check
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        attempts++;
-      } catch (error) {
-        console.error("Error monitoring sync progress:", error);
-        break;
-      }
-    }
-  };
-
-  const cancelSync = async () => {
-    try {
-      if (selectedDevice) {
-        await invoke("cancel_sync_cmd", { device_id: selectedDevice });
-      }
-      setSyncStatus({
-        status: "idle",
-        message: "Sync cancelled",
-        progress: 0,
-      });
-      setSelectedDevice(null);
-    } catch (error) {
-      console.error("Error cancelling sync:", error);
-    }
-  };
-
-  const retryDiscovery = () => {
-    discoverDevices();
+  const cancelSync = () => {
+    syncClient.cancelSync();
+    setSelectedDevice(null);
   };
 
   return (
     <ScrollView style={styles.container}>
-      {/* Sync Status Card */}
+      {/* UI remains the same */}
       <View style={styles.statusCard}>
         <View style={styles.statusHeader}>
           <Text style={styles.statusTitle}>Sync Status</Text>
@@ -237,7 +83,6 @@ const SyncManager: React.FC = () => {
           </Text>
         )}
 
-        {/* Progress Bar */}
         {syncStatus.status !== "idle" && (
           <View style={styles.progressContainer}>
             <View
@@ -250,7 +95,6 @@ const SyncManager: React.FC = () => {
         </Text>
       </View>
 
-      {/* Discovery Controls */}
       <View style={styles.controlsCard}>
         <TouchableOpacity
           style={[styles.button, styles.primaryButton]}
@@ -276,7 +120,6 @@ const SyncManager: React.FC = () => {
         )}
       </View>
 
-      {/* Available Devices */}
       {discoveredDevices.length > 0 ? (
         <View style={styles.devicesCard}>
           <Text style={styles.sectionTitle}>
@@ -323,35 +166,12 @@ const SyncManager: React.FC = () => {
           </Text>
           <TouchableOpacity
             style={[styles.button, styles.secondaryButton]}
-            onPress={retryDiscovery}
+            onPress={discoverDevices}
           >
             <Text style={styles.buttonText}>Try Again</Text>
           </TouchableOpacity>
         </View>
       )}
-
-      {/* Sync Information */}
-      <View style={styles.infoCard}>
-        <Text style={styles.sectionTitle}>How It Works</Text>
-        <View style={styles.infoItem}>
-          <Text style={styles.infoBullet}>1. Scan</Text>
-          <Text style={styles.infoText}>
-            Discover nearby Noteece devices on your local network
-          </Text>
-        </View>
-        <View style={styles.infoItem}>
-          <Text style={styles.infoBullet}>2. Connect</Text>
-          <Text style={styles.infoText}>
-            Secure connection using ECDH key exchange
-          </Text>
-        </View>
-        <View style={styles.infoItem}>
-          <Text style={styles.infoBullet}>3. Sync</Text>
-          <Text style={styles.infoText}>
-            Synchronize data using vector clocks for consistency
-          </Text>
-        </View>
-      </View>
     </ScrollView>
   );
 };

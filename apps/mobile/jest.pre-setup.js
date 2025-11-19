@@ -162,6 +162,12 @@ jest.mock("expo-linear-gradient", () => {
   };
 });
 
+// Mock expo-share-menu
+jest.mock("expo-share-menu", () => ({
+  addShareListener: jest.fn(() => ({ remove: jest.fn() })),
+  getInitialShare: jest.fn().mockResolvedValue(null),
+}));
+
 // Quiet expected console noise during tests while leaving other logs intact
 const SUPPRESSED_ERROR_PATTERNS = [
   "JSON parse error:",
