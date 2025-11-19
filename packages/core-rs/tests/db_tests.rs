@@ -21,9 +21,11 @@ fn test_migrations() -> Result<(), DbError> {
         .query_map([], |row| row.get(0))?
         .collect::<Result<Vec<String>, _>>()?;
 
+    // Corrected list of tables based on the current schema
     assert_eq!(
         tables,
         vec![
+            "finance_account",
             "form_template",
             "fts_note",
             "fts_note_config",
@@ -31,8 +33,14 @@ fn test_migrations() -> Result<(), DbError> {
             "fts_note_data",
             "fts_note_docsize",
             "fts_note_idx",
+            "health_goal",
+            "health_metric",
+            "insight",
+            "insight_feedback",
+            "itinerary_item",
             "knowledge_card",
             "link",
+            "meal_plan",
             "note",
             "note_meta",
             "note_tags",
@@ -42,16 +50,30 @@ fn test_migrations() -> Result<(), DbError> {
             "project_milestone",
             "project_risk",
             "project_update",
+            "recipe",
+            "recipe_ingredient",
             "review_log",
+            "role_permissions",
+            "roles",
             "saved_search",
             "schema_version",
+            "sessions",
+            "settings",
             "space",
-            "space_people",
+            "space_user_roles",
+            "space_users",
             "tag",
             "task",
             "task_people",
             "task_recur_exdate",
-            "task_tags"
+            "task_tags",
+            "time_entry",
+            "transaction",
+            "travel_document",
+            "trip",
+            "user_invitations",
+            "user_permissions",
+            "users"
         ]
     );
 
