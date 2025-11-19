@@ -9,7 +9,7 @@ use rusqlite::Connection;
 use tempfile::{tempdir, TempDir};
 use ulid::Ulid;
 
-fn setup_db() -> (Connection, TempDir) {
+fn setup_db() -> (Connection, TempDir, String) {
     let dir = tempdir().unwrap();
     let db_path = dir.path().join("test.db");
     let mut conn = Connection::open(&db_path).unwrap();
@@ -18,14 +18,22 @@ fn setup_db() -> (Connection, TempDir) {
     // Initialize sync tables
     init_sync_tables(&conn).expect("Failed to initialize sync tables");
 
-    (conn, dir)
+    // Create a space to satisfy foreign key constraints
+    let space_id = Ulid::new().to_string();
+    conn.execute(
+        "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
+        &[&space_id],
+    )
+    .unwrap();
+
+    (conn, dir, space_id)
 }
 
 // ============== DATABASE SCHEMA TESTS (Session 5 Fixes) ==============
 
 #[test]
 fn test_sync_state_table_exists() {
-    let (conn, _dir) = setup_db();
+    let (conn, _dir, _) = setup_db();
 
     // Verify sync_state table was created
     let table_exists: bool = conn
@@ -44,7 +52,7 @@ fn test_sync_state_table_exists() {
 
 #[test]
 fn test_entity_sync_log_table_exists() {
-    let (conn, _dir) = setup_db();
+    let (conn, _dir, _) = setup_db();
 
     // CRITICAL TEST: entity_sync_log table must exist (Session 5 fix)
     let table_exists: bool = conn
@@ -66,7 +74,7 @@ fn test_entity_sync_log_table_exists() {
 
 #[test]
 fn test_entity_sync_log_schema() {
-    let (conn, _dir) = setup_db();
+    let (conn, _dir, _) = setup_db();
 
     // Verify entity_sync_log has required columns
     let schema: Vec<(String, String)> = conn
@@ -109,7 +117,7 @@ fn test_entity_sync_log_schema() {
 
 #[test]
 fn test_sync_history_table_has_space_id() {
-    let (conn, _dir) = setup_db();
+    let (conn, _dir, _) = setup_db();
 
     // Verify sync_history has space_id column (used by Session 5 query fixes)
     let schema: Vec<String> = conn
@@ -128,7 +136,7 @@ fn test_sync_history_table_has_space_id() {
 
 #[test]
 fn test_sync_vector_clock_table_exists() {
-    let (conn, _dir) = setup_db();
+    let (conn, _dir, _) = setup_db();
 
     let table_exists: bool = conn
         .query_row(
@@ -163,7 +171,7 @@ fn test_sync_agent_creation() {
 
 #[test]
 fn test_register_device() {
-    let (conn, _dir) = setup_db();
+    let (conn, _dir, _) = setup_db();
 
     let agent = SyncAgent::new("device_1".to_string(), "Device 1".to_string(), 8765);
     let device_info = agent.get_device_info();
@@ -186,7 +194,7 @@ fn test_register_device() {
 
 #[test]
 fn test_get_devices() {
-    let (conn, _dir) = setup_db();
+    let (conn, _dir, _) = setup_db();
 
     let agent = SyncAgent::new("device_main".to_string(), "Main Device".to_string(), 8765);
 
@@ -230,7 +238,7 @@ fn test_conflict_resolution_types() {
 
 #[test]
 fn test_create_and_resolve_conflict() {
-    let (conn, _dir) = setup_db();
+    let (conn, _dir, space_id) = setup_db();
 
     let conflict_id = Ulid::new().to_string();
     let entity_id = Ulid::new().to_string();
@@ -240,8 +248,8 @@ fn test_create_and_resolve_conflict() {
     conn.execute(
         "INSERT INTO sync_conflict (
             id, entity_type, entity_id, local_version, remote_version,
-            conflict_type, detected_at, resolved, device_id
-        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 0, ?8)",
+            conflict_type, detected_at, resolved, device_id, space_id
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 0, ?8, ?9)",
         rusqlite::params![
             conflict_id,
             "note",
@@ -251,6 +259,7 @@ fn test_create_and_resolve_conflict() {
             "UpdateUpdate",
             chrono::Utc::now().timestamp(),
             device_id,
+            space_id,
         ],
     )
     .expect("Failed to create conflict");
@@ -287,7 +296,7 @@ fn test_create_and_resolve_conflict() {
 
 #[test]
 fn test_get_unresolved_conflicts() {
-    let (conn, _dir) = setup_db();
+    let (conn, _dir, space_id) = setup_db();
     let agent = SyncAgent::new("device_1".to_string(), "Device 1".to_string(), 8765);
     let device_id = "device_1".to_string();
 
@@ -299,8 +308,8 @@ fn test_get_unresolved_conflicts() {
         conn.execute(
             "INSERT INTO sync_conflict (
                 id, entity_type, entity_id, local_version, remote_version,
-                conflict_type, detected_at, resolved, device_id
-            ) VALUES (?1, 'note', ?2, ?3, ?4, 'UpdateUpdate', ?5, ?6, ?7)",
+                conflict_type, detected_at, resolved, device_id, space_id
+            ) VALUES (?1, 'note', ?2, ?3, ?4, 'UpdateUpdate', ?5, ?6, ?7, ?8)",
             rusqlite::params![
                 conflict_id,
                 entity_id,
@@ -309,6 +318,7 @@ fn test_get_unresolved_conflicts() {
                 chrono::Utc::now().timestamp(),
                 if i < 3 { 0 } else { 1 }, // First 3 unresolved
                 device_id,
+                space_id,
             ],
         )
         .expect("Failed to create conflict");
@@ -325,9 +335,8 @@ fn test_get_unresolved_conflicts() {
 
 #[test]
 fn test_record_sync_history() {
-    let (conn, _dir) = setup_db();
+    let (conn, _dir, space_id) = setup_db();
     let agent = SyncAgent::new("device_1".to_string(), "Device 1".to_string(), 8765);
-    let space_id = Ulid::new().to_string();
 
     agent
         .record_sync_history(&conn, &space_id, "bidirectional", 10, 5, 0, true, None)
@@ -347,9 +356,8 @@ fn test_record_sync_history() {
 
 #[test]
 fn test_get_sync_history() {
-    let (conn, _dir) = setup_db();
+    let (conn, _dir, space_id) = setup_db();
     let agent = SyncAgent::new("device_1".to_string(), "Device 1".to_string(), 8765);
-    let space_id = Ulid::new().to_string();
 
     // Record multiple sync events
     for i in 0..10 {
@@ -386,9 +394,8 @@ fn test_get_sync_history() {
 
 #[test]
 fn test_get_last_sync_time_uses_sync_history() {
-    let (conn, _dir) = setup_db();
+    let (conn, _dir, space_id) = setup_db();
     let agent = SyncAgent::new("device_1".to_string(), "Device 1".to_string(), 8765);
-    let space_id = Ulid::new().to_string();
 
     // Record sync with specific timestamp
     let sync_time = chrono::Utc::now().timestamp();
@@ -421,8 +428,7 @@ fn test_get_last_sync_time_uses_sync_history() {
 
 #[test]
 fn test_vector_clock_from_sync_history() {
-    let (conn, _dir) = setup_db();
-    let space_id = Ulid::new().to_string();
+    let (conn, _dir, space_id) = setup_db();
 
     // Insert sync history for multiple devices
     for i in 1..=3 {
@@ -475,7 +481,7 @@ fn test_vector_clock_from_sync_history() {
 
 #[test]
 fn test_entity_sync_log_insert_with_id() {
-    let (conn, _dir) = setup_db();
+    let (conn, _dir, _) = setup_db();
 
     let log_id = Ulid::new().to_string();
     let entity_id = Ulid::new().to_string();
@@ -511,7 +517,7 @@ fn test_entity_sync_log_insert_with_id() {
 
 #[test]
 fn test_entity_sync_log_all_fields() {
-    let (conn, _dir) = setup_db();
+    let (conn, _dir, _) = setup_db();
 
     let log_id = Ulid::new().to_string();
     let entity_id = Ulid::new().to_string();
@@ -552,7 +558,7 @@ fn test_entity_sync_log_all_fields() {
 
 #[test]
 fn test_entity_sync_log_operation_types() {
-    let (conn, _dir) = setup_db();
+    let (conn, _dir, _) = setup_db();
 
     let operations = vec!["Create", "Update", "Delete"];
 
@@ -596,9 +602,8 @@ fn test_device_types() {
 
 #[test]
 fn test_bulk_sync_history_query() {
-    let (conn, _dir) = setup_db();
+    let (conn, _dir, space_id) = setup_db();
     let agent = SyncAgent::new("device_1".to_string(), "Device 1".to_string(), 8765);
-    let space_id = Ulid::new().to_string();
 
     // Insert 100 sync records
     for _ in 0..100 {
