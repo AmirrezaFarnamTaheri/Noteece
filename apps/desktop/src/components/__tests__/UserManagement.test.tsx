@@ -1,6 +1,6 @@
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { invoke } from '@tauri-apps/api/tauri';
-import { renderWithProviders } from '../../utils/test-utils';
+import { renderWithProviders } from '../../utils/test-render';
 import UserManagement from '../UserManagement';
 import '@testing-library/jest-dom';
 

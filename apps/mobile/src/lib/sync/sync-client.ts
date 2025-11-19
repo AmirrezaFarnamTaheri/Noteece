@@ -144,7 +144,7 @@ export class SyncClient {
 
     try {
       // STEP 1: Generate ephemeral ECDH key pair (P-256)
-      const privateKey = p256.utils.randomPrivateKey();
+      // const privateKey = p256.utils.randomPrivateKey();
       // const publicKey = p256.getPublicKey(privateKey);
       // Public key will be used when implementing server component with WebSocket integration
 
