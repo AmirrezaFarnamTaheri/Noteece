@@ -1,8 +1,6 @@
 use core_rs::correlation::*;
 use core_rs::db;
-use core_rs::personal_modes;
 use core_rs::task;
-use core_rs::time_tracking;
 use rusqlite::Connection;
 use tempfile::{tempdir, TempDir};
 use ulid::Ulid;
@@ -20,6 +18,13 @@ fn setup_db() -> (Connection, TempDir) {
 fn test_gather_context() {
     let (conn, _dir) = setup_db(); // _dir keeps the temp directory alive
     let space_id = Ulid::new();
+
+    // A space must exist before tasks can be added to it.
+    conn.execute(
+        "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
+        &[&space_id.to_string()],
+    )
+    .unwrap();
 
     // Create tasks
     task::create_task(&conn, space_id, "Task 1", None).expect("Failed to create task");
@@ -44,10 +49,12 @@ fn test_correlations_to_insights() {
         entities: vec!["task_1".to_string(), "task_2".to_string()],
         pattern_description: "Test correlation".to_string(),
         metadata: [
-        ("work_hours".to_string(), serde_json::json!(20)),
-        ("low_mood_days".to_string(), serde_json::json!(3))
+            ("work_hours".to_string(), serde_json::json!(20)),
+            ("low_mood_days".to_string(), serde_json::json!(3)),
         ]
-        .iter().cloned().collect(),
+        .iter()
+        .cloned()
+        .collect(),
     };
 
     let insights = engine.correlations_to_insights(vec![correlation]);
@@ -55,7 +62,6 @@ fn test_correlations_to_insights() {
     assert!(!insights.is_empty(), "Should convert valid correlations to insights");
     assert_eq!(insights[0].insight_type, core_rs::foresight::InsightType::MoodCorrelation);
 }
-
 
 #[test]
 fn test_analyze_empty_context() {
@@ -82,6 +88,13 @@ fn test_time_range_filtering() {
     let space_id = Ulid::new();
     let now = chrono::Utc::now().timestamp();
 
+    // A space must exist before tasks can be added to it.
+    conn.execute(
+        "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
+        &[&space_id.to_string()],
+    )
+    .unwrap();
+
     // Create data from 30 days ago
     let old_timestamp = now - (30 * 86400);
     let mut old_task = task::create_task(&conn, space_id, "Old Task", None).unwrap();
@@ -98,7 +111,4 @@ fn test_time_range_filtering() {
 
     // fetch_tasks doesn't filter by time, so it should get all tasks in the space
     assert_eq!(context.tasks.len(), 2, "gather_context should fetch all tasks");
-
-    // The filtering logic happens inside analyze() which we can't directly test here without
-    // more complex data setup. The key is that gather_context itself works.
 }
