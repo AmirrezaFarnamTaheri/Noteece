@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import Dashboard from '../Dashboard';
 import '@testing-library/jest-dom';
 
-const invokeMock = jest.fn<Promise<any>, [string, Record<string, unknown> | undefined]>();
+const invokeMock = jest.fn<Promise<unknown>, [string, Record<string, unknown> | undefined]>();
 
 // Mock Tauri API
 jest.mock('@tauri-apps/api/tauri', () => ({
@@ -63,10 +63,10 @@ beforeEach(() => {
       case 'get_all_tasks_in_space_cmd':
       case 'get_running_entries_cmd':
       case 'get_recent_time_entries_cmd': {
-        return Promise.resolve([]);
+        return [];
       }
       default: {
-        return Promise.resolve(null);
+        return null;
       }
     }
   });

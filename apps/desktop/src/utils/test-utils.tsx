@@ -26,4 +26,3 @@ export const AllTheProviders = ({ children }: { children: React.ReactNode }) => 
     </QueryClientProvider>
   );
 };
-
