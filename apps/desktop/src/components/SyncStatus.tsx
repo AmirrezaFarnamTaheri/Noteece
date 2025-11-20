@@ -146,25 +146,27 @@ const SyncStatus: React.FC = () => {
 
       // Since we don't have a device selection in the simple manual sync, we'll broadcast or sync with all known active devices
       // For this iteration, we'll start sync with all online devices
-      const activeDevices = devices.filter(d => getDeviceStatus(d.last_seen) === 'online');
+      const activeDevices = devices.filter((d) => getDeviceStatus(d.last_seen) === 'online');
 
       if (activeDevices.length === 0) {
-         throw new Error("No online devices found to sync with.");
+        throw new Error('No online devices found to sync with.');
       }
 
-      const results = await Promise.all(activeDevices.map(async (device) => {
+      const results = await Promise.all(
+        activeDevices.map(async (device) => {
           try {
-              await invoke('start_p2p_sync_cmd', { device_id: device.device_id });
-              return { device: device.device_name, success: true };
-          } catch (e) {
-              return { device: device.device_name, success: false, error: e };
+            await invoke('start_p2p_sync_cmd', { device_id: device.device_id });
+            return { device: device.device_name, success: true };
+          } catch (error) {
+            return { device: device.device_name, success: false, error: error };
           }
-      }));
+        }),
+      );
 
       // Check if any failed
-      const failures = results.filter(r => !r.success);
+      const failures = results.filter((r) => !r.success);
       if (failures.length > 0) {
-          throw new Error(`Sync failed for: ${failures.map(f => f.device).join(', ')}`);
+        throw new Error(`Sync failed for: ${failures.map((f) => f.device).join(', ')}`);
       }
 
       setSyncProgress(100);

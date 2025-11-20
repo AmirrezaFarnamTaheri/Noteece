@@ -104,11 +104,7 @@ fn test_search_does_not_expose_encrypted_content() -> Result<(), DbError> {
 
     conn.execute(
         "INSERT INTO fts_note (note_id, title, content_md) VALUES (?1, ?2, ?3)",
-        rusqlite::params![
-            note_id,
-            "Public Title".to_lowercase(),
-            ""
-        ],
+        rusqlite::params![note_id, "Public Title".to_lowercase(), ""],
     )
     .unwrap();
 
@@ -158,11 +154,7 @@ fn test_search_does_not_match_encrypted_content() -> Result<(), DbError> {
 
     conn.execute(
         "INSERT INTO fts_note (note_id, title, content_md) VALUES (?1, ?2, ?3)",
-        rusqlite::params![
-            note_id,
-            "Public Title".to_lowercase(),
-            ""
-        ],
+        rusqlite::params![note_id, "Public Title".to_lowercase(), ""],
     )
     .unwrap();
 

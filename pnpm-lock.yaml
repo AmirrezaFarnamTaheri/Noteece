@@ -21,7 +21,7 @@ importers:
         version: 3.10.1(eslint-plugin-import@2.32.0)(eslint@8.57.1)
       eslint-plugin-import:
         specifier: ^2.29.1
-        version: 2.32.0(@typescript-eslint/parser@8.46.4)(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1)
+        version: 2.32.0(@typescript-eslint/parser@6.21.0)(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1)
       prettier:
         specifier: ^3.2.5
         version: 3.6.2
@@ -338,6 +338,9 @@ importers:
       react-native-screens:
         specifier: ~3.29.0
         version: 3.29.0(react-native@0.73.4)(react@18.2.0)
+      react-native-zeroconf:
+        specifier: ^0.13.8
+        version: 0.13.8(react-native@0.73.4)
       zod:
         specifier: ^3.22.4
         version: 3.25.76
@@ -7793,7 +7796,7 @@ packages:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.3
       eslint: 8.57.1
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.46.4)(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@6.21.0)(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1)
       get-tsconfig: 4.13.0
       is-bun-module: 2.0.0
       stable-hash: 0.0.5
@@ -8295,7 +8298,6 @@ packages:
   /events@3.3.0:
     resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
     engines: {node: '>=0.8.x'}
-    dev: true
 
   /exec-async@2.2.0:
     resolution: {integrity: sha512-87OpwcEiMia/DeiKFzaQNBNFeN3XkkpYIh9FyOqq5mS2oKv3CBE67PXoEKcr6nodWdXNogTiQ0jE2NGuoffXPw==}
@@ -12675,6 +12677,15 @@ packages:
       react-freeze: 1.0.4(react@18.2.0)
       react-native: 0.73.4(@babel/core@7.28.5)(@babel/preset-env@7.28.5)(react@18.2.0)
       warn-once: 0.1.1
+    dev: false
+
+  /react-native-zeroconf@0.13.8(react-native@0.73.4):
+    resolution: {integrity: sha512-frGS1xNbNCA7BfETSubNYODu7s7mlU55vgArEzZW9EuSQ8SYqlNQC5zpKHDZEAXy4fFqe+CgnMCxKAjQqYM6XA==}
+    peerDependencies:
+      react-native: '>=0.60'
+    dependencies:
+      events: 3.3.0
+      react-native: 0.73.4(@babel/core@7.28.5)(@babel/preset-env@7.28.5)(react@18.2.0)
     dev: false
 
   /react-native@0.73.4(@babel/core@7.28.5)(@babel/preset-env@7.28.5)(react@18.2.0):

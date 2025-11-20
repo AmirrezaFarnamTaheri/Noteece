@@ -1,3 +1,8 @@
+//! Core Noteece Library
+//!
+//! This library provides the backend logic for the Noteece application,
+//! including database management, encryption, sync, and business logic.
+
 pub mod analytics;
 pub mod auth;
 pub mod backlink;
@@ -36,8 +41,13 @@ pub mod vault;
 pub mod versioning;
 pub mod weekly_review;
 
+use log;
+
+/// Initialize the library, specifically the logger.
+/// This should be called once at the start of the application.
 pub fn init() {
     env_logger::init();
+    log::info!("[core-rs] Library initialized");
 }
 
 #[cfg(test)]

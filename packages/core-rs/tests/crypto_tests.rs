@@ -69,10 +69,11 @@ fn test_decrypt_with_invalid_ciphertext_too_short() {
     let result = decrypt_string(short_ciphertext, &dek);
     assert!(result.is_err());
     if let Err(e) = result {
-        assert!(e.to_string().contains("Invalid encrypted data: too short for nonce + tag"));
+        assert!(e
+            .to_string()
+            .contains("Invalid encrypted data: too short for nonce + tag"));
     }
 }
-
 
 #[test]
 fn test_decrypt_with_corrupted_ciphertext() {

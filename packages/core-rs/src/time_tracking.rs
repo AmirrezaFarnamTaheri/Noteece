@@ -150,10 +150,7 @@ pub fn get_time_entry(conn: &Connection, id: Ulid) -> Result<Option<TimeEntry>, 
     Ok(entry)
 }
 
-pub fn get_time_entries(
-    conn: &Connection,
-    space_id: &str,
-) -> Result<Vec<TimeEntry>, DbError> {
+pub fn get_time_entries(conn: &Connection, space_id: &str) -> Result<Vec<TimeEntry>, DbError> {
     let mut stmt = conn.prepare(
         "SELECT id, space_id, task_id, project_id, note_id, description, started_at, ended_at, duration_seconds, is_running
          FROM time_entry WHERE space_id = ?1 ORDER BY started_at DESC"
@@ -184,7 +181,6 @@ pub fn get_time_entries(
 
     Ok(entries)
 }
-
 
 /// Get all time entries for a task
 pub fn get_task_time_entries(conn: &Connection, task_id: Ulid) -> Result<Vec<TimeEntry>, DbError> {
@@ -361,7 +357,6 @@ pub fn get_time_entries_since(
 
     Ok(entries)
 }
-
 
 /// Get time statistics for a task
 pub fn get_task_time_stats(conn: &Connection, task_id: Ulid) -> Result<TimeStats, DbError> {

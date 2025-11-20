@@ -77,10 +77,13 @@ pub fn set_sync_port(conn: &Connection, port: u16) -> Result<(), DbError> {
     )
 }
 
+/// Run database migrations to update the schema to the latest version.
+/// This function is idempotent and checks the current version before applying changes.
 pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
     log::info!("[db] Starting migration");
     let tx = conn.transaction()?;
 
+    // Create schema_version table if it doesn't exist
     tx.execute_batch(
         "
         CREATE TABLE IF NOT EXISTS schema_version (
@@ -99,8 +102,9 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
     };
     log::info!("[db] Current schema version: {}", current_version);
 
+    // Version 1: Initial Schema
     if current_version < 1 {
-        log::info!("[db] Migrating to version 1");
+        log::info!("[db] Applying migration v1: Initial Schema");
         tx.execute_batch(
             "
             CREATE TABLE space(
@@ -523,9 +527,9 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
         )?;
     }
 
-        if current_version < 9 {
-            log::info!("[db] Migrating to version 9 - Update task.completed_at to use NULL");
-            tx.execute_batch(
+    if current_version < 9 {
+        log::info!("[db] Migrating to version 9 - Update task.completed_at to use NULL");
+        tx.execute_batch(
                 "
                 -- Step 1: Create a new table with the desired schema
                 CREATE TABLE task_new (
@@ -561,12 +565,12 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
                 INSERT INTO schema_version (version) VALUES (9);
                 "
             )?;
-        }
+    }
 
-        if current_version < 10 {
-            log::info!("[db] Migrating to version 10 - Sync Tables");
-            tx.execute_batch(
-                "
+    if current_version < 10 {
+        log::info!("[db] Migrating to version 10 - Sync Tables");
+        tx.execute_batch(
+            "
                 CREATE TABLE sync_history (
                     id TEXT PRIMARY KEY,
                     device_id TEXT NOT NULL,
@@ -594,35 +598,35 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
                     space_id TEXT NOT NULL REFERENCES space(id)
                 );
                 ",
+        )?;
+    }
+
+    tx.commit()?;
+    log::info!("[db] Migration finished");
+    Ok(())
+}
+
+/// Get or create a unique user ID for this vault
+pub fn get_or_create_user_id(conn: &Connection) -> Result<String, DbError> {
+    let setting_key = "user_id";
+    match get_setting(conn, setting_key)? {
+        Some(user_id) => {
+            log::info!("[db] Found user ID: {}", user_id);
+            Ok(user_id)
+        }
+        None => {
+            let new_user_id = Ulid::new().to_string();
+            log::info!("[db] No user ID found, creating new one: {}", new_user_id);
+            set_setting(
+                conn,
+                setting_key,
+                &new_user_id,
+                Some("Unique identifier for this vault's user."),
             )?;
-        }
-
-        tx.commit()?;
-        log::info!("[db] Migration finished");
-        Ok(())
-    }
-
-    /// Get or create a unique user ID for this vault
-    pub fn get_or_create_user_id(conn: &Connection) -> Result<String, DbError> {
-        let setting_key = "user_id";
-        match get_setting(conn, setting_key)? {
-            Some(user_id) => {
-                log::info!("[db] Found user ID: {}", user_id);
-                Ok(user_id)
-            }
-            None => {
-                let new_user_id = Ulid::new().to_string();
-                log::info!("[db] No user ID found, creating new one: {}", new_user_id);
-                set_setting(
-                    conn,
-                    setting_key,
-                    &new_user_id,
-                    Some("Unique identifier for this vault's user."),
-                )?;
-                Ok(new_user_id)
-            }
+            Ok(new_user_id)
         }
     }
+}
 
 pub fn init_llm_tables(_conn: &Connection) -> Result<(), DbError> {
     // Placeholder implementation

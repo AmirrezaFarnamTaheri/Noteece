@@ -714,7 +714,6 @@ fn fetch_calendar_events(
     parse_calendar_response(&response_text)
 }
 
-
 /// Parse CalDAV XML response and extract calendar events
 ///
 /// This function uses tolerant XML parsing that handles various namespace prefixes
@@ -777,7 +776,6 @@ fn parse_calendar_response(xml_data: &str) -> Result<Vec<CalDavEvent>, CalDavErr
 /// SECURITY: Skip events with missing or unparsable required fields (UID, DTSTART)
 /// instead of defaulting to sentinel values like 0, which could cause data corruption.
 fn parse_icalendar(ical_data: &str) -> Result<Vec<CalDavEvent>, CalDavError> {
-
     use std::io::BufReader;
 
     let buf = BufReader::new(ical_data.as_bytes());
@@ -1022,7 +1020,6 @@ fn parse_ical_datetime(datetime_str: &str) -> Result<i64, CalDavError> {
     // but we normalize to UTC for consistency)
     Ok(datetime.and_utc().timestamp())
 }
-
 
 /// Sync CalDAV account with real HTTP implementation
 pub fn sync_caldav_account(

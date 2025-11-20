@@ -3,10 +3,10 @@ use chrono::{DateTime, Utc};
 /// Enables synchronization of social media data between desktop and mobile devices
 /// Uses encrypted protocol with local network discovery
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::net::IpAddr;
 use std::sync::Arc;
 use thiserror::Error;
-use std::collections::HashMap;
 
 #[derive(Error, Debug)]
 pub enum SyncProtocolError {
@@ -304,7 +304,6 @@ impl SyncProtocol {
     pub async fn discover_devices(&self) -> Result<Vec<DeviceInfo>, SyncProtocolError> {
         use mdns_sd::ServiceDaemon;
 
-
         // Create mDNS service daemon
         let mdns =
             ServiceDaemon::new().map_err(|e| SyncProtocolError::DiscoveryFailed(e.to_string()))?;
@@ -418,7 +417,7 @@ impl SyncProtocol {
         // Store the shared secret for this device
         self.shared_secrets.insert(
             pairing_request.mobile_device.device_id.clone(),
-            shared_secret.to_bytes()
+            shared_secret.to_bytes(),
         );
 
         // 4. Create the response, sending the DESKTOP's public key back.
@@ -439,11 +438,17 @@ impl SyncProtocol {
 
     /// Start sync with paired device
     /// Enforces valid state transitions - sync can only start from Idle or Connected states
+    ///
+    /// # Arguments
+    /// * `device_id` - The ID of the device to sync with
+    /// * `categories` - List of categories to synchronize (e.g. Posts, Accounts)
     pub async fn start_sync(
         &mut self,
         device_id: &str,
         categories: Vec<SyncCategory>,
     ) -> Result<(), SyncProtocolError> {
+        log::info!("[mobile_sync] Starting sync with device: {}", device_id);
+
         // Verify device is paired and active
         let device = self
             .paired_devices
@@ -474,6 +479,11 @@ impl SyncProtocol {
 
         // Establish encrypted connection with paired device
         // Verify device is reachable at its IP address and port
+        log::debug!(
+            "[mobile_sync] Attempting to connect to {}:{}",
+            device.ip_address,
+            device.sync_port
+        );
         match std::net::TcpStream::connect_timeout(
             &std::net::SocketAddr::new(device.ip_address, device.sync_port),
             std::time::Duration::from_secs(5),
@@ -485,6 +495,7 @@ impl SyncProtocol {
                 drop(stream);
             }
             Err(e) => {
+                log::error!("[mobile_sync] Connection failed: {}", e);
                 self.sync_state = SyncState::Idle;
                 return Err(SyncProtocolError::ConnectionFailed(format!(
                     "Failed to establish connection: {}",
@@ -497,7 +508,7 @@ impl SyncProtocol {
         // Initialize session tracking and state management
         let sync_session_id = uuid::Uuid::new_v4().to_string();
         log::info!(
-            "[sync_protocol] Created sync session {} with device {} (categories: {:?})",
+            "[mobile_sync] Created sync session {} with device {} (categories: {:?})",
             sync_session_id,
             device_id,
             categories

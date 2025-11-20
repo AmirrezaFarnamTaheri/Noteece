@@ -212,7 +212,6 @@ mod tests {
     use super::*;
     use std::fs;
 
-
     #[test]
     fn test_logger_creation() {
         let logger = Logger::new(None, LogLevel::Info, false).unwrap();

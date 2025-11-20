@@ -113,7 +113,11 @@ fn find_tesseract() -> Option<String> {
 
 pub fn process_image_ocr(image_path: &Path, language: Option<&str>) -> Result<String, OcrError> {
     let lang = language.unwrap_or("eng");
-    if lang.len() > 20 || !lang.chars().all(|c| c.is_ascii_alphanumeric() || c == '+' || c == '-') {
+    if lang.len() > 20
+        || !lang
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '+' || c == '-')
+    {
         return Err(OcrError::Processing(
             "Invalid language parameter".to_string(),
         ));

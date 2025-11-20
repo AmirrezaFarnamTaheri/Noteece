@@ -3,9 +3,7 @@ module.exports = {
   transform: {
     "^.+\\.(js|jsx|ts|tsx)$": "babel-jest",
   },
-  // With pnpm and React Native/Expo, it's more reliable to transform
-  // all modules instead of ignoring node_modules, to avoid Flow/JS syntax
-  // issues in packages like @react-native/js-polyfills.
+  // Transform everything in node_modules. Slow but necessary for pnpm + React Native + Expo
   transformIgnorePatterns: [],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
@@ -20,6 +18,7 @@ module.exports = {
     "^expo/src/winter$": "<rootDir>/node_modules/expo/build/winter/index.js",
     "^expo/virtual/streams$": "<rootDir>/jest.mocks/expo-virtual-streams.js",
     "^expo-share-menu$": "<rootDir>/jest.mocks/expo-share-menu.js",
+    "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/jest.mocks/fileMock.js",
   },
   setupFiles: ["<rootDir>/jest.pre-setup.js"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
