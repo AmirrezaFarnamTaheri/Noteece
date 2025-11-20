@@ -23,27 +23,34 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 
 ---
 
-## 2. `desktop` Frontend Test Failures
+## 2. `desktop` Frontend/Tauri Issues
 
-### 2.1. `UserManagement` Component Tests
+### 2.1. `javascriptcore-rs-sys` Build Failure on Ubuntu 24.04
+
+- **Status:** **Open**
+- **Description:** The `cargo check` or build process for `apps/desktop/src-tauri` fails on Ubuntu 24.04 (Noble) with `pkg-config` error: `The system library 'javascriptcoregtk-4.0' required by crate 'javascriptcore-rs-sys' was not found.`
+- **Cause:** Ubuntu 24.04 has removed `libjavascriptcoregtk-4.0-dev` in favor of `4.1`. The `javascriptcore-rs-sys` crate (dependency of `tauri` v1 via `wry`) strictly requires version 4.0.
+- **Workaround:** Building on an older LTS (e.g., 22.04) or using a container with older libraries is required until `tauri` dependencies are updated to support WebKit 4.1 on this OS version.
+
+### 2.2. `UserManagement` Component Tests
 
 - **Status:** **Resolved**
 - **Description:** The test suite for the `UserManagement` component was failing.
 - **Resolution:** The test was updated to correctly wait for the user data to be rendered before making assertions. The redundant `UserManagement.test.tsx` was removed in favor of `UserManagement.qa-fixes.test.tsx`.
 
-### 2.2. `Dashboard` Component Test
+### 2.3. `Dashboard` Component Test
 
 - **Status:** **Resolved**
 - **Description:** The test suite for the main `Dashboard` component was failing due to a missing mock.
 - **Resolution:** The `getDecryptedCredentials` function was mocked in the test setup, and the `useStore` mock was updated to include `getState`.
 
-### 2.3. `dateUtils.test.ts` Failure
+### 2.4. `dateUtils.test.ts` Failure
 
 - **Status:** **Resolved**
 - **Description:** The `formatRelativeTime` test in `dateUtils.test.ts` was failing due to a logic error in the test itself.
 - **Resolution:** The test was corrected to assert the correct output for a date that is only a few hours in the past.
 
-### 2.4. `useActiveSpace.test.tsx` Failure
+### 2.5. `useActiveSpace.test.tsx` Failure
 
 - **Status:** **Resolved**
 - **Description:** The test suite for the `useActiveSpace` hook was failing because the Zustand store was not being persisted in the test environment.
@@ -69,4 +76,4 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 
 - **Status:** **Resolved** (By Removal)
 - **Description:** The test suite for `social-security` was failing because it was testing functions that no longer exist in the implementation.
-- **Resolution:** The obsolete test file `apps/mobile/src/lib/__tests__/social-security.test.ts` has been deleted.
+- **Resolution:** The obsolete test file `apps/mobile/src/lib/__tests__/social-security.test.ts` was removed.
