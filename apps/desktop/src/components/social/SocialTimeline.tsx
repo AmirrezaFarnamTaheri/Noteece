@@ -64,7 +64,7 @@ export function SocialTimeline({ spaceId }: SocialTimelineProperties) {
         offset: pageParameter,
       };
 
-      const result = await invoke<Post[]>('get_unified_timeline_cmd', {
+      const result = await invoke<Post[]>('get_unified_timeline', {
         spaceId,
         filters: timelineFilters,
       });
