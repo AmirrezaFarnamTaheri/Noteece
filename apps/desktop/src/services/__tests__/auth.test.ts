@@ -39,15 +39,18 @@ describe('AuthService', () => {
   });
 
   it('should logout user', async () => {
-    (invoke as jest.Mock).mockResolvedValue(undefined);
+    (invoke as jest.Mock).mockResolvedValue(void 0);
 
     // Mock login first to set the token if logout relies on stored token
     // Assuming authService stores the token internally or in localStorage
     // If we can't easily set internal state, we can accept any token in the expectation
     await authService.logout();
 
-    expect(invoke).toHaveBeenCalledWith('logout_user_cmd', expect.objectContaining({
-        token: expect.any(String)
-    }));
+    expect(invoke).toHaveBeenCalledWith(
+      'logout_user_cmd',
+      expect.objectContaining({
+        token: expect.any(String) as string,
+      }),
+    );
   });
 });

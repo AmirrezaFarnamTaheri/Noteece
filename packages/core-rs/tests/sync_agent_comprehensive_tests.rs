@@ -160,8 +160,6 @@ fn test_sync_agent_creation() {
     let device_name = "Test Device".to_string();
     let sync_port = 8765;
 
-    let _agent = SyncAgent::new(device_id.clone(), device_name.clone(), sync_port);
-
     let info = SyncAgent::new(device_id.clone(), device_name.clone(), sync_port).get_device_info();
     assert_eq!(info.device_id, device_id);
     assert_eq!(info.device_name, device_name);
@@ -395,7 +393,7 @@ fn test_get_sync_history() {
 #[test]
 fn test_get_last_sync_time_uses_sync_history() {
     let (conn, _dir, space_id) = setup_db();
-    let agent = SyncAgent::new("device_1".to_string(), "Device 1".to_string(), 8765);
+    let _agent = SyncAgent::new("device_1".to_string(), "Device 1".to_string(), 8765);
 
     // Record sync with specific timestamp
     let sync_time = chrono::Utc::now().timestamp();

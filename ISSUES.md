@@ -8,13 +8,7 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 
 ## 1. `core-rs` Backend Issues
 
-### 1.1. `ocr_tests.rs` Security Validation Test Failure
-
-- **Status:** **Resolved**
-- **Description:** The `test_security_validation_inputs` test in `packages/core-rs/tests/ocr_tests.rs` was failing due to a command injection vulnerability.
-- **Resolution:** The validation logic in `ocr.rs` was corrected to properly sanitize the `language` parameter before it is passed to the `tesseract` command-line tool. The test now passes.
-
-### 1.2. FTS5 Feature Conflict with SQLCipher
+### 1.1. FTS5 Feature Conflict with SQLCipher
 
 - **Status:** **Open**
 - **Description:** There is a persistent build failure in the `core-rs` crate when both the `fts5` and `bundled-sqlcipher-vendored-openssl` features are enabled for the `rusqlite` dependency. This prevents the full-text search capabilities from being used in conjunction with database encryption.
@@ -32,48 +26,18 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 - **Cause:** Ubuntu 24.04 has removed `libjavascriptcoregtk-4.0-dev` in favor of `4.1`. The `javascriptcore-rs-sys` crate (dependency of `tauri` v1 via `wry`) strictly requires version 4.0.
 - **Workaround:** Building on an older LTS (e.g., 22.04) or using a container with older libraries is required until `tauri` dependencies are updated to support WebKit 4.1 on this OS version.
 
-### 2.2. `UserManagement` Component Tests
+### 2.2. React Router Future Flag Warnings
 
-- **Status:** **Resolved**
-- **Description:** The test suite for the `UserManagement` component was failing.
-- **Resolution:** The test was updated to correctly wait for the user data to be rendered before making assertions. The redundant `UserManagement.test.tsx` was removed in favor of `UserManagement.qa-fixes.test.tsx`.
-
-### 2.3. `Dashboard` Component Test
-
-- **Status:** **Resolved**
-- **Description:** The test suite for the main `Dashboard` component was failing due to a missing mock.
-- **Resolution:** The `getDecryptedCredentials` function was mocked in the test setup, and the `useStore` mock was updated to include `getState`.
-
-### 2.4. `dateUtils.test.ts` Failure
-
-- **Status:** **Resolved**
-- **Description:** The `formatRelativeTime` test in `dateUtils.test.ts` was failing due to a logic error in the test itself.
-- **Resolution:** The test was corrected to assert the correct output for a date that is only a few hours in the past.
-
-### 2.5. `useActiveSpace.test.tsx` Failure
-
-- **Status:** **Resolved**
-- **Description:** The test suite for the `useActiveSpace` hook was failing because the Zustand store was not being persisted in the test environment.
-- **Resolution:** The tests were updated to reflect that persistence is disabled during testing, and the `clearStorage` mock was properly handled.
+- **Status:** **Open (Non-blocking)**
+- **Description:** `console.warn` outputs regarding React Router v7 future flags (`v7_startTransition`, `v7_relativeSplatPath`) appear during tests.
+- **Action:** These are deprecation warnings for a future upgrade and do not affect current functionality.
 
 ---
 
-## 3. `mobile` Frontend Test Failures
+## 3. `mobile` Frontend Issues
 
-### 3.1. Jest Setup Configuration Error
+### 3.1. React Native `act(...)` Warnings in Tests
 
-- **Status:** **Resolved**
-- **Description:** The entire test suite for the mobile app was failing to run due to a configuration error in the Jest environment.
-- **Resolution:** The `expo-share-menu`, `AppState`, and `Linking` native modules were mocked in the Jest setup, which resolved the issue.
-
-### 3.2. `SyncManager.test.tsx` Failure
-
-- **Status:** **Resolved**
-- **Description:** The test suite for the `SyncManager` component was failing due to an incomplete mock and incorrect test logic.
-- **Resolution:** The mock for `SyncClient` was completed, and the component was refactored to correctly handle the `SyncClient` instance for testability.
-
-### 3.3. `social-security.test.ts` Failure
-
-- **Status:** **Resolved** (By Removal)
-- **Description:** The test suite for `social-security` was failing because it was testing functions that no longer exist in the implementation.
-- **Resolution:** The obsolete test file `apps/mobile/src/lib/__tests__/social-security.test.ts` was removed.
+- **Status:** **Open (Non-blocking)**
+- **Description:** Tests emit warnings about updates to ForwardRef not being wrapped in `act(...)`.
+- **Action:** These are common in React Native testing and do not indicate a functional failure, but should be cleaned up in future refactoring.
