@@ -19,7 +19,15 @@ export interface SyncManifest {
 }
 
 export interface ChangeEntry {
-  entityType: "note" | "task" | "project" | "time_entry" | "health_metric";
+  entityType:
+    | "note"
+    | "task"
+    | "project"
+    | "time_entry"
+    | "health_metric"
+    | "track"
+    | "playlist"
+    | "calendar_event";
   entityId: string;
   operation: "create" | "update" | "delete";
   timestamp: number;
@@ -286,6 +294,8 @@ export class SyncClient {
       "note",
       "time_entry",
       "health_metric",
+      "track",
+      "playlist",
       "calendar_event",
       "location_trigger",
       "nfc_trigger",
@@ -406,6 +416,8 @@ export class SyncClient {
       note: "note",
       time_entry: "time_entry",
       health_metric: "health_metric",
+      track: "track",
+      playlist: "playlist",
       calendar_event: "calendar_event",
       location_trigger: "location_trigger",
       nfc_trigger: "nfc_trigger",
@@ -456,6 +468,35 @@ export class SyncClient {
         "notes",
         "recorded_at",
         "created_at",
+      ]),
+      track: new Set([
+        "id",
+        "space_id",
+        "title",
+        "artist",
+        "album",
+        "duration",
+        "uri",
+        "artwork_url",
+        "genre",
+        "year",
+        "track_number",
+        "play_count",
+        "last_played_at",
+        "is_favorite",
+        "added_at",
+        "updated_at",
+      ]),
+      playlist: new Set([
+        "id",
+        "space_id",
+        "name",
+        "description",
+        "artwork_url",
+        "is_smart_playlist",
+        "smart_criteria_json",
+        "created_at",
+        "updated_at",
       ]),
       calendar_event: new Set([
         "id",
@@ -568,6 +609,8 @@ export class SyncClient {
       note: "note",
       time_entry: "time_entry",
       health_metric: "health_metric",
+      track: "track",
+      playlist: "playlist",
       calendar_event: "calendar_event",
       location_trigger: "location_trigger",
       nfc_trigger: "nfc_trigger",
@@ -664,6 +707,8 @@ export class SyncClient {
       note: "note",
       time_entry: "time_entry",
       health_metric: "health_metric",
+      track: "track",
+      playlist: "playlist",
       calendar_event: "calendar_event",
       location_trigger: "location_trigger",
       nfc_trigger: "nfc_trigger",

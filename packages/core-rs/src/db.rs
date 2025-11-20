@@ -601,6 +601,94 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
         )?;
     }
 
+    if current_version < 11 {
+        log::info!("[db] Migrating to version 11 - Health, Music, and Calendar");
+        tx.execute_batch(
+            "
+            -- Health Metrics
+            CREATE TABLE IF NOT EXISTS health_metric (
+                id TEXT PRIMARY KEY,
+                space_id TEXT NOT NULL REFERENCES space(id),
+                note_id TEXT REFERENCES note(id),
+                metric_type TEXT NOT NULL,
+                value REAL NOT NULL,
+                unit TEXT,
+                notes TEXT,
+                recorded_at INTEGER NOT NULL,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_health_metric_type ON health_metric(metric_type);
+            CREATE INDEX IF NOT EXISTS idx_health_metric_recorded ON health_metric(recorded_at);
+
+            -- Music Tracks
+            CREATE TABLE IF NOT EXISTS track (
+                id TEXT PRIMARY KEY,
+                space_id TEXT NOT NULL REFERENCES space(id),
+                title TEXT NOT NULL,
+                artist TEXT,
+                album TEXT,
+                duration INTEGER,
+                uri TEXT,
+                artwork_url TEXT,
+                genre TEXT,
+                year INTEGER,
+                track_number INTEGER,
+                play_count INTEGER DEFAULT 0,
+                last_played_at INTEGER,
+                is_favorite INTEGER DEFAULT 0,
+                added_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_track_artist ON track(artist);
+            CREATE INDEX IF NOT EXISTS idx_track_album ON track(album);
+
+            -- Music Playlists
+            CREATE TABLE IF NOT EXISTS playlist (
+                id TEXT PRIMARY KEY,
+                space_id TEXT NOT NULL REFERENCES space(id),
+                name TEXT NOT NULL,
+                description TEXT,
+                artwork_url TEXT,
+                is_smart_playlist INTEGER DEFAULT 0,
+                smart_criteria_json TEXT,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+            );
+
+            -- Playlist Tracks (Junction)
+            CREATE TABLE IF NOT EXISTS playlist_track (
+                playlist_id TEXT NOT NULL REFERENCES playlist(id) ON DELETE CASCADE,
+                track_id TEXT NOT NULL REFERENCES track(id) ON DELETE CASCADE,
+                position INTEGER NOT NULL,
+                added_at INTEGER NOT NULL,
+                PRIMARY KEY(playlist_id, track_id)
+            );
+
+            -- Calendar Events (Sync support)
+            CREATE TABLE IF NOT EXISTS calendar_event (
+                id TEXT PRIMARY KEY,
+                space_id TEXT NOT NULL REFERENCES space(id),
+                title TEXT NOT NULL,
+                description TEXT,
+                start_time INTEGER NOT NULL,
+                end_time INTEGER,
+                location TEXT,
+                source TEXT NOT NULL,
+                color TEXT,
+                all_day INTEGER NOT NULL DEFAULT 0,
+                recurrence_rule TEXT,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL,
+                synced_at INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE INDEX IF NOT EXISTS idx_calendar_event_start ON calendar_event(start_time);
+
+            INSERT INTO schema_version (version) VALUES (11);
+            ",
+        )?;
+    }
+
     tx.commit()?;
     log::info!("[db] Migration finished");
     Ok(())

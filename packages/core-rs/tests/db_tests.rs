@@ -25,6 +25,7 @@ fn test_migrations() -> Result<(), DbError> {
     assert_eq!(
         tables,
         vec![
+            "calendar_event",
             "form_template",
             "fts_note",
             "fts_note_config",
@@ -32,12 +33,15 @@ fn test_migrations() -> Result<(), DbError> {
             "fts_note_data",
             "fts_note_docsize",
             "fts_note_idx",
+            "health_metric",
             "knowledge_card",
             "link",
             "note",
             "note_meta",
             "note_tags",
             "person",
+            "playlist",
+            "playlist_track",
             "project",
             "project_dependency",
             "project_milestone",
@@ -73,6 +77,7 @@ fn test_migrations() -> Result<(), DbError> {
             "task_recur_exdate",
             "task_tags",
             "time_entry",
+            "track",
             "users"
         ]
     );

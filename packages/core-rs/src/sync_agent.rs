@@ -318,6 +318,18 @@ impl SyncAgent {
         // Get projects deltas
         deltas.extend(self.get_projects_deltas(conn, space_id, since_timestamp)?);
 
+        // Get health metrics deltas
+        deltas.extend(self.get_health_metrics_deltas(conn, space_id, since_timestamp)?);
+
+        // Get tracks deltas
+        deltas.extend(self.get_tracks_deltas(conn, space_id, since_timestamp)?);
+
+        // Get playlists deltas
+        deltas.extend(self.get_playlists_deltas(conn, space_id, since_timestamp)?);
+
+        // Get calendar events deltas
+        deltas.extend(self.get_calendar_events_deltas(conn, space_id, since_timestamp)?);
+
         // Sort by timestamp
         deltas.sort_by_key(|d| d.timestamp);
 
@@ -577,6 +589,10 @@ impl SyncAgent {
             "note" => self.apply_note_delta(conn, delta, dek),
             "task" => self.apply_task_delta(conn, delta),
             "project" => self.apply_project_delta(conn, delta),
+            "health_metric" => self.apply_health_metric_delta(conn, delta),
+            "track" => self.apply_track_delta(conn, delta),
+            "playlist" => self.apply_playlist_delta(conn, delta),
+            "calendar_event" => self.apply_calendar_event_delta(conn, delta),
             _ => Err(SyncError::InvalidData(format!(
                 "Unknown entity type: {}",
                 delta.entity_type
@@ -665,6 +681,125 @@ impl SyncAgent {
                 }
                 SyncOperation::Delete => {
                     conn.execute("DELETE FROM projects WHERE id = ?1", [&delta.entity_id])?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn apply_health_metric_delta(
+        &self,
+        conn: &Connection,
+        delta: &SyncDelta,
+    ) -> Result<(), SyncError> {
+        if let Some(data) = &delta.data {
+            let metric_data: serde_json::Value =
+                serde_json::from_slice(data).map_err(|e| SyncError::InvalidData(e.to_string()))?;
+
+            match delta.operation {
+                SyncOperation::Create | SyncOperation::Update => {
+                    conn.execute(
+                        "INSERT OR REPLACE INTO health_metric (id, metric_type, value, unit, notes, recorded_at, created_at, updated_at)
+                         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+                        rusqlite::params![
+                            &delta.entity_id,
+                            metric_data["metric_type"].as_str().unwrap_or(""),
+                            metric_data["value"].as_f64().unwrap_or(0.0),
+                            metric_data["unit"].as_str(),
+                            metric_data["notes"].as_str(),
+                            metric_data["recorded_at"].as_i64().unwrap_or(0),
+                            metric_data["created_at"].as_i64().unwrap_or(0),
+                            delta.timestamp
+                        ],
+                    )?;
+                }
+                SyncOperation::Delete => {
+                    conn.execute("DELETE FROM health_metric WHERE id = ?1", [&delta.entity_id])?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn apply_track_delta(&self, conn: &Connection, delta: &SyncDelta) -> Result<(), SyncError> {
+        if let Some(data) = &delta.data {
+            let track_data: serde_json::Value =
+                serde_json::from_slice(data).map_err(|e| SyncError::InvalidData(e.to_string()))?;
+
+            match delta.operation {
+                SyncOperation::Create | SyncOperation::Update => {
+                    conn.execute(
+                        "INSERT OR REPLACE INTO track (id, title, artist, album, updated_at)
+                         VALUES (?1, ?2, ?3, ?4, ?5)",
+                        rusqlite::params![
+                            &delta.entity_id,
+                            track_data["title"].as_str().unwrap_or(""),
+                            track_data["artist"].as_str(),
+                            track_data["album"].as_str(),
+                            delta.timestamp
+                        ],
+                    )?;
+                }
+                SyncOperation::Delete => {
+                    conn.execute("DELETE FROM track WHERE id = ?1", [&delta.entity_id])?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn apply_playlist_delta(&self, conn: &Connection, delta: &SyncDelta) -> Result<(), SyncError> {
+        if let Some(data) = &delta.data {
+            let playlist_data: serde_json::Value =
+                serde_json::from_slice(data).map_err(|e| SyncError::InvalidData(e.to_string()))?;
+
+            match delta.operation {
+                SyncOperation::Create | SyncOperation::Update => {
+                    conn.execute(
+                        "INSERT OR REPLACE INTO playlist (id, name, description, updated_at)
+                         VALUES (?1, ?2, ?3, ?4)",
+                        rusqlite::params![
+                            &delta.entity_id,
+                            playlist_data["name"].as_str().unwrap_or(""),
+                            playlist_data["description"].as_str(),
+                            delta.timestamp
+                        ],
+                    )?;
+                }
+                SyncOperation::Delete => {
+                    conn.execute("DELETE FROM playlist WHERE id = ?1", [&delta.entity_id])?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn apply_calendar_event_delta(
+        &self,
+        conn: &Connection,
+        delta: &SyncDelta,
+    ) -> Result<(), SyncError> {
+        if let Some(data) = &delta.data {
+            let event_data: serde_json::Value =
+                serde_json::from_slice(data).map_err(|e| SyncError::InvalidData(e.to_string()))?;
+
+            match delta.operation {
+                SyncOperation::Create | SyncOperation::Update => {
+                    conn.execute(
+                        "INSERT OR REPLACE INTO calendar_event (id, title, description, start_time, end_time, updated_at)
+                         VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                        rusqlite::params![
+                            &delta.entity_id,
+                            event_data["title"].as_str().unwrap_or(""),
+                            event_data["description"].as_str(),
+                            event_data["start_time"].as_i64().unwrap_or(0),
+                            event_data["end_time"].as_i64(),
+                            delta.timestamp
+                        ],
+                    )?;
+                }
+                SyncOperation::Delete => {
+                    conn.execute("DELETE FROM calendar_event WHERE id = ?1", [&delta.entity_id])?;
                 }
             }
         }
@@ -834,6 +969,196 @@ impl SyncAgent {
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(entries)
+    }
+
+    fn get_health_metrics_deltas(
+        &self,
+        conn: &Connection,
+        space_id: Ulid,
+        since: i64,
+    ) -> Result<Vec<SyncDelta>, SyncError> {
+        let mut deltas = Vec::new();
+        let mut stmt = conn.prepare(
+            "SELECT id, note_id, metric_type, value, unit, notes, recorded_at, created_at, updated_at
+             FROM health_metric
+             WHERE space_id = ?1 AND updated_at > ?2",
+        )?;
+
+        let rows = stmt.query_map(rusqlite::params![space_id.to_string(), since], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, Option<String>>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, f64>(3)?,
+                row.get::<_, Option<String>>(4)?,
+                row.get::<_, Option<String>>(5)?,
+                row.get::<_, i64>(6)?,
+                row.get::<_, i64>(7)?,
+                row.get::<_, i64>(8)?,
+            ))
+        })?;
+
+        for row in rows {
+            let (
+                id,
+                note_id,
+                metric_type,
+                value,
+                unit,
+                notes,
+                recorded_at,
+                created_at,
+                updated_at,
+            ) = row?;
+            let data = serde_json::json!({
+                "note_id": note_id,
+                "metric_type": metric_type,
+                "value": value,
+                "unit": unit,
+                "notes": notes,
+                "recorded_at": recorded_at,
+                "created_at": created_at,
+            });
+            deltas.push(SyncDelta {
+                entity_type: "health_metric".to_string(),
+                entity_id: id,
+                operation: SyncOperation::Update,
+                data: Some(data.to_string().into_bytes()),
+                timestamp: updated_at,
+                vector_clock: HashMap::new(),
+            });
+        }
+
+        Ok(deltas)
+    }
+
+    fn get_tracks_deltas(
+        &self,
+        conn: &Connection,
+        space_id: Ulid,
+        since: i64,
+    ) -> Result<Vec<SyncDelta>, SyncError> {
+        let mut deltas = Vec::new();
+        let mut stmt = conn.prepare(
+            "SELECT id, title, artist, album, updated_at
+             FROM track
+             WHERE space_id = ?1 AND updated_at > ?2",
+        )?;
+
+        let rows = stmt.query_map(rusqlite::params![space_id.to_string(), since], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, Option<String>>(2)?,
+                row.get::<_, Option<String>>(3)?,
+                row.get::<_, i64>(4)?,
+            ))
+        })?;
+
+        for row in rows {
+            let (id, title, artist, album, updated_at) = row?;
+            let data = serde_json::json!({
+                "title": title,
+                "artist": artist,
+                "album": album,
+            });
+            deltas.push(SyncDelta {
+                entity_type: "track".to_string(),
+                entity_id: id,
+                operation: SyncOperation::Update,
+                data: Some(data.to_string().into_bytes()),
+                timestamp: updated_at,
+                vector_clock: HashMap::new(),
+            });
+        }
+
+        Ok(deltas)
+    }
+
+    fn get_playlists_deltas(
+        &self,
+        conn: &Connection,
+        space_id: Ulid,
+        since: i64,
+    ) -> Result<Vec<SyncDelta>, SyncError> {
+        let mut deltas = Vec::new();
+        let mut stmt = conn.prepare(
+            "SELECT id, name, description, updated_at
+             FROM playlist
+             WHERE space_id = ?1 AND updated_at > ?2",
+        )?;
+
+        let rows = stmt.query_map(rusqlite::params![space_id.to_string(), since], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, Option<String>>(2)?,
+                row.get::<_, i64>(3)?,
+            ))
+        })?;
+
+        for row in rows {
+            let (id, name, description, updated_at) = row?;
+            let data = serde_json::json!({
+                "name": name,
+                "description": description,
+            });
+            deltas.push(SyncDelta {
+                entity_type: "playlist".to_string(),
+                entity_id: id,
+                operation: SyncOperation::Update,
+                data: Some(data.to_string().into_bytes()),
+                timestamp: updated_at,
+                vector_clock: HashMap::new(),
+            });
+        }
+
+        Ok(deltas)
+    }
+
+    fn get_calendar_events_deltas(
+        &self,
+        conn: &Connection,
+        space_id: Ulid,
+        since: i64,
+    ) -> Result<Vec<SyncDelta>, SyncError> {
+        let mut deltas = Vec::new();
+        let mut stmt = conn.prepare(
+            "SELECT id, title, description, start_time, end_time, updated_at
+             FROM calendar_event
+             WHERE space_id = ?1 AND updated_at > ?2",
+        )?;
+
+        let rows = stmt.query_map(rusqlite::params![space_id.to_string(), since], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, Option<String>>(2)?,
+                row.get::<_, i64>(3)?,
+                row.get::<_, Option<i64>>(4)?,
+                row.get::<_, i64>(5)?,
+            ))
+        })?;
+
+        for row in rows {
+            let (id, title, description, start_time, end_time, updated_at) = row?;
+            let data = serde_json::json!({
+                "title": title,
+                "description": description,
+                "start_time": start_time,
+                "end_time": end_time,
+            });
+            deltas.push(SyncDelta {
+                entity_type: "calendar_event".to_string(),
+                entity_id: id,
+                operation: SyncOperation::Update,
+                data: Some(data.to_string().into_bytes()),
+                timestamp: updated_at,
+                vector_clock: HashMap::new(),
+            });
+        }
+
+        Ok(deltas)
     }
 
     /// Get unresolved conflicts

@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 let db: SQLite.SQLiteDatabase | null = null;
 
 // Database version for migrations
-const CURRENT_DB_VERSION = 3;
+const CURRENT_DB_VERSION = 4;
 const DB_VERSION_KEY = "database_version";
 
 /**
@@ -22,6 +22,21 @@ async function runMigrations(currentVersion: number): Promise<void> {
     console.log("Running migration v1 -> v2: Adding columns to calendar_event");
 
     try {
+      // Ensure table exists first (handling upgrade from v0/fresh installs via migration)
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS calendar_event (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          description TEXT,
+          start_time INTEGER NOT NULL,
+          end_time INTEGER,
+          location TEXT,
+          source TEXT NOT NULL,
+          color TEXT NOT NULL,
+          synced_at INTEGER NOT NULL
+        );
+      `);
+
       // Check if columns exist before adding them
       const tableInfo = await db.getAllAsync<{ name: string }>(
         "PRAGMA table_info(calendar_event)",
@@ -210,8 +225,96 @@ async function runMigrations(currentVersion: number): Promise<void> {
     }
   }
 
-  // Future migrations go here
-  // if (currentVersion < 4) { ... }
+  // Migration from v3 to v4: Add Music tables and ensure Health/Calendar tables
+  if (currentVersion < 4) {
+    console.log("Running migration v3 -> v4: Adding Music, Health, and Calendar tables");
+
+    try {
+      await db.execAsync(`
+        -- Music Tracks
+        CREATE TABLE IF NOT EXISTS track (
+            id TEXT PRIMARY KEY,
+            space_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            artist TEXT,
+            album TEXT,
+            duration INTEGER,
+            uri TEXT,
+            artwork_url TEXT,
+            genre TEXT,
+            year INTEGER,
+            track_number INTEGER,
+            play_count INTEGER DEFAULT 0,
+            last_played_at INTEGER,
+            is_favorite INTEGER DEFAULT 0,
+            added_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_track_artist ON track(artist);
+        CREATE INDEX IF NOT EXISTS idx_track_album ON track(album);
+
+        -- Music Playlists
+        CREATE TABLE IF NOT EXISTS playlist (
+            id TEXT PRIMARY KEY,
+            space_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            artwork_url TEXT,
+            is_smart_playlist INTEGER DEFAULT 0,
+            smart_criteria_json TEXT,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        );
+
+        -- Playlist Tracks (Junction)
+        CREATE TABLE IF NOT EXISTS playlist_track (
+            playlist_id TEXT NOT NULL,
+            track_id TEXT NOT NULL,
+            position INTEGER NOT NULL,
+            added_at INTEGER NOT NULL,
+            PRIMARY KEY(playlist_id, track_id),
+            FOREIGN KEY (playlist_id) REFERENCES playlist(id) ON DELETE CASCADE,
+            FOREIGN KEY (track_id) REFERENCES track(id) ON DELETE CASCADE
+        );
+
+        -- Ensure Health Metric table exists
+        CREATE TABLE IF NOT EXISTS health_metric (
+          id TEXT PRIMARY KEY,
+          space_id TEXT NOT NULL,
+          metric_type TEXT NOT NULL,
+          value REAL NOT NULL,
+          unit TEXT,
+          notes TEXT,
+          recorded_at INTEGER NOT NULL,
+          created_at INTEGER NOT NULL
+        );
+
+        -- Ensure Calendar Event table exists (if missed in v1->v2)
+        CREATE TABLE IF NOT EXISTS calendar_event (
+          id TEXT PRIMARY KEY,
+          space_id TEXT,
+          title TEXT NOT NULL,
+          description TEXT,
+          start_time INTEGER NOT NULL,
+          end_time INTEGER,
+          location TEXT,
+          source TEXT NOT NULL,
+          color TEXT NOT NULL,
+          all_day INTEGER NOT NULL DEFAULT 0,
+          recurrence_rule TEXT,
+          created_at INTEGER,
+          updated_at INTEGER,
+          synced_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_calendar_event_time ON calendar_event(start_time);
+      `);
+
+      console.log("Migration v3 -> v4 completed successfully");
+    } catch (error) {
+      console.error("Migration v3 -> v4 failed:", error);
+      throw error;
+    }
+  }
 
   // Update database version
   await AsyncStorage.setItem(DB_VERSION_KEY, CURRENT_DB_VERSION.toString());
