@@ -91,7 +91,7 @@ fn unlock_vault_cmd(db: State<DbConnection>, path: &str, password: &str) -> Resu
             device_name: "Desktop".to_string(),
             device_type: core_rs::sync::mobile_sync::DeviceType::Desktop,
             ip_address: "127.0.0.1".parse().unwrap(),
-            sync_port: 8765,
+            sync_port: AppConfig::sync_port(),
             public_key: vec![],
             os_version: std::env::consts::OS.to_string(),
             last_seen: chrono::Utc::now(),
@@ -121,9 +121,13 @@ fn resolve_sync_conflict_cmd(
         let dek_guard = db.dek.lock().unwrap();
         let dek = dek_guard.as_ref().map(|d| d.as_slice()).unwrap_or(&[]);
 
+        if dek.is_empty() {
+            return Err("DEK not available (Vault locked or error)".to_string());
+        }
+
         let device_id = get_or_create_user_id(conn).map_err(|e| e.to_string())?;
         // Use dynamic device name/port if possible, or defaults
-        let agent = SyncAgent::new(device_id, "Desktop".to_string(), 8765);
+        let agent = SyncAgent::new(device_id, "Desktop".to_string(), AppConfig::sync_port());
 
         agent
             .resolve_conflict(conn, &conflict, resolution, dek)
@@ -160,9 +164,9 @@ async fn start_sync_server_cmd(db: State<'_, DbConnection>) -> Result<(), String
         let port = {
             let conn = db.conn.lock().unwrap();
             if let Some(conn) = conn.as_ref() {
-                get_sync_port(conn).unwrap_or(8765)
+                get_sync_port(conn).unwrap_or_else(|_| AppConfig::sync_port())
             } else {
-                8765
+                AppConfig::sync_port()
             }
         };
         tokio::spawn(async move {
@@ -193,7 +197,7 @@ fn get_devices_cmd(db: State<DbConnection>) -> Result<Vec<core_rs::sync::mobile_
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let device_id = get_or_create_user_id(conn).map_err(|e| e.to_string())?;
-        let sync_port = get_sync_port(conn).unwrap_or(8765);
+        let sync_port = get_sync_port(conn).unwrap_or_else(|_| AppConfig::sync_port());
         let agent = SyncAgent::new(device_id, "Desktop".to_string(), sync_port);
         agent.get_devices(conn).map_err(|e| e.to_string())
     } else {
@@ -206,7 +210,7 @@ fn get_sync_conflicts_cmd(db: State<DbConnection>) -> Result<Vec<SyncConflict>, 
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
         let device_id = get_or_create_user_id(conn).map_err(|e| e.to_string())?;
-        let sync_port = get_sync_port(conn).unwrap_or(8765);
+        let sync_port = get_sync_port(conn).unwrap_or_else(|_| AppConfig::sync_port());
         let agent = SyncAgent::new(device_id, "Desktop".to_string(), sync_port);
         agent.get_unresolved_conflicts(conn).map_err(|e| e.to_string())
     } else {
@@ -219,7 +223,7 @@ fn get_sync_history_for_space_cmd(db: State<DbConnection>, space_id: String, lim
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
          let device_id = get_or_create_user_id(conn).map_err(|e| e.to_string())?;
-         let sync_port = get_sync_port(conn).unwrap_or(8765);
+         let sync_port = get_sync_port(conn).unwrap_or_else(|_| AppConfig::sync_port());
          let agent = SyncAgent::new(device_id, "Desktop".to_string(), sync_port);
          agent.get_sync_history(conn, &space_id, limit).map_err(|e| e.to_string())
     } else {
