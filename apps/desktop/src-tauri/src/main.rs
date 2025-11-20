@@ -110,6 +110,29 @@ fn cancel_sync_cmd(device_id: String) -> Result<bool, String> {
 }
 
 #[tauri::command]
+fn resolve_sync_conflict_cmd(
+    db: State<DbConnection>,
+    conflict: SyncConflict,
+    resolution: SyncConflictResolution,
+) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let dek_guard = db.dek.lock().unwrap();
+        let dek = dek_guard.as_ref().map(|d| d.as_slice()).unwrap_or(&[]);
+
+        let device_id = get_or_create_user_id(conn).map_err(|e| e.to_string())?;
+        // Use dynamic device name/port if possible, or defaults
+        let agent = SyncAgent::new(device_id, "Desktop".to_string(), 8765);
+
+        agent
+            .resolve_conflict(conn, &conflict, resolution, dek)
+            .map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
 fn get_or_create_user_id_cmd(db: State<DbConnection>) -> Result<String, String> {
     let conn = db.conn.lock().unwrap();
     if let Some(conn) = conn.as_ref() {
@@ -236,7 +259,7 @@ fn main() {
             register_device,
             get_sync_history_for_space,
             get_sync_conflicts,
-            resolve_sync_conflict,
+            resolve_sync_conflict_cmd,
             record_sync,
             create_health_metric,
             get_health_metrics,
