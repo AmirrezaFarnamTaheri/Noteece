@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Mobile App Feature Consolidation:** Implemented real database storage for **Health Hub** and **Music Hub** in the mobile app, replacing all temporary mock data.
+- **Backend Sync Expansion:** Updated `core-rs` sync agent to support `HealthMetric`, `Track`, `Playlist`, and `CalendarEvent` entities, enabling full sync capability for new mobile features.
+- **Music Schema:** Added comprehensive database tables for music tracks and playlists, including support for smart playlists.
+- **Health Schema:** Added database tables for tracking health metrics with support for units and notes.
+
+### Changed
+
+- **Mobile Database Schema:** Updated mobile SQLite schema (v4) to include `track` and `playlist` tables, aligning it with the backend schema.
+- **Refactoring:** Removed unused mocks from the desktop application (`apps/desktop/src/mocks/tauri.ts`) to clean up the codebase.
+- **Core Library:** Refactored `core-rs` to expose dedicated `health` and `music` modules for better code organization.
+
 ### Fixed
 
 - **Backend Test Suite:** Fixed a critical security vulnerability in the OCR module and resolved a panic in the analytics module. The backend test suite now passes completely.

@@ -17,23 +17,117 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { dbQuery, dbExecute } from "@/lib/database";
+import { nanoid } from "nanoid/non-secure";
 import type { Track, Playlist } from "../types/music";
 
 // Database helper functions for loading music data
 async function loadTracksFromDatabase(): Promise<Track[]> {
-  // Load all tracks from encrypted SQLite database
-  // Tracks are stored with optional artwork and metadata
-  // Currently returns empty array - will be populated when database service is initialized
-  // Database integration: Connect to local encrypted SQLite via React Native SQLite
-  return [];
+  try {
+    const tracks = await dbQuery("SELECT * FROM track ORDER BY title ASC");
+    // Map snake_case DB columns to camelCase Track type if necessary,
+    // but assuming direct mapping for now or that Track type matches DB.
+    // Actually Track type likely uses camelCase.
+    return tracks.map((t: any) => ({
+      id: t.id,
+      title: t.title,
+      artist: t.artist,
+      album: t.album,
+      duration: t.duration,
+      uri: t.uri,
+      artworkUrl: t.artwork_url,
+      genre: t.genre,
+      year: t.year,
+      trackNumber: t.track_number,
+      playCount: t.play_count,
+      lastPlayedAt: t.last_played_at,
+      isFavorite: t.is_favorite === 1,
+      addedAt: t.added_at,
+    }));
+  } catch (e) {
+    console.error("Error loading tracks:", e);
+    return [];
+  }
 }
 
 async function loadPlaylistsFromDatabase(): Promise<Playlist[]> {
-  // Load all playlists from encrypted SQLite database
-  // Playlists include both user-created and smart playlists
-  // Currently returns empty array - will be populated when database service is initialized
-  // Database integration: Connect to local encrypted SQLite via React Native SQLite
-  return [];
+  try {
+    const playlists = await dbQuery("SELECT * FROM playlist ORDER BY name ASC");
+    // Need to get track counts and duration for each playlist
+    const enhancedPlaylists = await Promise.all(
+      playlists.map(async (p: any) => {
+        const stats = await dbQuery(
+          "SELECT COUNT(*) as count FROM playlist_track WHERE playlist_id = ?",
+          [p.id],
+        );
+        const count = stats[0]?.count || 0;
+        return {
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          artworkUrl: p.artwork_url,
+          trackCount: count,
+          duration: 0, // TODO: Sum duration
+          createdAt: p.created_at,
+          updatedAt: p.updated_at,
+          isSmartPlaylist: p.is_smart_playlist === 1,
+          smartCriteria: p.smart_criteria_json
+            ? JSON.parse(p.smart_criteria_json)
+            : null,
+        };
+      }),
+    );
+    return enhancedPlaylists;
+  } catch (e) {
+    console.error("Error loading playlists:", e);
+    return [];
+  }
+}
+
+async function seedMusicData() {
+  const now = Date.now();
+  const spaceId = "default"; // Placeholder
+
+  const tracks = [
+    {
+      id: nanoid(),
+      title: "Moonlight Sonata",
+      artist: "Ludwig van Beethoven",
+      album: "Piano Sonatas",
+      duration: 320,
+      added_at: now,
+      updated_at: now,
+      is_favorite: 1,
+    },
+    {
+      id: nanoid(),
+      title: "Clair de Lune",
+      artist: "Claude Debussy",
+      album: "Suite bergamasque",
+      duration: 300,
+      added_at: now,
+      updated_at: now,
+      is_favorite: 1,
+    },
+  ];
+
+  for (const t of tracks) {
+    await dbExecute(
+      `INSERT OR IGNORE INTO track (id, space_id, title, artist, album, duration, added_at, updated_at, is_favorite)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        t.id,
+        spaceId,
+        t.title,
+        t.artist,
+        t.album,
+        t.duration,
+        t.added_at,
+        t.updated_at,
+        t.is_favorite,
+      ],
+    );
+  }
 }
 
 export function MusicHub() {
@@ -53,84 +147,19 @@ export function MusicHub() {
   const loadMusic = async () => {
     try {
       setLoading(true);
+
+      // Check if we need to seed data (if empty)
+      const currentTracks = await loadTracksFromDatabase();
+      if (currentTracks.length === 0) {
+        await seedMusicData();
+      }
+
       // Load tracks and playlists from local database
-      // Using SQLite with encrypted data storage
       const loadedTracks = await loadTracksFromDatabase();
       const loadedPlaylists = await loadPlaylistsFromDatabase();
 
-      // Fallback to mock data if database is empty
-      const mockTracks: Track[] = [
-        {
-          id: "1",
-          title: "Moonlight Sonata",
-          artist: "Ludwig van Beethoven",
-          album: "Piano Sonatas",
-          duration: 320,
-          uri: "",
-          artworkUrl: null,
-          genre: "Classical",
-          year: 1801,
-          trackNumber: 14,
-          playCount: 42,
-          lastPlayedAt: Date.now() - 86400000,
-          addedAt: Date.now() - 604800000,
-          isFavorite: true,
-        },
-        {
-          id: "2",
-          title: "Clair de Lune",
-          artist: "Claude Debussy",
-          album: "Suite bergamasque",
-          duration: 300,
-          uri: "",
-          artworkUrl: null,
-          genre: "Classical",
-          year: 1905,
-          trackNumber: 3,
-          playCount: 38,
-          lastPlayedAt: Date.now() - 172800000,
-          addedAt: Date.now() - 1209600000,
-          isFavorite: true,
-        },
-      ];
-
-      const mockPlaylists: Playlist[] = [
-        {
-          id: "1",
-          name: "Focus Flow",
-          description: "Music for deep work sessions",
-          artworkUrl: null,
-          trackCount: 24,
-          duration: 7200,
-          createdAt: Date.now() - 2592000000,
-          updatedAt: Date.now() - 86400000,
-          isSmartPlaylist: false,
-          smartCriteria: null,
-        },
-        {
-          id: "2",
-          name: "Recently Added",
-          description: "Your newest tracks",
-          artworkUrl: null,
-          trackCount: 12,
-          duration: 3600,
-          createdAt: Date.now() - 604800000,
-          updatedAt: Date.now(),
-          isSmartPlaylist: true,
-          smartCriteria: {
-            addedAfter: Date.now() - 2592000000,
-            sortBy: "addedAt",
-            sortOrder: "desc",
-            limit: 50,
-          },
-        },
-      ];
-
-      // Use loaded data if available, otherwise use mock data
-      setTracks(loadedTracks.length > 0 ? loadedTracks : mockTracks);
-      setPlaylists(
-        loadedPlaylists.length > 0 ? loadedPlaylists : mockPlaylists,
-      );
+      setTracks(loadedTracks);
+      setPlaylists(loadedPlaylists);
     } catch (error) {
       console.error("Failed to load music:", error);
     } finally {
