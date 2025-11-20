@@ -29,13 +29,13 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 
 - **Status:** **Resolved**
 - **Description:** The test suite for the `UserManagement` component was failing.
-- **Resolution:** The test was updated to correctly wait for the user data to be rendered before making assertions.
+- **Resolution:** The test was updated to correctly wait for the user data to be rendered before making assertions. The redundant `UserManagement.test.tsx` was removed in favor of `UserManagement.qa-fixes.test.tsx`.
 
 ### 2.2. `Dashboard` Component Test
 
 - **Status:** **Resolved**
 - **Description:** The test suite for the main `Dashboard` component was failing due to a missing mock.
-- **Resolution:** The `getDecryptedCredentials` function was mocked in the test setup.
+- **Resolution:** The `getDecryptedCredentials` function was mocked in the test setup, and the `useStore` mock was updated to include `getState`.
 
 ### 2.3. `dateUtils.test.ts` Failure
 
@@ -46,8 +46,8 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 ### 2.4. `useActiveSpace.test.tsx` Failure
 
 - **Status:** **Resolved**
-- **Description:** The test suite for the `useActiveSpace` hook was failing because the Zustand store was not being persisted.
-- **Resolution:** The `persist` middleware was added to the Zustand store.
+- **Description:** The test suite for the `useActiveSpace` hook was failing because the Zustand store was not being persisted in the test environment.
+- **Resolution:** The tests were updated to reflect that persistence is disabled during testing, and the `clearStorage` mock was properly handled.
 
 ---
 
@@ -63,10 +63,10 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 
 - **Status:** **Resolved**
 - **Description:** The test suite for the `SyncManager` component was failing due to an incomplete mock and incorrect test logic.
-- **Resolution:** The mock for `SyncClient` was completed, and the test was refactored to correctly handle asynchronous rendering.
+- **Resolution:** The mock for `SyncClient` was completed, and the component was refactored to correctly handle the `SyncClient` instance for testability.
 
 ### 3.3. `social-security.test.ts` Failure
 
-- **Status:** **Open**
-- **Description:** The test suite for `social-security` is failing because it is testing functions that no longer exist in the implementation.
-- **Next Steps:** The test suite has been disabled. The tests need to be rewritten or removed to reflect the current implementation.
+- **Status:** **Resolved** (By Removal)
+- **Description:** The test suite for `social-security` was failing because it was testing functions that no longer exist in the implementation.
+- **Resolution:** The obsolete test file `apps/mobile/src/lib/__tests__/social-security.test.ts` has been deleted.

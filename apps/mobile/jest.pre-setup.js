@@ -177,7 +177,6 @@ jest.mock("expo-linear-gradient", () => {
   };
 });
 
-
 // Quiet expected console noise during tests while leaving other logs intact
 const SUPPRESSED_ERROR_PATTERNS = [
   "JSON parse error:",

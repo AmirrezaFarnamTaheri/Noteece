@@ -14,9 +14,8 @@ import {
   SyncStatus,
 } from "../lib/sync/sync-client";
 
-const syncClient = new SyncClient();
-
 const SyncManager: React.FC = () => {
+  const [syncClient] = useState(() => new SyncClient());
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
     status: "idle",
     message: "Ready to sync",

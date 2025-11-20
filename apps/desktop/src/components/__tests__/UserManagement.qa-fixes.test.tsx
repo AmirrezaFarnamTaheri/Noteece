@@ -198,8 +198,12 @@ describe('UserManagement QA Fixes (Session 5)', () => {
         expect(mockInvoke).toHaveBeenCalledWith('revoke_permission_cmd', expect.anything());
       });
 
-      const revokeCalls = mockInvoke.mock.calls.filter((call: [string, any]) => call[0] === 'revoke_permission_cmd');
-      const revokedPermissions = revokeCalls.map((call: [string, { permission: string }]) => call[1].permission);
+      const revokeCalls = mockInvoke.mock.calls.filter(
+        (call: [string, unknown]) => call[0] === 'revoke_permission_cmd',
+      );
+      const revokedPermissions = revokeCalls.map(
+        (call: [string, unknown]) => (call[1] as { permission: string }).permission,
+      );
 
       // Should NOT revoke read or write (role permissions)
       expect(revokedPermissions).not.toContain('read');
@@ -231,8 +235,12 @@ describe('UserManagement QA Fixes (Session 5)', () => {
         );
       });
 
-      const revokeCalls = mockInvoke.mock.calls.filter((call) => call[0] === 'revoke_permission_cmd');
-      const revokedPermissions = revokeCalls.map((call: [string, { permission: string }]) => call[1].permission);
+      const revokeCalls = mockInvoke.mock.calls.filter(
+        (call: [string, unknown]) => call[0] === 'revoke_permission_cmd',
+      );
+      const revokedPermissions = revokeCalls.map(
+        (call: [string, unknown]) => (call[1] as { permission: string }).permission,
+      );
 
       // Should revoke manage_billing but not manage_users
       expect(revokedPermissions).toContain('manage_billing');
@@ -296,6 +304,7 @@ describe('UserManagement QA Fixes (Session 5)', () => {
           'invite_user_cmd',
           expect.objectContaining({
             email: 'new@example.com',
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             roleId: expect.any(String),
             invitedBy: '01H8XGJWBWBAQ4Z4Q4Z4Q4Z4Q4',
           }),
@@ -378,14 +387,15 @@ describe('UserManagement QA Fixes (Session 5)', () => {
 
   describe('Edge cases', () => {
     it('should handle empty user list gracefully', async () => {
-      mockInvoke.mockImplementation((cmd: string) => {
-        if (cmd === 'get_space_users_cmd') {
+      mockInvoke.mockImplementation((cmd: unknown) => {
+        const command = cmd as string;
+        if (command === 'get_space_users_cmd') {
           return Promise.resolve([]);
         }
-        if (cmd === 'get_roles_cmd') {
+        if (command === 'get_roles_cmd') {
           return Promise.resolve([]);
         }
-        return defaultInvokeHandler(cmd);
+        return defaultInvokeHandler(command);
       });
 
       render(<UserManagement />, { wrapper: AllTheProviders });

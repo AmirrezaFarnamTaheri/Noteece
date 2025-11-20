@@ -63,7 +63,7 @@ export function SocialHub() {
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery] = useState("");
 
   // Saved filters
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
