@@ -1,6 +1,20 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { AppShell, Title, Group, Button, Stack, Divider, Text, Tooltip, NavLink as MantineNavLink, ThemeIcon, Box, ScrollArea } from '@mantine/core';
+import {
+  AppShell,
+  Title,
+  Group,
+  Button,
+  Stack,
+  Divider,
+  Text,
+  Tooltip,
+  NavLink as MantineNavLink,
+  ThemeIcon,
+  Box,
+  ScrollArea,
+  Paper,
+} from '@mantine/core';
 import {
   IconHome2,
   IconNote,
@@ -83,24 +97,26 @@ const MainLayout: React.FC = () => {
 
   return (
     <AppShell
-        padding="md"
-        navbar={{ width: 260, breakpoint: 'sm' }}
-        header={{ height: 60 }}
-        styles={(theme) => ({
-            main: { backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0] },
-        })}
+      padding="md"
+      navbar={{ width: 260, breakpoint: 'sm' }}
+      header={{ height: 60 }}
+      styles={(theme) => ({
+        main: { backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0] },
+      })}
     >
       <AppShell.Header p="md" style={{ backdropFilter: 'blur(10px)' }}>
         <Group justify="space-between" align="center" h="100%">
           <Group gap="sm">
             <ThemeIcon size="lg" variant="gradient" gradient={{ from: 'indigo', to: 'cyan' }} radius="md">
-                <IconNote size={20} />
+              <IconNote size={20} />
             </ThemeIcon>
             <div>
-                <Title order={3} style={{ letterSpacing: '-0.5px', lineHeight: 1 }}>
+              <Title order={3} style={{ letterSpacing: '-0.5px', lineHeight: 1 }}>
                 Noteece
-                </Title>
-                <Text size="10px" c="dimmed" fw={700} tt="uppercase" ls={1}>Workspace</Text>
+              </Title>
+              <Text size="10px" c="dimmed" fw={700} tt="uppercase" ls={1}>
+                Workspace
+              </Text>
             </div>
           </Group>
           <Group gap="sm">
@@ -132,23 +148,19 @@ const MainLayout: React.FC = () => {
                   {group.title}
                 </Text>
                 {group.links.map((link) => (
-                    <NavLink
-                        to={link.to}
-                        key={link.label}
-                        style={{ textDecoration: 'none' }}
-                    >
-                        {({ isActive }) => (
-                             <MantineNavLink
-                                label={link.label}
-                                leftSection={<link.icon size={18} stroke={1.5} />}
-                                active={isActive}
-                                variant="light"
-                                color="blue"
-                                style={{ borderRadius: 'var(--mantine-radius-md)' }}
-                                rightSection={isActive && <IconChevronRight size={14} stroke={1.5} />}
-                             />
-                        )}
-                    </NavLink>
+                  <NavLink to={link.to} key={link.label} style={{ textDecoration: 'none' }}>
+                    {({ isActive }) => (
+                      <MantineNavLink
+                        label={link.label}
+                        leftSection={<link.icon size={18} stroke={1.5} />}
+                        active={isActive}
+                        variant="light"
+                        color="blue"
+                        style={{ borderRadius: 'var(--mantine-radius-md)' }}
+                        rightSection={isActive && <IconChevronRight size={14} stroke={1.5} />}
+                      />
+                    )}
+                  </NavLink>
                 ))}
               </Stack>
             ))}
@@ -158,13 +170,19 @@ const MainLayout: React.FC = () => {
         <AppShell.Section mt="md">
           <Divider my="sm" />
           <Paper withBorder p="xs" radius="md" bg="var(--mantine-color-gray-0)">
-             <Group>
-                 <ThemeIcon variant="light" color="green" size="sm"><IconCloud size={14} /></ThemeIcon>
-                 <div>
-                    <Text size="xs" fw={700}>Local Sync</Text>
-                    <Text size="xs" c="dimmed">Active</Text>
-                 </div>
-             </Group>
+            <Group>
+              <ThemeIcon variant="light" color="green" size="sm">
+                <IconCloud size={14} />
+              </ThemeIcon>
+              <div>
+                <Text size="xs" fw={700}>
+                  Local Sync
+                </Text>
+                <Text size="xs" c="dimmed">
+                  Active
+                </Text>
+              </div>
+            </Group>
           </Paper>
           <Text size="xs" c="dimmed" ta="center" mt="xs">
             v1.0.0 • Production Ready

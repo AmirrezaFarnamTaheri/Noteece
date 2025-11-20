@@ -1,12 +1,5 @@
 import { Grid, Title, Group, Stack, Paper, Text, useMantineTheme, LoadingOverlay, Container } from '@mantine/core';
-import {
-  IconArrowUpRight,
-  IconCheck,
-  IconClock,
-  IconLayoutGrid,
-  IconList,
-  IconX,
-} from '@tabler/icons-react';
+import { IconArrowUpRight, IconCheck, IconClock, IconLayoutGrid, IconList, IconX } from '@tabler/icons-react';
 import React from 'react';
 import { useProjects } from '../hooks/useQueries';
 import { useStore } from '../store';
@@ -54,26 +47,28 @@ const Dashboard: React.FC = () => {
       <Stack gap="lg">
         <Group justify="space-between">
           <div>
-             <Title order={2}>Dashboard</Title>
-             <Text c="dimmed" size="sm">Welcome back to your workspace</Text>
+            <Title order={2}>Dashboard</Title>
+            <Text c="dimmed" size="sm">
+              Welcome back to your workspace
+            </Text>
           </div>
           <IconLayoutGrid size={24} color={theme.colors.gray[6]} />
         </Group>
 
         {/* Top Row: Core Widgets */}
         <Grid gutter="md">
-           <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
-              <UniversalDashboardWidget />
-           </Grid.Col>
-           <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
-              <HealthWidget />
-           </Grid.Col>
-           <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
-              <Stack gap="md">
-                 <MusicWidget />
-                 <QuickCapture />
-              </Stack>
-           </Grid.Col>
+          <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
+            <UniversalDashboardWidget />
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
+            <HealthWidget />
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
+            <Stack gap="md">
+              <MusicWidget />
+              <QuickCapture />
+            </Stack>
+          </Grid.Col>
         </Grid>
 
         {/* Project Status Stats Cards */}
@@ -132,35 +127,35 @@ const Dashboard: React.FC = () => {
 
           {/* Middle Column: Activity & Content */}
           <Grid.Col span={{ base: 12, md: 4 }}>
-             <Stack gap="md">
-                <Paper style={{ border: '1px solid #e0e0e0' }} p="md" radius="md" shadow="xs">
-                  <Group justify="space-between" mb="sm">
-                    <Title order={3}>Project Stats</Title>
-                    <IconArrowUpRight size={20} color={theme.colors.gray[6]} />
-                  </Group>
-                  <BarChart data={projects} />
-                </Paper>
-                <NotesHeatmap />
-                <Activity icon={<IconLayoutGrid size={24} />} title="Recent Activity" />
-                <SocialWidget />
-                <NotesStatsWidget />
-             </Stack>
+            <Stack gap="md">
+              <Paper style={{ border: '1px solid #e0e0e0' }} p="md" radius="md" shadow="xs">
+                <Group justify="space-between" mb="sm">
+                  <Title order={3}>Project Stats</Title>
+                  <IconArrowUpRight size={20} color={theme.colors.gray[6]} />
+                </Group>
+                <BarChart data={projects} />
+              </Paper>
+              <NotesHeatmap />
+              <Activity icon={<IconLayoutGrid size={24} />} title="Recent Activity" />
+              <SocialWidget />
+              <NotesStatsWidget />
+            </Stack>
           </Grid.Col>
 
           {/* Right Column: Personal & Tracking */}
           <Grid.Col span={{ base: 12, md: 4 }}>
-             <Stack gap="md">
-                <CalendarWidget />
-                <FocusTimer />
-                <HabitsTracker />
-                <MoodTracker />
-                <InsightsWidget />
-                <GoalsTrackerWidget />
-                <AchievementBadgesWidget />
-                <BookmarksWidget />
-                <TimeTrackingWidget />
-                <TagsCloud />
-             </Stack>
+            <Stack gap="md">
+              <CalendarWidget />
+              <FocusTimer />
+              <HabitsTracker />
+              <MoodTracker />
+              <InsightsWidget />
+              <GoalsTrackerWidget />
+              <AchievementBadgesWidget />
+              <BookmarksWidget />
+              <TimeTrackingWidget />
+              <TagsCloud />
+            </Stack>
           </Grid.Col>
         </Grid>
       </Stack>
