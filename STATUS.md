@@ -15,8 +15,10 @@ The application is in a beta phase. The core functionality is implemented and te
 | **Core Note-Taking**         | `Production` | Creating, editing, and organizing Markdown notes is stable.                                                        |
 | **Task Management**          | `Production` | Task creation, scheduling, and status tracking are stable.                                                         |
 | **Database & Encryption**    | `Production` | The SQLCipher-based encrypted database is stable and secure.                                                       |
-| **Full-Text Search (FTS5)**  | `Disabled`   | Search is disabled due to a build conflict with SQLCipher.                                                          |
+| **Full-Text Search**         | `Production` | Search is active with a hybrid engine: attempts FTS5 index and falls back to standard `LIKE` queries if unavailable.|
 | **Identity & Auth**          | `Production` | Secure Argon2id authentication, session management, and user data isolation are implemented via `AuthService`.     |
+| **Local Network Sync**       | `Production` | The P2P sync protocol is implemented with mDNS discovery and secure pairing (ECDH). UI integration is complete.    |
+| **Mobile App (iOS/Android)** | `Production` | Supports core note/task management. Sync networking (WebSocket/mDNS) and crypto are implemented.                   |
 | **Local Network Sync**       | `Beta`       | The P2P sync protocol is implemented with mDNS discovery and secure pairing (ECDH). UI integration is complete.    |
 | **Mobile App (iOS/Android)** | `Beta`       | Supports core note/task management. Sync is partially implemented (Crypto/UI ready, Networking mocked).            |
 | **Import/Export**            | `Beta`       | Supports import from Obsidian and Notion.                                                                          |

@@ -10,10 +10,9 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 
 ### 1.1. FTS5 Feature Conflict with SQLCipher
 
-- **Status:** **Open**
-- **Description:** There is a persistent build failure in the `core-rs` crate when both the `fts5` and `bundled-sqlcipher-vendored-openssl` features are enabled for the `rusqlite` dependency. This prevents the full-text search capabilities from being used in conjunction with database encryption.
-- **Investigation:** Several workarounds were attempted, including using a git dependency with a patched version of `rusqlite`, and using Cargo features to isolate the `fts5` feature. None of these attempts were successful in the sandbox environment due to limitations with git dependencies and workspace feature unification.
-- **Next Steps:** This needs to be resolved to enable full-text search on encrypted user data. The solution may involve investigating alternative `rusqlite` forks or specific build flags. For now, the `fts5` feature is disabled.
+- **Status:** **Mitigated**
+- **Description:** There is a persistent build failure in the `core-rs` crate when both the `fts5` and `bundled-sqlcipher-vendored-openssl` features are enabled.
+- **Resolution:** A hybrid search engine was implemented in `search.rs`. The application now checks for the existence of the FTS5 table at runtime. If FTS5 is unavailable (due to build config), it automatically falls back to standard `LIKE` queries against the database content (which is transparently decrypted by SQLCipher at the connection level). This ensures search functionality is always available to the user.
 
 ---
 
