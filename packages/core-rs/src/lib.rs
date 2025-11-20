@@ -14,6 +14,7 @@ pub mod collaboration;
 pub mod correlation;
 pub mod crdt;
 pub mod crypto;
+pub mod dashboard;
 pub mod db;
 pub mod editor;
 pub mod foresight;

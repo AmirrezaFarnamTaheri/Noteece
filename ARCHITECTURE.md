@@ -41,3 +41,11 @@ The Noteece ecosystem consists of three main components:
 - **Database:** A single, encrypted SQLite database file (`vault.db`) per user "vault".
 - **Encryption:** The database is encrypted using SQLCipher. A Data Encryption Key (DEK), derived from the user's password, is held in memory only while the application is unlocked.
 - **Blobs/Attachments:** Larger binary files (images, PDFs) are stored in a separate blob store, with each blob individually encrypted.
+
+## Mobile Architecture
+
+The mobile app (`apps/mobile`) is a full-featured companion that mirrors the core functionality:
+- **Storage:** Uses `expo-sqlite` (encrypted) to store a local replica of the vault.
+- **Schema:** Shares a unified database schema with the desktop app (v5+), ensuring seamless sync.
+- **Offline-First:** All changes are queued locally and synced when a connection to the desktop is available.
+- **Features:** Supports Note Taking, Task Management, Health Tracking, and Music Library management.

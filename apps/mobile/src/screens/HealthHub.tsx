@@ -141,16 +141,7 @@ async function seedHealthData() {
       await dbExecute(
         `INSERT OR IGNORE INTO health_metric (id, space_id, metric_type, value, unit, recorded_at, source, meta_json)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          nanoid(),
-          spaceId,
-          m.type,
-          m.value,
-          m.unit,
-          timestamp,
-          "manual",
-          null,
-        ],
+        [nanoid(), spaceId, m.type, m.value, m.unit, timestamp, "manual", null],
       );
     }
   }

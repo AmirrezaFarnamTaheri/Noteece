@@ -211,7 +211,7 @@ impl SyncAgent {
     pub fn get_device_info(&self) -> DeviceInfo {
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
+            .unwrap_or_default() // Fallback to 0 if time goes backwards
             .as_secs() as i64;
 
         DeviceInfo {
@@ -239,7 +239,8 @@ impl SyncAgent {
             rusqlite::params![
                 &device_info.device_id,
                 &device_info.device_name,
-                serde_json::to_string(&device_info.device_type).unwrap(),
+                serde_json::to_string(&device_info.device_type)
+                    .map_err(|e| SyncError::InvalidData(e.to_string()))?,
                 device_info.last_seen,
                 &device_info.sync_address,
                 device_info.sync_port,
@@ -921,7 +922,8 @@ impl SyncAgent {
                 &delta.entity_id,
                 delta.timestamp,
                 &self.device_id,
-                serde_json::to_string(&delta.operation).unwrap()
+                serde_json::to_string(&delta.operation)
+                    .map_err(|e| SyncError::InvalidData(e.to_string()))?
             ],
         )?;
         Ok(())
@@ -1211,7 +1213,7 @@ impl SyncAgent {
         let id = Ulid::new().to_string();
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
+            .unwrap_or_default()
             .as_secs() as i64;
 
         conn.execute(
@@ -1275,8 +1277,8 @@ mod tests {
     #[test]
     fn test_device_type_serialization() {
         let device_type = DeviceType::Desktop;
-        let serialized = serde_json::to_string(&device_type).unwrap();
-        let deserialized: DeviceType = serde_json::from_str(&serialized).unwrap();
+        let serialized = serde_json::to_string(&device_type).expect("Failed to serialize");
+        let deserialized: DeviceType = serde_json::from_str(&serialized).expect("Failed to deserialize");
         assert_eq!(device_type, deserialized);
     }
 
@@ -1289,8 +1291,8 @@ mod tests {
         ];
 
         for op in ops {
-            let serialized = serde_json::to_string(&op).unwrap();
-            let deserialized: SyncOperation = serde_json::from_str(&serialized).unwrap();
+            let serialized = serde_json::to_string(&op).expect("Failed to serialize");
+            let deserialized: SyncOperation = serde_json::from_str(&serialized).expect("Failed to deserialize");
             assert_eq!(op, deserialized);
         }
     }
