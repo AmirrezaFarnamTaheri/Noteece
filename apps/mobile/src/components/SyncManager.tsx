@@ -29,15 +29,9 @@ const SyncManager: React.FC = () => {
 
   const updateStatus = useCallback(() => {
     setSyncStatus(syncClient.getSyncStatus());
-  }, []);
+  }, [syncClient]);
 
-  useEffect(() => {
-    discoverDevices();
-    const interval = setInterval(updateStatus, 1000); // Poll for status updates
-    return () => clearInterval(interval);
-  }, [updateStatus]);
-
-  const discoverDevices = async () => {
+  const discoverDevices = useCallback(async () => {
     try {
       setIsScanning(true);
       const devices = await syncClient.discoverDevices();
@@ -50,7 +44,13 @@ const SyncManager: React.FC = () => {
     } finally {
       setIsScanning(false);
     }
-  };
+  }, [syncClient]);
+
+  useEffect(() => {
+    discoverDevices();
+    const interval = setInterval(updateStatus, 1000); // Poll for status updates
+    return () => clearInterval(interval);
+  }, [updateStatus, discoverDevices]);
 
   const initiateSync = async (deviceId: string) => {
     try {

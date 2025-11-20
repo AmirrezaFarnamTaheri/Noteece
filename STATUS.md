@@ -26,6 +26,5 @@ The application is in a beta phase. The core functionality is implemented and te
 ## Known Critical Issues
 
 1.  **FTS5/SQLCipher Conflict:** There is a persistent build failure when both the `fts5` and `bundled-sqlcipher-vendored-openssl` features are enabled. This is a blocking issue for enabling full-text search.
-2.  **DEK Integration:** `resolve_sync_conflict` uses a DEK from the database connection, which is now properly implemented in the Desktop app but requires ongoing verification during beta testing.
 
 For a detailed list of resolved bugs, please refer to the `ISSUES.md` file.

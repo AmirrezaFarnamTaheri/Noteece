@@ -75,8 +75,7 @@ import { useStore } from '../../store';
 
 beforeEach(() => {
   // Reset the Zustand store and localStorage before each test
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const store = useStore.getState() as any;
+  const store = useStore.getState();
   if (store.clearStorage) {
     store.clearStorage();
   } else {
