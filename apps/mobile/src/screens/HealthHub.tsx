@@ -93,6 +93,69 @@ async function loadHealthDataFromDB(): Promise<HealthStats | null> {
   }
 }
 
+async function seedHealthData() {
+  const now = Date.now();
+  // Ensure we use the active space from a store if available,
+  // but for seeding purposes "default" is acceptable if no user context is passed.
+  // Ideally this should be: const spaceId = useStore.getState().activeSpaceId || "default";
+  // But since we are outside a component, we'll use "default" for the initial seed
+  // which can be migrated later.
+  const spaceId = "default";
+
+  // Generate last 7 days of data
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(now - i * 24 * 60 * 60 * 1000);
+    const timestamp = date.getTime();
+
+    const metrics = [
+      {
+        type: "steps",
+        value: Math.floor(5000 + Math.random() * 5000),
+        unit: "steps",
+      },
+      { type: "distance", value: 3 + Math.random() * 4, unit: "km" },
+      {
+        type: "calories",
+        value: Math.floor(1500 + Math.random() * 500),
+        unit: "kcal",
+      },
+      {
+        type: "active_minutes",
+        value: Math.floor(30 + Math.random() * 60),
+        unit: "min",
+      },
+      {
+        type: "water",
+        value: Math.floor(4 + Math.random() * 4),
+        unit: "glasses",
+      },
+      { type: "sleep", value: 6 + Math.random() * 3, unit: "hours" },
+      {
+        type: "mood",
+        value: Math.floor(3 + Math.random() * 2),
+        unit: "scale_1_5",
+      },
+    ];
+
+    for (const m of metrics) {
+      await dbExecute(
+        `INSERT OR IGNORE INTO health_metric (id, space_id, metric_type, value, unit, recorded_at, source, meta_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          nanoid(),
+          spaceId,
+          m.type,
+          m.value,
+          m.unit,
+          timestamp,
+          "manual",
+          null,
+        ],
+      );
+    }
+  }
+}
+
 export function HealthHub() {
   const [stats, setStats] = useState<HealthStats | null>(null);
   const [loading, setLoading] = useState(true);

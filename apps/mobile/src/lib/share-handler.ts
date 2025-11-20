@@ -28,6 +28,13 @@ export interface SharedItem {
  */
 export async function getSharedItems(): Promise<SharedItem[]> {
   try {
+    // Check for simulation mode
+    if (global.__SIMULATE_SHARE_ITEMS__) {
+      const items = global.__SIMULATE_SHARE_ITEMS__;
+      global.__SIMULATE_SHARE_ITEMS__ = undefined; // Clear after reading
+      return items;
+    }
+
     if (Platform.OS === "ios") {
       return await getSharedItemsIOS();
     } else if (Platform.OS === "android") {
@@ -38,6 +45,26 @@ export async function getSharedItems(): Promise<SharedItem[]> {
     console.error("[ShareHandler] Failed to get shared items:", error);
     return [];
   }
+}
+
+/**
+ * Simulate shared items for testing without native modules
+ */
+export function simulateSharedItem(item: Omit<SharedItem, "timestamp">) {
+  const fullItem = {
+    ...item,
+    timestamp: Date.now(),
+  };
+
+  if (!global.__SIMULATE_SHARE_ITEMS__) {
+    global.__SIMULATE_SHARE_ITEMS__ = [];
+  }
+  global.__SIMULATE_SHARE_ITEMS__.push(fullItem);
+  console.log("[ShareHandler] Simulation item queued:", fullItem);
+}
+
+declare global {
+  var __SIMULATE_SHARE_ITEMS__: SharedItem[] | undefined;
 }
 
 /**
