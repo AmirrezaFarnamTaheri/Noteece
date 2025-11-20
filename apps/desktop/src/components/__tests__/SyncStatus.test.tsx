@@ -89,7 +89,7 @@ describe('SyncStatus', () => {
   beforeEach(() => {
     mockInvoke.mockReset();
     mockInvoke.mockImplementation((cmd: string) => {
-      if (cmd === 'get_sync_devices_cmd') {
+      if (cmd === 'get_devices_cmd') {
         return Promise.resolve(sampleDevices);
       }
       if (cmd === 'get_sync_conflicts_cmd') {
@@ -98,7 +98,7 @@ describe('SyncStatus', () => {
       if (cmd === 'get_sync_history_for_space_cmd') {
         return Promise.resolve(sampleHistory);
       }
-      if (cmd === 'record_sync_cmd') {
+      if (cmd === 'start_p2p_sync_cmd') {
         return Promise.resolve({});
       }
       if (cmd === 'resolve_sync_conflict_cmd') {
@@ -146,7 +146,7 @@ describe('SyncStatus', () => {
     fireEvent.click(syncButton);
 
     await waitFor(() => {
-      expect(mockInvoke).toHaveBeenCalledWith('record_sync_cmd', expect.objectContaining({ space_id: 'space-123' }));
+      expect(mockInvoke).toHaveBeenCalledWith('start_p2p_sync_cmd', expect.objectContaining({ device_id: '1' }));
     });
   });
 

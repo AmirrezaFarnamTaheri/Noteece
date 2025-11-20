@@ -93,7 +93,7 @@ const SyncStatus: React.FC = () => {
   // Fetch sync devices from backend
   const { data: devices = [], isLoading: devicesLoading } = useQuery<SyncDevice[]>({
     queryKey: ['syncDevices'],
-    queryFn: () => invoke<SyncDevice[]>('get_sync_devices_cmd'),
+    queryFn: () => invoke<SyncDevice[]>('get_devices_cmd'),
     refetchInterval: 30_000, // Refetch every 30 seconds
   });
 
@@ -144,38 +144,31 @@ const SyncStatus: React.FC = () => {
       setIsSyncing(true);
       setSyncProgress(0);
 
-      // Simulate progress for now (in real implementation, this would track actual sync progress)
-      let cleared = false;
-      const progressInterval = setInterval(() => {
-        setSyncProgress((previous) => Math.min(previous + 10, 90));
-      }, 200);
+      // Since we don't have a device selection in the simple manual sync, we'll broadcast or sync with all known active devices
+      // For this iteration, we'll start sync with all online devices
+      const activeDevices = devices.filter(d => getDeviceStatus(d.last_seen) === 'online');
 
-      const clearProgress = () => {
-        if (!cleared) {
-          clearInterval(progressInterval);
-          cleared = true;
-        }
-      };
-
-      try {
-        // Record the sync attempt
-        await invoke('record_sync_cmd', {
-          space_id: activeSpaceId || '',
-          direction: 'bidirectional',
-          entities_pushed: 0,
-          entities_pulled: 0,
-          conflicts_detected: 0,
-          success: true,
-          error_message: null,
-        });
-
-        clearProgress();
-        setSyncProgress(100);
-        return true;
-      } catch (error) {
-        clearProgress();
-        throw error;
+      if (activeDevices.length === 0) {
+         throw new Error("No online devices found to sync with.");
       }
+
+      const results = await Promise.all(activeDevices.map(async (device) => {
+          try {
+              await invoke('start_p2p_sync_cmd', { device_id: device.device_id });
+              return { device: device.device_name, success: true };
+          } catch (e) {
+              return { device: device.device_name, success: false, error: e };
+          }
+      }));
+
+      // Check if any failed
+      const failures = results.filter(r => !r.success);
+      if (failures.length > 0) {
+          throw new Error(`Sync failed for: ${failures.map(f => f.device).join(', ')}`);
+      }
+
+      setSyncProgress(100);
+      return true;
     },
     onSuccess: () => {
       notifications.show({

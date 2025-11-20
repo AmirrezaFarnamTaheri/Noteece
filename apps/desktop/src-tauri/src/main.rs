@@ -163,6 +163,59 @@ async fn start_sync_server_cmd(db: State<'_, DbConnection>) -> Result<(), String
     Ok(())
 }
 
+#[tauri::command]
+async fn start_p2p_sync_cmd(db: State<'_, DbConnection>, device_id: String) -> Result<(), String> {
+    let p2p_sync = {
+        let guard = db.p2p_sync.lock().unwrap();
+        guard.clone()
+    };
+
+    if let Some(sync) = p2p_sync {
+        sync.start_sync(&device_id).await.map_err(|e| e.to_string())
+    } else {
+        Err("P2P Sync not initialized (Vault locked?)".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_devices_cmd(db: State<DbConnection>) -> Result<Vec<core_rs::sync::mobile_sync::DeviceInfo>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let device_id = get_or_create_user_id(conn).map_err(|e| e.to_string())?;
+        let sync_port = get_sync_port(conn).unwrap_or(8765);
+        let agent = SyncAgent::new(device_id, "Desktop".to_string(), sync_port);
+        agent.get_devices(conn).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_sync_conflicts_cmd(db: State<DbConnection>) -> Result<Vec<SyncConflict>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let device_id = get_or_create_user_id(conn).map_err(|e| e.to_string())?;
+        let sync_port = get_sync_port(conn).unwrap_or(8765);
+        let agent = SyncAgent::new(device_id, "Desktop".to_string(), sync_port);
+        agent.get_unresolved_conflicts(conn).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_sync_history_for_space_cmd(db: State<DbConnection>, space_id: String, limit: u32) -> Result<Vec<SyncHistoryEntry>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+         let device_id = get_or_create_user_id(conn).map_err(|e| e.to_string())?;
+         let sync_port = get_sync_port(conn).unwrap_or(8765);
+         let agent = SyncAgent::new(device_id, "Desktop".to_string(), sync_port);
+         agent.get_sync_history(conn, &space_id, limit).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
 fn main() {
     AppConfig::init();
 
@@ -255,12 +308,13 @@ fn main() {
             get_caldav_conflicts,
             resolve_caldav_conflict,
             init_sync_tables,
-            get_devices,
+            get_devices_cmd,
             register_device,
-            get_sync_history_for_space,
-            get_sync_conflicts,
+            get_sync_history_for_space_cmd,
+            get_sync_conflicts_cmd,
             resolve_sync_conflict_cmd,
             record_sync,
+            start_p2p_sync_cmd,
             create_health_metric,
             get_health_metrics,
             create_transaction,

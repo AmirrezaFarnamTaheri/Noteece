@@ -24,18 +24,35 @@ pub fn search_notes(conn: &Connection, query: &str, scope: &str) -> Result<Vec<N
         }
     }
 
-    let mut sql = "
-        SELECT n.id, n.space_id, n.title, n.content_md, n.created_at, n.modified_at, n.is_trashed
-        FROM note n
-        JOIN fts_note f ON n.id = f.note_id
-    "
-    .to_string();
+    // Determine if FTS5 table exists (safe fallback)
+    let has_fts: bool = conn
+        .query_row(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='fts_note'",
+            [],
+            |_| Ok(true),
+        )
+        .unwrap_or(false);
+
+    let mut sql = String::from(
+        "SELECT n.id, n.space_id, n.title, n.content_md, n.created_at, n.modified_at, n.is_trashed
+        FROM note n",
+    );
+
     let mut where_clauses = vec!["n.space_id = ?1".to_string()];
-    let mut params: Vec<&dyn rusqlite::ToSql> = vec![&scope];
+    let mut params: Vec<Box<dyn rusqlite::ToSql>> = vec![Box::new(scope.to_string())];
+
+    // LIKE query fallback string must live long enough, but we can Box it.
+    let like_query_val = format!("%{}%", fts_query);
 
     if !fts_query.is_empty() {
-        where_clauses.push("f.fts_note MATCH ?2".to_string());
-        params.push(&fts_query);
+        if has_fts {
+            sql.push_str(" JOIN fts_note f ON n.id = f.note_id");
+            where_clauses.push("f.fts_note MATCH ?2".to_string());
+            params.push(Box::new(fts_query.clone()));
+        } else {
+            where_clauses.push("(n.title LIKE ?2 OR n.content_md LIKE ?2)".to_string());
+            params.push(Box::new(like_query_val));
+        }
     }
 
     if !tags.is_empty() {
@@ -48,7 +65,7 @@ pub fn search_notes(conn: &Connection, query: &str, scope: &str) -> Result<Vec<N
         let tag_placeholders = tags.iter().map(|_| "?").collect::<Vec<_>>().join(", ");
         where_clauses.push(format!("t.name IN ({})", tag_placeholders));
         for tag in &tags {
-            params.push(tag);
+            params.push(Box::new(tag.clone()));
         }
     }
 
@@ -58,7 +75,10 @@ pub fn search_notes(conn: &Connection, query: &str, scope: &str) -> Result<Vec<N
     }
 
     let mut stmt = conn.prepare(&sql)?;
-    let mut rows = stmt.query(rusqlite::params_from_iter(&params))?;
+    // Convert Vec<Box<dyn ToSql>> to slice of &dyn ToSql for query
+    let params_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|b| b.as_ref()).collect();
+    let mut rows = stmt.query(params_refs.as_slice())?;
+
     let mut results = Vec::new();
     while let Some(row) = rows.next()? {
         results.push(Note {
