@@ -128,34 +128,50 @@ pub fn get_projects_in_space(
             });
 
         if let Ok(task_id_str) = row.get::<_, String>(8) {
-            project.tasks.push(Task {
-                id: Ulid::from_string(&task_id_str).unwrap(),
-                space_id: Ulid::from_string(&project.space_id).unwrap(),
-                note_id: None,
-                project_id: Some(Ulid::from_string(&project.id).unwrap()),
-                parent_task_id: None,
-                title: row.get(9).unwrap(),
-                description: None,
-                status: "inbox".to_string(),
-                due_at: None,
-                start_at: None,
-                completed_at: None,
-                priority: None,
-                estimate_minutes: None,
-                recur_rule: None,
-                context: None,
-                area: None,
-            });
+            if let (Ok(task_id), Ok(space_id), Ok(project_id), Ok(title)) = (
+                Ulid::from_string(&task_id_str),
+                Ulid::from_string(&project.space_id),
+                Ulid::from_string(&project.id),
+                row.get::<_, String>(9),
+            ) {
+                project.tasks.push(Task {
+                    id: task_id,
+                    space_id,
+                    note_id: None,
+                    project_id: Some(project_id),
+                    parent_task_id: None,
+                    title,
+                    description: None,
+                    status: "inbox".to_string(),
+                    due_at: None,
+                    start_at: None,
+                    completed_at: None,
+                    priority: None,
+                    estimate_minutes: None,
+                    recur_rule: None,
+                    context: None,
+                    area: None,
+                });
+            } else {
+                log::warn!("[project] Skipping invalid task data for project {}", project.id);
+            }
         }
 
-        if let Ok(milestone_id) = row.get(10) {
-            project.milestones.push(ProjectMilestone {
-                id: milestone_id,
-                project_id: project.id.clone(),
-                title: row.get(11).unwrap(),
-                due_at: None,
-                status: "active".to_string(),
-            });
+        if let Ok(milestone_id) = row.get::<_, String>(10) {
+            if let Ok(title) = row.get::<_, String>(11) {
+                project.milestones.push(ProjectMilestone {
+                    id: milestone_id,
+                    project_id: project.id.clone(),
+                    title,
+                    due_at: None,
+                    status: "active".to_string(),
+                });
+            } else {
+                log::warn!(
+                    "[project] Skipping invalid milestone data for project {}",
+                    project.id
+                );
+            }
         }
 
         Ok(())
@@ -199,34 +215,50 @@ pub fn get_project(conn: &Connection, id: &str) -> Result<Option<Project>, Proje
             });
 
         if let Ok(task_id_str) = row.get::<_, String>(8) {
-            project.tasks.push(Task {
-                id: Ulid::from_string(&task_id_str).unwrap(),
-                space_id: Ulid::from_string(&project.space_id).unwrap(),
-                note_id: None,
-                project_id: Some(Ulid::from_string(&project.id).unwrap()),
-                parent_task_id: None,
-                title: row.get(9).unwrap(),
-                description: None,
-                status: "inbox".to_string(),
-                due_at: None,
-                start_at: None,
-                completed_at: None,
-                priority: None,
-                estimate_minutes: None,
-                recur_rule: None,
-                context: None,
-                area: None,
-            });
+            if let (Ok(task_id), Ok(space_id), Ok(project_id), Ok(title)) = (
+                Ulid::from_string(&task_id_str),
+                Ulid::from_string(&project.space_id),
+                Ulid::from_string(&project.id),
+                row.get::<_, String>(9),
+            ) {
+                project.tasks.push(Task {
+                    id: task_id,
+                    space_id,
+                    note_id: None,
+                    project_id: Some(project_id),
+                    parent_task_id: None,
+                    title,
+                    description: None,
+                    status: "inbox".to_string(),
+                    due_at: None,
+                    start_at: None,
+                    completed_at: None,
+                    priority: None,
+                    estimate_minutes: None,
+                    recur_rule: None,
+                    context: None,
+                    area: None,
+                });
+            } else {
+                log::warn!("[project] Skipping invalid task data for project {}", project.id);
+            }
         }
 
-        if let Ok(milestone_id) = row.get(10) {
-            project.milestones.push(ProjectMilestone {
-                id: milestone_id,
-                project_id: project.id.clone(),
-                title: row.get(11).unwrap(),
-                due_at: None,
-                status: "active".to_string(),
-            });
+        if let Ok(milestone_id) = row.get::<_, String>(10) {
+            if let Ok(title) = row.get::<_, String>(11) {
+                project.milestones.push(ProjectMilestone {
+                    id: milestone_id,
+                    project_id: project.id.clone(),
+                    title,
+                    due_at: None,
+                    status: "active".to_string(),
+                });
+            } else {
+                log::warn!(
+                    "[project] Skipping invalid milestone data for project {}",
+                    project.id
+                );
+            }
         }
 
         Ok(())

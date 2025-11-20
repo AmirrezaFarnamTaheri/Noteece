@@ -58,6 +58,15 @@ Noteece follows a **monorepo** structure using Rust for the core logic and TypeS
 *   Project hierarchy with milestones and dependencies.
 *   Kanban board view.
 
+### 📊 Universal Dashboard (New)
+*   **Unified Overview:** A single pane of glass for all your data streams.
+*   **Widgets:**
+    *   **Health Pulse:** Visualize daily steps, sleep, and mood.
+    *   **Music Player:** Control local playback and see "Now Playing".
+    *   **Social Feed:** Recent updates from connected platforms.
+    *   **Task Summary:** At-a-glance view of pending and completed work.
+*   **Customizable Layout:** Responsive grid that adapts to your workflow.
+
 ### ❤️ Health Hub
 *   Track metrics (Steps, Sleep, Mood, etc.).
 *   Visualize trends over time.
@@ -127,7 +136,8 @@ Noteece uses a custom peer-to-peer sync protocol designed for local networks.
 ## 6. Security
 
 *   **Encryption at Rest:** The SQLite database is encrypted using SQLCipher (256-bit AES).
-*   **Key Derivation:** Argon2id is used to derive the Data Encryption Key (DEK) from the user's master password.
+*   **Key Derivation:** PBKDF2-HMAC-SHA512 (256,000 iterations) is used to derive the Key Encryption Key (KEK) from the user's master password. This KEK wraps the Data Encryption Key (DEK).
+*   **Authentication:** Argon2id is used for hashing user passwords for authentication sessions, separate from the database encryption.
 *   **Zero-Knowledge:** The server (if one exists for relay) sees only encrypted blobs.
 
 ---

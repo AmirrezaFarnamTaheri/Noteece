@@ -109,7 +109,7 @@ describe('Dashboard', () => {
 
   it('renders project statistics section', async () => {
     renderWithProviders(<Dashboard />);
-    expect(await screen.findByText('Project Statistics')).toBeInTheDocument();
+    expect(await screen.findByText('Project Stats')).toBeInTheDocument();
   });
 
   it('displays correct project counts', async () => {
@@ -128,6 +128,6 @@ describe('Dashboard', () => {
   it('renders multiple widgets', async () => {
     renderWithProviders(<Dashboard />);
     // Check for various widget titles
-    expect(await screen.findByText('Workspace Overview')).toBeInTheDocument();
+    expect(await screen.findByText('Universal Status')).toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { AppShell, Title, Group, Button, Stack, Divider, Text, Tooltip } from '@mantine/core';
+import { AppShell, Title, Group, Button, Stack, Divider, Text, Tooltip, NavLink as MantineNavLink, ThemeIcon, Box, ScrollArea } from '@mantine/core';
 import {
   IconHome2,
   IconNote,
@@ -17,6 +17,7 @@ import {
   IconChartBar,
   IconCommand,
   IconScan,
+  IconChevronRight,
 } from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
 import CommandPalette from './CommandPalette';
@@ -81,29 +82,40 @@ const MainLayout: React.FC = () => {
   };
 
   return (
-    <AppShell padding="md" navbar={{ width: 250, breakpoint: 'sm' }} header={{ height: 60 }}>
-      <AppShell.Header p="md">
+    <AppShell
+        padding="md"
+        navbar={{ width: 260, breakpoint: 'sm' }}
+        header={{ height: 60 }}
+        styles={(theme) => ({
+            main: { backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0] },
+        })}
+    >
+      <AppShell.Header p="md" style={{ backdropFilter: 'blur(10px)' }}>
         <Group justify="space-between" align="center" h="100%">
-          <Group gap="xs">
-            <Title order={3} style={{ letterSpacing: '-0.5px' }}>
-              Noteece
-            </Title>
-            <Text size="xs" c="dimmed" fw={500}>
-              Knowledge Management
-            </Text>
+          <Group gap="sm">
+            <ThemeIcon size="lg" variant="gradient" gradient={{ from: 'indigo', to: 'cyan' }} radius="md">
+                <IconNote size={20} />
+            </ThemeIcon>
+            <div>
+                <Title order={3} style={{ letterSpacing: '-0.5px', lineHeight: 1 }}>
+                Noteece
+                </Title>
+                <Text size="10px" c="dimmed" fw={700} tt="uppercase" ls={1}>Workspace</Text>
+            </div>
           </Group>
           <Group gap="sm">
             <Tooltip label="Open command palette (⌘K)">
               <Button
-                variant="subtle"
+                variant="default"
                 size="compact-sm"
                 leftSection={<IconCommand size={14} />}
                 onClick={() => setCommandPaletteOpened(true)}
+                radius="md"
               >
                 Commands
               </Button>
             </Tooltip>
-            <Button size="compact-md" onClick={handleDailyNote}>
+            <Button size="compact-sm" variant="light" onClick={handleDailyNote} radius="md">
               Daily Note
             </Button>
             <ThemeToggle />
@@ -111,52 +123,56 @@ const MainLayout: React.FC = () => {
         </Group>
       </AppShell.Header>
 
-      <AppShell.Navbar p="md">
-        <AppShell.Section>
-          <Stack gap="xs">
-            <Group justify="space-between" align="center">
-              <Text size="xs" fw={700} tt="uppercase" c="dimmed">
-                Navigation
-              </Text>
-            </Group>
-          </Stack>
-        </AppShell.Section>
-
-        <AppShell.Section grow mt="md" style={{ overflowY: 'auto' }}>
+      <AppShell.Navbar p="md" style={{ borderRight: '1px solid var(--mantine-color-gray-2)' }}>
+        <AppShell.Section grow component={ScrollArea}>
           <Stack gap="lg">
             {navLinkGroups.map((group) => (
-              <Stack key={group.title} gap="xs">
-                <Text size="xs" fw={600} c="dimmed" tt="uppercase" pl="xs">
+              <Stack key={group.title} gap={4}>
+                <Text size="11px" fw={700} c="dimmed" tt="uppercase" pl="xs" mb={4}>
                   {group.title}
                 </Text>
-                <Stack gap={2}>
-                  {group.links.map((link) => (
+                {group.links.map((link) => (
                     <NavLink
-                      to={link.to}
-                      key={link.label}
-                      className={({ isActive }) => `${classes.navLink} ${isActive ? classes.navLinkActive : ''}`}
+                        to={link.to}
+                        key={link.label}
+                        style={{ textDecoration: 'none' }}
                     >
-                      <Group gap="xs">
-                        <link.icon size={18} />
-                        <span>{link.label}</span>
-                      </Group>
+                        {({ isActive }) => (
+                             <MantineNavLink
+                                label={link.label}
+                                leftSection={<link.icon size={18} stroke={1.5} />}
+                                active={isActive}
+                                variant="light"
+                                color="blue"
+                                style={{ borderRadius: 'var(--mantine-radius-md)' }}
+                                rightSection={isActive && <IconChevronRight size={14} stroke={1.5} />}
+                             />
+                        )}
                     </NavLink>
-                  ))}
-                </Stack>
+                ))}
               </Stack>
             ))}
           </Stack>
         </AppShell.Section>
 
-        <AppShell.Section>
-          <Divider my="xs" />
-          <Text size="xs" c="dimmed" ta="center">
-            v1.0.0 • Local-first
+        <AppShell.Section mt="md">
+          <Divider my="sm" />
+          <Paper withBorder p="xs" radius="md" bg="var(--mantine-color-gray-0)">
+             <Group>
+                 <ThemeIcon variant="light" color="green" size="sm"><IconCloud size={14} /></ThemeIcon>
+                 <div>
+                    <Text size="xs" fw={700}>Local Sync</Text>
+                    <Text size="xs" c="dimmed">Active</Text>
+                 </div>
+             </Group>
+          </Paper>
+          <Text size="xs" c="dimmed" ta="center" mt="xs">
+            v1.0.0 • Production Ready
           </Text>
         </AppShell.Section>
       </AppShell.Navbar>
 
-      <AppShell.Main style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
+      <AppShell.Main>
         <CommandPalette opened={commandPaletteOpened} onClose={() => setCommandPaletteOpened(false)} />
         <Outlet />
       </AppShell.Main>

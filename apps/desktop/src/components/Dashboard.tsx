@@ -1,42 +1,42 @@
-import { Grid, Title, Group, Stack, Paper, Text, useMantineTheme, LoadingOverlay } from '@mantine/core';
+import { Grid, Title, Group, Stack, Paper, Text, useMantineTheme, LoadingOverlay, Container } from '@mantine/core';
 import {
   IconArrowUpRight,
-  IconCalendar,
   IconCheck,
   IconClock,
-  IconFileText,
+  IconLayoutGrid,
   IconList,
   IconX,
-  IconLayoutGrid,
 } from '@tabler/icons-react';
 import React from 'react';
+import { useProjects } from '../hooks/useQueries';
+import { useStore } from '../store';
 import classes from './Dashboard.module.css';
 import { Activity } from './activity';
 import { BarChart } from './bar-chart';
 import { StatsCard } from './stats-card';
 import { Upcoming } from './upcoming';
-import { TasksByPriority } from './widgets/TasksByPriority';
-import { TagsCloud } from './widgets/TagsCloud';
-import { QuickCapture } from './widgets/QuickCapture';
-import { WeeklyProgress } from './widgets/WeeklyProgress';
-import { RecentProjects } from './widgets/RecentProjects';
-import { FocusTimer } from './widgets/FocusTimer';
-import NotesHeatmap from './widgets/NotesHeatmap';
-import ProjectTimeline from './widgets/ProjectTimeline';
-import DueTodayWidget from './widgets/DueTodayWidget';
-import HabitsTracker from './widgets/HabitsTracker';
-import MoodTracker from './widgets/MoodTracker';
-import InsightsWidget from './widgets/InsightsWidget';
-import { GoalsTrackerWidget } from './widgets/GoalsTrackerWidget';
-import { NotesStatsWidget } from './widgets/NotesStatsWidget';
-import { CalendarWidget } from './widgets/CalendarWidget';
-import { BookmarksWidget } from './widgets/BookmarksWidget';
-import { QuickStatsWidget } from './widgets/QuickStatsWidget';
 import { AchievementBadgesWidget } from './widgets/AchievementBadgesWidget';
+import { BookmarksWidget } from './widgets/BookmarksWidget';
+import { CalendarWidget } from './widgets/CalendarWidget';
+import DueTodayWidget from './widgets/DueTodayWidget';
+import { FocusTimer } from './widgets/FocusTimer';
+import { GoalsTrackerWidget } from './widgets/GoalsTrackerWidget';
+import HabitsTracker from './widgets/HabitsTracker';
+import { HealthWidget } from './widgets/HealthWidget';
+import InsightsWidget from './widgets/InsightsWidget';
+import MoodTracker from './widgets/MoodTracker';
+import { MusicWidget } from './widgets/MusicWidget';
+import NotesHeatmap from './widgets/NotesHeatmap';
+import { NotesStatsWidget } from './widgets/NotesStatsWidget';
+import ProjectTimeline from './widgets/ProjectTimeline';
+import { QuickCapture } from './widgets/QuickCapture';
+import { RecentProjects } from './widgets/RecentProjects';
+import { SocialWidget } from './widgets/SocialWidget';
+import { TagsCloud } from './widgets/TagsCloud';
+import { TasksByPriority } from './widgets/TasksByPriority';
 import TimeTrackingWidget from './widgets/TimeTrackingWidget';
 import { UniversalDashboardWidget } from './widgets/UniversalDashboardWidget';
-import { useProjects } from '../hooks/useQueries';
-import { useStore } from '../store';
+import { WeeklyProgress } from './widgets/WeeklyProgress';
 
 const Dashboard: React.FC = () => {
   const theme = useMantineTheme();
@@ -48,18 +48,37 @@ const Dashboard: React.FC = () => {
   const archivedProjects = projects.filter((project) => project.status === 'archived').length;
 
   return (
-    <div className={classes.container}>
+    <Container fluid className={classes.container} p={0}>
       <LoadingOverlay visible={isLoading} />
 
       <Stack gap="lg">
         <Group justify="space-between">
-          <Title order={2}>Dashboard</Title>
+          <div>
+             <Title order={2}>Dashboard</Title>
+             <Text c="dimmed" size="sm">Welcome back to your workspace</Text>
+          </div>
           <IconLayoutGrid size={24} color={theme.colors.gray[6]} />
         </Group>
 
-        {/* Quick Stats Row */}
-        <Grid>
-          <Grid.Col span={{ lg: 3, md: 6, sm: 12 }}>
+        {/* Top Row: Core Widgets */}
+        <Grid gutter="md">
+           <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
+              <UniversalDashboardWidget />
+           </Grid.Col>
+           <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
+              <HealthWidget />
+           </Grid.Col>
+           <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
+              <Stack gap="md">
+                 <MusicWidget />
+                 <QuickCapture />
+              </Stack>
+           </Grid.Col>
+        </Grid>
+
+        {/* Project Status Stats Cards */}
+        <Grid gutter="md">
+          <Grid.Col span={{ base: 6, md: 3 }}>
             <StatsCard
               icon={<IconList size={24} color={theme.colors.gray[2]} />}
               title="All Projects"
@@ -68,7 +87,7 @@ const Dashboard: React.FC = () => {
               backgroundColor={theme.colors.gray[0]}
             />
           </Grid.Col>
-          <Grid.Col span={{ lg: 3, md: 6, sm: 12 }}>
+          <Grid.Col span={{ base: 6, md: 3 }}>
             <StatsCard
               icon={<IconCheck size={24} color={theme.colors.green[2]} />}
               title="Completed"
@@ -77,7 +96,7 @@ const Dashboard: React.FC = () => {
               backgroundColor={theme.colors.green[0]}
             />
           </Grid.Col>
-          <Grid.Col span={{ lg: 3, md: 6, sm: 12 }}>
+          <Grid.Col span={{ base: 6, md: 3 }}>
             <StatsCard
               icon={<IconClock size={24} color={theme.colors.orange[2]} />}
               title="In Progress"
@@ -86,7 +105,7 @@ const Dashboard: React.FC = () => {
               backgroundColor={theme.colors.orange[0]}
             />
           </Grid.Col>
-          <Grid.Col span={{ lg: 3, md: 6, sm: 12 }}>
+          <Grid.Col span={{ base: 6, md: 3 }}>
             <StatsCard
               icon={<IconX size={24} color={theme.colors.red[2]} />}
               title="Archived"
@@ -97,94 +116,55 @@ const Dashboard: React.FC = () => {
           </Grid.Col>
         </Grid>
 
-        {/* Main Content Row */}
-        <Grid>
-          <Grid.Col span={{ lg: 8, md: 12, sm: 12 }}>
+        {/* Main Content: 3 Column Layout */}
+        <Grid gutter="md">
+          {/* Left Column: Tasks & Projects */}
+          <Grid.Col span={{ base: 12, md: 4 }}>
             <Stack gap="md">
-              {/* Project Statistics Chart */}
-              <Paper style={{ border: '1px solid #e0e0e0' }} p="md" radius="md" shadow="xs">
-                <Group justify="space-between">
-                  <Title order={3}>Project Statistics</Title>
-                  <IconArrowUpRight size={24} color={theme.colors.gray[6]} />
-                </Group>
-                <Text c="dimmed" fz="sm" mb="xl">
-                  Track your progress and check your project statistics
-                </Text>
-                <BarChart data={projects} />
-              </Paper>
-
-              {/* Quick Capture */}
-              <QuickCapture />
-
-              {/* Quick Stats Overview */}
-              <QuickStatsWidget />
-
-              {/* Universal Dashboard (New Feature) */}
-              <UniversalDashboardWidget />
-
-              {/* New: Activity Heatmap and Insights */}
-              <Grid>
-                <Grid.Col span={{ lg: 6, md: 12, sm: 12 }}>
-                  <NotesHeatmap />
-                </Grid.Col>
-                <Grid.Col span={{ lg: 6, md: 12, sm: 12 }}>
-                  <InsightsWidget />
-                </Grid.Col>
-              </Grid>
-
-              {/* New: Due Today and Habits */}
-              <Grid>
-                <Grid.Col span={{ lg: 6, md: 12, sm: 12 }}>
-                  <DueTodayWidget />
-                </Grid.Col>
-                <Grid.Col span={{ lg: 6, md: 12, sm: 12 }}>
-                  <HabitsTracker />
-                </Grid.Col>
-              </Grid>
-
-              {/* Goals and Achievements */}
-              <Grid>
-                <Grid.Col span={{ lg: 6, md: 12, sm: 12 }}>
-                  <GoalsTrackerWidget />
-                </Grid.Col>
-                <Grid.Col span={{ lg: 6, md: 12, sm: 12 }}>
-                  <AchievementBadgesWidget />
-                </Grid.Col>
-              </Grid>
-
-              {/* Notes Stats */}
-              <NotesStatsWidget />
-
-              {/* Tasks and Activity Row */}
-              <Grid>
-                <Grid.Col span={{ lg: 6, md: 12, sm: 12 }}>
-                  <Upcoming icon={<IconCalendar size={24} />} title="Upcoming Tasks" />
-                </Grid.Col>
-                <Grid.Col span={{ lg: 6, md: 12, sm: 12 }}>
-                  <Activity icon={<IconFileText size={24} />} title="Recent Activity" />
-                </Grid.Col>
-              </Grid>
+              <Upcoming icon={<IconLayoutGrid size={24} />} title="Upcoming Tasks" />
+              <DueTodayWidget />
+              <TasksByPriority />
+              <ProjectTimeline />
+              <WeeklyProgress />
+              <RecentProjects />
             </Stack>
           </Grid.Col>
 
-          {/* Right Sidebar Widgets */}
-          <Grid.Col span={{ lg: 4, md: 12, sm: 12 }}>
-            <Stack gap="md">
-              <CalendarWidget />
-              <BookmarksWidget />
-              <FocusTimer />
-              <TimeTrackingWidget />
-              <MoodTracker />
-              <ProjectTimeline />
-              <WeeklyProgress />
-              <TasksByPriority />
-              <RecentProjects />
-              <TagsCloud />
-            </Stack>
+          {/* Middle Column: Activity & Content */}
+          <Grid.Col span={{ base: 12, md: 4 }}>
+             <Stack gap="md">
+                <Paper style={{ border: '1px solid #e0e0e0' }} p="md" radius="md" shadow="xs">
+                  <Group justify="space-between" mb="sm">
+                    <Title order={3}>Project Stats</Title>
+                    <IconArrowUpRight size={20} color={theme.colors.gray[6]} />
+                  </Group>
+                  <BarChart data={projects} />
+                </Paper>
+                <NotesHeatmap />
+                <Activity icon={<IconLayoutGrid size={24} />} title="Recent Activity" />
+                <SocialWidget />
+                <NotesStatsWidget />
+             </Stack>
+          </Grid.Col>
+
+          {/* Right Column: Personal & Tracking */}
+          <Grid.Col span={{ base: 12, md: 4 }}>
+             <Stack gap="md">
+                <CalendarWidget />
+                <FocusTimer />
+                <HabitsTracker />
+                <MoodTracker />
+                <InsightsWidget />
+                <GoalsTrackerWidget />
+                <AchievementBadgesWidget />
+                <BookmarksWidget />
+                <TimeTrackingWidget />
+                <TagsCloud />
+             </Stack>
           </Grid.Col>
         </Grid>
       </Stack>
-    </div>
+    </Container>
   );
 };
 

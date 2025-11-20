@@ -41,6 +41,7 @@ Noteece is **`Production Ready`**. All core modules are implemented, tested, and
 - **Mobile App (iOS/Android):** Fully functional companion app with offline support for Notes, Tasks, Health, and Music.
 - **Spaced Repetition System (SRS):** A system for creating and reviewing knowledge cards from your notes.
 - **Social Media Suite:** A local-first social media aggregator. Supports Twitter, Mastodon, and more.
+- **Universal Dashboard:** A centralized, widget-based view of your entire digital life (Notes, Tasks, Health, Music, Social).
 - **Health Hub:** Track vital metrics and wellness data securely.
 - **Music Hub:** Manage your local library and playlists.
 
