@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ulid::Ulid;
 
-
 #[derive(Error, Debug)]
 pub enum ForesightError {
     #[error("Database error: {0}")]
@@ -81,9 +80,10 @@ fn detect_deadline_pressure(
          WHERE space_id = ?1 AND status != 'completed' AND due_at BETWEEN ?2 AND ?3",
     )?;
 
-    let tasks = stmt.query_map(params![space_id.to_string(), now, three_days_later], |row| {
-        Ok((row.get(0)?, row.get(1)?, row.get(2)?))
-    })?;
+    let tasks = stmt.query_map(
+        params![space_id.to_string(), now, three_days_later],
+        |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+    )?;
 
     let mut insights = Vec::new();
     for task_res in tasks {
@@ -133,10 +133,9 @@ fn detect_project_stagnation(
          HAVING MAX(COALESCE(t.completed_at, 0)) < ?2",
     )?;
 
-    let projects =
-        stmt.query_map(params![space_id.to_string(), seven_days_ago], |row| {
-            Ok((row.get(0)?, row.get(1)?))
-        })?;
+    let projects = stmt.query_map(params![space_id.to_string(), seven_days_ago], |row| {
+        Ok((row.get(0)?, row.get(1)?))
+    })?;
 
     let mut insights = Vec::new();
     for project_res in projects {

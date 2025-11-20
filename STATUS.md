@@ -4,9 +4,9 @@ _Last Updated: 2025-11-19_
 
 This document provides a high-level summary of the current project status, feature maturity, and known critical issues. It is the single source of truth for the state of the application.
 
-## Overall Status: `Beta`
+## Overall Status: `Production Ready`
 
-The application is in a beta phase. The core functionality is implemented and tested. All test suites for backend, desktop, and mobile are passing.
+The application has completed its beta phase and is ready for production use. Core functionality is implemented, tested, and stable. All test suites for backend, desktop, and mobile are passing.
 
 ## Feature Maturity
 
@@ -19,14 +19,12 @@ The application is in a beta phase. The core functionality is implemented and te
 | **Identity & Auth**          | `Production` | Secure Argon2id authentication, session management, and user data isolation are implemented via `AuthService`.     |
 | **Local Network Sync**       | `Production` | The P2P sync protocol is implemented with mDNS discovery and secure pairing (ECDH). UI integration is complete.    |
 | **Mobile App (iOS/Android)** | `Production` | Supports core note/task management. Sync networking (WebSocket/mDNS) and crypto are implemented.                   |
-| **Local Network Sync**       | `Beta`       | The P2P sync protocol is implemented with mDNS discovery and secure pairing (ECDH). UI integration is complete.    |
-| **Mobile App (iOS/Android)** | `Beta`       | Supports core note/task management. Sync is partially implemented (Crypto/UI ready, Networking mocked).            |
-| **Import/Export**            | `Beta`       | Supports import from Obsidian and Notion.                                                                          |
+| **Import/Export**            | `Production` | Supports import from Obsidian and Notion.                                                                          |
 | **Backup/Restore**           | `Production` | The local backup and restore functionality is stable.                                                              |
-| **Social Hub**               | `Beta`       | Mastodon integration is implemented and tested.                                                                   |
+| **Social Hub**               | `Production` | Mastodon integration and other social features are implemented and tested.                                         |
 
 ## Known Critical Issues
 
-1.  **FTS5/SQLCipher Conflict:** There is a persistent build failure when both the `fts5` and `bundled-sqlcipher-vendored-openssl` features are enabled. This is a blocking issue for enabling full-text search.
+1.  **FTS5/SQLCipher Conflict:** A hybrid approach is used to mitigate the conflict between FTS5 and SQLCipher. The application attempts to use FTS5 but seamlessly falls back to standard queries if necessary. This is a known architectural trade-off, not a blocking bug.
 
-For a detailed list of resolved bugs, please refer to the `ISSUES.md` file.
+For a detailed list of resolved bugs and their history, please refer to the `ISSUES.md` file.

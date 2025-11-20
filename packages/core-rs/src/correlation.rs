@@ -106,17 +106,27 @@ impl CorrelationEngine {
             .map(|m| m.recorded_at / 86400)
             .collect();
 
-        if low_mood_days.len() < MIN_LOW_MOOD_DAYS { return None; }
+        if low_mood_days.len() < MIN_LOW_MOOD_DAYS {
+            return None;
+        }
         let low_mood_start = *low_mood_days.iter().min()?;
         let low_mood_end = *low_mood_days.iter().max()?;
 
-        let work_hours: f64 = context.time_entries.iter()
-            .filter(|e| (e.started_at / 86400) >= low_mood_start && (e.started_at / 86400) <= low_mood_end && e.ended_at.is_some())
+        let work_hours: f64 = context
+            .time_entries
+            .iter()
+            .filter(|e| {
+                (e.started_at / 86400) >= low_mood_start
+                    && (e.started_at / 86400) <= low_mood_end
+                    && e.ended_at.is_some()
+            })
             .map(|e| (e.ended_at.unwrap() - e.started_at) as f64 / 3600.0)
             .sum();
 
         let num_days = (low_mood_end - low_mood_start + 1) as f64;
-        if num_days == 0.0 { return None; }
+        if num_days == 0.0 {
+            return None;
+        }
         let expected_hours = num_days * 8.0;
         let overwork_ratio = work_hours / expected_hours;
 
@@ -127,12 +137,23 @@ impl CorrelationEngine {
                 entities: vec![],
                 pattern_description: "Low mood correlates with high workload.".to_string(),
                 metadata: [
-                    ("low_mood_days".to_string(), serde_json::json!(low_mood_days.len())),
+                    (
+                        "low_mood_days".to_string(),
+                        serde_json::json!(low_mood_days.len()),
+                    ),
                     ("work_hours".to_string(), serde_json::json!(work_hours)),
-                    ("overwork_ratio".to_string(), serde_json::json!(overwork_ratio))
-                ].iter().cloned().collect(),
+                    (
+                        "overwork_ratio".to_string(),
+                        serde_json::json!(overwork_ratio),
+                    ),
+                ]
+                .iter()
+                .cloned()
+                .collect(),
             })
-        } else { None }
+        } else {
+            None
+        }
     }
 
     fn correlation_to_insight(&self, correlation: Correlation) -> Option<Insight> {
@@ -145,7 +166,10 @@ impl CorrelationEngine {
                     id: Ulid::new().to_string(),
                     insight_type: InsightType::HighWorkload,
                     title: "Workload may be affecting well-being".to_string(),
-                    description: format!("Your mood has been low for {} days, coinciding with {:.1} hours of work.", low_mood_days, work_hours),
+                    description: format!(
+                        "Your mood has been low for {} days, coinciding with {:.1} hours of work.",
+                        low_mood_days, work_hours
+                    ),
                     severity: InsightSeverity::Medium,
                     context: InsightContext {
                         entity_id: None,
@@ -165,22 +189,41 @@ impl CorrelationEngine {
     }
 
     // FINALIZED: Functions match the now-corrected signatures in other modules.
-    fn fetch_health_metrics(&self, conn: &Connection, space_id: &str, since: i64) -> Result<Vec<HealthMetric>, CorrelationError> {
+    fn fetch_health_metrics(
+        &self,
+        conn: &Connection,
+        space_id: &str,
+        since: i64,
+    ) -> Result<Vec<HealthMetric>, CorrelationError> {
         crate::personal_modes::get_health_metrics_since(conn, space_id, since)
             .map_err(|e| CorrelationError::Analysis(e.to_string()))
     }
 
-    fn fetch_time_entries(&self, conn: &Connection, space_id: &str, since: i64) -> Result<Vec<TimeEntry>, CorrelationError> {
+    fn fetch_time_entries(
+        &self,
+        conn: &Connection,
+        space_id: &str,
+        since: i64,
+    ) -> Result<Vec<TimeEntry>, CorrelationError> {
         crate::time_tracking::get_time_entries_since(conn, space_id, since)
             .map_err(|e| CorrelationError::Analysis(e.to_string()))
     }
 
-    fn fetch_tasks(&self, conn: &Connection, space_id: Ulid) -> Result<Vec<Task>, CorrelationError> {
+    fn fetch_tasks(
+        &self,
+        conn: &Connection,
+        space_id: Ulid,
+    ) -> Result<Vec<Task>, CorrelationError> {
         crate::task::get_all_tasks_in_space(conn, space_id)
             .map_err(|e| CorrelationError::Analysis(e.to_string()))
     }
 
-    fn fetch_transactions(&self, conn: &Connection, space_id: &str, since: i64) -> Result<Vec<Transaction>, CorrelationError> {
+    fn fetch_transactions(
+        &self,
+        conn: &Connection,
+        space_id: &str,
+        since: i64,
+    ) -> Result<Vec<Transaction>, CorrelationError> {
         crate::personal_modes::get_transactions_since(conn, space_id, since)
             .map_err(|e| CorrelationError::Analysis(e.to_string()))
     }

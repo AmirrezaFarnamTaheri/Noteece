@@ -14,7 +14,7 @@ describe("SyncClient", () => {
 
   describe("discoverDevices", () => {
     it("should return an array of devices", async () => {
-      const devices = await syncClient.discoverDevices();
+      const devices = await syncClient.discoverDevices(100); // Short timeout for test
       expect(Array.isArray(devices)).toBe(true);
     });
   });

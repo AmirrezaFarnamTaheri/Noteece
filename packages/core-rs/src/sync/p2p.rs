@@ -2,12 +2,12 @@
 // This module integrates the discovery and mobile_sync modules to provide a complete P2P sync solution.
 
 use super::discovery::{DiscoveredDevice, DiscoveryService};
-use super::mobile_sync::{SyncProtocol, DeviceInfo, SyncCategory};
-use thiserror::Error;
+use super::mobile_sync::{DeviceInfo, SyncCategory, SyncProtocol};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tokio::net::TcpListener;
+use thiserror::Error;
 use tokio::io::AsyncReadExt;
+use tokio::net::TcpListener;
 
 #[derive(Error, Debug)]
 pub enum P2pError {
@@ -36,11 +36,16 @@ impl P2pSync {
     }
 
     pub async fn start_server(&self, port: u16) -> Result<(), P2pError> {
-        let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).await.map_err(|e| P2pError::Network(e.to_string()))?;
+        let listener = TcpListener::bind(format!("0.0.0.0:{}", port))
+            .await
+            .map_err(|e| P2pError::Network(e.to_string()))?;
         log::info!("[p2p] Sync server listening on port {}", port);
 
         loop {
-            let (mut socket, _) = listener.accept().await.map_err(|e| P2pError::Network(e.to_string()))?;
+            let (mut socket, _) = listener
+                .accept()
+                .await
+                .map_err(|e| P2pError::Network(e.to_string()))?;
             log::info!("[p2p] New connection from {}", socket.peer_addr().unwrap());
 
             tokio::spawn(async move {
@@ -61,11 +66,16 @@ impl P2pSync {
     }
 
     pub fn discover_peers(&self) -> Result<Vec<DiscoveredDevice>, P2pError> {
-        self.discovery.discover(Duration::from_secs(5)).map_err(|e| P2pError::Discovery(e.to_string()))
+        self.discovery
+            .discover(Duration::from_secs(5))
+            .map_err(|e| P2pError::Discovery(e.to_string()))
     }
 
     pub async fn start_sync(&self, device_id: &str) -> Result<(), P2pError> {
         let mut protocol = self.protocol.lock().unwrap();
-        protocol.start_sync(device_id, vec![SyncCategory::Posts]).await.map_err(|e| P2pError::Sync(e.to_string()))
+        protocol
+            .start_sync(device_id, vec![SyncCategory::Posts])
+            .await
+            .map_err(|e| P2pError::Sync(e.to_string()))
     }
 }

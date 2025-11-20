@@ -53,8 +53,11 @@ fn test_weekly_stats_aggregation() {
     let now = chrono::Utc::now().timestamp();
 
     // Complete a task now
-    conn.execute("INSERT INTO task (id, completed_at) VALUES ('1', ?1)", [now])
-        .unwrap();
+    conn.execute(
+        "INSERT INTO task (id, completed_at) VALUES ('1', ?1)",
+        [now],
+    )
+    .unwrap();
 
     let data = get_analytics_data(&conn).unwrap();
 

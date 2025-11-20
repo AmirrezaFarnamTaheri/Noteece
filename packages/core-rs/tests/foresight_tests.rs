@@ -26,8 +26,7 @@ fn test_generate_insights() {
         &[&space_id.to_string()],
     )
     .unwrap();
-    let project =
-        project::create_project(&conn, &space_id.to_string(), "Test Project").unwrap();
+    let project = project::create_project(&conn, &space_id.to_string(), "Test Project").unwrap();
 
     let now = chrono::Utc::now().timestamp();
     let tomorrow = now + 86400;

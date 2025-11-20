@@ -312,7 +312,6 @@ impl BackupService {
         Ok(serde_json::to_vec(&export)?)
     }
 
-
     /// Clear all social-related tables within a transaction
     fn clear_database_tx(&self, tx: &rusqlite::Transaction) -> Result<(), BackupError> {
         let tables = vec![

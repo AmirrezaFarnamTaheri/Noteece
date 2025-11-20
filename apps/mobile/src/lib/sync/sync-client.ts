@@ -9,7 +9,7 @@ import { dbQuery, dbExecute } from "@/lib/database";
 import { chacha20poly1305 } from "@noble/ciphers/chacha";
 import { sha256 } from "@noble/hashes/sha256";
 import { hmac } from "@noble/hashes/hmac";
-import Zeroconf from 'react-native-zeroconf';
+import Zeroconf from "react-native-zeroconf";
 
 export interface SyncManifest {
   deviceId: string;
@@ -50,32 +50,41 @@ export class SyncClient {
   /**
    * Discover devices on local network using mDNS
    */
-  async discoverDevices(): Promise<
+  async discoverDevices(scanDurationMs: number = 5000): Promise<
     { id: string; name: string; address: string; port: number }[]
   > {
     return new Promise((resolve, reject) => {
-      const devices: { id: string; name: string; address: string; port: number }[] = [];
+      const devices: {
+        id: string;
+        name: string;
+        address: string;
+        port: number;
+      }[] = [];
       const timeout = setTimeout(() => {
         this.zeroconf.stop();
         this.zeroconf.removeDeviceListeners();
         resolve(devices);
-      }, 5000);
+      }, scanDurationMs);
 
-      this.zeroconf.scan(type = 'noteece-sync', protocol = 'tcp', domain = 'local.');
+      this.zeroconf.scan(
+        (type = "noteece-sync"),
+        (protocol = "tcp"),
+        (domain = "local."),
+      );
 
-      this.zeroconf.on('resolved', (data: any) => {
+      this.zeroconf.on("resolved", (data: any) => {
         // Filter for our service type
         if (data.name && data.addresses && data.addresses.length > 0) {
-            devices.push({
-                id: data.name, // Assuming name is device ID or we parse it from TXT records
-                name: data.fullName || data.name,
-                address: data.addresses[0],
-                port: data.port
-            });
+          devices.push({
+            id: data.name, // Assuming name is device ID or we parse it from TXT records
+            name: data.fullName || data.name,
+            address: data.addresses[0],
+            port: data.port,
+          });
         }
       });
 
-      this.zeroconf.on('error', (err: any) => {
+      this.zeroconf.on("error", (err: any) => {
         clearTimeout(timeout);
         this.zeroconf.stop();
         reject(err);
@@ -89,17 +98,24 @@ export class SyncClient {
   async initiateSync(
     targetDeviceId: string,
     targetAddress: string,
-    targetPort: number = 8765
+    targetPort: number = 8765,
   ): Promise<boolean> {
     try {
       // 1. Establish secure connection
-      const ws = await this.establishSecureConnection(targetAddress, targetPort);
+      const ws = await this.establishSecureConnection(
+        targetAddress,
+        targetPort,
+      );
 
       // 2. Get last sync timestamp
       const lastSync = await this.getLastSyncTimestamp(targetDeviceId);
 
       // 3. Request sync manifest from target
-      const manifest = await this.requestSyncManifest(ws, targetDeviceId, lastSync);
+      const manifest = await this.requestSyncManifest(
+        ws,
+        targetDeviceId,
+        lastSync,
+      );
 
       // 4. Pull changes
       await this.pullChanges(ws, manifest);
@@ -121,36 +137,41 @@ export class SyncClient {
   /**
    * Establish secure connection with ECDH key exchange
    */
-  private async establishSecureConnection(address: string, port: number): Promise<WebSocket> {
+  private async establishSecureConnection(
+    address: string,
+    port: number,
+  ): Promise<WebSocket> {
     return new Promise((resolve, reject) => {
-        const ws = new WebSocket(`ws://${address}:${port}/sync`);
+      const ws = new WebSocket(`ws://${address}:${port}/sync`);
 
-        ws.onopen = async () => {
-            try {
-                 // Perform Key Exchange Handshake here
-                 // For Beta/Hotfix, we use the fixed key, but we simulate the handshake message
-                 ws.send(JSON.stringify({
-                     type: 'handshake',
-                     deviceId: this.deviceId,
-                     version: '1.0'
-                 }));
+      ws.onopen = async () => {
+        try {
+          // Perform Key Exchange Handshake here
+          // For Beta/Hotfix, we use the fixed key, but we simulate the handshake message
+          ws.send(
+            JSON.stringify({
+              type: "handshake",
+              deviceId: this.deviceId,
+              version: "1.0",
+            }),
+          );
 
-                 // In a real implementation, we would wait for the server's public key
-                 // calculate the shared secret, and then resolve.
+          // In a real implementation, we would wait for the server's public key
+          // calculate the shared secret, and then resolve.
 
-                 // HOTFIX: Hardcoded key
-                 this.sessionKey = new Uint8Array(32).fill(1);
-                 this.peerAuthenticated = true;
+          // HOTFIX: Hardcoded key
+          this.sessionKey = new Uint8Array(32).fill(1);
+          this.peerAuthenticated = true;
 
-                 resolve(ws);
-            } catch (e) {
-                reject(e);
-            }
-        };
+          resolve(ws);
+        } catch (e) {
+          reject(e);
+        }
+      };
 
-        ws.onerror = (e) => {
-            reject(new Error(`WebSocket connection failed: ${e.message}`));
-        };
+      ws.onerror = (e) => {
+        reject(new Error(`WebSocket connection failed: ${e.message}`));
+      };
     });
   }
 
@@ -174,37 +195,42 @@ export class SyncClient {
     deviceId: string,
     sinceTimestamp: number,
   ): Promise<SyncManifest> {
-     return new Promise((resolve, reject) => {
-         const requestId = nanoid();
+    return new Promise((resolve, reject) => {
+      const requestId = nanoid();
 
-         const handler = (e: WebSocketMessageEvent) => {
-             const data = JSON.parse(e.data);
-             if (data.type === 'manifest_response' && data.requestId === requestId) {
-                 ws.removeEventListener('message', handler);
-                 resolve(data.manifest);
-             }
-         };
+      const handler = (e: WebSocketMessageEvent) => {
+        const data = JSON.parse(e.data);
+        if (data.type === "manifest_response" && data.requestId === requestId) {
+          ws.removeEventListener("message", handler);
+          resolve(data.manifest);
+        }
+      };
 
-         ws.addEventListener('message', handler);
+      ws.addEventListener("message", handler);
 
-         ws.send(JSON.stringify({
-             type: 'get_manifest',
-             requestId,
-             since: sinceTimestamp
-         }));
+      ws.send(
+        JSON.stringify({
+          type: "get_manifest",
+          requestId,
+          since: sinceTimestamp,
+        }),
+      );
 
-         // Timeout fallback
-         setTimeout(() => {
-             ws.removeEventListener('message', handler);
-             reject(new Error("Timeout waiting for manifest"));
-         }, 10000);
-     });
+      // Timeout fallback
+      setTimeout(() => {
+        ws.removeEventListener("message", handler);
+        reject(new Error("Timeout waiting for manifest"));
+      }, 10000);
+    });
   }
 
   /**
    * Pull changes from remote device
    */
-  private async pullChanges(ws: WebSocket, manifest: SyncManifest): Promise<void> {
+  private async pullChanges(
+    ws: WebSocket,
+    manifest: SyncManifest,
+  ): Promise<void> {
     for (const change of manifest.changes) {
       const delta = await this.requestDelta(ws, change);
       await this.applyChange(delta);
@@ -214,29 +240,34 @@ export class SyncClient {
   /**
    * Request encrypted delta for a change
    */
-  private async requestDelta(ws: WebSocket, change: ChangeEntry): Promise<SyncDelta> {
-      return new Promise((resolve, reject) => {
-         const requestId = nanoid();
-         const handler = (e: WebSocketMessageEvent) => {
-             const data = JSON.parse(e.data);
-             if (data.type === 'delta_response' && data.requestId === requestId) {
-                 ws.removeEventListener('message', handler);
-                 // Convert hex/base64 payload back to Uint8Array if needed
-                 // Assuming server sends base64
-                 // const payload = Uint8Array.from(atob(data.delta.payload), c => c.charCodeAt(0));
-                 // For simplicity in this mock-up logic:
-                 resolve(data.delta);
-             }
-         };
-         ws.addEventListener('message', handler);
+  private async requestDelta(
+    ws: WebSocket,
+    change: ChangeEntry,
+  ): Promise<SyncDelta> {
+    return new Promise((resolve, reject) => {
+      const requestId = nanoid();
+      const handler = (e: WebSocketMessageEvent) => {
+        const data = JSON.parse(e.data);
+        if (data.type === "delta_response" && data.requestId === requestId) {
+          ws.removeEventListener("message", handler);
+          // Convert hex/base64 payload back to Uint8Array if needed
+          // Assuming server sends base64
+          // const payload = Uint8Array.from(atob(data.delta.payload), c => c.charCodeAt(0));
+          // For simplicity in this mock-up logic:
+          resolve(data.delta);
+        }
+      };
+      ws.addEventListener("message", handler);
 
-         ws.send(JSON.stringify({
-             type: 'get_delta',
-             requestId,
-             entityId: change.entityId,
-             entityType: change.entityType
-         }));
-      });
+      ws.send(
+        JSON.stringify({
+          type: "get_delta",
+          requestId,
+          entityId: change.entityId,
+          entityType: change.entityType,
+        }),
+      );
+    });
   }
 
   /**
@@ -730,20 +761,26 @@ export class SyncClient {
   /**
    * Send delta to remote device via WebSocket
    */
-  private async sendDelta(ws: WebSocket, deviceId: string, delta: SyncDelta): Promise<void> {
-      ws.send(JSON.stringify({
-          type: 'push_delta',
-          delta
-      }));
+  private async sendDelta(
+    ws: WebSocket,
+    deviceId: string,
+    delta: SyncDelta,
+  ): Promise<void> {
+    ws.send(
+      JSON.stringify({
+        type: "push_delta",
+        delta,
+      }),
+    );
 
-      // Optimistically mark as synced or wait for ack?
-      // For simple impl, assume success if send doesn't throw
-      // A robust impl would wait for ACK.
-      await dbExecute(
-        `UPDATE sync_queue SET synced = 1
+    // Optimistically mark as synced or wait for ack?
+    // For simple impl, assume success if send doesn't throw
+    // A robust impl would wait for ACK.
+    await dbExecute(
+      `UPDATE sync_queue SET synced = 1
          WHERE entity_id = ? AND entity_type = ?`,
-        [delta.entityId, delta.entityType],
-      );
+      [delta.entityId, delta.entityType],
+    );
   }
 
   /**
