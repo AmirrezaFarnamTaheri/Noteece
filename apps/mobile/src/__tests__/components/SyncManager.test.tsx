@@ -29,10 +29,20 @@ describe("SyncManager Component", () => {
 
   it("triggers discovery on press", async () => {
     const { findByText } = render(<SyncManager />);
+
+    // Wait for the initial discovery (triggered by useEffect) to complete
+    await waitFor(() => {
+      expect(mockSyncClient.discoverDevices).toHaveBeenCalled();
+    });
+
+    // Find button by text options since it changes based on state
     const button = await findByText(/Scan/i);
+
     // Clear the mock from the initial useEffect call
     mockSyncClient.discoverDevices.mockClear();
+
     fireEvent.press(button);
+
     await waitFor(() => {
       expect(mockSyncClient.discoverDevices).toHaveBeenCalled();
     });

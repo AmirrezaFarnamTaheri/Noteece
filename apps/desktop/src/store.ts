@@ -15,7 +15,7 @@ const store: StateCreator<AppState> = (set) => ({
   activeSpaceId: null,
   setSpaces: (spaces) => set({ spaces }),
   setActiveSpaceId: (spaceId) => set({ activeSpaceId: spaceId }),
-  clearStorage: () => set({}, true),
+  clearStorage: () => set({ spaces: [], activeSpaceId: null }),
 });
 
 // Only use persist middleware in browser environment

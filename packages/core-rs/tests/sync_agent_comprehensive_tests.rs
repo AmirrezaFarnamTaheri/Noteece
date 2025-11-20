@@ -160,9 +160,9 @@ fn test_sync_agent_creation() {
     let device_name = "Test Device".to_string();
     let sync_port = 8765;
 
-    let agent = SyncAgent::new(device_id.clone(), device_name.clone(), sync_port);
+    let _agent = SyncAgent::new(device_id.clone(), device_name.clone(), sync_port);
 
-    let info = agent.get_device_info();
+    let info = SyncAgent::new(device_id.clone(), device_name.clone(), sync_port).get_device_info();
     assert_eq!(info.device_id, device_id);
     assert_eq!(info.device_name, device_name);
     assert_eq!(info.sync_port, sync_port);

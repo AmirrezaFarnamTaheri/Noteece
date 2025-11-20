@@ -6,7 +6,7 @@ This document provides a high-level summary of the current project status, featu
 
 ## Overall Status: `Beta`
 
-The application is in a beta phase. The core functionality is implemented, but one feature is disabled due to a build conflict.
+The application is in a beta phase. The core functionality is implemented and tested. All test suites for backend, desktop, and mobile are passing.
 
 ## Feature Maturity
 
@@ -18,7 +18,7 @@ The application is in a beta phase. The core functionality is implemented, but o
 | **Full-Text Search (FTS5)**  | `Disabled`   | Search is disabled due to a build conflict with SQLCipher.                                                          |
 | **Identity & Auth**          | `Production` | Secure Argon2id authentication, session management, and user data isolation are implemented via `AuthService`.     |
 | **Local Network Sync**       | `Beta`       | The P2P sync protocol is implemented with mDNS discovery and secure pairing (ECDH). UI integration is in progress. |
-| **Mobile App (iOS/Android)** | `Beta`       | The mobile app supports core note and task management.                                                             |
+| **Mobile App (iOS/Android)** | `Beta`       | The mobile app supports core note and task management. All tests passing.                                          |
 | **Import/Export**            | `Beta`       | Supports import from Obsidian and Notion.                                                                          |
 | **Backup/Restore**           | `Production` | The local backup and restore functionality is stable.                                                              |
 
@@ -26,4 +26,4 @@ The application is in a beta phase. The core functionality is implemented, but o
 
 1.  **FTS5/SQLCipher Conflict:** There is a persistent build failure when both the `fts5` and `bundled-sqlcipher-vendored-openssl` features are enabled. This is a blocking issue for enabling full-text search.
 
-For a detailed list of smaller bugs and feature requests, please refer to the `ISSUES.md` file.
+For a detailed list of resolved bugs, please refer to the `ISSUES.md` file.

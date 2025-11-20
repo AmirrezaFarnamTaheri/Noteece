@@ -619,7 +619,7 @@ mod tests {
         let conn = setup_test_db();
 
         // Create account and post
-        let dek = [0u8; 32];
+        let _dek = [0u8; 32];
         conn.execute(
             "INSERT INTO social_account (id, space_id, platform, username, display_name, encrypted_credentials, enabled, sync_frequency_minutes, created_at)
              VALUES ('account1', 'test_space', 'twitter', 'user1', 'User 1', x'00', 1, 60, 0)",

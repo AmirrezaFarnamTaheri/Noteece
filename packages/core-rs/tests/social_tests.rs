@@ -2,7 +2,7 @@ use core_rs::social::*;
 use rusqlite::Connection;
 
 fn setup_db() -> Connection {
-    let mut conn = Connection::open_in_memory().unwrap();
+    let conn = Connection::open_in_memory().unwrap();
 
     // Setup basic schema
     conn.execute(

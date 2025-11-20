@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import { render, waitFor } from "@testing-library/react-native";
 import { SocialHub } from "../../screens/SocialHub";
 import * as SocialDatabase from "../../lib/social-database";
 

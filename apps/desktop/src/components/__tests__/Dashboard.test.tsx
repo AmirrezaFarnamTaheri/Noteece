@@ -37,11 +37,19 @@ jest.mock('../../hooks/useQueries', () => ({
 }));
 
 // Mock store
-jest.mock('../../store', () => ({
-  useStore: jest.fn(() => ({
+jest.mock('../../store', () => {
+  const mockStore = jest.fn(() => ({
     activeSpaceId: 'test-space-id',
-  })),
-}));
+  }));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (mockStore as any).getState = () => ({
+    activeSpaceId: 'test-space-id',
+    clearStorage: jest.fn(),
+  });
+  return {
+    useStore: mockStore,
+  };
+});
 
 // Mock auth service
 jest.mock('../../services/auth', () => ({
@@ -67,8 +75,13 @@ import { useStore } from '../../store';
 
 beforeEach(() => {
   // Reset the Zustand store and localStorage before each test
-  const { clearStorage } = useStore.getState();
-  clearStorage();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const store = useStore.getState() as any;
+  if (store.clearStorage) {
+    store.clearStorage();
+  } else {
+    useStore.setState({ spaces: [], activeSpaceId: null });
+  }
   localStorage.clear();
 
   queryClient.clear();
