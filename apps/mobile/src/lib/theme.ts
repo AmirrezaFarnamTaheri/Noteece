@@ -1,45 +1,50 @@
 // Modern, beautiful color palette inspired by Notion and Linear
+// Updated to match Desktop's revolutionary aesthetic (Deep Indigo/Teal)
+
 export const colors = {
   // Primary brand colors
-  primary: "#6366F1",
-  primaryLight: "#818CF8",
-  primaryDark: "#4F46E5",
+  primary: "#4C6EF5", // Indigo-500 (Matches Desktop)
+  primaryLight: "#748FFC",
+  primaryDark: "#364FC7",
 
-  // Background colors (dark mode optimized)
-  background: "#0A0E27",
-  backgroundElevated: "#14182E",
-  backgroundHover: "#1C2137",
+  // Background colors (dark mode optimized - Obsidian/Slate)
+  background: "#101113", // Dark 9
+  backgroundElevated: "#141517", // Dark 8
+  backgroundHover: "#25262B", // Dark 6
 
   // Surface colors
-  surface: "#1E2235",
-  surfaceElevated: "#252A40",
+  surface: "#1A1B1E", // Dark 7
+  surfaceElevated: "#2C2E33", // Dark 5
+  surfaceInput: "rgba(255, 255, 255, 0.05)",
 
   // Text colors
-  text: "#E4E7EC",
-  textPrimary: "#E4E7EC", // Alias for 'text' for consistency
-  textSecondary: "#9CA3AF",
-  textTertiary: "#6B7280",
+  text: "#C1C2C5", // Dark 0
+  textPrimary: "#C1C2C5",
+  textSecondary: "#909296", // Dark 2
+  textTertiary: "#5C5F66", // Dark 3
+  textInverse: "#101113",
 
   // Semantic colors
-  success: "#10B981",
-  warning: "#F59E0B",
-  error: "#EF4444",
-  info: "#3B82F6",
+  success: "#20C997", // Teal-500
+  warning: "#FCC419", // Yellow-500
+  error: "#FA5252", // Red-500
+  info: "#4C6EF5", // Indigo-500
 
-  // Accent colors for different content types
-  task: "#8B5CF6",
-  note: "#06B6D4",
-  calendar: "#EC4899",
-  health: "#10B981",
-  finance: "#F59E0B",
+  // Accent colors for different content types (Vibrant)
+  task: "#748FFC", // Indigo
+  note: "#228BE6", // Blue
+  calendar: "#FA5252", // Red/Pink
+  health: "#20C997", // Teal
+  finance: "#FAB005", // Yellow
+  social: "#BE4BDB", // Grape
 
   // Borders and dividers
-  border: "#2D3348",
-  borderLight: "#3B4158",
+  border: "#2C2E33", // Dark 5
+  borderLight: "#373A40", // Dark 4
 
   // Overlay and shadow
-  overlay: "rgba(0, 0, 0, 0.5)",
-  shadow: "rgba(0, 0, 0, 0.3)",
+  overlay: "rgba(0, 0, 0, 0.7)",
+  shadow: "rgba(0, 0, 0, 0.5)",
 };
 
 export const spacing = {
@@ -57,7 +62,7 @@ export const typography = {
     medium: "Inter-Medium",
     semibold: "Inter-SemiBold",
     bold: "Inter-Bold",
-    mono: "Courier New", // Monospace font for code/error displays
+    mono: "JetBrainsMono-Regular",
   },
   fontSize: {
     xs: 12,
@@ -65,47 +70,47 @@ export const typography = {
     base: 16,
     lg: 18,
     xl: 20,
-    "2xl": 24, // Alias for xxl (TailwindCSS-style naming)
+    "2xl": 24,
     xxl: 24,
-    "3xl": 32, // Alias for xxxl (TailwindCSS-style naming)
-    xxxl: 32,
+    "3xl": 30,
+    xxxl: 30,
   } as Record<string, number>,
   lineHeight: {
-    tight: 1.25,
+    tight: 1.2,
     normal: 1.5,
     relaxed: 1.75,
   },
 };
 
 export const borderRadius = {
-  sm: 6,
-  md: 12,
-  lg: 16,
-  xl: 24,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
   full: 9999,
 };
 
 export const shadows = {
   sm: {
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  md: {
-    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 2,
   },
-  lg: {
+  md: {
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
+  },
+  lg: {
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
   },
 };
 

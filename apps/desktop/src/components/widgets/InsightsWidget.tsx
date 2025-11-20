@@ -59,7 +59,7 @@ export default function InsightsWidget() {
         description: `You created ${recentNotes.length} notes this week. Keep it up!`,
         icon: '🎉',
       });
-    } else if (recentNotes.length === 0) {
+    } else if (recentNotes.length === 0 && notes.length > 0) {
       insights.push({
         id: '1b',
         type: 'suggestion',

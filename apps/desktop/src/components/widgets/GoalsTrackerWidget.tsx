@@ -53,7 +53,8 @@ export function GoalsTrackerWidget() {
     if (activeSpaceId) {
       try {
         const fetchedGoals: Goal[] = await invoke('get_goals_cmd', { spaceId: activeSpaceId });
-        setGoals(fetchedGoals);
+        // Ensure fetchedGoals is an array, even if backend returns null/undefined
+        setGoals(Array.isArray(fetchedGoals) ? fetchedGoals : []);
       } catch (error) {
         logger.error('Error fetching goals:', error as Error);
       }

@@ -39,6 +39,9 @@ describe("useTodayTimeline", () => {
   });
 
   it("handles errors gracefully", async () => {
+    // Mock console.error to suppress the expected error log
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
     (Database.dbQuery as jest.Mock).mockRejectedValue(new Error("DB Error"));
     const { result } = renderHook(() => useTodayTimeline());
 
@@ -46,5 +49,7 @@ describe("useTodayTimeline", () => {
       expect(result.current.loading).toBe(false);
       expect(result.current.timeline).toHaveLength(0);
     });
+
+    consoleSpy.mockRestore();
   });
 });

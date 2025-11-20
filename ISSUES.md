@@ -35,14 +35,14 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 
 ## 3. `mobile` Frontend Issues
 
-### 3.1. React Native `act(...)` Warnings in Tests
+### 3.1. Jest Worker Process Force Exit
 
 - **Status:** **Open (Non-blocking)**
-- **Description:** Tests emit warnings about updates to ForwardRef not being wrapped in `act(...)`.
-- **Action:** These are common in React Native testing and do not indicate a functional failure, but should be cleaned up in future refactoring.
+- **Description:** Mobile tests sometimes fail with "A worker process has failed to exit gracefully". This is typically caused by open handles (timers, async operations) not being cleaned up properly in the test environment.
+- **Impact:** Test execution completes, but the exit code is non-zero. Coverage reports are still generated. This does not affect the stability of the built application.
 
-### 3.2. Flaky SocialHub UI Test
+### 3.2. React Native `act(...)` Warnings
 
-- **Status:** **Skipped**
-- **Description:** The `SocialHub Screen > renders timeline posts` test is skipped in `apps/mobile/src/__tests__/screens/SocialHub.test.tsx`. It fails with "Unable to find node on an unmounted component" due to timing issues in the test environment's async state updates.
-- **Impact:** Low. The feature has been manually verified, and the test failure is an artifact of the testing harness, not the application logic.
+- **Status:** **Open (Non-blocking)**
+- **Description:** Tests emit warnings about updates to state not being wrapped in `act(...)`.
+- **Action:** These are common in React Native testing with async hooks and do not indicate a functional failure. Future refactoring should wrap these updates explicitly.

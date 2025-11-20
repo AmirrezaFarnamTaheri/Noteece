@@ -72,6 +72,82 @@ jest.mock("expo-linear-gradient", () => ({
   LinearGradient: "LinearGradient",
 }));
 
+// Mock React Native Gesture Handler
+jest.mock("react-native-gesture-handler", () => ({
+  Swipeable: "Swipeable",
+  DrawerLayout: "DrawerLayout",
+  State: {},
+  ScrollView: "ScrollView",
+  Slider: "Slider",
+  Switch: "Switch",
+  TextInput: "TextInput",
+  ToolbarAndroid: "ToolbarAndroid",
+  ViewPagerAndroid: "ViewPagerAndroid",
+  DrawerLayoutAndroid: "DrawerLayoutAndroid",
+  WebView: "WebView",
+  NativeViewGestureHandler: "NativeViewGestureHandler",
+  TapGestureHandler: "TapGestureHandler",
+  FlingGestureHandler: "FlingGestureHandler",
+  ForceTouchGestureHandler: "ForceTouchGestureHandler",
+  LongPressGestureHandler: "LongPressGestureHandler",
+  PanGestureHandler: "PanGestureHandler",
+  PinchGestureHandler: "PinchGestureHandler",
+  RotationGestureHandler: "RotationGestureHandler",
+  /* Buttons */
+  RawButton: "RawButton",
+  BaseButton: "BaseButton",
+  RectButton: "RectButton",
+  BorderlessButton: "BorderlessButton",
+  /* Other */
+  FlatList: "FlatList",
+  gestureHandlerRootHOC: jest.fn(),
+  Directions: {},
+}));
+
+// Mock Reanimated
+jest.mock("react-native-reanimated", () => {
+  const Reanimated = require("react-native-reanimated/mock");
+  // The mock for `call` immediately calls the callback which is incorrect
+  // So we override it with a no-op
+  Reanimated.default.call = () => {};
+  return Reanimated;
+});
+
+// Mock Task Manager
+jest.mock("expo-task-manager", () => ({
+  defineTask: jest.fn(),
+  isTaskRegisteredAsync: jest.fn().mockResolvedValue(false),
+}));
+
+// Mock Expo Haptics
+jest.mock("expo-haptics", () => ({
+  NotificationFeedbackType: {
+    Success: "success",
+    Warning: "warning",
+    Error: "error",
+  },
+  ImpactFeedbackStyle: {
+    Light: "light",
+    Medium: "medium",
+    Heavy: "heavy",
+  },
+  notificationAsync: jest.fn(),
+  impactAsync: jest.fn(),
+}));
+
+// Mock Expo Sharing
+jest.mock("expo-sharing", () => ({
+  shareAsync: jest.fn(),
+  isAvailableAsync: jest.fn(() => Promise.resolve(true)),
+}));
+
+// Mock Expo Linking
+jest.mock("expo-linking", () => ({
+  createURL: jest.fn(),
+  openURL: jest.fn(),
+  addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+}));
+
 // Mock console.log and console.error to reduce noise
 const originalConsoleLog = console.log;
 const originalConsoleError = console.error;
