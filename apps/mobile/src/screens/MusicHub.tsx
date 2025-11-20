@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   Image,
   RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
@@ -56,18 +57,24 @@ async function loadPlaylistsFromDatabase(): Promise<Playlist[]> {
     // Need to get track counts and duration for each playlist
     const enhancedPlaylists = await Promise.all(
       playlists.map(async (p: any) => {
+        // Join with track table to get total duration
         const stats = await dbQuery(
-          "SELECT COUNT(*) as count FROM playlist_track WHERE playlist_id = ?",
+          `SELECT COUNT(*) as count, SUM(t.duration) as total_duration
+           FROM playlist_track pt
+           LEFT JOIN track t ON pt.track_id = t.id
+           WHERE pt.playlist_id = ?`,
           [p.id],
         );
         const count = stats[0]?.count || 0;
+        const duration = stats[0]?.total_duration || 0;
+
         return {
           id: p.id,
           name: p.name,
           description: p.description,
           artworkUrl: p.artwork_url,
           trackCount: count,
-          duration: 0, // TODO: Sum duration
+          duration: duration,
           createdAt: p.created_at,
           updatedAt: p.updated_at,
           isSmartPlaylist: p.is_smart_playlist === 1,
@@ -137,6 +144,7 @@ export function MusicHub() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -375,7 +383,11 @@ export function MusicHub() {
       </View>
 
       {/* Content */}
-      {view === "library" && (
+      {loading && tracks.length === 0 ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#6366F1" />
+        </View>
+      ) : view === "library" ? (
         <FlatList
           data={tracks}
           renderItem={renderTrackItem}
@@ -398,9 +410,7 @@ export function MusicHub() {
             </View>
           }
         />
-      )}
-
-      {view === "playlists" && (
+      ) : view === "playlists" ? (
         <FlatList
           data={playlists}
           renderItem={renderPlaylistItem}
@@ -419,7 +429,7 @@ export function MusicHub() {
             </View>
           }
         />
-      )}
+      ) : null}
 
       {/* Now Playing Mini Player */}
       {renderNowPlaying()}
@@ -586,6 +596,11 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: 15,
     color: "#9CA3AF",
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   nowPlaying: {
     position: "absolute",
