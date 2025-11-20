@@ -11,6 +11,7 @@ Welcome to the Noteece project wiki. This document serves as a comprehensive gui
 5. [Sync Protocol](#sync-protocol)
 6. [Security](#security)
 7. [Database Schema](#database-schema)
+8. [Future Roadmap](#future-roadmap)
 
 ---
 
@@ -71,6 +72,7 @@ Noteece follows a **monorepo** structure using Rust for the core logic and TypeS
     *   **Social Feed:** Recent updates from connected platforms.
     *   **Task Summary:** At-a-glance view of pending and completed work.
     *   **Goals & Habits:** Track your personal progress.
+    *   **Insights:** AI-powered suggestions based on your activity.
 *   **Customizable Layout:** Responsive grid that adapts to your workflow.
 
 ### ❤️ Health Hub
@@ -165,3 +167,13 @@ The schema is versioned and managed via migrations in `packages/core-rs/src/db.r
 *   `habit` / `habit_log`: Habit tracking.
 
 For the full schema definition, refer to `packages/core-rs/src/db.rs` or `apps/mobile/src/lib/database.ts`.
+
+---
+
+## 8. Future Roadmap
+
+See `NEXT_STEPS.md` for detailed plans regarding:
+*   Decentralized Identity & Relay Servers
+*   Local AI Integration (LLM, RAG)
+*   Advanced Collaboration Features
+*   Plugin Architecture (WASM)

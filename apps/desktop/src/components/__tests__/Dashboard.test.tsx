@@ -91,8 +91,17 @@ beforeEach(() => {
       case 'get_recent_notes_cmd':
       case 'get_all_tasks_in_space_cmd':
       case 'get_running_entries_cmd':
-      case 'get_recent_time_entries_cmd': {
+      case 'get_recent_time_entries_cmd':
+      case 'get_goals_cmd': {
         return [];
+      }
+      case 'get_project_stats': {
+        return {
+          total: 2,
+          active: 1,
+          completed: 1,
+          archived: 0,
+        };
       }
       default: {
         return null;

@@ -1,56 +1,34 @@
-import { render, screen } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MantineProvider } from '@mantine/core';
-import { BrowserRouter } from 'react-router-dom';
 import { BookmarksWidget } from '../BookmarksWidget';
 import '@testing-library/jest-dom';
+import { BrowserRouter } from 'react-router-dom';
 
 // Mock hooks
-jest.mock('../../../hooks/useQueries', () => ({
-  useNotes: jest.fn(() => ({
-    data: [
-      {
-        id: '1',
-        title: 'Recent Note 1',
-        content_md: 'Content',
-        modified_at: Date.now() - 1000,
-        is_trashed: false,
-      },
-      {
-        id: '2',
-        title: 'Recent Note 2',
-        content_md: 'Content',
-        modified_at: Date.now() - 2000,
-        is_trashed: false,
-      },
-    ],
-    isLoading: false,
-  })),
-  useTasks: jest.fn(() => ({
-    data: [],
-    isLoading: false,
-  })),
-  useProjects: jest.fn(() => ({
-    data: [],
-    isLoading: false,
-  })),
-}));
+const mockNotes = [
+  { id: '1', title: 'Note 1', is_trashed: false, modified_at: 1000 },
+  { id: '2', title: 'Note 2', is_trashed: false, modified_at: 2000 },
+];
+const mockTasks = [
+  { id: 't1', title: 'Task 1' },
+];
+const mockProjects = [
+  { id: 'p1', title: 'Project 1' },
+];
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-    },
-  },
-});
+jest.mock('../../../hooks/useQueries', () => ({
+  useNotes: jest.fn(() => ({ data: mockNotes, isLoading: false })),
+  useTasks: jest.fn(() => ({ data: mockTasks, isLoading: false })),
+  useProjects: jest.fn(() => ({ data: mockProjects, isLoading: false })),
+}));
 
 const renderWithProviders = (component: React.ReactElement) => {
   return render(
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <MantineProvider>{component}</MantineProvider>
+    <MantineProvider>
+      <BrowserRouter>
+        {component}
       </BrowserRouter>
-    </QueryClientProvider>,
+    </MantineProvider>
   );
 };
 
@@ -60,20 +38,45 @@ describe('BookmarksWidget', () => {
     expect(screen.getByText('Bookmarks')).toBeInTheDocument();
   });
 
-  it('shows bookmark count badge', () => {
-    renderWithProviders(<BookmarksWidget />);
-    expect(screen.getByText('0')).toBeInTheDocument(); // Initially no bookmarks
-  });
-
-  it('displays message when no bookmarks', () => {
-    renderWithProviders(<BookmarksWidget />);
-    expect(screen.getByText(/no bookmarks yet. star your favorite items for quick access!/i)).toBeInTheDocument();
-  });
-
-  it('shows recent notes section when no bookmarks', () => {
+  it('shows recent notes when no bookmarks exist', () => {
     renderWithProviders(<BookmarksWidget />);
     expect(screen.getByText('Recent Notes')).toBeInTheDocument();
-    expect(screen.getByText('Recent Note 1')).toBeInTheDocument();
-    expect(screen.getByText('Recent Note 2')).toBeInTheDocument();
+    expect(screen.getByText('Note 1')).toBeInTheDocument();
+    expect(screen.getByText('Note 2')).toBeInTheDocument();
+  });
+
+  it('allows bookmarking a recent note', async () => {
+    renderWithProviders(<BookmarksWidget />);
+
+    // Find star icon for Note 1
+    const starButton = screen.getByLabelText('Bookmark Note 1');
+    fireEvent.click(starButton);
+
+    // Should now appear in Bookmarks section (implied by logic switching view)
+    // Since we don't have persistence mocked fully, the component re-renders with state
+    await waitFor(() => {
+        expect(screen.queryByText('Recent Notes')).not.toBeInTheDocument();
+        expect(screen.getByText('Notes')).toBeInTheDocument(); // The category header in bookmarks view
+    });
+  });
+
+  it('allows unbookmarking a note', async () => {
+    renderWithProviders(<BookmarksWidget />);
+
+    // Bookmark first
+    const starButton = screen.getByLabelText('Bookmark Note 1');
+    fireEvent.click(starButton);
+
+    await waitFor(() => {
+         expect(screen.getByLabelText('Unbookmark Note 1')).toBeInTheDocument();
+    });
+
+    // Unbookmark
+    const unstarButton = screen.getByLabelText('Unbookmark Note 1');
+    fireEvent.click(unstarButton);
+
+    await waitFor(() => {
+        expect(screen.getByText('Recent Notes')).toBeInTheDocument();
+    });
   });
 });

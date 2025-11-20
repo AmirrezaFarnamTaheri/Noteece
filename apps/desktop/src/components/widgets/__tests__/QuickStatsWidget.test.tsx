@@ -1,50 +1,32 @@
-import { render, screen, within } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen } from '@testing-library/react';
 import { MantineProvider } from '@mantine/core';
 import { QuickStatsWidget } from '../QuickStatsWidget';
 import '@testing-library/jest-dom';
 
 // Mock hooks
+const mockNotes = [
+  { id: '1', content_md: 'Test #tag1 #tag2' },
+  { id: '2', content_md: 'Another note' },
+  { id: '3', is_trashed: true },
+];
+const mockTasks = [
+  { id: '1', status: 'todo', due_at: new Date().getTime() },
+  { id: '2', status: 'done' },
+  { id: '3', status: 'cancelled' },
+];
+const mockProjects = [
+  { id: '1', status: 'active' },
+  { id: '2', status: 'completed' },
+];
+
 jest.mock('../../../hooks/useQueries', () => ({
-  useNotes: jest.fn(() => ({
-    data: [
-      { id: '1', title: 'Note 1', content_md: 'test', is_trashed: false },
-      { id: '2', title: 'Note 2', content_md: 'test #tag1', is_trashed: false },
-      { id: '3', title: 'Note 3', content_md: 'test #tag2', is_trashed: false },
-    ],
-    isLoading: false,
-  })),
-  useTasks: jest.fn(() => ({
-    data: [
-      { id: '1', title: 'Task 1', status: 'in_progress', priority: 'high' },
-      { id: '2', title: 'Task 2', status: 'done', priority: 'low' },
-      { id: '3', title: 'Task 3', status: 'next', priority: 'medium' },
-    ],
-    isLoading: false,
-  })),
-  useProjects: jest.fn(() => ({
-    data: [
-      { id: '1', title: 'Project 1', status: 'active' },
-      { id: '2', title: 'Project 2', status: 'done' },
-    ],
-    isLoading: false,
-  })),
+  useNotes: jest.fn(() => ({ data: mockNotes, isLoading: false })),
+  useTasks: jest.fn(() => ({ data: mockTasks, isLoading: false })),
+  useProjects: jest.fn(() => ({ data: mockProjects, isLoading: false })),
 }));
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-    },
-  },
-});
-
 const renderWithProviders = (component: React.ReactElement) => {
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MantineProvider>{component}</MantineProvider>
-    </QueryClientProvider>,
-  );
+  return render(<MantineProvider>{component}</MantineProvider>);
 };
 
 describe('QuickStatsWidget', () => {
@@ -53,52 +35,45 @@ describe('QuickStatsWidget', () => {
     expect(screen.getByText('Workspace Overview')).toBeInTheDocument();
   });
 
-  it('displays notes count', () => {
+  it('displays correct active notes count', () => {
     renderWithProviders(<QuickStatsWidget />);
-    const notesLabel = screen.getByText('Notes');
-    expect(notesLabel).toBeInTheDocument();
-    const notesCard = notesLabel.closest('div');
-    expect(notesCard).not.toBeNull();
-    expect(within(notesCard as HTMLElement).getAllByText('3').length).toBeGreaterThan(0);
+    // 2 active notes (1 is trashed)
+    const notesStat = screen.getByText('Notes').parentElement;
+    expect(notesStat).toHaveTextContent('2');
   });
 
-  it('shows active tasks count', () => {
+  it('displays correct active tasks count', () => {
     renderWithProviders(<QuickStatsWidget />);
-    const activeTasksLabel = screen.getByText('Active Tasks');
-    expect(activeTasksLabel).toBeInTheDocument();
-    const activeTasksCard = activeTasksLabel.closest('div');
-    expect(activeTasksCard).not.toBeNull();
-    const activeCounts = within(activeTasksCard as HTMLElement).getAllByText('2');
-    expect(activeCounts.length).toBeGreaterThan(0); // in_progress and next
+    // 1 todo (active)
+    const tasksStat = screen.getByText('Active Tasks').parentElement;
+    expect(tasksStat).toHaveTextContent('1');
   });
 
-  it('displays completed tasks count', () => {
+  it('displays correct completed tasks count', () => {
     renderWithProviders(<QuickStatsWidget />);
-    const completedLabel = screen.getByText('Completed');
-    expect(completedLabel).toBeInTheDocument();
-    const completedCard = completedLabel.closest('div');
-    expect(completedCard).not.toBeNull();
-    const completedCounts = within(completedCard as HTMLElement).getAllByText('1');
-    expect(completedCounts.length).toBeGreaterThan(0);
+    // 1 done
+    const completedStat = screen.getByText('Completed').parentElement;
+    expect(completedStat).toHaveTextContent('1');
   });
 
-  it('shows projects count', () => {
+  it('displays correct active projects count', () => {
     renderWithProviders(<QuickStatsWidget />);
-    const projectsLabel = screen.getByText('Projects');
-    expect(projectsLabel).toBeInTheDocument();
-    const projectsCard = projectsLabel.closest('div');
-    expect(projectsCard).not.toBeNull();
-    const projectCounts = within(projectsCard as HTMLElement).getAllByText('1');
-    expect(projectCounts.length).toBeGreaterThan(0); // Only active project
+    // 1 active
+    const projectsStat = screen.getByText('Projects').parentElement;
+    expect(projectsStat).toHaveTextContent('1');
   });
 
-  it('displays tags count', () => {
+  it('displays correct due today count', () => {
     renderWithProviders(<QuickStatsWidget />);
-    const tagsLabel = screen.getByText('Tags');
-    expect(tagsLabel).toBeInTheDocument();
-    const tagsCard = tagsLabel.closest('div');
-    expect(tagsCard).not.toBeNull();
-    const tagCounts = within(tagsCard as HTMLElement).getAllByText('2');
-    expect(tagCounts.length).toBeGreaterThan(0); // #tag1 and #tag2
+    // 1 due today
+    const dueStat = screen.getByText('Due Today').parentElement;
+    expect(dueStat).toHaveTextContent('1');
+  });
+
+  it('displays correct unique tags count', () => {
+    renderWithProviders(<QuickStatsWidget />);
+    // #tag1, #tag2
+    const tagsStat = screen.getByText('Tags').parentElement;
+    expect(tagsStat).toHaveTextContent('2');
   });
 });
