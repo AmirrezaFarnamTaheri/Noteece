@@ -689,6 +689,78 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
         )?;
     }
 
+    if current_version < 12 {
+        log::info!("[db] Migrating to version 12 - Goals and Habits");
+        tx.execute_batch(
+            "
+            -- Goals
+            CREATE TABLE IF NOT EXISTS goal (
+                id TEXT PRIMARY KEY,
+                space_id TEXT NOT NULL REFERENCES space(id),
+                title TEXT NOT NULL,
+                description TEXT,
+                target REAL NOT NULL,
+                current REAL NOT NULL DEFAULT 0.0,
+                unit TEXT,
+                category TEXT,
+                start_date INTEGER NOT NULL,
+                target_date INTEGER,
+                is_completed INTEGER NOT NULL DEFAULT 0,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_goal_space ON goal(space_id);
+
+            -- Habits
+            CREATE TABLE IF NOT EXISTS habit (
+                id TEXT PRIMARY KEY,
+                space_id TEXT NOT NULL REFERENCES space(id),
+                name TEXT NOT NULL,
+                description TEXT,
+                frequency TEXT NOT NULL,
+                target_days_per_week INTEGER NOT NULL DEFAULT 7,
+                streak INTEGER NOT NULL DEFAULT 0,
+                longest_streak INTEGER NOT NULL DEFAULT 0,
+                last_completed_at INTEGER,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_habit_space ON habit(space_id);
+
+            -- Habit Logs (for history)
+            CREATE TABLE IF NOT EXISTS habit_log (
+                id TEXT PRIMARY KEY,
+                habit_id TEXT NOT NULL REFERENCES habit(id) ON DELETE CASCADE,
+                completed_at INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_habit_log_habit ON habit_log(habit_id, completed_at);
+
+            INSERT INTO schema_version (version) VALUES (12);
+            ",
+        )?;
+    }
+
+    if current_version < 13 {
+        log::info!("[db] Migrating to version 13 - LLM Cache (Official)");
+        tx.execute_batch(
+            "
+            CREATE TABLE IF NOT EXISTS llm_cache (
+                cache_key TEXT PRIMARY KEY,
+                request_json TEXT NOT NULL,
+                response_json TEXT NOT NULL,
+                model TEXT NOT NULL,
+                tokens_used INTEGER NOT NULL,
+                created_at INTEGER NOT NULL,
+                last_accessed INTEGER NOT NULL,
+                access_count INTEGER NOT NULL DEFAULT 1
+            );
+            CREATE INDEX IF NOT EXISTS idx_llm_cache_accessed ON llm_cache(last_accessed);
+
+            INSERT INTO schema_version (version) VALUES (13);
+            ",
+        )?;
+    }
+
     tx.commit()?;
     log::info!("[db] Migration finished");
     Ok(())
@@ -717,6 +789,6 @@ pub fn get_or_create_user_id(conn: &Connection) -> Result<String, DbError> {
 }
 
 pub fn init_llm_tables(_conn: &Connection) -> Result<(), DbError> {
-    // Placeholder implementation
+    // Implemented via migration v13, keeping stub for backward compatibility if any
     Ok(())
 }

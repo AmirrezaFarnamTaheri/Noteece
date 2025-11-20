@@ -24,33 +24,10 @@ pub struct ResponseCache {
 
 impl ResponseCache {
     /// Create a new response cache
-    pub fn new(conn: &Connection) -> Result<Self, LLMError> {
+    pub fn new(_conn: &Connection) -> Result<Self, LLMError> {
         log::debug!("[LLM::Cache] Initializing response cache");
-
-        // Ensure cache table exists
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS llm_cache (
-                cache_key TEXT PRIMARY KEY,
-                request_json TEXT NOT NULL,
-                response_json TEXT NOT NULL,
-                model TEXT NOT NULL,
-                tokens_used INTEGER NOT NULL,
-                created_at INTEGER NOT NULL,
-                last_accessed INTEGER NOT NULL,
-                access_count INTEGER NOT NULL DEFAULT 1
-            )",
-            [],
-        )?;
-
-        // Create index for cleanup queries
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_llm_cache_accessed
-             ON llm_cache(last_accessed)",
-            [],
-        )?;
-
+        // Tables are now created in db::migrate
         log::info!("[LLM::Cache] Cache initialized successfully");
-
         Ok(Self {})
     }
 
