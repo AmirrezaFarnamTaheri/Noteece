@@ -16,7 +16,7 @@ Welcome to the Noteece project wiki. This document serves as a comprehensive gui
 
 ## 1. Project Overview
 
-**Noteece** is a local-first, end-to-end encrypted workspace designed for speed-of-thought productivity. It combines note-taking, task management, and personal data aggregation (Health, Music, Social) into a single, private vault.
+**Noteece** is a local-first, end-to-end encrypted workspace designed for speed-of-thought productivity. It combines note-taking, task management, and personal data aggregation (Health, Music, Social, Goals, Habits) into a single, private vault.
 
 ### Key Principles
 *   **Local-First:** Your data lives on your device. The network is optional.
@@ -58,6 +58,11 @@ Noteece follows a **monorepo** structure using Rust for the core logic and TypeS
 *   Project hierarchy with milestones and dependencies.
 *   Kanban board view.
 
+### 🎯 Personal Growth (New)
+*   **Goals:** Track long-term objectives with target values and categories.
+*   **Habits:** Monitor daily/weekly habits with streak tracking and heatmaps.
+*   **Achievements:** Gamified badges for consistent usage and milestones.
+
 ### 📊 Universal Dashboard (New)
 *   **Unified Overview:** A single pane of glass for all your data streams.
 *   **Widgets:**
@@ -65,6 +70,7 @@ Noteece follows a **monorepo** structure using Rust for the core logic and TypeS
     *   **Music Player:** Control local playback and see "Now Playing".
     *   **Social Feed:** Recent updates from connected platforms.
     *   **Task Summary:** At-a-glance view of pending and completed work.
+    *   **Goals & Habits:** Track your personal progress.
 *   **Customizable Layout:** Responsive grid that adapts to your workflow.
 
 ### ❤️ Health Hub
@@ -81,6 +87,7 @@ Noteece follows a **monorepo** structure using Rust for the core logic and TypeS
 *   Aggregated timeline from multiple platforms (Twitter/X, Mastodon, etc.).
 *   Local-only storage of posts.
 *   Auto-categorization and focus modes.
+*   **Encryption:** Credentials are encrypted using the vault's Data Encryption Key (DEK).
 
 ---
 
@@ -139,6 +146,7 @@ Noteece uses a custom peer-to-peer sync protocol designed for local networks.
 *   **Key Derivation:** PBKDF2-HMAC-SHA512 (256,000 iterations) is used to derive the Key Encryption Key (KEK) from the user's master password. This KEK wraps the Data Encryption Key (DEK).
 *   **Authentication:** Argon2id is used for hashing user passwords for authentication sessions, separate from the database encryption.
 *   **Zero-Knowledge:** The server (if one exists for relay) sees only encrypted blobs.
+*   **Social Credentials:** OAuth tokens and passwords for social accounts are encrypted with the DEK before storage.
 
 ---
 
@@ -153,5 +161,7 @@ The schema is versioned and managed via migrations in `packages/core-rs/src/db.r
 *   `social_account` / `social_post`: Social media data.
 *   `health_metric`: Health data points.
 *   `track` / `playlist`: Music library.
+*   `goal`: Long-term goals.
+*   `habit` / `habit_log`: Habit tracking.
 
 For the full schema definition, refer to `packages/core-rs/src/db.rs` or `apps/mobile/src/lib/database.ts`.

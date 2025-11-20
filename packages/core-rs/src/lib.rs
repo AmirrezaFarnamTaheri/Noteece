@@ -19,6 +19,8 @@ pub mod db;
 pub mod editor;
 pub mod foresight;
 pub mod form;
+pub mod goals;
+pub mod habits;
 pub mod health;
 pub mod import;
 pub mod llm;

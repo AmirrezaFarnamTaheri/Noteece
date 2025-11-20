@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Text,
@@ -14,6 +14,9 @@ import {
 } from '@mantine/core';
 import { IconTarget, IconPlus, IconTrash, IconCheck } from '@tabler/icons-react';
 import { useForm } from '@mantine/form';
+import { invoke } from '@tauri-apps/api/tauri';
+import { useStore } from '../../store';
+import { logger } from '@/utils/logger';
 
 interface Goal {
   id: string;
@@ -21,6 +24,7 @@ interface Goal {
   target: number;
   current: number;
   category: string;
+  is_completed: boolean;
 }
 
 /**
@@ -32,12 +36,9 @@ interface Goal {
  * - Quick progress updates
  */
 export function GoalsTrackerWidget() {
-  const [goals, setGoals] = useState<Goal[]>([
-    { id: '1', title: 'Write 50 blog posts', target: 50, current: 23, category: 'Writing' },
-    { id: '2', title: 'Read 24 books', target: 24, current: 18, category: 'Reading' },
-    { id: '3', title: 'Exercise 100 times', target: 100, current: 67, category: 'Health' },
-  ]);
+  const [goals, setGoals] = useState<Goal[]>([]);
   const [modalOpened, setModalOpened] = useState(false);
+  const { activeSpaceId } = useStore();
 
   const form = useForm({
     initialValues: {
@@ -48,32 +49,67 @@ export function GoalsTrackerWidget() {
     },
   });
 
-  const handleAddGoal = (values: typeof form.values) => {
-    const newGoal: Goal = {
-      id: Date.now().toString(),
-      ...values,
-    };
-    setGoals([...goals, newGoal]);
-    form.reset();
-    setModalOpened(false);
+  const fetchGoals = async () => {
+    if (activeSpaceId) {
+      try {
+        const fetchedGoals: Goal[] = await invoke('get_goals_cmd', { spaceId: activeSpaceId });
+        setGoals(fetchedGoals);
+      } catch (error) {
+        logger.error('Error fetching goals:', error as Error);
+      }
+    }
   };
 
-  const handleDeleteGoal = (id: string) => {
-    setGoals(goals.filter((goal) => goal.id !== id));
+  useEffect(() => {
+    void fetchGoals();
+  }, [activeSpaceId]);
+
+  const handleAddGoal = async (values: typeof form.values) => {
+    if (!activeSpaceId) return;
+    try {
+      await invoke('create_goal_cmd', {
+        spaceId: activeSpaceId,
+        title: values.title,
+        target: Number(values.target), // Ensure float
+        category: values.category,
+      });
+      void fetchGoals();
+      form.reset();
+      setModalOpened(false);
+    } catch (error) {
+      logger.error('Error adding goal:', error as Error);
+    }
   };
 
-  const handleIncrementProgress = (id: string) => {
-    setGoals(
-      goals.map((goal) =>
-        goal.id === id && goal.current < goal.target ? { ...goal, current: goal.current + 1 } : goal,
-      ),
-    );
+  const handleDeleteGoal = async (id: string) => {
+    try {
+      await invoke('delete_goal_cmd', { goalId: id });
+      setGoals(goals.filter((goal) => goal.id !== id));
+    } catch (error) {
+      logger.error('Error deleting goal:', error as Error);
+    }
+  };
+
+  const handleIncrementProgress = async (goal: Goal) => {
+    if (goal.current >= goal.target) return;
+    const newCurrent = goal.current + 1;
+    try {
+      await invoke('update_goal_progress_cmd', { goalId: goal.id, current: newCurrent });
+      // Optimistic update
+      setGoals(
+        goals.map((g) =>
+          g.id === goal.id ? { ...g, current: newCurrent, is_completed: newCurrent >= g.target } : g,
+        ),
+      );
+    } catch (error) {
+      logger.error('Error updating goal progress:', error as Error);
+    }
   };
 
   return (
     <>
       <Card p="lg" radius="md" withBorder>
-        <Group justify="apart" mb="md">
+        <Group justify="space-between" mb="md">
           <Group gap="xs">
             <IconTarget size={24} />
             <Text size="lg" fw={600}>
@@ -93,11 +129,12 @@ export function GoalsTrackerWidget() {
           ) : (
             goals.map((goal) => {
               const percentage = Math.round((goal.current / goal.target) * 100);
-              const isCompleted = goal.current >= goal.target;
+              // Backend provides is_completed, but we can also calculate it
+              const isCompleted = goal.is_completed || goal.current >= goal.target;
 
               return (
                 <Card key={goal.id} p="sm" withBorder>
-                  <Group justify="apart" mb="xs">
+                  <Group justify="space-between" mb="xs">
                     <Group gap="xs">
                       <Text size="sm" fw={500}>
                         {goal.title}
@@ -119,7 +156,7 @@ export function GoalsTrackerWidget() {
                     </ActionIcon>
                   </Group>
 
-                  <Group justify="apart" mb="xs">
+                  <Group justify="space-between" mb="xs">
                     <Badge size="xs" variant="light">
                       {goal.category}
                     </Badge>
@@ -128,7 +165,7 @@ export function GoalsTrackerWidget() {
                     </Text>
                   </Group>
 
-                  <Progress value={percentage} size="sm" radius="xl" mb="xs" />
+                  <Progress value={Math.min(percentage, 100)} size="sm" radius="xl" mb="xs" />
 
                   <Group justify="space-between">
                     <Text size="xs" c="dimmed">
@@ -138,7 +175,7 @@ export function GoalsTrackerWidget() {
                       <Button
                         size="xs"
                         variant="light"
-                        onClick={() => handleIncrementProgress(goal.id)}
+                        onClick={() => handleIncrementProgress(goal)}
                         aria-label={`Increment progress for ${goal.title}`}
                       >
                         +1

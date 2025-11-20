@@ -11,6 +11,8 @@ use core_rs::collaboration::*;
 use core_rs::sync::discovery::*;
 use core_rs::foresight::*;
 use core_rs::form::*;
+use core_rs::goals::*;
+use core_rs::habits::*;
 use core_rs::import::*;
 use core_rs::mode::*;
 use core_rs::note::*;
@@ -231,6 +233,94 @@ fn get_sync_history_for_space_cmd(db: State<DbConnection>, space_id: String, lim
     }
 }
 
+#[tauri::command]
+fn create_goal_cmd(db: State<DbConnection>, space_id: String, title: String, target: f64, category: String) -> Result<Goal, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let space_id = Ulid::from_string(&space_id).map_err(|e| e.to_string())?;
+        create_goal(conn, space_id, &title, target, &category).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_goals_cmd(db: State<DbConnection>, space_id: String) -> Result<Vec<Goal>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let space_id = Ulid::from_string(&space_id).map_err(|e| e.to_string())?;
+        get_goals(conn, space_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn update_goal_progress_cmd(db: State<DbConnection>, goal_id: String, current: f64) -> Result<Goal, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let goal_id = Ulid::from_string(&goal_id).map_err(|e| e.to_string())?;
+        update_goal_progress(conn, goal_id, current).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn delete_goal_cmd(db: State<DbConnection>, goal_id: String) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let goal_id = Ulid::from_string(&goal_id).map_err(|e| e.to_string())?;
+        delete_goal(conn, goal_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn create_habit_cmd(db: State<DbConnection>, space_id: String, name: String, frequency: String) -> Result<Habit, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let space_id = Ulid::from_string(&space_id).map_err(|e| e.to_string())?;
+        create_habit(conn, space_id, &name, &frequency).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_habits_cmd(db: State<DbConnection>, space_id: String) -> Result<Vec<Habit>, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let space_id = Ulid::from_string(&space_id).map_err(|e| e.to_string())?;
+        get_habits(conn, space_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn complete_habit_cmd(db: State<DbConnection>, habit_id: String) -> Result<Habit, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let habit_id = Ulid::from_string(&habit_id).map_err(|e| e.to_string())?;
+        complete_habit(conn, habit_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn delete_habit_cmd(db: State<DbConnection>, habit_id: String) -> Result<(), String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        let habit_id = Ulid::from_string(&habit_id).map_err(|e| e.to_string())?;
+        delete_habit(conn, habit_id).map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
 fn main() {
     AppConfig::init();
 
@@ -394,7 +484,15 @@ fn main() {
             cancel_sync_cmd,
             get_or_create_user_id_cmd,
             start_sync_server_cmd,
-            get_dashboard_stats_cmd
+            get_dashboard_stats_cmd,
+            create_goal_cmd,
+            get_goals_cmd,
+            update_goal_progress_cmd,
+            delete_goal_cmd,
+            create_habit_cmd,
+            get_habits_cmd,
+            complete_habit_cmd,
+            delete_habit_cmd
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
