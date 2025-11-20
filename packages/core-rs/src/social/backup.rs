@@ -434,8 +434,8 @@ mod tests {
     use tempfile::TempDir;
 
     fn setup_backup_service() -> (BackupService, TempDir) {
-        let dir = TempDir::new().unwrap();
-        let service = BackupService::new(dir.path()).unwrap();
+        let dir = TempDir::new().expect("Failed to create temp dir");
+        let service = BackupService::new(dir.path()).expect("Failed to create backup service");
         (service, dir)
     }
 
@@ -448,7 +448,7 @@ mod tests {
     #[test]
     fn test_list_backups_empty() {
         let (service, _dir) = setup_backup_service();
-        let backups = service.list_backups().unwrap();
+        let backups = service.list_backups().expect("Failed to list backups");
         assert_eq!(backups.len(), 0);
     }
 

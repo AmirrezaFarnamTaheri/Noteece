@@ -30,6 +30,7 @@ use core_rs::vault::{create_vault, unlock_vault, Vault};
 use core_rs::weekly_review::generate_weekly_review;
 use core_rs::auth::{AuthService, User, Session};
 use core_rs::social::backup::{BackupService, BackupMetadata};
+use core_rs::dashboard::*;
 use rusqlite::Connection;
 use std::sync::{Arc, Mutex};
 use tauri::{Manager, State};
@@ -127,6 +128,16 @@ fn resolve_sync_conflict_cmd(
         agent
             .resolve_conflict(conn, &conflict, resolution, dek)
             .map_err(|e| e.to_string())
+    } else {
+        Err("Database connection not available".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_dashboard_stats_cmd(db: State<DbConnection>, space_id: String) -> Result<DashboardStats, String> {
+    let conn = db.conn.lock().unwrap();
+    if let Some(conn) = conn.as_ref() {
+        get_dashboard_stats(conn, &space_id).map_err(|e| e.to_string())
     } else {
         Err("Database connection not available".to_string())
     }
@@ -378,7 +389,8 @@ fn main() {
             get_sync_progress,
             cancel_sync_cmd,
             get_or_create_user_id_cmd,
-            start_sync_server_cmd
+            start_sync_server_cmd,
+            get_dashboard_stats_cmd
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

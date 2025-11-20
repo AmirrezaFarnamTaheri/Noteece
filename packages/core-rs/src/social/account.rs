@@ -426,14 +426,14 @@ mod tests {
 
     #[test]
     fn test_add_and_get_account() {
-        let mut conn = Connection::open_in_memory().unwrap();
-        crate::db::migrate(&mut conn).unwrap();
+        let mut conn = Connection::open_in_memory().expect("Failed to open in-memory DB");
+        crate::db::migrate(&mut conn).expect("Migration failed");
 
         // Create a test space
         conn.execute(
             "INSERT INTO space (id, name, icon, enabled_modes_json) VALUES ('test_space', 'Test', '📱', '[]')",
             [],
-        ).unwrap();
+        ).expect("Failed to insert test space");
 
         let dek = [0u8; 32]; // Test DEK
 
@@ -446,19 +446,19 @@ mod tests {
             "oauth_token_here",
             &dek,
         )
-        .unwrap();
+        .expect("Failed to add social account");
 
         assert_eq!(account.platform, "twitter");
         assert_eq!(account.username, "testuser");
         assert_eq!(account.enabled, true);
 
         // Retrieve account
-        let retrieved = get_social_account(&conn, &account.id).unwrap();
+        let retrieved = get_social_account(&conn, &account.id).expect("Failed to get social account");
         assert!(retrieved.is_some());
-        assert_eq!(retrieved.unwrap().username, "testuser");
+        assert_eq!(retrieved.expect("Account should exist").username, "testuser");
 
         // Get all accounts
-        let accounts = get_social_accounts(&conn, "test_space").unwrap();
+        let accounts = get_social_accounts(&conn, "test_space").expect("Failed to get accounts");
         assert_eq!(accounts.len(), 1);
     }
 }

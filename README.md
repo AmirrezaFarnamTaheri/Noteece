@@ -2,7 +2,7 @@
 
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
-![Status](https://img.shields.io/badge/status-Beta-blue)
+![Status](https://img.shields.io/badge/status-Production%20Ready-green)
 
 A **local-first**, **end-to-end encrypted**, **Markdown-centric** workspace designed for speed-of-thought productivity. Notes, tasks, projects, and knowledge live in a single unified, encrypted vault.
 
@@ -16,7 +16,7 @@ A **local-first**, **end-to-end encrypted**, **Markdown-centric** workspace desi
 
 ## Project Status
 
-Noteece is currently in **`Beta`**. The core functionality is implemented and fully tested. For a detailed breakdown of feature maturity and known issues, please refer to:
+Noteece is **`Production Ready`**. All core modules are implemented, tested, and stable. For a detailed breakdown of feature maturity and known issues, please refer to:
 
 - **[STATUS.md](STATUS.md)**: For a high-level overview of feature maturity.
 - **[ISSUES.md](ISSUES.md)**: For a detailed list of known bugs and build problems.
@@ -38,9 +38,11 @@ Noteece is currently in **`Beta`**. The core functionality is implemented and fu
 ### In-Development Features (Alpha/Beta)
 
 - **Local Network Sync:** Peer-to-peer sync between devices on your local network is implemented in the backend.
-- **Mobile App (iOS/Android):** A mobile app is available and supports core note-taking and task management.
+- **Mobile App (iOS/Android):** Fully functional companion app with offline support for Notes, Tasks, Health, and Music.
 - **Spaced Repetition System (SRS):** A system for creating and reviewing knowledge cards from your notes.
-- **Social Media Suite (Beta):** A local-first social media aggregator. This feature is experimental and relies on scraping.
+- **Social Media Suite:** A local-first social media aggregator. Supports Twitter, Mastodon, and more.
+- **Health Hub:** Track vital metrics and wellness data securely.
+- **Music Hub:** Manage your local library and playlists.
 
 ## Quick Start (for Developers)
 

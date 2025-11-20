@@ -59,7 +59,9 @@ describe("SocialHub Screen", () => {
     ];
     (SocialDatabase.getTimelinePosts as jest.Mock).mockResolvedValue(mockPosts);
 
-    const { findByText, getByText } = render(<SocialHub navigation={mockNavigation} />);
+    const { findByText, getByText } = render(
+      <SocialHub navigation={mockNavigation} />,
+    );
 
     // Wait for the initial render and data fetch using findByText
     await findByText("Hello World");

@@ -16,11 +16,6 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.noteece.app",
       "infoPlist": {
-        "NSCameraUsageDescription": "Noteece uses your camera to capture and OCR images for quick notes.",
-        "NSLocationWhenInUseUsageDescription": "Noteece uses your location for location-based task reminders.",
-        "NFCReaderUsageDescription": "Noteece uses NFC to trigger quick actions via NFC tags.",
-        "NSSpeechRecognitionUsageDescription": "Noteece uses speech recognition for voice capture.",
-        "NSMicrophoneUsageDescription": "Noteece uses your microphone for voice notes.",
         "NSFaceIDUsageDescription": "Noteece uses Face ID to unlock your encrypted vault securely."
       },
       "config": {
@@ -72,7 +67,7 @@
     "extra": {
       "sentryDsn": "",
       "eas": {
-        "projectId": "your-eas-project-id"
+        "projectId": "63273789-4930-438a-8753-616384e41405"
       }
     },
     "hooks": {

@@ -58,9 +58,9 @@ export class SyncClient {
   /**
    * Discover devices on local network using mDNS
    */
-  async discoverDevices(scanDurationMs: number = 5000): Promise<
-    { id: string; name: string; address: string; port: number }[]
-  > {
+  async discoverDevices(
+    scanDurationMs: number = 5000,
+  ): Promise<{ id: string; name: string; address: string; port: number }[]> {
     return new Promise((resolve, reject) => {
       const devices: {
         id: string;

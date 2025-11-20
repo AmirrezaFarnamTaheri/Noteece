@@ -64,6 +64,7 @@ export function simulateSharedItem(item: Omit<SharedItem, "timestamp">) {
 }
 
 declare global {
+  // eslint-disable-next-line no-var
   var __SIMULATE_SHARE_ITEMS__: SharedItem[] | undefined;
 }
 

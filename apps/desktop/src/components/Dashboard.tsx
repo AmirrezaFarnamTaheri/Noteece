@@ -34,6 +34,7 @@ import { BookmarksWidget } from './widgets/BookmarksWidget';
 import { QuickStatsWidget } from './widgets/QuickStatsWidget';
 import { AchievementBadgesWidget } from './widgets/AchievementBadgesWidget';
 import TimeTrackingWidget from './widgets/TimeTrackingWidget';
+import { UniversalDashboardWidget } from './widgets/UniversalDashboardWidget';
 import { useProjects } from '../hooks/useQueries';
 import { useStore } from '../store';
 
@@ -117,6 +118,9 @@ const Dashboard: React.FC = () => {
 
               {/* Quick Stats Overview */}
               <QuickStatsWidget />
+
+              {/* Universal Dashboard (New Feature) */}
+              <UniversalDashboardWidget />
 
               {/* New: Activity Heatmap and Insights */}
               <Grid>

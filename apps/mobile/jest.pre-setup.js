@@ -27,7 +27,8 @@ jest.mock("expo-sqlite", () => ({
     transaction: jest.fn((callback) => {
       callback({
         executeSql: jest.fn((query, params, success, error) => {
-          if (success) success([], { rows: { length: 0, item: () => null, _array: [] } });
+          if (success)
+            success([], { rows: { length: 0, item: () => null, _array: [] } });
         }),
       });
     }),
@@ -94,7 +95,9 @@ console.error = (...args) => {
   if (
     typeof args[0] === "string" &&
     (args[0].includes("Warning: An update to ForwardRef") ||
-      args[0].includes("You are trying to `import` a file after the Jest environment has been torn down") ||
+      args[0].includes(
+        "You are trying to `import` a file after the Jest environment has been torn down",
+      ) ||
       args[0].includes("Sync failed: Error: WebSocket connection failed") ||
       args[0].includes("Failed to load timeline: Error: DB Error"))
   ) {
