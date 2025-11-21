@@ -77,9 +77,9 @@ pub fn get_health_metrics(
     let metrics = stmt
         .query_map([space_id.to_string(), limit.to_string()], |row| {
             Ok(HealthMetric {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).unwrap(),
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).unwrap(),
-                note_id: row.get::<_, Option<String>>(2)?.map(|s| Ulid::from_string(&s).unwrap()),
+                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                note_id: row.get::<_, Option<String>>(2)?.map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 metric_type: row.get(3)?,
                 value: row.get(4)?,
                 unit: row.get(5)?,

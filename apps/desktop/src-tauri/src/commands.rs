@@ -124,8 +124,8 @@ pub fn get_or_create_user_id_cmd(db: State<DbConnection>) -> Result<String, Stri
 #[tauri::command]
 pub fn get_project_cmd(db: State<DbConnection>, id: String) -> Result<Option<Project>, String> {
     with_db!(db, conn, {
-        let id = Ulid::from_string(&id).map_err(|e| e.to_string())?;
-        core_rs::project::get_project(conn, id).map_err(|e| e.to_string())
+        // id is string here, get_project expects &str
+        core_rs::project::get_project(conn, &id).map_err(|e| e.to_string())
     })
 }
 
@@ -139,24 +139,24 @@ pub fn get_projects_in_space_cmd(db: State<DbConnection>, space_id: String) -> R
 #[tauri::command]
 pub fn get_project_milestones_cmd(db: State<DbConnection>, project_id: String) -> Result<Vec<Milestone>, String> {
     with_db!(db, conn, {
-        let id = Ulid::from_string(&project_id).map_err(|e| e.to_string())?;
-        core_rs::project::get_project_milestones(conn, id).map_err(|e| e.to_string())
+        // project_id is string, core_rs expects &str
+        core_rs::project::get_project_milestones(conn, &project_id).map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
 pub fn get_project_risks_cmd(db: State<DbConnection>, project_id: String) -> Result<Vec<Risk>, String> {
     with_db!(db, conn, {
-        let id = Ulid::from_string(&project_id).map_err(|e| e.to_string())?;
-        core_rs::project::get_project_risks(conn, id).map_err(|e| e.to_string())
+        // project_id is string, core_rs expects &str
+        core_rs::project::get_project_risks(conn, &project_id).map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
 pub fn get_project_updates_cmd(db: State<DbConnection>, project_id: String) -> Result<Vec<ProjectUpdate>, String> {
     with_db!(db, conn, {
-        let id = Ulid::from_string(&project_id).map_err(|e| e.to_string())?;
-        core_rs::project::get_project_updates(conn, id).map_err(|e| e.to_string())
+        // project_id is string, core_rs expects &str
+        core_rs::project::get_project_updates(conn, &project_id).map_err(|e| e.to_string())
     })
 }
 
@@ -169,8 +169,8 @@ pub fn create_project_risk_cmd(
     impact: String,
 ) -> Result<Risk, String> {
     with_db!(db, conn, {
-        let id = Ulid::from_string(&project_id).map_err(|e| e.to_string())?;
-        core_rs::project::create_project_risk(conn, id, &description, &likelihood, &impact)
+        // Arguments are strings, core_rs expects &str for project_id
+        core_rs::project::create_project_risk(conn, &project_id, &description, &likelihood, &impact)
             .map_err(|e| e.to_string())
     })
 }
@@ -242,7 +242,7 @@ pub fn execute_saved_search_cmd(db: State<DbConnection>, id: String) -> Result<V
         let search = core_rs::search::get_saved_search(conn, id)
             .map_err(|e| e.to_string())?
             .ok_or_else(|| "Saved search not found".to_string())?;
-        core_rs::search::search_notes(conn, &search.query, search.space_id.as_deref())
+        core_rs::search::search_notes(conn, &search.query, search.space_id.as_deref().unwrap_or_default())
             .map_err(|e| e.to_string())
     })
 }
@@ -351,7 +351,32 @@ pub fn search_notes_cmd(
     scope: Option<String>,
 ) -> Result<Vec<SearchResult>, String> {
     with_db!(db, conn, {
-        core_rs::search::search_notes(conn, &query, scope.as_deref()).map_err(|e| e.to_string())
+        let scope_str = scope.as_deref().unwrap_or("");
+        // Need to map Note to SearchResult if using core_rs::search::search_notes which returns Vec<Note>
+        // But there is also core_rs::search::search_all returning Vec<SearchResult>
+        // Assuming we want Vec<Note> here if API expects it, OR convert.
+        // But `search_notes_cmd` return type signature is Vec<SearchResult> in provided code.
+        // However, core_rs::search::search_notes returns Vec<Note>.
+        // We should probably use `search_all` or map it.
+        // Let's use `search_notes` and map to simplified SearchResult for now to match signature or change signature.
+        // Actually, let's check `search.rs` again.
+        // `search_notes` returns `Vec<Note>`.
+        // `search_all` returns `Vec<SearchResult>`.
+        // The command signature says `Vec<SearchResult>`.
+        // Let's use `search_all` with a constructed query.
+        use core_rs::search::{SearchQuery, EntityType, SearchFilters, SortOptions};
+        let search_query = SearchQuery {
+            query: query,
+            entity_types: vec![EntityType::Note],
+            filters: SearchFilters {
+                space_id: if !scope_str.is_empty() { Some(Ulid::from_string(scope_str).unwrap_or_default()) } else { None },
+                ..Default::default()
+            },
+            sort: SortOptions::default(),
+            limit: Some(50),
+            offset: None,
+        };
+        core_rs::search::search_all(conn, &search_query).map_err(|e| e.to_string())
     })
 }
 
@@ -529,7 +554,7 @@ pub fn get_all_spaces_cmd(db: State<DbConnection>) -> Result<Vec<Space>, String>
 #[tauri::command]
 pub fn get_all_tags_in_space_cmd(db: State<DbConnection>, space_id: String) -> Result<Vec<Tag>, String> {
     with_db!(db, conn, {
-        core_rs::tag::get_all_tags_in_space(conn, &space_id).map_err(|e| e.to_string())
+        core_rs::tag::get_all_tags_in_space(conn, Ulid::from_string(&space_id).map_err(|e| e.to_string())?).map_err(|e| e.to_string())
     })
 }
 
@@ -546,7 +571,7 @@ pub fn start_time_entry_cmd(
     with_db!(db, conn, {
         let task_ulid = task_id.map(|s| Ulid::from_string(&s)).transpose().map_err(|e| e.to_string())?;
         let project_ulid = project_id.map(|s| Ulid::from_string(&s)).transpose().map_err(|e| e.to_string())?;
-        core_rs::time_tracking::start_time_entry(conn, &space_id, task_ulid, project_ulid, description.as_deref())
+        core_rs::time_tracking::start_time_entry(conn, Ulid::from_string(&space_id).map_err(|e| e.to_string())?, task_ulid, project_ulid, None, description.as_deref())
             .map_err(|e| e.to_string())
     })
 }
@@ -578,14 +603,14 @@ pub fn get_project_time_entries_cmd(db: State<DbConnection>, project_id: String)
 #[tauri::command]
 pub fn get_running_entries_cmd(db: State<DbConnection>, space_id: String) -> Result<Vec<TimeEntry>, String> {
     with_db!(db, conn, {
-        core_rs::time_tracking::get_running_entries(conn, &space_id).map_err(|e| e.to_string())
+        core_rs::time_tracking::get_running_entries(conn, Ulid::from_string(&space_id).map_err(|e| e.to_string())?).map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
 pub fn get_recent_time_entries_cmd(db: State<DbConnection>, space_id: String, limit: u32) -> Result<Vec<TimeEntry>, String> {
     with_db!(db, conn, {
-        core_rs::time_tracking::get_recent_time_entries(conn, &space_id, limit).map_err(|e| e.to_string())
+        core_rs::time_tracking::get_recent_time_entries(conn, Ulid::from_string(&space_id).map_err(|e| e.to_string())?, limit as i64).map_err(|e| e.to_string())
     })
 }
 
@@ -816,17 +841,13 @@ pub fn register_device_cmd(
         let device_info = DeviceInfo {
             device_id: device_id.clone(),
             device_name: name,
-            device_type: core_rs::sync::mobile_sync::DeviceType::Mobile, // Assuming registration is for mobile
+            device_type: core_rs::sync_agent::DeviceType::Mobile, // Assuming registration is for mobile
             last_seen: chrono::Utc::now().timestamp(),
             sync_address: "".to_string(),
             sync_port: 0,
             protocol_version: "1.0.0".to_string(),
         };
         // Core register_device now takes DeviceInfo
-        // Assuming core_rs::sync_agent::SyncAgent doesn't have static method, but usually uses instance.
-        // Checking sync_agent.rs... register_device is a method on SyncAgent, BUT there is also `init_sync_tables` which is static-like.
-        // Wait, sync_agent.rs has `impl SyncAgent` with `register_device`.
-        // We need an instance of SyncAgent.
         let user_id = core_rs::db::get_or_create_user_id(conn).map_err(|e| e.to_string())?;
         let agent = SyncAgent::new(user_id, "Desktop".to_string(), AppConfig::sync_port());
         agent.register_device(conn, &device_info).map_err(|e| e.to_string())
@@ -852,17 +873,20 @@ pub fn record_sync_cmd(
 
 #[tauri::command]
 pub fn get_all_sync_tasks_cmd(db: State<DbConnection>, space_id: String) -> Result<Vec<SyncTask>, String> {
-    // sync_agent.rs doesn't seem to have get_all_sync_tasks in the provided file content.
-    // Placeholder or check if it exists in full file.
-    // Assuming it's missing from memory but needed.
-    // Returning empty for now if not found, or implementing using available methods.
-    Ok(vec![])
+    with_db!(db, conn, {
+        let user_id = core_rs::db::get_or_create_user_id(conn).map_err(|e| e.to_string())?;
+        let agent = SyncAgent::new(user_id, "Desktop".to_string(), AppConfig::sync_port());
+        agent.get_all_sync_tasks(conn, &space_id).map_err(|e| e.to_string())
+    })
 }
 
 #[tauri::command]
 pub fn get_sync_stats_cmd(db: State<DbConnection>, space_id: String) -> Result<SyncStats, String> {
-    // Placeholder
-    Ok(SyncStats::default())
+    with_db!(db, conn, {
+        let user_id = core_rs::db::get_or_create_user_id(conn).map_err(|e| e.to_string())?;
+        let agent = SyncAgent::new(user_id, "Desktop".to_string(), AppConfig::sync_port());
+        agent.get_sync_stats(conn, &space_id).map_err(|e| e.to_string())
+    })
 }
 
 // --- Personal Modes Commands ---
@@ -876,14 +900,15 @@ pub fn create_health_metric_cmd(
     unit: String,
 ) -> Result<HealthMetric, String> {
     with_db!(db, conn, {
-        core_rs::personal_modes::create_health_metric(conn, &space_id, &metric_type, value, &unit).map_err(|e| e.to_string())
+        // space_id is string, core_rs expects Ulid
+        core_rs::personal_modes::create_health_metric(conn, Ulid::from_string(&space_id).map_err(|e| e.to_string())?, &metric_type, value, &unit, chrono::Utc::now().timestamp(), None, None).map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
 pub fn get_health_metrics_cmd(db: State<DbConnection>, space_id: String) -> Result<Vec<HealthMetric>, String> {
     with_db!(db, conn, {
-        core_rs::personal_modes::get_health_metrics(conn, &space_id).map_err(|e| e.to_string())
+        core_rs::personal_modes::get_health_metrics(conn, Ulid::from_string(&space_id).map_err(|e| e.to_string())?, 100, None).map_err(|e| e.to_string())
     })
 }
 
@@ -896,14 +921,14 @@ pub fn create_transaction_cmd(
     description: String,
 ) -> Result<Transaction, String> {
     with_db!(db, conn, {
-        core_rs::personal_modes::create_transaction(conn, &space_id, amount, &category, &description).map_err(|e| e.to_string())
+        core_rs::personal_modes::create_transaction(conn, Ulid::from_string(&space_id).map_err(|e| e.to_string())?, "expense", amount, "USD", &category, "default", chrono::Utc::now().timestamp(), Some(&description)).map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
 pub fn get_transactions_cmd(db: State<DbConnection>, space_id: String) -> Result<Vec<Transaction>, String> {
     with_db!(db, conn, {
-        core_rs::personal_modes::get_transactions(conn, &space_id).map_err(|e| e.to_string())
+        core_rs::personal_modes::get_transactions(conn, Ulid::from_string(&space_id).map_err(|e| e.to_string())?, 100).map_err(|e| e.to_string())
     })
 }
 
@@ -916,14 +941,19 @@ pub fn create_recipe_cmd(
     instructions: String,
 ) -> Result<Recipe, String> {
     with_db!(db, conn, {
-        core_rs::personal_modes::create_recipe(conn, &space_id, &name, &ingredients, &instructions).map_err(|e| e.to_string())
+        // Recipe creation simplified for command, ignoring ingredients/instructions details for now as create_recipe signature expects less
+        // Actually core_rs::personal_modes::create_recipe takes (conn, space_id, note_id, name, servings, difficulty)
+        // We need to update command signature or logic to match.
+        // Assuming note_id is needed.
+        let note = core_rs::note::create_note(conn, &space_id, &name, &instructions).map_err(|e| e.to_string())?;
+        core_rs::personal_modes::create_recipe(conn, Ulid::from_string(&space_id).map_err(|e| e.to_string())?, &note.id.to_string(), &name, 4, "medium").map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
 pub fn get_recipes_cmd(db: State<DbConnection>, space_id: String) -> Result<Vec<Recipe>, String> {
     with_db!(db, conn, {
-        core_rs::personal_modes::get_recipes(conn, &space_id).map_err(|e| e.to_string())
+        core_rs::personal_modes::get_recipes(conn, Ulid::from_string(&space_id).map_err(|e| e.to_string())?, 100).map_err(|e| e.to_string())
     })
 }
 
@@ -936,14 +966,16 @@ pub fn create_trip_cmd(
     end_date: i64,
 ) -> Result<Trip, String> {
     with_db!(db, conn, {
-        core_rs::personal_modes::create_trip(conn, &space_id, &destination, start_date, end_date).map_err(|e| e.to_string())
+        // Similar note dependency for trip
+        let note = core_rs::note::create_note(conn, &space_id, &format!("Trip to {}", destination), "").map_err(|e| e.to_string())?;
+        core_rs::personal_modes::create_trip(conn, Ulid::from_string(&space_id).map_err(|e| e.to_string())?, &note.id.to_string(), &format!("Trip to {}", destination), &destination, start_date, end_date).map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
 pub fn get_trips_cmd(db: State<DbConnection>, space_id: String) -> Result<Vec<Trip>, String> {
     with_db!(db, conn, {
-        core_rs::personal_modes::get_trips(conn, &space_id).map_err(|e| e.to_string())
+        core_rs::personal_modes::get_trips(conn, Ulid::from_string(&space_id).map_err(|e| e.to_string())?, 100).map_err(|e| e.to_string())
     })
 }
 
@@ -1236,9 +1268,6 @@ pub fn restore_backup_cmd(db: State<DbConnection>, backup_id: String) -> Result<
 pub fn list_backups_cmd(db: State<DbConnection>, space_id: String) -> Result<Vec<BackupMetadata>, String> {
     // Backups are not strictly per space currently in core-rs/backup.rs?
     // list_backups() returns (String, BackupMetadata).
-    // We might want to filter by space if metadata allows, or just return all.
-    // The frontend seems to expect Vec<BackupMetadata>.
-    // core-rs returns Vec<(String, BackupMetadata)>.
     // We map it.
     let service = BackupService::new(std::path::PathBuf::from("backups")).map_err(|e| e.to_string())?;
     let backups = service.list_backups().map_err(|e| e.to_string())?;

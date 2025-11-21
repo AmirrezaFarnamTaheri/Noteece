@@ -75,8 +75,8 @@ pub fn get_habits(conn: &Connection, space_id: Ulid) -> Result<Vec<Habit>, DbErr
     let habits = stmt
         .query_map([space_id.to_string()], |row| {
             Ok(Habit {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).unwrap(),
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).unwrap(),
+                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 name: row.get(2)?,
                 description: row.get(3)?,
                 frequency: row.get(4)?,
@@ -105,8 +105,8 @@ pub fn complete_habit(conn: &Connection, habit_id: Ulid) -> Result<Habit, DbErro
     let mut new_streak = current_streak;
 
     if let Some(last) = last_completed {
-        let last_date = chrono::DateTime::from_timestamp(last, 0).unwrap().date_naive();
-        let today = chrono::DateTime::from_timestamp(now, 0).unwrap().date_naive();
+        let last_date = chrono::DateTime::from_timestamp(last, 0).ok_or_else(|| rusqlite::Error::ToSqlConversionFailure(Box::new(DbError::Message("Invalid last completed timestamp".to_string()))))?.date_naive();
+        let today = chrono::DateTime::from_timestamp(now, 0).ok_or_else(|| rusqlite::Error::ToSqlConversionFailure(Box::new(DbError::Message("Invalid current timestamp".to_string()))))?.date_naive();
         let diff = today.signed_duration_since(last_date).num_days();
 
         if frequency == "weekly" {
@@ -161,8 +161,8 @@ pub fn complete_habit(conn: &Connection, habit_id: Ulid) -> Result<Habit, DbErro
         [&habit_id.to_string()],
         |row| {
             Ok(Habit {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).unwrap(),
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).unwrap(),
+                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 name: row.get(2)?,
                 description: row.get(3)?,
                 frequency: row.get(4)?,

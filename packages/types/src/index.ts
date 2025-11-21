@@ -195,5 +195,42 @@ export interface TimeStats {
   average_seconds: number;
 }
 
+export interface SyncTask {
+  id: string;
+  device_id: string;
+  space_id: string;
+  direction: string;
+  status: string;
+  progress: number;
+  created_at: number;
+}
+
+export interface SyncStats {
+  total_synced: number;
+  last_sync_at: number | null;
+  success_rate: number;
+  conflicts_total: number;
+}
+
+export interface DeviceInfo {
+  device_id: string;
+  device_name: string;
+  device_type: "Desktop" | "Mobile" | "Web";
+  last_seen: number;
+  sync_address: string;
+  sync_port: number;
+  protocol_version: string;
+}
+
+export interface DiscoveredDevice {
+  device_id: string;
+  device_name: string;
+  device_type: "Desktop" | "Mobile" | "Tablet"; // sync/mobile_sync.rs uses this enum
+  ip_address: string;
+  sync_port: number;
+  os_version: string;
+  last_seen: string; // DateTime serialized
+}
+
 // Social Media Suite types
-export * from "./social";
+export * from './social';

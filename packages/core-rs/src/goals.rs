@@ -81,8 +81,8 @@ pub fn get_goals(conn: &Connection, space_id: Ulid) -> Result<Vec<Goal>, DbError
     let goals = stmt
         .query_map([space_id.to_string()], |row| {
             Ok(Goal {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).unwrap(),
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).unwrap(),
+                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 title: row.get(2)?,
                 description: row.get(3)?,
                 target: row.get(4)?,
@@ -130,8 +130,8 @@ pub fn update_goal_progress(
         [&goal_id.to_string()],
         |row| {
             Ok(Goal {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).unwrap(),
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).unwrap(),
+                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 title: row.get(2)?,
                 description: row.get(3)?,
                 target: row.get(4)?,
