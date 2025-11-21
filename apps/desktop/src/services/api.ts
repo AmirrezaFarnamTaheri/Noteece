@@ -160,3 +160,69 @@ export const createManualTimeEntry = (
     duration_seconds: durationSeconds,
   });
 };
+
+// P2P Sync API
+
+export const startSyncServer = (): Promise<void> => {
+  return invoke('start_sync_server_cmd');
+};
+
+export const startP2pSync = (deviceId: string): Promise<void> => {
+  return invoke('start_p2p_sync_cmd', { deviceId });
+};
+
+export const discoverDevices = (): Promise<any[]> => {
+  return invoke('discover_devices_cmd');
+};
+
+export const initiatePairing = (deviceId: string): Promise<void> => {
+  return invoke('initiate_pairing_cmd', { deviceId });
+};
+
+export const getDevices = (): Promise<any[]> => {
+  return invoke('get_devices_cmd');
+};
+
+export const getSyncConflicts = (): Promise<any[]> => {
+  return invoke('get_sync_conflicts_cmd');
+};
+
+export const resolveSyncConflict = (conflict: any, resolution: any): Promise<void> => {
+  return invoke('resolve_sync_conflict_cmd', { conflict, resolution });
+};
+
+// Backup API
+
+export const createBackup = (spaceId: string): Promise<any> => {
+  return invoke('create_backup_cmd', { spaceId });
+};
+
+export const restoreBackup = (backupId: string): Promise<void> => {
+  return invoke('restore_backup_cmd', { backupId });
+};
+
+export const listBackups = (spaceId: string): Promise<any[]> => {
+  return invoke('list_backups_cmd', { spaceId });
+};
+
+export const deleteBackup = (backupId: string): Promise<void> => {
+  return invoke('delete_backup_cmd', { backupId });
+};
+
+// Auth API
+
+export const createUser = (username: string, email: string, password: string): Promise<any> => {
+  return invoke('create_user_cmd', { username, email, password });
+};
+
+export const authenticateUser = (username: string, password: string): Promise<any> => {
+  return invoke('authenticate_user_cmd', { username, password });
+};
+
+export const logoutUser = (token: string): Promise<void> => {
+  return invoke('logout_user_cmd', { token });
+};
+
+export const getCurrentUser = (token: string): Promise<any> => {
+  return invoke('get_current_user_cmd', { token });
+};

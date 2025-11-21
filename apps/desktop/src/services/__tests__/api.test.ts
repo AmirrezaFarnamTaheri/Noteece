@@ -16,7 +16,7 @@ describe('API Service', () => {
 
     const result = await getAllProjectsInSpace('space-1');
 
-    expect(invoke).toHaveBeenCalledWith('get_all_projects_cmd', { spaceId: 'space-1' });
+    expect(invoke).toHaveBeenCalledWith('get_projects_in_space_cmd', { spaceId: 'space-1' });
     expect(result).toEqual(mockProjects);
   });
 });
