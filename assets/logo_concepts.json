@@ -1,0 +1,212 @@
+[
+  {
+    "id": "logo_original",
+    "name": "Original Shield",
+    "description": "Shield/Note hybrid with P2P nodes forming an N."
+  },
+  {
+    "id": "logo_nexus",
+    "name": "The Nexus",
+    "description": "Interconnected nodes forming a sphere, symbolizing global connectivity."
+  },
+  {
+    "id": "logo_vault",
+    "name": "The Vault",
+    "description": "Isometric cube with a glowing core, representing secure data storage."
+  },
+  {
+    "id": "logo_pulse",
+    "name": "The Pulse",
+    "description": "Waveform passing through a shield, symbolizing active protection."
+  },
+  {
+    "id": "logo_monolith",
+    "name": "The Monolith",
+    "description": "Minimalist abstract pillar with digital patterns, representing stability."
+  },
+  {
+    "id": "logo_infinity",
+    "name": "The Infinity",
+    "description": "Loop symbolizing continuous sync and eternal data."
+  },
+  {
+    "id": "logo_prism",
+    "name": "The Prism (Redesigned)",
+    "description": "Refracting light into spectrum, symbolizing insight and analysis."
+  },
+  {
+    "id": "logo_prism_mirrored",
+    "name": "The Prism (Mirrored)",
+    "description": "Mirrored version of the prism, input from right."
+  },
+  {
+    "id": "logo_circuit",
+    "name": "The Circuit",
+    "description": "PCB trace forming an 'N', emphasizing hardware/low-level connection."
+  },
+  {
+    "id": "logo_constellation",
+    "name": "The Constellation",
+    "description": "Star map forming a shield, symbolizing decentralized discovery."
+  },
+  {
+    "id": "logo_gateway",
+    "name": "The Gateway",
+    "description": "Portal/Doorway with depth, representing access to knowledge."
+  },
+  {
+    "id": "logo_zen_enso",
+    "name": "The Zen Enso",
+    "description": "Digital brush stroke circle, representing Zen Mode simplicity."
+  },
+  {
+    "id": "logo_neuron",
+    "name": "Digital Neuron",
+    "description": "Organic neural network node glowing with data."
+  },
+  {
+    "id": "logo_quantum",
+    "name": "The Quantum Bit",
+    "description": "Overlapping states/circles representing superposition/sync."
+  },
+  {
+    "id": "logo_origami",
+    "name": "Origami Shield",
+    "description": "Folded paper style forming a shield."
+  },
+  {
+    "id": "logo_hexhive",
+    "name": "Hex-Hive",
+    "description": "Hexagonal grid with active cells, modular P2P."
+  },
+  {
+    "id": "logo_beacon",
+    "name": "The Beacon",
+    "description": "Lighthouse beam cutting through noise."
+  },
+  {
+    "id": "logo_dna",
+    "name": "Data DNA",
+    "description": "Double helix formed by binary/dots."
+  },
+  {
+    "id": "logo_void",
+    "name": "The Void Core",
+    "description": "Black hole accretion disk style."
+  },
+  {
+    "id": "logo_neon",
+    "name": "Neon Glyph",
+    "description": "Cyberpunk rune style 'N'."
+  },
+  {
+    "id": "logo_construct",
+    "name": "The Construct",
+    "description": "Wireframe 3D box unfolding."
+  },
+  {
+    "id": "logo_flux",
+    "name": "Flux Capacitor",
+    "description": "Energy flow convergence."
+  },
+  {
+    "id": "logo_abstract_n",
+    "name": "Abstract N",
+    "description": "Minimalist geometric N with gradient overlay."
+  },
+  {
+    "id": "logo_cyber_eye",
+    "name": "Cyber-Eye",
+    "description": "Digital eye with scan lines and iris."
+  },
+  {
+    "id": "logo_data_cloud",
+    "name": "Data Cloud",
+    "description": "Cloud shape formed by data dots."
+  },
+  {
+    "id": "logo_encrypted_key",
+    "name": "Encrypted Key",
+    "description": "Stylized key with digital teeth."
+  },
+  {
+    "id": "logo_neural_mesh",
+    "name": "Neural Mesh",
+    "description": "Grid with active neural path."
+  },
+  {
+    "id": "logo_quantum_loop",
+    "name": "Quantum Loop",
+    "description": "Intertwined quantum loops."
+  },
+  {
+    "id": "logo_holographic_cube",
+    "name": "Holographic Cube",
+    "description": "Translucent cube layers."
+  },
+  {
+    "id": "logo_digital_feather",
+    "name": "Digital Feather",
+    "description": "Quill pen with pixelated details."
+  },
+  {
+    "id": "logo_biometric_lock",
+    "name": "Biometric Lock",
+    "description": "Padlock with fingerprint motif."
+  },
+  {
+    "id": "logo_syntax_tree",
+    "name": "Syntax Tree",
+    "description": "Hierarchical tree structure."
+  },
+  {
+    "id": "logo_flow_state",
+    "name": "Flow State",
+    "description": "Fluid wave motion."
+  },
+  {
+    "id": "logo_deep_dive",
+    "name": "Deep Dive",
+    "description": "Concentric circles with depth."
+  },
+  {
+    "id": "logo_obsidian_shard",
+    "name": "Obsidian Shard",
+    "description": "Sharp, faceted crystal shard."
+  },
+  {
+    "id": "logo_violet_nova",
+    "name": "Violet Nova",
+    "description": "Explosive starburst."
+  },
+  {
+    "id": "logo_teal_pulse",
+    "name": "Teal Pulse",
+    "description": "EKG heartbeat line."
+  },
+  {
+    "id": "logo_binary_ring",
+    "name": "Binary Ring",
+    "description": "Circle of 1s and 0s."
+  },
+  {
+    "id": "logo_logic_gate",
+    "name": "Logic Gate",
+    "description": "Stylized AND gate symbol."
+  },
+  {
+    "id": "logo_echo_chamber",
+    "name": "Echo Chamber",
+    "description": "Sound waves echoing."
+  },
+  {
+    "id": "logo_focus_point",
+    "name": "Focus Point",
+    "description": "Target crosshair with focus."
+  },
+  {
+    "id": "logo_zenith_star",
+    "name": "Zenith Star",
+    "description": "Eight-pointed star."
+  }
+]

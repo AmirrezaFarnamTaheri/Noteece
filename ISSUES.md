@@ -16,9 +16,9 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 
 ### 1.2. Task Sync Timestamp Limitation
 
-- **Status:** **Open (Architecture)**
-- **Description:** The `task` and `project` tables in V1 schema lack an `updated_at` or `modified_at` column. This limits the sync agent's ability to detect conflicts reliably for these entities (it falls back to "Last Write Wins" or purely arrival-based logic).
-- **Workaround:** Current sync logic assumes no conflict if timestamp is missing, effectively overwriting. A future schema migration (V15) should add `updated_at` to these tables.
+- **Status:** **Resolved**
+- **Description:** The `task` and `project` tables in V1 schema lacked an `updated_at` or `modified_at` column. This limited the sync agent's ability to detect conflicts reliably for these entities.
+- **Resolution:** Migration V15 was added to `db.rs` which introduces `updated_at` column to both `task` and `project` tables. The `sync_agent.rs` logic was updated to utilize this column for robust conflict detection.
 
 ---
 
@@ -68,3 +68,9 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 - **Status:** **Resolved**
 - **Description:** Potential for orphaned records when deleting projects.
 - **Resolution:** The `delete_project` function now executes within a strict transaction, manually removing related milestones, risks, and dependencies, and nullifying foreign keys in tasks and time entries before removing the project itself. Verified by `robustness_tests.rs`.
+
+### 4.3. Sync Conflict Space Context (Resolved)
+
+- **Status:** **Resolved**
+- **Description:** The `SyncConflict` struct lacked `space_id`, causing `NOT NULL` constraint violations in the `sync_conflict` table during inserts.
+- **Resolution:** Added `space_id` to `SyncConflict` and `SyncDelta`. Updated `sync_agent.rs` to populate this field from the database or incoming delta during conflict detection, ensuring it is persisted correctly.

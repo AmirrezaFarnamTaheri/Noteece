@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Quantum Loops -->
+  <ellipse cx="256" cy="256" rx="150" ry="60" stroke="#845EF7" stroke-width="8" fill="none" transform="rotate(45 256 256)" />
+  <ellipse cx="256" cy="256" rx="150" ry="60" stroke="#20C997" stroke-width="8" fill="none" transform="rotate(-45 256 256)" />
+
+  <!-- Core -->
+  <circle cx="256" cy="256" r="20" fill="#FFFFFF" filter="url(#glow)" />
+</svg>

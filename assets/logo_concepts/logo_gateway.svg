@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="grad9" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#364FC7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#050506;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Outer Arch -->
+  <path d="M100 450 V 200 C 100 100, 412 100, 412 200 V 450"
+        stroke="#5F3DC4" stroke-width="20" fill="none" stroke-linecap="round"/>
+
+  <!-- Inner Arch (The Void/Entry) -->
+  <path d="M180 450 V 250 C 180 200, 332 200, 332 250 V 450"
+        fill="url(#grad9)" opacity="0.8"/>
+
+  <!-- Floor Glow -->
+  <ellipse cx="256" cy="450" rx="150" ry="20" fill="#845EF7" filter="blur(10px)" opacity="0.6" />
+</svg>

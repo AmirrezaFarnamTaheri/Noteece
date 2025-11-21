@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Central Hub -->
+  <circle cx="256" cy="256" r="40" fill="#FFFFFF" />
+
+  <!-- Three prongs -->
+  <path d="M256 256 L 256 100" stroke="#845EF7" stroke-width="20" stroke-linecap="round" />
+  <path d="M256 256 L 391 334" stroke="#845EF7" stroke-width="20" stroke-linecap="round" />
+  <path d="M256 256 L 121 334" stroke="#845EF7" stroke-width="20" stroke-linecap="round" />
+
+  <!-- Energy Arcs -->
+  <path d="M230 150 Q 282 150 282 200" stroke="#20C997" stroke-width="4" fill="none" />
+  <path d="M350 300 Q 324 345 280 320" stroke="#20C997" stroke-width="4" fill="none" />
+  <path d="M162 300 Q 188 345 232 320" stroke="#20C997" stroke-width="4" fill="none" />
+</svg>

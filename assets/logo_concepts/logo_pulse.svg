@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="grad3" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#FF0080;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7950F2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Shield Shape -->
+  <path d="M256 60 C 256 60, 100 90, 100 240 C 100 380, 256 460, 256 460 C 256 460, 412 380, 412 240 C 412 90, 256 60, 256 60 Z"
+        stroke="#2C2E33" stroke-width="8" fill="none" />
+
+  <!-- Pulse Waveform -->
+  <path d="M120 256 L 180 256 L 210 180 L 240 330 L 270 200 L 300 280 L 330 256 L 392 256"
+        stroke="url(#grad3)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

@@ -16,6 +16,7 @@ import {
   ActionIcon,
   Affix,
   Box,
+  Image,
 } from '@mantine/core';
 import {
   IconHome2,
@@ -104,11 +105,11 @@ const MainLayout: React.FC = () => {
     <AppShell
       padding="md"
       navbar={zenMode ? undefined : { width: 250, breakpoint: 'sm' }}
-      header={zenMode ? undefined : { height: 60 }}
+      header={zenMode ? undefined : { height: 64 }} // Slightly taller for better logo breathing room
       styles={(theme) => ({
         main: {
           backgroundColor: theme.colors.dark[9], // Deepest background
-          paddingTop: zenMode ? 0 : 'calc(60px + var(--mantine-spacing-md))', // Adjust for header
+          paddingTop: zenMode ? 0 : 'calc(64px + var(--mantine-spacing-md))', // Adjust for header
         },
       })}
     >
@@ -122,16 +123,14 @@ const MainLayout: React.FC = () => {
           }}
         >
           <Group justify="space-between" align="center" h="100%">
-            <Group gap="xs">
-              <ThemeIcon size="lg" variant="gradient" gradient={{ from: 'violet', to: 'indigo', deg: 135 }} radius="md">
-                <IconNote size={22} />
-              </ThemeIcon>
+            <Group gap="sm" style={{ cursor: 'pointer' }} onClick={() => navigate('/main')}>
+              <Image src="/logo.svg" w={32} h={32} alt="Noteece Logo" style={{ filter: 'drop-shadow(0 0 8px rgba(132, 94, 247, 0.5))' }} />
               <Box>
-                <Title order={4} style={{ lineHeight: 1, fontWeight: 800, letterSpacing: '-0.5px' }}>
+                <Title order={4} style={{ lineHeight: 1, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--mantine-color-gray-0)' }}>
                   Noteece
                 </Title>
-                <Text size="9px" c="dimmed" fw={700} tt="uppercase" ls={1.5}>
-                  Vault
+                <Text size="8px" c="dimmed" fw={700} tt="uppercase" ls={2} mt={2}>
+                  Private Vault
                 </Text>
               </Box>
             </Group>
@@ -158,16 +157,22 @@ const MainLayout: React.FC = () => {
               <Button
                 size="xs"
                 variant="gradient"
-                gradient={{ from: 'violet', to: 'cyan' }}
+                gradient={{ from: 'violet', to: 'indigo' }}
                 onClick={handleDailyNote}
                 radius="md"
                 leftSection={<IconPlus size={14} />}
+                style={{
+                    boxShadow: '0 4px 12px rgba(132, 94, 247, 0.3)',
+                    transition: 'transform 0.2s ease',
+                }}
               >
                 Daily Note
               </Button>
 
+              <Divider orientation="vertical" mx={4} color="dark.6" />
+
               <Tooltip label="Toggle Zen Mode">
-                <ActionIcon variant="subtle" onClick={toggleZenMode} size="lg" radius="md">
+                <ActionIcon variant="subtle" onClick={toggleZenMode} size="lg" radius="md" color="gray">
                   <IconEyeOff size={20} />
                 </ActionIcon>
               </Tooltip>
@@ -183,14 +188,14 @@ const MainLayout: React.FC = () => {
           p="sm"
           style={{
             backgroundColor: 'var(--mantine-color-dark-8)', // Slightly lighter than main
-            borderRight: '1px solid rgba(255, 255, 255, 0.05)',
+            borderRight: 'none', // Removed border for cleaner look
           }}
         >
           <AppShell.Section grow component={ScrollArea} className="no-scrollbar">
-            <Stack gap="lg">
+            <Stack gap="lg" pt="sm">
               {navLinkGroups.map((group) => (
-                <Stack key={group.title} gap={2}>
-                  <Text size="10px" fw={800} c="dimmed" tt="uppercase" pl="xs" mb={4} ls={1}>
+                <Stack key={group.title} gap={4}>
+                  <Text size="10px" fw={800} c="dimmed" tt="uppercase" pl="xs" mb={4} ls={1} style={{ opacity: 0.7 }}>
                     {group.title}
                   </Text>
                   {group.links.map((link) => (
@@ -198,7 +203,7 @@ const MainLayout: React.FC = () => {
                       {({ isActive }) => (
                         <MantineNavLink
                           label={
-                            <Text size="sm" fw={isActive ? 700 : 500}>
+                            <Text size="sm" fw={isActive ? 600 : 500}>
                               {link.label}
                             </Text>
                           }
@@ -206,14 +211,22 @@ const MainLayout: React.FC = () => {
                             <link.icon
                               size={18}
                               stroke={1.5}
-                              color={isActive ? 'var(--mantine-color-violet-4)' : 'var(--mantine-color-gray-5)'}
+                              color={isActive ? 'var(--mantine-color-violet-3)' : 'var(--mantine-color-gray-5)'}
                             />
                           }
                           active={isActive}
-                          variant="subtle" // Changed from light to custom handled in theme
+                          variant="subtle"
                           rightSection={
                             isActive && <IconChevronRight size={14} stroke={1.5} style={{ opacity: 0.5 }} />
                           }
+                          styles={{
+                            root: {
+                                borderRadius: '8px',
+                                '&[data-active]': {
+                                    backgroundColor: 'rgba(132, 94, 247, 0.1)',
+                                }
+                            }
+                          }}
                         />
                       )}
                     </NavLink>
@@ -224,25 +237,24 @@ const MainLayout: React.FC = () => {
           </AppShell.Section>
 
           <AppShell.Section mt="md">
-            <Divider mb="sm" color="dark.5" />
             <Paper
               p="xs"
               radius="md"
               style={{
-                backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                backgroundColor: 'rgba(255, 255, 255, 0.03)',
                 border: '1px solid rgba(255, 255, 255, 0.05)',
               }}
             >
               <Group gap="xs">
-                <ThemeIcon variant="light" color="green" size="sm" radius="xl">
+                <ThemeIcon variant="light" color="teal" size="sm" radius="xl">
                   <IconCloud size={12} />
                 </ThemeIcon>
                 <Box style={{ flex: 1 }}>
-                  <Text size="xs" fw={700}>
+                  <Text size="xs" fw={700} c="teal.1">
                     Sync Active
                   </Text>
                   <Text size="10px" c="dimmed">
-                    Updated just now
+                    Local P2P Ready
                   </Text>
                 </Box>
               </Group>

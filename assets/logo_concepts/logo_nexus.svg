@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#845EF7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#20C997;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Central Sphere of Connections -->
+  <circle cx="256" cy="256" r="120" stroke="url(#grad1)" stroke-width="8" fill="none" opacity="0.8"/>
+  <circle cx="256" cy="256" r="60" stroke="#E5DBFF" stroke-width="4" fill="none" opacity="0.5"/>
+
+  <!-- Nodes -->
+  <circle cx="256" cy="136" r="12" fill="#845EF7" />
+  <circle cx="376" cy="256" r="12" fill="#20C997" />
+  <circle cx="256" cy="376" r="12" fill="#845EF7" />
+  <circle cx="136" cy="256" r="12" fill="#20C997" />
+
+  <!-- Connecting Lines -->
+  <path d="M256 136 L 376 256 L 256 376 L 136 256 Z" stroke="#E5DBFF" stroke-width="2" opacity="0.6" />
+</svg>

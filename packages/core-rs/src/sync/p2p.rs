@@ -2,7 +2,8 @@
 // This module integrates the discovery and mobile_sync modules to provide a complete P2P sync solution.
 
 use super::discovery::{DiscoveredDevice, DiscoveryService};
-use super::mobile_sync::{DeviceInfo, SyncCategory, SyncProtocol};
+use super::mobile_sync::{DeviceInfo, SyncCategory, SyncProtocol, SyncDelta, DeltaOperation};
+use crate::sync_agent::{SyncDelta as DbSyncDelta, SyncOperation as DbSyncOperation};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use thiserror::Error;
@@ -17,6 +18,8 @@ pub enum P2pError {
     Sync(String),
     #[error("Network error: {0}")]
     Network(String),
+    #[error("Database error: {0}")]
+    Database(String),
 }
 
 pub struct P2pSync {
@@ -50,6 +53,8 @@ impl P2pSync {
             let peer_addr = socket.peer_addr().map(|a| a.to_string()).unwrap_or_else(|_| "unknown".to_string());
             log::info!("[p2p] New connection from {}", peer_addr);
 
+            // In a real implementation, we would hand off the socket to the protocol handler
+            // to perform the handshake and exchange data.
             tokio::spawn(async move {
                 let mut buf = [0; 1024];
                 loop {
@@ -73,18 +78,27 @@ impl P2pSync {
             .map_err(|e| P2pError::Discovery(e.to_string()))
     }
 
+    /// Start sync with a specific device.
     pub async fn start_sync(&self, device_id: &str) -> Result<(), P2pError> {
         let mut protocol = self.protocol.lock().map_err(|_| P2pError::Sync("Mutex poisoned".to_string()))?;
+
+        // We are syncing all vault categories
+        let categories = vec![
+            SyncCategory::Notes,
+            SyncCategory::Tasks,
+            SyncCategory::Projects,
+            SyncCategory::Health,
+            SyncCategory::Time,
+            SyncCategory::Calendar,
+        ];
+
         protocol
-            .start_sync(device_id, vec![SyncCategory::Posts])
+            .start_sync(device_id, categories)
             .await
             .map_err(|e| P2pError::Sync(e.to_string()))
     }
 
     pub async fn initiate_pairing(&self, device_id: &str) -> Result<(), P2pError> {
-        // In a real P2P flow, we would send a pairing request over the network.
-        // Current SyncProtocol::pair_device is passive (receives a request).
-        // For this "active" init, we verify availability and prepare state.
         let protocol = self.protocol.lock().map_err(|_| P2pError::Sync("Mutex poisoned".to_string()))?;
 
         if protocol.is_device_available(device_id) {
@@ -92,11 +106,40 @@ impl P2pSync {
              return Ok(());
         }
 
-        // Simulate active pairing initiation by logging.
-        // The actual handshake is currently driven by the mobile client (Scanning QR code on Desktop).
-        // So "Initiate Pairing" on Desktop essentially means "Enter Listening/Display QR Code Mode".
-        // We log this intent.
         log::info!("[p2p] Ready to accept pairing from {}", device_id);
         Ok(())
+    }
+}
+
+// Conversion helpers between Database SyncDelta and Protocol SyncDelta
+pub fn db_delta_to_protocol_delta(db_delta: DbSyncDelta) -> SyncDelta {
+    SyncDelta {
+        operation: match db_delta.operation {
+            DbSyncOperation::Create => DeltaOperation::Create,
+            DbSyncOperation::Update => DeltaOperation::Update,
+            DbSyncOperation::Delete => DeltaOperation::Delete,
+        },
+        entity_type: db_delta.entity_type,
+        entity_id: db_delta.entity_id,
+        encrypted_data: db_delta.data, // In a real encrypted setup, this would be ciphertext
+        timestamp: chrono::DateTime::from_timestamp(db_delta.timestamp, 0).unwrap_or(chrono::Utc::now()),
+        data_hash: None,
+        sequence: 0, // Sequence handling needs implementation
+    }
+}
+
+pub fn protocol_delta_to_db_delta(proto_delta: SyncDelta) -> DbSyncDelta {
+    DbSyncDelta {
+        entity_type: proto_delta.entity_type,
+        entity_id: proto_delta.entity_id,
+        operation: match proto_delta.operation {
+            DeltaOperation::Create => DbSyncOperation::Create,
+            DeltaOperation::Update => DbSyncOperation::Update,
+            DeltaOperation::Delete => DbSyncOperation::Delete,
+        },
+        data: proto_delta.encrypted_data,
+        timestamp: proto_delta.timestamp.timestamp(),
+        vector_clock: std::collections::HashMap::new(), // Needs vector clock logic integration
+        space_id: None, // Protocol needs to carry space_id if we want to populate this correctly
     }
 }

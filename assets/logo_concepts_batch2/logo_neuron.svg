@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Neuron Body -->
+  <circle cx="256" cy="256" r="60" fill="#845EF7" opacity="0.8">
+    <animate attributeName="opacity" values="0.8;1;0.8" duration="3s" repeatCount="indefinite" />
+  </circle>
+
+  <!-- Dendrites / Connections -->
+  <path d="M256 256 Q 350 150 400 100" stroke="#20C997" stroke-width="4" fill="none" />
+  <circle cx="400" cy="100" r="8" fill="#20C997" />
+
+  <path d="M256 256 Q 150 150 112 100" stroke="#20C997" stroke-width="4" fill="none" />
+  <circle cx="112" cy="100" r="8" fill="#20C997" />
+
+  <path d="M256 256 Q 150 350 112 412" stroke="#20C997" stroke-width="4" fill="none" />
+  <circle cx="112" cy="412" r="8" fill="#20C997" />
+
+  <path d="M256 256 Q 350 350 400 412" stroke="#20C997" stroke-width="4" fill="none" />
+  <circle cx="400" cy="412" r="8" fill="#20C997" />
+
+  <!-- Core Nucleus -->
+  <circle cx="256" cy="256" r="20" fill="#FFFFFF" />
+</svg>
