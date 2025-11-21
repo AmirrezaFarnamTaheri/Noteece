@@ -4,8 +4,8 @@ mod tests {
     use core_rs::sync::mobile_sync::{SyncProtocol, PairingRequest, DeviceInfo as ProtocolDeviceInfo};
     use rusqlite::Connection;
     use ulid::Ulid;
-    use std::sync::{Arc, Mutex};
-    use std::net::IpAddr;
+
+
     use chrono::Utc;
 
     // Helper to create an in-memory DB with sync tables initialized

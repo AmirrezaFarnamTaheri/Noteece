@@ -127,17 +127,17 @@ pub fn get_time_entry(conn: &Connection, id: Ulid) -> Result<Option<TimeEntry>, 
     let entry = stmt
         .query_row([id.to_string()], |row| {
             Ok(TimeEntry {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).unwrap(),
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).unwrap(),
+                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 task_id: row
                     .get::<_, Option<String>>(2)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 project_id: row
                     .get::<_, Option<String>>(3)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 note_id: row
                     .get::<_, Option<String>>(4)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 description: row.get(5)?,
                 started_at: row.get(6)?,
                 ended_at: row.get(7)?,
@@ -159,17 +159,17 @@ pub fn get_time_entries(conn: &Connection, space_id: &str) -> Result<Vec<TimeEnt
     let entries = stmt
         .query_map([space_id], |row| {
             Ok(TimeEntry {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).unwrap(),
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).unwrap(),
+                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 task_id: row
                     .get::<_, Option<String>>(2)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 project_id: row
                     .get::<_, Option<String>>(3)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 note_id: row
                     .get::<_, Option<String>>(4)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 description: row.get(5)?,
                 started_at: row.get(6)?,
                 ended_at: row.get(7)?,
@@ -192,17 +192,17 @@ pub fn get_task_time_entries(conn: &Connection, task_id: Ulid) -> Result<Vec<Tim
     let entries = stmt
         .query_map([task_id.to_string()], |row| {
             Ok(TimeEntry {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).unwrap(),
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).unwrap(),
+                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 task_id: row
                     .get::<_, Option<String>>(2)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 project_id: row
                     .get::<_, Option<String>>(3)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 note_id: row
                     .get::<_, Option<String>>(4)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 description: row.get(5)?,
                 started_at: row.get(6)?,
                 ended_at: row.get(7)?,
@@ -228,17 +228,17 @@ pub fn get_project_time_entries(
     let entries = stmt
         .query_map([project_id.to_string()], |row| {
             Ok(TimeEntry {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).unwrap(),
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).unwrap(),
+                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 task_id: row
                     .get::<_, Option<String>>(2)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 project_id: row
                     .get::<_, Option<String>>(3)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 note_id: row
                     .get::<_, Option<String>>(4)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 description: row.get(5)?,
                 started_at: row.get(6)?,
                 ended_at: row.get(7)?,
@@ -261,17 +261,17 @@ pub fn get_running_entries(conn: &Connection, space_id: Ulid) -> Result<Vec<Time
     let entries = stmt
         .query_map([space_id.to_string()], |row| {
             Ok(TimeEntry {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).unwrap(),
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).unwrap(),
+                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 task_id: row
                     .get::<_, Option<String>>(2)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 project_id: row
                     .get::<_, Option<String>>(3)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 note_id: row
                     .get::<_, Option<String>>(4)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 description: row.get(5)?,
                 started_at: row.get(6)?,
                 ended_at: row.get(7)?,
@@ -298,17 +298,17 @@ pub fn get_recent_time_entries(
     let entries = stmt
         .query_map(rusqlite::params![space_id.to_string(), limit], |row| {
             Ok(TimeEntry {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).unwrap(),
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).unwrap(),
+                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 task_id: row
                     .get::<_, Option<String>>(2)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 project_id: row
                     .get::<_, Option<String>>(3)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 note_id: row
                     .get::<_, Option<String>>(4)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 description: row.get(5)?,
                 started_at: row.get(6)?,
                 ended_at: row.get(7)?,
@@ -335,17 +335,17 @@ pub fn get_time_entries_since(
     let entries = stmt
         .query_map(rusqlite::params![space_id, since_timestamp], |row| {
             Ok(TimeEntry {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).unwrap(),
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).unwrap(),
+                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 task_id: row
                     .get::<_, Option<String>>(2)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 project_id: row
                     .get::<_, Option<String>>(3)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 note_id: row
                     .get::<_, Option<String>>(4)?
-                    .map(|s| Ulid::from_string(&s).unwrap()),
+                    .map(|s| Ulid::from_string(&s)).transpose().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 description: row.get(5)?,
                 started_at: row.get(6)?,
                 ended_at: row.get(7)?,

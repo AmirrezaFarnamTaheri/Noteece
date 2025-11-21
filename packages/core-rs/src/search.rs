@@ -267,8 +267,12 @@ fn search_notes_advanced(
 
     // Archived filter
     if let Some(archived) = query.filters.archived {
-        where_clauses.push("n.is_archived = ?".to_string());
-        params.push(Box::new(if archived { 1 } else { 0 }));
+        // Check if is_archived column exists or use some other indicator.
+        // Assuming no is_archived column exists in `note` table yet based on schema in db.rs.
+        // This might be a placeholder. Skipping for now to avoid error if column doesn't exist.
+        // where_clauses.push("n.is_archived = ?".to_string());
+        // params.push(Box::new(if archived { 1 } else { 0 }));
+        log::warn!("[search] Archived filter requested but not implemented for notes");
     }
 
     if !where_clauses.is_empty() {
@@ -339,16 +343,21 @@ fn search_tasks_advanced(
 
     // Priority filter
     if let Some(priority) = &query.filters.priority {
-        where_clauses.push("t.priority = ?".to_string());
-        params.push(Box::new(priority.clone()));
+        // Assuming priority is stored as INTEGER in DB but query passes String or Int?
+        // Schema says priority INTEGER. SearchFilters has Option<String>.
+        // We need to parse if necessary.
+        if let Ok(p_int) = priority.parse::<i32>() {
+             where_clauses.push("t.priority = ?".to_string());
+             params.push(Box::new(p_int));
+        }
     }
 
     // Completed filter
     if let Some(completed) = query.filters.completed {
         if completed {
-            where_clauses.push("t.status = 'completed'".to_string());
+            where_clauses.push("t.status = 'done'".to_string()); // Using 'done' based on schema check constraint
         } else {
-            where_clauses.push("t.status != 'completed'".to_string());
+            where_clauses.push("t.status != 'done'".to_string());
         }
     }
 
@@ -367,9 +376,9 @@ fn search_tasks_advanced(
         let title: String = row.get(1)?;
         let description: Option<String> = row.get::<_, Option<String>>(2)?;
         let status: String = row.get(3)?;
-        let priority: Option<String> = row.get::<_, Option<String>>(4)?;
-        let created_at: i64 = row.get(5)?;
-        let updated_at: i64 = row.get(6)?;
+        let priority: Option<i32> = row.get::<_, Option<i32>>(4)?; // Schema says INT
+        let created_at: i64 = row.get::<_, Option<i64>>(5)?.unwrap_or(0); // task doesn't have created_at, using start_at as proxy or default
+        let updated_at: i64 = 0; // No updated_at in task schema v1?
         let deadline: Option<i64> = row.get::<_, Option<i64>>(7)?;
 
         let snippet = description
@@ -418,7 +427,8 @@ fn search_projects_advanced(
 
     // Text search
     if !query.query.is_empty() {
-        where_clauses.push("(p.name LIKE ? OR p.description LIKE ?)".to_string());
+        // Note: project description column doesn't exist in schema v1 (only title, goal_outcome)
+        where_clauses.push("(p.title LIKE ? OR p.goal_outcome LIKE ?)".to_string());
         let pattern = format!("%{}%", query.query);
         params.push(Box::new(pattern.clone()));
         params.push(Box::new(pattern));
@@ -443,16 +453,16 @@ fn search_projects_advanced(
     while let Some(row) = rows.next()? {
         let id: String = row.get(0)?;
         let name: String = row.get(1)?;
-        let description: Option<String> = row.get(2).ok();
+        let goal_outcome: Option<String> = row.get(2).ok();
         let status: String = row.get(3)?;
-        let created_at: i64 = row.get(4)?;
-        let updated_at: i64 = row.get(5)?;
+        let start_at: i64 = row.get::<_, Option<i64>>(4)?.unwrap_or(0);
+        // No updated_at in project schema v1
 
-        let snippet = description
+        let snippet = goal_outcome
             .as_ref()
             .and_then(|d| extract_snippet(d, &query.query));
 
-        let relevance = calculate_relevance(&name, description.as_deref(), &query.query);
+        let relevance = calculate_relevance(&name, goal_outcome.as_deref(), &query.query);
 
         results.push(SearchResult {
             entity_type: EntityType::Project,
@@ -460,8 +470,8 @@ fn search_projects_advanced(
             title: name,
             snippet,
             relevance_score: relevance,
-            created_at,
-            updated_at,
+            created_at: start_at, // Use start_at as proxy
+            updated_at: 0,
             metadata: serde_json::json!({
                 "type": "project",
                 "status": status

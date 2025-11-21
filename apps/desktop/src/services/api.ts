@@ -14,6 +14,10 @@ import {
   ProjectMilestone,
   TimeEntry,
   TimeStats,
+  SyncTask,
+  SyncStats,
+  DeviceInfo,
+  DiscoveredDevice,
 } from '@noteece/types';
 
 export const getAnalyticsData = (): Promise<AnalyticsData> => {
@@ -171,7 +175,7 @@ export const startP2pSync = (deviceId: string): Promise<void> => {
   return invoke('start_p2p_sync_cmd', { deviceId });
 };
 
-export const discoverDevices = (): Promise<any[]> => {
+export const discoverDevices = (): Promise<DiscoveredDevice[]> => {
   return invoke('discover_devices_cmd');
 };
 
@@ -179,7 +183,7 @@ export const initiatePairing = (deviceId: string): Promise<void> => {
   return invoke('initiate_pairing_cmd', { deviceId });
 };
 
-export const getDevices = (): Promise<any[]> => {
+export const getDevices = (): Promise<DeviceInfo[]> => {
   return invoke('get_devices_cmd');
 };
 
@@ -201,6 +205,14 @@ export const getSyncProgress = (deviceId: string): Promise<number> => {
 
 export const shutdownClearKeys = (): Promise<void> => {
   return invoke('shutdown_clear_keys_cmd');
+};
+
+export const getAllSyncTasks = (spaceId: string): Promise<SyncTask[]> => {
+  return invoke('get_all_sync_tasks_cmd', { spaceId });
+};
+
+export const getSyncStats = (spaceId: string): Promise<SyncStats> => {
+  return invoke('get_sync_stats_cmd', { spaceId });
 };
 
 // Backup API

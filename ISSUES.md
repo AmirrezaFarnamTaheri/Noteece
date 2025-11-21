@@ -14,11 +14,11 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 - **Description:** There is a persistent build failure in the `core-rs` crate when both the `fts5` and `bundled-sqlcipher-vendored-openssl` features are enabled.
 - **Resolution:** A hybrid search engine was implemented in `search.rs`. The application now checks for the existence of the FTS5 table at runtime. If FTS5 is unavailable (due to build config), it automatically falls back to standard `LIKE` queries against the database content (which is transparently decrypted by SQLCipher at the connection level). This ensures search functionality is always available to the user.
 
-### 1.2. FTS5 Trigger Conflicts (Resolved)
+### 1.2. Task Sync Timestamp Limitation
 
-- **Status:** **Resolved**
-- **Description:** The FTS5 update trigger ('note_au') caused conflicts with SQLCipher.
-- **Resolution:** Triggers were removed. FTS index updates are now handled manually within the application logic (in `create_note` and `update_note_content` functions) to ensure the index remains in sync with the content table.
+- **Status:** **Open (Architecture)**
+- **Description:** The `task` and `project` tables in V1 schema lack an `updated_at` or `modified_at` column. This limits the sync agent's ability to detect conflicts reliably for these entities (it falls back to "Last Write Wins" or purely arrival-based logic).
+- **Workaround:** Current sync logic assumes no conflict if timestamp is missing, effectively overwriting. A future schema migration (V15) should add `updated_at` to these tables.
 
 ---
 
@@ -57,11 +57,11 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 
 ## 4. Resolved Issues (Verification Complete)
 
-### 4.1. Split-Brain Sync Wiring (Resolved)
+### 4.1. Sync Schema Mismatch (Resolved)
 
 - **Status:** **Resolved**
-- **Description:** The frontend `api.ts` expected commands (`start_p2p_sync_cmd`, `get_devices_cmd`, etc.) that were missing or misplaced in `commands.rs`.
-- **Resolution:** All sync-related commands were implemented in `apps/desktop/src-tauri/src/commands.rs` and correctly wired to `core-rs` logic. A new test `sync_wiring_test.rs` confirms the integration.
+- **Description:** The `sync_agent.rs` was using plural table names (`notes`, `tasks`) while the database schema used singular (`note`, `task`). This caused sync to fail silently or panic.
+- **Resolution:** Fixed `sync_agent.rs` to use singular table names. Added `sync_logic_tests.rs` to verify conflict resolution works against the correct schema.
 
 ### 4.2. Transaction Safety in Cascading Deletes (Resolved)
 
