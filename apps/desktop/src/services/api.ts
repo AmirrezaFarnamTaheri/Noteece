@@ -21,19 +21,19 @@ export const getAnalyticsData = (): Promise<AnalyticsData> => {
 };
 
 export const getFormTemplatesForSpace = (spaceId: string): Promise<FormTemplate[]> => {
-  return invoke('get_form_templates_for_space', { spaceId });
+  return invoke('get_form_templates_for_space_cmd', { spaceId });
 };
 
 export const createFormTemplate = (spaceId: string, name: string, fields: FormField[]): Promise<FormTemplate> => {
-  return invoke('create_form_template', { spaceId, name, fields });
+  return invoke('create_form_template_cmd', { spaceId, name, fields });
 };
 
-export const updateFormTemplate = (id: string, name: string, fields: FormField[]): Promise<void> => {
-  return invoke('update_form_template', { id, name, fields });
+export const updateFormTemplate = (id: string, name: string, fields: FormField[]): Promise<FormTemplate> => {
+  return invoke('update_form_template_cmd', { id, name, fields });
 };
 
 export const deleteFormTemplate = (id: string): Promise<void> => {
-  return invoke('delete_form_template', { id });
+  return invoke('delete_form_template_cmd', { id });
 };
 
 export const getProjectRisks = (projectId: string): Promise<ProjectRisk[]> => {
@@ -62,7 +62,7 @@ export const getAllNotesInSpace = (spaceId: string): Promise<Note[]> => {
 };
 
 export const getAllProjectsInSpace = (spaceId: string): Promise<Project[]> => {
-  return invoke('get_all_projects_cmd', { spaceId });
+  return invoke('get_projects_in_space_cmd', { spaceId });
 };
 
 export const getOrCreateDailyNote = (spaceId: string): Promise<Note> => {
@@ -148,13 +148,15 @@ export const createManualTimeEntry = (
   startedAt: number,
   durationSeconds: number,
 ): Promise<TimeEntry> => {
+  // Argument names must match snake_case in Rust command: started_at, duration_seconds
+  // Also using started_at and duration_seconds as expected by the backend
   return invoke('create_manual_time_entry_cmd', {
     spaceId,
     taskId: taskId || null,
     projectId: projectId || null,
     noteId: noteId || null,
     description: description || null,
-    startedAt,
-    durationSeconds,
+    started_at: startedAt,
+    duration_seconds: durationSeconds,
   });
 };
