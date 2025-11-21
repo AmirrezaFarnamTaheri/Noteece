@@ -1262,13 +1262,25 @@ pub async fn initiate_pairing_cmd(db: State<'_, DbConnection>, device_id: String
 
 #[tauri::command]
 pub fn exchange_keys_cmd(db: State<DbConnection>, device_id: String) -> Result<(), String> {
-     // Placeholder
+     // Desktop acts as a passive server for pairing.
+     // The mobile device scans the QR code and initiates the handshake.
+     // This command is kept for API compatibility but logs information.
+     log::info!("[p2p] exchange_keys_cmd called for {}. Desktop waits for mobile to connect.", device_id);
     Ok(())
 }
 
 #[tauri::command]
 pub fn get_sync_progress_cmd(db: State<DbConnection>, device_id: String) -> Result<f32, String> {
-    Ok(0.0) // Placeholder
+    let p2p_sync = {
+        let guard = db.p2p_sync.lock().map_err(|_| "Failed to lock P2P sync".to_string())?;
+        guard.clone()
+    };
+
+    if let Some(sync) = p2p_sync {
+        Ok(sync.get_progress())
+    } else {
+        Ok(0.0)
+    }
 }
 
 #[tauri::command]

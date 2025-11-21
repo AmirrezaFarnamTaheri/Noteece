@@ -10,7 +10,7 @@ import { createTheme, rem } from '@mantine/core';
 
 export const theme = createTheme({
   primaryColor: 'violet', // Changed to Violet for a more cyber/modern feel
-  defaultRadius: 'md',
+  defaultRadius: 'lg', // Increased for softer feel
   cursorType: 'pointer',
 
   colors: {
@@ -22,11 +22,11 @@ export const theme = createTheme({
       '#909296', // 2 - Icon inactive
       '#5C5F66', // 3 - Border Light
       '#373A40', // 4 - Border Dark / Surface Hover
-      '#25262B', // 5 - Surface Lighter
-      '#1F2023', // 6 - Surface Default (Cards)
-      '#141517', // 7 - App Background
-      '#101113', // 8 - Deep contrast / Modal overlay
-      '#0A0A0C', // 9 - Almost black / Deepest Background
+      '#2C2E33', // 5 - Surface Lighter
+      '#25262B', // 6 - Surface Default (Cards)
+      '#1A1B1E', // 7 - App Background
+      '#141517', // 8 - Deep contrast / Modal overlay
+      '#101113', // 9 - Almost black / Deepest Background
     ],
     // Electric Violet for primary actions - "Cyber" feel
     violet: [
@@ -80,10 +80,10 @@ export const theme = createTheme({
       styles: (theme) => ({
         root: {
           fontWeight: 600,
-          transition: 'transform 0.1s ease, box-shadow 0.2s ease',
+          transition: 'all 0.2s ease',
           '&:hover': {
             transform: 'translateY(-1px)',
-            boxShadow: '0 4px 12px rgba(132, 94, 247, 0.25)', // Violet glow
+            boxShadow: '0 4px 12px rgba(132, 94, 247, 0.3)', // Violet glow
           },
           '&:active': {
             transform: 'translateY(0)',

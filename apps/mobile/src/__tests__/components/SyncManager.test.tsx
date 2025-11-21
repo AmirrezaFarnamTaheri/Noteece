@@ -1,14 +1,18 @@
 import React from "react";
-import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
 import SyncManager from "../../components/SyncManager";
 import { SyncClient } from "../../lib/sync/sync-client";
 
 jest.mock("../../lib/sync/sync-client");
 
+// Mock setImmediate to prevent "worker process failed to exit" issues
+// global.setImmediate = jest.useRealTimers as unknown as typeof global.setImmediate;
+
 describe("SyncManager Component", () => {
   let mockSyncClient: jest.Mocked<SyncClient>;
 
   beforeEach(() => {
+    jest.useFakeTimers();
     mockSyncClient = {
       discoverDevices: jest.fn().mockResolvedValue([]),
       getSyncStatus: jest.fn().mockReturnValue({
@@ -22,8 +26,16 @@ describe("SyncManager Component", () => {
     (SyncClient as jest.Mock).mockReturnValue(mockSyncClient);
   });
 
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+  });
+
   it("renders sync button", async () => {
     const { findByText } = render(<SyncManager />);
+    await waitFor(() => {
+        expect(mockSyncClient.discoverDevices).toHaveBeenCalled();
+    });
     expect(await findByText(/Scan/i)).toBeTruthy();
   });
 
@@ -48,3 +60,5 @@ describe("SyncManager Component", () => {
     });
   });
 });
+
+jest.mock("react-native/Libraries/Animated/NativeAnimatedHelper");

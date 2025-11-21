@@ -99,4 +99,11 @@ impl P2pSync {
         log::info!("[p2p] Ready to accept pairing from {}", device_id);
         Ok(())
     }
+
+    pub fn get_progress(&self) -> f32 {
+        match self.protocol.lock() {
+            Ok(protocol) => protocol.get_progress(),
+            Err(_) => 0.0,
+        }
+    }
 }

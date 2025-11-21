@@ -285,6 +285,9 @@ pub struct SyncProtocol {
 
     /// Active shared secrets for paired devices (device_id -> shared_secret)
     shared_secrets: HashMap<String, [u8; 32]>,
+
+    /// Sync progress (0.0 to 1.0)
+    sync_progress: f32,
 }
 
 impl SyncProtocol {
@@ -296,7 +299,18 @@ impl SyncProtocol {
             sync_state: SyncState::Idle,
             last_sync: None,
             shared_secrets: HashMap::new(),
+            sync_progress: 0.0,
         }
+    }
+
+    /// Get sync progress
+    pub fn get_progress(&self) -> f32 {
+        self.sync_progress
+    }
+
+    /// Update sync progress
+    pub fn set_progress(&mut self, progress: f32) {
+        self.sync_progress = progress.clamp(0.0, 1.0);
     }
 
     /// Discover other devices on local network using mDNS
@@ -476,6 +490,7 @@ impl SyncProtocol {
         }
 
         self.sync_state = SyncState::Connecting;
+        self.sync_progress = 0.0;
 
         // Establish encrypted connection with paired device
         // Verify device is reachable at its IP address and port
@@ -504,6 +519,8 @@ impl SyncProtocol {
             }
         }
 
+        self.sync_progress = 0.1; // Connected
+
         // Create sync session with device
         // Initialize session tracking and state management
         let sync_session_id = uuid::Uuid::new_v4().to_string();
@@ -517,12 +534,14 @@ impl SyncProtocol {
         // Begin delta transmission for selected categories
         // Here we would utilize the shared_secret stored in self.shared_secrets.get(device_id)
         // to encrypt the communication channel for the actual sync process.
-
-        for category in categories {
-            log::debug!("[sync_protocol] Syncing category: {:?}", category);
-        }
-
         self.sync_state = SyncState::Syncing;
+
+        let total_categories = categories.len() as f32;
+        for (i, category) in categories.iter().enumerate() {
+            log::debug!("[sync_protocol] Syncing category: {:?}", category);
+            // Simulate progress update
+            self.sync_progress = 0.2 + (0.7 * ((i as f32) / total_categories));
+        }
 
         Ok(())
     }
@@ -530,6 +549,7 @@ impl SyncProtocol {
     /// Complete sync and update last_sync timestamp
     pub fn complete_sync(&mut self) -> Result<(), SyncProtocolError> {
         self.sync_state = SyncState::SyncComplete;
+        self.sync_progress = 1.0;
         self.last_sync = Some(Utc::now());
         Ok(())
     }

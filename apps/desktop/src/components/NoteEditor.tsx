@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Button, TextInput, List, Group, Modal, Select, LoadingOverlay, Text } from '@mantine/core';
-import { invoke } from '@tauri-apps/api/tauri';
 import { Note } from '@noteece/types';
 import { useStore } from '../store';
 import { useNotes, useFormTemplates } from '../hooks/useQueries';
+import { trashNote, createNote, updateNoteContent, createNoteCmd } from '../services/api';
+import { invoke } from '@tauri-apps/api/tauri';
 import LexicalEditor from './LexicalEditor';
 import classes from './NoteEditor.module.css';
 import { logger } from '@/utils/logger';
@@ -63,7 +64,7 @@ const NoteEditor: React.FC = () => {
       return;
     }
     try {
-      await invoke('update_note_content_cmd', { id: selectedNote.id, title, content });
+      await updateNoteContent(selectedNote.id, title, content);
       refetchNotes(); // Refresh the list using React Query
     } catch (error) {
       logger.error('Failed to update note:', error as Error);
@@ -73,7 +74,7 @@ const NoteEditor: React.FC = () => {
   const handleDeleteNote = async () => {
     if (!selectedNote) return;
     try {
-      await invoke('trash_note_cmd', { id: selectedNote.id });
+      await trashNote(selectedNote.id);
       refetchNotes(); // Refresh the list using React Query
       setSelectedNote(null);
     } catch (error) {

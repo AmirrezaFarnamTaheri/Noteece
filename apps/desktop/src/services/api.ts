@@ -1,5 +1,3 @@
-// apps/desktop/src/services/api.ts
-
 import { invoke } from '@tauri-apps/api/tauri';
 import {
   AnalyticsData,
@@ -87,6 +85,14 @@ export const getRecentNotes = (spaceId: string, limit: number): Promise<Note[]> 
 
 export const updateTask = (task: Task): Promise<void> => {
   return invoke('update_task_cmd', { task });
+};
+
+export const updateNoteContent = (id: string, title: string, content: string): Promise<void> => {
+  return invoke('update_note_content_cmd', { id, title, content });
+};
+
+export const trashNote = (id: string): Promise<void> => {
+  return invoke('trash_note_cmd', { id });
 };
 
 // Time Tracking API

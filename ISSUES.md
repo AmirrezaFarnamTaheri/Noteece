@@ -43,12 +43,12 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 
 ### 3.1. Jest Worker Process Force Exit
 
-- **Status:** **Open (Non-blocking)**
-- **Description:** Mobile tests sometimes fail with "A worker process has failed to exit gracefully". This is typically caused by open handles (timers, async operations) not being cleaned up properly in the test environment.
-- **Impact:** Test execution completes, but the exit code is non-zero. Coverage reports are still generated. This does not affect the stability of the built application.
+- **Status:** **Mitigated**
+- **Description:** Mobile tests sometimes failed with "A worker process has failed to exit gracefully" due to open handles (timers).
+- **Resolution:** Implemented `jest.useFakeTimers()` in test suites (e.g., `SyncManager.test.tsx`) to control timer execution and ensure proper cleanup. Some instances may still occur but are largely reduced.
 
 ### 3.2. React Native `act(...)` Warnings
 
-- **Status:** **Open (Non-blocking)**
+- **Status:** **Mitigated**
 - **Description:** Tests emit warnings about updates to state not being wrapped in `act(...)`.
-- **Action:** These are common in React Native testing with async hooks and do not indicate a functional failure. Future refactoring should wrap these updates explicitly.
+- **Action:** Refactored tests to use `await waitFor(...)` which implicitly handles act wrapping. Remaining warnings are from deep dependency interactions (e.g., `react-test-renderer`) and are non-blocking.

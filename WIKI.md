@@ -111,8 +111,9 @@ The database is normalized and managed via migrations (`db.rs`). Key tables incl
 ### 6. P2P Sync
 
 - **Local Network:** Sync devices over WiFi using mDNS for discovery.
-- **E2EE:** ECDH key exchange and ChaCha20Poly1305 encryption for secure data transfer.
+- **E2EE:** ECDH key exchange (X25519) and XChaCha20Poly1305 encryption for secure data transfer.
 - **Conflict Resolution:** Vector clocks (CRDT-inspired) to handle concurrent edits.
+- **Pairing:** Desktop initiates a passive listening mode (QR Code), while Mobile actively scans and initiates the handshake.
 
 ---
 
