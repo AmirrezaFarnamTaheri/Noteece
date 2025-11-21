@@ -1,4 +1,6 @@
+use crate::audit;
 use crate::db::DbError;
+use chrono::TimeZone;
 use rusqlite::{Connection, OptionalExtension, Result};
 use serde::{Deserialize, Serialize};
 use ulid::Ulid;
@@ -60,6 +62,17 @@ pub fn create_task(
         ],
     )?;
 
+    let _ = audit::log_event(
+        conn,
+        None,
+        "TASK_CREATED",
+        "task",
+        Some(&task.id.to_string()),
+        Some(&format!(r#"{{"title": "{}"}}"#, task.title)),
+        None,
+        None,
+    );
+
     Ok(task)
 }
 
@@ -120,12 +133,129 @@ pub fn update_task(conn: &Connection, task: &Task) -> Result<(), DbError> {
             &task.id.to_string(),
         ],
     )?;
+
+    // Handle recurrence if task is marked as done
+    if task.status == "done" && task.recur_rule.is_some() {
+        handle_recurrence(conn, task)?;
+    }
+
+    Ok(())
+}
+
+fn handle_recurrence(conn: &Connection, task: &Task) -> Result<(), DbError> {
+    if let Some(rule) = &task.recur_rule {
+        // Prevent duplicate recurrence: Check if a child task already exists
+        let count: i64 = conn
+            .query_row(
+                "SELECT count(*) FROM task WHERE parent_task_id = ?1",
+                [&task.id.to_string()],
+                |row| row.get(0),
+            )
+            .unwrap_or(0);
+
+        if count > 0 {
+            log::info!("[task] Next recurring task already exists for parent: {}", task.id);
+            return Ok(());
+        }
+
+        log::info!("[task] Handling recurrence for task: {}", task.id);
+
+        let current_due = task.due_at.unwrap_or_else(|| chrono::Utc::now().timestamp());
+
+        // Try legacy simple rules first, then full RRULE parsing
+        let next_due = match rule.to_uppercase().as_str() {
+            "DAILY" => Some(current_due + 86400),
+            "WEEKLY" => Some(current_due + 604800),
+            "MONTHLY" => Some(current_due + 2592000), // Approx 30 days
+            _ => {
+                // Try parsing as RFC 5545 RRULE
+                match rule.parse::<rrule::RRuleSet>() {
+                    Ok(rrule_set) => {
+                        let dt_start_utc = chrono::Utc.timestamp_opt(current_due, 0).unwrap();
+                        // Convert to rrule::Tz (UTC)
+                        let dt_start = dt_start_utc.with_timezone(&rrule::Tz::UTC);
+
+                        // RRuleSet implements IntoIterator
+                        // We want the first occurrence *after* current_due
+                        let next = rrule_set.into_iter().find(|dt| *dt > dt_start);
+                        next.map(|dt| dt.timestamp())
+                    }
+                    Err(e) => {
+                        log::warn!("[task] Failed to parse recurrence rule '{}': {}", rule, e);
+                        None
+                    }
+                }
+            }
+        };
+
+        if let Some(due) = next_due {
+            let mut new_task = task.clone();
+            new_task.id = Ulid::new();
+            new_task.status = "next".to_string();
+            new_task.due_at = Some(due);
+            new_task.completed_at = None;
+            new_task.parent_task_id = Some(task.id); // Link to previous task to prevent duplicates
+            // We don't clear recur_rule so the new task also recurs
+
+            log::info!("[task] Creating next recurring task instance: {}", new_task.id);
+
+            // Pre-convert optionals to own types to avoid temporary lifetime issues in params!
+            let nid = new_task.note_id.map(|id| id.to_string());
+            let pid = new_task.project_id.map(|id| id.to_string());
+            let par_id = new_task.parent_task_id.map(|id| id.to_string());
+
+            conn.execute(
+                "INSERT INTO task (id, space_id, note_id, project_id, parent_task_id, title, description, status, due_at, start_at, completed_at, priority, estimate_minutes, recur_rule, context, area) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
+                rusqlite::params![
+                    &new_task.id.to_string(),
+                    &new_task.space_id.to_string(),
+                    &nid,
+                    &pid,
+                    &par_id,
+                    &new_task.title,
+                    &new_task.description,
+                    &new_task.status,
+                    &new_task.due_at,
+                    &new_task.start_at,
+                    &new_task.completed_at,
+                    &new_task.priority,
+                    &new_task.estimate_minutes,
+                    &new_task.recur_rule,
+                    &new_task.context,
+                    &new_task.area,
+                ],
+            )?;
+
+            let _ = audit::log_event(
+                conn,
+                None,
+                "TASK_RECURRENCE_CREATED",
+                "task",
+                Some(&new_task.id.to_string()),
+                Some(&format!(r#"{{"parent_id": "{}"}}"#, task.id)),
+                None,
+                None,
+            );
+        }
+    }
     Ok(())
 }
 
 pub fn delete_task(conn: &Connection, id: Ulid) -> Result<(), DbError> {
     log::info!("[task] Deleting task with id: {}", id);
     conn.execute("DELETE FROM task WHERE id = ?1", [id.to_string()])?;
+
+    let _ = audit::log_event(
+        conn,
+        None,
+        "TASK_DELETED",
+        "task",
+        Some(&id.to_string()),
+        None,
+        None,
+        None,
+    );
+
     Ok(())
 }
 

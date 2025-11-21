@@ -54,7 +54,7 @@ export default function HabitsTracker() {
         const today = new Date().setHours(0, 0, 0, 0);
 
         const habitsWithStatus = fetchedHabits.map((h) => {
-          const lastCompleted = h.last_completed_at ? new Date(h.last_completed_at * 1000).setHours(0,0,0,0) : 0;
+          const lastCompleted = h.last_completed_at ? new Date(h.last_completed_at * 1000).setHours(0, 0, 0, 0) : 0;
           return {
             ...h,
             completed: lastCompleted === today,
@@ -118,9 +118,7 @@ export default function HabitsTracker() {
     }
   };
 
-  const completionRate = habits.length > 0
-    ? (habits.filter((h) => h.completed).length / habits.length) * 100
-    : 0;
+  const completionRate = habits.length > 0 ? (habits.filter((h) => h.completed).length / habits.length) * 100 : 0;
 
   return (
     <Paper withBorder p="md" h="100%">
@@ -153,7 +151,9 @@ export default function HabitsTracker() {
 
         <Stack gap="xs" mt="sm">
           {habits.length === 0 ? (
-            <Text size="sm" c="dimmed" ta="center">No habits tracked.</Text>
+            <Text size="sm" c="dimmed" ta="center">
+              No habits tracked.
+            </Text>
           ) : (
             habits.map((habit) => (
               <Group key={habit.id} gap="xs" wrap="nowrap">
@@ -199,12 +199,7 @@ export default function HabitsTracker() {
       <Modal opened={modalOpened} onClose={() => setModalOpened(false)} title="Add New Habit" size="sm">
         <form onSubmit={form.onSubmit(handleAddHabit)}>
           <Stack gap="md">
-            <TextInput
-              label="Habit Name"
-              placeholder="e.g., Read 30 mins"
-              required
-              {...form.getInputProps('name')}
-            />
+            <TextInput label="Habit Name" placeholder="e.g., Read 30 mins" required {...form.getInputProps('name')} />
             <Select
               label="Frequency"
               data={[

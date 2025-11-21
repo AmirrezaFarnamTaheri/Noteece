@@ -56,7 +56,9 @@ describe("data-utils", () => {
 
     it("returns zeros when database throws", async () => {
       // Mock console.error to suppress expected error log
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       const failingDb = {
         getFirstAsync: jest.fn().mockRejectedValue(new Error("DB error")),

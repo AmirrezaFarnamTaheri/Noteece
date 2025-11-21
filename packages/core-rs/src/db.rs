@@ -761,6 +761,30 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
         )?;
     }
 
+    if current_version < 14 {
+        log::info!("[db] Migrating to version 14 - Audit Logs");
+        tx.execute_batch(
+            "
+            CREATE TABLE IF NOT EXISTS audit_log (
+                id TEXT PRIMARY KEY,
+                user_id TEXT,
+                event_type TEXT NOT NULL,
+                entity_type TEXT NOT NULL,
+                entity_id TEXT,
+                details_json TEXT,
+                ip_address TEXT,
+                user_agent TEXT,
+                created_at INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_audit_log_created ON audit_log(created_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_audit_log_entity ON audit_log(entity_type, entity_id);
+            CREATE INDEX IF NOT EXISTS idx_audit_log_user ON audit_log(user_id);
+
+            INSERT INTO schema_version (version) VALUES (14);
+            ",
+        )?;
+    }
+
     tx.commit()?;
     log::info!("[db] Migration finished");
     Ok(())

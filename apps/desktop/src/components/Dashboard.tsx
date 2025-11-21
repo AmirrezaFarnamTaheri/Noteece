@@ -1,5 +1,26 @@
-import { Grid, Title, Group, Stack, Paper, Text, useMantineTheme, LoadingOverlay, Container, Button, SegmentedControl } from '@mantine/core';
-import { IconArrowUpRight, IconCheck, IconClock, IconLayoutGrid, IconList, IconX, IconEye, IconEyeOff } from '@tabler/icons-react';
+import {
+  Grid,
+  Title,
+  Group,
+  Stack,
+  Paper,
+  Text,
+  useMantineTheme,
+  LoadingOverlay,
+  Container,
+  Button,
+  SegmentedControl,
+} from '@mantine/core';
+import {
+  IconArrowUpRight,
+  IconCheck,
+  IconClock,
+  IconLayoutGrid,
+  IconList,
+  IconX,
+  IconEye,
+  IconEyeOff,
+} from '@tabler/icons-react';
 import React, { useState } from 'react';
 import { useProjects } from '../hooks/useQueries';
 import { useStore } from '../store';
@@ -42,7 +63,12 @@ const Dashboard: React.FC = () => {
   const archivedProjects = projects.filter((project) => project.status === 'archived').length;
 
   return (
-    <Container fluid className={classes.container} p="xl" style={{ backgroundColor: theme.colors.dark[8], minHeight: '100vh' }}>
+    <Container
+      fluid
+      className={classes.container}
+      p="xl"
+      style={{ backgroundColor: theme.colors.dark[8], minHeight: '100vh' }}
+    >
       <LoadingOverlay visible={isLoading} overlayProps={{ blur: 2 }} />
 
       <Stack gap="xl">
@@ -56,15 +82,15 @@ const Dashboard: React.FC = () => {
             </Text>
           </div>
           <Group>
-             <Button
-               variant="light"
-               color={focusMode ? 'indigo' : 'gray'}
-               leftSection={focusMode ? <IconEyeOff size={18} /> : <IconEye size={18} />}
-               onClick={() => setFocusMode(!focusMode)}
-             >
-               {focusMode ? 'Exit Focus' : 'Focus Mode'}
-             </Button>
-             <IconLayoutGrid size={24} color={theme.colors.gray[6]} />
+            <Button
+              variant="light"
+              color={focusMode ? 'indigo' : 'gray'}
+              leftSection={focusMode ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+              onClick={() => setFocusMode(!focusMode)}
+            >
+              {focusMode ? 'Exit Focus' : 'Focus Mode'}
+            </Button>
+            <IconLayoutGrid size={24} color={theme.colors.gray[6]} />
           </Group>
         </Group>
 
@@ -88,44 +114,44 @@ const Dashboard: React.FC = () => {
 
         {/* Project Status Stats Cards */}
         {!focusMode && (
-        <Grid gutter="lg">
-          <Grid.Col span={{ base: 6, md: 3 }}>
-            <StatsCard
-              icon={<IconList size={24} color={theme.colors.dark[0]} />}
-              title="All Projects"
-              value={projects.length.toString()}
-              color={theme.colors.indigo[6]}
-              backgroundColor={theme.colors.indigo[9]}
-            />
-          </Grid.Col>
-          <Grid.Col span={{ base: 6, md: 3 }}>
-            <StatsCard
-              icon={<IconCheck size={24} color={theme.colors.teal[1]} />}
-              title="Completed"
-              value={completedProjects.toString()}
-              color={theme.colors.teal[6]}
-              backgroundColor={theme.colors.teal[9]}
-            />
-          </Grid.Col>
-          <Grid.Col span={{ base: 6, md: 3 }}>
-            <StatsCard
-              icon={<IconClock size={24} color={theme.colors.yellow[1]} />}
-              title="In Progress"
-              value={inProgressProjects.toString()}
-              color={theme.colors.yellow[6]}
-              backgroundColor={theme.colors.yellow[9]}
-            />
-          </Grid.Col>
-          <Grid.Col span={{ base: 6, md: 3 }}>
-            <StatsCard
-              icon={<IconX size={24} color={theme.colors.red[1]} />}
-              title="Archived"
-              value={archivedProjects.toString()}
-              color={theme.colors.red[6]}
-              backgroundColor={theme.colors.red[9]}
-            />
-          </Grid.Col>
-        </Grid>
+          <Grid gutter="lg">
+            <Grid.Col span={{ base: 6, md: 3 }}>
+              <StatsCard
+                icon={<IconList size={24} color={theme.colors.dark[0]} />}
+                title="All Projects"
+                value={projects.length.toString()}
+                color={theme.colors.indigo[6]}
+                backgroundColor={theme.colors.indigo[9]}
+              />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, md: 3 }}>
+              <StatsCard
+                icon={<IconCheck size={24} color={theme.colors.teal[1]} />}
+                title="Completed"
+                value={completedProjects.toString()}
+                color={theme.colors.teal[6]}
+                backgroundColor={theme.colors.teal[9]}
+              />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, md: 3 }}>
+              <StatsCard
+                icon={<IconClock size={24} color={theme.colors.yellow[1]} />}
+                title="In Progress"
+                value={inProgressProjects.toString()}
+                color={theme.colors.yellow[6]}
+                backgroundColor={theme.colors.yellow[9]}
+              />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, md: 3 }}>
+              <StatsCard
+                icon={<IconX size={24} color={theme.colors.red[1]} />}
+                title="Archived"
+                value={archivedProjects.toString()}
+                color={theme.colors.red[6]}
+                backgroundColor={theme.colors.red[9]}
+              />
+            </Grid.Col>
+          </Grid>
         )}
 
         {/* Main Content: 3 Column Layout */}
@@ -149,7 +175,9 @@ const Dashboard: React.FC = () => {
               {!focusMode && (
                 <Paper p="lg" radius="lg" shadow="sm" withBorder>
                   <Group justify="space-between" mb="md">
-                    <Title order={3} size="h4">Project Stats</Title>
+                    <Title order={3} size="h4">
+                      Project Stats
+                    </Title>
                     <IconArrowUpRight size={20} color={theme.colors.gray[6]} />
                   </Group>
                   <BarChart data={projects} />

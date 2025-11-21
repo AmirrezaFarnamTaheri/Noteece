@@ -43,7 +43,7 @@ const renderWithProviders = (component: React.ReactElement) => {
   return render(
     <QueryClientProvider client={queryClient}>
       <MantineProvider>{component}</MantineProvider>
-    </QueryClientProvider>
+    </QueryClientProvider>,
   );
 };
 
@@ -69,7 +69,7 @@ describe('TimeTrackingWidget', () => {
   it('displays running entry', async () => {
     const now = Math.floor(Date.now() / 1000);
     mockGetRunningEntries.mockResolvedValue([
-      { id: '1', started_at: now - 3600, description: 'Working on Feature A', is_running: true }
+      { id: '1', started_at: now - 3600, description: 'Working on Feature A', is_running: true },
     ]);
 
     renderWithProviders(<TimeTrackingWidget />);
@@ -88,7 +88,14 @@ describe('TimeTrackingWidget', () => {
   it('displays recent entries', async () => {
     const now = Math.floor(Date.now() / 1000);
     mockGetRecentTimeEntries.mockResolvedValue([
-      { id: '2', started_at: now - 7200, ended_at: now - 3600, duration_seconds: 3600, description: 'Old Task', is_running: false }
+      {
+        id: '2',
+        started_at: now - 7200,
+        ended_at: now - 3600,
+        duration_seconds: 3600,
+        description: 'Old Task',
+        is_running: false,
+      },
     ]);
 
     renderWithProviders(<TimeTrackingWidget />);
@@ -101,9 +108,7 @@ describe('TimeTrackingWidget', () => {
 
   it('stops a running timer', async () => {
     const now = Math.floor(Date.now() / 1000);
-    mockGetRunningEntries.mockResolvedValue([
-      { id: '1', started_at: now, description: 'Task', is_running: true }
-    ]);
+    mockGetRunningEntries.mockResolvedValue([{ id: '1', started_at: now, description: 'Task', is_running: true }]);
     mockStopTimeEntry.mockResolvedValue({});
 
     renderWithProviders(<TimeTrackingWidget />);
@@ -122,7 +127,7 @@ describe('TimeTrackingWidget', () => {
   it('deletes an entry', async () => {
     const now = Math.floor(Date.now() / 1000);
     mockGetRecentTimeEntries.mockResolvedValue([
-      { id: '2', started_at: now, duration_seconds: 60, description: 'To Delete', is_running: false }
+      { id: '2', started_at: now, duration_seconds: 60, description: 'To Delete', is_running: false },
     ]);
     mockDeleteTimeEntry.mockResolvedValue({});
 

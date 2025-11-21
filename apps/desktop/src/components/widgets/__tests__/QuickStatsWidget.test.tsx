@@ -10,7 +10,7 @@ const mockNotes = [
   { id: '3', is_trashed: true },
 ];
 const mockTasks = [
-  { id: '1', status: 'todo', due_at: new Date().getTime() },
+  { id: '1', status: 'todo', due_at: Date.now() },
   { id: '2', status: 'done' },
   { id: '3', status: 'cancelled' },
 ];

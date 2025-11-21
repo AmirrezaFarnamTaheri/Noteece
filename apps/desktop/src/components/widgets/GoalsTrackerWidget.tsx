@@ -98,9 +98,7 @@ export function GoalsTrackerWidget() {
       await invoke('update_goal_progress_cmd', { goalId: goal.id, current: newCurrent });
       // Optimistic update
       setGoals(
-        goals.map((g) =>
-          g.id === goal.id ? { ...g, current: newCurrent, is_completed: newCurrent >= g.target } : g,
-        ),
+        goals.map((g) => (g.id === goal.id ? { ...g, current: newCurrent, is_completed: newCurrent >= g.target } : g)),
       );
     } catch (error) {
       logger.error('Error updating goal progress:', error as Error);

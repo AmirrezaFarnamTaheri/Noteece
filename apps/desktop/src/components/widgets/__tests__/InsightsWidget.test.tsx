@@ -44,23 +44,27 @@ describe('InsightsWidget', () => {
 
   it('shows productivity achievement for >10 recent notes', () => {
     const now = Date.now();
-    mockNotes = Array(11).fill(null).map((_, i) => ({
-      id: String(i),
-      created_at: now,
-      content_md: 'text'
-    }));
+    mockNotes = Array.from({ length: 11 })
+      .fill(null)
+      .map((_, i) => ({
+        id: String(i),
+        created_at: now,
+        content_md: 'text',
+      }));
 
     renderWithProviders(<InsightsWidget />);
     expect(screen.getByText('Productive Week!')).toBeInTheDocument();
   });
 
   it('shows overdue tasks warning', () => {
-    const yesterday = Math.floor(Date.now() / 1000) - 86400;
-    mockTasks = [{
-      id: '1',
-      due_at: yesterday,
-      status: 'todo',
-    }];
+    const yesterday = Math.floor(Date.now() / 1000) - 86_400;
+    mockTasks = [
+      {
+        id: '1',
+        due_at: yesterday,
+        status: 'todo',
+      },
+    ];
 
     renderWithProviders(<InsightsWidget />);
     expect(screen.getByText('Overdue Tasks')).toBeInTheDocument();
@@ -81,10 +85,10 @@ describe('InsightsWidget', () => {
 
   it('shows achievement for high task completion rate', () => {
     mockTasks = [
-        { id: '1', status: 'done' },
-        { id: '2', status: 'done' },
-        { id: '3', status: 'done' },
-        { id: '4', status: 'todo' }, // 75% completion
+      { id: '1', status: 'done' },
+      { id: '2', status: 'done' },
+      { id: '3', status: 'done' },
+      { id: '4', status: 'todo' }, // 75% completion
     ];
     // Need > 75%, so let's make it 100% or add more done
     mockTasks.push({ id: '5', status: 'done' }); // 80% done
@@ -95,8 +99,8 @@ describe('InsightsWidget', () => {
 
   it('shows suggestion for inactive projects', () => {
     mockProjects = [
-        { id: '1', status: 'completed' },
-        { id: '2', status: 'archived' }
+      { id: '1', status: 'completed' },
+      { id: '2', status: 'archived' },
     ];
 
     renderWithProviders(<InsightsWidget />);
@@ -105,13 +109,15 @@ describe('InsightsWidget', () => {
 
   it('shows prolific writer achievement', () => {
     // ~10 words
-    const content = "This is a test note with ten words in it.";
+    const content = 'This is a test note with ten words in it.';
     // Need > 10k words
-    mockNotes = Array(1001).fill(null).map((_, i) => ({
+    mockNotes = Array.from({ length: 1001 })
+      .fill(null)
+      .map((_, i) => ({
         id: String(i),
         created_at: Date.now(),
-        content_md: content
-    }));
+        content_md: content,
+      }));
 
     renderWithProviders(<InsightsWidget />);
     expect(screen.getByText('Growing Collection')).toBeInTheDocument();

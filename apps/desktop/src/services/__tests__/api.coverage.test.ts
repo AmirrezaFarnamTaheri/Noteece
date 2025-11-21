@@ -41,7 +41,12 @@ describe('API Service', () => {
 
   it('createProjectRisk calls correct command', async () => {
     await api.createProjectRisk('p1', 'Desc', 'High', 'Low');
-    expect(mockInvoke).toHaveBeenCalledWith('create_project_risk_cmd', { projectId: 'p1', description: 'Desc', likelihood: 'High', impact: 'Low' });
+    expect(mockInvoke).toHaveBeenCalledWith('create_project_risk_cmd', {
+      projectId: 'p1',
+      description: 'Desc',
+      likelihood: 'High',
+      impact: 'Low',
+    });
   });
 
   it('getProjectMilestones calls correct command', async () => {

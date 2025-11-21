@@ -80,15 +80,15 @@ describe('GoalsTrackerWidget', () => {
 
   it('displays completed badge for finished goals', async () => {
     const completedGoals = [
-        ...mockGoals,
-        { id: '4', title: 'Finished Goal', target: 10, current: 10, category: 'Test', is_completed: true }
+      ...mockGoals,
+      { id: '4', title: 'Finished Goal', target: 10, current: 10, category: 'Test', is_completed: true },
     ];
     mockInvoke.mockResolvedValue(completedGoals);
 
     renderWithProviders(<GoalsTrackerWidget />);
 
     await waitFor(() => {
-        expect(screen.getByText('Finished Goal')).toBeInTheDocument();
+      expect(screen.getByText('Finished Goal')).toBeInTheDocument();
     });
     // Check for badge or indicator
     expect(screen.getByText('Completed')).toBeInTheDocument();

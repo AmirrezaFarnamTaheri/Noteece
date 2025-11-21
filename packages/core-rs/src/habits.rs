@@ -1,3 +1,4 @@
+use crate::audit;
 use crate::db::DbError;
 use rusqlite::{Connection, Result};
 use serde::{Deserialize, Serialize};
@@ -140,6 +141,17 @@ pub fn complete_habit(conn: &Connection, habit_id: Ulid) -> Result<Habit, DbErro
         "INSERT INTO habit_log (id, habit_id, completed_at) VALUES (?1, ?2, ?3)",
         rusqlite::params![&event_id, &habit_id.to_string(), now],
     )?;
+
+    let _ = audit::log_event(
+        conn,
+        None,
+        "HABIT_COMPLETED",
+        "habit",
+        Some(&habit_id.to_string()),
+        Some(&format!(r#"{{"streak": {}, "longest_streak": {}}}"#, new_streak, new_longest)),
+        None,
+        None,
+    );
 
     // Return updated habit
     conn.query_row(

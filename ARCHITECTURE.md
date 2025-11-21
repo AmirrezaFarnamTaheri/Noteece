@@ -45,6 +45,7 @@ The Noteece ecosystem consists of three main components:
 ## Mobile Architecture
 
 The mobile app (`apps/mobile`) is a full-featured companion that mirrors the core functionality:
+
 - **Storage:** Uses `expo-sqlite` (encrypted) to store a local replica of the vault.
 - **Schema:** Shares a unified database schema with the desktop app (v5+), ensuring seamless sync.
 - **Offline-First:** All changes are queued locally and synced when a connection to the desktop is available.

@@ -9,12 +9,8 @@ const mockNotes = [
   { id: '1', title: 'Note 1', is_trashed: false, modified_at: 1000 },
   { id: '2', title: 'Note 2', is_trashed: false, modified_at: 2000 },
 ];
-const mockTasks = [
-  { id: 't1', title: 'Task 1' },
-];
-const mockProjects = [
-  { id: 'p1', title: 'Project 1' },
-];
+const mockTasks = [{ id: 't1', title: 'Task 1' }];
+const mockProjects = [{ id: 'p1', title: 'Project 1' }];
 
 jest.mock('../../../hooks/useQueries', () => ({
   useNotes: jest.fn(() => ({ data: mockNotes, isLoading: false })),
@@ -25,10 +21,8 @@ jest.mock('../../../hooks/useQueries', () => ({
 const renderWithProviders = (component: React.ReactElement) => {
   return render(
     <MantineProvider>
-      <BrowserRouter>
-        {component}
-      </BrowserRouter>
-    </MantineProvider>
+      <BrowserRouter>{component}</BrowserRouter>
+    </MantineProvider>,
   );
 };
 
@@ -55,8 +49,8 @@ describe('BookmarksWidget', () => {
     // Should now appear in Bookmarks section (implied by logic switching view)
     // Since we don't have persistence mocked fully, the component re-renders with state
     await waitFor(() => {
-        expect(screen.queryByText('Recent Notes')).not.toBeInTheDocument();
-        expect(screen.getByText('Notes')).toBeInTheDocument(); // The category header in bookmarks view
+      expect(screen.queryByText('Recent Notes')).not.toBeInTheDocument();
+      expect(screen.getByText('Notes')).toBeInTheDocument(); // The category header in bookmarks view
     });
   });
 
@@ -68,7 +62,7 @@ describe('BookmarksWidget', () => {
     fireEvent.click(starButton);
 
     await waitFor(() => {
-         expect(screen.getByLabelText('Unbookmark Note 1')).toBeInTheDocument();
+      expect(screen.getByLabelText('Unbookmark Note 1')).toBeInTheDocument();
     });
 
     // Unbookmark
@@ -76,7 +70,7 @@ describe('BookmarksWidget', () => {
     fireEvent.click(unstarButton);
 
     await waitFor(() => {
-        expect(screen.getByText('Recent Notes')).toBeInTheDocument();
+      expect(screen.getByText('Recent Notes')).toBeInTheDocument();
     });
   });
 });

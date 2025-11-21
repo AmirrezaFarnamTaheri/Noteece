@@ -57,9 +57,7 @@ describe('ProjectHub', () => {
   });
 
   it('selects the first project by default and fetches tasks', async () => {
-    (getAllProjectsInSpace as jest.Mock).mockResolvedValue([
-      { id: '1', title: 'Project Alpha' },
-    ]);
+    (getAllProjectsInSpace as jest.Mock).mockResolvedValue([{ id: '1', title: 'Project Alpha' }]);
     mockInvoke.mockResolvedValue([{ id: 't1', title: 'Task 1' }]);
 
     renderWithProviders(<ProjectHub />);
@@ -90,21 +88,19 @@ describe('ProjectHub', () => {
   });
 
   it('navigates when tab is changed', async () => {
-    (getAllProjectsInSpace as jest.Mock).mockResolvedValue([
-        { id: '1', title: 'Project Alpha' },
-      ]);
-      mockInvoke.mockResolvedValue([]);
+    (getAllProjectsInSpace as jest.Mock).mockResolvedValue([{ id: '1', title: 'Project Alpha' }]);
+    mockInvoke.mockResolvedValue([]);
 
-      renderWithProviders(<ProjectHub />);
+    renderWithProviders(<ProjectHub />);
 
-      // Tabs are: Overview, Kanban, Timeline, Risks
-      // Mantine Tabs uses buttons.
-      const kanbanTab = screen.getByRole('tab', { name: 'Kanban' });
-      fireEvent.click(kanbanTab);
+    // Tabs are: Overview, Kanban, Timeline, Risks
+    // Mantine Tabs uses buttons.
+    const kanbanTab = screen.getByRole('tab', { name: 'Kanban' });
+    fireEvent.click(kanbanTab);
 
-      await waitFor(() => {
-          expect(mockNavigate).toHaveBeenCalledWith('kanban');
-      });
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('kanban');
+    });
   });
 
   it('handles error fetching projects', async () => {
@@ -114,8 +110,8 @@ describe('ProjectHub', () => {
     renderWithProviders(<ProjectHub />);
 
     await waitFor(() => {
-        // Logger uses console.error internally in mock maybe? Or we mocked logger?
-        // The logger is imported from utils/logger. If not mocked, it might log.
+      // Logger uses console.error internally in mock maybe? Or we mocked logger?
+      // The logger is imported from utils/logger. If not mocked, it might log.
     });
     consoleSpy.mockRestore();
   });

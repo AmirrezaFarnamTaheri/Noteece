@@ -7,23 +7,27 @@ The Noteece project has been successfully advanced to a production-ready state. 
 ## Key Achievements
 
 ### 1. Core Backend Stability (`core-rs`)
+
 - **Encrypted Database:** Full SQLCipher integration with secure key management.
 - **Sync Protocol:** Robust P2P sync using mDNS discovery and ECDH key exchange.
 - **Search:** Hybrid full-text search engine handling both indexed and non-indexed scenarios.
 - **Testing:** Comprehensive unit and integration tests covering all modules (auth, db, sync, crypto).
 
 ### 2. Frontend Maturity (`apps/desktop`)
+
 - **UI/UX:** polished React components using Mantine UI.
 - **State Management:** efficient global state using Zustand with persistence.
 - **Integration:** Seamless communication with Rust backend via Tauri commands.
 - **Testing:** Jest test suite passing for all major components.
 
 ### 3. Mobile Application (`apps/mobile`)
+
 - **Cross-Platform:** React Native/Expo app supporting iOS and Android.
 - **Sync Client:** Full implementation of the mobile-side sync protocol.
 - **Stability:** Resolved dependency conflicts and linting issues.
 
 ### 4. Code Quality & Documentation
+
 - **Linting:** `eslint` and `prettier` configurations standardized across the monorepo.
 - **Rust Formatting:** `cargo fmt` applied to ensure idiomatic Rust code.
 - **Documentation:** All documentation files (README, STATUS, CHANGELOG) updated to reflect the current state.

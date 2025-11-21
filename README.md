@@ -32,6 +32,8 @@ Noteece is **`Production Ready`**. All core modules are implemented, tested, and
 - **Note Management:** Create, edit, and organize notes with support for daily notes, version history, and backlinking.
 - **Task & Project Management:** Basic support for tasks and projects, including Kanban-style boards.
 - **Full-Text Search:** The backend supports fast, encrypted search, though this is temporarily disabled due to a build issue (see `ISSUES.md`).
+- **Zen Mode:** A distraction-free environment to focus purely on writing.
+- **Audit Logging:** Comprehensive security logging for enterprise-grade accountability.
 - **Import/Export:** Import from Obsidian and Notion, and export your data to Markdown.
 - **Backup/Restore:** Create and restore from local, encrypted backups.
 

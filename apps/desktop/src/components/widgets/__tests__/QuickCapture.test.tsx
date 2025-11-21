@@ -43,7 +43,7 @@ describe('QuickCapture', () => {
 
   it('enables buttons when input has text', () => {
     renderWithProviders(<QuickCapture />);
-    const input = screen.getByPlaceholderText(/Capture a quick thought/i);
+    const input = screen.getByPlaceholderText(/capture a quick thought/i);
     fireEvent.change(input, { target: { value: 'Test Note' } });
     expect(screen.getByRole('button', { name: 'Add as Task' })).not.toBeDisabled();
     expect(screen.getByRole('button', { name: 'Save as Note' })).not.toBeDisabled();
@@ -53,7 +53,7 @@ describe('QuickCapture', () => {
     mockInvoke.mockResolvedValue({});
     renderWithProviders(<QuickCapture />);
 
-    const input = screen.getByPlaceholderText(/Capture a quick thought/i);
+    const input = screen.getByPlaceholderText(/capture a quick thought/i);
     fireEvent.change(input, { target: { value: 'My Note Content' } });
 
     const saveBtn = screen.getByRole('button', { name: 'Save as Note' });
@@ -74,7 +74,7 @@ describe('QuickCapture', () => {
     mockInvoke.mockResolvedValue({});
     renderWithProviders(<QuickCapture />);
 
-    const input = screen.getByPlaceholderText(/Capture a quick thought/i);
+    const input = screen.getByPlaceholderText(/capture a quick thought/i);
     fireEvent.change(input, { target: { value: 'My Task' } });
 
     const taskBtn = screen.getByRole('button', { name: 'Add as Task' });
@@ -95,7 +95,7 @@ describe('QuickCapture', () => {
     mockInvoke.mockRejectedValue(new Error('Failed'));
     renderWithProviders(<QuickCapture />);
 
-    const input = screen.getByPlaceholderText(/Capture a quick thought/i);
+    const input = screen.getByPlaceholderText(/capture a quick thought/i);
     fireEvent.change(input, { target: { value: 'Fail Note' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save as Note' }));
 
@@ -108,7 +108,7 @@ describe('QuickCapture', () => {
     mockInvoke.mockRejectedValue(new Error('Failed'));
     renderWithProviders(<QuickCapture />);
 
-    const input = screen.getByPlaceholderText(/Capture a quick thought/i);
+    const input = screen.getByPlaceholderText(/capture a quick thought/i);
     fireEvent.change(input, { target: { value: 'Fail Task' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add as Task' }));
 

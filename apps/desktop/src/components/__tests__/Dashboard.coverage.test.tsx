@@ -6,7 +6,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 
 // Mock components to simplify testing
-jest.mock('../widgets/UniversalDashboardWidget', () => ({ UniversalDashboardWidget: () => <div>UniversalDashboardWidget</div> }));
+jest.mock('../widgets/UniversalDashboardWidget', () => ({
+  UniversalDashboardWidget: () => <div>UniversalDashboardWidget</div>,
+}));
 jest.mock('../widgets/HealthWidget', () => ({ HealthWidget: () => <div>HealthWidget</div> }));
 jest.mock('../widgets/MusicWidget', () => ({ MusicWidget: () => <div>MusicWidget</div> }));
 jest.mock('../widgets/QuickCapture', () => ({ QuickCapture: () => <div>QuickCapture</div> }));
@@ -24,7 +26,9 @@ jest.mock('../widgets/HabitsTracker', () => () => <div>HabitsTracker</div>);
 jest.mock('../widgets/MoodTracker', () => () => <div>MoodTracker</div>);
 jest.mock('../widgets/InsightsWidget', () => () => <div>InsightsWidget</div>);
 jest.mock('../widgets/GoalsTrackerWidget', () => ({ GoalsTrackerWidget: () => <div>GoalsTrackerWidget</div> }));
-jest.mock('../widgets/AchievementBadgesWidget', () => ({ AchievementBadgesWidget: () => <div>AchievementBadgesWidget</div> }));
+jest.mock('../widgets/AchievementBadgesWidget', () => ({
+  AchievementBadgesWidget: () => <div>AchievementBadgesWidget</div>,
+}));
 jest.mock('../widgets/BookmarksWidget', () => ({ BookmarksWidget: () => <div>BookmarksWidget</div> }));
 jest.mock('../widgets/TimeTrackingWidget', () => () => <div>TimeTrackingWidget</div>);
 jest.mock('../widgets/TagsCloud', () => ({ TagsCloud: () => <div>TagsCloud</div> }));
@@ -55,11 +59,9 @@ const renderWithProviders = (component: React.ReactElement) => {
   return render(
     <QueryClientProvider client={queryClient}>
       <MantineProvider>
-        <BrowserRouter>
-          {component}
-        </BrowserRouter>
+        <BrowserRouter>{component}</BrowserRouter>
       </MantineProvider>
-    </QueryClientProvider>
+    </QueryClientProvider>,
   );
 };
 

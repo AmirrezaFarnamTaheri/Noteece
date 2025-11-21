@@ -1,15 +1,17 @@
 import { createTheme, rem } from '@mantine/core';
 
 /**
- * Noteece Modern Theme
- * A revolutionary, high-contrast, elegant dark-first aesthetic.
- * Primary colors shift from standard blue to a deep, sophisticated Indigo/Violet.
+ * Noteece Revolutionary Theme
+ * A modern, "Deep Obsidian" aesthetic inspired by the latest trends in
+ * developer tools (Linear, Vercel, Raycast).
  */
 
 export const theme = createTheme({
   primaryColor: 'indigo',
+  defaultRadius: 'md',
+
   colors: {
-    // Deep Slate / Obsidian background tones
+    // Custom "Obsidian" scale for a richer, less generic gray
     dark: [
       '#C1C2C5', // 0
       '#A6A7AB', // 1
@@ -17,74 +19,72 @@ export const theme = createTheme({
       '#5C5F66', // 3
       '#373A40', // 4
       '#2C2E33', // 5
-      '#25262B', // 6 - Paper/Card bg
-      '#1A1B1E', // 7 - App bg
-      '#141517', // 8
-      '#101113', // 9
+      '#25262B', // 6 - Cards/Paper
+      '#1A1B1E', // 7 - App Background
+      '#141517', // 8 - Deep contrast
+      '#101113', // 9 - Almost black
     ],
-    // Vibrant accents
+    // Vibrant, electric indigo for primary actions
     indigo: [
-      '#EDF2FF',
-      '#DBE4FF',
-      '#BAC8FF',
-      '#91A7FF',
-      '#748FFC',
-      '#5C7CFA',
-      '#4C6EF5', // Primary
-      '#4263EB',
-      '#3B5BDB',
-      '#364FC7',
+      '#E0E7FF',
+      '#C7D2FE',
+      '#A5B4FC',
+      '#818CF8',
+      '#6366F1',
+      '#4F46E5', // Primary
+      '#4338CA',
+      '#3730A3',
+      '#312E81',
+      '#1E1B4B',
     ],
   },
-  fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
-  fontFamilyMonospace: 'JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+
+  fontFamily: 'Inter, -apple-system, system-ui, sans-serif',
+  fontFamilyMonospace: 'JetBrains Mono, ui-monospace, monospace',
+
   headings: {
-    fontFamily: 'Greycliff CF, Inter, sans-serif',
-    fontWeight: '700',
+    fontFamily: 'Cal Sans, Inter, sans-serif',
+    fontWeight: '600',
     sizes: {
-      h1: { fontSize: rem(36) },
-      h2: { fontSize: rem(30) },
-      h3: { fontSize: rem(24) },
-      h4: { fontSize: rem(20) },
+      h1: { fontSize: rem(32), lineHeight: '1.2' },
+      h2: { fontSize: rem(26), lineHeight: '1.3' },
+      h3: { fontSize: rem(22), lineHeight: '1.35' },
+      h4: { fontSize: rem(18), lineHeight: '1.4' },
     },
   },
-  defaultRadius: 'lg',
-  spacing: {
-    xs: '0.75rem',
-    sm: '1rem',
-    md: '1.5rem',
-    lg: '2rem',
-    xl: '3rem',
-  },
+
   components: {
     Button: {
       defaultProps: {
-        size: 'md',
+        size: 'sm',
+        radius: 'md',
       },
       styles: {
         root: {
-          fontWeight: 600,
-          transition: 'transform 0.1s ease, box-shadow 0.2s ease',
+          fontWeight: 500,
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            transform: 'translateY(-1px)',
+          },
           '&:active': {
-            transform: 'translateY(1px)',
+            transform: 'translateY(0)',
           },
         },
       },
     },
     Card: {
       defaultProps: {
-        padding: 'lg',
         radius: 'lg',
         withBorder: true,
       },
-      styles: (theme) => ({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      styles: (theme: any) => ({
         root: {
           backgroundColor: theme.colors.dark[6],
-          backdropFilter: 'blur(10px)',
-          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+          transition: 'all 0.2s ease',
           '&:hover': {
-            transform: 'translateY(-2px)',
-            boxShadow: theme.shadows.md,
+            borderColor: theme.colors.indigo[5],
+            boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
           },
         },
       }),
@@ -93,28 +93,31 @@ export const theme = createTheme({
       defaultProps: {
         radius: 'lg',
       },
-      styles: (theme) => ({
-        root: {
-          backgroundColor: theme.colors.dark[6],
-        },
-      }),
     },
-    Badge: {
+    Modal: {
       defaultProps: {
-        size: 'md',
-        radius: 'md',
-        variant: 'light',
+        radius: 'lg',
+        overlayProps: {
+          blur: 8,
+          opacity: 0.55,
+        },
       },
     },
     TextInput: {
-      styles: {
-        input: {
-          backgroundColor: 'rgba(255, 255, 255, 0.03)',
-          '&:focus': {
-             backgroundColor: 'rgba(255, 255, 255, 0.05)',
-          }
-        },
+      defaultProps: {
+        radius: 'md',
       },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      styles: (theme: any) => ({
+        input: {
+          backgroundColor: 'rgba(255,255,255,0.03)',
+          borderColor: 'transparent',
+          '&:focus': {
+            backgroundColor: 'rgba(255,255,255,0.05)',
+            borderColor: theme.colors.indigo[5],
+          },
+        },
+      }),
     },
   },
 });

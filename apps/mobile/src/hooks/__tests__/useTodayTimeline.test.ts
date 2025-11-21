@@ -40,7 +40,9 @@ describe("useTodayTimeline", () => {
 
   it("handles errors gracefully", async () => {
     // Mock console.error to suppress the expected error log
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
 
     (Database.dbQuery as jest.Mock).mockRejectedValue(new Error("DB Error"));
     const { result } = renderHook(() => useTodayTimeline());

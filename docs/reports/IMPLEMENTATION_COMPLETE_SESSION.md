@@ -27,6 +27,7 @@ This implementation session successfully completed the backend implementation an
   - Added real `invoke` calls to `start_p2p_sync_cmd`.
 
 **Status:**
+
 - ✅ Backend: Complete & Exposed
 - ✅ Frontend: Connected to Real Backend
 - ✅ Integration: Complete
@@ -39,6 +40,7 @@ This implementation session successfully completed the backend implementation an
 - **Verification:** Confirmed Mastodon support in `packages/types` and `AddAccountModal.tsx`.
 
 **Status:**
+
 - ✅ Backend: Complete
 - ✅ Frontend: Corrected & Verified
 - ✅ Integration: Complete
@@ -52,6 +54,7 @@ This implementation session successfully completed the backend implementation an
 - **Action:** Updated `STATUS.md` to accurately reflect this as "Networking mocked" rather than "Complete".
 
 **Status:**
+
 - ✅ Backend (Crypto): Complete
 - ⚠️ Networking: Mocked (Documented as limitation)
 

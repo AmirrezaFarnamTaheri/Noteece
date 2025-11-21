@@ -567,6 +567,7 @@ let agent = SyncAgent::new(device_id, "Desktop".to_string(), AppConfig::sync_por
 ```
 
 **Impact:**
+
 - Port is now configurable via environment variables or config file.
 - Consistent port usage across the application.
 
