@@ -120,8 +120,8 @@ pub fn build_current_graph(
 
     // Collect notes as nodes
     let mut note_stmt = conn.prepare(
-        "SELECT id, title, created_at, updated_at, content FROM note
-         WHERE space_id = ?1 AND deleted = 0",
+        "SELECT id, title, created_at, modified_at, content_md FROM note
+         WHERE space_id = ?1 AND is_trashed = 0",
     )?;
 
     let note_rows = note_stmt.query_map([space_id.to_string()], |row| {
@@ -144,20 +144,25 @@ pub fn build_current_graph(
     }
 
     // Collect tasks as nodes
+    // task table: id, space_id, ..., title, description, status, due_at, start_at, completed_at...
+    // It also lacks created_at/updated_at in schema v1.
+    // We can use start_at or 0 as fallback.
+
     let mut task_stmt = conn.prepare(
-        "SELECT id, title, created_at, updated_at, status FROM task
+        "SELECT id, title, start_at, status FROM task
          WHERE space_id = ?1",
     )?;
 
     let task_rows = task_stmt.query_map([space_id.to_string()], |row| {
+        let start_at: Option<i64> = row.get(2)?;
         Ok(GraphNode {
             id: row.get(0)?,
             node_type: "task".to_string(),
             title: row.get(1)?,
-            created_at: row.get(2)?,
-            updated_at: row.get(3)?,
+            created_at: start_at.unwrap_or(0),
+            updated_at: start_at.unwrap_or(0),
             word_count: None,
-            status: row.get(4)?,
+            status: row.get(3)?,
         })
     })?;
 
@@ -166,20 +171,28 @@ pub fn build_current_graph(
     }
 
     // Collect projects as nodes
+    // project table: id, space_id, title, goal_outcome, status, confidence, start_at, target_end_at
+    // It does NOT have updated_at/created_at in schema v1.
+    // Wait, checking db.rs migration v1.
+    // CREATE TABLE project(id, space_id, title, goal_outcome, status, confidence, start_at, target_end_at);
+    // It lacks created_at/updated_at!
+    // But graph needs them. We can use start_at as created_at proxy? Or 0.
+
     let mut project_stmt = conn.prepare(
-        "SELECT id, name, created_at, updated_at, status FROM project
+        "SELECT id, title, start_at, status FROM project
          WHERE space_id = ?1",
     )?;
 
     let project_rows = project_stmt.query_map([space_id.to_string()], |row| {
+        let start_at: Option<i64> = row.get(2)?;
         Ok(GraphNode {
             id: row.get(0)?,
             node_type: "project".to_string(),
             title: row.get(1)?,
-            created_at: row.get(2)?,
-            updated_at: row.get(3)?,
+            created_at: start_at.unwrap_or(0),
+            updated_at: start_at.unwrap_or(0), // Best effort
             word_count: None,
-            status: row.get(4)?,
+            status: row.get(3)?,
         })
     })?;
 
@@ -188,38 +201,35 @@ pub fn build_current_graph(
     }
 
     // Collect backlinks as edges (filtered by space_id to prevent cross-space contamination)
-    // Try space_id-based filtering first; fall back to JOIN if note_link lacks space_id
-    // Exclude self-links to maintain graph integrity
+    // Collect backlinks as edges
+    // In DB migration v1, the table name is `link`, not `note_link`.
+    // CREATE TABLE link(source_note_id TEXT, target_note_id TEXT, PRIMARY KEY(source_note_id, target_note_id));
+    // It lacks ID and created_at.
+    // We will synthesize ID and created_at.
+
     let stable_space_id = space_id.to_string();
 
-    // Try to query with space_id column first
-    let mut stmt_result = conn.prepare(
-        "SELECT nl.id, nl.from_note_id, nl.to_note_id, nl.created_at
-         FROM note_link nl
-         LEFT JOIN note n1 ON n1.id = nl.from_note_id
-         LEFT JOIN note n2 ON n2.id = nl.to_note_id
+    let mut stmt = conn.prepare(
+        "SELECT l.source_note_id, l.target_note_id
+         FROM link l
+         LEFT JOIN note n1 ON n1.id = l.source_note_id
+         LEFT JOIN note n2 ON n2.id = l.target_note_id
          WHERE n1.space_id = ?1
            AND n2.space_id = ?1
-           AND nl.from_note_id != nl.to_note_id",
-    );
+           AND l.source_note_id != l.target_note_id",
+    )?;
 
-    if stmt_result.is_err() {
-        // Fallback for older schema without space_id on note_link
-        stmt_result = conn.prepare(
-            "SELECT id, from_note_id, to_note_id, created_at
-             FROM note_link
-             WHERE from_note_id != to_note_id",
-        );
-    }
-
-    let mut stmt = stmt_result?;
     let backlink_rows = stmt.query_map([&stable_space_id], |row| {
+        let source_id: String = row.get(0)?;
+        let target_id: String = row.get(1)?;
+        let edge_id = format!("{}-{}", source_id, target_id); // Synthetic ID
+
         Ok(GraphEdge {
-            id: row.get(0)?,
-            source_id: row.get(1)?,
-            target_id: row.get(2)?,
+            id: edge_id,
+            source_id,
+            target_id,
             edge_type: "backlink".to_string(),
-            created_at: row.get(3)?,
+            created_at: now, // Fallback to current time as link table has no timestamp
             weight: 1.0,
         })
     })?;
@@ -230,20 +240,21 @@ pub fn build_current_graph(
 
     // Collect task-project relationships as edges
     let mut task_project_stmt = conn.prepare(
-        "SELECT id, id, project_id, created_at FROM task
+        "SELECT id, project_id, start_at FROM task
          WHERE project_id IS NOT NULL",
     )?;
 
     let task_project_rows = task_project_stmt.query_map([], |row| {
-        let task_id: String = row.get(1)?;
+        let task_id: String = row.get(0)?;
         let edge_id = Ulid::new().to_string();
+        let start_at: Option<i64> = row.get(2)?;
 
         Ok(GraphEdge {
             id: edge_id,
             source_id: task_id,
-            target_id: row.get(2)?,
+            target_id: row.get(1)?,
             edge_type: "task_to_project".to_string(),
-            created_at: row.get(3)?,
+            created_at: start_at.unwrap_or(0),
             weight: 0.8,
         })
     })?;
@@ -473,8 +484,8 @@ pub fn detect_major_notes(
     space_id: Ulid,
 ) -> Result<Vec<GraphMilestone>, TemporalGraphError> {
     let mut stmt = conn.prepare(
-        "SELECT id, title, created_at, content FROM note
-         WHERE space_id = ?1 AND deleted = 0 AND LENGTH(content) > 6000
+        "SELECT id, title, created_at, content_md FROM note
+         WHERE space_id = ?1 AND is_trashed = 0 AND LENGTH(content_md) > 6000
          ORDER BY created_at DESC LIMIT 10",
     )?;
 

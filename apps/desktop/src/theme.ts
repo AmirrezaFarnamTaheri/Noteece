@@ -1,4 +1,4 @@
-import { createTheme, rem } from '@mantine/core';
+import { createTheme, rem, ActionIcon, Button, Card, Modal, NavLink, Paper, Textarea, TextInput, Tooltip } from '@mantine/core';
 
 /**
  * Noteece Revolutionary Theme
@@ -9,7 +9,7 @@ import { createTheme, rem } from '@mantine/core';
  */
 
 export const theme = createTheme({
-  primaryColor: 'violet', // Changed to Violet for a more cyber/modern feel
+  primaryColor: 'violet',
   defaultRadius: 'md',
   cursorType: 'pointer',
 
@@ -21,12 +21,12 @@ export const theme = createTheme({
       '#A6A7AB', // 1 - Text Dimmed
       '#909296', // 2 - Icon inactive
       '#5C5F66', // 3 - Border Light
-      '#373A40', // 4 - Border Dark / Surface Hover
+      '#2C2E33', // 4 - Border Dark / Surface Hover (Slightly lighter than before for visibility)
       '#25262B', // 5 - Surface Lighter
-      '#1F2023', // 6 - Surface Default (Cards)
+      '#1A1B1E', // 6 - Surface Default (Cards)
       '#141517', // 7 - App Background
       '#101113', // 8 - Deep contrast / Modal overlay
-      '#0A0A0C', // 9 - Almost black / Deepest Background
+      '#050506', // 9 - Almost black / Deepest Background
     ],
     // Electric Violet for primary actions - "Cyber" feel
     violet: [
@@ -60,18 +60,18 @@ export const theme = createTheme({
   fontFamilyMonospace: 'JetBrains Mono, ui-monospace, monospace',
 
   headings: {
-    fontFamily: 'Cal Sans, Inter, sans-serif',
-    fontWeight: '700',
+    fontFamily: 'Inter, sans-serif',
+    fontWeight: '800',
     sizes: {
-      h1: { fontSize: rem(34), lineHeight: '1.2', fontWeight: '800' },
-      h2: { fontSize: rem(28), lineHeight: '1.3', fontWeight: '700' },
-      h3: { fontSize: rem(22), lineHeight: '1.35', fontWeight: '600' },
-      h4: { fontSize: rem(18), lineHeight: '1.4', fontWeight: '600' },
+      h1: { fontSize: rem(34), lineHeight: '1.2' },
+      h2: { fontSize: rem(28), lineHeight: '1.3' },
+      h3: { fontSize: rem(22), lineHeight: '1.35' },
+      h4: { fontSize: rem(18), lineHeight: '1.4' },
     },
   },
 
   components: {
-    Button: {
+    Button: Button.extend({
       defaultProps: {
         size: 'sm',
         radius: 'md',
@@ -83,29 +83,31 @@ export const theme = createTheme({
           transition: 'transform 0.1s ease, box-shadow 0.2s ease',
           '&:hover': {
             transform: 'translateY(-1px)',
-            boxShadow: '0 4px 12px rgba(132, 94, 247, 0.25)', // Violet glow
+            boxShadow: '0 4px 12px rgba(132, 94, 247, 0.4)', // Stronger Violet glow
           },
           '&:active': {
             transform: 'translateY(0)',
           },
         },
       }),
-    },
-    ActionIcon: {
+    }),
+    ActionIcon: ActionIcon.extend({
       defaultProps: {
         radius: 'md',
+        variant: 'subtle',
       },
       styles: (theme) => ({
         root: {
           transition: 'all 0.2s ease',
           '&:hover': {
-            backgroundColor: theme.colors.dark[4],
-            transform: 'scale(1.05)',
+            backgroundColor: theme.colors.dark[6],
+            transform: 'scale(1.1)',
+            color: theme.colors.violet[4],
           },
         },
       }),
-    },
-    Card: {
+    }),
+    Card: Card.extend({
       defaultProps: {
         radius: 'lg',
         withBorder: true,
@@ -118,13 +120,13 @@ export const theme = createTheme({
           transition: 'transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
           '&:hover': {
             borderColor: theme.colors.violet[5],
-            transform: 'translateY(-2px)',
-            boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
+            transform: 'translateY(-4px)',
+            boxShadow: '0 12px 24px rgba(0,0,0,0.3)',
           },
         },
       }),
-    },
-    Paper: {
+    }),
+    Paper: Paper.extend({
       defaultProps: {
         radius: 'lg',
       },
@@ -133,15 +135,14 @@ export const theme = createTheme({
           backgroundColor: theme.colors.dark[6],
         },
       }),
-    },
-    Modal: {
+    }),
+    Modal: Modal.extend({
       defaultProps: {
         radius: 'lg',
         centered: true,
         overlayProps: {
           blur: 8,
-          color: '#000',
-          opacity: 0.6,
+          backgroundOpacity: 0.7,
         },
         transitionProps: {
           transition: 'pop',
@@ -150,59 +151,59 @@ export const theme = createTheme({
       },
       styles: (theme) => ({
         header: {
-          backgroundColor: theme.colors.dark[6],
+          backgroundColor: theme.colors.dark[7],
         },
         body: {
-          backgroundColor: theme.colors.dark[6],
+          backgroundColor: theme.colors.dark[7],
         },
         content: {
           border: `1px solid ${theme.colors.dark[4]}`,
-          boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
         },
       }),
-    },
-    TextInput: {
+    }),
+    TextInput: TextInput.extend({
       defaultProps: {
         radius: 'md',
         size: 'md',
       },
       styles: (theme) => ({
         input: {
-          backgroundColor: 'rgba(0, 0, 0, 0.2)',
+          backgroundColor: theme.colors.dark[8],
           borderColor: theme.colors.dark[4],
-          transition: 'border-color 0.2s ease, background-color 0.2s ease',
+          color: theme.colors.gray[1],
+          transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
           '&:focus': {
-            backgroundColor: 'rgba(0, 0, 0, 0.3)',
             borderColor: theme.colors.violet[5],
-            boxShadow: '0 0 0 1px var(--mantine-color-violet-5)',
+            boxShadow: '0 0 0 2px rgba(132, 94, 247, 0.2)',
           },
           '&:hover': {
             borderColor: theme.colors.dark[3],
           },
         },
       }),
-    },
-    Textarea: {
+    }),
+    Textarea: Textarea.extend({
       defaultProps: {
         radius: 'md',
         size: 'md',
       },
       styles: (theme) => ({
         input: {
-          backgroundColor: 'rgba(0, 0, 0, 0.2)',
+          backgroundColor: theme.colors.dark[8],
           borderColor: theme.colors.dark[4],
-          transition: 'border-color 0.2s ease, background-color 0.2s ease',
+          color: theme.colors.gray[1],
+          transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
           '&:focus': {
-            backgroundColor: 'rgba(0, 0, 0, 0.3)',
             borderColor: theme.colors.violet[5],
-            boxShadow: '0 0 0 1px var(--mantine-color-violet-5)',
+            boxShadow: '0 0 0 2px rgba(132, 94, 247, 0.2)',
           },
           '&:hover': {
             borderColor: theme.colors.dark[3],
           },
         },
       }),
-    },
+    }),
     Badge: {
       defaultProps: {
         radius: 'sm',
@@ -212,40 +213,48 @@ export const theme = createTheme({
         root: {
           textTransform: 'none',
           fontWeight: 600,
+          letterSpacing: '0.5px',
         },
       },
     },
-    Tooltip: {
+    Tooltip: Tooltip.extend({
       defaultProps: {
         radius: 'sm',
         withArrow: true,
       },
       styles: (theme) => ({
         tooltip: {
-          backgroundColor: theme.colors.dark[8],
+          backgroundColor: theme.colors.dark[9],
           border: `1px solid ${theme.colors.dark[4]}`,
           color: theme.colors.gray[0],
           fontSize: '0.75rem',
+          boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
         },
       }),
-    },
-    NavLink: {
+    }),
+    NavLink: NavLink.extend({
       defaultProps: {
         variant: 'light',
       },
       styles: (theme) => ({
         root: {
           borderRadius: theme.radius.md,
+          marginBottom: '4px',
+          transition: 'background-color 0.1s ease, color 0.1s ease',
           '&[data-active]': {
             backgroundColor: 'rgba(132, 94, 247, 0.15)', // Violet fade
             color: theme.colors.violet[3],
             fontWeight: 600,
+            borderLeft: `3px solid ${theme.colors.violet[5]}`, // Accent line
           },
           '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            backgroundColor: theme.colors.dark[5],
           },
         },
+        label: {
+          fontSize: '0.9rem',
+        },
       }),
-    },
+    }),
   },
 });

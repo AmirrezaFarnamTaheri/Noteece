@@ -11,11 +11,11 @@ import {
   Tooltip,
   NavLink as MantineNavLink,
   ThemeIcon,
-  Box,
   ScrollArea,
   Paper,
   ActionIcon,
   Affix,
+  Box,
 } from '@mantine/core';
 import {
   IconHome2,
@@ -36,6 +36,7 @@ import {
   IconChevronRight,
   IconEyeOff,
   IconEye,
+  IconPlus,
 } from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
 import CommandPalette from './CommandPalette';
@@ -102,48 +103,80 @@ const MainLayout: React.FC = () => {
   return (
     <AppShell
       padding="md"
-      navbar={zenMode ? undefined : { width: 260, breakpoint: 'sm' }}
+      navbar={zenMode ? undefined : { width: 250, breakpoint: 'sm' }}
       header={zenMode ? undefined : { height: 60 }}
       styles={(theme) => ({
-        main: { backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0] },
+        main: {
+          backgroundColor: theme.colors.dark[9], // Deepest background
+          paddingTop: zenMode ? 0 : 'calc(60px + var(--mantine-spacing-md))', // Adjust for header
+        },
       })}
     >
       {!zenMode && (
-        <AppShell.Header p="md" style={{ backdropFilter: 'blur(10px)' }}>
+        <AppShell.Header
+          p="md"
+          style={{
+            background: 'rgba(20, 21, 23, 0.8)', // Semi-transparent
+            backdropFilter: 'blur(12px)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+          }}
+        >
           <Group justify="space-between" align="center" h="100%">
-            <Group gap="sm">
-              <ThemeIcon size="lg" variant="gradient" gradient={{ from: 'indigo', to: 'cyan' }} radius="md">
-                <IconNote size={20} />
+            <Group gap="xs">
+              <ThemeIcon
+                size="lg"
+                variant="gradient"
+                gradient={{ from: 'violet', to: 'indigo', deg: 135 }}
+                radius="md"
+              >
+                <IconNote size={22} />
               </ThemeIcon>
-              <div>
-                <Title order={3} style={{ letterSpacing: '-0.5px', lineHeight: 1 }}>
+              <Box>
+                <Title order={4} style={{ lineHeight: 1, fontWeight: 800, letterSpacing: '-0.5px' }}>
                   Noteece
                 </Title>
-                <Text size="10px" c="dimmed" fw={700} tt="uppercase" ls={1}>
-                  Workspace
+                <Text size="9px" c="dimmed" fw={700} tt="uppercase" ls={1.5}>
+                  Vault
                 </Text>
-              </div>
+              </Box>
             </Group>
-            <Group gap="sm">
+
+            <Group gap="xs">
               <Tooltip label="Open command palette (⌘K)">
                 <Button
                   variant="default"
-                  size="compact-sm"
-                  leftSection={<IconCommand size={14} />}
+                  size="xs"
+                  leftSection={<IconCommand size={12} />}
                   onClick={() => setCommandPaletteOpened(true)}
                   radius="md"
+                  fw={500}
+                  c="dimmed"
+                  style={{
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                  }}
                 >
-                  Commands
+                  Search...
                 </Button>
               </Tooltip>
-              <Button size="compact-sm" variant="light" onClick={handleDailyNote} radius="md">
+
+              <Button
+                size="xs"
+                variant="gradient"
+                gradient={{ from: 'violet', to: 'cyan' }}
+                onClick={handleDailyNote}
+                radius="md"
+                leftSection={<IconPlus size={14} />}
+              >
                 Daily Note
               </Button>
+
               <Tooltip label="Toggle Zen Mode">
-                <ActionIcon variant="subtle" onClick={toggleZenMode}>
+                <ActionIcon variant="subtle" onClick={toggleZenMode} size="lg" radius="md">
                   <IconEyeOff size={20} />
                 </ActionIcon>
               </Tooltip>
+
               <ThemeToggle />
             </Group>
           </Group>
@@ -151,25 +184,39 @@ const MainLayout: React.FC = () => {
       )}
 
       {!zenMode && (
-        <AppShell.Navbar p="md" style={{ borderRight: '1px solid var(--mantine-color-gray-2)' }}>
-          <AppShell.Section grow component={ScrollArea}>
+        <AppShell.Navbar
+          p="sm"
+          style={{
+            backgroundColor: 'var(--mantine-color-dark-8)', // Slightly lighter than main
+            borderRight: '1px solid rgba(255, 255, 255, 0.05)',
+          }}
+        >
+          <AppShell.Section grow component={ScrollArea} className="no-scrollbar">
             <Stack gap="lg">
               {navLinkGroups.map((group) => (
-                <Stack key={group.title} gap={4}>
-                  <Text size="11px" fw={700} c="dimmed" tt="uppercase" pl="xs" mb={4}>
+                <Stack key={group.title} gap={2}>
+                  <Text size="10px" fw={800} c="dimmed" tt="uppercase" pl="xs" mb={4} ls={1}>
                     {group.title}
                   </Text>
                   {group.links.map((link) => (
                     <NavLink to={link.to} key={link.label} style={{ textDecoration: 'none' }}>
                       {({ isActive }) => (
                         <MantineNavLink
-                          label={link.label}
-                          leftSection={<link.icon size={18} stroke={1.5} />}
+                          label={
+                            <Text size="sm" fw={isActive ? 700 : 500}>
+                              {link.label}
+                            </Text>
+                          }
+                          leftSection={
+                            <link.icon
+                              size={18}
+                              stroke={1.5}
+                              color={isActive ? 'var(--mantine-color-violet-4)' : 'var(--mantine-color-gray-5)'}
+                            />
+                          }
                           active={isActive}
-                          variant="light"
-                          color="blue"
-                          style={{ borderRadius: 'var(--mantine-radius-md)' }}
-                          rightSection={isActive && <IconChevronRight size={14} stroke={1.5} />}
+                          variant="subtle" // Changed from light to custom handled in theme
+                          rightSection={isActive && <IconChevronRight size={14} stroke={1.5} style={{ opacity: 0.5 }} />}
                         />
                       )}
                     </NavLink>
@@ -180,25 +227,29 @@ const MainLayout: React.FC = () => {
           </AppShell.Section>
 
           <AppShell.Section mt="md">
-            <Divider my="sm" />
-            <Paper withBorder p="xs" radius="md" bg="var(--mantine-color-gray-0)">
-              <Group>
-                <ThemeIcon variant="light" color="green" size="sm">
-                  <IconCloud size={14} />
+            <Divider mb="sm" color="dark.5" />
+            <Paper
+              p="xs"
+              radius="md"
+              style={{
+                backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                border: '1px solid rgba(255, 255, 255, 0.05)',
+              }}
+            >
+              <Group gap="xs">
+                <ThemeIcon variant="light" color="green" size="sm" radius="xl">
+                  <IconCloud size={12} />
                 </ThemeIcon>
-                <div>
+                <Box style={{ flex: 1 }}>
                   <Text size="xs" fw={700}>
-                    Local Sync
+                    Sync Active
                   </Text>
-                  <Text size="xs" c="dimmed">
-                    Active
+                  <Text size="10px" c="dimmed">
+                    Updated just now
                   </Text>
-                </div>
+                </Box>
               </Group>
             </Paper>
-            <Text size="xs" c="dimmed" ta="center" mt="xs">
-              v1.0.0 • Production Ready
-            </Text>
           </AppShell.Section>
         </AppShell.Navbar>
       )}
@@ -207,19 +258,29 @@ const MainLayout: React.FC = () => {
         <CommandPalette opened={commandPaletteOpened} onClose={() => setCommandPaletteOpened(false)} />
         <Outlet />
         {zenMode && (
-          <Affix position={{ bottom: 20, right: 20 }}>
-            <Tooltip label="Exit Zen Mode">
+          <Affix position={{ bottom: 24, right: 24 }}>
+            <Tooltip label="Exit Zen Mode" position="left">
               <ActionIcon
                 variant="filled"
-                color="gray"
+                color="dark"
                 size="xl"
                 radius="xl"
                 onClick={toggleZenMode}
-                style={{ opacity: 0.5, transition: 'opacity 0.2s' }}
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.5')}
+                style={{
+                  opacity: 0.3,
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = '1';
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = '0.3';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
               >
-                <IconEye size={24} />
+                <IconEye size={24} stroke={1.5} />
               </ActionIcon>
             </Tooltip>
           </Affix>
