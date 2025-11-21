@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Visual Overhaul:** Implemented a "Deep Obsidian" theme across the desktop application with a new Violet/Teal color palette, glassmorphism effects, and modern typography.
+- **API Consistency:** Added missing API methods (`exchangeKeys`, `getSyncProgress`, `shutdownClearKeys`, `getBackupDetails`) to `apps/desktop/src/services/api.ts` to fully align the frontend with the Rust backend.
+- **Global Styles:** Introduced custom scrollbars, global transition effects, and glassmorphism utilities in `global.css`.
+
+### Changed
+- **Theme Engine:** Updated `theme.ts` to use a refined color scale and custom component styles for Buttons, Cards, Modals, and Inputs.
+- **Status:** Project status updated to "Production Ready" with a focus on visual polish and robust wiring.
+
+### Fixed
+- **Frontend-Backend Wiring:** Resolved gaps where specific backend commands were not exposed to the frontend TypeScript API.
+- **Documentation:** Updated `STATUS.md` and cleared out resolved issues in `ISSUES.md`.
+
+### Added
 
 - **Backend Robustness:** Implemented a dedicated `commands.rs` layer in the desktop app to explicitly wrap all Rust core functions. This ensures consistent error handling (mapping DbErrors to user-friendly strings) and thread-safety (managing mutex locks centrally) before passing data to the frontend.
 - **Integration Tests:** Added `auth_integration_test.rs` to verify the authentication flow end-to-end at the backend level.

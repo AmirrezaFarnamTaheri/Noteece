@@ -191,6 +191,18 @@ export const resolveSyncConflict = (conflict: any, resolution: any): Promise<voi
   return invoke('resolve_sync_conflict_cmd', { conflict, resolution });
 };
 
+export const exchangeKeys = (deviceId: string): Promise<void> => {
+  return invoke('exchange_keys_cmd', { deviceId });
+};
+
+export const getSyncProgress = (deviceId: string): Promise<number> => {
+  return invoke('get_sync_progress_cmd', { deviceId });
+};
+
+export const shutdownClearKeys = (): Promise<void> => {
+  return invoke('shutdown_clear_keys_cmd');
+};
+
 // Backup API
 
 export const createBackup = (spaceId: string): Promise<any> => {
@@ -203,6 +215,10 @@ export const restoreBackup = (backupId: string): Promise<void> => {
 
 export const listBackups = (spaceId: string): Promise<any[]> => {
   return invoke('list_backups_cmd', { spaceId });
+};
+
+export const getBackupDetails = (backupId: string): Promise<any> => {
+  return invoke('get_backup_details_cmd', { backupId });
 };
 
 export const deleteBackup = (backupId: string): Promise<void> => {
