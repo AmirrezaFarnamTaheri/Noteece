@@ -2,15 +2,16 @@
 
 ## Overview
 
-This document provides an overview of the test coverage for Noteece, with a focus on security-critical functionality. The test suite has been significantly expanded to ensure all security improvements from batches 1-5 are thoroughly tested.
+This document provides an overview of the test coverage for Noteece, with a focus on security-critical functionality. The test suite has been significantly expanded to ensure all security improvements and core features are thoroughly tested.
 
 ## Quick Stats
 
 | Category          | Total Tests | Security-Specific | Coverage |
 | ----------------- | ----------- | ----------------- | -------- |
-| **Rust Core**     | 43          | 30                | High     |
-| **TypeScript UI** | 10+         | -                 | Moderate |
-| **Total**         | **53+**     | **30+**           | **High** |
+| **Rust Core**     | 88+         | 30+               | High     |
+| **Desktop UI**    | 189         | -                 | High     |
+| **Mobile UI**     | 68          | -                 | High     |
+| **Total**         | **345+**    | **30+**           | **High** |
 
 ## Rust Test Suites
 
@@ -112,7 +113,13 @@ cargo test search_tests
 - ✅ Privacy in search results
 - ✅ Performance optimization
 
-### 5. Additional Test Suites
+### 5. Sync & P2P (`packages/core-rs/tests/sync_agent_comprehensive_tests.rs`)
+
+**21+ tests**
+
+Tests synchronization logic, conflict resolution, and device management.
+
+### 6. Additional Test Suites
 
 **26+ existing tests** across:
 
@@ -123,7 +130,6 @@ cargo test search_tests
 - `db_tests.rs` - Database operations
 - `note_tests.rs` - Note CRUD operations
 - `space_tests.rs` - Workspace management
-- `sync_tests.rs` - Synchronization logic
 - `task_tests.rs` - Task management
 - `vault_tests.rs` - Vault operations
 
@@ -136,9 +142,13 @@ cargo test search_tests
 cd packages/core-rs
 cargo test --verbose
 
-# TypeScript tests
+# Desktop tests
 cd apps/desktop
-npm test
+pnpm test
+
+# Mobile tests
+cd apps/mobile
+pnpm test
 ```
 
 ### Run Specific Test Suites
@@ -184,6 +194,7 @@ File: `.github/workflows/ci.yml`
 2. **TypeScript Checks**:
    - ✅ `pnpm lint` - ESLint
    - ✅ `pnpm format --check` - Prettier
+   - ✅ `pnpm test` - Frontend tests
 
 **Result**: All tests must pass before merge to main branch.
 
@@ -198,7 +209,7 @@ File: `.github/workflows/ci.yml`
 ### Batch 2 (Medium/Low Priority)
 
 - ✅ OCR output size limits (ocr_tests.rs)
-- ⚠️ UI component tests (Dashboard, ProjectHub, widgets)
+- ✅ UI component tests (Dashboard, ProjectHub, widgets)
 
 ### Batch 3 (High-Priority Security)
 
@@ -256,19 +267,16 @@ fn test_security_feature_prevents_attack() {
 
 ### Infrastructure Constraints
 
-⚠️ **Network Restrictions**: Local test execution may fail due to crates.io access restrictions (403 errors). This is an infrastructure limitation, not a code issue.
+⚠️ **Network Restrictions**: Local test execution may fail due to crates.io access restrictions (403 errors) if the environment is locked down.
 
-**Workaround**: All tests run successfully in GitHub Actions CI/CD environment.
+**Workaround**: All tests run successfully in the CI/CD environment.
 
 ### Missing Test Coverage
 
-Areas requiring future test expansion:
+Areas requiring future test expansion (low priority):
 
-- [ ] sync_agent.rs DEK encryption logic
-- [ ] logger.rs file I/O error handling
-- [ ] Foresight.tsx ID validation
-- [ ] TaskBoard.tsx type hardening
-- [ ] CalDAVSettings.tsx per-account locking
+- [ ] `logger.rs` file I/O error handling (hard to mock in integration tests)
+- [ ] `CalDAVSettings.tsx` per-account locking edge cases (UI is functional)
 
 ## Test Metrics
 
@@ -280,14 +288,16 @@ Areas requiring future test expansion:
 | ocr_tests        | 2-5s         | Mock-based         |
 | import_tests     | 5-10s        | Includes ZIP I/O   |
 | search_tests     | 3-5s         | Database queries   |
-| **Total (Rust)** | **~30s**     | Parallel execution |
+| Desktop Tests    | 22s          | 189 tests          |
+| Mobile Tests     | 7s           | 68 tests           |
+| **Total**        | **~1m**      | Parallel execution |
 
 ### Test Stability
 
-**All new tests are deterministic** (no flaky tests):
+**All tests are deterministic** (no flaky tests):
 
-- ✅ No timing-dependent assertions
-- ✅ No network dependencies
+- ✅ No timing-dependent assertions (use `waitFor`)
+- ✅ No network dependencies (all mocked)
 - ✅ Isolated test databases (tempdir)
 - ✅ Proper cleanup in all tests
 
@@ -295,20 +305,20 @@ Areas requiring future test expansion:
 
 ### Adding New Tests
 
-1. Create test in appropriate `tests/<module>_tests.rs` file
-2. Follow existing test structure and naming
-3. Document security implications
-4. Run tests locally: `cargo test <your_test>`
-5. Verify CI passes before PR
+1. Create test in appropriate `tests/<module>_tests.rs` file or `__tests__` directory.
+2. Follow existing test structure and naming.
+3. Document security implications.
+4. Run tests locally: `cargo test <your_test>` or `pnpm test`.
+5. Verify CI passes before PR.
 
 ### Reporting Test Failures
 
 If tests fail unexpectedly:
 
-1. Check if it's a known infrastructure issue (network restrictions)
-2. Verify all dependencies are installed
-3. Review recent code changes that might affect the test
-4. Report with full error output and context
+1. Check if it's a known infrastructure issue (network restrictions).
+2. Verify all dependencies are installed (`pnpm install`).
+3. Review recent code changes that might affect the test.
+4. Report with full error output and context.
 
 ## Resources
 
@@ -320,5 +330,5 @@ If tests fail unexpectedly:
 ---
 
 **Last Updated**: January 2025
-**Test Count**: 53+ total, 30+ security-specific
+**Test Count**: 345+ total (88+ Rust, 189 Desktop, 68 Mobile)
 **CI Status**: ✅ All checks passing

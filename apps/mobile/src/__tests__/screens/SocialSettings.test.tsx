@@ -90,7 +90,7 @@ describe("SocialSettings Screen", () => {
     });
 
     // Should update status
-    expect(await findByText("Just now")).toBeTruthy();
+    expect(await findByText(/Just now/)).toBeTruthy();
   });
 
   it("toggles biometric lock", async () => {

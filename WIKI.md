@@ -1,201 +1,231 @@
 # Noteece Wiki
 
-Welcome to the Noteece project wiki. This document serves as a comprehensive guide to the project's architecture, features, and development workflows.
+Welcome to the **Noteece** Wiki. This documentation serves as the comprehensive guide to the project's architecture, features, workflows, and development guidelines.
 
 ## Table of Contents
 
-1. [Project Overview](#project-overview)
+1. [Introduction](#introduction)
 2. [Architecture](#architecture)
-3. [Core Features](#core-features)
+3. [Features](#features)
 4. [Development Guide](#development-guide)
-5. [Sync Protocol](#sync-protocol)
-6. [Security](#security)
-7. [Database Schema](#database-schema)
-8. [Future Roadmap](#future-roadmap)
+5. [Security](#security)
+6. [Workflows](#workflows)
+7. [Troubleshooting & FAQ](#troubleshooting--faq)
 
 ---
 
-## 1. Project Overview
+## Introduction
 
-**Noteece** is a local-first, end-to-end encrypted workspace designed for speed-of-thought productivity. It combines note-taking, task management, and personal data aggregation (Health, Music, Social, Goals, Habits) into a single, private vault.
+**Noteece** is a local-first, end-to-end encrypted, Markdown-centric workspace designed for privacy and productivity. It combines note-taking, project management, personal growth tracking, and social media aggregation into a single, unified application.
 
-### Key Principles
+### Core Principles
 
-- **Local-First:** Your data lives on your device. The network is optional.
-- **Privacy-Centric:** All data is encrypted at rest (SQLCipher) and in transit (TLS + End-to-End encryption for sync).
-- **Speed:** Optimized for rapid capture and retrieval.
-- **Ownership:** You own your data. Export to Markdown/JSON at any time.
-
----
-
-## 2. Architecture
-
-Noteece follows a **monorepo** structure using Rust for the core logic and TypeScript/React for the frontend.
-
-### 🔒 Security Architecture Update
-
-With the introduction of **Audit Logs**, all critical write operations and authentication events are permanently recorded in a tamper-evident `audit_log` table. This ensures full accountability for data access and modification.
-
-### Directory Structure
-
-- `apps/desktop`: Tauri v1 application (React + Mantine).
-- `apps/mobile`: Expo/React Native application.
-- `packages/core-rs`: Shared Rust backend library (Business logic, DB, Crypto, Sync).
-- `packages/types`: Shared TypeScript definitions.
-- `packages/ui`: Shared UI components (WIP).
-
-### Technology Stack
-
-- **Backend:** Rust, Rusqlite (SQLCipher), Tokio, Hyper.
-- **Frontend (Desktop):** React, Vite, Mantine, Zustand, React Query.
-- **Frontend (Mobile):** React Native, Expo, Tamagui/NativeBase (transitioning).
-- **Database:** SQLite (encrypted via SQLCipher).
-- **Sync:** Custom P2P protocol over WebSocket/mDNS.
+- **Local-First:** Your data lives on your device. There is no central server.
+- **Privacy:** All data is encrypted at rest (SQLCipher) and in transit (P2P Sync).
+- **Ownership:** You own your data. Export to JSON, Markdown, or ZIP at any time.
+- **Productivity:** Integrated tools for tasks, habits, goals, and knowledge management.
 
 ---
 
-## 3. Core Features
+## Architecture
 
-### 📝 Note-Taking
+Noteece follows a monorepo structure containing a Rust core library and frontend applications.
 
-- Markdown-based editor with rich text support.
-- **Zen Mode:** Distraction-free writing environment.
-- Backlinking (`[[Link]]`) and graph view.
-- Tagging and full-text search (FTS5).
+### High-Level Overview
 
-### ✅ Task Management
+```mermaid
+graph TD
+    A[Desktop App (Tauri/React)] --> B[Rust Core (core-rs)]
+    C[Mobile App (Expo/React Native)] --> D[SQLite (Expo)]
+    B --> E[SQLite (SQLCipher)]
+    B --> F[File System]
+    C --> G[File System]
+```
 
-- GTD-inspired workflow (Inbox, Next, Waiting, Done).
-- Project hierarchy with milestones and dependencies.
-- Kanban board view.
+### Components
 
-### 🎯 Personal Growth (New)
+1.  **`packages/core-rs` (Rust Core):**
+    - The brain of the application.
+    - Handles database interactions, encryption, business logic, search (FTS5), and sync protocol.
+    - Exposed to Desktop via Tauri commands.
+2.  **`apps/desktop` (Desktop App):**
+    - Built with **Tauri** (v1) and **React** (TypeScript).
+    - UI Toolkit: **Mantine** v7.
+    - State Management: **Zustand**.
+    - Navigation: **React Router**.
+3.  **`apps/mobile` (Mobile App):**
+    - Built with **Expo** (React Native).
+    - UI Toolkit: Custom components with **Tamagui**-like styling (StyleSheet).
+    - Database: `expo-sqlite`.
+    - Sync: Implements the same crypto/sync logic as `core-rs` in TypeScript (`sync-client.ts`).
 
-- **Goals:** Track long-term objectives with target values and categories.
-- **Habits:** Monitor daily/weekly habits with streak tracking and heatmaps.
-- **Achievements:** Gamified badges for consistent usage and milestones.
+### Database Schema
 
-### 📊 Universal Dashboard (New)
+The database is normalized and managed via migrations (`db.rs`). Key tables include:
 
-- **Unified Overview:** A single pane of glass for all your data streams.
-- **Widgets:**
-  - **Health Pulse:** Visualize daily steps, sleep, and mood.
-  - **Music Player:** Control local playback and see "Now Playing".
-  - **Social Feed:** Recent updates from connected platforms.
-  - **Task Summary:** At-a-glance view of pending and completed work.
-  - **Goals & Habits:** Track your personal progress.
-  - **Insights:** AI-powered suggestions based on your activity.
-- **Customizable Layout:** Responsive grid that adapts to your workflow.
-
-### ❤️ Health Hub
-
-- Track metrics (Steps, Sleep, Mood, etc.).
-- Visualize trends over time.
-- Sync with mobile health data (planned).
-
-### 🎵 Music Hub
-
-- Manage local library (Tracks, Playlists).
-- Smart playlists based on criteria.
-- Listen history and analytics.
-
-### 🌐 Social Hub
-
-- Aggregated timeline from multiple platforms (Twitter/X, Mastodon, etc.).
-- Local-only storage of posts.
-- Auto-categorization and focus modes.
-- **Encryption:** Credentials are encrypted using the vault's Data Encryption Key (DEK).
+- `space`: Workspaces for isolating content.
+- `note`: Markdown notes with metadata.
+- `project`: Projects with milestones and tasks.
+- `task`: Tasks with recurring logic (RRule).
+- `goal` / `habit` / `habit_log`: Personal growth tracking.
+- `sync_history` / `sync_state`: P2P synchronization logs.
+- `audit_log`: Security and activity logging.
 
 ---
 
-## 4. Development Guide
+## Features
+
+### 1. Knowledge Management (Notes)
+
+- **Markdown Editor:** Rich text editing with Markdown support.
+- **Backlinks:** Bidirectional linking using `[[WikiLinks]]`.
+- **Tags:** Categorize content with `#tags`.
+- **Search:** Full-text search (FTS5) with filters (`tag:`, `created:`).
+- **Versioning:** Automatic snapshots of note history (compressed with zstd).
+
+### 2. Project Hub
+
+- **Projects:** Manage complex projects with descriptions and deadlines.
+- **Milestones:** Break projects into trackable milestones.
+- **Tasks:** Kanban board and list views for task management.
+- **Burn-down Charts:** Visual progress tracking.
+
+### 3. Personal Growth
+
+- **Habits:** Track daily habits with streaks and consistency scores.
+- **Goals:** Set long-term goals (SMART criteria) and link them to projects/tasks.
+- **Weekly Review:** Automated wizard to review past week's performance and plan ahead.
+
+### 4. Universal Dashboard
+
+- **Widgets:** Customizable grid of widgets (Calendar, Tasks, Habits, Stats).
+- **Focus Mode:** Zen mode for distraction-free work.
+- **Foresight:** AI-powered (local heuristics) suggestions for task prioritization.
+
+### 5. Social Media Suite
+
+- **Aggregator:** View posts from multiple platforms (Twitter, Reddit, etc.) in one timeline.
+- **Privacy:** Data is scraped locally or fetched via public APIs (no OAuth required for basic view).
+- **Analytics:** Local analysis of engagement and trends.
+
+### 6. P2P Sync
+
+- **Local Network:** Sync devices over WiFi using mDNS for discovery.
+- **E2EE:** ECDH key exchange and ChaCha20Poly1305 encryption for secure data transfer.
+- **Conflict Resolution:** Vector clocks (CRDT-inspired) to handle concurrent edits.
+
+---
+
+## Development Guide
 
 ### Prerequisites
 
-- Node.js (v18+) & pnpm.
-- Rust (stable).
-- System dependencies (see `BUILD.md`).
+- **Node.js** (v18+) & **pnpm**
+- **Rust** (latest stable)
+- **System Dependencies:**
+  - Linux: `libwebkit2gtk-4.0-dev`, `build-essential`, `curl`, `wget`, `file`, `libssl-dev`, `libgtk-3-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev`.
+  - macOS: Xcode Command Line Tools.
+  - Windows: C++ Build Tools.
 
 ### Setup
 
-```bash
-pnpm install
-```
+1.  **Install Dependencies:**
+    ```bash
+    pnpm install
+    ```
+2.  **Build Rust Core (Optional check):**
+    ```bash
+    cd packages/core-rs
+    cargo build
+    ```
 
-### Running Desktop
+### Running the App
 
-```bash
-pnpm dev:desktop
-# or
-cd apps/desktop && pnpm dev:tauri
-```
+- **Desktop:**
+  ```bash
+  cd apps/desktop
+  pnpm dev:tauri
+  ```
+- **Mobile:**
+  ```bash
+  cd apps/mobile
+  pnpm start
+  ```
 
-### Running Mobile
+### Testing
 
-```bash
-cd apps/mobile && pnpm start
-```
+- **Run All Tests:**
+  ```bash
+  # From root
+  pnpm test:all # If script exists, otherwise:
+  cd packages/core-rs && cargo test
+  cd apps/desktop && pnpm test
+  cd apps/mobile && pnpm test
+  ```
 
-### Running Tests
+### Directory Structure
 
-```bash
-# Backend
-cd packages/core-rs && cargo test
-
-# Frontend
-pnpm test
-```
-
----
-
-## 5. Sync Protocol
-
-Noteece uses a custom peer-to-peer sync protocol designed for local networks.
-
-1.  **Discovery:** Devices find each other using mDNS (`_noteece-sync._tcp`).
-2.  **Handshake:** ECDH key exchange establishes a secure session.
-3.  **Authentication:** Devices authenticate using a shared vault password (derived key).
-4.  **Synchronization:**
-    - **Vector Clocks** track causality.
-    - **Merkle Trees** (simplified) detect data divergence.
-    - **Deltas** (encrypted changesets) are exchanged to converge states.
-
----
-
-## 6. Security
-
-- **Encryption at Rest:** The SQLite database is encrypted using SQLCipher (256-bit AES).
-- **Key Derivation:** PBKDF2-HMAC-SHA512 (256,000 iterations) is used to derive the Key Encryption Key (KEK) from the user's master password. This KEK wraps the Data Encryption Key (DEK).
-- **Authentication:** Argon2id is used for hashing user passwords for authentication sessions, separate from the database encryption.
-- **Zero-Knowledge:** The server (if one exists for relay) sees only encrypted blobs.
-- **Social Credentials:** OAuth tokens and passwords for social accounts are encrypted with the DEK before storage.
+- `packages/types`: Shared TypeScript definitions.
+- `packages/ui`: Shared React components (if applicable).
+- `docs/`: Documentation files.
+- `scripts/`: Utility scripts.
 
 ---
 
-## 7. Database Schema
+## Security
 
-The schema is versioned and managed via migrations in `packages/core-rs/src/db.rs`.
+### Encryption
 
-### Key Tables
+- **At Rest:** SQLCipher (AES-256-CBC) for SQLite databases.
+- **Key Derivation:** Argon2id for user passwords, PBKDF2 for database keys.
+- **DEK (Data Encryption Key):** A random 32-byte key encrypts the database; this key is encrypted by the user's password (KEK).
 
-- `space`: Logical containers for data.
-- `note`: Markdown content.
-- `task`: Actionable items.
-- `social_account` / `social_post`: Social media data.
-- `health_metric`: Health data points.
-- `track` / `playlist`: Music library.
-- `goal`: Long-term goals.
-- `habit` / `habit_log`: Habit tracking.
+### Authentication
 
-For the full schema definition, refer to `packages/core-rs/src/db.rs` or `apps/mobile/src/lib/database.ts`.
+- **Local:** Password-based session management.
+- **Biometric:** Mobile app supports FaceID/TouchID via `expo-local-authentication` (mocked in dev).
+
+### Privacy
+
+- **No Telemetry:** The app does not send usage data to cloud servers.
+- **Sandboxed:** The Tauri app runs with a strict Content Security Policy (CSP).
+
+For detailed security audits, refer to `SECURITY.md`.
 
 ---
 
-## 8. Future Roadmap
+## Workflows
 
-See `NEXT_STEPS.md` for detailed plans regarding:
+### Creating a New Feature
 
-- Decentralized Identity & Relay Servers
-- Local AI Integration (LLM, RAG)
-- Advanced Collaboration Features
-- Plugin Architecture (WASM)
+1.  **Plan:** Document the feature in `PLAN.md`.
+2.  **Backend:** Implement logic in `packages/core-rs`. Add tests.
+3.  **Frontend:** Implement UI in `apps/desktop` or `apps/mobile`. Add tests.
+4.  **Verify:** Run full test suite.
+5.  **Document:** Update `WIKI.md` and `CHANGELOG.md`.
+
+### Release Process
+
+1.  **Bump Version:** Update `package.json` and `Cargo.toml`.
+2.  **Changelog:** Move "Unreleased" changes to new version in `CHANGELOG.md`.
+3.  **Tag:** Create a git tag (e.g., `v1.2.0`).
+4.  **Build:** Run CI/CD pipeline to generate binaries.
+
+---
+
+## Troubleshooting & FAQ
+
+### "System library not found" on Linux?
+Ensure you have installed `libwebkit2gtk-4.0-dev` (or `4.1` if supported by Tauri v2, currently Noteece uses Tauri v1 which requires 4.0). On Ubuntu 24.04, this package is missing; see `ISSUES.md` for workarounds.
+
+### Sync not working?
+- Ensure both devices are on the **same WiFi network**.
+- Check if firewall allows **UDP port 5353** (mDNS) and the random TCP port used for sync.
+- Verify "Background Sync" is enabled in Settings.
+
+### Database locked?
+This usually happens during development if multiple processes access the SQLite file. Restart the app.
+
+---
+
+_For more details, explore the code documentation in specific modules or the `docs/` folder._

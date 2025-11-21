@@ -52,3 +52,9 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 - **Status:** **Open (Non-blocking)**
 - **Description:** Tests emit warnings about updates to state not being wrapped in `act(...)`.
 - **Action:** These are common in React Native testing with async hooks and do not indicate a functional failure. Future refactoring should wrap these updates explicitly.
+
+### 3.3. SocialHub Test Flakiness
+
+- **Status:** **Resolved**
+- **Description:** The `SocialHub` tests were previously skipped due to flakiness.
+- **Resolution:** Mocks for `expo-linking` and `Share` were corrected, and tests were updated to handle text matching more robustly (using regex or specific counts). All mobile tests are now passing.

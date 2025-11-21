@@ -40,9 +40,11 @@ describe("MusicHub Screen", () => {
       { id: "2", title: "Track 2", artist: "Artist 2", duration: 200 },
     ];
     // Mock track loading query and playlist query
-    (dbQuery as jest.Mock)
-      .mockResolvedValueOnce(mockTracks) // Tracks
-      .mockResolvedValueOnce([]); // Playlists
+    (dbQuery as jest.Mock).mockImplementation((sql: string) => {
+      if (sql.includes("FROM track")) return Promise.resolve(mockTracks);
+      if (sql.includes("FROM playlist")) return Promise.resolve([]);
+      return Promise.resolve([]);
+    });
 
     const { findByText } = render(<MusicHub />);
 
@@ -54,10 +56,13 @@ describe("MusicHub Screen", () => {
     const mockPlaylists = [
       { id: "p1", name: "My Playlist", is_smart_playlist: 0 },
     ];
-    (dbQuery as jest.Mock)
-      .mockResolvedValueOnce([]) // Tracks
-      .mockResolvedValueOnce(mockPlaylists) // Playlists
-      .mockResolvedValueOnce([{ count: 5, total_duration: 1000 }]); // Playlist stats
+    (dbQuery as jest.Mock).mockImplementation((sql: string) => {
+      if (sql.includes("FROM track")) return Promise.resolve([]);
+      if (sql.includes("FROM playlist")) return Promise.resolve(mockPlaylists);
+      if (sql.includes("COUNT(*)"))
+        return Promise.resolve([{ count: 5, total_duration: 1000 }]);
+      return Promise.resolve([]);
+    });
 
     const { getByText, findByText } = render(<MusicHub />);
 
@@ -70,9 +75,11 @@ describe("MusicHub Screen", () => {
     const mockTracks = [
       { id: "1", title: "Song A", artist: "Band B", duration: 180 },
     ];
-    (dbQuery as jest.Mock)
-      .mockResolvedValueOnce(mockTracks)
-      .mockResolvedValueOnce([]);
+    (dbQuery as jest.Mock).mockImplementation((sql: string) => {
+      if (sql.includes("FROM track")) return Promise.resolve(mockTracks);
+      if (sql.includes("FROM playlist")) return Promise.resolve([]);
+      return Promise.resolve([]);
+    });
 
     const { findByText, getByText } = render(<MusicHub />);
 
