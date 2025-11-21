@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Gate Symbol (AND) -->
+  <path d="M180 150 H 280 C 350 150, 350 362, 280 362 H 180 V 150 Z"
+        stroke="#E5DBFF" stroke-width="8" fill="rgba(132, 94, 247, 0.2)" />
+
+  <!-- Inputs -->
+  <path d="M100 200 H 180" stroke="#20C997" stroke-width="8" />
+  <path d="M100 312 H 180" stroke="#20C997" stroke-width="8" />
+
+  <!-- Output -->
+  <path d="M350 256 H 412" stroke="#845EF7" stroke-width="8" />
+</svg>

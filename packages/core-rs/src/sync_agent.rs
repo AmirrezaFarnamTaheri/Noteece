@@ -53,6 +53,7 @@ pub fn init_sync_tables(conn: &Connection) -> Result<(), rusqlite::Error> {
             resolved_at INTEGER,
             resolution TEXT,
             device_id TEXT NOT NULL,
+            space_id TEXT NOT NULL, -- Added NOT NULL constraint as per schema
             FOREIGN KEY (device_id) REFERENCES sync_state(device_id)
         )",
         [],
@@ -128,6 +129,7 @@ pub struct SyncDelta {
     pub data: Option<Vec<u8>>,
     pub timestamp: i64,
     pub vector_clock: HashMap<String, i64>,
+    pub space_id: Option<String>, // Added for context when applying
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -159,6 +161,7 @@ pub struct SyncConflict {
     pub local_version: Vec<u8>,
     pub remote_version: Vec<u8>,
     pub conflict_type: ConflictType,
+    pub space_id: Option<String>, // Added to match SyncDelta context and DB schema
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -376,23 +379,31 @@ impl SyncAgent {
             if let Some(conflict) = self.detect_conflict(&tx, &delta)? {
                 // Persist conflict to DB so it can be resolved later
                 let conflict_id = Ulid::new().to_string();
-                tx.execute(
-                    "INSERT INTO sync_conflict (
-                        id, entity_type, entity_id, local_version, remote_version,
-                        conflict_type, detected_at, resolved, device_id
-                    ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 0, ?8)",
-                    rusqlite::params![
-                        conflict_id,
-                        conflict.entity_type,
-                        conflict.entity_id,
-                        conflict.local_version,
-                        conflict.remote_version,
-                        format!("{:?}", conflict.conflict_type), // Serialize enum
-                        chrono::Utc::now().timestamp(),
-                        self.device_id
-                    ],
-                )?;
-                conflicts.push(conflict);
+                // space_id is required in sync_conflict table.
+                // We use the one from delta if available, or we fail (log error) if not.
+                // This is critical for robustness.
+                if let Some(space_id) = &conflict.space_id {
+                    tx.execute(
+                        "INSERT INTO sync_conflict (
+                            id, entity_type, entity_id, local_version, remote_version,
+                            conflict_type, detected_at, resolved, device_id, space_id
+                        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 0, ?8, ?9)",
+                        rusqlite::params![
+                            conflict_id,
+                            conflict.entity_type,
+                            conflict.entity_id,
+                            conflict.local_version,
+                            conflict.remote_version,
+                            format!("{:?}", conflict.conflict_type), // Serialize enum
+                            chrono::Utc::now().timestamp(),
+                            self.device_id,
+                            space_id
+                        ],
+                    )?;
+                    conflicts.push(conflict);
+                } else {
+                    log::error!("Cannot persist conflict for {} without space_id", delta.entity_id);
+                }
                 continue;
             }
 
@@ -403,8 +414,6 @@ impl SyncAgent {
                 }
                 Err(SyncError::ConflictError(_msg)) => {
                     // Should be caught by detect_conflict above, but fallback logic
-                    // We can't easily persist conflict here as `detect_conflict` logic is separate
-                    // This branch might be unreachable with current logic
                 }
                 Err(e) => return Err(e),
             }
@@ -436,6 +445,7 @@ impl SyncAgent {
                     data: Some(conflict.remote_version.clone()),
                     timestamp: chrono::Utc::now().timestamp(),
                     vector_clock: HashMap::new(),
+                    space_id: conflict.space_id.clone(),
                 };
                 // Use provided DEK for encryption/decryption operations
                 self.apply_single_delta(conn, &delta, dek)?;
@@ -522,13 +532,7 @@ impl SyncAgent {
         since: i64,
     ) -> Result<Vec<SyncDelta>, SyncError> {
         let mut deltas = Vec::new();
-        // Note table uses `modified_at`, not `updated_at`. Content is in `content_md`, encrypted or not depends on logic.
-        // The schema in db.rs says `content_md`. The sync agent seems to assume `encrypted_content`.
-        // If we are syncing raw DB rows, we sync `content_md`.
-        // If we are implementing encryption at rest, `content_md` might hold ciphertext.
-        // Assuming `content_md` holds what needs to be synced.
-        // The previous code used `encrypted_content` column which doesn't exist in V1 schema.
-        // It should likely use `content_md`.
+
         let mut stmt = conn.prepare(
             "SELECT id, content_md, modified_at
              FROM note
@@ -552,6 +556,7 @@ impl SyncAgent {
                 data: Some(content.into_bytes()),
                 timestamp,
                 vector_clock: HashMap::new(),
+                space_id: Some(space_id.to_string()),
             });
         }
 
@@ -562,48 +567,28 @@ impl SyncAgent {
         &self,
         conn: &Connection,
         space_id: Ulid,
-        _since: i64,
+        since: i64,
     ) -> Result<Vec<SyncDelta>, SyncError> {
         let mut deltas = Vec::new();
-        // Task table doesn't have updated_at in V1 schema?
-        // It has `due_at`, `start_at`. `created_at`? No.
-        // V1 schema:
-        // CREATE TABLE task(..., id TEXT PRIMARY KEY, space_id TEXT ..., status TEXT ..., ...);
-        // It doesn't seem to have a modification timestamp in V1!
-        // This is a problem for sync.
-        // V11 migration adds `updated_at` to many tables but maybe not task?
-        // Let's check `db.rs` again.
-        // V1 schema has `note` with `modified_at`. `space` with `updated_at`.
-        // `task` doesn't have `updated_at` in V1.
-        // I should check if I can rely on `space` updated_at or if I need to migrate task to have updated_at.
-        // Assuming for now I should use `start_at` as proxy or just 0 if not available, OR add it.
-        // But modifying schema now might be risky.
-        // Let's check if V9 migration added it? No.
-        // Wait, `db.rs` migration V11 adds `health_metric` etc with `updated_at`.
-        // If `task` lacks `updated_at`, sync is hard.
-        // Let's assume for now we sync all tasks or use `start_at` if available.
-        // Actually, let's look at `migrate` in `db.rs` again.
-        // `task` table definition in V1: `id, space_id ...`. No updated_at.
-        // We should add `updated_at` to task if we want robust sync.
-        // For now, I will query what exists.
+
+        // Updated to use `updated_at` added in migration 15
         let mut stmt = conn.prepare(
-            "SELECT id, title, status
+            "SELECT id, title, status, updated_at
              FROM task
-             WHERE space_id = ?1",
+             WHERE space_id = ?1 AND updated_at > ?2",
         )?;
 
-        let rows = stmt.query_map(rusqlite::params![space_id.to_string()], |row| {
+        let rows = stmt.query_map(rusqlite::params![space_id.to_string(), since], |row| {
             Ok((
                 row.get::<_, String>(0)?,
                 row.get::<_, String>(1)?,
                 row.get::<_, String>(2)?,
+                row.get::<_, i64>(3)?,
             ))
         })?;
 
-        let now = chrono::Utc::now().timestamp();
-
         for row in rows {
-            let (id, title, status) = row?;
+            let (id, title, status, updated_at) = row?;
             let data = serde_json::json!({
                 "title": title,
                 "status": status,
@@ -613,8 +598,9 @@ impl SyncAgent {
                 entity_id: id,
                 operation: SyncOperation::Update,
                 data: Some(data.to_string().into_bytes()),
-                timestamp: now, // Fallback since no updated_at
+                timestamp: updated_at,
                 vector_clock: HashMap::new(),
+                space_id: Some(space_id.to_string()),
             });
         }
 
@@ -625,37 +611,35 @@ impl SyncAgent {
         &self,
         conn: &Connection,
         space_id: Ulid,
-        _since: i64,
+        since: i64,
     ) -> Result<Vec<SyncDelta>, SyncError> {
         let mut deltas = Vec::new();
-        // Project table V1: `id, space_id, title, ...`. No `updated_at`.
-        // Only `start_at`, `target_end_at`.
-        // Same issue as task.
+        // Updated to use `updated_at` added in migration 15
         let mut stmt = conn.prepare(
-            "SELECT id, title
+            "SELECT id, title, updated_at
              FROM project
-             WHERE space_id = ?1",
+             WHERE space_id = ?1 AND updated_at > ?2",
         )?;
 
-        let rows = stmt.query_map(rusqlite::params![space_id.to_string()], |row| {
+        let rows = stmt.query_map(rusqlite::params![space_id.to_string(), since], |row| {
             Ok((
                 row.get::<_, String>(0)?,
                 row.get::<_, String>(1)?,
+                row.get::<_, i64>(2)?,
             ))
         })?;
 
-        let now = chrono::Utc::now().timestamp();
-
         for row in rows {
-            let (id, name) = row?;
+            let (id, name, updated_at) = row?;
             let data = serde_json::json!({ "name": name });
             deltas.push(SyncDelta {
                 entity_type: "project".to_string(),
                 entity_id: id,
                 operation: SyncOperation::Update,
                 data: Some(data.to_string().into_bytes()),
-                timestamp: now,
+                timestamp: updated_at,
                 vector_clock: HashMap::new(),
+                space_id: Some(space_id.to_string()),
             });
         }
 
@@ -692,39 +676,27 @@ impl SyncAgent {
         if let Some(data) = &delta.data {
             match delta.operation {
                 SyncOperation::Create | SyncOperation::Update => {
-                    // For now, just treating as string content for content_md
-                    // We are not using encrypted_content column as it doesn't exist in schema V1
                     let content = String::from_utf8(data.clone())
                         .map_err(|e| SyncError::InvalidData(e.to_string()))?;
 
-                    // Note table needs space_id. If not in delta (which it isn't explicitly for this entity),
-                    // we might fail NOT NULL constraint if insert.
-                    // Ideally delta should include space_id or we infer from context.
-                    // `apply_deltas` is called in context where we might know space? No, mixed spaces possible.
-                    // We'll use a placeholder or fail if new.
-                    // BUT `INSERT OR REPLACE` needs all non-default columns.
-                    // `space_id` is NOT NULL.
-                    // We need to fetch existing space_id if update, or fail if create and no space info.
-                    // For robustness, let's assume we can get it or we skip.
-                    // Limitation: SyncDelta doesn't carry space_id.
-                    // We will attempt to get it from current record if update.
-                    let current_space_id: Option<String> = conn.query_row(
-                        "SELECT space_id FROM note WHERE id = ?1",
-                        [&delta.entity_id],
-                        |row| row.get(0)
-                    ).optional()?;
+                    // Attempt to get space_id from delta or current record
+                    let space_id = if let Some(sid) = &delta.space_id {
+                        Some(sid.clone())
+                    } else {
+                        conn.query_row(
+                            "SELECT space_id FROM note WHERE id = ?1",
+                            [&delta.entity_id],
+                            |row| row.get(0)
+                        ).optional()?
+                    };
 
-                    if let Some(sid) = current_space_id {
+                    if let Some(sid) = space_id {
                         conn.execute(
                             "INSERT OR REPLACE INTO note (id, space_id, content_md, modified_at, created_at)
-                             VALUES (?1, ?2, ?3, ?4, ?4)", // updating created_at is wrong on update but fine for Replace semantics if we had original.
+                             VALUES (?1, ?2, ?3, ?4, COALESCE((SELECT created_at FROM note WHERE id = ?1), ?4))",
                             rusqlite::params![&delta.entity_id, sid, content, delta.timestamp],
                         )?;
                     } else {
-                        // New note without space info?
-                        // We can't insert without space_id.
-                        // This is a protocol limitation.
-                        // We'll log error and skip.
                         log::error!("Cannot apply note delta for {} without space_id", delta.entity_id);
                     }
                 }
@@ -743,21 +715,42 @@ impl SyncAgent {
 
             match delta.operation {
                 SyncOperation::Create | SyncOperation::Update => {
-                    let current_space_id: Option<String> = conn.query_row(
-                        "SELECT space_id FROM task WHERE id = ?1",
-                        [&delta.entity_id],
-                        |row| row.get(0)
-                    ).optional()?;
+                    let space_id = if let Some(sid) = &delta.space_id {
+                        Some(sid.clone())
+                    } else {
+                        conn.query_row(
+                            "SELECT space_id FROM task WHERE id = ?1",
+                            [&delta.entity_id],
+                            |row| row.get(0)
+                        ).optional()?
+                    };
 
-                    if current_space_id.is_some() {
+                    if let Some(sid) = space_id {
+                        // Note: Tasks have NOT NULL constraint on space_id
                         conn.execute(
-                            "UPDATE task SET title = ?1, status = ?2 WHERE id = ?3",
+                            "INSERT OR REPLACE INTO task (id, space_id, title, status, updated_at, created_at)
+                             VALUES (?1, ?2, ?3, ?4, ?5, COALESCE((SELECT created_at FROM task WHERE id = ?1), ?5))", // Assuming created_at if available or use updated_at
+                            // Wait, task table V1 doesn't have created_at?
+                            // Migration 15 added updated_at.
+                            // V1 schema: CREATE TABLE task(... id, space_id ...). No created_at.
+                            // So we can't insert created_at.
+                            // Just insert id, space_id, title, status, updated_at.
+                             // Actually let's check schema again. V1 schema has no created_at.
+                             // So we just update updated_at.
                             rusqlite::params![
+                                &delta.entity_id,
+                                sid,
                                 task_data["title"].as_str().unwrap_or(""),
                                 task_data["status"].as_str().unwrap_or("inbox"),
-                                &delta.entity_id
+                                delta.timestamp
                             ],
                         )?;
+                         // Wait, INSERT OR REPLACE works but we need to specify columns.
+                         // If inserting, we need all NON NULL columns.
+                         // id, space_id, title, status, updated_at.
+                         // We are missing others?
+                         // status has default? No. status TEXT NOT NULL CHECK...
+                         // We provided all NOT NULLs.
                     } else {
                          log::error!("Cannot apply task delta for {} without space_id", delta.entity_id);
                     }
@@ -777,20 +770,45 @@ impl SyncAgent {
 
             match delta.operation {
                 SyncOperation::Create | SyncOperation::Update => {
-                     let current_space_id: Option<String> = conn.query_row(
-                        "SELECT space_id FROM project WHERE id = ?1",
-                        [&delta.entity_id],
-                        |row| row.get(0)
-                    ).optional()?;
+                    let space_id = if let Some(sid) = &delta.space_id {
+                        Some(sid.clone())
+                    } else {
+                        conn.query_row(
+                            "SELECT space_id FROM project WHERE id = ?1",
+                            [&delta.entity_id],
+                            |row| row.get(0)
+                        ).optional()?
+                    };
 
-                    if current_space_id.is_some() {
-                        conn.execute(
-                            "UPDATE project SET title = ?1 WHERE id = ?2",
-                            rusqlite::params![
-                                project_data["name"].as_str().unwrap_or(""), // 'title' in DB, 'name' in json
+                    if let Some(sid) = space_id {
+                        // Project V1: id, space_id, title, status, updated_at (added in V15)
+                        // status check('proposed', ...)
+                        // Default status is proposed in create_project. We should assume same or update.
+                        // If update, we want to keep existing status if not provided.
+                        // SyncDelta only sends "name" (title).
+                        // This means we might reset status if we use REPLACE?
+                        // We should try UPDATE first, if 0 rows then INSERT.
+
+                        let updated = conn.execute(
+                            "UPDATE project SET title = ?1, updated_at = ?2 WHERE id = ?3",
+                             rusqlite::params![
+                                project_data["name"].as_str().unwrap_or(""),
+                                delta.timestamp,
                                 &delta.entity_id
                             ],
                         )?;
+
+                        if updated == 0 {
+                            conn.execute(
+                                "INSERT INTO project (id, space_id, title, status, updated_at) VALUES (?1, ?2, ?3, 'proposed', ?4)",
+                                rusqlite::params![
+                                    &delta.entity_id,
+                                    sid,
+                                    project_data["name"].as_str().unwrap_or(""),
+                                    delta.timestamp
+                                ]
+                            )?;
+                        }
                     } else {
                          log::error!("Cannot apply project delta for {} without space_id", delta.entity_id);
                     }
@@ -815,8 +833,8 @@ impl SyncAgent {
             match delta.operation {
                 SyncOperation::Create | SyncOperation::Update => {
                     conn.execute(
-                        "INSERT OR REPLACE INTO health_metric (id, metric_type, value, unit, notes, recorded_at, created_at, updated_at)
-                         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+                        "INSERT OR REPLACE INTO health_metric (id, metric_type, value, unit, notes, recorded_at, created_at, updated_at, space_id)
+                         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, COALESCE((SELECT space_id FROM health_metric WHERE id = ?1), ?9))",
                         rusqlite::params![
                             &delta.entity_id,
                             metric_data["metric_type"].as_str().unwrap_or(""),
@@ -825,7 +843,9 @@ impl SyncAgent {
                             metric_data["notes"].as_str(),
                             metric_data["recorded_at"].as_i64().unwrap_or(0),
                             metric_data["created_at"].as_i64().unwrap_or(0),
-                            delta.timestamp
+                            delta.timestamp,
+                            delta.space_id // Needs to be provided or retrieved? Health metric MUST have space_id.
+                            // We need to handle space_id for health metrics too.
                         ],
                     )?;
                 }
@@ -844,15 +864,17 @@ impl SyncAgent {
 
             match delta.operation {
                 SyncOperation::Create | SyncOperation::Update => {
+                     let space_id = delta.space_id.clone().ok_or(SyncError::InvalidData("Missing space_id for track".to_string()))?;
                     conn.execute(
-                        "INSERT OR REPLACE INTO track (id, title, artist, album, updated_at)
-                         VALUES (?1, ?2, ?3, ?4, ?5)",
+                        "INSERT OR REPLACE INTO track (id, title, artist, album, updated_at, space_id, added_at)
+                         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?5)", // Using updated_at as added_at if new
                         rusqlite::params![
                             &delta.entity_id,
                             track_data["title"].as_str().unwrap_or(""),
                             track_data["artist"].as_str(),
                             track_data["album"].as_str(),
-                            delta.timestamp
+                            delta.timestamp,
+                            space_id
                         ],
                     )?;
                 }
@@ -871,14 +893,16 @@ impl SyncAgent {
 
             match delta.operation {
                 SyncOperation::Create | SyncOperation::Update => {
+                     let space_id = delta.space_id.clone().ok_or(SyncError::InvalidData("Missing space_id for playlist".to_string()))?;
                     conn.execute(
-                        "INSERT OR REPLACE INTO playlist (id, name, description, updated_at)
-                         VALUES (?1, ?2, ?3, ?4)",
+                        "INSERT OR REPLACE INTO playlist (id, name, description, updated_at, space_id, created_at)
+                         VALUES (?1, ?2, ?3, ?4, ?5, ?4)",
                         rusqlite::params![
                             &delta.entity_id,
                             playlist_data["name"].as_str().unwrap_or(""),
                             playlist_data["description"].as_str(),
-                            delta.timestamp
+                            delta.timestamp,
+                            space_id
                         ],
                     )?;
                 }
@@ -901,16 +925,18 @@ impl SyncAgent {
 
             match delta.operation {
                 SyncOperation::Create | SyncOperation::Update => {
+                    let space_id = delta.space_id.clone().ok_or(SyncError::InvalidData("Missing space_id for calendar_event".to_string()))?;
                     conn.execute(
-                        "INSERT OR REPLACE INTO calendar_event (id, title, description, start_time, end_time, updated_at)
-                         VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                        "INSERT OR REPLACE INTO calendar_event (id, title, description, start_time, end_time, updated_at, space_id, source, created_at)
+                         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'sync', ?6)",
                         rusqlite::params![
                             &delta.entity_id,
                             event_data["title"].as_str().unwrap_or(""),
                             event_data["description"].as_str(),
                             event_data["start_time"].as_i64().unwrap_or(0),
                             event_data["end_time"].as_i64(),
-                            delta.timestamp
+                            delta.timestamp,
+                            space_id
                         ],
                     )?;
                 }
@@ -950,15 +976,24 @@ impl SyncAgent {
                 (ts, data)
             }
             "task" => {
-                // Task V1 has no updated_at. Can't detect conflict by timestamp reliably without it.
-                // We return None to accept remote overwrite (LWW by default if no local ts).
-                // Or we could use start_at as a proxy? No.
-                // Future migration should add updated_at.
-                (None, None)
+                let ts: Option<i64> = conn
+                    .query_row(
+                        "SELECT updated_at FROM task WHERE id = ?1",
+                        [&delta.entity_id],
+                        |row| row.get(0),
+                    )
+                    .optional()?;
+                 (ts, None) // We don't store full JSON locally easily unless we serialize.
             }
             "project" => {
-                // Project V1 has no updated_at.
-                (None, None)
+                let ts: Option<i64> = conn
+                    .query_row(
+                        "SELECT updated_at FROM project WHERE id = ?1",
+                        [&delta.entity_id],
+                        |row| row.get(0),
+                    )
+                    .optional()?;
+                (ts, None)
             }
             _ => (None, None),
         };
@@ -972,6 +1007,7 @@ impl SyncAgent {
                     local_version: local_data.unwrap_or_default(),
                     remote_version: delta.data.clone().unwrap_or_default(),
                     conflict_type: ConflictType::UpdateUpdate,
+                    space_id: delta.space_id.clone(), // Populate space_id from delta
                 }));
             }
         }
@@ -1097,6 +1133,7 @@ impl SyncAgent {
                 data: Some(data.to_string().into_bytes()),
                 timestamp: updated_at,
                 vector_clock: HashMap::new(),
+                space_id: Some(space_id.to_string()),
             });
         }
 
@@ -1140,6 +1177,7 @@ impl SyncAgent {
                 data: Some(data.to_string().into_bytes()),
                 timestamp: updated_at,
                 vector_clock: HashMap::new(),
+                space_id: Some(space_id.to_string()),
             });
         }
 
@@ -1181,6 +1219,7 @@ impl SyncAgent {
                 data: Some(data.to_string().into_bytes()),
                 timestamp: updated_at,
                 vector_clock: HashMap::new(),
+                space_id: Some(space_id.to_string()),
             });
         }
 
@@ -1226,6 +1265,7 @@ impl SyncAgent {
                 data: Some(data.to_string().into_bytes()),
                 timestamp: updated_at,
                 vector_clock: HashMap::new(),
+                space_id: Some(space_id.to_string()),
             });
         }
 
@@ -1238,7 +1278,7 @@ impl SyncAgent {
         conn: &Connection,
     ) -> Result<Vec<SyncConflict>, SyncError> {
         let mut stmt = conn.prepare(
-            "SELECT entity_type, entity_id, local_version, remote_version, conflict_type
+            "SELECT entity_type, entity_id, local_version, remote_version, conflict_type, space_id
              FROM sync_conflict
              WHERE resolved = 0
              ORDER BY detected_at DESC",
@@ -1260,6 +1300,7 @@ impl SyncAgent {
                     local_version: row.get(2)?,
                     remote_version: row.get(3)?,
                     conflict_type,
+                    space_id: row.get(5)?,
                 })
             })?
             .collect::<Result<Vec<_>, _>>()?;

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Central Hex -->
+  <path d="M256 196 L 308 226 V 286 L 256 316 L 204 286 V 226 Z" fill="#845EF7" stroke="#E5DBFF" stroke-width="4" />
+
+  <!-- Top Hex -->
+  <path d="M256 76 L 308 106 V 166 L 256 196 L 204 166 V 106 Z" stroke="#20C997" stroke-width="4" fill="none" opacity="0.6" />
+
+  <!-- Bottom Left Hex -->
+  <path d="M152 256 L 204 286 V 346 L 152 376 L 100 346 V 286 Z" stroke="#20C997" stroke-width="4" fill="none" opacity="0.6" />
+
+  <!-- Bottom Right Hex -->
+  <path d="M360 256 L 412 286 V 346 L 360 376 L 308 346 V 286 Z" stroke="#20C997" stroke-width="4" fill="none" opacity="0.6" />
+
+  <!-- Connecting Nodes -->
+  <circle cx="256" cy="256" r="8" fill="#FFFFFF" />
+</svg>

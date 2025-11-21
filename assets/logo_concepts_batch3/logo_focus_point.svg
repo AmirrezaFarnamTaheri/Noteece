@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Target Crosshair -->
+  <line x1="256" y1="50" x2="256" y2="462" stroke="#2C2E33" stroke-width="2" />
+  <line x1="50" y1="256" x2="462" y2="256" stroke="#2C2E33" stroke-width="2" />
+
+  <!-- Outer Circle -->
+  <circle cx="256" cy="256" r="100" stroke="#845EF7" stroke-width="4" stroke-dasharray="20 10" />
+
+  <!-- Inner Dot (Focus) -->
+  <circle cx="256" cy="256" r="16" fill="#20C997" />
+</svg>

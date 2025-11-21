@@ -10,6 +10,8 @@ import {
   Container,
   Button,
   SegmentedControl,
+  Card,
+  ThemeIcon,
 } from '@mantine/core';
 import {
   IconArrowUpRight,
@@ -20,6 +22,7 @@ import {
   IconX,
   IconEye,
   IconEyeOff,
+  IconChartPie,
 } from '@tabler/icons-react';
 import React, { useState } from 'react';
 import { useProjects } from '../hooks/useQueries';
@@ -67,44 +70,48 @@ const Dashboard: React.FC = () => {
       fluid
       className={classes.container}
       p="xl"
-      style={{ backgroundColor: theme.colors.dark[8], minHeight: '100vh' }}
+      style={{
+          backgroundColor: theme.colors.dark[9],
+          minHeight: '100vh',
+          backgroundImage: 'radial-gradient(circle at 90% 10%, rgba(132, 94, 247, 0.08) 0%, transparent 40%)'
+      }}
     >
       <LoadingOverlay visible={isLoading} overlayProps={{ blur: 2 }} />
 
       <Stack gap="xl">
         <Group justify="space-between" align="flex-end">
           <div>
-            <Title order={1} fw={800} style={{ letterSpacing: '-1px', color: theme.colors.gray[0] }}>
-              Dashboard
+            <Title order={1} fw={900} style={{ letterSpacing: '-1px', fontSize: '2.5rem' }}>
+              <Text span inherit variant="gradient" gradient={{ from: 'violet.2', to: 'white' }}>
+                Dashboard
+              </Text>
             </Title>
-            <Text c="dimmed" size="md" mt="xs">
-              Welcome back to your workspace
+            <Text c="dimmed" size="md" mt={4} fw={500}>
+              Your personal command center
             </Text>
           </div>
           <Group>
             <Button
               variant="light"
               color={focusMode ? 'indigo' : 'gray'}
+              radius="md"
               leftSection={focusMode ? <IconEyeOff size={18} /> : <IconEye size={18} />}
               onClick={() => setFocusMode(!focusMode)}
             >
               {focusMode ? 'Exit Focus' : 'Focus Mode'}
             </Button>
-            <IconLayoutGrid size={24} color={theme.colors.gray[6]} />
           </Group>
         </Group>
 
-        {/* Top Row: Core Widgets */}
+        {/* Top Row: Core Widgets - Highly Visual */}
         {!focusMode && (
           <Grid gutter="lg">
-            <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
-              <UniversalDashboardWidget />
+            <Grid.Col span={{ base: 12, lg: 8 }}>
+                {/* Universal Widget (Merged Health/Stats) */}
+               <UniversalDashboardWidget />
             </Grid.Col>
-            <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
-              <HealthWidget />
-            </Grid.Col>
-            <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
-              <Stack gap="lg">
+            <Grid.Col span={{ base: 12, lg: 4 }}>
+              <Stack gap="lg" h="100%">
                 <MusicWidget />
                 <QuickCapture />
               </Stack>
@@ -112,95 +119,92 @@ const Dashboard: React.FC = () => {
           </Grid>
         )}
 
-        {/* Project Status Stats Cards */}
+        {/* Project Stats Row - Clean Cards */}
         {!focusMode && (
           <Grid gutter="lg">
             <Grid.Col span={{ base: 6, md: 3 }}>
               <StatsCard
-                icon={<IconList size={24} color={theme.colors.dark[0]} />}
-                title="All Projects"
+                icon={<IconList size={20} />}
+                title="Total Projects"
                 value={projects.length.toString()}
-                color={theme.colors.indigo[6]}
-                backgroundColor={theme.colors.indigo[9]}
+                color="indigo"
               />
             </Grid.Col>
             <Grid.Col span={{ base: 6, md: 3 }}>
               <StatsCard
-                icon={<IconCheck size={24} color={theme.colors.teal[1]} />}
+                icon={<IconCheck size={20} />}
                 title="Completed"
                 value={completedProjects.toString()}
-                color={theme.colors.teal[6]}
-                backgroundColor={theme.colors.teal[9]}
+                color="teal"
               />
             </Grid.Col>
             <Grid.Col span={{ base: 6, md: 3 }}>
               <StatsCard
-                icon={<IconClock size={24} color={theme.colors.yellow[1]} />}
+                icon={<IconClock size={20} />}
                 title="In Progress"
                 value={inProgressProjects.toString()}
-                color={theme.colors.yellow[6]}
-                backgroundColor={theme.colors.yellow[9]}
+                color="violet"
               />
             </Grid.Col>
             <Grid.Col span={{ base: 6, md: 3 }}>
               <StatsCard
-                icon={<IconX size={24} color={theme.colors.red[1]} />}
-                title="Archived"
-                value={archivedProjects.toString()}
-                color={theme.colors.red[6]}
-                backgroundColor={theme.colors.red[9]}
+                icon={<IconChartPie size={20} />}
+                title="Completion Rate"
+                value={`${projects.length > 0 ? Math.round((completedProjects / projects.length) * 100) : 0}%`}
+                color="cyan"
               />
             </Grid.Col>
           </Grid>
         )}
 
-        {/* Main Content: 3 Column Layout */}
+        {/* Main Content Layout */}
         <Grid gutter="lg">
-          {/* Left Column: Tasks & Projects */}
+          {/* Left Column: Actionable Items */}
           <Grid.Col span={{ base: 12, md: focusMode ? 6 : 4 }}>
             <Stack gap="lg">
-              <Upcoming icon={<IconLayoutGrid size={24} />} title="Upcoming Tasks" />
+              <Card withBorder radius="lg" p="md" style={{ backgroundColor: theme.colors.dark[8] }}>
+                  <Group justify="space-between" mb="md">
+                      <Group gap="xs">
+                          <ThemeIcon color="violet" variant="light" radius="md">
+                              <IconLayoutGrid size={18} />
+                          </ThemeIcon>
+                          <Text fw={700}>Priority Tasks</Text>
+                      </Group>
+                  </Group>
+                  <TasksByPriority />
+              </Card>
+
               <DueTodayWidget />
-              <TasksByPriority />
-              {!focusMode && <ProjectTimeline />}
-              {!focusMode && <WeeklyProgress />}
               {!focusMode && <RecentProjects />}
             </Stack>
           </Grid.Col>
 
-          {/* Middle Column: Activity & Content */}
+          {/* Middle Column: Visuals & Content */}
           <Grid.Col span={{ base: 12, md: focusMode ? 6 : 4 }}>
             <Stack gap="lg">
               <FocusTimer />
               {!focusMode && (
-                <Paper p="lg" radius="lg" shadow="sm" withBorder>
+                <Card withBorder radius="lg" p="lg" style={{ backgroundColor: theme.colors.dark[8] }}>
                   <Group justify="space-between" mb="md">
-                    <Title order={3} size="h4">
-                      Project Stats
-                    </Title>
+                    <Title order={4}>Project Trajectory</Title>
                     <IconArrowUpRight size={20} color={theme.colors.gray[6]} />
                   </Group>
                   <BarChart data={projects} />
-                </Paper>
+                </Card>
               )}
               {!focusMode && <NotesHeatmap />}
-              <Activity icon={<IconLayoutGrid size={24} />} title="Recent Activity" />
-              {!focusMode && <SocialWidget />}
-              {!focusMode && <NotesStatsWidget />}
+              <Activity icon={<IconClock size={18} />} title="Recent Activity" />
             </Stack>
           </Grid.Col>
 
-          {/* Right Column: Personal & Tracking - Hidden in Focus Mode */}
+          {/* Right Column: "Quantified Self" & System */}
           {!focusMode && (
             <Grid.Col span={{ base: 12, md: 4 }}>
               <Stack gap="lg">
-                <CalendarWidget />
-                <HabitsTracker />
-                <MoodTracker />
-                <InsightsWidget />
                 <GoalsTrackerWidget />
-                <AchievementBadgesWidget />
-                <BookmarksWidget />
+                <HabitsTracker />
+                <CalendarWidget />
+                <InsightsWidget />
                 <TimeTrackingWidget />
                 <TagsCloud />
               </Stack>

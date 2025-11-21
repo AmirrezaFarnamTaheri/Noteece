@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <!-- Deep Violet to Electric Purple Gradient -->
+    <linearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7048E8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#B197FC;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Teal Glow for Connectivity -->
+    <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:#20C997;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#087F5B;stop-opacity:0" />
+    </radialGradient>
+
+    <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background: Deepest Obsidian Void -->
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Central Structure: Abstract "N" formed by secure blocks -->
+  <!-- Left Pillar -->
+  <path d="M128 128 L 192 128 L 192 384 L 128 384 Z" fill="url(#mainGradient)" filter="url(#neonGlow)" />
+
+  <!-- Right Pillar -->
+  <path d="M320 128 L 384 128 L 384 384 L 320 384 Z" fill="url(#mainGradient)" filter="url(#neonGlow)" />
+
+  <!-- Diagonal Connection (The P2P Link) -->
+  <!-- Stylized as a data stream connecting the two secure pillars -->
+  <path d="M192 128 L 320 384 L 320 320 L 192 64 Z" fill="url(#mainGradient)" opacity="0.7" clip-path="inset(0 0 0 0)" />
+  <!-- Corrected Diagonal to stay within bounds -->
+  <path d="M192 160 L 320 384 L 256 384 L 128 160 Z" fill="none" /> <!-- remove old guide -->
+
+  <path d="M192 128 L 320 384 L 270 384 L 142 128 Z" fill="url(#mainGradient)" opacity="0.8" />
+
+  <!-- Nodes: Represents Decentralization / Encryption Points -->
+  <!-- Top Left Node -->
+  <circle cx="160" cy="128" r="16" fill="#20C997" filter="url(#neonGlow)" />
+
+  <!-- Bottom Right Node -->
+  <circle cx="352" cy="384" r="16" fill="#20C997" filter="url(#neonGlow)" />
+
+  <!-- Middle Data Stream Node (Spark) -->
+  <circle cx="256" cy="256" r="12" fill="#F3F0FF" filter="url(#neonGlow)" />
+
+  <!-- Encryption Shield Overlay Hint (Subtle) -->
+  <path d="M256 460 C 100 380, 100 200, 100 200 L 256 100 L 412 200 C 412 200, 412 380, 256 460 Z"
+        fill="none"
+        stroke="url(#mainGradient)"
+        stroke-width="2"
+        opacity="0.2" />
+
+</svg>
