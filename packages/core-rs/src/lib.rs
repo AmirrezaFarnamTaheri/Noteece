@@ -4,6 +4,7 @@
 //! including database management, encryption, sync, and business logic.
 
 pub mod analytics;
+pub mod audit;
 pub mod auth;
 pub mod backlink;
 pub mod backup;
@@ -20,6 +21,7 @@ pub mod editor;
 pub mod foresight;
 pub mod form;
 pub mod goals;
+pub mod graph;
 pub mod habits;
 pub mod health;
 pub mod import;

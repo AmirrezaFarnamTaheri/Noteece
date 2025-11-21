@@ -59,6 +59,20 @@ pub struct ProjectUpdate {
     pub summary: String,
 }
 
+pub fn delete_project(conn: &Connection, id: &str) -> Result<(), ProjectError> {
+    log::info!("[project] Deleting project with id: {}", id);
+    match conn.execute("DELETE FROM project WHERE id = ?1", [id]) {
+        Ok(_) => {
+            log::debug!("[project] Project deleted successfully");
+            Ok(())
+        }
+        Err(e) => {
+            log::error!("[project] Error deleting project: {}", e);
+            Err(e.into())
+        }
+    }
+}
+
 pub fn create_project(
     conn: &Connection,
     space_id: &str,

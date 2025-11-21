@@ -14,6 +14,8 @@ import {
   Box,
   ScrollArea,
   Paper,
+  ActionIcon,
+  Affix,
 } from '@mantine/core';
 import {
   IconHome2,
@@ -32,6 +34,8 @@ import {
   IconCommand,
   IconScan,
   IconChevronRight,
+  IconEyeOff,
+  IconEye,
 } from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
 import CommandPalette from './CommandPalette';
@@ -82,7 +86,7 @@ const MainLayout: React.FC = () => {
   const [commandPaletteOpened, setCommandPaletteOpened] = React.useState(false);
   const navigate = useNavigate();
   useHotkeys([['mod+K', () => setCommandPaletteOpened((o) => !o)]]);
-  const { activeSpaceId } = useStore();
+  const { activeSpaceId, zenMode, toggleZenMode } = useStore();
 
   const handleDailyNote = async () => {
     if (activeSpaceId) {
@@ -98,101 +102,128 @@ const MainLayout: React.FC = () => {
   return (
     <AppShell
       padding="md"
-      navbar={{ width: 260, breakpoint: 'sm' }}
-      header={{ height: 60 }}
+      navbar={zenMode ? undefined : { width: 260, breakpoint: 'sm' }}
+      header={zenMode ? undefined : { height: 60 }}
       styles={(theme) => ({
         main: { backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0] },
       })}
     >
-      <AppShell.Header p="md" style={{ backdropFilter: 'blur(10px)' }}>
-        <Group justify="space-between" align="center" h="100%">
-          <Group gap="sm">
-            <ThemeIcon size="lg" variant="gradient" gradient={{ from: 'indigo', to: 'cyan' }} radius="md">
-              <IconNote size={20} />
-            </ThemeIcon>
-            <div>
-              <Title order={3} style={{ letterSpacing: '-0.5px', lineHeight: 1 }}>
-                Noteece
-              </Title>
-              <Text size="10px" c="dimmed" fw={700} tt="uppercase" ls={1}>
-                Workspace
-              </Text>
-            </div>
-          </Group>
-          <Group gap="sm">
-            <Tooltip label="Open command palette (⌘K)">
-              <Button
-                variant="default"
-                size="compact-sm"
-                leftSection={<IconCommand size={14} />}
-                onClick={() => setCommandPaletteOpened(true)}
-                radius="md"
-              >
-                Commands
-              </Button>
-            </Tooltip>
-            <Button size="compact-sm" variant="light" onClick={handleDailyNote} radius="md">
-              Daily Note
-            </Button>
-            <ThemeToggle />
-          </Group>
-        </Group>
-      </AppShell.Header>
-
-      <AppShell.Navbar p="md" style={{ borderRight: '1px solid var(--mantine-color-gray-2)' }}>
-        <AppShell.Section grow component={ScrollArea}>
-          <Stack gap="lg">
-            {navLinkGroups.map((group) => (
-              <Stack key={group.title} gap={4}>
-                <Text size="11px" fw={700} c="dimmed" tt="uppercase" pl="xs" mb={4}>
-                  {group.title}
-                </Text>
-                {group.links.map((link) => (
-                  <NavLink to={link.to} key={link.label} style={{ textDecoration: 'none' }}>
-                    {({ isActive }) => (
-                      <MantineNavLink
-                        label={link.label}
-                        leftSection={<link.icon size={18} stroke={1.5} />}
-                        active={isActive}
-                        variant="light"
-                        color="blue"
-                        style={{ borderRadius: 'var(--mantine-radius-md)' }}
-                        rightSection={isActive && <IconChevronRight size={14} stroke={1.5} />}
-                      />
-                    )}
-                  </NavLink>
-                ))}
-              </Stack>
-            ))}
-          </Stack>
-        </AppShell.Section>
-
-        <AppShell.Section mt="md">
-          <Divider my="sm" />
-          <Paper withBorder p="xs" radius="md" bg="var(--mantine-color-gray-0)">
-            <Group>
-              <ThemeIcon variant="light" color="green" size="sm">
-                <IconCloud size={14} />
+      {!zenMode && (
+        <AppShell.Header p="md" style={{ backdropFilter: 'blur(10px)' }}>
+          <Group justify="space-between" align="center" h="100%">
+            <Group gap="sm">
+              <ThemeIcon size="lg" variant="gradient" gradient={{ from: 'indigo', to: 'cyan' }} radius="md">
+                <IconNote size={20} />
               </ThemeIcon>
               <div>
-                <Text size="xs" fw={700}>
-                  Local Sync
-                </Text>
-                <Text size="xs" c="dimmed">
-                  Active
+                <Title order={3} style={{ letterSpacing: '-0.5px', lineHeight: 1 }}>
+                  Noteece
+                </Title>
+                <Text size="10px" c="dimmed" fw={700} tt="uppercase" ls={1}>
+                  Workspace
                 </Text>
               </div>
             </Group>
-          </Paper>
-          <Text size="xs" c="dimmed" ta="center" mt="xs">
-            v1.0.0 • Production Ready
-          </Text>
-        </AppShell.Section>
-      </AppShell.Navbar>
+            <Group gap="sm">
+              <Tooltip label="Open command palette (⌘K)">
+                <Button
+                  variant="default"
+                  size="compact-sm"
+                  leftSection={<IconCommand size={14} />}
+                  onClick={() => setCommandPaletteOpened(true)}
+                  radius="md"
+                >
+                  Commands
+                </Button>
+              </Tooltip>
+              <Button size="compact-sm" variant="light" onClick={handleDailyNote} radius="md">
+                Daily Note
+              </Button>
+              <Tooltip label="Toggle Zen Mode">
+                <ActionIcon variant="subtle" onClick={toggleZenMode}>
+                  <IconEyeOff size={20} />
+                </ActionIcon>
+              </Tooltip>
+              <ThemeToggle />
+            </Group>
+          </Group>
+        </AppShell.Header>
+      )}
+
+      {!zenMode && (
+        <AppShell.Navbar p="md" style={{ borderRight: '1px solid var(--mantine-color-gray-2)' }}>
+          <AppShell.Section grow component={ScrollArea}>
+            <Stack gap="lg">
+              {navLinkGroups.map((group) => (
+                <Stack key={group.title} gap={4}>
+                  <Text size="11px" fw={700} c="dimmed" tt="uppercase" pl="xs" mb={4}>
+                    {group.title}
+                  </Text>
+                  {group.links.map((link) => (
+                    <NavLink to={link.to} key={link.label} style={{ textDecoration: 'none' }}>
+                      {({ isActive }) => (
+                        <MantineNavLink
+                          label={link.label}
+                          leftSection={<link.icon size={18} stroke={1.5} />}
+                          active={isActive}
+                          variant="light"
+                          color="blue"
+                          style={{ borderRadius: 'var(--mantine-radius-md)' }}
+                          rightSection={isActive && <IconChevronRight size={14} stroke={1.5} />}
+                        />
+                      )}
+                    </NavLink>
+                  ))}
+                </Stack>
+              ))}
+            </Stack>
+          </AppShell.Section>
+
+          <AppShell.Section mt="md">
+            <Divider my="sm" />
+            <Paper withBorder p="xs" radius="md" bg="var(--mantine-color-gray-0)">
+              <Group>
+                <ThemeIcon variant="light" color="green" size="sm">
+                  <IconCloud size={14} />
+                </ThemeIcon>
+                <div>
+                  <Text size="xs" fw={700}>
+                    Local Sync
+                  </Text>
+                  <Text size="xs" c="dimmed">
+                    Active
+                  </Text>
+                </div>
+              </Group>
+            </Paper>
+            <Text size="xs" c="dimmed" ta="center" mt="xs">
+              v1.0.0 • Production Ready
+            </Text>
+          </AppShell.Section>
+        </AppShell.Navbar>
+      )}
 
       <AppShell.Main>
         <CommandPalette opened={commandPaletteOpened} onClose={() => setCommandPaletteOpened(false)} />
         <Outlet />
+        {zenMode && (
+          <Affix position={{ bottom: 20, right: 20 }}>
+            <Tooltip label="Exit Zen Mode">
+              <ActionIcon
+                variant="filled"
+                color="gray"
+                size="xl"
+                radius="xl"
+                onClick={toggleZenMode}
+                style={{ opacity: 0.5, transition: 'opacity 0.2s' }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.5')}
+              >
+                <IconEye size={24} />
+              </ActionIcon>
+            </Tooltip>
+          </Affix>
+        )}
       </AppShell.Main>
     </AppShell>
   );

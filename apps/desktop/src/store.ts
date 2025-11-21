@@ -5,17 +5,21 @@ import { Space } from '@noteece/types';
 export interface AppState {
   spaces: Space[];
   activeSpaceId: string | null;
+  zenMode: boolean;
   setSpaces: (spaces: Space[]) => void;
   setActiveSpaceId: (spaceId: string) => void;
+  toggleZenMode: () => void;
   clearStorage: () => void;
 }
 
 const store: StateCreator<AppState> = (set) => ({
   spaces: [],
   activeSpaceId: null,
+  zenMode: false,
   setSpaces: (spaces) => set({ spaces }),
   setActiveSpaceId: (spaceId) => set({ activeSpaceId: spaceId }),
-  clearStorage: () => set({ spaces: [], activeSpaceId: null }),
+  toggleZenMode: () => set((state) => ({ zenMode: !state.zenMode })),
+  clearStorage: () => set({ spaces: [], activeSpaceId: null, zenMode: false }),
 });
 
 // Only use persist middleware in browser environment

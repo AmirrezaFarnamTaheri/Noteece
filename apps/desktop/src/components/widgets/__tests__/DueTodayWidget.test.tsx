@@ -11,9 +11,9 @@ const mockTasks = [
     title: 'Task 1 Due Today',
     status: 'todo',
     priority: 1,
-    due_at: Math.floor(new Date().getTime() / 1000), // Today
-    created_at: 12345,
-    updated_at: 12345,
+    due_at: Math.floor(Date.now() / 1000), // Today
+    created_at: 12_345,
+    updated_at: 12_345,
     space_id: 'space-1',
   },
   {
@@ -21,9 +21,9 @@ const mockTasks = [
     title: 'Task 2 Due Tomorrow',
     status: 'todo',
     priority: 2,
-    due_at: Math.floor(new Date().getTime() / 1000) + 86400, // Tomorrow
-    created_at: 12345,
-    updated_at: 12345,
+    due_at: Math.floor(Date.now() / 1000) + 86_400, // Tomorrow
+    created_at: 12_345,
+    updated_at: 12_345,
     space_id: 'space-1',
   },
   {
@@ -31,9 +31,9 @@ const mockTasks = [
     title: 'Task 3 Done Today',
     status: 'done',
     priority: 3,
-    due_at: Math.floor(new Date().getTime() / 1000), // Today but done
-    created_at: 12345,
-    updated_at: 12345,
+    due_at: Math.floor(Date.now() / 1000), // Today but done
+    created_at: 12_345,
+    updated_at: 12_345,
     space_id: 'space-1',
   },
 ] as Task[];
@@ -97,10 +97,12 @@ describe('DueTodayWidget', () => {
     fireEvent.click(checkbox);
 
     await waitFor(() => {
-      expect(mockMutateAsync).toHaveBeenCalledWith(expect.objectContaining({
-        id: '1',
-        status: 'done',
-      }));
+      expect(mockMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: '1',
+          status: 'done',
+        }),
+      );
     });
   });
 

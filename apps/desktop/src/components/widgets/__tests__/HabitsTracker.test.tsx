@@ -20,7 +20,7 @@ const mockHabits = [
     name: 'Morning Jog',
     completed: false,
     streak: 5,
-    last_completed_at: Math.floor(new Date().getTime() / 1000) - 86400, // Yesterday
+    last_completed_at: Math.floor(Date.now() / 1000) - 86_400, // Yesterday
     frequency: 'daily',
   },
   {
@@ -28,7 +28,7 @@ const mockHabits = [
     name: 'Read Book',
     completed: true, // will be recalculated based on last_completed_at
     streak: 12,
-    last_completed_at: Math.floor(new Date().getTime() / 1000), // Today
+    last_completed_at: Math.floor(Date.now() / 1000), // Today
     frequency: 'daily',
   },
 ];
@@ -90,10 +90,13 @@ describe('HabitsTracker Widget', () => {
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
-      expect(mockInvoke).toHaveBeenCalledWith('create_habit_cmd', expect.objectContaining({
-        name: 'New Habit',
-        frequency: 'daily'
-      }));
+      expect(mockInvoke).toHaveBeenCalledWith(
+        'create_habit_cmd',
+        expect.objectContaining({
+          name: 'New Habit',
+          frequency: 'daily',
+        }),
+      );
     });
   });
 
@@ -106,7 +109,7 @@ describe('HabitsTracker Widget', () => {
 
     // Find checkbox for the incomplete habit
     const checkboxes = screen.getAllByRole('checkbox');
-    const uncheckedBox = checkboxes.find(cb => !(cb as HTMLInputElement).checked);
+    const uncheckedBox = checkboxes.find((cb) => !(cb as HTMLInputElement).checked);
 
     if (uncheckedBox) {
       fireEvent.click(uncheckedBox);

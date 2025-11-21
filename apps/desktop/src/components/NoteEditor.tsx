@@ -14,6 +14,7 @@ const NoteEditor: React.FC = () => {
   const [content, setContent] = useState('');
   const [templateModalOpened, setTemplateModalOpened] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [typewriterMode, setTypewriterMode] = useState(false);
   const { activeSpaceId } = useStore();
 
   // Use React Query hooks for data fetching
@@ -154,14 +155,25 @@ const NoteEditor: React.FC = () => {
         </List>
       </div>
 
-      <div className={classes.editor}>
-        <TextInput
-          label="Title"
-          placeholder="Enter title"
-          value={title}
-          onChange={(event) => setTitle(event.currentTarget.value)}
-          size="md"
-        />
+      <div className={classes.editor} style={typewriterMode ? { paddingTop: '40vh', paddingBottom: '40vh' } : {}}>
+        <Group justify="space-between">
+          <TextInput
+            label="Title"
+            placeholder="Enter title"
+            value={title}
+            onChange={(event) => setTitle(event.currentTarget.value)}
+            size="md"
+            style={{ flex: 1 }}
+          />
+          <Button
+            variant="subtle"
+            size="xs"
+            onClick={() => setTypewriterMode(!typewriterMode)}
+            color={typewriterMode ? 'blue' : 'gray'}
+          >
+            {typewriterMode ? 'Typewriter On' : 'Typewriter Off'}
+          </Button>
+        </Group>
 
         {/* Lexical Editor with full rich text and markdown support */}
         <LexicalEditor

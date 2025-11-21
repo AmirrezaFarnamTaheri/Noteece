@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Zen Mode:** A distraction-free writing mode that hides the sidebar and header, allowing users to focus solely on their content.
+- **Audit Logging:** A comprehensive backend system that logs critical user actions (login, data modification) to a tamper-evident `audit_log` table for security and accountability.
 - **Mobile App Feature Consolidation:** Implemented real database storage for **Health Hub** and **Music Hub** in the mobile app, replacing all temporary mock data.
 - **Backend Sync Expansion:** Updated `core-rs` sync agent to support `HealthMetric`, `Track`, `Playlist`, and `CalendarEvent` entities, enabling full sync capability for new mobile features.
 - **Music Schema:** Added comprehensive database tables for music tracks and playlists, including support for smart playlists.
@@ -22,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **False Alarm in QA Report:** Investigated and confirmed that the `invitedBy` TODO mentioned in QA reports was already resolved in the codebase.
 - **Backend Test Suite:** Fixed a critical security vulnerability in the OCR module and resolved a panic in the analytics module. The backend test suite now passes completely.
 - **Mobile Test Suite:** Resolved a Jest setup issue that was preventing the mobile test suite from running.
 - **Linting Issues:** Fixed a large number of linting errors and warnings across the entire codebase.
