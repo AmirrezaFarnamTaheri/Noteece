@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, TextInput, List, Group, Modal, Select, LoadingOverlay, Text } from '@mantine/core';
+import { Button, TextInput, List, Group, Modal, Select, LoadingOverlay, Text, useMantineTheme, Paper, ActionIcon, Tooltip, Box } from '@mantine/core';
 import { invoke } from '@tauri-apps/api/tauri';
 import { Note } from '@noteece/types';
 import { useStore } from '../store';
@@ -7,8 +7,10 @@ import { useNotes, useFormTemplates } from '../hooks/useQueries';
 import LexicalEditor from './LexicalEditor';
 import classes from './NoteEditor.module.css';
 import { logger } from '@/utils/logger';
+import { IconPlus, IconTemplate, IconTrash, IconAlignJustified, IconMaximize, IconMinimize } from '@tabler/icons-react';
 
 const NoteEditor: React.FC = () => {
+  const theme = useMantineTheme();
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -104,13 +106,16 @@ const NoteEditor: React.FC = () => {
   };
 
   return (
-    <div className={classes.editorContainer}>
-      <LoadingOverlay visible={notesLoading || templatesLoading} />
+    <div className={classes.editorContainer} style={{ height: 'calc(100vh - 80px)', display: 'flex', gap: theme.spacing.md }}>
+      <LoadingOverlay visible={notesLoading || templatesLoading} overlayProps={{ blur: 2 }} />
 
       <Modal
         opened={templateModalOpened}
         onClose={() => setTemplateModalOpened(false)}
         title="Create Note from Template"
+        radius="lg"
+        centered
+        styles={{ header: { backgroundColor: theme.colors.dark[7] }, body: { backgroundColor: theme.colors.dark[7] } }}
       >
         <Select
           label="Select a template"
@@ -118,83 +123,154 @@ const NoteEditor: React.FC = () => {
           data={templates.map((t) => ({ value: t.id, label: t.name }))}
           value={selectedTemplate}
           onChange={setSelectedTemplate}
+          searchable
+          nothingFoundMessage="No templates found"
         />
-        <Button mt="md" onClick={handleCreateFromTemplate}>
+        <Button mt="md" onClick={handleCreateFromTemplate} fullWidth color="violet">
           Create
         </Button>
       </Modal>
 
-      <div className={classes.noteList}>
-        <Group justify="space-between" mb="sm">
-          <Text fw={600} size="lg">
+      {/* Sidebar Note List */}
+      <Paper
+        className={classes.noteList}
+        p="md"
+        radius="lg"
+        style={{
+            width: 300,
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: theme.colors.dark[8],
+            border: `1px solid ${theme.colors.dark[6]}`,
+        }}
+      >
+        <Group justify="space-between" mb="md">
+          <Text fw={700} size="sm" c="dimmed" tt="uppercase" ls={1}>
             Notes
           </Text>
-          <Button size="xs" onClick={handleNewNoteClick}>
-            New
-          </Button>
+          <Tooltip label="Create New Note">
+            <ActionIcon variant="light" color="violet" onClick={handleNewNoteClick} size="sm" radius="md">
+                <IconPlus size={16} />
+            </ActionIcon>
+          </Tooltip>
         </Group>
-        <Button size="xs" variant="outline" onClick={() => setTemplateModalOpened(true)} mb="sm" fullWidth>
+
+        <Button
+            size="xs"
+            variant="light"
+            color="gray"
+            onClick={() => setTemplateModalOpened(true)}
+            mb="md"
+            fullWidth
+            leftSection={<IconTemplate size={14} />}
+            styles={{ inner: { justifyContent: 'flex-start' } }}
+        >
           New from Template
         </Button>
-        <List spacing="xs">
+
+        <List spacing={4} listStyleType="none" style={{ overflowY: 'auto', flex: 1 }}>
           {notes.map((note) => (
             <List.Item
               key={note.id.toString()}
               onClick={() => setSelectedNote(note)}
               style={{
                 cursor: 'pointer',
-                fontWeight: selectedNote?.id === note.id ? 'bold' : 'normal',
-                padding: '0.5rem',
-                borderRadius: '4px',
-                backgroundColor: selectedNote?.id === note.id ? 'var(--mantine-color-blue-9)' : 'transparent',
+                padding: '8px 12px',
+                borderRadius: theme.radius.md,
+                backgroundColor: selectedNote?.id === note.id ? theme.colors.violet[9] + '40' : 'transparent',
+                color: selectedNote?.id === note.id ? theme.colors.violet[2] : theme.colors.gray[4],
+                transition: 'all 0.2s ease',
+                fontSize: theme.fontSizes.sm,
+                borderLeft: selectedNote?.id === note.id ? `3px solid ${theme.colors.violet[5]}` : '3px solid transparent',
               }}
             >
-              {note.title}
+              <Text truncate>{note.title || 'Untitled'}</Text>
             </List.Item>
           ))}
         </List>
-      </div>
+      </Paper>
 
-      <div className={classes.editor} style={typewriterMode ? { paddingTop: '40vh', paddingBottom: '40vh' } : {}}>
-        <Group justify="space-between">
-          <TextInput
-            label="Title"
-            placeholder="Enter title"
-            value={title}
-            onChange={(event) => setTitle(event.currentTarget.value)}
-            size="md"
-            style={{ flex: 1 }}
-          />
-          <Button
-            variant="subtle"
-            size="xs"
-            onClick={() => setTypewriterMode(!typewriterMode)}
-            color={typewriterMode ? 'blue' : 'gray'}
-          >
-            {typewriterMode ? 'Typewriter On' : 'Typewriter Off'}
-          </Button>
-        </Group>
+      {/* Editor Area */}
+      <Paper
+        className={classes.editor}
+        p="xl"
+        radius="lg"
+        style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: theme.colors.dark[8],
+            border: `1px solid ${theme.colors.dark[6]}`,
+            position: 'relative',
+        }}
+      >
+        <div style={{
+            paddingTop: typewriterMode ? '40vh' : 0,
+            paddingBottom: typewriterMode ? '40vh' : 0,
+            transition: 'padding 0.3s ease',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column'
+        }}>
+            <Group justify="space-between" mb="lg">
+            <TextInput
+                placeholder="Untitled Note"
+                value={title}
+                onChange={(event) => setTitle(event.currentTarget.value)}
+                size="xl"
+                variant="unstyled"
+                style={{ flex: 1 }}
+                styles={{ input: { fontSize: '2rem', fontWeight: 800, color: theme.colors.gray[0] } }}
+            />
+            <Group gap="xs">
+                <Tooltip label={typewriterMode ? "Disable Typewriter Mode" : "Enable Typewriter Mode"}>
+                    <ActionIcon
+                        variant="subtle"
+                        onClick={() => setTypewriterMode(!typewriterMode)}
+                        color={typewriterMode ? 'violet' : 'gray'}
+                        size="lg"
+                    >
+                        {typewriterMode ? <IconMinimize size={20} /> : <IconAlignJustified size={20} />}
+                    </ActionIcon>
+                </Tooltip>
+                {selectedNote && (
+                    <Tooltip label="Delete Note">
+                        <ActionIcon
+                            variant="subtle"
+                            color="red"
+                            onClick={handleDeleteNote}
+                            size="lg"
+                        >
+                            <IconTrash size={20} />
+                        </ActionIcon>
+                    </Tooltip>
+                )}
+            </Group>
+            </Group>
 
-        {/* Lexical Editor with full rich text and markdown support */}
-        <LexicalEditor
-          key={selectedNote ? String(selectedNote.id) : 'new-note'}
-          initialContent={content}
-          onChange={handleContentChange}
-          placeholder="Start writing your note... Use markdown shortcuts like # for headings, - for lists, etc."
-        />
+            {/* Lexical Editor with full rich text and markdown support */}
+            <Box style={{ flex: 1, overflowY: 'auto' }}>
+                <LexicalEditor
+                key={selectedNote ? String(selectedNote.id) : 'new-note'}
+                initialContent={content}
+                onChange={handleContentChange}
+                placeholder="Start writing..."
+                />
+            </Box>
 
-        <Group mt="md" justify="flex-start">
-          <Button onClick={handleCreateNote} disabled={selectedNote !== null || !title.trim()}>
-            Create Note
-          </Button>
-          <Button onClick={handleUpdateNote} disabled={selectedNote === null || !title.trim()}>
-            Update Note
-          </Button>
-          <Button onClick={handleDeleteNote} color="red" disabled={selectedNote === null}>
-            Delete Note
-          </Button>
-        </Group>
-      </div>
+            <Group mt="lg" justify="flex-end">
+            {selectedNote ? (
+                <Button onClick={handleUpdateNote} color="violet" radius="md">
+                    Save Changes
+                </Button>
+            ) : (
+                <Button onClick={handleCreateNote} disabled={!title.trim()} color="violet" radius="md">
+                    Create Note
+                </Button>
+            )}
+            </Group>
+        </div>
+      </Paper>
     </div>
   );
 };

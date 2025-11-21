@@ -52,3 +52,19 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 - **Status:** **Open (Non-blocking)**
 - **Description:** Tests emit warnings about updates to state not being wrapped in `act(...)`.
 - **Action:** These are common in React Native testing with async hooks and do not indicate a functional failure. Future refactoring should wrap these updates explicitly.
+
+---
+
+## 4. Resolved Issues (Verification Complete)
+
+### 4.1. Split-Brain Sync Wiring (Resolved)
+
+- **Status:** **Resolved**
+- **Description:** The frontend `api.ts` expected commands (`start_p2p_sync_cmd`, `get_devices_cmd`, etc.) that were missing or misplaced in `commands.rs`.
+- **Resolution:** All sync-related commands were implemented in `apps/desktop/src-tauri/src/commands.rs` and correctly wired to `core-rs` logic. A new test `sync_wiring_test.rs` confirms the integration.
+
+### 4.2. Transaction Safety in Cascading Deletes (Resolved)
+
+- **Status:** **Resolved**
+- **Description:** Potential for orphaned records when deleting projects.
+- **Resolution:** The `delete_project` function now executes within a strict transaction, manually removing related milestones, risks, and dependencies, and nullifying foreign keys in tasks and time entries before removing the project itself. Verified by `robustness_tests.rs`.

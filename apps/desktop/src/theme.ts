@@ -1,4 +1,16 @@
-import { createTheme, rem, ActionIcon, Button, Card, Modal, NavLink, Paper, Textarea, TextInput, Tooltip } from '@mantine/core';
+import {
+  createTheme,
+  rem,
+  ActionIcon,
+  Button,
+  Card,
+  Modal,
+  NavLink,
+  Paper,
+  Textarea,
+  TextInput,
+  Tooltip,
+} from '@mantine/core';
 
 /**
  * Noteece Revolutionary Theme

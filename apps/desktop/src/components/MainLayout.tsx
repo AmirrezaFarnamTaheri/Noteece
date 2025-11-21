@@ -123,12 +123,7 @@ const MainLayout: React.FC = () => {
         >
           <Group justify="space-between" align="center" h="100%">
             <Group gap="xs">
-              <ThemeIcon
-                size="lg"
-                variant="gradient"
-                gradient={{ from: 'violet', to: 'indigo', deg: 135 }}
-                radius="md"
-              >
+              <ThemeIcon size="lg" variant="gradient" gradient={{ from: 'violet', to: 'indigo', deg: 135 }} radius="md">
                 <IconNote size={22} />
               </ThemeIcon>
               <Box>
@@ -216,7 +211,9 @@ const MainLayout: React.FC = () => {
                           }
                           active={isActive}
                           variant="subtle" // Changed from light to custom handled in theme
-                          rightSection={isActive && <IconChevronRight size={14} stroke={1.5} style={{ opacity: 0.5 }} />}
+                          rightSection={
+                            isActive && <IconChevronRight size={14} stroke={1.5} style={{ opacity: 0.5 }} />
+                          }
                         />
                       )}
                     </NavLink>
