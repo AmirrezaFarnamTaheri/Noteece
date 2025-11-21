@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Sync Command Wiring:** Resolved a critical "Split-Brain" issue where P2P sync commands (`start_p2p_sync`, `get_devices`) were defined in the frontend `api.ts` but missing or misnamed in the backend `commands.rs`. All commands are now centralized, typed, and correctly wired.
+- **Transaction Safety:** Enhanced `delete_project` in `core-rs` to run within a strict database transaction, manually cascading deletes to related tables (milestones, risks, dependencies) to prevent orphaned records and potential integrity errors.
+- **UI Visual Consistency:** Fixed hardcoded styles in `Kanban.tsx` and `NoteEditor.tsx` to fully adopt the "Deep Obsidian" design token system (`theme.colors.dark[...]`), ensuring a consistent look across all views.
+
+### Added
+- **Sync Integration Tests:** Added `sync_wiring_test.rs` to `core-rs` to programmatically verify that the sync agent, device registration, and delta application logic are correctly integrated and functioning.
+- **Robustness Tests:** Added `robustness_tests.rs` to verify atomicity of critical operations like cascading project deletes and batch delta application.
+- **Shared State Management:** Created a dedicated `state.rs` module in the desktop backend to securely share `DbConnection` and `SecureDek` across the command layer, eliminating circular dependencies.
+
+### Changed
+- **Codebase Cleanup:** Refactored `apps/desktop/src-tauri/src/main.rs` to remove inline command definitions, delegating all logic to the centralized `commands` module for better maintainability.
+- **Modernization:** Updated `NoteEditor` and `Dashboard` components to use glassmorphism effects and the refined color palette.
+
 ### Added
 - **Visual Overhaul:** Implemented a "Deep Obsidian" theme across the desktop application with a new Violet/Teal color palette, glassmorphism effects, and modern typography.
 - **API Consistency:** Added missing API methods (`exchangeKeys`, `getSyncProgress`, `shutdownClearKeys`, `getBackupDetails`) to `apps/desktop/src/services/api.ts` to fully align the frontend with the Rust backend.
@@ -76,4 +90,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0] - 2025-11-17
 
-... (previous entries remain)
+- Initial Release

@@ -1,4 +1,3 @@
-
 import { exchangeKeys, getSyncProgress, shutdownClearKeys, getBackupDetails } from '../api';
 import { invoke } from '@tauri-apps/api/tauri';
 
@@ -32,7 +31,7 @@ describe('API Service - New Methods', () => {
 
   test('getBackupDetails calls get_backup_details_cmd', async () => {
     const backupId = 'backup-123';
-    const mockDetails = { id: 'backup-123', timestamp: 1234567890 };
+    const mockDetails = { id: 'backup-123', timestamp: 1_234_567_890 };
     (invoke as jest.Mock).mockResolvedValueOnce(mockDetails);
     const details = await getBackupDetails(backupId);
     expect(invoke).toHaveBeenCalledWith('get_backup_details_cmd', { backupId });
