@@ -1,4 +1,14 @@
-import { NativeModules } from "react-native";
+import { NativeModules, Linking } from "react-native";
+
+// Mock Linking
+jest.mock("react-native/Libraries/Linking/Linking", () => ({
+  getInitialURL: jest.fn(() => Promise.resolve(null)),
+  openURL: jest.fn(() => Promise.resolve(true)),
+  canOpenURL: jest.fn(() => Promise.resolve(true)),
+  addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+  removeEventListener: jest.fn(),
+  sendIntent: jest.fn(),
+}));
 
 // Mock crypto
 global.crypto = {
@@ -145,7 +155,13 @@ jest.mock("expo-sharing", () => ({
 jest.mock("expo-linking", () => ({
   createURL: jest.fn(),
   openURL: jest.fn(),
+  getInitialURL: jest.fn(() => Promise.resolve(null)),
   addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+}));
+
+// Mock React Native Share
+jest.mock("react-native/Libraries/Share/Share", () => ({
+  share: jest.fn(),
 }));
 
 // Mock console.log and console.error to reduce noise

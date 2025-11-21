@@ -46,7 +46,7 @@ describe("SocialHub Screen", () => {
     });
   });
 
-  it.skip("renders timeline posts when data is available", async () => {
+  it("renders timeline posts when data is available", async () => {
     const mockPosts = [
       {
         id: "1",

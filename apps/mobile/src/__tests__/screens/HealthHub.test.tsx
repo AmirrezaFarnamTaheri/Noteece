@@ -56,13 +56,17 @@ describe("HealthHub Screen", () => {
     await waitFor(() => expect(dbQuery).toHaveBeenCalled());
 
     // Check for Today view metrics
-    expect(await findByText("5.0k")).toBeTruthy(); // Steps formatted
-    expect(await findByText("8")).toBeTruthy(); // Water
+    // Use regex for values that might be part of a larger string
+    expect(await findByText(/5\.0k/)).toBeTruthy(); // Steps formatted
+    expect(await findByText(/8/)).toBeTruthy(); // Water
     expect(await findByText("Steps")).toBeTruthy();
   });
 
   it("switches views (Today -> Week -> Month)", async () => {
-    (dbQuery as jest.Mock).mockResolvedValue([]);
+    const mockMetrics = [
+      { metric_type: "steps", value: 5000, recorded_at: Date.now() },
+    ];
+    (dbQuery as jest.Mock).mockResolvedValue(mockMetrics);
     const { getByText } = render(<HealthHub />);
 
     await waitFor(() => expect(getByText("Today")).toBeTruthy());

@@ -5,7 +5,6 @@ use core_rs::space;
 use core_rs::task;
 use rusqlite::Connection;
 use tempfile::tempdir;
-use ulid::Ulid;
 
 fn setup_db() -> (Connection, tempfile::TempDir) {
     let temp_dir = tempdir().unwrap();
@@ -88,7 +87,7 @@ fn test_task_edge_cases() {
 
 #[test]
 fn test_habit_correlation() {
-    let (mut conn, _dir) = setup_db();
+    let (conn, _dir) = setup_db();
     use core_rs::analytics;
     // Insert some data... calculating correlation requires >5 points.
     // This is tedious to setup in a unit test without a helper.

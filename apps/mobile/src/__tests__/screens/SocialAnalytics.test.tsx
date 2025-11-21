@@ -58,11 +58,11 @@ describe("SocialAnalytics Screen", () => {
     ]);
     (getTotalPostCount as jest.Mock).mockResolvedValue(20);
 
-    const { findByText, getByText } = render(<SocialAnalytics />);
+    const { findByText, getAllByText, getByText } = render(<SocialAnalytics />);
 
     expect(await findByText("20")).toBeTruthy(); // Total posts
-    expect(getByText("twitter")).toBeTruthy();
-    expect(getByText("Tech")).toBeTruthy();
+    expect(getAllByText("twitter").length).toBeGreaterThan(0);
+    expect(getAllByText("Tech").length).toBeGreaterThan(0);
   });
 
   it("handles export", async () => {

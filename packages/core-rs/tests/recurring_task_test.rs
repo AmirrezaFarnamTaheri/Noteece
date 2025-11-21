@@ -1,9 +1,8 @@
 use core_rs::db;
 use core_rs::space;
-use core_rs::task::{self, Task};
+use core_rs::task::{self};
 use rusqlite::Connection;
 use tempfile::tempdir;
-use ulid::Ulid;
 
 fn setup_db() -> (Connection, tempfile::TempDir) {
     let temp_dir = tempdir().unwrap();
