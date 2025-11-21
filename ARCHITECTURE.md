@@ -22,6 +22,7 @@ The Noteece ecosystem consists of three main components:
 2.  **Desktop Application (`apps/desktop`):** A Tauri-based application for Windows, macOS, and Linux.
     - Uses React and TypeScript for the frontend UI.
     - Communicates with the Rust core via Tauri's command bridge.
+    - **Command Layer (`commands.rs`):** A dedicated Rust module that wraps core logic into robust, error-handling Tauri commands (suffixed with `_cmd`), ensuring consistent API surface and thread safety.
     - Manages the main database file and user preferences.
 
 3.  **Mobile Application (`apps/mobile`):** An Expo-based application for iOS and Android.
