@@ -112,6 +112,15 @@ pub fn create_project_risk_cmd(
     })
 }
 
+// IMPORTANT: This command now uses with_db_mut! to support transaction
+#[tauri::command]
+pub fn delete_project_cmd(db: State<DbConnection>, id: String) -> Result<(), String> {
+    with_db_mut!(db, conn, {
+        // core_rs::project::delete_project now takes &mut Connection
+        core_rs::project::delete_project(conn, &id).map_err(|e| e.to_string())
+    })
+}
+
 // --- Search Commands ---
 
 #[tauri::command]
@@ -552,15 +561,26 @@ pub fn create_manual_time_entry_cmd(
     space_id: String,
     task_id: Option<String>,
     project_id: Option<String>,
+    note_id: Option<String>,
     description: Option<String>,
-    start_time: i64,
-    end_time: i64,
+    started_at: i64,
+    duration_seconds: i64,
 ) -> Result<TimeEntry, String> {
     with_db!(db, conn, {
         let task_ulid = task_id.map(|s| Ulid::from_string(&s)).transpose().map_err(|e| e.to_string())?;
         let project_ulid = project_id.map(|s| Ulid::from_string(&s)).transpose().map_err(|e| e.to_string())?;
+        let note_ulid = note_id.map(|s| Ulid::from_string(&s)).transpose().map_err(|e| e.to_string())?;
+        let space_ulid = Ulid::from_string(&space_id).map_err(|e| e.to_string())?;
+
         core_rs::time_tracking::create_manual_time_entry(
-            conn, &space_id, task_ulid, project_ulid, description.as_deref(), start_time, end_time
+            conn,
+            space_ulid,
+            task_ulid,
+            project_ulid,
+            note_ulid,
+            description.as_deref(),
+            started_at,
+            duration_seconds
         ).map_err(|e| e.to_string())
     })
 }

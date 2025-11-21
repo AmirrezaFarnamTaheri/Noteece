@@ -59,15 +59,32 @@ pub struct ProjectUpdate {
     pub summary: String,
 }
 
-pub fn delete_project(conn: &Connection, id: &str) -> Result<(), ProjectError> {
+pub fn delete_project(conn: &mut Connection, id: &str) -> Result<(), ProjectError> {
     log::info!("[project] Deleting project with id: {}", id);
-    match conn.execute("DELETE FROM project WHERE id = ?1", [id]) {
+
+    let tx = conn.transaction()?;
+
+    // Manually delete related entities to satisfy FK constraints
+    tx.execute("DELETE FROM project_milestone WHERE project_id = ?1", [id])?;
+    tx.execute("DELETE FROM project_risk WHERE project_id = ?1", [id])?;
+    tx.execute("DELETE FROM project_update WHERE project_id = ?1", [id])?;
+    tx.execute("DELETE FROM project_dependency WHERE project_id = ?1 OR depends_on_project_id = ?1", [id])?;
+
+    // Nullify project_id in Tasks
+    tx.execute("UPDATE task SET project_id = NULL WHERE project_id = ?1", [id])?;
+
+    // Nullify project_id in Time Entries
+    tx.execute("UPDATE time_entry SET project_id = NULL WHERE project_id = ?1", [id])?;
+
+    match tx.execute("DELETE FROM project WHERE id = ?1", [id]) {
         Ok(_) => {
+            tx.commit()?;
             log::debug!("[project] Project deleted successfully");
             Ok(())
         }
         Err(e) => {
             log::error!("[project] Error deleting project: {}", e);
+            // Transaction will be rolled back automatically when tx is dropped if not committed
             Err(e.into())
         }
     }

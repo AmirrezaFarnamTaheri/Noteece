@@ -1,6 +1,6 @@
 # Known Issues
 
-_Last Updated: 2025-11-19_
+_Last Updated: 2025-11-20_
 
 This document tracks persistent, hard-to-debug issues in the codebase.
 
@@ -31,11 +31,11 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 - **Description:** `console.warn` outputs regarding React Router v7 future flags (`v7_startTransition`, `v7_relativeSplatPath`) appear during tests.
 - **Action:** These are deprecation warnings for a future upgrade and do not affect current functionality.
 
-### 2.3. QA Report False Positives
+### 2.3. API Signature Mismatch (Resolved)
 
 - **Status:** **Resolved**
-- **Description:** QA reports indicated a missing implementation for user invitation authentication context (`invitedBy` TODO).
-- **Resolution:** Verified that the `UserManagement.tsx` component correctly retrieves the current user ID from `authService` and passes it to the backend. The TODO in the report was outdated.
+- **Description:** `createManualTimeEntry` had conflicting signatures between frontend (`startedAt`, `durationSeconds`) and backend (`start_time`, `end_time`).
+- **Resolution:** Backend `commands.rs` updated to accept `started_at` and `duration_seconds` to match `core-rs` logic and frontend intent. Frontend `api.ts` updated to call command with correct snake_case keys.
 
 ---
 

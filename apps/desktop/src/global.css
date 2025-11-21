@@ -9,7 +9,7 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.9);
-  background-color: #1A1B1E; /* Matches theme.colors.dark[7] */
+  background-color: #141517; /* Matches theme.colors.dark[7] - Deep Background */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -21,13 +21,13 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #1A1B1E;
+  background-color: #141517;
 }
 
-/* Modern Scrollbar */
+/* Modern Scrollbar - Thin & Minimal */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -35,18 +35,38 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #373A40;
-  border-radius: 5px;
-  border: 2px solid #1A1B1E; /* Creates padding effect */
+  background: #373A40; /* Dark[4] */
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #5C5F66;
+  background: #5C5F66; /* Dark[3] */
 }
 
-/* Smooth Transitions */
+/* Smooth Transitions for global elements */
 button, a, input, textarea, select {
-  transition-property: background-color, border-color, color, box-shadow;
-  transition-duration: 0.15s;
-  transition-timing-function: ease-in-out;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+
+/* Glassmorphism Utilities */
+.glass {
+    background: rgba(37, 38, 43, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Utility for hiding scrollbar but allowing scroll */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Selection Color */
+::selection {
+    background: rgba(132, 94, 247, 0.3); /* Violet */
+    color: white;
 }

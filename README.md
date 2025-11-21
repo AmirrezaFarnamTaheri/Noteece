@@ -1,10 +1,11 @@
 # Noteece
 
-**Noteece** is a local-first, end-to-end encrypted, Markdown-centric workspace designed for privacy and productivity.
+**Noteece** is a local-first, end-to-end encrypted, Markdown-centric workspace designed for privacy, productivity, and personal growth.
 
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
 ![Status](https://img.shields.io/badge/status-production_ready-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-1.0.0-violet)
 
 ## Overview
 
@@ -12,11 +13,13 @@ Noteece combines the best of note-taking, project management, and personal growt
 
 ### Key Features
 
-- **📝 Knowledge Management:** Markdown editor with backlinks, tags, and full-text search.
-- **🚀 Project Hub:** Manage projects, milestones, and tasks with Kanban boards.
+- **📝 Knowledge Management:** Markdown editor with backlinks, tags, and full-text search (with FTS5 fallback support).
+- **🚀 Project Hub:** comprehensive project management with Milestones, Risks, and Kanban boards.
+- **⏱️ Time Tracking:** Built-in manual and timer-based time tracking linked to projects and tasks.
 - **🌱 Personal Growth:** Track habits, set goals, and perform weekly reviews.
 - **📱 Mobile Companion:** Sync your data securely via P2P to your mobile device.
 - **🔒 Privacy First:** Local-first architecture with SQLCipher encryption. No cloud, no tracking.
+- **🎨 Modern UI:** Revolutionary "Deep Obsidian" aesthetic with glassmorphism and smooth interactions.
 
 ## Getting Started
 
@@ -56,6 +59,7 @@ For detailed information, please refer to the **[Wiki](./WIKI.md)**.
 - **[Developer Guide](./DEVELOPER_GUIDE.md)**
 - **[Architecture](./ARCHITECTURE.md)**
 - **[Security](./SECURITY.md)**
+- **[Issues](./ISSUES.md)** - Current known issues and workarounds.
 
 ## Contributing
 
