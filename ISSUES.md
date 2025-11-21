@@ -14,6 +14,12 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 - **Description:** There is a persistent build failure in the `core-rs` crate when both the `fts5` and `bundled-sqlcipher-vendored-openssl` features are enabled.
 - **Resolution:** A hybrid search engine was implemented in `search.rs`. The application now checks for the existence of the FTS5 table at runtime. If FTS5 is unavailable (due to build config), it automatically falls back to standard `LIKE` queries against the database content (which is transparently decrypted by SQLCipher at the connection level). This ensures search functionality is always available to the user.
 
+### 1.2. FTS5 Trigger Conflicts (Resolved)
+
+- **Status:** **Resolved**
+- **Description:** The FTS5 update trigger ('note_au') caused conflicts with SQLCipher.
+- **Resolution:** Triggers were removed. FTS index updates are now handled manually within the application logic (in `create_note` and `update_note_content` functions) to ensure the index remains in sync with the content table.
+
 ---
 
 ## 2. `desktop` Frontend/Tauri Issues
@@ -31,12 +37,6 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 - **Description:** `console.warn` outputs regarding React Router v7 future flags (`v7_startTransition`, `v7_relativeSplatPath`) appear during tests.
 - **Action:** These are deprecation warnings for a future upgrade and do not affect current functionality.
 
-### 2.3. API Signature Mismatch (Resolved)
-
-- **Status:** **Resolved**
-- **Description:** `createManualTimeEntry` had conflicting signatures between frontend (`startedAt`, `durationSeconds`) and backend (`start_time`, `end_time`).
-- **Resolution:** Backend `commands.rs` updated to accept `started_at` and `duration_seconds` to match `core-rs` logic and frontend intent. Frontend `api.ts` updated to call command with correct snake_case keys.
-
 ---
 
 ## 3. `mobile` Frontend Issues
@@ -52,9 +52,3 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 - **Status:** **Open (Non-blocking)**
 - **Description:** Tests emit warnings about updates to state not being wrapped in `act(...)`.
 - **Action:** These are common in React Native testing with async hooks and do not indicate a functional failure. Future refactoring should wrap these updates explicitly.
-
-### 3.3. SocialHub Test Flakiness
-
-- **Status:** **Resolved**
-- **Description:** The `SocialHub` tests were previously skipped due to flakiness.
-- **Resolution:** Mocks for `expo-linking` and `Share` were corrected, and tests were updated to handle text matching more robustly (using regex or specific counts). All mobile tests are now passing.

@@ -1247,9 +1247,17 @@ pub fn discover_devices_cmd(db: State<DbConnection>) -> Result<Vec<DiscoveredDev
 }
 
 #[tauri::command]
-pub fn initiate_pairing_cmd(db: State<DbConnection>, device_id: String) -> Result<(), String> {
-    // Placeholder: P2P sync pairing logic needs to be exposed in P2P sync struct
-    Ok(())
+pub async fn initiate_pairing_cmd(db: State<'_, DbConnection>, device_id: String) -> Result<(), String> {
+    let p2p_sync = {
+        let guard = db.p2p_sync.lock().map_err(|_| "Failed to lock P2P sync".to_string())?;
+        guard.clone()
+    };
+
+    if let Some(sync) = p2p_sync {
+        sync.initiate_pairing(&device_id).await.map_err(|e| e.to_string())
+    } else {
+        Err("P2P Sync not initialized".to_string())
+    }
 }
 
 #[tauri::command]

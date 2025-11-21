@@ -340,21 +340,22 @@ impl SyncAgent {
     /// Apply incoming deltas
     pub fn apply_deltas(
         &self,
-        conn: &Connection,
+        conn: &mut Connection,
         deltas: Vec<SyncDelta>,
         dek: &[u8],
     ) -> Result<Vec<SyncConflict>, SyncError> {
         let mut conflicts = Vec::new();
+        let tx = conn.transaction()?;
 
         for delta in deltas {
-            match self.apply_single_delta(conn, &delta, dek) {
+            match self.apply_single_delta(&tx, &delta, dek) {
                 Ok(_) => {
                     // Log successful sync
-                    self.log_entity_sync(conn, &delta)?;
+                    self.log_entity_sync(&tx, &delta)?;
                 }
                 Err(SyncError::ConflictError(_msg)) => {
                     // Detect and record conflict
-                    if let Some(conflict) = self.detect_conflict(conn, &delta)? {
+                    if let Some(conflict) = self.detect_conflict(&tx, &delta)? {
                         conflicts.push(conflict);
                     }
                 }
@@ -362,6 +363,7 @@ impl SyncAgent {
             }
         }
 
+        tx.commit()?;
         Ok(conflicts)
     }
 

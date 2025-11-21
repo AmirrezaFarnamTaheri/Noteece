@@ -121,6 +121,6 @@ fn test_project_basic_flow() {
     project::delete_project_milestone(&conn, &milestone.id).unwrap();
 
     // Delete Project
-    project::delete_project(&conn, &project.id).unwrap();
+    project::delete_project(&mut conn, &project.id).unwrap();
     assert!(project::get_project(&conn, &project.id).unwrap().is_none());
 }

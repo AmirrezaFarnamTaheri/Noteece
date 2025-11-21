@@ -12,24 +12,31 @@ jest.mock('../widgets/UniversalDashboardWidget', () => ({
 jest.mock('../widgets/HealthWidget', () => ({ HealthWidget: () => <div>HealthWidget</div> }));
 jest.mock('../widgets/MusicWidget', () => ({ MusicWidget: () => <div>MusicWidget</div> }));
 jest.mock('../widgets/QuickCapture', () => ({ QuickCapture: () => <div>QuickCapture</div> }));
+// eslint-disable-next-line react/display-name
 jest.mock('../widgets/DueTodayWidget', () => () => <div>DueTodayWidget</div>);
 jest.mock('../widgets/TasksByPriority', () => ({ TasksByPriority: () => <div>TasksByPriority</div> }));
+// eslint-disable-next-line react/display-name
 jest.mock('../widgets/ProjectTimeline', () => () => <div>ProjectTimeline</div>);
 jest.mock('../widgets/WeeklyProgress', () => ({ WeeklyProgress: () => <div>WeeklyProgress</div> }));
 jest.mock('../widgets/RecentProjects', () => ({ RecentProjects: () => <div>RecentProjects</div> }));
+// eslint-disable-next-line react/display-name
 jest.mock('../widgets/NotesHeatmap', () => () => <div>NotesHeatmap</div>);
 jest.mock('../widgets/SocialWidget', () => ({ SocialWidget: () => <div>SocialWidget</div> }));
 jest.mock('../widgets/NotesStatsWidget', () => ({ NotesStatsWidget: () => <div>NotesStatsWidget</div> }));
 jest.mock('../widgets/CalendarWidget', () => ({ CalendarWidget: () => <div>CalendarWidget</div> }));
 jest.mock('../widgets/FocusTimer', () => ({ FocusTimer: () => <div>FocusTimer</div> }));
+// eslint-disable-next-line react/display-name
 jest.mock('../widgets/HabitsTracker', () => () => <div>HabitsTracker</div>);
+// eslint-disable-next-line react/display-name
 jest.mock('../widgets/MoodTracker', () => () => <div>MoodTracker</div>);
+// eslint-disable-next-line react/display-name
 jest.mock('../widgets/InsightsWidget', () => () => <div>InsightsWidget</div>);
 jest.mock('../widgets/GoalsTrackerWidget', () => ({ GoalsTrackerWidget: () => <div>GoalsTrackerWidget</div> }));
 jest.mock('../widgets/AchievementBadgesWidget', () => ({
   AchievementBadgesWidget: () => <div>AchievementBadgesWidget</div>,
 }));
 jest.mock('../widgets/BookmarksWidget', () => ({ BookmarksWidget: () => <div>BookmarksWidget</div> }));
+// eslint-disable-next-line react/display-name
 jest.mock('../widgets/TimeTrackingWidget', () => () => <div>TimeTrackingWidget</div>);
 jest.mock('../widgets/TagsCloud', () => ({ TagsCloud: () => <div>TagsCloud</div> }));
 jest.mock('../activity', () => ({ Activity: () => <div>Activity</div> }));

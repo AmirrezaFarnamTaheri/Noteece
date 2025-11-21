@@ -80,4 +80,23 @@ impl P2pSync {
             .await
             .map_err(|e| P2pError::Sync(e.to_string()))
     }
+
+    pub async fn initiate_pairing(&self, device_id: &str) -> Result<(), P2pError> {
+        // In a real P2P flow, we would send a pairing request over the network.
+        // Current SyncProtocol::pair_device is passive (receives a request).
+        // For this "active" init, we verify availability and prepare state.
+        let protocol = self.protocol.lock().map_err(|_| P2pError::Sync("Mutex poisoned".to_string()))?;
+
+        if protocol.is_device_available(device_id) {
+             log::info!("[p2p] Device {} is already available/paired.", device_id);
+             return Ok(());
+        }
+
+        // Simulate active pairing initiation by logging.
+        // The actual handshake is currently driven by the mobile client (Scanning QR code on Desktop).
+        // So "Initiate Pairing" on Desktop essentially means "Enter Listening/Display QR Code Mode".
+        // We log this intent.
+        log::info!("[p2p] Ready to accept pairing from {}", device_id);
+        Ok(())
+    }
 }

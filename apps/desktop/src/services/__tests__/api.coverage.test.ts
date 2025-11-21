@@ -16,22 +16,26 @@ describe('API Service', () => {
 
   it('getFormTemplatesForSpace calls correct command', async () => {
     await api.getFormTemplatesForSpace('s1');
-    expect(mockInvoke).toHaveBeenCalledWith('get_form_templates_for_space', { spaceId: 's1' });
+    expect(mockInvoke).toHaveBeenCalledWith('get_form_templates_for_space_cmd', { spaceId: 's1' });
   });
 
   it('createFormTemplate calls correct command', async () => {
     await api.createFormTemplate('s1', 'Template', []);
-    expect(mockInvoke).toHaveBeenCalledWith('create_form_template', { spaceId: 's1', name: 'Template', fields: [] });
+    expect(mockInvoke).toHaveBeenCalledWith('create_form_template_cmd', {
+      spaceId: 's1',
+      name: 'Template',
+      fields: [],
+    });
   });
 
   it('updateFormTemplate calls correct command', async () => {
     await api.updateFormTemplate('t1', 'Template', []);
-    expect(mockInvoke).toHaveBeenCalledWith('update_form_template', { id: 't1', name: 'Template', fields: [] });
+    expect(mockInvoke).toHaveBeenCalledWith('update_form_template_cmd', { id: 't1', name: 'Template', fields: [] });
   });
 
   it('deleteFormTemplate calls correct command', async () => {
     await api.deleteFormTemplate('t1');
-    expect(mockInvoke).toHaveBeenCalledWith('delete_form_template', { id: 't1' });
+    expect(mockInvoke).toHaveBeenCalledWith('delete_form_template_cmd', { id: 't1' });
   });
 
   it('getProjectRisks calls correct command', async () => {
@@ -66,7 +70,7 @@ describe('API Service', () => {
 
   it('getAllProjectsInSpace calls correct command', async () => {
     await api.getAllProjectsInSpace('s1');
-    expect(mockInvoke).toHaveBeenCalledWith('get_all_projects_cmd', { spaceId: 's1' });
+    expect(mockInvoke).toHaveBeenCalledWith('get_projects_in_space_cmd', { spaceId: 's1' });
   });
 
   it('getOrCreateDailyNote calls correct command', async () => {
@@ -159,8 +163,8 @@ describe('API Service', () => {
       projectId: 'p1',
       noteId: 'n1',
       description: 'desc',
-      startedAt: 1000,
-      durationSeconds: 60,
+      started_at: 1000,
+      duration_seconds: 60,
     });
   });
 });

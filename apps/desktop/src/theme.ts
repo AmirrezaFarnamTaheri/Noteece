@@ -97,13 +97,13 @@ export const theme = createTheme({
       },
       styles: (theme) => ({
         root: {
-           transition: 'all 0.2s ease',
-           '&:hover': {
-             backgroundColor: theme.colors.dark[4],
-             transform: 'scale(1.05)',
-           }
-        }
-      })
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            backgroundColor: theme.colors.dark[4],
+            transform: 'scale(1.05)',
+          },
+        },
+      }),
     },
     Card: {
       defaultProps: {
@@ -130,9 +130,9 @@ export const theme = createTheme({
       },
       styles: (theme) => ({
         root: {
-            backgroundColor: theme.colors.dark[6],
-        }
-      })
+          backgroundColor: theme.colors.dark[6],
+        },
+      }),
     },
     Modal: {
       defaultProps: {
@@ -144,22 +144,22 @@ export const theme = createTheme({
           opacity: 0.6,
         },
         transitionProps: {
-            transition: 'pop',
-            duration: 200,
-        }
+          transition: 'pop',
+          duration: 200,
+        },
       },
       styles: (theme) => ({
         header: {
-            backgroundColor: theme.colors.dark[6],
+          backgroundColor: theme.colors.dark[6],
         },
         body: {
-            backgroundColor: theme.colors.dark[6],
+          backgroundColor: theme.colors.dark[6],
         },
         content: {
-            border: `1px solid ${theme.colors.dark[4]}`,
-            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-        }
-      })
+          border: `1px solid ${theme.colors.dark[4]}`,
+          boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+        },
+      }),
     },
     TextInput: {
       defaultProps: {
@@ -178,74 +178,74 @@ export const theme = createTheme({
           },
           '&:hover': {
             borderColor: theme.colors.dark[3],
-          }
+          },
         },
       }),
     },
     Textarea: {
-        defaultProps: {
-            radius: 'md',
-            size: 'md',
+      defaultProps: {
+        radius: 'md',
+        size: 'md',
+      },
+      styles: (theme) => ({
+        input: {
+          backgroundColor: 'rgba(0, 0, 0, 0.2)',
+          borderColor: theme.colors.dark[4],
+          transition: 'border-color 0.2s ease, background-color 0.2s ease',
+          '&:focus': {
+            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            borderColor: theme.colors.violet[5],
+            boxShadow: '0 0 0 1px var(--mantine-color-violet-5)',
+          },
+          '&:hover': {
+            borderColor: theme.colors.dark[3],
+          },
         },
-        styles: (theme) => ({
-            input: {
-                backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                borderColor: theme.colors.dark[4],
-                transition: 'border-color 0.2s ease, background-color 0.2s ease',
-                '&:focus': {
-                    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                    borderColor: theme.colors.violet[5],
-                    boxShadow: '0 0 0 1px var(--mantine-color-violet-5)',
-                },
-                '&:hover': {
-                    borderColor: theme.colors.dark[3],
-                }
-            },
-        }),
+      }),
     },
     Badge: {
-        defaultProps: {
-            radius: 'sm',
-            variant: 'light',
+      defaultProps: {
+        radius: 'sm',
+        variant: 'light',
+      },
+      styles: {
+        root: {
+          textTransform: 'none',
+          fontWeight: 600,
         },
-        styles: {
-            root: {
-                textTransform: 'none',
-                fontWeight: 600,
-            }
-        }
+      },
     },
     Tooltip: {
-        defaultProps: {
-            radius: 'sm',
-            withArrow: true,
+      defaultProps: {
+        radius: 'sm',
+        withArrow: true,
+      },
+      styles: (theme) => ({
+        tooltip: {
+          backgroundColor: theme.colors.dark[8],
+          border: `1px solid ${theme.colors.dark[4]}`,
+          color: theme.colors.gray[0],
+          fontSize: '0.75rem',
         },
-        styles: (theme) => ({
-            tooltip: {
-                backgroundColor: theme.colors.dark[8],
-                border: `1px solid ${theme.colors.dark[4]}`,
-                color: theme.colors.gray[0],
-                fontSize: '0.75rem',
-            }
-        })
+      }),
     },
     NavLink: {
-        defaultProps: {
-            variant: 'light',
+      defaultProps: {
+        variant: 'light',
+      },
+      styles: (theme) => ({
+        root: {
+          borderRadius: theme.radius.md,
+          '&[data-active]': {
+            backgroundColor: 'rgba(132, 94, 247, 0.15)', // Violet fade
+            color: theme.colors.violet[3],
+            fontWeight: 600,
+          },
+          '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          },
         },
-        styles: (theme) => ({
-            root: {
-                borderRadius: theme.radius.md,
-                '&[data-active]': {
-                    backgroundColor: 'rgba(132, 94, 247, 0.15)', // Violet fade
-                    color: theme.colors.violet[3],
-                    fontWeight: 600,
-                },
-                '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                }
-            }
-        })
-    }
+      }),
+    },
   },
 });
