@@ -8,6 +8,8 @@ use ulid::Ulid;
 pub enum ProjectError {
     #[error("Rusqlite error: {0}")]
     Rusqlite(#[from] rusqlite::Error),
+    #[error("Invalid data: {0}")]
+    InvalidData(String),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -159,17 +161,17 @@ pub fn get_projects_in_space(
             });
 
         if let Ok(task_id_str) = row.get::<_, String>(8) {
-            if let (Ok(task_id), Ok(space_id), Ok(project_id), Ok(title)) = (
-                Ulid::from_string(&task_id_str),
-                Ulid::from_string(&project.space_id),
-                Ulid::from_string(&project.id),
-                row.get::<_, String>(9),
-            ) {
+            // Safely parse ULIDs
+            let task_id = Ulid::from_string(&task_id_str).unwrap_or_default();
+            let space_id = Ulid::from_string(&project.space_id).unwrap_or_default();
+            let project_id_ulid = Ulid::from_string(&project.id).unwrap_or_default();
+
+            if let Ok(title) = row.get::<_, String>(9) {
                 project.tasks.push(Task {
                     id: task_id,
                     space_id,
                     note_id: None,
-                    project_id: Some(project_id),
+                    project_id: Some(project_id_ulid),
                     parent_task_id: None,
                     title,
                     description: None,
@@ -183,8 +185,6 @@ pub fn get_projects_in_space(
                     context: None,
                     area: None,
                 });
-            } else {
-                log::warn!("[project] Skipping invalid task data for project {}", project.id);
             }
         }
 
@@ -246,17 +246,17 @@ pub fn get_project(conn: &Connection, id: &str) -> Result<Option<Project>, Proje
             });
 
         if let Ok(task_id_str) = row.get::<_, String>(8) {
-            if let (Ok(task_id), Ok(space_id), Ok(project_id), Ok(title)) = (
-                Ulid::from_string(&task_id_str),
-                Ulid::from_string(&project.space_id),
-                Ulid::from_string(&project.id),
-                row.get::<_, String>(9),
-            ) {
+            // Safely parse ULIDs
+            let task_id = Ulid::from_string(&task_id_str).unwrap_or_default();
+            let space_id = Ulid::from_string(&project.space_id).unwrap_or_default();
+            let project_id_ulid = Ulid::from_string(&project.id).unwrap_or_default();
+
+            if let Ok(title) = row.get::<_, String>(9) {
                 project.tasks.push(Task {
                     id: task_id,
                     space_id,
                     note_id: None,
-                    project_id: Some(project_id),
+                    project_id: Some(project_id_ulid),
                     parent_task_id: None,
                     title,
                     description: None,
@@ -270,8 +270,6 @@ pub fn get_project(conn: &Connection, id: &str) -> Result<Option<Project>, Proje
                     context: None,
                     area: None,
                 });
-            } else {
-                log::warn!("[project] Skipping invalid task data for project {}", project.id);
             }
         }
 
