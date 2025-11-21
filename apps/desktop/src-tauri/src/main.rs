@@ -2,8 +2,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod config;
+mod commands;
 
 use config::AppConfig;
+use commands::*;
 use core_rs::analytics::*;
 use core_rs::caldav::*;
 use core_rs::db::*;
@@ -60,9 +62,9 @@ pub struct DbConnection {
 
 #[tauri::command]
 fn create_vault_cmd(db: State<DbConnection>, path: &str, password: &str) -> Result<(), String> {
-    let mut conn_guard = db.conn.lock().unwrap();
+    let mut conn_guard = db.conn.lock().map_err(|_| "Failed to lock database connection".to_string())?;
     if conn_guard.is_some() {
-        let mut dek_guard = db.dek.lock().unwrap();
+        let mut dek_guard = db.dek.lock().map_err(|_| "Failed to lock DEK".to_string())?;
         *dek_guard = None;
         *conn_guard = None;
     }
@@ -75,9 +77,9 @@ fn create_vault_cmd(db: State<DbConnection>, path: &str, password: &str) -> Resu
 
 #[tauri::command]
 fn unlock_vault_cmd(db: State<DbConnection>, path: &str, password: &str) -> Result<(), String> {
-    let mut conn_guard = db.conn.lock().unwrap();
+    let mut conn_guard = db.conn.lock().map_err(|_| "Failed to lock database connection".to_string())?;
     if conn_guard.is_some() {
-        let mut dek_guard = db.dek.lock().unwrap();
+        let mut dek_guard = db.dek.lock().map_err(|_| "Failed to lock DEK".to_string())?;
         *dek_guard = None;
         *conn_guard = None;
     }
@@ -86,13 +88,13 @@ fn unlock_vault_cmd(db: State<DbConnection>, path: &str, password: &str) -> Resu
     *conn_guard = Some(vault.conn);
 
     let device_info = {
-        let conn = conn_guard.as_ref().unwrap();
+        let conn = conn_guard.as_ref().ok_or("Database connection failed to initialize")?;
         let device_id = get_or_create_user_id(conn).unwrap_or_default();
         core_rs::sync::mobile_sync::DeviceInfo {
             device_id,
             device_name: "Desktop".to_string(),
             device_type: core_rs::sync::mobile_sync::DeviceType::Desktop,
-            ip_address: "127.0.0.1".parse().unwrap(),
+            ip_address: "127.0.0.1".parse().unwrap_or_else(|_| std::net::IpAddr::V4(std::net::Ipv4Addr::new(127, 0, 0, 1))),
             sync_port: AppConfig::sync_port(),
             public_key: vec![],
             os_version: std::env::consts::OS.to_string(),
@@ -100,8 +102,8 @@ fn unlock_vault_cmd(db: State<DbConnection>, path: &str, password: &str) -> Resu
             is_active: true,
         }
     };
-    let mut p2p_sync_guard = db.p2p_sync.lock().unwrap();
-    *p2p_sync_guard = Some(Arc::new(P2pSync::new(device_info).unwrap()));
+    let mut p2p_sync_guard = db.p2p_sync.lock().map_err(|_| "Failed to lock P2P sync".to_string())?;
+    *p2p_sync_guard = Some(Arc::new(P2pSync::new(device_info).map_err(|e| e.to_string())?));
 
     Ok(())
 }
@@ -118,9 +120,9 @@ fn resolve_sync_conflict_cmd(
     conflict: SyncConflict,
     resolution: SyncConflictResolution,
 ) -> Result<(), String> {
-    let conn = db.conn.lock().unwrap();
+    let conn = db.conn.lock().map_err(|_| "Failed to lock database connection".to_string())?;
     if let Some(conn) = conn.as_ref() {
-        let dek_guard = db.dek.lock().unwrap();
+        let dek_guard = db.dek.lock().map_err(|_| "Failed to lock DEK".to_string())?;
         let dek = dek_guard.as_ref().map(|d| d.as_slice()).unwrap_or(&[]);
 
         if dek.is_empty() {
@@ -141,7 +143,7 @@ fn resolve_sync_conflict_cmd(
 
 #[tauri::command]
 fn get_dashboard_stats_cmd(db: State<DbConnection>, space_id: String) -> Result<DashboardStats, String> {
-    let conn = db.conn.lock().unwrap();
+    let conn = db.conn.lock().map_err(|_| "Failed to lock database connection".to_string())?;
     if let Some(conn) = conn.as_ref() {
         get_dashboard_stats(conn, &space_id).map_err(|e| e.to_string())
     } else {
@@ -151,7 +153,7 @@ fn get_dashboard_stats_cmd(db: State<DbConnection>, space_id: String) -> Result<
 
 #[tauri::command]
 fn get_or_create_user_id_cmd(db: State<DbConnection>) -> Result<String, String> {
-    let conn = db.conn.lock().unwrap();
+    let conn = db.conn.lock().map_err(|_| "Failed to lock database connection".to_string())?;
     if let Some(conn) = conn.as_ref() {
         get_or_create_user_id(conn).map_err(|e| e.to_string())
     } else {
@@ -161,10 +163,10 @@ fn get_or_create_user_id_cmd(db: State<DbConnection>) -> Result<String, String> 
 
 #[tauri::command]
 async fn start_sync_server_cmd(db: State<'_, DbConnection>) -> Result<(), String> {
-    let p2p_sync = db.p2p_sync.lock().unwrap().clone();
+    let p2p_sync = db.p2p_sync.lock().map_err(|_| "Failed to lock P2P sync".to_string())?.clone();
     if let Some(p2p_sync) = p2p_sync {
         let port = {
-            let conn = db.conn.lock().unwrap();
+            let conn = db.conn.lock().map_err(|_| "Failed to lock database connection".to_string())?;
             if let Some(conn) = conn.as_ref() {
                 get_sync_port(conn).unwrap_or_else(|_| AppConfig::sync_port())
             } else {
@@ -183,7 +185,7 @@ async fn start_sync_server_cmd(db: State<'_, DbConnection>) -> Result<(), String
 #[tauri::command]
 async fn start_p2p_sync_cmd(db: State<'_, DbConnection>, device_id: String) -> Result<(), String> {
     let p2p_sync = {
-        let guard = db.p2p_sync.lock().unwrap();
+        let guard = db.p2p_sync.lock().map_err(|_| "Failed to lock P2P sync".to_string())?;
         guard.clone()
     };
 
@@ -196,7 +198,7 @@ async fn start_p2p_sync_cmd(db: State<'_, DbConnection>, device_id: String) -> R
 
 #[tauri::command]
 fn get_devices_cmd(db: State<DbConnection>) -> Result<Vec<core_rs::sync::mobile_sync::DeviceInfo>, String> {
-    let conn = db.conn.lock().unwrap();
+    let conn = db.conn.lock().map_err(|_| "Failed to lock database connection".to_string())?;
     if let Some(conn) = conn.as_ref() {
         let device_id = get_or_create_user_id(conn).map_err(|e| e.to_string())?;
         let sync_port = get_sync_port(conn).unwrap_or_else(|_| AppConfig::sync_port());
@@ -209,7 +211,7 @@ fn get_devices_cmd(db: State<DbConnection>) -> Result<Vec<core_rs::sync::mobile_
 
 #[tauri::command]
 fn get_sync_conflicts_cmd(db: State<DbConnection>) -> Result<Vec<SyncConflict>, String> {
-    let conn = db.conn.lock().unwrap();
+    let conn = db.conn.lock().map_err(|_| "Failed to lock database connection".to_string())?;
     if let Some(conn) = conn.as_ref() {
         let device_id = get_or_create_user_id(conn).map_err(|e| e.to_string())?;
         let sync_port = get_sync_port(conn).unwrap_or_else(|_| AppConfig::sync_port());
@@ -222,7 +224,7 @@ fn get_sync_conflicts_cmd(db: State<DbConnection>) -> Result<Vec<SyncConflict>, 
 
 #[tauri::command]
 fn get_sync_history_for_space_cmd(db: State<DbConnection>, space_id: String, limit: u32) -> Result<Vec<SyncHistoryEntry>, String> {
-    let conn = db.conn.lock().unwrap();
+    let conn = db.conn.lock().map_err(|_| "Failed to lock database connection".to_string())?;
     if let Some(conn) = conn.as_ref() {
          let device_id = get_or_create_user_id(conn).map_err(|e| e.to_string())?;
          let sync_port = get_sync_port(conn).unwrap_or_else(|_| AppConfig::sync_port());
@@ -235,7 +237,7 @@ fn get_sync_history_for_space_cmd(db: State<DbConnection>, space_id: String, lim
 
 #[tauri::command]
 fn create_goal_cmd(db: State<DbConnection>, space_id: String, title: String, target: f64, category: String) -> Result<Goal, String> {
-    let conn = db.conn.lock().unwrap();
+    let conn = db.conn.lock().map_err(|_| "Failed to lock database connection".to_string())?;
     if let Some(conn) = conn.as_ref() {
         let space_id = Ulid::from_string(&space_id).map_err(|e| e.to_string())?;
         create_goal(conn, space_id, &title, target, &category).map_err(|e| e.to_string())
@@ -246,7 +248,7 @@ fn create_goal_cmd(db: State<DbConnection>, space_id: String, title: String, tar
 
 #[tauri::command]
 fn get_goals_cmd(db: State<DbConnection>, space_id: String) -> Result<Vec<Goal>, String> {
-    let conn = db.conn.lock().unwrap();
+    let conn = db.conn.lock().map_err(|_| "Failed to lock database connection".to_string())?;
     if let Some(conn) = conn.as_ref() {
         let space_id = Ulid::from_string(&space_id).map_err(|e| e.to_string())?;
         get_goals(conn, space_id).map_err(|e| e.to_string())
@@ -257,7 +259,7 @@ fn get_goals_cmd(db: State<DbConnection>, space_id: String) -> Result<Vec<Goal>,
 
 #[tauri::command]
 fn update_goal_progress_cmd(db: State<DbConnection>, goal_id: String, current: f64) -> Result<Goal, String> {
-    let conn = db.conn.lock().unwrap();
+    let conn = db.conn.lock().map_err(|_| "Failed to lock database connection".to_string())?;
     if let Some(conn) = conn.as_ref() {
         let goal_id = Ulid::from_string(&goal_id).map_err(|e| e.to_string())?;
         update_goal_progress(conn, goal_id, current).map_err(|e| e.to_string())
@@ -268,7 +270,7 @@ fn update_goal_progress_cmd(db: State<DbConnection>, goal_id: String, current: f
 
 #[tauri::command]
 fn delete_goal_cmd(db: State<DbConnection>, goal_id: String) -> Result<(), String> {
-    let conn = db.conn.lock().unwrap();
+    let conn = db.conn.lock().map_err(|_| "Failed to lock database connection".to_string())?;
     if let Some(conn) = conn.as_ref() {
         let goal_id = Ulid::from_string(&goal_id).map_err(|e| e.to_string())?;
         delete_goal(conn, goal_id).map_err(|e| e.to_string())
@@ -279,7 +281,7 @@ fn delete_goal_cmd(db: State<DbConnection>, goal_id: String) -> Result<(), Strin
 
 #[tauri::command]
 fn create_habit_cmd(db: State<DbConnection>, space_id: String, name: String, frequency: String) -> Result<Habit, String> {
-    let conn = db.conn.lock().unwrap();
+    let conn = db.conn.lock().map_err(|_| "Failed to lock database connection".to_string())?;
     if let Some(conn) = conn.as_ref() {
         let space_id = Ulid::from_string(&space_id).map_err(|e| e.to_string())?;
         create_habit(conn, space_id, &name, &frequency).map_err(|e| e.to_string())
@@ -290,7 +292,7 @@ fn create_habit_cmd(db: State<DbConnection>, space_id: String, name: String, fre
 
 #[tauri::command]
 fn get_habits_cmd(db: State<DbConnection>, space_id: String) -> Result<Vec<Habit>, String> {
-    let conn = db.conn.lock().unwrap();
+    let conn = db.conn.lock().map_err(|_| "Failed to lock database connection".to_string())?;
     if let Some(conn) = conn.as_ref() {
         let space_id = Ulid::from_string(&space_id).map_err(|e| e.to_string())?;
         get_habits(conn, space_id).map_err(|e| e.to_string())
@@ -301,7 +303,7 @@ fn get_habits_cmd(db: State<DbConnection>, space_id: String) -> Result<Vec<Habit
 
 #[tauri::command]
 fn complete_habit_cmd(db: State<DbConnection>, habit_id: String) -> Result<Habit, String> {
-    let conn = db.conn.lock().unwrap();
+    let conn = db.conn.lock().map_err(|_| "Failed to lock database connection".to_string())?;
     if let Some(conn) = conn.as_ref() {
         let habit_id = Ulid::from_string(&habit_id).map_err(|e| e.to_string())?;
         complete_habit(conn, habit_id).map_err(|e| e.to_string())
@@ -312,7 +314,7 @@ fn complete_habit_cmd(db: State<DbConnection>, habit_id: String) -> Result<Habit
 
 #[tauri::command]
 fn delete_habit_cmd(db: State<DbConnection>, habit_id: String) -> Result<(), String> {
-    let conn = db.conn.lock().unwrap();
+    let conn = db.conn.lock().map_err(|_| "Failed to lock database connection".to_string())?;
     if let Some(conn) = conn.as_ref() {
         let habit_id = Ulid::from_string(&habit_id).map_err(|e| e.to_string())?;
         delete_habit(conn, habit_id).map_err(|e| e.to_string())
@@ -342,145 +344,144 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             create_vault_cmd,
             unlock_vault_cmd,
-            get_project,
-            get_projects_in_space,
-            get_project_milestones,
-            get_project_risks,
-            get_project_updates,
-            create_project_risk,
-            create_saved_search,
-            get_saved_search,
-            get_saved_searches,
-            update_saved_search,
-            delete_saved_search,
-            execute_saved_search,
-            generate_weekly_review,
-            get_space_modes,
-            enable_mode,
-            disable_mode,
-            create_note,
-            get_note,
-            update_note_content,
-            trash_note,
-            create_task,
-            get_task,
-            update_task,
-            delete_task,
-            get_tasks_by_project,
-            get_due_cards,
-            review_card,
-            get_all_notes_in_space,
-            get_all_tasks_in_space,
-            import_from_obsidian,
-            import_from_notion,
-            create_form_template,
-            get_form_template,
-            get_form_templates_for_space,
-            update_form_template,
-            delete_form_template,
-            get_analytics_data,
-            search_notes,
-            get_or_create_daily_note,
-            get_all_spaces,
-            get_all_tags_in_space,
-            get_upcoming_tasks,
-            get_recent_notes,
-            start_time_entry,
-            stop_time_entry,
-            get_task_time_entries,
-            get_project_time_entries,
-            get_running_entries,
-            get_recent_time_entries,
-            get_task_time_stats,
-            get_project_time_stats,
-            delete_time_entry,
-            create_manual_time_entry,
-            queue_ocr,
-            get_ocr_status,
-            search_ocr_text,
-            process_ocr_job,
-            generate_insights,
-            get_active_insights,
-            dismiss_insight,
-            record_feedback,
-            add_caldav_account,
-            get_caldav_accounts,
-            get_caldav_account,
-            update_caldav_account,
-            delete_caldav_account,
-            sync_caldav_account,
-            get_caldav_sync_history,
-            get_caldav_conflicts,
-            resolve_caldav_conflict,
-            init_sync_tables,
+            get_project_cmd,
+            get_projects_in_space_cmd,
+            get_project_milestones_cmd,
+            get_project_risks_cmd,
+            get_project_updates_cmd,
+            create_project_risk_cmd,
+            create_saved_search_cmd,
+            get_saved_search_cmd,
+            get_saved_searches_cmd,
+            update_saved_search_cmd,
+            delete_saved_search_cmd,
+            execute_saved_search_cmd,
+            generate_weekly_review_cmd,
+            get_space_modes_cmd,
+            enable_mode_cmd,
+            disable_mode_cmd,
+            create_note_cmd,
+            get_note_cmd,
+            update_note_content_cmd,
+            trash_note_cmd,
+            create_task_cmd,
+            get_task_cmd,
+            update_task_cmd,
+            delete_task_cmd,
+            get_tasks_by_project_cmd,
+            get_due_cards_cmd,
+            review_card_cmd,
+            get_all_notes_in_space_cmd,
+            get_all_tasks_in_space_cmd,
+            import_from_obsidian_cmd,
+            import_from_notion_cmd,
+            create_form_template_cmd,
+            get_form_template_cmd,
+            get_form_templates_for_space_cmd,
+            update_form_template_cmd,
+            delete_form_template_cmd,
+            get_analytics_data_cmd,
+            search_notes_cmd,
+            get_or_create_daily_note_cmd,
+            get_all_spaces_cmd,
+            get_all_tags_in_space_cmd,
+            get_upcoming_tasks_cmd,
+            get_recent_notes_cmd,
+            start_time_entry_cmd,
+            stop_time_entry_cmd,
+            get_task_time_entries_cmd,
+            get_project_time_entries_cmd,
+            get_running_entries_cmd,
+            get_recent_time_entries_cmd,
+            get_task_time_stats_cmd,
+            get_project_time_stats_cmd,
+            delete_time_entry_cmd,
+            create_manual_time_entry_cmd,
+            queue_ocr_cmd,
+            get_ocr_status_cmd,
+            search_ocr_text_cmd,
+            process_ocr_job_cmd,
+            generate_insights_cmd,
+            get_active_insights_cmd,
+            dismiss_insight_cmd,
+            record_feedback_cmd,
+            add_caldav_account_cmd,
+            get_caldav_accounts_cmd,
+            get_caldav_account_cmd,
+            update_caldav_account_cmd,
+            delete_caldav_account_cmd,
+            sync_caldav_account_cmd,
+            get_caldav_sync_history_cmd,
+            get_caldav_conflicts_cmd,
+            resolve_caldav_conflict_cmd,
+            init_sync_tables_cmd,
             get_devices_cmd,
-            register_device,
+            register_device_cmd,
             get_sync_history_for_space_cmd,
             get_sync_conflicts_cmd,
             resolve_sync_conflict_cmd,
-            record_sync,
+            record_sync_cmd,
             start_p2p_sync_cmd,
-            create_health_metric,
-            get_health_metrics,
-            create_transaction,
-            get_transactions,
-            create_recipe,
-            get_recipes,
-            create_trip,
-            get_trips,
-            build_current_graph,
-            get_graph_evolution,
-            detect_major_notes,
-            shutdown_clear_keys,
-            init_rbac_tables,
-            get_space_users,
-            check_permission,
-            invite_user,
-            update_user_role,
-            grant_permission,
-            revoke_permission,
-            suspend_user,
-            activate_user,
-            get_roles,
-            add_user_to_space,
-            remove_user_from_space,
-            add_social_account,
-            get_social_accounts,
-            get_social_account,
-            update_social_account,
-            delete_social_account,
-            store_social_posts,
-            get_unified_timeline,
-            create_category,
-            get_categories,
-            assign_category,
-            delete_category,
-            get_timeline_stats,
-            get_analytics_overview,
-            search_social_posts,
-            auto_categorize_posts,
-            create_webview_session,
-            get_webview_session,
-            save_session_cookies,
-            get_all_sync_tasks,
-            get_sync_stats,
-            create_backup,
-            restore_backup,
-            list_backups,
-            delete_backup,
-            get_backup_details,
-            create_user,
-            authenticate_user,
-            validate_session,
-            logout_user,
-            get_user_by_id,
-            change_password,
-            get_current_user,
-            discover_devices,
-            initiate_pairing,
-            exchange_keys,
-            start_sync,
-            get_sync_progress,
+            create_health_metric_cmd,
+            get_health_metrics_cmd,
+            create_transaction_cmd,
+            get_transactions_cmd,
+            create_recipe_cmd,
+            get_recipes_cmd,
+            create_trip_cmd,
+            get_trips_cmd,
+            build_current_graph_cmd,
+            get_graph_evolution_cmd,
+            detect_major_notes_cmd,
+            shutdown_clear_keys_cmd,
+            init_rbac_tables_cmd,
+            get_space_users_cmd,
+            check_permission_cmd,
+            invite_user_cmd,
+            update_user_role_cmd,
+            grant_permission_cmd,
+            revoke_permission_cmd,
+            suspend_user_cmd,
+            activate_user_cmd,
+            get_roles_cmd,
+            add_user_to_space_cmd,
+            remove_user_from_space_cmd,
+            add_social_account_cmd,
+            get_social_accounts_cmd,
+            get_social_account_cmd,
+            update_social_account_cmd,
+            delete_social_account_cmd,
+            store_social_posts_cmd,
+            get_unified_timeline_cmd,
+            create_category_cmd,
+            get_categories_cmd,
+            assign_category_cmd,
+            delete_category_cmd,
+            get_timeline_stats_cmd,
+            get_analytics_overview_cmd,
+            search_social_posts_cmd,
+            auto_categorize_posts_cmd,
+            create_webview_session_cmd,
+            get_webview_session_cmd,
+            save_session_cookies_cmd,
+            get_all_sync_tasks_cmd,
+            get_sync_stats_cmd,
+            create_backup_cmd,
+            restore_backup_cmd,
+            list_backups_cmd,
+            delete_backup_cmd,
+            get_backup_details_cmd,
+            create_user_cmd,
+            authenticate_user_cmd,
+            validate_session_cmd,
+            logout_user_cmd,
+            get_user_by_id_cmd,
+            change_password_cmd,
+            get_current_user_cmd,
+            discover_devices_cmd,
+            initiate_pairing_cmd,
+            exchange_keys_cmd,
+            get_sync_progress_cmd,
             cancel_sync_cmd,
             get_or_create_user_id_cmd,
             start_sync_server_cmd,

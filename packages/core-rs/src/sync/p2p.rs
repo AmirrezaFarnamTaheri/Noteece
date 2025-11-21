@@ -46,7 +46,9 @@ impl P2pSync {
                 .accept()
                 .await
                 .map_err(|e| P2pError::Network(e.to_string()))?;
-            log::info!("[p2p] New connection from {}", socket.peer_addr().unwrap());
+
+            let peer_addr = socket.peer_addr().map(|a| a.to_string()).unwrap_or_else(|_| "unknown".to_string());
+            log::info!("[p2p] New connection from {}", peer_addr);
 
             tokio::spawn(async move {
                 let mut buf = [0; 1024];
@@ -72,7 +74,7 @@ impl P2pSync {
     }
 
     pub async fn start_sync(&self, device_id: &str) -> Result<(), P2pError> {
-        let mut protocol = self.protocol.lock().unwrap();
+        let mut protocol = self.protocol.lock().map_err(|_| P2pError::Sync("Mutex poisoned".to_string()))?;
         protocol
             .start_sync(device_id, vec![SyncCategory::Posts])
             .await
