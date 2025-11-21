@@ -131,6 +131,7 @@ pub fn update_note_content(
 
     let tx = conn.transaction()?;
 
+    // Check if note exists first to return nice error
     let rowid: i64 = tx
         .query_row(
             "SELECT rowid FROM note WHERE id = ?1",
@@ -143,7 +144,10 @@ pub fn update_note_content(
                 id.0,
                 e
             );
-            e
+            match e {
+                rusqlite::Error::QueryReturnedNoRows => DbError::Message("Note not found".into()),
+                _ => DbError::Rusqlite(e),
+            }
         })?;
 
     tx.execute(

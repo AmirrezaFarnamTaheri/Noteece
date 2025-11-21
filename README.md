@@ -14,12 +14,21 @@ Noteece combines the best of note-taking, project management, and personal growt
 ### Key Features
 
 - **📝 Knowledge Management:** Markdown editor with backlinks, tags, and full-text search (with FTS5 fallback support).
-- **🚀 Project Hub:** comprehensive project management with Milestones, Risks, and Kanban boards.
+- **🚀 Project Hub:** Comprehensive project management with Milestones, Risks, and Kanban boards.
 - **⏱️ Time Tracking:** Built-in manual and timer-based time tracking linked to projects and tasks.
 - **🌱 Personal Growth:** Track habits, set goals, and perform weekly reviews.
-- **📱 Mobile Companion:** Sync your data securely via P2P to your mobile device.
-- **🔒 Privacy First:** Local-first architecture with SQLCipher encryption. No cloud, no tracking.
+- **📱 Mobile Companion:** Sync your data securely via P2P to your mobile device (Android/iOS).
+- **🔒 Privacy First:** Local-first architecture with SQLCipher encryption (ChaCha20Poly1305, Argon2). No cloud, no tracking.
+- **🌐 Social Media Suite:** Securely aggregate, categorize, and archive your social media presence locally.
 - **🎨 Modern UI:** Revolutionary "Deep Obsidian" aesthetic with glassmorphism and smooth interactions.
+
+## Robustness & Security
+
+Noteece is built with a focus on 100% data integrity and security:
+- **End-to-End Encryption:** All data is encrypted at rest using SQLCipher. Keys are derived using Argon2.
+- **Sync Consistency:** Uses Vector Clocks and Merkle-like hashing to ensure eventual consistency across devices without central servers.
+- **Cross-Platform Verified:** CI/CD pipelines verify builds across Linux (Ubuntu), macOS, and Windows.
+- **Safe & Sound:** The backend (`core-rs`) is written in Rust with strict error handling (no unsafe unwraps in critical paths) to prevent crashes and data corruption.
 
 ## Getting Started
 

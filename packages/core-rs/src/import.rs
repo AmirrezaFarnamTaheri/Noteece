@@ -45,7 +45,8 @@ pub fn import_from_obsidian(
                     .file_stem()
                     .and_then(|s| s.to_str())
                     .unwrap_or("Untitled");
-                create_note(conn, &space_id.to_string(), title, &result.content)?;
+                create_note(conn, &space_id.to_string(), title, &result.content)
+                    .map_err(ImportError::Db)?;
             }
         }
     }
@@ -75,7 +76,8 @@ pub fn import_from_notion(
                     .file_stem()
                     .and_then(|s| s.to_str())
                     .unwrap_or("Untitled");
-                create_note(conn, &space_id.to_string(), title, &result.content)?;
+                create_note(conn, &space_id.to_string(), title, &result.content)
+                    .map_err(ImportError::Db)?;
             }
         }
     }

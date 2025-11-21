@@ -28,10 +28,22 @@ pub fn create_backup(vault_path: &str, backup_path: &str) -> Result<(), BackupEr
     let mut buffer = Vec::new();
     for entry in WalkDir::new(vault_path).into_iter().filter_map(|e| e.ok()) {
         let path = entry.path();
-        let name = path.strip_prefix(Path::new(vault_path)).unwrap();
+        let name = match path.strip_prefix(Path::new(vault_path)) {
+            Ok(n) => n,
+            Err(e) => {
+                log::warn!("[backup] Skipping file {:?} due to strip prefix error: {}", path, e);
+                continue;
+            }
+        };
         if path.is_file() {
             log::info!("[backup] Adding file to backup: {:?}", name);
-            zip.start_file(name.to_str().unwrap(), options)?;
+            match name.to_str() {
+                Some(n) => zip.start_file(n, options)?,
+                None => {
+                    log::warn!("[backup] Skipping file with invalid unicode name: {:?}", name);
+                    continue;
+                }
+            }
             let mut f = fs::File::open(path)?;
             f.read_to_end(&mut buffer)?;
             zip.write_all(&buffer)?;
