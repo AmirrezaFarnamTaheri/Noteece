@@ -23,6 +23,7 @@ pub struct Task {
     pub recur_rule: Option<String>,
     pub context: Option<String>,
     pub area: Option<String>,
+    pub updated_at: i64,
 }
 
 pub fn create_task(
@@ -32,6 +33,7 @@ pub fn create_task(
     description: Option<String>,
 ) -> Result<Task, DbError> {
     log::info!("[task] Creating task with title: {}", title);
+    let now = chrono::Utc::now().timestamp();
     let task = Task {
         id: Ulid::new(),
         space_id,
@@ -49,16 +51,18 @@ pub fn create_task(
         recur_rule: None,
         context: None,
         area: None,
+        updated_at: now,
     };
 
     conn.execute(
-        "INSERT INTO task (id, space_id, title, description, status) VALUES (?1, ?2, ?3, ?4, ?5)",
+        "INSERT INTO task (id, space_id, title, description, status, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         rusqlite::params![
             &task.id.to_string(),
             &task.space_id.to_string(),
             &task.title,
             &task.description,
-            &task.status
+            &task.status,
+            &task.updated_at
         ],
     )?;
 
@@ -78,7 +82,7 @@ pub fn create_task(
 
 pub fn get_task(conn: &Connection, id: Ulid) -> Result<Option<Task>, DbError> {
     log::info!("[task] Getting task with id: {}", id);
-    let mut stmt = conn.prepare("SELECT id, space_id, note_id, project_id, parent_task_id, title, description, status, due_at, start_at, completed_at, priority, estimate_minutes, recur_rule, context, area FROM task WHERE id = ?1")?;
+    let mut stmt = conn.prepare("SELECT id, space_id, note_id, project_id, parent_task_id, title, description, status, due_at, start_at, completed_at, priority, estimate_minutes, recur_rule, context, area, updated_at FROM task WHERE id = ?1")?;
     let task: Option<Task> = stmt
         .query_row([id.to_string()], |row| {
             Ok(Task {
@@ -110,6 +114,7 @@ pub fn get_task(conn: &Connection, id: Ulid) -> Result<Option<Task>, DbError> {
                 recur_rule: row.get(13)?,
                 context: row.get(14)?,
                 area: row.get(15)?,
+                updated_at: row.get(16)?,
             })
         })
         .optional()?;
@@ -119,8 +124,9 @@ pub fn get_task(conn: &Connection, id: Ulid) -> Result<Option<Task>, DbError> {
 
 pub fn update_task(conn: &Connection, task: &Task) -> Result<(), DbError> {
     log::info!("[task] Updating task with id: {}", task.id);
+    let now = chrono::Utc::now().timestamp();
     conn.execute(
-        "UPDATE task SET note_id = ?1, project_id = ?2, parent_task_id = ?3, title = ?4, description = ?5, status = ?6, due_at = ?7, start_at = ?8, completed_at = ?9, priority = ?10, estimate_minutes = ?11, recur_rule = ?12, context = ?13, area = ?14 WHERE id = ?15",
+        "UPDATE task SET note_id = ?1, project_id = ?2, parent_task_id = ?3, title = ?4, description = ?5, status = ?6, due_at = ?7, start_at = ?8, completed_at = ?9, priority = ?10, estimate_minutes = ?11, recur_rule = ?12, context = ?13, area = ?14, updated_at = ?15 WHERE id = ?16",
         rusqlite::params![
             &task.note_id.map(|id| id.to_string()),
             &task.project_id.map(|id| id.to_string()),
@@ -136,6 +142,7 @@ pub fn update_task(conn: &Connection, task: &Task) -> Result<(), DbError> {
             &task.recur_rule,
             &task.context,
             &task.area,
+            now,
             &task.id.to_string(),
         ],
     )?;
@@ -208,6 +215,7 @@ fn handle_recurrence(conn: &Connection, task: &Task) -> Result<(), DbError> {
             new_task.due_at = Some(due);
             new_task.completed_at = None;
             new_task.parent_task_id = Some(task.id); // Link to previous task to prevent duplicates
+            new_task.updated_at = chrono::Utc::now().timestamp();
             // We don't clear recur_rule so the new task also recurs
 
             log::info!("[task] Creating next recurring task instance: {}", new_task.id);
@@ -218,7 +226,7 @@ fn handle_recurrence(conn: &Connection, task: &Task) -> Result<(), DbError> {
             let par_id = new_task.parent_task_id.map(|id| id.to_string());
 
             conn.execute(
-                "INSERT INTO task (id, space_id, note_id, project_id, parent_task_id, title, description, status, due_at, start_at, completed_at, priority, estimate_minutes, recur_rule, context, area) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
+                "INSERT INTO task (id, space_id, note_id, project_id, parent_task_id, title, description, status, due_at, start_at, completed_at, priority, estimate_minutes, recur_rule, context, area, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)",
                 rusqlite::params![
                     &new_task.id.to_string(),
                     &new_task.space_id.to_string(),
@@ -236,6 +244,7 @@ fn handle_recurrence(conn: &Connection, task: &Task) -> Result<(), DbError> {
                     &new_task.recur_rule,
                     &new_task.context,
                     &new_task.area,
+                    &new_task.updated_at,
                 ],
             )?;
 
@@ -274,7 +283,7 @@ pub fn delete_task(conn: &Connection, id: Ulid) -> Result<(), DbError> {
 
 pub fn get_tasks_by_project(conn: &Connection, project_id: Ulid) -> Result<Vec<Task>, DbError> {
     log::info!("[task] Getting tasks for project with id: {}", project_id);
-    let mut stmt = conn.prepare("SELECT id, space_id, note_id, project_id, parent_task_id, title, description, status, due_at, start_at, completed_at, priority, estimate_minutes, recur_rule, context, area FROM task WHERE project_id = ?1")?;
+    let mut stmt = conn.prepare("SELECT id, space_id, note_id, project_id, parent_task_id, title, description, status, due_at, start_at, completed_at, priority, estimate_minutes, recur_rule, context, area, updated_at FROM task WHERE project_id = ?1")?;
     let tasks = stmt
         .query_map([project_id.to_string()], |row| {
             Ok(Task {
@@ -306,6 +315,7 @@ pub fn get_tasks_by_project(conn: &Connection, project_id: Ulid) -> Result<Vec<T
                 recur_rule: row.get(13)?,
                 context: row.get(14)?,
                 area: row.get(15)?,
+                updated_at: row.get(16)?,
             })
         })?
         .collect::<Result<Vec<Task>, _>>()?;
@@ -322,7 +332,7 @@ pub fn get_upcoming_tasks(
         "[task] Getting upcoming tasks for space with id: {}",
         space_id
     );
-    let mut stmt = conn.prepare("SELECT id, space_id, note_id, project_id, parent_task_id, title, description, status, due_at, start_at, completed_at, priority, estimate_minutes, recur_rule, context, area FROM task WHERE space_id = ?1 AND due_at IS NOT NULL AND status != 'done' ORDER BY due_at ASC LIMIT ?2")?;
+    let mut stmt = conn.prepare("SELECT id, space_id, note_id, project_id, parent_task_id, title, description, status, due_at, start_at, completed_at, priority, estimate_minutes, recur_rule, context, area, updated_at FROM task WHERE space_id = ?1 AND due_at IS NOT NULL AND status != 'done' ORDER BY due_at ASC LIMIT ?2")?;
     let tasks = stmt
         .query_map([space_id.to_string(), limit.to_string()], |row| {
             Ok(Task {
@@ -354,6 +364,7 @@ pub fn get_upcoming_tasks(
                 recur_rule: row.get(13)?,
                 context: row.get(14)?,
                 area: row.get(15)?,
+                updated_at: row.get(16)?,
             })
         })?
         .collect::<Result<Vec<Task>, _>>()?;
@@ -394,13 +405,14 @@ impl TryFrom<&rusqlite::Row<'_>> for Task {
             recur_rule: row.get(13)?,
             context: row.get(14)?,
             area: row.get(15)?,
+            updated_at: row.get(16)?,
         })
     }
 }
 
 pub fn get_all_tasks_in_space(conn: &Connection, space_id: Ulid) -> Result<Vec<Task>, DbError> {
     log::info!("[task] Getting all tasks for space with id: {}", space_id);
-    let mut stmt = conn.prepare("SELECT id, space_id, note_id, project_id, parent_task_id, title, description, status, due_at, start_at, completed_at, priority, estimate_minutes, recur_rule, context, area FROM task WHERE space_id = ?1")?;
+    let mut stmt = conn.prepare("SELECT id, space_id, note_id, project_id, parent_task_id, title, description, status, due_at, start_at, completed_at, priority, estimate_minutes, recur_rule, context, area, updated_at FROM task WHERE space_id = ?1")?;
     let tasks = stmt
         .query_map([space_id.to_string()], |row| {
             Ok(Task {
@@ -432,6 +444,7 @@ pub fn get_all_tasks_in_space(conn: &Connection, space_id: Ulid) -> Result<Vec<T
                 recur_rule: row.get(13)?,
                 context: row.get(14)?,
                 area: row.get(15)?,
+                updated_at: row.get(16)?,
             })
         })?
         .collect::<Result<Vec<Task>, _>>()?;

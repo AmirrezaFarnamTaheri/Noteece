@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Glitchy N -->
+  <path d="M150 100 L 150 412" stroke="#FF00FF" stroke-width="16" stroke-linecap="square" filter="url(#glow)" />
+  <path d="M362 100 L 362 412" stroke="#00FFFF" stroke-width="16" stroke-linecap="square" filter="url(#glow)" />
+  <path d="M150 100 L 362 412" stroke="#FFFFFF" stroke-width="8" stroke-dasharray="20 10" />
+
+  <!-- Runes / Data markings -->
+  <rect x="120" y="150" width="20" height="20" fill="#845EF7" />
+  <rect x="372" y="350" width="20" height="20" fill="#20C997" />
+
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+</svg>

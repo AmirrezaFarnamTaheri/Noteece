@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Mesh Grid -->
+  <path d="M100 256 H 412" stroke="#845EF7" stroke-width="2" opacity="0.3" />
+  <path d="M256 100 V 412" stroke="#845EF7" stroke-width="2" opacity="0.3" />
+
+  <!-- Active Neural Path -->
+  <path d="M150 150 Q 256 100 362 150 T 150 362" stroke="#20C997" stroke-width="8" fill="none" stroke-linecap="round" />
+
+  <!-- Synapses -->
+  <circle cx="150" cy="150" r="8" fill="#FFFFFF" />
+  <circle cx="362" cy="150" r="8" fill="#FFFFFF" />
+  <circle cx="150" cy="362" r="8" fill="#FFFFFF" />
+</svg>

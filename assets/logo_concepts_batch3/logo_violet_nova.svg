@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Explosion Center -->
+  <circle cx="256" cy="256" r="40" fill="#F3F0FF" />
+
+  <!-- Rays -->
+  <path d="M256 216 V 100" stroke="#845EF7" stroke-width="8" stroke-linecap="round" />
+  <path d="M256 296 V 412" stroke="#845EF7" stroke-width="8" stroke-linecap="round" />
+  <path d="M216 256 H 100" stroke="#845EF7" stroke-width="8" stroke-linecap="round" />
+  <path d="M296 256 H 412" stroke="#845EF7" stroke-width="8" stroke-linecap="round" />
+
+  <!-- Secondary Rays -->
+  <path d="M228 228 L 150 150" stroke="#7048E8" stroke-width="4" stroke-linecap="round" />
+  <path d="M284 284 L 362 362" stroke="#7048E8" stroke-width="4" stroke-linecap="round" />
+  <path d="M284 228 L 362 150" stroke="#7048E8" stroke-width="4" stroke-linecap="round" />
+  <path d="M228 284 L 150 362" stroke="#7048E8" stroke-width="4" stroke-linecap="round" />
+</svg>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Ring of 1s and 0s -->
+  <!-- Simplified as dashes/dots for SVG conciseness -->
+  <circle cx="256" cy="256" r="140" stroke="#2C2E33" stroke-width="2" />
+
+  <path d="M256 116 V 136" stroke="#845EF7" stroke-width="6" /> <!-- 1 -->
+  <circle cx="356" cy="156" r="6" fill="#20C997" /> <!-- 0 -->
+  <path d="M396 256 H 376" stroke="#845EF7" stroke-width="6" /> <!-- 1 -->
+  <circle cx="356" cy="356" r="6" fill="#20C997" /> <!-- 0 -->
+  <path d="M256 396 V 376" stroke="#845EF7" stroke-width="6" /> <!-- 1 -->
+  <circle cx="156" cy="356" r="6" fill="#20C997" /> <!-- 0 -->
+  <path d="M116 256 H 136" stroke="#845EF7" stroke-width="6" /> <!-- 1 -->
+  <circle cx="156" cy="156" r="6" fill="#20C997" /> <!-- 0 -->
+
+  <!-- Inner Core -->
+  <circle cx="256" cy="256" r="40" fill="#1A1B1E" stroke="#E5DBFF" stroke-width="2" />
+</svg>

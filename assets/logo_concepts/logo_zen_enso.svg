@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Enso Circle (Imperfect) -->
+  <path d="M256 100 C 350 100, 430 180, 430 280 C 430 380, 350 460, 250 460 C 160 460, 82 400, 82 280"
+        stroke="#E5DBFF" stroke-width="32" stroke-linecap="round" stroke-dasharray="20 10 50 10" />
+
+  <!-- Digital Artifacts in the gap -->
+  <rect x="82" y="180" width="20" height="20" fill="#20C997" />
+  <rect x="110" y="150" width="20" height="20" fill="#845EF7" />
+</svg>

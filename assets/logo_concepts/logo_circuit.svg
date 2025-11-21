@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Circuit Board 'N' -->
+  <path d="M156 128 V 384" stroke="#20C997" stroke-width="24" stroke-linecap="round" />
+  <path d="M356 128 V 384" stroke="#20C997" stroke-width="24" stroke-linecap="round" />
+  <path d="M156 128 L 356 384" stroke="#845EF7" stroke-width="24" stroke-linecap="round" />
+
+  <!-- Connection Points -->
+  <circle cx="156" cy="128" r="20" fill="#FFFFFF" />
+  <circle cx="356" cy="384" r="20" fill="#FFFFFF" />
+</svg>

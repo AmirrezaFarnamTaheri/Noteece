@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Stars -->
+  <circle cx="256" cy="100" r="8" fill="#FFFFFF" />
+  <circle cx="100" cy="200" r="8" fill="#FFFFFF" />
+  <circle cx="412" cy="200" r="8" fill="#FFFFFF" />
+  <circle cx="180" cy="350" r="8" fill="#FFFFFF" />
+  <circle cx="332" cy="350" r="8" fill="#FFFFFF" />
+  <circle cx="256" cy="450" r="8" fill="#FFFFFF" />
+
+  <!-- Lines Connecting Stars to form Shield -->
+  <path d="M256 100 L 412 200 L 332 350 L 256 450 L 180 350 L 100 200 Z"
+        stroke="#845EF7" stroke-width="2" fill="rgba(132, 94, 247, 0.1)" />
+
+  <!-- Inner Connections -->
+  <path d="M256 100 L 256 450" stroke="#20C997" stroke-width="1" opacity="0.5" />
+  <path d="M100 200 L 412 200" stroke="#20C997" stroke-width="1" opacity="0.5" />
+</svg>

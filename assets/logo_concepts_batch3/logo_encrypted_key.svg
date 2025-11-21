@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Key Head -->
+  <circle cx="200" cy="200" r="60" stroke="#E5DBFF" stroke-width="16" fill="none" />
+
+  <!-- Key Shaft -->
+  <path d="M240 240 L 380 380" stroke="#E5DBFF" stroke-width="16" stroke-linecap="round" />
+
+  <!-- Key Teeth (Data) -->
+  <path d="M380 380 L 340 420" stroke="#845EF7" stroke-width="16" stroke-linecap="round" />
+  <path d="M340 340 L 300 380" stroke="#20C997" stroke-width="16" stroke-linecap="round" />
+</svg>

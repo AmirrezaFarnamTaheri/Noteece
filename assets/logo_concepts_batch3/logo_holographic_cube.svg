@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Cube Outline -->
+  <path d="M256 150 L 350 200 V 300 L 256 350 L 162 300 V 200 Z" stroke="#E5DBFF" stroke-width="4" fill="none" opacity="0.8" />
+
+  <!-- Holographic Layers -->
+  <path d="M256 130 L 370 190 V 310 L 256 370 L 142 310 V 190 Z" stroke="#845EF7" stroke-width="2" fill="none" opacity="0.4" />
+  <path d="M256 170 L 330 210 V 290 L 256 330 L 182 290 V 210 Z" stroke="#20C997" stroke-width="2" fill="none" opacity="0.6" />
+</svg>

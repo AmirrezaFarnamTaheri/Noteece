@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="grad5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7950F2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F06595;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Infinity Loop -->
+  <path d="M156 256 C 156 200, 220 200, 256 256 C 292 312, 356 312, 356 256 C 356 200, 292 200, 256 256 C 220 312, 156 312, 156 256 Z"
+        stroke="url(#grad5)" stroke-width="40" stroke-linecap="round" fill="none" />
+
+  <!-- Sync Arrows Overlay (Negative Space implication) -->
+  <!-- Just stylizing the stroke endpoints could work, or adding arrowheads -->
+</svg>

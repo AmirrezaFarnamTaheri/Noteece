@@ -24,6 +24,7 @@ pub struct Project {
     pub target_end_at: Option<i64>,
     pub tasks: Vec<Task>,
     pub milestones: Vec<ProjectMilestone>,
+    pub updated_at: i64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -103,9 +104,10 @@ pub fn create_project(
         space_id
     );
     let id = Ulid::new().to_string();
+    let now = chrono::Utc::now().timestamp();
     match conn.execute(
-        "INSERT INTO project (id, space_id, title, status) VALUES (?1, ?2, ?3, 'proposed')",
-        rusqlite::params![id, space_id, title],
+        "INSERT INTO project (id, space_id, title, status, updated_at) VALUES (?1, ?2, ?3, 'proposed', ?4)",
+        rusqlite::params![id, space_id, title, now],
     ) {
         Ok(_) => {
             log::debug!("[project] Project created successfully with id: {}", id);
@@ -120,11 +122,42 @@ pub fn create_project(
                 target_end_at: None,
                 tasks: vec![],
                 milestones: vec![],
+                updated_at: now,
             })
         }
         Err(e) => {
             log::error!("[project] Error creating project: {}", e);
             Err(e.into())
+        }
+    }
+}
+
+pub fn update_project(
+    conn: &Connection,
+    project: &Project,
+) -> Result<(), ProjectError> {
+    log::info!("[project] Updating project with id: {}", project.id);
+    let now = chrono::Utc::now().timestamp();
+    match conn.execute(
+        "UPDATE project SET title = ?1, goal_outcome = ?2, status = ?3, confidence = ?4, start_at = ?5, target_end_at = ?6, updated_at = ?7 WHERE id = ?8",
+        rusqlite::params![
+            project.title,
+            project.goal_outcome,
+            project.status,
+            project.confidence,
+            project.start_at,
+            project.target_end_at,
+            now,
+            project.id
+        ],
+    ) {
+        Ok(_) => {
+            log::debug!("[project] Project updated successfully");
+            Ok(())
+        }
+        Err(e) => {
+             log::error!("[project] Error updating project: {}", e);
+             Err(e.into())
         }
     }
 }
@@ -135,7 +168,7 @@ pub fn get_projects_in_space(
 ) -> Result<Vec<Project>, ProjectError> {
     log::info!("[project] Getting projects in space: {}", space_id);
     let mut stmt = conn.prepare(
-        "SELECT p.id, p.space_id, p.title, p.goal_outcome, p.status, p.confidence, p.start_at, p.target_end_at, t.id, t.title, m.id, m.title
+        "SELECT p.id, p.space_id, p.title, p.goal_outcome, p.status, p.confidence, p.start_at, p.target_end_at, p.updated_at, t.id, t.title, m.id, m.title
          FROM project p
          LEFT JOIN task t ON p.id = t.project_id
          LEFT JOIN project_milestone m ON p.id = m.project_id
@@ -156,17 +189,18 @@ pub fn get_projects_in_space(
                 confidence: row.get(5).unwrap_or_default(),
                 start_at: row.get(6).unwrap_or_default(),
                 target_end_at: row.get(7).unwrap_or_default(),
+                updated_at: row.get(8).unwrap_or_default(),
                 tasks: Vec::new(),
                 milestones: Vec::new(),
             });
 
-        if let Ok(task_id_str) = row.get::<_, String>(8) {
+        if let Ok(task_id_str) = row.get::<_, String>(9) {
              // Use ? propagation where possible, handle ULID parsing safely
              if let Ok(task_id) = Ulid::from_string(&task_id_str) {
                  let space_id = Ulid::from_string(&project.space_id).unwrap_or_default();
                  let project_id_ulid = Ulid::from_string(&project.id).unwrap_or_default();
 
-                 if let Ok(title) = row.get::<_, String>(9) {
+                 if let Ok(title) = row.get::<_, String>(10) {
                      project.tasks.push(Task {
                          id: task_id,
                          space_id,
@@ -184,13 +218,16 @@ pub fn get_projects_in_space(
                          recur_rule: None,
                          context: None,
                          area: None,
+                         updated_at: 0, // Task data here is minimal, but we should fetch real updated_at if needed.
+                                        // Since this is a joined view for project summary, default 0 is acceptable for now
+                                        // or we should join task.updated_at as well.
                      });
                  }
              }
         }
 
-        if let Ok(milestone_id) = row.get::<_, String>(10) {
-            if let Ok(title) = row.get::<_, String>(11) {
+        if let Ok(milestone_id) = row.get::<_, String>(11) {
+            if let Ok(title) = row.get::<_, String>(12) {
                 project.milestones.push(ProjectMilestone {
                     id: milestone_id,
                     project_id: project.id.clone(),
@@ -221,7 +258,7 @@ pub fn get_projects_in_space(
 pub fn get_project(conn: &Connection, id: &str) -> Result<Option<Project>, ProjectError> {
     log::info!("[project] Getting project with id: {}", id);
     let mut stmt = conn.prepare(
-        "SELECT p.id, p.space_id, p.title, p.goal_outcome, p.status, p.confidence, p.start_at, p.target_end_at, t.id, t.title, m.id, m.title
+        "SELECT p.id, p.space_id, p.title, p.goal_outcome, p.status, p.confidence, p.start_at, p.target_end_at, p.updated_at, t.id, t.title, m.id, m.title
          FROM project p
          LEFT JOIN task t ON p.id = t.project_id
          LEFT JOIN project_milestone m ON p.id = m.project_id
@@ -242,16 +279,17 @@ pub fn get_project(conn: &Connection, id: &str) -> Result<Option<Project>, Proje
                 confidence: row.get(5).unwrap_or_default(),
                 start_at: row.get(6).unwrap_or_default(),
                 target_end_at: row.get(7).unwrap_or_default(),
+                updated_at: row.get(8).unwrap_or_default(),
                 tasks: Vec::new(),
                 milestones: Vec::new(),
             });
 
-        if let Ok(task_id_str) = row.get::<_, String>(8) {
+        if let Ok(task_id_str) = row.get::<_, String>(9) {
             if let Ok(task_id) = Ulid::from_string(&task_id_str) {
                 let space_id = Ulid::from_string(&project.space_id).unwrap_or_default();
                 let project_id_ulid = Ulid::from_string(&project.id).unwrap_or_default();
 
-                if let Ok(title) = row.get::<_, String>(9) {
+                if let Ok(title) = row.get::<_, String>(10) {
                     project.tasks.push(Task {
                         id: task_id,
                         space_id,
@@ -269,13 +307,14 @@ pub fn get_project(conn: &Connection, id: &str) -> Result<Option<Project>, Proje
                         recur_rule: None,
                         context: None,
                         area: None,
+                        updated_at: 0, // See above
                     });
                 }
             }
         }
 
-        if let Ok(milestone_id) = row.get::<_, String>(10) {
-            if let Ok(title) = row.get::<_, String>(11) {
+        if let Ok(milestone_id) = row.get::<_, String>(11) {
+            if let Ok(title) = row.get::<_, String>(12) {
                 project.milestones.push(ProjectMilestone {
                     id: milestone_id,
                     project_id: project.id.clone(),

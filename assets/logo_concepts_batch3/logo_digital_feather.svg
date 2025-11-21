@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Feather Quill Shape -->
+  <path d="M256 100 C 256 100, 350 180, 350 300 C 350 400, 256 450, 256 450 C 256 450, 162 400, 162 300 C 162 180, 256 100, 256 100 Z"
+        fill="#101113" stroke="#845EF7" stroke-width="4" />
+
+  <!-- Digital Spine -->
+  <path d="M256 100 V 450" stroke="#20C997" stroke-width="4" stroke-dasharray="8 8" />
+
+  <!-- Barbs as Data Bits -->
+  <rect x="266" y="200" width="40" height="4" fill="#845EF7" />
+  <rect x="206" y="240" width="40" height="4" fill="#845EF7" />
+</svg>

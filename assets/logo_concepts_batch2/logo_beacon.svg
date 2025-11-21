@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Lighthouse Tower -->
+  <path d="M236 350 L 276 350 L 266 150 L 246 150 Z" fill="#5F3DC4" />
+
+  <!-- Light Source -->
+  <circle cx="256" cy="150" r="20" fill="#FFFFFF" filter="url(#glow)" />
+
+  <!-- Beams -->
+  <path d="M256 150 L 450 50" stroke="#E5DBFF" stroke-width="2" opacity="0.3" />
+  <path d="M256 150 L 450 250" stroke="#E5DBFF" stroke-width="2" opacity="0.3" />
+  <path d="M256 150 L 450 150" fill="url(#beamGrad)" opacity="0.5" /> <!-- Simplified beam shape intent -->
+  <polygon points="256,150 450,100 450,200" fill="#845EF7" opacity="0.2" />
+
+  <!-- Waves/Data at bottom -->
+  <path d="M156 400 Q 256 350 356 400" stroke="#20C997" stroke-width="4" fill="none" />
+  <path d="M156 420 Q 256 370 356 420" stroke="#20C997" stroke-width="4" fill="none" opacity="0.6" />
+</svg>

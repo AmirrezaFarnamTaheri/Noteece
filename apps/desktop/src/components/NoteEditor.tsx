@@ -106,7 +106,7 @@ const NoteEditor: React.FC = () => {
   };
 
   return (
-    <div className={classes.editorContainer} style={{ height: 'calc(100vh - 80px)', display: 'flex', gap: theme.spacing.md }}>
+    <div className={classes.editorContainer} style={{ height: 'calc(100vh - 80px)', display: 'flex', gap: theme.spacing.md, backgroundColor: theme.colors.dark[9] }}>
       <LoadingOverlay visible={notesLoading || templatesLoading} overlayProps={{ blur: 2 }} />
 
       <Modal
@@ -141,12 +141,12 @@ const NoteEditor: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
             backgroundColor: theme.colors.dark[8],
-            border: `1px solid ${theme.colors.dark[6]}`,
+            border: `1px solid ${theme.colors.dark[7]}`, // Subtler border
         }}
       >
         <Group justify="space-between" mb="md">
-          <Text fw={700} size="sm" c="dimmed" tt="uppercase" ls={1}>
-            Notes
+          <Text fw={800} size="sm" c="dimmed" tt="uppercase" ls={1}>
+            All Notes
           </Text>
           <Tooltip label="Create New Note">
             <ActionIcon variant="light" color="violet" onClick={handleNewNoteClick} size="sm" radius="md">
@@ -157,7 +157,7 @@ const NoteEditor: React.FC = () => {
 
         <Button
             size="xs"
-            variant="light"
+            variant="subtle"
             color="gray"
             onClick={() => setTemplateModalOpened(true)}
             mb="md"
@@ -168,23 +168,23 @@ const NoteEditor: React.FC = () => {
           New from Template
         </Button>
 
-        <List spacing={4} listStyleType="none" style={{ overflowY: 'auto', flex: 1 }}>
+        <List spacing={2} listStyleType="none" style={{ overflowY: 'auto', flex: 1 }}>
           {notes.map((note) => (
             <List.Item
               key={note.id.toString()}
               onClick={() => setSelectedNote(note)}
               style={{
                 cursor: 'pointer',
-                padding: '8px 12px',
+                padding: '10px 12px',
                 borderRadius: theme.radius.md,
-                backgroundColor: selectedNote?.id === note.id ? theme.colors.violet[9] + '40' : 'transparent',
-                color: selectedNote?.id === note.id ? theme.colors.violet[2] : theme.colors.gray[4],
+                backgroundColor: selectedNote?.id === note.id ? 'rgba(132, 94, 247, 0.15)' : 'transparent',
+                color: selectedNote?.id === note.id ? theme.colors.violet[3] : theme.colors.gray[4],
                 transition: 'all 0.2s ease',
                 fontSize: theme.fontSizes.sm,
                 borderLeft: selectedNote?.id === note.id ? `3px solid ${theme.colors.violet[5]}` : '3px solid transparent',
               }}
             >
-              <Text truncate>{note.title || 'Untitled'}</Text>
+              <Text truncate fw={selectedNote?.id === note.id ? 600 : 400}>{note.title || 'Untitled'}</Text>
             </List.Item>
           ))}
         </List>
@@ -200,7 +200,7 @@ const NoteEditor: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
             backgroundColor: theme.colors.dark[8],
-            border: `1px solid ${theme.colors.dark[6]}`,
+            border: `1px solid ${theme.colors.dark[7]}`,
             position: 'relative',
         }}
       >
@@ -220,7 +220,7 @@ const NoteEditor: React.FC = () => {
                 size="xl"
                 variant="unstyled"
                 style={{ flex: 1 }}
-                styles={{ input: { fontSize: '2rem', fontWeight: 800, color: theme.colors.gray[0] } }}
+                styles={{ input: { fontSize: '2.2rem', fontWeight: 800, color: theme.colors.gray[0], lineHeight: 1.2 } }}
             />
             <Group gap="xs">
                 <Tooltip label={typewriterMode ? "Disable Typewriter Mode" : "Enable Typewriter Mode"}>
@@ -249,7 +249,7 @@ const NoteEditor: React.FC = () => {
             </Group>
 
             {/* Lexical Editor with full rich text and markdown support */}
-            <Box style={{ flex: 1, overflowY: 'auto' }}>
+            <Box style={{ flex: 1, overflowY: 'auto', paddingRight: '8px' }}>
                 <LexicalEditor
                 key={selectedNote ? String(selectedNote.id) : 'new-note'}
                 initialContent={content}

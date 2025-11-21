@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Improved Triangle Prism (More vibrant) -->
+  <path d="M256 120 L 400 400 H 112 Z" stroke="#E5DBFF" stroke-width="6" fill="rgba(255,255,255,0.08)" />
+
+  <!-- Light Beam Entry (Stronger) -->
+  <path d="M60 220 L 185 285" stroke="#FFFFFF" stroke-width="10" opacity="0.9" stroke-linecap="round" />
+
+  <!-- Refraction Point Glow -->
+  <circle cx="185" cy="285" r="8" fill="#FFFFFF" filter="blur(4px)" />
+
+  <!-- Refracted Spectrum (Deep Obsidian Theme Colors) -->
+  <path d="M330 285 L 480 220" stroke="#845EF7" stroke-width="10" stroke-linecap="round" opacity="0.9" /> <!-- Violet -->
+  <path d="M340 305 L 480 305" stroke="#20C997" stroke-width="10" stroke-linecap="round" opacity="0.9" /> <!-- Teal -->
+  <path d="M320 325 L 480 380" stroke="#FCC419" stroke-width="10" stroke-linecap="round" opacity="0.9" /> <!-- Yellow -->
+</svg>

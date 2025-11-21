@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Root Node -->
+  <circle cx="256" cy="400" r="20" fill="#20C997" />
+
+  <!-- Branches -->
+  <path d="M256 400 L 256 300" stroke="#E5DBFF" stroke-width="8" />
+
+  <path d="M256 300 L 156 200" stroke="#E5DBFF" stroke-width="8" />
+  <path d="M256 300 L 356 200" stroke="#E5DBFF" stroke-width="8" />
+
+  <!-- Leaf Nodes -->
+  <rect x="136" y="160" width="40" height="40" fill="#845EF7" />
+  <rect x="336" y="160" width="40" height="40" fill="#845EF7" />
+
+  <path d="M156 160 L 100 100" stroke="#E5DBFF" stroke-width="4" opacity="0.5" />
+</svg>

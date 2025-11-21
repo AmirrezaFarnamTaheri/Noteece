@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Strand 1 -->
+  <path d="M156 100 Q 356 180 156 256 Q 356 332 156 412" stroke="#845EF7" stroke-width="12" fill="none" stroke-linecap="round" />
+
+  <!-- Strand 2 -->
+  <path d="M356 100 Q 156 180 356 256 Q 156 332 356 412" stroke="#20C997" stroke-width="12" fill="none" stroke-linecap="round" opacity="0.8" />
+
+  <!-- Base Pairs (Data Blocks) -->
+  <line x1="200" y1="140" x2="312" y2="140" stroke="#E5DBFF" stroke-width="6" stroke-linecap="round" />
+  <line x1="200" y1="220" x2="312" y2="220" stroke="#E5DBFF" stroke-width="6" stroke-linecap="round" />
+  <line x1="200" y1="300" x2="312" y2="300" stroke="#E5DBFF" stroke-width="6" stroke-linecap="round" />
+  <line x1="200" y1="380" x2="312" y2="380" stroke="#E5DBFF" stroke-width="6" stroke-linecap="round" />
+</svg>

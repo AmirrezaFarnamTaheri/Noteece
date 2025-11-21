@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Echo Waves -->
+  <path d="M256 350 C 310 350, 350 310, 350 256" stroke="#845EF7" stroke-width="4" opacity="0.2" />
+  <path d="M256 400 C 340 400, 400 340, 400 256" stroke="#845EF7" stroke-width="4" opacity="0.4" />
+  <path d="M256 450 C 370 450, 450 370, 450 256" stroke="#845EF7" stroke-width="4" opacity="0.6" />
+
+  <!-- Speaker/Source -->
+  <polygon points="150,200 150,312 256,312 256,200" fill="#E5DBFF" />
+</svg>

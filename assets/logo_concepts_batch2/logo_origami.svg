@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Shield Base (Paper Fold) -->
+  <path d="M256 100 L 400 180 V 300 L 256 400 L 112 300 V 180 Z" fill="#5F3DC4" />
+
+  <!-- Left Fold (Lighter) -->
+  <path d="M256 100 L 256 400 L 112 300 L 112 180 Z" fill="#7048E8" opacity="0.8" />
+
+  <!-- Top Crease (Highlight) -->
+  <path d="M256 100 L 112 180" stroke="rgba(255,255,255,0.2)" stroke-width="2" />
+  <path d="M256 100 L 400 180" stroke="rgba(255,255,255,0.2)" stroke-width="2" />
+
+  <!-- Central Spine -->
+  <path d="M256 100 V 400" stroke="#E5DBFF" stroke-width="4" />
+
+  <!-- Note Lines -->
+  <path d="M150 220 H 220" stroke="#E5DBFF" stroke-width="4" opacity="0.5" />
+  <path d="M150 260 H 220" stroke="#E5DBFF" stroke-width="4" opacity="0.5" />
+  <path d="M290 220 H 360" stroke="#E5DBFF" stroke-width="4" opacity="0.5" />
+</svg>

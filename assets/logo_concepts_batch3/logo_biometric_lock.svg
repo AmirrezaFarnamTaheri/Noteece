@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Fingerprint Pattern inside Lock -->
+  <path d="M256 150 A 60 60 0 0 1 316 210 V 250" stroke="#845EF7" stroke-width="8" stroke-linecap="round" />
+  <path d="M196 250 V 210 A 60 60 0 0 1 256 150" stroke="#845EF7" stroke-width="8" stroke-linecap="round" />
+
+  <!-- Lock Body -->
+  <rect x="156" y="250" width="200" height="150" rx="20" fill="#1A1B1E" stroke="#20C997" stroke-width="4" />
+
+  <!-- Core Scanner -->
+  <rect x="236" y="300" width="40" height="50" fill="#E5DBFF" opacity="0.2" />
+  <path d="M236 325 H 276" stroke="#FF0000" stroke-width="2" opacity="0.8" />
+</svg>

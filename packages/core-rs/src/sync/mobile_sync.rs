@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
-/// Desktop-Mobile Sync Protocol for SocialHub
-/// Enables synchronization of social media data between desktop and mobile devices
+/// Desktop-Mobile Sync Protocol for SocialHub & Noteece Vault
+/// Enables synchronization of social media data and vault content (notes, tasks, etc.) between desktop and mobile devices
 /// Uses encrypted protocol with local network discovery
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -145,6 +145,13 @@ pub enum SyncCategory {
     SyncHistory,
     /// Backup metadata
     Backups,
+    /// Noteece Vault Categories
+    Notes,
+    Tasks,
+    Projects,
+    Health,
+    Time,
+    Calendar,
 }
 
 /// Single delta (change) to sync
@@ -159,7 +166,7 @@ pub struct SyncDelta {
     /// Entity ID
     pub entity_id: String,
 
-    /// Encrypted data (BLOB)
+    /// Encrypted data (BLOB). For Vault Sync, this may contain serialized JSON or raw content.
     pub encrypted_data: Option<Vec<u8>>,
 
     /// Timestamp of change

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <defs>
+    <mix-blend-mode>screen</mix-blend-mode>
+  </defs>
+
+  <!-- State 0 -->
+  <circle cx="200" cy="256" r="100" stroke="#845EF7" stroke-width="8" fill="rgba(132, 94, 247, 0.2)" style="mix-blend-mode: screen;" />
+
+  <!-- State 1 -->
+  <circle cx="312" cy="256" r="100" stroke="#20C997" stroke-width="8" fill="rgba(32, 201, 151, 0.2)" style="mix-blend-mode: screen;" />
+
+  <!-- Superposition Intersection -->
+  <path d="M256 180 V 332" stroke="#FFFFFF" stroke-width="4" stroke-dasharray="8 8" />
+
+  <!-- Orbiting Electrons -->
+  <circle cx="200" cy="156" r="8" fill="#FFFFFF" />
+  <circle cx="312" cy="356" r="8" fill="#FFFFFF" />
+</svg>

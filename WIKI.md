@@ -7,10 +7,11 @@ Welcome to the **Noteece** Wiki. This documentation serves as the comprehensive 
 1. [Introduction](#introduction)
 2. [Architecture](#architecture)
 3. [Features](#features)
-4. [Development Guide](#development-guide)
-5. [Security](#security)
-6. [Workflows](#workflows)
-7. [Troubleshooting & FAQ](#troubleshooting--faq)
+4. [Design System](#design-system)
+5. [Development Guide](#development-guide)
+6. [Security](#security)
+7. [Workflows](#workflows)
+8. [Troubleshooting & FAQ](#troubleshooting--faq)
 
 ---
 
@@ -71,6 +72,9 @@ The database is normalized and managed via migrations (`db.rs`). Key tables incl
 - `sync_history` / `sync_state`: P2P synchronization logs.
 - `audit_log`: Security and activity logging.
 
+**Latest Migration (V15):**
+Added `updated_at` columns to `task` and `project` tables to support robust synchronization and conflict detection.
+
 ---
 
 ## Features
@@ -113,6 +117,26 @@ The database is normalized and managed via migrations (`db.rs`). Key tables incl
 - **Local Network:** Sync devices over WiFi using mDNS for discovery.
 - **E2EE:** ECDH key exchange and ChaCha20Poly1305 encryption for secure data transfer.
 - **Conflict Resolution:** Vector clocks (CRDT-inspired) to handle concurrent edits.
+- **Supported Entities:** Notes, Tasks, Projects, Health Metrics, Tracks, Playlists, Calendar Events.
+
+---
+
+## Design System
+
+### Deep Obsidian Theme
+
+Noteece utilizes a distinct "Deep Obsidian" visual language designed for focus and aesthetic appeal.
+
+- **Primary Colors:**
+  - **Violet:** Main brand color, used for primary actions, active states, and highlights.
+  - **Deep Dark (Obsidian):** Backgrounds use a scale of deep grays/blacks (`#050506`, `#101113`) to reduce eye strain and create depth.
+  - **Teal:** Secondary accent for success states, connectivity, and "growth" metrics.
+
+- **UI Characteristics:**
+  - **Glassmorphism:** Subtle blur effects on headers and overlays.
+  - **Glow:** Neon-like glows on active elements and critical alerts.
+  - **Minimalism:** Reduced border noise, relying on spacing and contrast hierarchy.
+  - **Card-based:** Content is organized in cohesive cards with distinct hover states.
 
 ---
 
@@ -228,4 +252,4 @@ This usually happens during development if multiple processes access the SQLite 
 
 ---
 
-_For more details, explore the code documentation in specific modules or the `docs/` folder._
+_For more details, explore the code documentation in specific modules or the `docs/`: Documentation files._

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Iris -->
+  <circle cx="256" cy="256" r="120" stroke="#845EF7" stroke-width="4" fill="none" stroke-dasharray="10 5" />
+  <circle cx="256" cy="256" r="100" stroke="#20C997" stroke-width="2" fill="none" opacity="0.7" />
+
+  <!-- Pupil -->
+  <circle cx="256" cy="256" r="40" fill="#FFFFFF" />
+
+  <!-- Scan Lines -->
+  <path d="M136 256 H 376" stroke="#20C997" stroke-width="2" opacity="0.5" />
+  <path d="M256 136 V 376" stroke="#845EF7" stroke-width="2" opacity="0.5" />
+</svg>

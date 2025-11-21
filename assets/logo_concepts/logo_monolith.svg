@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Main Pillar -->
+  <rect x="226" y="80" width="60" height="352" fill="#E5DBFF" />
+
+  <!-- Circuit Traces -->
+  <path d="M226 120 H 150 V 160" stroke="#845EF7" stroke-width="8" fill="none"/>
+  <circle cx="150" cy="160" r="8" fill="#845EF7"/>
+
+  <path d="M286 380 H 362 V 340" stroke="#20C997" stroke-width="8" fill="none"/>
+  <circle cx="362" cy="340" r="8" fill="#20C997"/>
+
+  <path d="M226 256 H 100" stroke="#7048E8" stroke-width="8" fill="none"/>
+  <circle cx="100" cy="256" r="8" fill="#7048E8"/>
+</svg>

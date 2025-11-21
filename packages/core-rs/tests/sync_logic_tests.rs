@@ -46,6 +46,7 @@ fn test_sync_conflict_resolution_use_local() {
         data: Some("Remote Content".to_string().into_bytes()),
         timestamp: now, // Older than local
         vector_clock: HashMap::new(),
+        space_id: Some(space_id.clone()),
     };
 
     // Apply deltas

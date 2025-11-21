@@ -315,9 +315,9 @@ mod tests {
     use tempfile::tempdir;
 
     fn setup_auth_db() -> (Arc<Mutex<Connection>>, tempfile::TempDir) {
-        let dir = tempdir().unwrap();
+        let dir = tempdir().expect("Failed to create temp dir");
         let db_path = dir.path().join("test.db");
-        let conn = Connection::open(&db_path).unwrap();
+        let conn = Connection::open(&db_path).expect("Failed to open DB");
 
         // Create auth tables
         conn.execute(
@@ -332,7 +332,7 @@ mod tests {
             )",
             [],
         )
-        .unwrap();
+        .expect("Failed to create users table");
 
         conn.execute(
             "CREATE TABLE IF NOT EXISTS sessions (
@@ -345,7 +345,7 @@ mod tests {
             )",
             [],
         )
-        .unwrap();
+        .expect("Failed to create sessions table");
 
         (Arc::new(Mutex::new(conn)), dir)
     }
@@ -353,10 +353,10 @@ mod tests {
     #[test]
     fn test_user_registration() {
         let (conn, _dir) = setup_auth_db();
-        let conn = conn.lock().unwrap();
+        let conn = conn.lock().expect("Failed to lock DB");
 
         let user = AuthService::create_user(&conn, "testuser", "test@example.com", "password123")
-            .unwrap();
+            .expect("Failed to create user");
 
         assert_eq!(user.username, "testuser");
         assert_eq!(user.email, "test@example.com");
@@ -365,7 +365,7 @@ mod tests {
     #[test]
     fn test_weak_password_rejected() {
         let (conn, _dir) = setup_auth_db();
-        let conn = conn.lock().unwrap();
+        let conn = conn.lock().expect("Failed to lock DB");
 
         let result = AuthService::create_user(&conn, "testuser", "test@example.com", "short");
         assert!(matches!(result, Err(AuthError::WeakPassword)));
@@ -374,10 +374,10 @@ mod tests {
     #[test]
     fn test_duplicate_username_rejected() {
         let (conn, _dir) = setup_auth_db();
-        let conn = conn.lock().unwrap();
+        let conn = conn.lock().expect("Failed to lock DB");
 
         AuthService::create_user(&conn, "testuser", "test1@example.com", "password123")
-            .unwrap();
+            .expect("Failed to create user");
 
         let result = AuthService::create_user(&conn, "testuser", "test2@example.com", "password123");
         assert!(matches!(result, Err(AuthError::UserAlreadyExists)));
@@ -386,12 +386,12 @@ mod tests {
     #[test]
     fn test_authentication_success() {
         let (conn, _dir) = setup_auth_db();
-        let conn = conn.lock().unwrap();
+        let conn = conn.lock().expect("Failed to lock DB");
 
         AuthService::create_user(&conn, "testuser", "test@example.com", "password123")
-            .unwrap();
+            .expect("Failed to create user");
 
-        let session = AuthService::authenticate(&conn, "testuser", "password123").unwrap();
+        let session = AuthService::authenticate(&conn, "testuser", "password123").expect("Failed to authenticate");
         assert_eq!(session.user_id.len(), 26); // ULID length
         assert!(!session.token.is_empty());
     }
@@ -399,10 +399,10 @@ mod tests {
     #[test]
     fn test_authentication_failure_invalid_password() {
         let (conn, _dir) = setup_auth_db();
-        let conn = conn.lock().unwrap();
+        let conn = conn.lock().expect("Failed to lock DB");
 
         AuthService::create_user(&conn, "testuser", "test@example.com", "password123")
-            .unwrap();
+            .expect("Failed to create user");
 
         let result = AuthService::authenticate(&conn, "testuser", "wrongpassword");
         assert!(matches!(result, Err(AuthError::InvalidCredentials)));
@@ -411,7 +411,7 @@ mod tests {
     #[test]
     fn test_authentication_failure_nonexistent_user() {
         let (conn, _dir) = setup_auth_db();
-        let conn = conn.lock().unwrap();
+        let conn = conn.lock().expect("Failed to lock DB");
 
         let result = AuthService::authenticate(&conn, "nonexistent", "password123");
         assert!(matches!(result, Err(AuthError::InvalidCredentials)));
@@ -420,14 +420,14 @@ mod tests {
     #[test]
     fn test_session_validation() {
         let (conn, _dir) = setup_auth_db();
-        let conn = conn.lock().unwrap();
+        let conn = conn.lock().expect("Failed to lock DB");
 
         AuthService::create_user(&conn, "testuser", "test@example.com", "password123")
-            .unwrap();
+            .expect("Failed to create user");
 
-        let session = AuthService::authenticate(&conn, "testuser", "password123").unwrap();
+        let session = AuthService::authenticate(&conn, "testuser", "password123").expect("Failed to authenticate");
 
-        let user_id = AuthService::validate_session(&conn, &session.token).unwrap();
+        let user_id = AuthService::validate_session(&conn, &session.token).expect("Failed to validate session");
         assert_eq!(user_id, session.user_id);
     }
 
@@ -436,25 +436,25 @@ mod tests {
         let (conn, _dir) = setup_auth_db();
         // We need manual lock control here
         {
-            let conn = conn.lock().unwrap();
-            AuthService::create_user(&conn, "testuser", "test@example.com", "password123").unwrap();
+            let conn = conn.lock().expect("Failed to lock DB");
+            AuthService::create_user(&conn, "testuser", "test@example.com", "password123").expect("Failed to create user");
         }
 
         let session = {
-            let conn = conn.lock().unwrap();
-            AuthService::authenticate(&conn, "testuser", "password123").unwrap()
+            let conn = conn.lock().expect("Failed to lock DB");
+            AuthService::authenticate(&conn, "testuser", "password123").expect("Failed to authenticate")
         };
 
         // Set expiration to past
         {
-            let conn = conn.lock().unwrap();
+            let conn = conn.lock().expect("Failed to lock DB");
             conn.execute(
                 "UPDATE sessions SET expires_at = ?1 WHERE id = ?2",
                 rusqlite::params![0, session.id],
-            ).unwrap();
+            ).expect("Failed to update session");
         }
 
-        let conn = conn.lock().unwrap();
+        let conn = conn.lock().expect("Failed to lock DB");
         let result = AuthService::validate_session(&conn, &session.token);
         assert!(matches!(result, Err(AuthError::InvalidSession)));
     }
@@ -462,14 +462,14 @@ mod tests {
     #[test]
     fn test_logout() {
         let (conn, _dir) = setup_auth_db();
-        let conn = conn.lock().unwrap();
+        let conn = conn.lock().expect("Failed to lock DB");
 
         AuthService::create_user(&conn, "testuser", "test@example.com", "password123")
-            .unwrap();
+            .expect("Failed to create user");
 
-        let session = AuthService::authenticate(&conn, "testuser", "password123").unwrap();
+        let session = AuthService::authenticate(&conn, "testuser", "password123").expect("Failed to authenticate");
 
-        AuthService::logout(&conn, &session.token).unwrap();
+        AuthService::logout(&conn, &session.token).expect("Failed to logout");
 
         let result = AuthService::validate_session(&conn, &session.token);
         assert!(matches!(result, Err(AuthError::InvalidSession)));
@@ -478,12 +478,12 @@ mod tests {
     #[test]
     fn test_get_user() {
         let (conn, _dir) = setup_auth_db();
-        let conn = conn.lock().unwrap();
+        let conn = conn.lock().expect("Failed to lock DB");
 
         let created_user = AuthService::create_user(&conn, "testuser", "test@example.com", "password123")
-            .unwrap();
+            .expect("Failed to create user");
 
-        let retrieved_user = AuthService::get_user(&conn, &created_user.id).unwrap();
+        let retrieved_user = AuthService::get_user(&conn, &created_user.id).expect("Failed to get user");
         assert_eq!(retrieved_user.username, "testuser");
         assert_eq!(retrieved_user.email, "test@example.com");
     }
@@ -491,20 +491,20 @@ mod tests {
     #[test]
     fn test_change_password() {
         let (conn, _dir) = setup_auth_db();
-        let conn = conn.lock().unwrap();
+        let conn = conn.lock().expect("Failed to lock DB");
 
         let user = AuthService::create_user(&conn, "testuser", "test@example.com", "oldpassword123")
-            .unwrap();
+            .expect("Failed to create user");
 
         AuthService::change_password(&conn, &user.id, "oldpassword123", "newpassword123")
-            .unwrap();
+            .expect("Failed to change password");
 
         // Old password should fail
         let result = AuthService::authenticate(&conn, "testuser", "oldpassword123");
         assert!(matches!(result, Err(AuthError::InvalidCredentials)));
 
         // New password should work
-        let session = AuthService::authenticate(&conn, "testuser", "newpassword123").unwrap();
+        let session = AuthService::authenticate(&conn, "testuser", "newpassword123").expect("Failed to authenticate");
         assert!(!session.token.is_empty());
     }
 }

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#050506" />
+
+  <!-- Wireframe Box -->
+  <path d="M256 150 L 356 200 L 356 300 L 256 350 L 156 300 L 156 200 Z" stroke="#845EF7" stroke-width="4" fill="none" />
+  <path d="M256 250 L 356 200" stroke="#845EF7" stroke-width="4" />
+  <path d="M256 250 L 156 200" stroke="#845EF7" stroke-width="4" />
+  <path d="M256 250 L 256 350" stroke="#845EF7" stroke-width="4" />
+
+  <!-- Unfolding Faces -->
+  <path d="M356 200 L 420 150 L 320 100 L 256 150" stroke="#20C997" stroke-width="2" stroke-dasharray="4 4" fill="none" opacity="0.6" />
+
+  <!-- Core Data -->
+  <rect x="246" y="240" width="20" height="20" fill="#FFFFFF" />
+</svg>
