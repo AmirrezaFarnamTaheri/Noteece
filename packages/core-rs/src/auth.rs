@@ -48,8 +48,10 @@ impl From<rusqlite::Error> for AuthError {
     }
 }
 
+use serde::Serialize;
+
 /// Represents a user in the system
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct User {
     pub id: String,
     pub username: String,
@@ -60,7 +62,7 @@ pub struct User {
 }
 
 /// Represents an active session
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Session {
     pub id: String,
     pub user_id: String,

@@ -4,6 +4,8 @@
 mod config;
 mod commands;
 mod state;
+mod db_pool;
+mod concurrency_tests;
 
 use config::AppConfig;
 use commands::*;
@@ -16,7 +18,7 @@ fn main() {
 
     tauri::Builder::default()
         .manage(DbConnection {
-            conn: Mutex::new(None),
+            pool: Mutex::new(None),
             dek: Mutex::new(None),
             p2p_sync: Mutex::new(None),
         })
