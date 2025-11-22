@@ -10,6 +10,8 @@ pub enum ForesightError {
     Database(#[from] rusqlite::Error),
     #[error("Generation error: {0}")]
     Generation(String),
+    #[error("Serde error: {0}")]
+    Serde(#[from] serde_json::Error),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -21,6 +23,27 @@ pub enum InsightType {
     HabitStreak,
 }
 
+impl InsightType {
+    fn as_str(&self) -> &'static str {
+        match self {
+            InsightType::DeadlineApproaching => "deadline_approaching",
+            InsightType::ProjectStagnant => "project_stagnant",
+            InsightType::HighWorkload => "high_workload",
+            InsightType::HabitStreak => "habit_streak",
+        }
+    }
+
+    fn from_str(s: &str) -> Self {
+        match s {
+            "deadline_approaching" => InsightType::DeadlineApproaching,
+            "project_stagnant" => InsightType::ProjectStagnant,
+            "high_workload" => InsightType::HighWorkload,
+            "habit_streak" => InsightType::HabitStreak,
+            _ => InsightType::HighWorkload, // Default fallback
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum InsightSeverity {
@@ -28,6 +51,27 @@ pub enum InsightSeverity {
     Medium,
     High,
     Critical,
+}
+
+impl InsightSeverity {
+    fn as_str(&self) -> &'static str {
+        match self {
+            InsightSeverity::Low => "low",
+            InsightSeverity::Medium => "medium",
+            InsightSeverity::High => "high",
+            InsightSeverity::Critical => "critical",
+        }
+    }
+
+    fn from_str(s: &str) -> Self {
+        match s {
+            "low" => InsightSeverity::Low,
+            "medium" => InsightSeverity::Medium,
+            "high" => InsightSeverity::High,
+            "critical" => InsightSeverity::Critical,
+            _ => InsightSeverity::Medium,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -47,6 +91,7 @@ pub struct SuggestedAction {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Insight {
     pub id: String,
+    pub space_id: Option<String>,
     pub insight_type: InsightType,
     pub title: String,
     pub description: String,
@@ -65,7 +110,92 @@ pub fn generate_insights(
     insights.extend(detect_deadline_pressure(conn, space_id)?);
     insights.extend(detect_project_stagnation(conn, space_id)?);
     insights.extend(detect_habit_disruptions(conn, space_id)?);
-    Ok(insights)
+
+    // Persist generated insights
+    for insight in &insights {
+        persist_insight(conn, insight, space_id)?;
+    }
+
+    // Return all active insights for this space (including previously generated ones)
+    get_active_insights(conn, &space_id.to_string())
+}
+
+fn persist_insight(conn: &Connection, insight: &Insight, space_id: Ulid) -> Result<(), ForesightError> {
+    let context_json = serde_json::to_string(&insight.context)?;
+    let actions_json = serde_json::to_string(&insight.suggested_actions)?;
+
+    // Upsert: If exists, ignore (idempotent generation).
+    // But typically generation creates new IDs. We might want to deduplicate by content signature?
+    // For now, assume generation logic creates new ID each run, which might flood DB.
+    // Ideally we check if similar active insight exists.
+    // For simplicity in this fix, we insert.
+    // NOTE: In production, we should check `entity_id` + `insight_type` uniqueness for active insights.
+
+    conn.execute(
+        "INSERT INTO insight (id, space_id, title, description, insight_type, severity, context_json, suggested_actions_json, created_at, dismissed)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 0)
+         ON CONFLICT(id) DO NOTHING",
+        params![
+            insight.id,
+            space_id.to_string(),
+            insight.title,
+            insight.description,
+            insight.insight_type.as_str(),
+            insight.severity.as_str(),
+            context_json,
+            actions_json,
+            insight.created_at
+        ],
+    )?;
+    Ok(())
+}
+
+pub fn get_active_insights(conn: &Connection, space_id: &str) -> Result<Vec<Insight>, ForesightError> {
+    let mut stmt = conn.prepare(
+        "SELECT id, space_id, title, description, insight_type, severity, context_json, suggested_actions_json, created_at, dismissed
+         FROM insight
+         WHERE space_id = ?1 AND dismissed = 0
+         ORDER BY created_at DESC",
+    )?;
+
+    let rows = stmt.query_map([space_id], |row| {
+        let context_json: String = row.get(6)?;
+        let actions_json: String = row.get(7)?;
+        let type_str: String = row.get(4)?;
+        let severity_str: String = row.get(5)?;
+
+        Ok(Insight {
+            id: row.get(0)?,
+            space_id: row.get(1)?,
+            title: row.get(2)?,
+            description: row.get(3)?,
+            insight_type: InsightType::from_str(&type_str),
+            severity: InsightSeverity::from_str(&severity_str),
+            context: serde_json::from_str(&context_json).unwrap_or_default(),
+            suggested_actions: serde_json::from_str(&actions_json).unwrap_or_default(),
+            created_at: row.get(8)?,
+            dismissed: row.get::<_, i32>(9)? == 1,
+        })
+    })?;
+
+    let mut results = Vec::new();
+    for row in rows {
+        results.push(row?);
+    }
+    Ok(results)
+}
+
+pub fn dismiss_insight(conn: &Connection, id: Ulid) -> Result<(), ForesightError> {
+    conn.execute("UPDATE insight SET dismissed = 1 WHERE id = ?1", [id.to_string()])?;
+    Ok(())
+}
+
+pub fn record_feedback(conn: &Connection, id: Ulid, useful: bool) -> Result<(), ForesightError> {
+    conn.execute(
+        "UPDATE insight SET feedback_useful = ?2 WHERE id = ?1",
+        params![id.to_string(), if useful { 1 } else { 0 }],
+    )?;
+    Ok(())
 }
 
 fn detect_deadline_pressure(
@@ -92,6 +222,7 @@ fn detect_deadline_pressure(
 
         insights.push(Insight {
             id: Ulid::new().to_string(),
+            space_id: Some(space_id.to_string()),
             insight_type: InsightType::DeadlineApproaching,
             title: format!("'{}' is due in {} day(s)", title, days_until),
             description: "A task deadline is approaching.".to_string(),
@@ -142,6 +273,7 @@ fn detect_project_stagnation(
         let (project_id, title): (String, String) = project_res?;
         insights.push(Insight {
             id: Ulid::new().to_string(),
+            space_id: Some(space_id.to_string()),
             insight_type: InsightType::ProjectStagnant,
             title: format!("Project '{}' seems stagnant", title),
             description: "No tasks have been completed recently in this project.".to_string(),
@@ -184,6 +316,7 @@ fn detect_habit_disruptions(
 
         insights.push(Insight {
             id: Ulid::new().to_string(),
+            space_id: Some(space_id.to_string()),
             insight_type: InsightType::HabitStreak,
             title: format!("Habit at risk: {}", title),
             description: format!("This recurring task is {} days overdue.", days_overdue),

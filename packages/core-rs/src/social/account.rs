@@ -212,60 +212,63 @@ pub fn update_social_account(
     enabled: Option<bool>,
     sync_frequency_minutes: Option<i32>,
     display_name: Option<&str>,
+    username: Option<&str>,
+    credentials: Option<&str>,
+    dek: Option<&[u8]>,
 ) -> Result<(), SocialError> {
     log::debug!(
-        "[Social::Account] Updating account {} - enabled={:?}, sync_freq={:?}, display_name={:?}",
+        "[Social::Account] Updating account {} - enabled={:?}, sync_freq={:?}, display_name={:?}, username={:?}",
         account_id,
         enabled,
         sync_frequency_minutes,
-        display_name
+        display_name,
+        username
     );
 
     if let Some(enabled) = enabled {
-        log::debug!(
-            "[Social::Account] Setting enabled={} for account {}",
-            enabled,
-            account_id
-        );
         conn.execute(
             "UPDATE social_account SET enabled = ?1 WHERE id = ?2",
             params![if enabled { 1 } else { 0 }, account_id],
         )
-        .map_err(|e| {
-            log::error!("[Social::Account] Failed to update enabled status: {}", e);
-            e
-        })?;
+        .map_err(SocialError::Database)?;
     }
 
     if let Some(frequency) = sync_frequency_minutes {
-        log::debug!(
-            "[Social::Account] Setting sync_frequency={} for account {}",
-            frequency,
-            account_id
-        );
         conn.execute(
             "UPDATE social_account SET sync_frequency_minutes = ?1 WHERE id = ?2",
             params![frequency, account_id],
         )
-        .map_err(|e| {
-            log::error!("[Social::Account] Failed to update sync frequency: {}", e);
-            e
-        })?;
+        .map_err(SocialError::Database)?;
     }
 
     if let Some(name) = display_name {
-        log::debug!(
-            "[Social::Account] Setting display_name for account {}",
-            account_id
-        );
         conn.execute(
             "UPDATE social_account SET display_name = ?1 WHERE id = ?2",
             params![name, account_id],
         )
-        .map_err(|e| {
-            log::error!("[Social::Account] Failed to update display name: {}", e);
-            e
-        })?;
+        .map_err(SocialError::Database)?;
+    }
+
+    if let Some(u) = username {
+        conn.execute(
+            "UPDATE social_account SET username = ?1 WHERE id = ?2",
+            params![u, account_id],
+        )
+        .map_err(SocialError::Database)?;
+    }
+
+    if let Some(c) = credentials {
+        if let Some(k) = dek {
+            use crate::crypto::encrypt_string;
+            let enc = encrypt_string(c, k).map_err(SocialError::Crypto)?;
+            conn.execute(
+                "UPDATE social_account SET encrypted_credentials = ?1 WHERE id = ?2",
+                params![enc, account_id],
+            )
+            .map_err(SocialError::Database)?;
+        } else {
+            log::warn!("[Social::Account] Cannot update credentials without DEK");
+        }
     }
 
     log::info!(

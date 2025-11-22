@@ -801,6 +801,30 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
         )?;
     }
 
+    if current_version < 16 {
+        log::info!("[db] Migrating to version 16 - Insights");
+        tx.execute_batch(
+            "
+            CREATE TABLE IF NOT EXISTS insight (
+                id TEXT PRIMARY KEY,
+                space_id TEXT NOT NULL REFERENCES space(id),
+                title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                insight_type TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                context_json TEXT NOT NULL,
+                suggested_actions_json TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                dismissed INTEGER NOT NULL DEFAULT 0,
+                feedback_useful INTEGER
+            );
+            CREATE INDEX IF NOT EXISTS idx_insight_space ON insight(space_id, dismissed);
+
+            INSERT INTO schema_version (version) VALUES (16);
+            ",
+        )?;
+    }
+
     tx.commit()?;
     log::info!("[db] Migration finished");
     Ok(())

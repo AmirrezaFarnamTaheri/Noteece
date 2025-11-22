@@ -4,7 +4,8 @@
 use super::discovery::{DiscoveredDevice, DiscoveryService};
 use super::mobile_sync::{DeviceInfo, SyncCategory, SyncProtocol, SyncDelta, DeltaOperation};
 use crate::sync_agent::{SyncDelta as DbSyncDelta, SyncOperation as DbSyncOperation};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use std::time::Duration;
 use thiserror::Error;
 use tokio::io::AsyncReadExt;
@@ -80,7 +81,7 @@ impl P2pSync {
 
     /// Start sync with a specific device.
     pub async fn start_sync(&self, device_id: &str) -> Result<(), P2pError> {
-        let mut protocol = self.protocol.lock().map_err(|_| P2pError::Sync("Mutex poisoned".to_string()))?;
+        let mut protocol = self.protocol.lock().await;
 
         // We are syncing all vault categories
         let categories = vec![
@@ -99,7 +100,7 @@ impl P2pSync {
     }
 
     pub async fn initiate_pairing(&self, device_id: &str) -> Result<(), P2pError> {
-        let protocol = self.protocol.lock().map_err(|_| P2pError::Sync("Mutex poisoned".to_string()))?;
+        let protocol = self.protocol.lock().await;
 
         if protocol.is_device_available(device_id) {
              log::info!("[p2p] Device {} is already available/paired.", device_id);

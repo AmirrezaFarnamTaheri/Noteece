@@ -164,6 +164,7 @@ impl CorrelationEngine {
                 let low_mood_days = correlation.metadata.get("low_mood_days")?.as_u64()?;
                 Some(Insight {
                     id: Ulid::new().to_string(),
+                    space_id: None,
                     insight_type: InsightType::HighWorkload,
                     title: "Workload may be affecting well-being".to_string(),
                     description: format!(

@@ -23,9 +23,16 @@ rusqlite = { version = "0.37.0", features = ["bundled-sqlcipher-vendored-openssl
 ulid = { version = "1.2.1", features = ["serde"] }
 zeroize = { version = "1.7", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
+r2d2 = "0.8"
+chrono = "0.4.31"
+log = "0.4.27"
+hex = "0.4.3"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.
 # If you use cargo directly instead of tauri's cli you can use this feature flag to switch between tauri's `dev` and `build` modes.
 # DO NOT REMOVE!!
 custom-protocol = [ "tauri/custom-protocol" ]
+
+[dev-dependencies]
+tempfile = "3.6.0"

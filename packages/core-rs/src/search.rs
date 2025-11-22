@@ -1,6 +1,6 @@
 use crate::db::DbError;
 use crate::note::Note;
-use rusqlite::{Connection, Result};
+use rusqlite::{Connection, Result, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use ulid::Ulid;
 
@@ -226,11 +226,6 @@ pub fn search_all(conn: &Connection, query: &SearchQuery) -> Result<Vec<SearchRe
 }
 
 /// Advanced note search
-///
-/// SECURITY & PERFORMANCE: Does not fetch encrypted_content column to:
-/// - Reduce memory usage and I/O
-/// - Avoid unnecessary exposure of sensitive encrypted data
-/// - Prevent accidental plaintext processing of ciphertext
 fn search_notes_advanced(
     conn: &Connection,
     query: &SearchQuery,
@@ -267,11 +262,6 @@ fn search_notes_advanced(
 
     // Archived filter
     if let Some(archived) = query.filters.archived {
-        // Check if is_archived column exists or use some other indicator.
-        // Assuming no is_archived column exists in `note` table yet based on schema in db.rs.
-        // This might be a placeholder. Skipping for now to avoid error if column doesn't exist.
-        // where_clauses.push("n.is_archived = ?".to_string());
-        // params.push(Box::new(if archived { 1 } else { 0 }));
         log::warn!("[search] Archived filter requested but not implemented for notes");
     }
 
@@ -343,9 +333,6 @@ fn search_tasks_advanced(
 
     // Priority filter
     if let Some(priority) = &query.filters.priority {
-        // Assuming priority is stored as INTEGER in DB but query passes String or Int?
-        // Schema says priority INTEGER. SearchFilters has Option<String>.
-        // We need to parse if necessary.
         if let Ok(p_int) = priority.parse::<i32>() {
              where_clauses.push("t.priority = ?".to_string());
              params.push(Box::new(p_int));
@@ -554,4 +541,82 @@ fn sort_results(results: &mut [SearchResult], sort: &SortOptions) {
             SortDirection::Desc => cmp,
         }
     });
+}
+
+// --- Saved Search ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SavedSearch {
+    pub id: String,
+    pub space_id: Option<String>,
+    pub name: String,
+    pub query: String,
+}
+
+pub fn create_saved_search(conn: &Connection, name: &str, query: &str, space_id: Option<&str>) -> Result<SavedSearch, DbError> {
+    let id = Ulid::new().to_string();
+    conn.execute(
+        "INSERT INTO saved_search (id, space_id, title, query_string, scope) VALUES (?1, ?2, ?3, ?4, 'note')",
+        rusqlite::params![id, space_id, name, query],
+    )?;
+    Ok(SavedSearch {
+        id,
+        space_id: space_id.map(|s| s.to_string()),
+        name: name.to_string(),
+        query: query.to_string(),
+    })
+}
+
+pub fn get_saved_search(conn: &Connection, id: Ulid) -> Result<Option<SavedSearch>, DbError> {
+    let mut stmt = conn.prepare("SELECT id, space_id, title, query_string FROM saved_search WHERE id = ?1")?;
+    let result = stmt.query_row([id.to_string()], |row| {
+        Ok(SavedSearch {
+            id: row.get(0)?,
+            space_id: row.get(1)?,
+            name: row.get(2)?,
+            query: row.get(3)?,
+        })
+    }).optional()?;
+    Ok(result)
+}
+
+pub fn get_saved_searches(conn: &Connection, space_id: Option<&str>) -> Result<Vec<SavedSearch>, DbError> {
+    let mut sql = "SELECT id, space_id, title, query_string FROM saved_search".to_string();
+    let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
+
+    if let Some(sid) = space_id {
+        sql.push_str(" WHERE space_id = ?1");
+        params.push(Box::new(sid.to_string()));
+    }
+
+    let mut stmt = conn.prepare(&sql)?;
+    let params_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|b| b.as_ref()).collect();
+    let rows = stmt.query_map(params_refs.as_slice(), |row| {
+         Ok(SavedSearch {
+            id: row.get(0)?,
+            space_id: row.get(1)?,
+            name: row.get(2)?,
+            query: row.get(3)?,
+        })
+    })?;
+
+    let mut results = Vec::new();
+    for row in rows {
+        results.push(row?);
+    }
+    Ok(results)
+}
+
+pub fn update_saved_search(conn: &Connection, id: Ulid, name: &str, query: &str) -> Result<SavedSearch, DbError> {
+    conn.execute(
+        "UPDATE saved_search SET title = ?1, query_string = ?2 WHERE id = ?3",
+        rusqlite::params![name, query, id.to_string()],
+    )?;
+    // Fetch updated
+    get_saved_search(conn, id)?.ok_or(DbError::Message("Saved search not found after update".to_string()))
+}
+
+pub fn delete_saved_search(conn: &Connection, id: Ulid) -> Result<(), DbError> {
+    conn.execute("DELETE FROM saved_search WHERE id = ?1", [id.to_string()])?;
+    Ok(())
 }

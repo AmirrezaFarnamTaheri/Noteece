@@ -23,6 +23,7 @@ pub enum VaultError {
 
 pub struct Vault {
     pub conn: rusqlite::Connection,
+    pub dek: [u8; 32],
 }
 
 fn apply_sqlcipher_settings(conn: &rusqlite::Connection, dek: &[u8; 32]) -> Result<(), VaultError> {
@@ -134,7 +135,7 @@ pub fn create_vault(path: &str, password: &str) -> Result<Vault, VaultError> {
     }
     debug!("[vault] Vault config file written.");
 
-    Ok(Vault { conn })
+    Ok(Vault { conn, dek })
 }
 
 pub fn unlock_vault(path: &str, password: &str) -> Result<Vault, VaultError> {
@@ -202,5 +203,5 @@ pub fn unlock_vault(path: &str, password: &str) -> Result<Vault, VaultError> {
     )?;
     info!("[vault] Vault unlocked successfully.");
 
-    Ok(Vault { conn })
+    Ok(Vault { conn, dek })
 }
