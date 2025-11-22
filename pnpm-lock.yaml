@@ -21,7 +21,7 @@ importers:
         version: 3.10.1(eslint-plugin-import@2.32.0)(eslint@8.57.1)
       eslint-plugin-import:
         specifier: ^2.29.1
-        version: 2.32.0(@typescript-eslint/parser@8.46.4)(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1)
+        version: 2.32.0(@typescript-eslint/parser@6.21.0)(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1)
       prettier:
         specifier: ^3.2.5
         version: 3.6.2
@@ -278,6 +278,12 @@ importers:
       expo-background-fetch:
         specifier: ~11.6.0
         version: 11.6.0(expo@50.0.21)
+      expo-build-properties:
+        specifier: ^1.0.9
+        version: 1.0.9(expo@50.0.21)
+      expo-camera:
+        specifier: ^17.0.9
+        version: 17.0.9(expo@50.0.21)(react-native@0.73.4)(react@18.2.0)
       expo-crypto:
         specifier: ~12.8.0
         version: 12.8.1(expo@50.0.21)
@@ -293,6 +299,9 @@ importers:
       expo-local-authentication:
         specifier: ^17.0.7
         version: 17.0.7(expo@50.0.21)
+      expo-location:
+        specifier: ^19.0.7
+        version: 19.0.7(expo@50.0.21)
       expo-notifications:
         specifier: ~0.27.0
         version: 0.27.8(expo@50.0.21)
@@ -7796,7 +7805,7 @@ packages:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.3
       eslint: 8.57.1
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.46.4)(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@6.21.0)(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1)
       get-tsconfig: 4.13.0
       is-bun-module: 2.0.0
       stable-hash: 0.0.5
@@ -8407,6 +8416,33 @@ packages:
       expo-task-manager: 11.5.0(expo@50.0.21)
     dev: false
 
+  /expo-build-properties@1.0.9(expo@50.0.21):
+    resolution: {integrity: sha512-2icttCy3OPTk/GWIFt+vwA+0hup53jnmYb7JKRbvNvrrOrz+WblzpeoiaOleI2dYG/vjwpNO8to8qVyKhYJtrQ==}
+    peerDependencies:
+      expo: '*'
+    dependencies:
+      ajv: 8.17.1
+      expo: 50.0.21(@babel/core@7.28.5)(@react-native/babel-preset@0.82.1)(react-native@0.73.4)(react@18.2.0)
+      semver: 7.7.3
+    dev: false
+
+  /expo-camera@17.0.9(expo@50.0.21)(react-native@0.73.4)(react@18.2.0):
+    resolution: {integrity: sha512-KgticPGurqEsaPBIwbG0T6mzAVnqZasDdM/6OoJt5zPh6tWB09+th6cBF1WafIBMPy8AWbfyUQSqQXqOrNJClg==}
+    peerDependencies:
+      expo: '*'
+      react: 18.2.0
+      react-native: '*'
+      react-native-web: '*'
+    peerDependenciesMeta:
+      react-native-web:
+        optional: true
+    dependencies:
+      expo: 50.0.21(@babel/core@7.28.5)(@react-native/babel-preset@0.82.1)(react-native@0.73.4)(react@18.2.0)
+      invariant: 2.2.4
+      react: 18.2.0
+      react-native: 0.73.4(@babel/core@7.28.5)(@babel/preset-env@7.28.5)(react@18.2.0)
+    dev: false
+
   /expo-constants@15.4.6(expo@50.0.21):
     resolution: {integrity: sha512-vizE69dww2Vl0PTWWvDmK0Jo2/J+WzdcMZlA05YEnEYofQuhKxTVsiuipf79mSOmFavt4UQYC1UnzptzKyfmiQ==}
     peerDependencies:
@@ -8504,6 +8540,14 @@ packages:
     dependencies:
       expo: 50.0.21(@babel/core@7.28.5)(@react-native/babel-preset@0.82.1)(react-native@0.73.4)(react@18.2.0)
       invariant: 2.2.4
+    dev: false
+
+  /expo-location@19.0.7(expo@50.0.21):
+    resolution: {integrity: sha512-YNkh4r9E6ECbPkBCAMG5A5yHDgS0pw+Rzyd0l2ZQlCtjkhlODB55nMCKr5CZnUI0mXTkaSm8CwfoCO8n2MpYfg==}
+    peerDependencies:
+      expo: '*'
+    dependencies:
+      expo: 50.0.21(@babel/core@7.28.5)(@react-native/babel-preset@0.82.1)(react-native@0.73.4)(react@18.2.0)
     dev: false
 
   /expo-modules-autolinking@1.10.3:
