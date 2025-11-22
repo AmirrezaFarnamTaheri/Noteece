@@ -39,7 +39,6 @@ pub mod social;
 pub mod space;
 pub mod srs;
 pub mod sync;
-pub mod sync_agent;
 pub mod tag;
 pub mod task;
 pub mod temporal_graph;

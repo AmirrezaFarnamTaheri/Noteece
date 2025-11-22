@@ -256,6 +256,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bloomfilter"
+version = "3.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f6d7f06817e48ea4e17532fa61bc4e8b9a101437f0623f69d2ea54284f3a817"
+dependencies = [
+ "getrandom 0.2.16",
+ "siphasher 1.0.1",
+]
+
+[[package]]
 name = "brotli"
 version = "7.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -584,6 +594,7 @@ dependencies = [
  "async-trait",
  "base32",
  "base64 0.21.7",
+ "bloomfilter",
  "chacha20poly1305",
  "chrono",
  "env_logger",
@@ -594,6 +605,7 @@ dependencies = [
  "hkdf",
  "ical",
  "ics",
+ "lazy_static",
  "log",
  "mdns-sd",
  "pbkdf2",
