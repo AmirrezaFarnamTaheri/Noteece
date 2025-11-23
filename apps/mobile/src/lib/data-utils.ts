@@ -199,7 +199,7 @@ export async function clearAllData(): Promise<{
       await SecureStore.deleteItemAsync("biometric_vault_data");
     } catch {
       // SecureStore might not have data, that's okay
-      console.log("No SecureStore data to clear");
+      // console.log("No SecureStore data to clear");
     }
 
     return { success: true };

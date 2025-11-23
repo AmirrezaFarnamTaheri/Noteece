@@ -47,7 +47,17 @@ pub mod vault;
 pub mod versioning;
 pub mod weekly_review;
 
-use log;
+// Re-exports to satisfy dependencies that expect them at top level or in sync_agent
+pub mod sync_agent {
+    pub use crate::sync::engine::SyncAgent;
+    pub use crate::sync::models::{
+        DeviceInfo, DeviceType, SyncDelta, SyncOperation, SyncConflict, SyncStats, SyncTask, SyncHistoryEntry
+    };
+    pub use crate::sync::conflict::{ConflictResolution, ConflictType};
+    pub use crate::sync::db_init::init_sync_tables;
+}
+
+pub use sync::engine::SyncAgent;
 
 /// Initialize the library, specifically the logger.
 /// This should be called once at the start of the application.

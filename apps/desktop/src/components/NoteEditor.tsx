@@ -7,7 +7,7 @@ import { useNotes, useFormTemplates } from '../hooks/useQueries';
 import LexicalEditor from './LexicalEditor';
 import classes from './NoteEditor.module.css';
 import { logger } from '@/utils/logger';
-import { IconPlus, IconTemplate, IconTrash, IconAlignJustified, IconMaximize, IconMinimize } from '@tabler/icons-react';
+import { IconPlus, IconTemplate, IconTrash, IconAlignJustified, IconMinimize } from '@tabler/icons-react';
 
 const NoteEditor: React.FC = () => {
   const theme = useMantineTheme();
@@ -145,7 +145,7 @@ const NoteEditor: React.FC = () => {
         }}
       >
         <Group justify="space-between" mb="md">
-          <Text fw={800} size="sm" c="dimmed" tt="uppercase" ls={1}>
+          <Text fw={800} size="sm" c="dimmed" tt="uppercase">
             All Notes
           </Text>
           <Tooltip label="Create New Note">

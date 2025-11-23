@@ -825,6 +825,9 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
         )?;
     }
 
+    // Run Personal Modes Initialization (Idempotent)
+    crate::personal_modes::init_personal_modes_tables(&tx)?;
+
     tx.commit()?;
     log::info!("[db] Migration finished");
     Ok(())

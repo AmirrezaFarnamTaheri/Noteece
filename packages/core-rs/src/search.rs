@@ -261,7 +261,7 @@ fn search_notes_advanced(
     }
 
     // Archived filter
-    if let Some(archived) = query.filters.archived {
+    if let Some(_archived) = query.filters.archived {
         log::warn!("[search] Archived filter requested but not implemented for notes");
     }
 

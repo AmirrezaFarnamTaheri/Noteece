@@ -1,66 +1,7 @@
+use crate::project::models::*;
 use crate::task::Task;
 use rusqlite::{Connection, OptionalExtension, Result};
-use serde::{Deserialize, Serialize};
-use thiserror::Error;
 use ulid::Ulid;
-
-#[derive(Error, Debug)]
-pub enum ProjectError {
-    #[error("Rusqlite error: {0}")]
-    Rusqlite(#[from] rusqlite::Error),
-    #[error("Invalid data: {0}")]
-    InvalidData(String),
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Project {
-    pub id: String,
-    pub space_id: String,
-    pub title: String,
-    pub goal_outcome: Option<String>,
-    pub status: String,
-    pub confidence: Option<i64>,
-    pub start_at: Option<i64>,
-    pub target_end_at: Option<i64>,
-    pub tasks: Vec<Task>,
-    pub milestones: Vec<ProjectMilestone>,
-    pub updated_at: i64,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ProjectMilestone {
-    pub id: String,
-    pub project_id: String,
-    pub title: String,
-    pub due_at: Option<i64>,
-    pub status: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ProjectDependency {
-    pub project_id: String,
-    pub depends_on_project_id: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ProjectRisk {
-    pub id: String,
-    pub project_id: String,
-    pub description: String,
-    pub impact: String,
-    pub likelihood: String,
-    pub mitigation: String,
-    pub owner_person_id: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ProjectUpdate {
-    pub id: String,
-    pub project_id: String,
-    pub when_at: i64,
-    pub health: String,
-    pub summary: String,
-}
 
 pub fn delete_project(conn: &mut Connection, id: &str) -> Result<(), ProjectError> {
     log::info!("[project] Deleting project with id: {}", id);
@@ -71,13 +12,22 @@ pub fn delete_project(conn: &mut Connection, id: &str) -> Result<(), ProjectErro
     tx.execute("DELETE FROM project_milestone WHERE project_id = ?1", [id])?;
     tx.execute("DELETE FROM project_risk WHERE project_id = ?1", [id])?;
     tx.execute("DELETE FROM project_update WHERE project_id = ?1", [id])?;
-    tx.execute("DELETE FROM project_dependency WHERE project_id = ?1 OR depends_on_project_id = ?1", [id])?;
+    tx.execute(
+        "DELETE FROM project_dependency WHERE project_id = ?1 OR depends_on_project_id = ?1",
+        [id],
+    )?;
 
     // Nullify project_id in Tasks
-    tx.execute("UPDATE task SET project_id = NULL WHERE project_id = ?1", [id])?;
+    tx.execute(
+        "UPDATE task SET project_id = NULL WHERE project_id = ?1",
+        [id],
+    )?;
 
     // Nullify project_id in Time Entries
-    tx.execute("UPDATE time_entry SET project_id = NULL WHERE project_id = ?1", [id])?;
+    tx.execute(
+        "UPDATE time_entry SET project_id = NULL WHERE project_id = ?1",
+        [id],
+    )?;
 
     match tx.execute("DELETE FROM project WHERE id = ?1", [id]) {
         Ok(_) => {
@@ -132,10 +82,7 @@ pub fn create_project(
     }
 }
 
-pub fn update_project(
-    conn: &Connection,
-    project: &Project,
-) -> Result<(), ProjectError> {
+pub fn update_project(conn: &Connection, project: &Project) -> Result<(), ProjectError> {
     log::info!("[project] Updating project with id: {}", project.id);
     let now = chrono::Utc::now().timestamp();
     match conn.execute(
@@ -195,7 +142,6 @@ pub fn get_projects_in_space(
             });
 
         if let Ok(task_id_str) = row.get::<_, String>(9) {
-             // Use ? propagation where possible, handle ULID parsing safely
              if let Ok(task_id) = Ulid::from_string(&task_id_str) {
                  let space_id = Ulid::from_string(&project.space_id).unwrap_or_default();
                  let project_id_ulid = Ulid::from_string(&project.id).unwrap_or_default();
@@ -218,9 +164,7 @@ pub fn get_projects_in_space(
                          recur_rule: None,
                          context: None,
                          area: None,
-                         updated_at: 0, // Task data here is minimal, but we should fetch real updated_at if needed.
-                                        // Since this is a joined view for project summary, default 0 is acceptable for now
-                                        // or we should join task.updated_at as well.
+                         updated_at: 0,
                      });
                  }
              }
@@ -235,11 +179,6 @@ pub fn get_projects_in_space(
                     due_at: None,
                     status: "active".to_string(),
                 });
-            } else {
-                log::warn!(
-                    "[project] Skipping invalid milestone data for project {}",
-                    project.id
-                );
             }
         }
 
@@ -307,7 +246,7 @@ pub fn get_project(conn: &Connection, id: &str) -> Result<Option<Project>, Proje
                         recur_rule: None,
                         context: None,
                         area: None,
-                        updated_at: 0, // See above
+                        updated_at: 0,
                     });
                 }
             }
@@ -322,11 +261,6 @@ pub fn get_project(conn: &Connection, id: &str) -> Result<Option<Project>, Proje
                     due_at: None,
                     status: "active".to_string(),
                 });
-            } else {
-                log::warn!(
-                    "[project] Skipping invalid milestone data for project {}",
-                    project.id
-                );
             }
         }
 

@@ -61,7 +61,7 @@ export async function enableSocialBiometric(): Promise<boolean> {
 
     await AsyncStorage.setItem(SOCIAL_BIOMETRIC_ENABLED_KEY, "true");
     await AsyncStorage.removeItem(SOCIAL_SESSION_UNLOCKED_KEY);
-    console.log("[SocialSecurity] Biometric lock enabled for social");
+    // console.log("[SocialSecurity] Biometric lock enabled for social");
     return true;
   } catch (error) {
     console.error("[SocialSecurity] Failed to enable biometric:", error);
@@ -76,7 +76,7 @@ export async function disableSocialBiometric(): Promise<boolean> {
   try {
     await AsyncStorage.removeItem(SOCIAL_BIOMETRIC_ENABLED_KEY);
     await AsyncStorage.removeItem(SOCIAL_SESSION_UNLOCKED_KEY);
-    console.log("[SocialSecurity] Biometric lock disabled for social");
+    // console.log("[SocialSecurity] Biometric lock disabled for social");
     return true;
   } catch (error) {
     console.error("[SocialSecurity] Failed to disable biometric:", error);
@@ -121,7 +121,7 @@ export async function authenticateForSocial(): Promise<boolean> {
     if (result.success) {
       // Mark session as unlocked
       await AsyncStorage.setItem(SOCIAL_SESSION_UNLOCKED_KEY, "true");
-      console.log("[SocialSecurity] Social session unlocked");
+      // console.log("[SocialSecurity] Social session unlocked");
       return true;
     }
 
@@ -139,7 +139,7 @@ export async function authenticateForSocial(): Promise<boolean> {
 export async function lockSocialSession(): Promise<void> {
   try {
     await AsyncStorage.removeItem(SOCIAL_SESSION_UNLOCKED_KEY);
-    console.log("[SocialSecurity] Social session locked");
+    // console.log("[SocialSecurity] Social session locked");
   } catch (error) {
     console.error("[SocialSecurity] Failed to lock session:", error);
   }

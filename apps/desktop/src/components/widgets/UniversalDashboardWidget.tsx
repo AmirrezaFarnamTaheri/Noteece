@@ -4,6 +4,7 @@ import { IconHeartRateMonitor, IconMusic, IconSocial, IconListCheck, IconActivit
 import { useAsync } from '../../hooks/useAsync';
 import { invoke } from '@tauri-apps/api/tauri';
 import { useStore } from '../../store';
+import { useEffect } from 'react';
 
 interface DashboardStats {
   health: {
@@ -27,10 +28,17 @@ interface DashboardStats {
 export const UniversalDashboardWidget: React.FC = () => {
   const { activeSpaceId } = useStore();
 
-  // Fetch stats
-  const { data: stats, loading } = useAsync<DashboardStats>(async () => {
-    if (!activeSpaceId) return null;
-    // Fallback to mock data if command fails or returns null in dev
+  // useAsync doesn't support dependency array for re-execution automatically on prop change in this version.
+  // We need to manually trigger execute when activeSpaceId changes.
+  const { data: stats, execute, loading } = useAsync<DashboardStats>(async () => {
+    if (!activeSpaceId) {
+       return {
+        health: { metrics_count: 0, latest_metric: null },
+        music: { track_count: 0, playlist_count: 0 },
+        social: { posts_count: 0, platforms_count: 0 },
+        tasks: { pending_count: 0, completed_count: 0 },
+      };
+    }
     try {
       return await invoke('get_dashboard_stats_cmd', { spaceId: activeSpaceId });
     } catch (error) {
@@ -42,10 +50,14 @@ export const UniversalDashboardWidget: React.FC = () => {
         tasks: { pending_count: 8, completed_count: 15 },
       };
     }
-  }, [activeSpaceId]);
+  }, { immediate: false }); // Don't auto-exec on mount, we handle it below
 
-  // Calculate an arbitrary "Day Score" based on task completion and activity
-  // This creates a gamified feel
+  useEffect(() => {
+      if (activeSpaceId) {
+          execute();
+      }
+  }, [activeSpaceId, execute]);
+
   const pending = stats?.tasks.pending_count || 0;
   const completed = stats?.tasks.completed_count || 0;
   const total = pending + completed;

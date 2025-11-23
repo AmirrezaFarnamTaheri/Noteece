@@ -225,11 +225,191 @@ export interface DeviceInfo {
 export interface DiscoveredDevice {
   device_id: string;
   device_name: string;
-  device_type: "Desktop" | "Mobile" | "Tablet"; // sync/mobile_sync.rs uses this enum
+  device_type: "Desktop" | "Mobile" | "Tablet";
   ip_address: string;
   sync_port: number;
   os_version: string;
   last_seen: string; // DateTime serialized
+}
+
+export type ConflictType = "UpdateUpdate" | "DeleteUpdate" | "UpdateDelete";
+
+export enum ConflictResolution {
+  UseLocal = "UseLocal",
+  UseRemote = "UseRemote",
+  Merge = "Merge",
+}
+
+export interface SyncConflict {
+  entity_type: string;
+  entity_id: string;
+  local_version: number[]; // Vec<u8> serializes to number array
+  remote_version: number[];
+  conflict_type: ConflictType;
+  space_id?: string;
+}
+
+// --- New types for Personal Modes & Social ---
+
+export interface HealthMetric {
+  id: string;
+  space_id: string;
+  metric_type: string;
+  value: number;
+  unit: string;
+  notes?: string;
+  recorded_at: number;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface Goal {
+  id: string;
+  space_id: string;
+  title: string;
+  description?: string;
+  target: number;
+  current: number;
+  unit: string;
+  category: string;
+  start_date: number;
+  target_date?: number;
+  is_completed: boolean;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface Habit {
+  id: string;
+  space_id: string;
+  title: string;
+  frequency: string;
+  is_archived: boolean;
+  created_at: number;
+}
+
+export interface Transaction {
+  id: string;
+  space_id: string;
+  transaction_type: string;
+  amount: number;
+  currency: string;
+  category: string;
+  account_id: string;
+  date: number;
+  description?: string;
+  created_at: number;
+}
+
+export interface Recipe {
+  id: string;
+  space_id: string;
+  note_id: string;
+  name: string;
+  rating: number;
+  difficulty: string;
+  created_at: number;
+}
+
+export interface Trip {
+  id: string;
+  space_id: string;
+  note_id: string;
+  name: string;
+  destination: string;
+  start_date: number;
+  end_date: number;
+  created_at: number;
+}
+
+export interface GraphSnapshot {
+  space_id: string;
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  metrics: GraphMetrics;
+  captured_at: number;
+}
+
+export interface GraphNode {
+  id: string;
+  label: string;
+  node_type: string;
+  centrality: number;
+}
+
+export interface GraphEdge {
+  source: string;
+  target: string;
+  weight: number;
+}
+
+export interface GraphMetrics {
+  node_count: number;
+  edge_count: number;
+  density: number;
+  avg_clustering: number;
+}
+
+export interface GraphMilestone {
+  note_id: string;
+  title: string;
+  date: number;
+  importance: number;
+  reason: string;
+}
+
+export interface SpaceUser {
+  user_id: string;
+  role: string;
+  joined_at: number;
+}
+
+export interface Role {
+  name: string;
+  permissions: string[];
+}
+
+export interface WebViewSession {
+  id: string;
+  account_id: string;
+  cookies: string;
+  user_agent: string;
+}
+
+export interface AnalyticsOverview {
+  total_posts: number;
+  total_engagement: number;
+  top_platform: string;
+}
+
+export interface BackupMetadata {
+  id: string;
+  space_id?: string;
+  created_at: number;
+  size_bytes: number;
+  file_count: number;
+  encrypted: boolean;
+}
+
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  created_at: number;
+}
+
+export interface Session {
+  token: string;
+  expires_at: number;
+  user_id: string;
+}
+
+export interface SearchResult {
+  entity_type: string;
+  entity_id: string;
+  title?: string;
+  snippet?: string;
+  score: number;
 }
 
 // Social Media Suite types

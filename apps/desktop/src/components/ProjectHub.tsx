@@ -12,10 +12,11 @@ import {
   ActionIcon,
   Progress,
   Menu,
-  Tabs,
   Paper,
   useMantineTheme,
   Stack,
+  ThemeIcon,
+  MantineTheme,
 } from '@mantine/core';
 import {
   IconPlus,
@@ -26,12 +27,12 @@ import {
   IconList,
   IconSortAscending,
   IconFolder,
+  IconLayoutGrid,
 } from '@tabler/icons-react';
-import { useNavigate } from 'react-router-dom';
-import { useProjects } from '../../hooks/useQueries'; // Adjusted path for consistency
-import { useStore } from '../../store'; // Adjusted path
+import { useNavigate, NavigateFunction } from 'react-router-dom';
+import { useProjects } from '../hooks/useQueries';
+import { useStore } from '../store';
 import { Project } from '@noteece/types';
-import TaskBoard from './TaskBoard'; // Ensure this component exists or is mocked
 
 const ProjectHub: React.FC = () => {
   const theme = useMantineTheme();
@@ -109,7 +110,6 @@ const ProjectHub: React.FC = () => {
 
         {viewMode === 'list' && (
           <Paper withBorder radius="lg" style={{ backgroundColor: theme.colors.dark[8], overflow: 'hidden' }}>
-             {/* Simple List View Implementation */}
              <Stack gap={0}>
                 {filteredProjects.map(project => (
                     <Group key={project.id} p="md" style={{ borderBottom: `1px solid ${theme.colors.dark[6]}` }} justify="space-between">
@@ -130,7 +130,6 @@ const ProjectHub: React.FC = () => {
         )}
 
         {viewMode === 'kanban' && (
-            // Placeholder for Kanban view, reusing TaskBoard logic or similar if applicable
             <Text c="dimmed" ta="center" py="xl">Kanban view for projects coming soon...</Text>
         )}
       </Stack>
@@ -138,7 +137,12 @@ const ProjectHub: React.FC = () => {
   );
 };
 
-const SegmentedControlWithIcons = ({ viewMode, setViewMode }: any) => (
+interface SegmentedControlProps {
+    viewMode: 'grid' | 'list' | 'kanban';
+    setViewMode: (mode: 'grid' | 'list' | 'kanban') => void;
+}
+
+const SegmentedControlWithIcons: React.FC<SegmentedControlProps> = ({ viewMode, setViewMode }) => (
     <Group gap={4}>
         <ActionIcon
             variant={viewMode === 'grid' ? 'filled' : 'subtle'}
@@ -167,7 +171,14 @@ const SegmentedControlWithIcons = ({ viewMode, setViewMode }: any) => (
     </Group>
 );
 
-const ProjectCard = ({ project, navigate, theme, getStatusColor }: any) => (
+interface ProjectCardProps {
+    project: Project;
+    navigate: NavigateFunction;
+    theme: MantineTheme;
+    getStatusColor: (status: string) => string;
+}
+
+const ProjectCard: React.FC<ProjectCardProps> = ({ project, navigate, theme, getStatusColor }) => (
   <Card
     padding="lg"
     radius="lg"
@@ -177,7 +188,7 @@ const ProjectCard = ({ project, navigate, theme, getStatusColor }: any) => (
         cursor: 'pointer',
         transition: 'transform 0.2s ease, border-color 0.2s ease',
     }}
-    className="project-card-hover" // Add CSS class for hover
+    className="project-card-hover"
     onClick={() => navigate(`/main/projects/${project.id}`)}
   >
     <Group justify="space-between" mb="xs">
@@ -207,7 +218,6 @@ const ProjectCard = ({ project, navigate, theme, getStatusColor }: any) => (
 
     <Group justify="space-between" mt="md" align="center">
       <Text size="xs" c="dimmed">Confidence: {project.confidence || 0}%</Text>
-      {/* Mock Progress */}
       <Progress value={project.confidence || 30} size="sm" w={100} color={getStatusColor(project.status)} />
     </Group>
   </Card>

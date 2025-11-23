@@ -3,13 +3,11 @@ import {
   Title,
   Group,
   Stack,
-  Paper,
   Text,
   useMantineTheme,
   LoadingOverlay,
   Container,
   Button,
-  SegmentedControl,
   Card,
   ThemeIcon,
 } from '@mantine/core';
@@ -19,7 +17,6 @@ import {
   IconClock,
   IconLayoutGrid,
   IconList,
-  IconX,
   IconEye,
   IconEyeOff,
   IconChartPie,
@@ -31,29 +28,20 @@ import classes from './Dashboard.module.css';
 import { Activity } from './activity';
 import { BarChart } from './bar-chart';
 import { StatsCard } from './stats-card';
-import { Upcoming } from './upcoming';
-import { AchievementBadgesWidget } from './widgets/AchievementBadgesWidget';
-import { BookmarksWidget } from './widgets/BookmarksWidget';
-import { CalendarWidget } from './widgets/CalendarWidget';
 import DueTodayWidget from './widgets/DueTodayWidget';
 import { FocusTimer } from './widgets/FocusTimer';
 import { GoalsTrackerWidget } from './widgets/GoalsTrackerWidget';
 import HabitsTracker from './widgets/HabitsTracker';
-import { HealthWidget } from './widgets/HealthWidget';
 import InsightsWidget from './widgets/InsightsWidget';
-import MoodTracker from './widgets/MoodTracker';
 import { MusicWidget } from './widgets/MusicWidget';
 import NotesHeatmap from './widgets/NotesHeatmap';
-import { NotesStatsWidget } from './widgets/NotesStatsWidget';
-import ProjectTimeline from './widgets/ProjectTimeline';
 import { QuickCapture } from './widgets/QuickCapture';
 import { RecentProjects } from './widgets/RecentProjects';
-import { SocialWidget } from './widgets/SocialWidget';
 import { TagsCloud } from './widgets/TagsCloud';
 import { TasksByPriority } from './widgets/TasksByPriority';
 import TimeTrackingWidget from './widgets/TimeTrackingWidget';
 import { UniversalDashboardWidget } from './widgets/UniversalDashboardWidget';
-import { WeeklyProgress } from './widgets/WeeklyProgress';
+import { CalendarWidget } from './widgets/CalendarWidget';
 
 const Dashboard: React.FC = () => {
   const theme = useMantineTheme();
@@ -63,7 +51,6 @@ const Dashboard: React.FC = () => {
 
   const completedProjects = projects.filter((project) => project.status === 'done').length;
   const inProgressProjects = projects.filter((project) => project.status === 'active').length;
-  const archivedProjects = projects.filter((project) => project.status === 'archived').length;
 
   return (
     <Container
@@ -128,6 +115,7 @@ const Dashboard: React.FC = () => {
                 title="Total Projects"
                 value={projects.length.toString()}
                 color="indigo"
+                backgroundColor="rgba(76, 110, 245, 0.1)"
               />
             </Grid.Col>
             <Grid.Col span={{ base: 6, md: 3 }}>
@@ -136,6 +124,7 @@ const Dashboard: React.FC = () => {
                 title="Completed"
                 value={completedProjects.toString()}
                 color="teal"
+                backgroundColor="rgba(20, 177, 166, 0.1)"
               />
             </Grid.Col>
             <Grid.Col span={{ base: 6, md: 3 }}>
@@ -144,6 +133,7 @@ const Dashboard: React.FC = () => {
                 title="In Progress"
                 value={inProgressProjects.toString()}
                 color="violet"
+                backgroundColor="rgba(132, 94, 247, 0.1)"
               />
             </Grid.Col>
             <Grid.Col span={{ base: 6, md: 3 }}>
@@ -152,6 +142,7 @@ const Dashboard: React.FC = () => {
                 title="Completion Rate"
                 value={`${projects.length > 0 ? Math.round((completedProjects / projects.length) * 100) : 0}%`}
                 color="cyan"
+                backgroundColor="rgba(34, 184, 207, 0.1)"
               />
             </Grid.Col>
           </Grid>

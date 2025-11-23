@@ -1,4 +1,4 @@
-use crate::caldav::client::{get_caldav_account, delete_caldav_account};
+use crate::caldav::client::get_caldav_account;
 use crate::caldav::error::CalDavError;
 use crate::caldav::models::{
     CalDavEvent, ConflictResolution, SyncConflict, SyncDirection, SyncResult,

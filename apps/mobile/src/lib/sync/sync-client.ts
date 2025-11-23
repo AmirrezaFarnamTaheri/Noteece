@@ -75,9 +75,9 @@ export class SyncClient {
       }, scanDurationMs);
 
       this.zeroconf.scan(
-        (type = "noteece-sync"),
-        (protocol = "tcp"),
-        (domain = "local."),
+        "noteece-sync",
+        "tcp",
+        "local.",
       );
 
       this.zeroconf.on("resolved", (data: any) => {
