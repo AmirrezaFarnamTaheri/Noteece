@@ -242,7 +242,7 @@ fn get_all_space_user_permissions(
     for (user_id, permission) in role_perms {
         permissions_map
             .entry(user_id)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(permission);
     }
 
@@ -262,7 +262,7 @@ fn get_all_space_user_permissions(
         .collect::<Result<Vec<_>, _>>()?;
 
     for (user_id, permission, granted) in custom_perms {
-        let perms = permissions_map.entry(user_id).or_insert_with(Vec::new);
+        let perms = permissions_map.entry(user_id).or_default();
         if granted == 1 && !perms.contains(&permission) {
             perms.push(permission);
         } else if granted == 0 {

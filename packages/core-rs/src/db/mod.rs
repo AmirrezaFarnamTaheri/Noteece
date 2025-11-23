@@ -58,7 +58,7 @@ pub fn get_sync_port(conn: &Connection) -> Result<u16, DbError> {
     let port = get_setting_int(conn, "sync_port", 8765)?;
 
     // Validate port is within valid TCP range
-    if port < 1 || port > 65535 {
+    if !(1..=65535).contains(&port) {
         return Err(DbError::Message(format!(
             "Invalid sync_port value: {} (must be between 1 and 65535)",
             port

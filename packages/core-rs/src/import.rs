@@ -173,7 +173,7 @@ pub fn export_to_json(
     }
 
     let json = serde_json::to_string_pretty(&export_data)
-        .map_err(|e| ImportError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+        .map_err(|e| ImportError::Io(std::io::Error::other(e)))?;
     Ok(json)
 }
 
@@ -262,7 +262,7 @@ pub fn export_to_zip(
         item_count: 0, // Would count all items
     };
     let metadata_json = serde_json::to_string_pretty(&metadata)
-        .map_err(|e| ImportError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+        .map_err(|e| ImportError::Io(std::io::Error::other(e)))?;
     zip.start_file("metadata.json", options)?;
     write!(zip, "{}", metadata_json)?;
 
@@ -464,7 +464,7 @@ fn export_tasks_json(conn: &Connection, space_id: Ulid) -> Result<String, Import
     }
 
     serde_json::to_string_pretty(&tasks)
-        .map_err(|e| ImportError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))
+        .map_err(|e| ImportError::Io(std::io::Error::other(e)))
 }
 
 fn export_projects_json(conn: &Connection, space_id: Ulid) -> Result<String, ImportError> {
@@ -492,7 +492,7 @@ fn export_projects_json(conn: &Connection, space_id: Ulid) -> Result<String, Imp
     }
 
     serde_json::to_string_pretty(&projects)
-        .map_err(|e| ImportError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))
+        .map_err(|e| ImportError::Io(std::io::Error::other(e)))
 }
 
 fn sanitize_filename(name: &str) -> String {

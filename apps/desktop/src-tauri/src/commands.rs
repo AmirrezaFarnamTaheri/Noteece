@@ -747,10 +747,10 @@ pub fn search_ocr_text_cmd(db: State<DbConnection>, query: String) -> Result<Vec
 }
 
 #[tauri::command]
-pub fn process_ocr_job_cmd(db: State<DbConnection>, job_id: String) -> Result<(), String> {
+pub fn process_ocr_job_cmd(db: State<DbConnection>, job_id: String, image_path: String) -> Result<(), String> {
     with_db!(db, conn, {
         let jid = job_id;
-        core_rs::ocr::process_ocr_job(&conn, &jid, Path::new("placeholder"), None).map_err(|e| e.to_string())?;
+        core_rs::ocr::process_ocr_job(&conn, &jid, Path::new(&image_path), None).map_err(|e| e.to_string())?;
         Ok(())
     })
 }

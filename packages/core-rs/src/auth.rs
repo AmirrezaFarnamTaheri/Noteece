@@ -311,7 +311,7 @@ fn generate_session_token() -> String {
     let mut token_bytes = [0u8; 32];
     use rand::Rng;
     rand::thread_rng().fill(&mut token_bytes);
-    base64::engine::general_purpose::STANDARD.encode(&token_bytes)
+    base64::engine::general_purpose::STANDARD.encode(token_bytes)
 }
 
 #[cfg(test)]

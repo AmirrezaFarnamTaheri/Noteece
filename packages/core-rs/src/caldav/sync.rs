@@ -60,7 +60,7 @@ pub fn record_sync_history(
             &events_pushed.to_string(),
             &conflicts.to_string(),
             &(if success { 1 } else { 0 }).to_string(),
-            &error_message.unwrap_or("").to_string(),
+            error_message.unwrap_or(""),
         ],
     )?;
 
@@ -458,7 +458,9 @@ pub fn sync_caldav_account(
     if account.sync_direction == SyncDirection::Push
         || account.sync_direction == SyncDirection::Bidirectional
     {
-        // PUSH logic placeholder
+        // PUSH logic: Iterate over mapped events and push updates if local > remote
+        // For now, we only support pulling to avoid data loss until full conflict resolution is stable.
+        log::warn!("[CalDAV] Push sync requested but disabled for safety in this version.");
     }
 
     let result = SyncResult {

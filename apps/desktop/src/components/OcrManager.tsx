@@ -144,10 +144,15 @@ export function OcrManager() {
       // Generate a unique blob ID
       const blobId = `blob_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
-      const result = await invoke<string>('process_ocr_cmd', {
-        blobId,
+      // In a real app, you would first upload/store the blob and get a real blob ID.
+      // Here we assume the image path is available locally to the backend.
+      // For this implementation, we queue and process immediately.
+
+      await invoke('queue_ocr_cmd', { blobId });
+
+      await invoke('process_ocr_job_cmd', {
+        jobId: blobId, // Using blobId as jobId for simplicity in this flow
         imagePath: filePath,
-        language: language || undefined,
       });
 
       // Get the status to verify completion before notifying

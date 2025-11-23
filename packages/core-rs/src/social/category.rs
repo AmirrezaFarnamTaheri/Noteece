@@ -42,7 +42,7 @@ pub fn create_category(
     let now = Utc::now().timestamp_millis();
     let filters_json = filters
         .as_ref()
-        .map(|f| serde_json::to_string(f))
+        .map(serde_json::to_string)
         .transpose()?;
 
     conn.execute(

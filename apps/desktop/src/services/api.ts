@@ -46,9 +46,19 @@ import {
   Session,
 } from '@noteece/types';
 
+// Type definitions for DashboardStats which was missing in imports
+export interface DashboardStats {
+  totalNotes: number;
+  totalTasks: number;
+  completedTasks: number;
+  upcomingDeadlines: Task[];
+  recentActivity: Note[];
+  projectProgress: Array<{ id: string; title: string; progress: number }>;
+}
+
 // Dashboard & Analytics
 export const getAnalyticsData = (): Promise<AnalyticsData> => invoke('get_analytics_data_cmd', {});
-export const getDashboardStats = (spaceId: string): Promise<any> => invoke('get_dashboard_stats_cmd', { spaceId }); // DashboardStats type needed
+export const getDashboardStats = (spaceId: string): Promise<DashboardStats> => invoke('get_dashboard_stats_cmd', { spaceId });
 
 // Forms
 export const getFormTemplatesForSpace = (spaceId: string): Promise<FormTemplate[]> =>
