@@ -336,8 +336,19 @@ fn test_record_sync_history() {
     let (conn, _dir, space_id) = setup_db();
     let agent = SyncAgent::new("device_1".to_string(), "Device 1".to_string(), 8765);
 
+    use core_rs::sync::history::SyncRecordParams;
+    let params = SyncRecordParams {
+        device_id: "device_1",
+        space_id: &space_id,
+        direction: "bidirectional",
+        entities_pushed: 10,
+        entities_pulled: 5,
+        conflicts: 0,
+        success: true,
+        error_message: None,
+    };
     agent
-        .record_sync_history(&conn, &space_id, "bidirectional", 10, 5, 0, true, None)
+        .record_sync_history(&conn, params)
         .expect("Failed to record sync history");
 
     // Verify record created
@@ -359,17 +370,18 @@ fn test_get_sync_history() {
 
     // Record multiple sync events
     for i in 0..10 {
+        let params = core_rs::sync::history::SyncRecordParams {
+            device_id: "device_1",
+            space_id: &space_id,
+            direction: if i % 2 == 0 { "push" } else { "pull" },
+            entities_pushed: i as u32,
+            entities_pulled: (i + 1) as u32,
+            conflicts: 0,
+            success: true,
+            error_message: None,
+        };
         agent
-            .record_sync_history(
-                &conn,
-                &space_id,
-                if i % 2 == 0 { "push" } else { "pull" },
-                i,
-                i + 1,
-                0,
-                true,
-                None,
-            )
+            .record_sync_history(&conn, params)
             .expect("Failed to record history");
     }
 
@@ -605,8 +617,18 @@ fn test_bulk_sync_history_query() {
 
     // Insert 100 sync records
     for _ in 0..100 {
+        let params = core_rs::sync::history::SyncRecordParams {
+            device_id: "device_1",
+            space_id: &space_id,
+            direction: "bidirectional",
+            entities_pushed: 1,
+            entities_pulled: 1,
+            conflicts: 0,
+            success: true,
+            error_message: None,
+        };
         agent
-            .record_sync_history(&conn, &space_id, "bidirectional", 1, 1, 0, true, None)
+            .record_sync_history(&conn, params)
             .expect("Failed to record history");
     }
 

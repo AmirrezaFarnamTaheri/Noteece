@@ -99,7 +99,8 @@ describe('API Service', () => {
   });
 
   it('updateTask calls correct command', async () => {
-    const task = { id: 't1' } as any;
+    // Partial mock of Task to avoid needing full object
+    const task = { id: 't1', title: 'Test' } as unknown as import('@noteece/types').Task;
     await api.updateTask(task);
     expect(mockInvoke).toHaveBeenCalledWith('update_task_cmd', { task });
   });

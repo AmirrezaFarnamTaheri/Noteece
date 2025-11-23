@@ -299,7 +299,7 @@ fn generate_summary(content: &str) -> Option<String> {
     }
 
     // Try to find first sentence
-    if let Some(end) = content.find(|c| c == '.' || c == '!' || c == '?') {
+    if let Some(end) = content.find(['.', '!', '?']) {
         let summary = &content[..=end];
         if summary.len() <= 150 {
             return Some(summary.to_string());

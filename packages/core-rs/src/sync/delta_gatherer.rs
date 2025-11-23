@@ -1,4 +1,4 @@
-use rusqlite::{Connection, OptionalExtension, Result};
+use rusqlite::{Connection, Result};
 use serde_json::json;
 use std::collections::HashMap;
 use ulid::Ulid;

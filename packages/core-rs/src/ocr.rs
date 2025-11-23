@@ -49,14 +49,18 @@ impl OcrStatus {
             OcrStatus::Unknown => "unknown",
         }
     }
+}
 
-    pub fn from_str(s: &str) -> Self {
+impl std::str::FromStr for OcrStatus {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "pending" => OcrStatus::Pending,
-            "processing" => OcrStatus::Processing,
-            "completed" => OcrStatus::Completed,
-            "failed" => OcrStatus::Failed,
-            _ => OcrStatus::Unknown,
+            "pending" => Ok(OcrStatus::Pending),
+            "processing" => Ok(OcrStatus::Processing),
+            "completed" => Ok(OcrStatus::Completed),
+            "failed" => Ok(OcrStatus::Failed),
+            _ => Ok(OcrStatus::Unknown),
         }
     }
 }
@@ -176,7 +180,7 @@ pub fn get_ocr_status(conn: &Connection, blob_id: &str) -> Result<Option<OcrResu
             blob_id: row.get(1)?,
             extracted_text: row.get(2)?,
             confidence: row.get(3)?,
-            status: OcrStatus::from_str(&status_str),
+            status: status_str.parse().unwrap_or(OcrStatus::Unknown),
             processed_at: row.get(5)?,
             error_message: row.get(6)?,
             created_at: row.get(7)?,
@@ -251,7 +255,7 @@ pub fn search_ocr_text(
             blob_id: row.get(1)?,
             extracted_text: row.get(2)?,
             confidence: row.get(3)?,
-            status: OcrStatus::from_str(&status_str),
+            status: status_str.parse().unwrap_or(OcrStatus::Unknown),
             processed_at: row.get(5)?,
             error_message: row.get(6)?,
             created_at: row.get(7)?,

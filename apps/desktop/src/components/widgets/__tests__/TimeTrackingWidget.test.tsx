@@ -3,6 +3,7 @@ import { MantineProvider } from '@mantine/core';
 import TimeTrackingWidget from '../TimeTrackingWidget';
 import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { TimeEntry } from '@noteece/types';
 
 // Mock store
 jest.mock('../../../store', () => ({
@@ -12,10 +13,10 @@ jest.mock('../../../store', () => ({
 }));
 
 // Mock API calls
-const mockGetRunningEntries = jest.fn();
-const mockGetRecentTimeEntries = jest.fn();
-const mockStopTimeEntry = jest.fn();
-const mockDeleteTimeEntry = jest.fn();
+const mockGetRunningEntries = jest.fn<Promise<TimeEntry[]>, [string]>();
+const mockGetRecentTimeEntries = jest.fn<Promise<TimeEntry[]>, [string, number]>();
+const mockStopTimeEntry = jest.fn<Promise<TimeEntry>, [string]>();
+const mockDeleteTimeEntry = jest.fn<Promise<void>, [string]>();
 
 jest.mock('../../../services/api', () => ({
   getRunningEntries: (spaceId: string) => mockGetRunningEntries(spaceId),

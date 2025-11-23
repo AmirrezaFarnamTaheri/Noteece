@@ -2,9 +2,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MantineProvider } from '@mantine/core';
 import { RecentProjects } from '../RecentProjects';
 import '@testing-library/jest-dom';
+import { Project } from '@noteece/types';
 
 // Mock API
-const mockGetAllProjectsInSpace = jest.fn();
+const mockGetAllProjectsInSpace = jest.fn<Promise<Project[]>, [string]>();
 jest.mock('../../../services/api', () => ({
   getAllProjectsInSpace: (id: string) => mockGetAllProjectsInSpace(id),
 }));

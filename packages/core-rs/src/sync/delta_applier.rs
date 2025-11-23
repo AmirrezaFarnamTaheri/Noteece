@@ -1,5 +1,4 @@
 use rusqlite::{Connection, OptionalExtension, Result};
-use std::collections::HashMap;
 
 use crate::sync::error::SyncError;
 use crate::sync::models::{SyncDelta, SyncOperation};

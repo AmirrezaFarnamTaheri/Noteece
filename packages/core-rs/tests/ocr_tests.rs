@@ -22,7 +22,7 @@ fn test_ocr_status_enum() {
     for status in statuses {
         let s = status.as_str();
         assert!(!s.is_empty());
-        let parsed = OcrStatus::from_str(s);
+        let parsed: OcrStatus = s.parse().unwrap();
         assert_eq!(parsed, status);
     }
 }

@@ -173,15 +173,19 @@ pub fn disable_health_mode(conn: &Connection, space_id: &str) -> Result<(), DbEr
 
 // --- Health Logic ---
 
+pub struct CreateHealthMetricParams<'a> {
+    pub space_id: Ulid,
+    pub metric_type: &'a str,
+    pub value: f64,
+    pub unit: &'a str,
+    pub recorded_at: i64,
+    pub notes: Option<&'a str>,
+    pub _id: Option<Ulid>,
+}
+
 pub fn create_health_metric(
     conn: &Connection,
-    space_id: Ulid,
-    metric_type: &str,
-    value: f64,
-    unit: &str,
-    recorded_at: i64,
-    notes: Option<&str>,
-    _id: Option<Ulid>,
+    params: CreateHealthMetricParams,
 ) -> Result<HealthMetric, DbError> {
     let id = Ulid::new().to_string();
     let now = chrono::Utc::now().timestamp();
@@ -191,24 +195,24 @@ pub fn create_health_metric(
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?8)",
         rusqlite::params![
             &id,
-            space_id.to_string(),
-            metric_type,
-            value,
-            unit,
-            notes,
-            recorded_at,
+            params.space_id.to_string(),
+            params.metric_type,
+            params.value,
+            params.unit,
+            params.notes,
+            params.recorded_at,
             now
         ],
     )?;
 
     Ok(HealthMetric {
         id,
-        space_id: space_id.to_string(),
-        metric_type: metric_type.to_string(),
-        value,
-        unit: unit.to_string(),
-        notes: notes.map(|s| s.to_string()),
-        recorded_at,
+        space_id: params.space_id.to_string(),
+        metric_type: params.metric_type.to_string(),
+        value: params.value,
+        unit: params.unit.to_string(),
+        notes: params.notes.map(|s| s.to_string()),
+        recorded_at: params.recorded_at,
         created_at: now,
         updated_at: now,
     })
@@ -290,16 +294,20 @@ pub fn get_health_metrics_since(
 
 // --- Finance Logic ---
 
+pub struct CreateTransactionParams<'a> {
+    pub space_id: Ulid,
+    pub transaction_type: &'a str,
+    pub amount: f64,
+    pub currency: &'a str,
+    pub category: &'a str,
+    pub account_id: &'a str,
+    pub date: i64,
+    pub description: Option<&'a str>,
+}
+
 pub fn create_transaction(
     conn: &Connection,
-    space_id: Ulid,
-    transaction_type: &str,
-    amount: f64,
-    currency: &str,
-    category: &str,
-    account_id: &str,
-    date: i64,
-    description: Option<&str>,
+    params: CreateTransactionParams,
 ) -> Result<Transaction, DbError> {
     let id = Ulid::new().to_string();
     let now = chrono::Utc::now().timestamp();
@@ -309,28 +317,28 @@ pub fn create_transaction(
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
         rusqlite::params![
             &id,
-            space_id.to_string(),
-            transaction_type,
-            amount,
-            currency,
-            category,
-            account_id,
-            date,
-            description,
+            params.space_id.to_string(),
+            params.transaction_type,
+            params.amount,
+            params.currency,
+            params.category,
+            params.account_id,
+            params.date,
+            params.description,
             now
         ],
     )?;
 
     Ok(Transaction {
         id,
-        space_id: space_id.to_string(),
-        transaction_type: transaction_type.to_string(),
-        amount,
-        currency: currency.to_string(),
-        category: category.to_string(),
-        account_id: account_id.to_string(),
-        date,
-        description: description.map(|s| s.to_string()),
+        space_id: params.space_id.to_string(),
+        transaction_type: params.transaction_type.to_string(),
+        amount: params.amount,
+        currency: params.currency.to_string(),
+        category: params.category.to_string(),
+        account_id: params.account_id.to_string(),
+        date: params.date,
+        description: params.description.map(|s| s.to_string()),
         created_at: now,
     })
 }

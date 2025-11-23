@@ -6,7 +6,7 @@
     "name": "Amirreza Farnam Taheri",
     "email": "taheri.farnam@gmail.com"
   },
-  "license": "GPL-3.0",
+  "license": "AGPL-3.0",
   "private": true,
   "scripts": {
     "build": "turbo build",

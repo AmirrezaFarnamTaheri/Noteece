@@ -116,7 +116,7 @@ pub enum EntityType {
     All,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct SearchFilters {
     pub space_id: Option<Ulid>,
     pub tags: Vec<String>,
@@ -162,20 +162,6 @@ pub struct SearchResult {
     pub metadata: serde_json::Value,
 }
 
-impl Default for SearchFilters {
-    fn default() -> Self {
-        SearchFilters {
-            space_id: None,
-            tags: vec![],
-            date_from: None,
-            date_to: None,
-            status: None,
-            priority: None,
-            completed: None,
-            archived: None,
-        }
-    }
-}
 
 impl Default for SortOptions {
     fn default() -> Self {

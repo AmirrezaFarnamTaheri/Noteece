@@ -470,30 +470,34 @@ pub fn delete_time_entry(conn: &Connection, entry_id: Ulid) -> Result<(), DbErro
     Ok(())
 }
 
+pub struct CreateManualEntryParams {
+    pub space_id: Ulid,
+    pub task_id: Option<Ulid>,
+    pub project_id: Option<Ulid>,
+    pub note_id: Option<Ulid>,
+    pub description: Option<String>,
+    pub started_at: i64,
+    pub duration_seconds: i64,
+}
+
 /// Manually create a completed time entry
 pub fn create_manual_time_entry(
     conn: &Connection,
-    space_id: Ulid,
-    task_id: Option<Ulid>,
-    project_id: Option<Ulid>,
-    note_id: Option<Ulid>,
-    description: Option<String>,
-    started_at: i64,
-    duration_seconds: i64,
+    params: CreateManualEntryParams,
 ) -> Result<TimeEntry, DbError> {
     log::info!("[time_tracking] Creating manual time entry");
 
-    let ended_at = started_at + duration_seconds;
+    let ended_at = params.started_at + params.duration_seconds;
     let entry = TimeEntry {
         id: Ulid::new(),
-        space_id,
-        task_id,
-        project_id,
-        note_id,
-        description,
-        started_at,
+        space_id: params.space_id,
+        task_id: params.task_id,
+        project_id: params.project_id,
+        note_id: params.note_id,
+        description: params.description,
+        started_at: params.started_at,
         ended_at: Some(ended_at),
-        duration_seconds: Some(duration_seconds),
+        duration_seconds: Some(params.duration_seconds),
         is_running: false,
     };
 

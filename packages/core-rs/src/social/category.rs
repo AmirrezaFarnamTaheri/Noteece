@@ -40,10 +40,7 @@ pub fn create_category(
 
     let id = Ulid::new().to_string();
     let now = Utc::now().timestamp_millis();
-    let filters_json = filters
-        .as_ref()
-        .map(|f| serde_json::to_string(f))
-        .transpose()?;
+    let filters_json = filters.as_ref().map(serde_json::to_string).transpose()?;
 
     conn.execute(
         "INSERT INTO social_category (
