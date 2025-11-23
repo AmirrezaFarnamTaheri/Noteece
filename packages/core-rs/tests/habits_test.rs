@@ -18,13 +18,7 @@ fn test_habit_crud_and_logs() {
     let space_id = space::create_space(&mut conn, "Test Space").unwrap();
 
     // Create Habit
-    let habit = habits::create_habit(
-        &conn,
-        space_id,
-        "Exercise",
-        "daily",
-    )
-    .unwrap();
+    let habit = habits::create_habit(&conn, space_id, "Exercise", "daily").unwrap();
 
     assert_eq!(habit.name, "Exercise");
     assert_eq!(habit.streak, 0);

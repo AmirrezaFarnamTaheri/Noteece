@@ -35,7 +35,8 @@ export async function getSharedItems(): Promise<SharedItem[]> {
     return [];
   } catch (error) {
     // Silently fail in production, log in dev if needed
-    if (__DEV__) console.error("[ShareHandler] Failed to get shared items:", error);
+    if (__DEV__)
+      console.error("[ShareHandler] Failed to get shared items:", error);
     return [];
   }
 }
@@ -71,7 +72,8 @@ export async function clearSharedItems(): Promise<void> {
       await clearSharedItemsAndroid();
     }
   } catch (error) {
-    if (__DEV__) console.error("[ShareHandler] Failed to clear shared items:", error);
+    if (__DEV__)
+      console.error("[ShareHandler] Failed to clear shared items:", error);
   }
 }
 
@@ -127,7 +129,8 @@ export async function processSharedItems(): Promise<number> {
 
     return items.length;
   } catch (error) {
-    if (__DEV__) console.error("[ShareHandler] Failed to process shared items:", error);
+    if (__DEV__)
+      console.error("[ShareHandler] Failed to process shared items:", error);
     return 0;
   }
 }
@@ -141,7 +144,8 @@ export async function getPendingItems(): Promise<any[]> {
     const data = await AsyncStorage.getItem(pendingKey);
     return data ? JSON.parse(data) : [];
   } catch (error) {
-    if (__DEV__) console.error("[ShareHandler] Failed to get pending items:", error);
+    if (__DEV__)
+      console.error("[ShareHandler] Failed to get pending items:", error);
     return [];
   }
 }
@@ -168,7 +172,8 @@ export async function markItemsProcessed(timestamps: number[]): Promise<void> {
 
     await AsyncStorage.setItem(pendingKey, JSON.stringify(updated));
   } catch (error) {
-    if (__DEV__) console.error("[ShareHandler] Failed to mark items processed:", error);
+    if (__DEV__)
+      console.error("[ShareHandler] Failed to mark items processed:", error);
   }
 }
 
@@ -192,7 +197,8 @@ export async function cleanupProcessedItems(): Promise<void> {
 
     await AsyncStorage.setItem(pendingKey, JSON.stringify(filtered));
   } catch (error) {
-    if (__DEV__) console.error("[ShareHandler] Failed to cleanup items:", error);
+    if (__DEV__)
+      console.error("[ShareHandler] Failed to cleanup items:", error);
   }
 }
 

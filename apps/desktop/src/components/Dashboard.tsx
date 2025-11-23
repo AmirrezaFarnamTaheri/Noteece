@@ -58,9 +58,9 @@ const Dashboard: React.FC = () => {
       className={classes.container}
       p="xl"
       style={{
-          backgroundColor: theme.colors.dark[9],
-          minHeight: '100vh',
-          backgroundImage: 'radial-gradient(circle at 90% 10%, rgba(132, 94, 247, 0.08) 0%, transparent 40%)'
+        backgroundColor: theme.colors.dark[9],
+        minHeight: '100vh',
+        backgroundImage: 'radial-gradient(circle at 90% 10%, rgba(132, 94, 247, 0.08) 0%, transparent 40%)',
       }}
     >
       <LoadingOverlay visible={isLoading} overlayProps={{ blur: 2 }} />
@@ -94,8 +94,8 @@ const Dashboard: React.FC = () => {
         {!focusMode && (
           <Grid gutter="lg">
             <Grid.Col span={{ base: 12, lg: 8 }}>
-                {/* Universal Widget (Merged Health/Stats) */}
-               <UniversalDashboardWidget />
+              {/* Universal Widget (Merged Health/Stats) */}
+              <UniversalDashboardWidget />
             </Grid.Col>
             <Grid.Col span={{ base: 12, lg: 4 }}>
               <Stack gap="lg" h="100%">
@@ -154,15 +154,15 @@ const Dashboard: React.FC = () => {
           <Grid.Col span={{ base: 12, md: focusMode ? 6 : 4 }}>
             <Stack gap="lg">
               <Card withBorder radius="lg" p="md" style={{ backgroundColor: theme.colors.dark[8] }}>
-                  <Group justify="space-between" mb="md">
-                      <Group gap="xs">
-                          <ThemeIcon color="violet" variant="light" radius="md">
-                              <IconLayoutGrid size={18} />
-                          </ThemeIcon>
-                          <Text fw={700}>Priority Tasks</Text>
-                      </Group>
+                <Group justify="space-between" mb="md">
+                  <Group gap="xs">
+                    <ThemeIcon color="violet" variant="light" radius="md">
+                      <IconLayoutGrid size={18} />
+                    </ThemeIcon>
+                    <Text fw={700}>Priority Tasks</Text>
                   </Group>
-                  <TasksByPriority />
+                </Group>
+                <TasksByPriority />
               </Card>
 
               <DueTodayWidget />

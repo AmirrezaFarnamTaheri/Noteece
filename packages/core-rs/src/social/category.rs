@@ -535,9 +535,12 @@ mod tests {
         let conn = setup_test_db();
 
         // Create multiple categories
-        create_category(&conn, "test_space", "Work", Some("#FF0000"), None, None).expect("Create failed");
-        create_category(&conn, "test_space", "Personal", Some("#00FF00"), None, None).expect("Create failed");
-        create_category(&conn, "test_space", "News", None, Some("📰"), None).expect("Create failed");
+        create_category(&conn, "test_space", "Work", Some("#FF0000"), None, None)
+            .expect("Create failed");
+        create_category(&conn, "test_space", "Personal", Some("#00FF00"), None, None)
+            .expect("Create failed");
+        create_category(&conn, "test_space", "News", None, Some("📰"), None)
+            .expect("Create failed");
 
         let categories = get_categories(&conn, "test_space").expect("Failed to get categories");
         assert_eq!(categories.len(), 3);
@@ -560,24 +563,31 @@ mod tests {
     fn test_update_category() {
         let conn = setup_test_db();
 
-        let category = create_category(&conn, "test_space", "Original", None, None, None).expect("Create failed");
+        let category = create_category(&conn, "test_space", "Original", None, None, None)
+            .expect("Create failed");
 
         // Update name
         update_category(&conn, &category.id, Some("Updated"), None, None).expect("Update failed");
 
-        let retrieved = get_category(&conn, &category.id).expect("Get failed").expect("Not found");
+        let retrieved = get_category(&conn, &category.id)
+            .expect("Get failed")
+            .expect("Not found");
         assert_eq!(retrieved.name, "Updated");
 
         // Update color
         update_category(&conn, &category.id, None, Some("#0000FF"), None).expect("Update failed");
 
-        let retrieved = get_category(&conn, &category.id).expect("Get failed").expect("Not found");
+        let retrieved = get_category(&conn, &category.id)
+            .expect("Get failed")
+            .expect("Not found");
         assert_eq!(retrieved.color, Some("#0000FF".to_string()));
 
         // Update icon
         update_category(&conn, &category.id, None, None, Some("🎯")).expect("Update failed");
 
-        let retrieved = get_category(&conn, &category.id).expect("Get failed").expect("Not found");
+        let retrieved = get_category(&conn, &category.id)
+            .expect("Get failed")
+            .expect("Not found");
         assert_eq!(retrieved.icon, Some("🎯".to_string()));
 
         // Update multiple at once
@@ -590,7 +600,9 @@ mod tests {
         )
         .expect("Update failed");
 
-        let retrieved = get_category(&conn, &category.id).expect("Get failed").expect("Not found");
+        let retrieved = get_category(&conn, &category.id)
+            .expect("Get failed")
+            .expect("Not found");
         assert_eq!(retrieved.name, "Final");
         assert_eq!(retrieved.color, Some("#FFFFFF".to_string()));
         assert_eq!(retrieved.icon, Some("✨".to_string()));
@@ -600,16 +612,21 @@ mod tests {
     fn test_delete_category() {
         let conn = setup_test_db();
 
-        let category = create_category(&conn, "test_space", "ToDelete", None, None, None).expect("Create failed");
+        let category = create_category(&conn, "test_space", "ToDelete", None, None, None)
+            .expect("Create failed");
 
         // Verify it exists
-        assert!(get_category(&conn, &category.id).expect("Get failed").is_some());
+        assert!(get_category(&conn, &category.id)
+            .expect("Get failed")
+            .is_some());
 
         // Delete it
         delete_category(&conn, &category.id).expect("Delete failed");
 
         // Verify it's gone
-        assert!(get_category(&conn, &category.id).expect("Get failed").is_none());
+        assert!(get_category(&conn, &category.id)
+            .expect("Get failed")
+            .is_none());
     }
 
     // ===== Post-Category Assignment Tests =====
@@ -635,8 +652,10 @@ mod tests {
         .expect("Insert post failed");
 
         // Create categories
-        let cat1 = create_category(&conn, "test_space", "Category 1", None, None, None).expect("Create cat1 failed");
-        let cat2 = create_category(&conn, "test_space", "Category 2", None, None, None).expect("Create cat2 failed");
+        let cat1 = create_category(&conn, "test_space", "Category 1", None, None, None)
+            .expect("Create cat1 failed");
+        let cat2 = create_category(&conn, "test_space", "Category 2", None, None, None)
+            .expect("Create cat2 failed");
 
         // Assign categories to post
         assign_category(&conn, "post1", &cat1.id, "user").expect("Assign cat1 failed");
@@ -670,7 +689,8 @@ mod tests {
         )
         .expect("Insert post failed");
 
-        let category = create_category(&conn, "test_space", "Test", None, None, None).expect("Create cat failed");
+        let category = create_category(&conn, "test_space", "Test", None, None, None)
+            .expect("Create cat failed");
 
         // Assign twice
         assign_category(&conn, "post1", &category.id, "user").expect("First assign failed");
@@ -700,15 +720,26 @@ mod tests {
         )
         .expect("Insert post failed");
 
-        let category = create_category(&conn, "test_space", "Test", None, None, None).expect("Create cat failed");
+        let category = create_category(&conn, "test_space", "Test", None, None, None)
+            .expect("Create cat failed");
 
         // Assign and verify
         assign_category(&conn, "post1", &category.id, "user").expect("Assign failed");
-        assert_eq!(get_post_categories(&conn, "post1").expect("Get failed").len(), 1);
+        assert_eq!(
+            get_post_categories(&conn, "post1")
+                .expect("Get failed")
+                .len(),
+            1
+        );
 
         // Remove and verify
         remove_category(&conn, "post1", &category.id).expect("Remove failed");
-        assert_eq!(get_post_categories(&conn, "post1").expect("Get failed").len(), 0);
+        assert_eq!(
+            get_post_categories(&conn, "post1")
+                .expect("Get failed")
+                .len(),
+            0
+        );
     }
 
     // ===== Auto-Categorization Tests =====
@@ -763,7 +794,8 @@ mod tests {
         .expect("Create cat failed");
 
         // Run auto-categorization
-        let categorized = auto_categorize_posts(&conn, "test_space").expect("Auto-categorize failed");
+        let categorized =
+            auto_categorize_posts(&conn, "test_space").expect("Auto-categorize failed");
         assert_eq!(categorized, 1); // Only Twitter post should be categorized
 
         // Verify the Twitter post was categorized
@@ -808,10 +840,12 @@ mod tests {
             authors: None,
             keywords: Some(vec!["work".to_string(), "project".to_string()]),
         };
-        create_category(&conn, "test_space", "Work", None, None, Some(filters)).expect("Create cat failed");
+        create_category(&conn, "test_space", "Work", None, None, Some(filters))
+            .expect("Create cat failed");
 
         // Run auto-categorization
-        let categorized = auto_categorize_posts(&conn, "test_space").expect("Auto-categorize failed");
+        let categorized =
+            auto_categorize_posts(&conn, "test_space").expect("Auto-categorize failed");
         assert_eq!(categorized, 1); // Only post with "work" keyword
 
         // Verify post1 was categorized
@@ -849,10 +883,12 @@ mod tests {
             authors: None,
             keywords: Some(vec!["C++".to_string(), "programming_tutorial".to_string()]),
         };
-        create_category(&conn, "test_space", "Tech", None, None, Some(filters)).expect("Create cat failed");
+        create_category(&conn, "test_space", "Tech", None, None, Some(filters))
+            .expect("Create cat failed");
 
         // Run auto-categorization - should handle % and _ escaping
-        let categorized = auto_categorize_posts(&conn, "test_space").expect("Auto-categorize failed");
+        let categorized =
+            auto_categorize_posts(&conn, "test_space").expect("Auto-categorize failed");
         assert_eq!(categorized, 1);
 
         let post_categories = get_post_categories(&conn, "post1").expect("Get cat failed");
@@ -883,13 +919,16 @@ mod tests {
             authors: None,
             keywords: None,
         };
-        create_category(&conn, "test_space", "Twitter", None, None, Some(filters)).expect("Create cat failed");
+        create_category(&conn, "test_space", "Twitter", None, None, Some(filters))
+            .expect("Create cat failed");
 
         // Run auto-categorization twice
-        let categorized1 = auto_categorize_posts(&conn, "test_space").expect("Auto-categorize 1 failed");
+        let categorized1 =
+            auto_categorize_posts(&conn, "test_space").expect("Auto-categorize 1 failed");
         assert_eq!(categorized1, 1);
 
-        let categorized2 = auto_categorize_posts(&conn, "test_space").expect("Auto-categorize 2 failed");
+        let categorized2 =
+            auto_categorize_posts(&conn, "test_space").expect("Auto-categorize 2 failed");
         assert_eq!(categorized2, 0); // No new assignments
 
         // Post should still have only one category

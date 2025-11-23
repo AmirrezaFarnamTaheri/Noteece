@@ -1,8 +1,8 @@
-use rusqlite::Connection;
 use crate::sync::error::SyncError;
 use crate::sync::models::{SyncHistoryEntry, SyncStats};
-use ulid::Ulid;
+use rusqlite::Connection;
 use rusqlite::OptionalExtension;
+use ulid::Ulid;
 
 pub struct SyncHistory;
 
@@ -92,7 +92,7 @@ impl SyncHistory {
                 SUM(conflicts_detected) as conflicts_total,
                 SUM(entities_pushed + entities_pulled) as total_entities
              FROM sync_history
-             WHERE space_id = ?1"
+             WHERE space_id = ?1",
         )?;
 
         let stats = stmt.query_row([space_id], |row| {

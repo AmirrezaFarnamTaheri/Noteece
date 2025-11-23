@@ -1,7 +1,7 @@
 use core_rs::db;
 use core_rs::space;
-use core_rs::time_tracking;
 use core_rs::task;
+use core_rs::time_tracking;
 use rusqlite::Connection;
 use tempfile::tempdir;
 use ulid::Ulid;
@@ -35,15 +35,18 @@ fn test_manual_time_entry_calculation() {
         None,
         Some("Manual Entry".to_string()),
         start_time,
-        duration
-    ).unwrap();
+        duration,
+    )
+    .unwrap();
 
     assert_eq!(entry.started_at, start_time);
     assert_eq!(entry.duration_seconds, Some(duration));
     assert_eq!(entry.ended_at, Some(start_time + duration));
     assert_eq!(entry.is_running, false);
 
-    let retrieved = time_tracking::get_time_entry(&conn, entry.id).unwrap().unwrap();
+    let retrieved = time_tracking::get_time_entry(&conn, entry.id)
+        .unwrap()
+        .unwrap();
     assert_eq!(retrieved.ended_at, Some(start_time + duration));
 }
 
@@ -64,8 +67,9 @@ fn test_manual_time_entry_constraints() {
         None,
         Some("Negative Duration".to_string()),
         start_time,
-        duration
-    ).unwrap();
+        duration,
+    )
+    .unwrap();
 
     assert_eq!(entry.ended_at, Some(500));
 
@@ -79,7 +83,7 @@ fn test_manual_time_entry_constraints() {
         None,
         None,
         start_time,
-        3600
+        3600,
     );
 
     // Should fail due to FK constraint

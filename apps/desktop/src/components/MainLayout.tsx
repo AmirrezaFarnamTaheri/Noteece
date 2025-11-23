@@ -124,9 +124,23 @@ const MainLayout: React.FC = () => {
         >
           <Group justify="space-between" align="center" h="100%">
             <Group gap="sm" style={{ cursor: 'pointer' }} onClick={() => navigate('/main')}>
-              <Image src="/logo.svg" w={32} h={32} alt="Noteece Logo" style={{ filter: 'drop-shadow(0 0 8px rgba(132, 94, 247, 0.5))' }} />
+              <Image
+                src="/logo.svg"
+                w={32}
+                h={32}
+                alt="Noteece Logo"
+                style={{ filter: 'drop-shadow(0 0 8px rgba(132, 94, 247, 0.5))' }}
+              />
               <Box>
-                <Title order={4} style={{ lineHeight: 1, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--mantine-color-gray-0)' }}>
+                <Title
+                  order={4}
+                  style={{
+                    lineHeight: 1,
+                    fontWeight: 800,
+                    letterSpacing: '-0.5px',
+                    color: 'var(--mantine-color-gray-0)',
+                  }}
+                >
                   Noteece
                 </Title>
                 <Text size="8px" c="dimmed" fw={700} tt="uppercase" mt={2} style={{ letterSpacing: '2px' }}>
@@ -162,8 +176,8 @@ const MainLayout: React.FC = () => {
                 radius="md"
                 leftSection={<IconPlus size={14} />}
                 style={{
-                    boxShadow: '0 4px 12px rgba(132, 94, 247, 0.3)',
-                    transition: 'transform 0.2s ease',
+                  boxShadow: '0 4px 12px rgba(132, 94, 247, 0.3)',
+                  transition: 'transform 0.2s ease',
                 }}
               >
                 Daily Note
@@ -195,7 +209,15 @@ const MainLayout: React.FC = () => {
             <Stack gap="lg" pt="sm">
               {navLinkGroups.map((group) => (
                 <Stack key={group.title} gap={4}>
-                  <Text size="10px" fw={800} c="dimmed" tt="uppercase" pl="xs" mb={4} style={{ opacity: 0.7, letterSpacing: '1px' }}>
+                  <Text
+                    size="10px"
+                    fw={800}
+                    c="dimmed"
+                    tt="uppercase"
+                    pl="xs"
+                    mb={4}
+                    style={{ opacity: 0.7, letterSpacing: '1px' }}
+                  >
                     {group.title}
                   </Text>
                   {group.links.map((link) => (
@@ -221,11 +243,11 @@ const MainLayout: React.FC = () => {
                           }
                           styles={{
                             root: {
-                                borderRadius: '8px',
-                                '&[data-active]': {
-                                    backgroundColor: 'rgba(132, 94, 247, 0.1)',
-                                }
-                            }
+                              borderRadius: '8px',
+                              '&[data-active]': {
+                                backgroundColor: 'rgba(132, 94, 247, 0.1)',
+                              },
+                            },
                           }}
                         />
                       )}

@@ -60,7 +60,17 @@ fn test_social_account_lifecycle() {
     assert_eq!(creds, "token");
 
     // Test Update
-    update_social_account(&conn, &account.id, Some(false), None, None, None, None, None).unwrap();
+    update_social_account(
+        &conn,
+        &account.id,
+        Some(false),
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
+    .unwrap();
     let updated = get_social_account(&conn, &account.id).unwrap().unwrap();
     assert_eq!(updated.enabled, false);
 

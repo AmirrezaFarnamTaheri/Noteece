@@ -1,10 +1,10 @@
 use core_rs::db::migrate;
-use core_rs::sync_agent::{SyncAgent, ConflictResolution, SyncDelta, SyncOperation};
+use core_rs::sync_agent::{ConflictResolution, SyncAgent, SyncDelta, SyncOperation};
 use rusqlite::Connection;
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tempfile::tempdir;
 use ulid::Ulid;
-use std::collections::HashMap;
 
 fn setup_db() -> (Arc<Mutex<Connection>>, tempfile::TempDir) {
     let dir = tempdir().unwrap();
@@ -24,10 +24,12 @@ fn test_sync_conflict_resolution_use_local() {
 
     // Setup: Create Space and Note
     let space_id = Ulid::new().to_string();
-    conn_guard.execute(
-        "INSERT INTO space (id, name) VALUES (?1, ?2)",
-        rusqlite::params![space_id, "Test Space"]
-    ).unwrap();
+    conn_guard
+        .execute(
+            "INSERT INTO space (id, name) VALUES (?1, ?2)",
+            rusqlite::params![space_id, "Test Space"],
+        )
+        .unwrap();
 
     let note_id = Ulid::new().to_string();
     let now = chrono::Utc::now().timestamp();
@@ -50,30 +52,38 @@ fn test_sync_conflict_resolution_use_local() {
     };
 
     // Apply deltas
-    let conflicts = agent.apply_deltas(&mut conn_guard, vec![delta], &[]).unwrap();
+    let conflicts = agent
+        .apply_deltas(&mut conn_guard, vec![delta], &[])
+        .unwrap();
 
     assert_eq!(conflicts.len(), 1);
     let conflict = &conflicts[0];
     assert_eq!(conflict.entity_id, note_id);
 
     // Resolve using local
-    agent.resolve_conflict(&conn_guard, conflict, ConflictResolution::UseLocal, &[]).unwrap();
+    agent
+        .resolve_conflict(&conn_guard, conflict, ConflictResolution::UseLocal, &[])
+        .unwrap();
 
     // Verify local content remains
-    let content: String = conn_guard.query_row(
-        "SELECT content_md FROM note WHERE id = ?1",
-        [&note_id],
-        |row| row.get(0)
-    ).unwrap();
+    let content: String = conn_guard
+        .query_row(
+            "SELECT content_md FROM note WHERE id = ?1",
+            [&note_id],
+            |row| row.get(0),
+        )
+        .unwrap();
 
     assert_eq!(content, "Local Content");
 
     // Verify conflict marked resolved
-    let resolved: i32 = conn_guard.query_row(
-        "SELECT resolved FROM sync_conflict WHERE entity_id = ?1",
-        [&conflict.entity_id],
-        |row| row.get(0)
-    ).unwrap();
+    let resolved: i32 = conn_guard
+        .query_row(
+            "SELECT resolved FROM sync_conflict WHERE entity_id = ?1",
+            [&conflict.entity_id],
+            |row| row.get(0),
+        )
+        .unwrap();
 
     assert_eq!(resolved, 1);
 }

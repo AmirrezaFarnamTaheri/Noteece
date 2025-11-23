@@ -10,6 +10,40 @@ interface HealthMetric {
   unit: string;
 }
 
+const getIcon = (type: string) => {
+  switch (type) {
+    case 'steps': {
+      return <IconFlame size={20} />;
+    }
+    case 'water_intake': {
+      return <IconDroplet size={20} />;
+    }
+    case 'sleep_hours': {
+      return <IconZzz size={20} />;
+    }
+    default: {
+      return <IconHeartbeat size={20} />;
+    }
+  }
+};
+
+const getColor = (type: string) => {
+  switch (type) {
+    case 'steps': {
+      return 'orange';
+    }
+    case 'water_intake': {
+      return 'cyan';
+    }
+    case 'sleep_hours': {
+      return 'indigo';
+    }
+    default: {
+      return 'red';
+    }
+  }
+};
+
 export const HealthWidget = () => {
   const { activeSpaceId } = useStore();
   const [metrics, setMetrics] = useState<HealthMetric[]>([]);
@@ -17,8 +51,9 @@ export const HealthWidget = () => {
 
   useEffect(() => {
     if (activeSpaceId) {
-      loadMetrics();
+      void loadMetrics();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSpaceId]);
 
   const loadMetrics = async () => {
@@ -28,14 +63,14 @@ export const HealthWidget = () => {
       const data = await invoke<HealthMetric[]>('get_health_metrics_cmd', {
         spaceId: activeSpaceId,
         metricType: null,
-        limit: 20 // Get recent 20 and filter in frontend for latest unique
+        limit: 20, // Get recent 20 and filter in frontend for latest unique
       });
 
       // Simple dedupe to get latest per type
       const unique: Record<string, HealthMetric> = {};
-      data.forEach(m => {
-          if (!unique[m.metric_type]) unique[m.metric_type] = m;
-      });
+      for (const m of data) {
+        if (!unique[m.metric_type]) unique[m.metric_type] = m;
+      }
       setMetrics(Object.values(unique));
     } catch (error) {
       console.error('Failed to load health metrics:', error);
@@ -44,31 +79,21 @@ export const HealthWidget = () => {
     }
   };
 
-  const getIcon = (type: string) => {
-    switch (type) {
-      case 'steps': return <IconFlame size={20} />;
-      case 'water_intake': return <IconDroplet size={20} />;
-      case 'sleep_hours': return <IconZzz size={20} />;
-      default: return <IconHeartbeat size={20} />;
-    }
-  };
-
-  const getColor = (type: string) => {
-    switch (type) {
-      case 'steps': return 'orange';
-      case 'water_intake': return 'cyan';
-      case 'sleep_hours': return 'indigo';
-      default: return 'red';
-    }
-  };
-
   // Mock data if empty
-  const displayMetrics = metrics.length > 0 ? metrics : [
-      { metric_type: 'steps', value: 0, unit: 'steps' },
-      { metric_type: 'sleep_hours', value: 0, unit: 'hrs' }
-  ];
+  const displayMetrics =
+    metrics.length > 0
+      ? metrics
+      : [
+          { metric_type: 'steps', value: 0, unit: 'steps' },
+          { metric_type: 'sleep_hours', value: 0, unit: 'hrs' },
+        ];
 
-  if (loading) return <Center h={100}><Loader size="sm" /></Center>;
+  if (loading)
+    return (
+      <Center h={100}>
+        <Loader size="sm" />
+      </Center>
+    );
 
   return (
     <Paper withBorder p="md" radius="md">
@@ -87,15 +112,24 @@ export const HealthWidget = () => {
                 {getIcon(metric.metric_type)}
               </ThemeIcon>
               <div>
-                <Text size="sm" fw={600}>{metric.metric_type.replace('_', ' ')}</Text>
-                <Text size="xs" c="dimmed">{metric.value} {metric.unit}</Text>
+                <Text size="sm" fw={600}>
+                  {metric.metric_type.replace('_', ' ')}
+                </Text>
+                <Text size="xs" c="dimmed">
+                  {metric.value} {metric.unit}
+                </Text>
               </div>
             </Group>
             <RingProgress
               size={40}
               thickness={4}
               roundCaps
-              sections={[{ value: Math.min((metric.value / (metric.metric_type === 'steps' ? 10000 : 8)) * 100, 100), color: getColor(metric.metric_type) }]}
+              sections={[
+                {
+                  value: Math.min((metric.value / (metric.metric_type === 'steps' ? 10_000 : 8)) * 100, 100),
+                  color: getColor(metric.metric_type),
+                },
+              ]}
             />
           </Group>
         ))}

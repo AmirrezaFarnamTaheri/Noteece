@@ -29,9 +29,8 @@ pub fn get_vault_graph(conn: &Connection, space_id: Ulid) -> Result<GraphData, D
     let mut edges = Vec::new();
 
     // 1. Notes
-    let mut stmt = conn.prepare(
-        "SELECT id, title FROM note WHERE space_id = ?1 AND is_trashed = 0",
-    )?;
+    let mut stmt =
+        conn.prepare("SELECT id, title FROM note WHERE space_id = ?1 AND is_trashed = 0")?;
     let note_rows = stmt.query_map([space_id.to_string()], |row| {
         Ok(GraphNode {
             id: row.get(0)?,

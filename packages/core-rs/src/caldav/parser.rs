@@ -155,7 +155,6 @@ fn parse_icalendar(ical_data: &str) -> Result<Vec<CalDavEvent>, CalDavError> {
 /// - DateTime UTC: YYYYMMDDTHHMMSSZ (e.g., "20250107T143000Z")
 /// - With separators: YYYY-MM-DDTHH:MM:SSZ
 fn parse_ical_datetime(datetime_str: &str) -> Result<i64, CalDavError> {
-
     // Normalize and trim input
     let trimmed = datetime_str.trim();
     if trimmed.is_empty() {

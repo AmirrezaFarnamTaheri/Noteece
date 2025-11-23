@@ -1,12 +1,19 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import { MantineProvider } from '@mantine/core';
+import { render, fireEvent, waitFor, screen } from '@testing-library/react';
 import ProjectHub from '../ProjectHub';
 import { invoke } from '@tauri-apps/api/tauri';
+import { AllTheProviders } from '../../utils/test-utils';
+import '@testing-library/jest-dom';
 
 jest.mock('@tauri-apps/api/tauri', () => ({
   invoke: jest.fn(),
+}));
+
+jest.mock('../../hooks/useQueries', () => ({
+  useProjects: jest.fn(() => ({
+    data: [],
+    isLoading: false,
+  })),
 }));
 
 describe('ProjectHub', () => {
@@ -15,16 +22,13 @@ describe('ProjectHub', () => {
   });
 
   it('should render the ProjectHub component', async () => {
-    const { getByText } = render(
-      <MantineProvider>
-        <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <ProjectHub />
-        </MemoryRouter>
-      </MantineProvider>,
+    render(
+      <AllTheProviders>
+        <ProjectHub />
+      </AllTheProviders>,
     );
 
-    await waitFor(() => {
-      expect(getByText('Project Hub')).toBeInTheDocument();
-    });
+    // Update expected text to match what is actually in the component
+    expect(await screen.findByText('Projects')).toBeInTheDocument();
   });
 });

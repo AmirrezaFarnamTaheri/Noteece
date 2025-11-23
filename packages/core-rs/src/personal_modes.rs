@@ -1,5 +1,5 @@
 use crate::db::DbError;
-use crate::mode::{enable_mode, disable_mode, Mode};
+use crate::mode::{disable_mode, enable_mode, Mode};
 use rusqlite::{Connection, Result};
 use serde::{Deserialize, Serialize};
 use ulid::Ulid;
@@ -107,7 +107,7 @@ pub struct Recipe {
     pub space_id: String,
     pub note_id: String, // Link to the note containing the full recipe
     pub name: String,
-    pub rating: i32, // 1-5
+    pub rating: i32,        // 1-5
     pub difficulty: String, // 'easy', 'medium', 'hard'
     pub created_at: i64,
 }
@@ -227,7 +227,7 @@ pub fn get_health_metrics(
     if let Some(mt) = metric_type {
         let mut stmt = conn.prepare("SELECT id, space_id, metric_type, value, unit, notes, recorded_at, created_at, updated_at FROM health_metric WHERE space_id = ?1 AND metric_type = ?2 ORDER BY recorded_at DESC LIMIT ?3")?;
         let rows = stmt.query_map(rusqlite::params![space_id.to_string(), mt, limit], |row| {
-             Ok(HealthMetric {
+            Ok(HealthMetric {
                 id: row.get(0)?,
                 space_id: row.get(1)?,
                 metric_type: row.get(2)?,
@@ -243,7 +243,7 @@ pub fn get_health_metrics(
     } else {
         let mut stmt = conn.prepare("SELECT id, space_id, metric_type, value, unit, notes, recorded_at, created_at, updated_at FROM health_metric WHERE space_id = ?1 ORDER BY recorded_at DESC LIMIT ?2")?;
         let rows = stmt.query_map(rusqlite::params![space_id.to_string(), limit], |row| {
-             Ok(HealthMetric {
+            Ok(HealthMetric {
                 id: row.get(0)?,
                 space_id: row.get(1)?,
                 metric_type: row.get(2)?,
@@ -264,25 +264,25 @@ pub fn get_health_metrics_since(
     space_id: &str, // Changed to &str to match usage in correlation.rs
     since: i64,
 ) -> Result<Vec<HealthMetric>, DbError> {
-     let mut stmt = conn.prepare(
+    let mut stmt = conn.prepare(
         "SELECT id, space_id, metric_type, value, unit, notes, recorded_at, created_at, updated_at
          FROM health_metric
          WHERE space_id = ?1 AND recorded_at >= ?2
-         ORDER BY recorded_at ASC"
+         ORDER BY recorded_at ASC",
     )?;
 
     let rows = stmt.query_map(rusqlite::params![space_id, since], |row| {
-             Ok(HealthMetric {
-                id: row.get(0)?,
-                space_id: row.get(1)?,
-                metric_type: row.get(2)?,
-                value: row.get(3)?,
-                unit: row.get(4)?,
-                notes: row.get(5)?,
-                recorded_at: row.get(6)?,
-                created_at: row.get(7)?,
-                updated_at: row.get(8)?,
-            })
+        Ok(HealthMetric {
+            id: row.get(0)?,
+            space_id: row.get(1)?,
+            metric_type: row.get(2)?,
+            value: row.get(3)?,
+            unit: row.get(4)?,
+            notes: row.get(5)?,
+            recorded_at: row.get(6)?,
+            created_at: row.get(7)?,
+            updated_at: row.get(8)?,
+        })
     })?;
 
     rows.collect::<Result<Vec<_>, _>>().map_err(DbError::from)
@@ -370,7 +370,7 @@ pub fn get_transactions_since(
     space_id: &str, // Changed to &str
     since: i64,
 ) -> Result<Vec<Transaction>, DbError> {
-     let mut stmt = conn.prepare(
+    let mut stmt = conn.prepare(
         "SELECT id, space_id, type, amount, currency, category, account_id, date, description, created_at
          FROM transaction_log
          WHERE space_id = ?1 AND date >= ?2
@@ -411,7 +411,15 @@ pub fn create_recipe(
     conn.execute(
         "INSERT INTO recipe (id, space_id, note_id, name, rating, difficulty, created_at)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-        rusqlite::params![&id, space_id.to_string(), note_id, name, rating, difficulty, now],
+        rusqlite::params![
+            &id,
+            space_id.to_string(),
+            note_id,
+            name,
+            rating,
+            difficulty,
+            now
+        ],
     )?;
 
     Ok(Recipe {
@@ -425,16 +433,12 @@ pub fn create_recipe(
     })
 }
 
-pub fn get_recipes(
-    conn: &Connection,
-    space_id: Ulid,
-    limit: i64,
-) -> Result<Vec<Recipe>, DbError> {
+pub fn get_recipes(conn: &Connection, space_id: Ulid, limit: i64) -> Result<Vec<Recipe>, DbError> {
     let mut stmt = conn.prepare(
         "SELECT id, space_id, note_id, name, rating, difficulty, created_at
          FROM recipe
          WHERE space_id = ?1
-         ORDER BY created_at DESC LIMIT ?2"
+         ORDER BY created_at DESC LIMIT ?2",
     )?;
 
     let rows = stmt.query_map(rusqlite::params![space_id.to_string(), limit], |row| {
@@ -484,16 +488,12 @@ pub fn create_trip(
     })
 }
 
-pub fn get_trips(
-    conn: &Connection,
-    space_id: Ulid,
-    limit: i64,
-) -> Result<Vec<Trip>, DbError> {
+pub fn get_trips(conn: &Connection, space_id: Ulid, limit: i64) -> Result<Vec<Trip>, DbError> {
     let mut stmt = conn.prepare(
         "SELECT id, space_id, note_id, name, destination, start_date, end_date, created_at
          FROM trip
          WHERE space_id = ?1
-         ORDER BY start_date DESC LIMIT ?2"
+         ORDER BY start_date DESC LIMIT ?2",
     )?;
 
     let rows = stmt.query_map(rusqlite::params![space_id.to_string(), limit], |row| {

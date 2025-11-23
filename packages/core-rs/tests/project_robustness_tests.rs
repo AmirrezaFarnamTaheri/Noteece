@@ -61,7 +61,13 @@ fn test_project_cascade_delete_robustness() {
 
     // Verify milestones are gone (manual delete in delete_project)
     // We can check row count directly
-    let count: i64 = conn.query_row("SELECT count(*) FROM project_milestone WHERE project_id = ?1", [&p1.id], |r| r.get(0)).unwrap();
+    let count: i64 = conn
+        .query_row(
+            "SELECT count(*) FROM project_milestone WHERE project_id = ?1",
+            [&p1.id],
+            |r| r.get(0),
+        )
+        .unwrap();
     assert_eq!(count, 0);
 
     // Verify tasks are unlinked (project_id set to NULL)

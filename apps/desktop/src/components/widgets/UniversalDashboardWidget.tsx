@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Paper, Title, Grid, Stack, Text, Group, ThemeIcon, RingProgress, Center } from '@mantine/core';
 import { IconHeartRateMonitor, IconMusic, IconSocial, IconListCheck, IconActivity } from '@tabler/icons-react';
 import { useAsync } from '../../hooks/useAsync';
 import { invoke } from '@tauri-apps/api/tauri';
 import { useStore } from '../../store';
-import { useEffect } from 'react';
 
 interface DashboardStats {
   health: {
@@ -30,32 +29,39 @@ export const UniversalDashboardWidget: React.FC = () => {
 
   // useAsync doesn't support dependency array for re-execution automatically on prop change in this version.
   // We need to manually trigger execute when activeSpaceId changes.
-  const { data: stats, execute, loading } = useAsync<DashboardStats>(async () => {
-    if (!activeSpaceId) {
-       return {
-        health: { metrics_count: 0, latest_metric: null },
-        music: { track_count: 0, playlist_count: 0 },
-        social: { posts_count: 0, platforms_count: 0 },
-        tasks: { pending_count: 0, completed_count: 0 },
-      };
-    }
-    try {
-      return await invoke('get_dashboard_stats_cmd', { spaceId: activeSpaceId });
-    } catch (error) {
-      console.warn('Failed to fetch stats, using mock', error);
-      return {
-        health: { metrics_count: 12, latest_metric: 'Steps' },
-        music: { track_count: 1450, playlist_count: 5 },
-        social: { posts_count: 24, platforms_count: 2 },
-        tasks: { pending_count: 8, completed_count: 15 },
-      };
-    }
-  }, { immediate: false }); // Don't auto-exec on mount, we handle it below
+  const {
+    data: stats,
+    execute,
+    loading,
+  } = useAsync<DashboardStats>(
+    async () => {
+      if (!activeSpaceId) {
+        return {
+          health: { metrics_count: 0, latest_metric: null },
+          music: { track_count: 0, playlist_count: 0 },
+          social: { posts_count: 0, platforms_count: 0 },
+          tasks: { pending_count: 0, completed_count: 0 },
+        };
+      }
+      try {
+        return await invoke('get_dashboard_stats_cmd', { spaceId: activeSpaceId });
+      } catch (error) {
+        console.warn('Failed to fetch stats, using mock', error);
+        return {
+          health: { metrics_count: 12, latest_metric: 'Steps' },
+          music: { track_count: 1450, playlist_count: 5 },
+          social: { posts_count: 24, platforms_count: 2 },
+          tasks: { pending_count: 8, completed_count: 15 },
+        };
+      }
+    },
+    { immediate: false },
+  ); // Don't auto-exec on mount, we handle it below
 
   useEffect(() => {
-      if (activeSpaceId) {
-          execute();
-      }
+    if (activeSpaceId) {
+      execute();
+    }
   }, [activeSpaceId, execute]);
 
   const pending = stats?.tasks.pending_count || 0;

@@ -1,5 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Button, TextInput, List, Group, Modal, Select, LoadingOverlay, Text, useMantineTheme, Paper, ActionIcon, Tooltip, Box } from '@mantine/core';
+import {
+  Button,
+  TextInput,
+  List,
+  Group,
+  Modal,
+  Select,
+  LoadingOverlay,
+  Text,
+  useMantineTheme,
+  Paper,
+  ActionIcon,
+  Tooltip,
+  Box,
+} from '@mantine/core';
 import { invoke } from '@tauri-apps/api/tauri';
 import { Note } from '@noteece/types';
 import { useStore } from '../store';
@@ -106,7 +120,15 @@ const NoteEditor: React.FC = () => {
   };
 
   return (
-    <div className={classes.editorContainer} style={{ height: 'calc(100vh - 80px)', display: 'flex', gap: theme.spacing.md, backgroundColor: theme.colors.dark[9] }}>
+    <div
+      className={classes.editorContainer}
+      style={{
+        height: 'calc(100vh - 80px)',
+        display: 'flex',
+        gap: theme.spacing.md,
+        backgroundColor: theme.colors.dark[9],
+      }}
+    >
       <LoadingOverlay visible={notesLoading || templatesLoading} overlayProps={{ blur: 2 }} />
 
       <Modal
@@ -137,11 +159,11 @@ const NoteEditor: React.FC = () => {
         p="md"
         radius="lg"
         style={{
-            width: 300,
-            display: 'flex',
-            flexDirection: 'column',
-            backgroundColor: theme.colors.dark[8],
-            border: `1px solid ${theme.colors.dark[7]}`, // Subtler border
+          width: 300,
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: theme.colors.dark[8],
+          border: `1px solid ${theme.colors.dark[7]}`, // Subtler border
         }}
       >
         <Group justify="space-between" mb="md">
@@ -150,20 +172,20 @@ const NoteEditor: React.FC = () => {
           </Text>
           <Tooltip label="Create New Note">
             <ActionIcon variant="light" color="violet" onClick={handleNewNoteClick} size="sm" radius="md">
-                <IconPlus size={16} />
+              <IconPlus size={16} />
             </ActionIcon>
           </Tooltip>
         </Group>
 
         <Button
-            size="xs"
-            variant="subtle"
-            color="gray"
-            onClick={() => setTemplateModalOpened(true)}
-            mb="md"
-            fullWidth
-            leftSection={<IconTemplate size={14} />}
-            styles={{ inner: { justifyContent: 'flex-start' } }}
+          size="xs"
+          variant="subtle"
+          color="gray"
+          onClick={() => setTemplateModalOpened(true)}
+          mb="md"
+          fullWidth
+          leftSection={<IconTemplate size={14} />}
+          styles={{ inner: { justifyContent: 'flex-start' } }}
         >
           New from Template
         </Button>
@@ -181,10 +203,13 @@ const NoteEditor: React.FC = () => {
                 color: selectedNote?.id === note.id ? theme.colors.violet[3] : theme.colors.gray[4],
                 transition: 'all 0.2s ease',
                 fontSize: theme.fontSizes.sm,
-                borderLeft: selectedNote?.id === note.id ? `3px solid ${theme.colors.violet[5]}` : '3px solid transparent',
+                borderLeft:
+                  selectedNote?.id === note.id ? `3px solid ${theme.colors.violet[5]}` : '3px solid transparent',
               }}
             >
-              <Text truncate fw={selectedNote?.id === note.id ? 600 : 400}>{note.title || 'Untitled'}</Text>
+              <Text truncate fw={selectedNote?.id === note.id ? 600 : 400}>
+                {note.title || 'Untitled'}
+              </Text>
             </List.Item>
           ))}
         </List>
@@ -196,79 +221,76 @@ const NoteEditor: React.FC = () => {
         p="xl"
         radius="lg"
         style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            backgroundColor: theme.colors.dark[8],
-            border: `1px solid ${theme.colors.dark[7]}`,
-            position: 'relative',
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: theme.colors.dark[8],
+          border: `1px solid ${theme.colors.dark[7]}`,
+          position: 'relative',
         }}
       >
-        <div style={{
+        <div
+          style={{
             paddingTop: typewriterMode ? '40vh' : 0,
             paddingBottom: typewriterMode ? '40vh' : 0,
             transition: 'padding 0.3s ease',
             height: '100%',
             display: 'flex',
-            flexDirection: 'column'
-        }}>
-            <Group justify="space-between" mb="lg">
+            flexDirection: 'column',
+          }}
+        >
+          <Group justify="space-between" mb="lg">
             <TextInput
-                placeholder="Untitled Note"
-                value={title}
-                onChange={(event) => setTitle(event.currentTarget.value)}
-                size="xl"
-                variant="unstyled"
-                style={{ flex: 1 }}
-                styles={{ input: { fontSize: '2.2rem', fontWeight: 800, color: theme.colors.gray[0], lineHeight: 1.2 } }}
+              placeholder="Untitled Note"
+              value={title}
+              onChange={(event) => setTitle(event.currentTarget.value)}
+              size="xl"
+              variant="unstyled"
+              style={{ flex: 1 }}
+              styles={{ input: { fontSize: '2.2rem', fontWeight: 800, color: theme.colors.gray[0], lineHeight: 1.2 } }}
             />
             <Group gap="xs">
-                <Tooltip label={typewriterMode ? "Disable Typewriter Mode" : "Enable Typewriter Mode"}>
-                    <ActionIcon
-                        variant="subtle"
-                        onClick={() => setTypewriterMode(!typewriterMode)}
-                        color={typewriterMode ? 'violet' : 'gray'}
-                        size="lg"
-                    >
-                        {typewriterMode ? <IconMinimize size={20} /> : <IconAlignJustified size={20} />}
-                    </ActionIcon>
+              <Tooltip label={typewriterMode ? 'Disable Typewriter Mode' : 'Enable Typewriter Mode'}>
+                <ActionIcon
+                  variant="subtle"
+                  onClick={() => setTypewriterMode(!typewriterMode)}
+                  color={typewriterMode ? 'violet' : 'gray'}
+                  size="lg"
+                >
+                  {typewriterMode ? <IconMinimize size={20} /> : <IconAlignJustified size={20} />}
+                </ActionIcon>
+              </Tooltip>
+              {selectedNote && (
+                <Tooltip label="Delete Note">
+                  <ActionIcon variant="subtle" color="red" onClick={handleDeleteNote} size="lg">
+                    <IconTrash size={20} />
+                  </ActionIcon>
                 </Tooltip>
-                {selectedNote && (
-                    <Tooltip label="Delete Note">
-                        <ActionIcon
-                            variant="subtle"
-                            color="red"
-                            onClick={handleDeleteNote}
-                            size="lg"
-                        >
-                            <IconTrash size={20} />
-                        </ActionIcon>
-                    </Tooltip>
-                )}
+              )}
             </Group>
-            </Group>
+          </Group>
 
-            {/* Lexical Editor with full rich text and markdown support */}
-            <Box style={{ flex: 1, overflowY: 'auto', paddingRight: '8px' }}>
-                <LexicalEditor
-                key={selectedNote ? String(selectedNote.id) : 'new-note'}
-                initialContent={content}
-                onChange={handleContentChange}
-                placeholder="Start writing..."
-                />
-            </Box>
+          {/* Lexical Editor with full rich text and markdown support */}
+          <Box style={{ flex: 1, overflowY: 'auto', paddingRight: '8px' }}>
+            <LexicalEditor
+              key={selectedNote ? String(selectedNote.id) : 'new-note'}
+              initialContent={content}
+              onChange={handleContentChange}
+              placeholder="Start writing..."
+            />
+          </Box>
 
-            <Group mt="lg" justify="flex-end">
+          <Group mt="lg" justify="flex-end">
             {selectedNote ? (
-                <Button onClick={handleUpdateNote} color="violet" radius="md">
-                    Save Changes
-                </Button>
+              <Button onClick={handleUpdateNote} color="violet" radius="md">
+                Save Changes
+              </Button>
             ) : (
-                <Button onClick={handleCreateNote} disabled={!title.trim()} color="violet" radius="md">
-                    Create Note
-                </Button>
+              <Button onClick={handleCreateNote} disabled={!title.trim()} color="violet" radius="md">
+                Create Note
+              </Button>
             )}
-            </Group>
+          </Group>
         </div>
       </Paper>
     </div>

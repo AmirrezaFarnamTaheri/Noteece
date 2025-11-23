@@ -1,6 +1,6 @@
 use crate::db::DbError;
 use crate::note::Note;
-use rusqlite::{Connection, Result, OptionalExtension};
+use rusqlite::{Connection, OptionalExtension, Result};
 use serde::{Deserialize, Serialize};
 use ulid::Ulid;
 
@@ -334,8 +334,8 @@ fn search_tasks_advanced(
     // Priority filter
     if let Some(priority) = &query.filters.priority {
         if let Ok(p_int) = priority.parse::<i32>() {
-             where_clauses.push("t.priority = ?".to_string());
-             params.push(Box::new(p_int));
+            where_clauses.push("t.priority = ?".to_string());
+            params.push(Box::new(p_int));
         }
     }
 
@@ -553,7 +553,12 @@ pub struct SavedSearch {
     pub query: String,
 }
 
-pub fn create_saved_search(conn: &Connection, name: &str, query: &str, space_id: Option<&str>) -> Result<SavedSearch, DbError> {
+pub fn create_saved_search(
+    conn: &Connection,
+    name: &str,
+    query: &str,
+    space_id: Option<&str>,
+) -> Result<SavedSearch, DbError> {
     let id = Ulid::new().to_string();
     conn.execute(
         "INSERT INTO saved_search (id, space_id, title, query_string, scope) VALUES (?1, ?2, ?3, ?4, 'note')",
@@ -568,19 +573,25 @@ pub fn create_saved_search(conn: &Connection, name: &str, query: &str, space_id:
 }
 
 pub fn get_saved_search(conn: &Connection, id: Ulid) -> Result<Option<SavedSearch>, DbError> {
-    let mut stmt = conn.prepare("SELECT id, space_id, title, query_string FROM saved_search WHERE id = ?1")?;
-    let result = stmt.query_row([id.to_string()], |row| {
-        Ok(SavedSearch {
-            id: row.get(0)?,
-            space_id: row.get(1)?,
-            name: row.get(2)?,
-            query: row.get(3)?,
+    let mut stmt =
+        conn.prepare("SELECT id, space_id, title, query_string FROM saved_search WHERE id = ?1")?;
+    let result = stmt
+        .query_row([id.to_string()], |row| {
+            Ok(SavedSearch {
+                id: row.get(0)?,
+                space_id: row.get(1)?,
+                name: row.get(2)?,
+                query: row.get(3)?,
+            })
         })
-    }).optional()?;
+        .optional()?;
     Ok(result)
 }
 
-pub fn get_saved_searches(conn: &Connection, space_id: Option<&str>) -> Result<Vec<SavedSearch>, DbError> {
+pub fn get_saved_searches(
+    conn: &Connection,
+    space_id: Option<&str>,
+) -> Result<Vec<SavedSearch>, DbError> {
     let mut sql = "SELECT id, space_id, title, query_string FROM saved_search".to_string();
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
 
@@ -592,7 +603,7 @@ pub fn get_saved_searches(conn: &Connection, space_id: Option<&str>) -> Result<V
     let mut stmt = conn.prepare(&sql)?;
     let params_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|b| b.as_ref()).collect();
     let rows = stmt.query_map(params_refs.as_slice(), |row| {
-         Ok(SavedSearch {
+        Ok(SavedSearch {
             id: row.get(0)?,
             space_id: row.get(1)?,
             name: row.get(2)?,
@@ -607,13 +618,20 @@ pub fn get_saved_searches(conn: &Connection, space_id: Option<&str>) -> Result<V
     Ok(results)
 }
 
-pub fn update_saved_search(conn: &Connection, id: Ulid, name: &str, query: &str) -> Result<SavedSearch, DbError> {
+pub fn update_saved_search(
+    conn: &Connection,
+    id: Ulid,
+    name: &str,
+    query: &str,
+) -> Result<SavedSearch, DbError> {
     conn.execute(
         "UPDATE saved_search SET title = ?1, query_string = ?2 WHERE id = ?3",
         rusqlite::params![name, query, id.to_string()],
     )?;
     // Fetch updated
-    get_saved_search(conn, id)?.ok_or(DbError::Message("Saved search not found after update".to_string()))
+    get_saved_search(conn, id)?.ok_or(DbError::Message(
+        "Saved search not found after update".to_string(),
+    ))
 }
 
 pub fn delete_saved_search(conn: &Connection, id: Ulid) -> Result<(), DbError> {

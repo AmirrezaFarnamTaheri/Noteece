@@ -1,6 +1,6 @@
+use thiserror::Error;
 use yrs::updates::decoder::Decode;
 use yrs::{Doc, GetString, ReadTxn, StateVector, Text, Transact, Update};
-use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum CrdtError {
@@ -19,7 +19,8 @@ pub fn apply_update(doc: &mut Doc, update: &[u8]) -> Result<(), CrdtError> {
 
 pub fn get_update(doc: &mut Doc, remote_sv: &[u8]) -> Result<Vec<u8>, CrdtError> {
     let txn = doc.transact();
-    let sv = StateVector::decode_v1(remote_sv).map_err(|e| CrdtError::DecodeError(e.to_string()))?;
+    let sv =
+        StateVector::decode_v1(remote_sv).map_err(|e| CrdtError::DecodeError(e.to_string()))?;
     Ok(txn.encode_diff_v1(&sv))
 }
 

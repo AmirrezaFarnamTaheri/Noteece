@@ -20,7 +20,14 @@ fn test_audit_extreme_cases() {
 
     // Test 1: Log with all Nones
     let id1 = audit::log_event(
-        &conn, None, "TEST_EVENT", "test_entity", None, None, None, None,
+        &conn,
+        None,
+        "TEST_EVENT",
+        "test_entity",
+        None,
+        None,
+        None,
+        None,
     )
     .unwrap();
     assert_eq!(id1.len(), 26); // ULID length
@@ -111,7 +118,8 @@ fn test_project_basic_flow() {
     assert_eq!(fetched.id, project.id);
 
     // Milestones
-    let milestone = project::create_project_milestone(&conn, &project.id, "M1", Some(1000), "active").unwrap();
+    let milestone =
+        project::create_project_milestone(&conn, &project.id, "M1", Some(1000), "active").unwrap();
     assert_eq!(milestone.title, "M1".to_string());
 
     let milestones = project::get_project_milestones(&conn, &project.id).unwrap();

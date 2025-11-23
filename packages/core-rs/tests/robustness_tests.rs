@@ -84,7 +84,8 @@ fn test_corrupted_data_resilience() {
 
         // Let's verify that `get_projects_in_space` works normally first.
         create_project(&conn, &space_id.to_string(), "Project 1").unwrap();
-        let projects = core_rs::project::get_projects_in_space(&conn, &space_id.to_string()).unwrap();
+        let projects =
+            core_rs::project::get_projects_in_space(&conn, &space_id.to_string()).unwrap();
         assert_eq!(projects.len(), 1);
     }
 }

@@ -23,7 +23,8 @@ fn test_track_creation_and_retrieval() {
         "My Song",
         Some("Artist".to_string()),
         Some("Album".to_string()),
-    ).unwrap();
+    )
+    .unwrap();
 
     assert_eq!(track.title, "My Song");
     assert_eq!(track.artist, Some("Artist".to_string()));
@@ -43,7 +44,8 @@ fn test_playlist_creation_and_retrieval() {
         space_id,
         "My Playlist",
         Some("Chill vibes".to_string()),
-    ).unwrap();
+    )
+    .unwrap();
 
     assert_eq!(playlist.name, "My Playlist");
 

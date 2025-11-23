@@ -48,6 +48,7 @@ export default function HabitsTracker() {
   const fetchHabits = async () => {
     if (activeSpaceId) {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const fetchedHabits: any[] = await invoke('get_habits_cmd', { spaceId: activeSpaceId });
 
         // Determine if "completed" today based on last_completed_at
@@ -70,6 +71,7 @@ export default function HabitsTracker() {
 
   useEffect(() => {
     void fetchHabits();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSpaceId]);
 
   const handleAddHabit = async (values: typeof form.values) => {

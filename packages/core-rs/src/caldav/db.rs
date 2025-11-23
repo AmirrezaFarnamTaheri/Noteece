@@ -1,5 +1,5 @@
-use rusqlite::Connection;
 use crate::caldav::error::CalDavError;
+use rusqlite::Connection;
 
 /// Initialize CalDAV tables
 pub fn init_caldav_tables(conn: &Connection) -> Result<(), CalDavError> {

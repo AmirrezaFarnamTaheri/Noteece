@@ -81,8 +81,10 @@ pub fn get_goals(conn: &Connection, space_id: Ulid) -> Result<Vec<Goal>, DbError
     let goals = stmt
         .query_map([space_id.to_string()], |row| {
             Ok(Goal {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                id: Ulid::from_string(&row.get::<_, String>(0)?)
+                    .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?)
+                    .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 title: row.get(2)?,
                 description: row.get(3)?,
                 target: row.get(4)?,
@@ -130,8 +132,10 @@ pub fn update_goal_progress(
         [&goal_id.to_string()],
         |row| {
             Ok(Goal {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                id: Ulid::from_string(&row.get::<_, String>(0)?)
+                    .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?)
+                    .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 title: row.get(2)?,
                 description: row.get(3)?,
                 target: row.get(4)?,
@@ -145,13 +149,11 @@ pub fn update_goal_progress(
                 updated_at: row.get(12)?,
             })
         },
-    ).map_err(|e| e.into())
+    )
+    .map_err(|e| e.into())
 }
 
 pub fn delete_goal(conn: &Connection, goal_id: Ulid) -> Result<(), DbError> {
-    conn.execute(
-        "DELETE FROM goal WHERE id = ?1",
-        [&goal_id.to_string()],
-    )?;
+    conn.execute("DELETE FROM goal WHERE id = ?1", [&goal_id.to_string()])?;
     Ok(())
 }

@@ -63,6 +63,7 @@ export function GoalsTrackerWidget() {
 
   useEffect(() => {
     void fetchGoals();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSpaceId]);
 
   const handleAddGoal = async (values: typeof form.values) => {

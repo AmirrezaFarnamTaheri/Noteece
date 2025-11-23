@@ -86,23 +86,53 @@ pub fn get_task(conn: &Connection, id: Ulid) -> Result<Option<Task>, DbError> {
     let task: Option<Task> = stmt
         .query_row([id.to_string()], |row| {
             Ok(Task {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::FromSqlConversionFailure(1, rusqlite::types::Type::Text, Box::new(e)))?,
+                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        0,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        1,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
                 note_id: row
                     .get::<_, Option<String>>(2)?
                     .map(|s| Ulid::from_string(&s))
                     .transpose()
-                    .map_err(|e| rusqlite::Error::FromSqlConversionFailure(2, rusqlite::types::Type::Text, Box::new(e)))?,
+                    .map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            2,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
                 project_id: row
                     .get::<_, Option<String>>(3)?
                     .map(|s| Ulid::from_string(&s))
                     .transpose()
-                    .map_err(|e| rusqlite::Error::FromSqlConversionFailure(3, rusqlite::types::Type::Text, Box::new(e)))?,
+                    .map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            3,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
                 parent_task_id: row
                     .get::<_, Option<String>>(4)?
                     .map(|s| Ulid::from_string(&s))
                     .transpose()
-                    .map_err(|e| rusqlite::Error::FromSqlConversionFailure(4, rusqlite::types::Type::Text, Box::new(e)))?,
+                    .map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            4,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
                 title: row.get(5)?,
                 description: row.get(6)?,
                 status: row.get(7)?,
@@ -167,13 +197,18 @@ fn handle_recurrence(conn: &Connection, task: &Task) -> Result<(), DbError> {
             .unwrap_or(0);
 
         if count > 0 {
-            log::info!("[task] Next recurring task already exists for parent: {}", task.id);
+            log::info!(
+                "[task] Next recurring task already exists for parent: {}",
+                task.id
+            );
             return Ok(());
         }
 
         log::info!("[task] Handling recurrence for task: {}", task.id);
 
-        let current_due = task.due_at.unwrap_or_else(|| chrono::Utc::now().timestamp());
+        let current_due = task
+            .due_at
+            .unwrap_or_else(|| chrono::Utc::now().timestamp());
 
         // Try legacy simple rules first, then full RRULE parsing
         let next_due = match rule.to_uppercase().as_str() {
@@ -193,9 +228,12 @@ fn handle_recurrence(conn: &Connection, task: &Task) -> Result<(), DbError> {
                                 // We want the first occurrence *after* current_due
                                 let next = rrule_set.into_iter().find(|dt| *dt > dt_start);
                                 next.map(|dt| dt.timestamp())
-                            },
+                            }
                             _ => {
-                                log::warn!("[task] Invalid timestamp for recurrence: {}", current_due);
+                                log::warn!(
+                                    "[task] Invalid timestamp for recurrence: {}",
+                                    current_due
+                                );
                                 None
                             }
                         }
@@ -218,7 +256,10 @@ fn handle_recurrence(conn: &Connection, task: &Task) -> Result<(), DbError> {
             new_task.updated_at = chrono::Utc::now().timestamp();
             // We don't clear recur_rule so the new task also recurs
 
-            log::info!("[task] Creating next recurring task instance: {}", new_task.id);
+            log::info!(
+                "[task] Creating next recurring task instance: {}",
+                new_task.id
+            );
 
             // Pre-convert optionals to own types to avoid temporary lifetime issues in params!
             let nid = new_task.note_id.map(|id| id.to_string());
@@ -287,23 +328,53 @@ pub fn get_tasks_by_project(conn: &Connection, project_id: Ulid) -> Result<Vec<T
     let tasks = stmt
         .query_map([project_id.to_string()], |row| {
             Ok(Task {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::FromSqlConversionFailure(1, rusqlite::types::Type::Text, Box::new(e)))?,
+                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        0,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        1,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
                 note_id: row
                     .get::<_, Option<String>>(2)?
                     .map(|s| Ulid::from_string(&s))
                     .transpose()
-                    .map_err(|e| rusqlite::Error::FromSqlConversionFailure(2, rusqlite::types::Type::Text, Box::new(e)))?,
+                    .map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            2,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
                 project_id: row
                     .get::<_, Option<String>>(3)?
                     .map(|s| Ulid::from_string(&s))
                     .transpose()
-                    .map_err(|e| rusqlite::Error::FromSqlConversionFailure(3, rusqlite::types::Type::Text, Box::new(e)))?,
+                    .map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            3,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
                 parent_task_id: row
                     .get::<_, Option<String>>(4)?
                     .map(|s| Ulid::from_string(&s))
                     .transpose()
-                    .map_err(|e| rusqlite::Error::FromSqlConversionFailure(4, rusqlite::types::Type::Text, Box::new(e)))?,
+                    .map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            4,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
                 title: row.get(5)?,
                 description: row.get(6)?,
                 status: row.get(7)?,
@@ -336,23 +407,53 @@ pub fn get_upcoming_tasks(
     let tasks = stmt
         .query_map([space_id.to_string(), limit.to_string()], |row| {
             Ok(Task {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::FromSqlConversionFailure(1, rusqlite::types::Type::Text, Box::new(e)))?,
+                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        0,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        1,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
                 note_id: row
                     .get::<_, Option<String>>(2)?
                     .map(|s| Ulid::from_string(&s))
                     .transpose()
-                    .map_err(|e| rusqlite::Error::FromSqlConversionFailure(2, rusqlite::types::Type::Text, Box::new(e)))?,
+                    .map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            2,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
                 project_id: row
                     .get::<_, Option<String>>(3)?
                     .map(|s| Ulid::from_string(&s))
                     .transpose()
-                    .map_err(|e| rusqlite::Error::FromSqlConversionFailure(3, rusqlite::types::Type::Text, Box::new(e)))?,
+                    .map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            3,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
                 parent_task_id: row
                     .get::<_, Option<String>>(4)?
                     .map(|s| Ulid::from_string(&s))
                     .transpose()
-                    .map_err(|e| rusqlite::Error::FromSqlConversionFailure(4, rusqlite::types::Type::Text, Box::new(e)))?,
+                    .map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            4,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
                 title: row.get(5)?,
                 description: row.get(6)?,
                 status: row.get(7)?,
@@ -377,23 +478,53 @@ impl TryFrom<&rusqlite::Row<'_>> for Task {
 
     fn try_from(row: &rusqlite::Row<'_>) -> Result<Self, Self::Error> {
         Ok(Task {
-            id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
-            space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::FromSqlConversionFailure(1, rusqlite::types::Type::Text, Box::new(e)))?,
+            id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| {
+                rusqlite::Error::FromSqlConversionFailure(
+                    0,
+                    rusqlite::types::Type::Text,
+                    Box::new(e),
+                )
+            })?,
+            space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| {
+                rusqlite::Error::FromSqlConversionFailure(
+                    1,
+                    rusqlite::types::Type::Text,
+                    Box::new(e),
+                )
+            })?,
             note_id: row
                 .get::<_, Option<String>>(2)?
                 .map(|s| Ulid::from_string(&s))
                 .transpose()
-                .map_err(|e| rusqlite::Error::FromSqlConversionFailure(2, rusqlite::types::Type::Text, Box::new(e)))?,
+                .map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        2,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
             project_id: row
                 .get::<_, Option<String>>(3)?
                 .map(|s| Ulid::from_string(&s))
                 .transpose()
-                .map_err(|e| rusqlite::Error::FromSqlConversionFailure(3, rusqlite::types::Type::Text, Box::new(e)))?,
+                .map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        3,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
             parent_task_id: row
                 .get::<_, Option<String>>(4)?
                 .map(|s| Ulid::from_string(&s))
                 .transpose()
-                .map_err(|e| rusqlite::Error::FromSqlConversionFailure(4, rusqlite::types::Type::Text, Box::new(e)))?,
+                .map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        4,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
             title: row.get(5)?,
             description: row.get(6)?,
             status: row.get(7)?,
@@ -416,23 +547,53 @@ pub fn get_all_tasks_in_space(conn: &Connection, space_id: Ulid) -> Result<Vec<T
     let tasks = stmt
         .query_map([space_id.to_string()], |row| {
             Ok(Task {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::FromSqlConversionFailure(1, rusqlite::types::Type::Text, Box::new(e)))?,
+                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        0,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        1,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
                 note_id: row
                     .get::<_, Option<String>>(2)?
                     .map(|s| Ulid::from_string(&s))
                     .transpose()
-                    .map_err(|e| rusqlite::Error::FromSqlConversionFailure(2, rusqlite::types::Type::Text, Box::new(e)))?,
+                    .map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            2,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
                 project_id: row
                     .get::<_, Option<String>>(3)?
                     .map(|s| Ulid::from_string(&s))
                     .transpose()
-                    .map_err(|e| rusqlite::Error::FromSqlConversionFailure(3, rusqlite::types::Type::Text, Box::new(e)))?,
+                    .map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            3,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
                 parent_task_id: row
                     .get::<_, Option<String>>(4)?
                     .map(|s| Ulid::from_string(&s))
                     .transpose()
-                    .map_err(|e| rusqlite::Error::FromSqlConversionFailure(4, rusqlite::types::Type::Text, Box::new(e)))?,
+                    .map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            4,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
                 title: row.get(5)?,
                 description: row.get(6)?,
                 status: row.get(7)?,

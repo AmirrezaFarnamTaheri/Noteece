@@ -40,13 +40,18 @@ pub struct TaskStats {
     pub completed_count: i64,
 }
 
-pub fn get_dashboard_stats(conn: &Connection, space_id: &str) -> Result<DashboardStats, DashboardError> {
+pub fn get_dashboard_stats(
+    conn: &Connection,
+    space_id: &str,
+) -> Result<DashboardStats, DashboardError> {
     // Health Stats
-    let metrics_count: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM health_metric WHERE space_id = ?1",
-        [space_id],
-        |row| row.get(0),
-    ).unwrap_or(0);
+    let metrics_count: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM health_metric WHERE space_id = ?1",
+            [space_id],
+            |row| row.get(0),
+        )
+        .unwrap_or(0);
 
     let latest_metric: Option<String> = conn.query_row(
         "SELECT metric_type FROM health_metric WHERE space_id = ?1 ORDER BY recorded_at DESC LIMIT 1",
@@ -55,32 +60,40 @@ pub fn get_dashboard_stats(conn: &Connection, space_id: &str) -> Result<Dashboar
     ).ok();
 
     // Music Stats
-    let track_count: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM track WHERE space_id = ?1",
-        [space_id],
-        |row| row.get(0),
-    ).unwrap_or(0);
+    let track_count: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM track WHERE space_id = ?1",
+            [space_id],
+            |row| row.get(0),
+        )
+        .unwrap_or(0);
 
-    let playlist_count: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM playlist WHERE space_id = ?1",
-        [space_id],
-        |row| row.get(0),
-    ).unwrap_or(0);
+    let playlist_count: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM playlist WHERE space_id = ?1",
+            [space_id],
+            |row| row.get(0),
+        )
+        .unwrap_or(0);
 
     // Social Stats
-    let posts_count: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM social_post p
+    let posts_count: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM social_post p
          JOIN social_account a ON p.account_id = a.id
          WHERE a.space_id = ?1",
-        [space_id],
-        |row| row.get(0),
-    ).unwrap_or(0);
+            [space_id],
+            |row| row.get(0),
+        )
+        .unwrap_or(0);
 
-    let platforms_count: i64 = conn.query_row(
-        "SELECT COUNT(DISTINCT platform) FROM social_account WHERE space_id = ?1",
-        [space_id],
-        |row| row.get(0),
-    ).unwrap_or(0);
+    let platforms_count: i64 = conn
+        .query_row(
+            "SELECT COUNT(DISTINCT platform) FROM social_account WHERE space_id = ?1",
+            [space_id],
+            |row| row.get(0),
+        )
+        .unwrap_or(0);
 
     // Task Stats
     let pending_count: i64 = conn.query_row(
@@ -89,11 +102,13 @@ pub fn get_dashboard_stats(conn: &Connection, space_id: &str) -> Result<Dashboar
         |row| row.get(0),
     ).unwrap_or(0);
 
-    let completed_count: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM task WHERE space_id = ?1 AND status = 'done'",
-        [space_id],
-        |row| row.get(0),
-    ).unwrap_or(0);
+    let completed_count: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM task WHERE space_id = ?1 AND status = 'done'",
+            [space_id],
+            |row| row.get(0),
+        )
+        .unwrap_or(0);
 
     Ok(DashboardStats {
         health: HealthStats {

@@ -142,32 +142,32 @@ pub fn get_projects_in_space(
             });
 
         if let Ok(task_id_str) = row.get::<_, String>(9) {
-             if let Ok(task_id) = Ulid::from_string(&task_id_str) {
-                 let space_id = Ulid::from_string(&project.space_id).unwrap_or_default();
-                 let project_id_ulid = Ulid::from_string(&project.id).unwrap_or_default();
+            if let Ok(task_id) = Ulid::from_string(&task_id_str) {
+                let space_id = Ulid::from_string(&project.space_id).unwrap_or_default();
+                let project_id_ulid = Ulid::from_string(&project.id).unwrap_or_default();
 
-                 if let Ok(title) = row.get::<_, String>(10) {
-                     project.tasks.push(Task {
-                         id: task_id,
-                         space_id,
-                         note_id: None,
-                         project_id: Some(project_id_ulid),
-                         parent_task_id: None,
-                         title,
-                         description: None,
-                         status: "inbox".to_string(),
-                         due_at: None,
-                         start_at: None,
-                         completed_at: None,
-                         priority: None,
-                         estimate_minutes: None,
-                         recur_rule: None,
-                         context: None,
-                         area: None,
-                         updated_at: 0,
-                     });
-                 }
-             }
+                if let Ok(title) = row.get::<_, String>(10) {
+                    project.tasks.push(Task {
+                        id: task_id,
+                        space_id,
+                        note_id: None,
+                        project_id: Some(project_id_ulid),
+                        parent_task_id: None,
+                        title,
+                        description: None,
+                        status: "inbox".to_string(),
+                        due_at: None,
+                        start_at: None,
+                        completed_at: None,
+                        priority: None,
+                        estimate_minutes: None,
+                        recur_rule: None,
+                        context: None,
+                        area: None,
+                        updated_at: 0,
+                    });
+                }
+            }
         }
 
         if let Ok(milestone_id) = row.get::<_, String>(11) {

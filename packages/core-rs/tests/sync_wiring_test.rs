@@ -1,10 +1,11 @@
 #[cfg(test)]
 mod tests {
-    use core_rs::sync_agent::{SyncAgent, DeviceInfo, DeviceType, SyncDelta, SyncOperation};
-    use core_rs::sync::mobile_sync::{SyncProtocol, PairingRequest, DeviceInfo as ProtocolDeviceInfo};
+    use core_rs::sync::mobile_sync::{
+        DeviceInfo as ProtocolDeviceInfo, PairingRequest, SyncProtocol,
+    };
+    use core_rs::sync_agent::{DeviceInfo, DeviceType, SyncAgent, SyncDelta, SyncOperation};
     use rusqlite::Connection;
     use ulid::Ulid;
-
 
     use chrono::Utc;
 
@@ -34,7 +35,9 @@ mod tests {
             protocol_version: "1.0.0".to_string(),
         };
 
-        agent.register_device(&conn, &device_info).expect("Failed to register device");
+        agent
+            .register_device(&conn, &device_info)
+            .expect("Failed to register device");
 
         let devices = agent.get_devices(&conn).expect("Failed to get devices");
         assert_eq!(devices.len(), 1);
@@ -79,9 +82,9 @@ mod tests {
         };
 
         // Test pairing success
-        let result = tokio::runtime::Runtime::new().unwrap().block_on(async {
-            protocol.pair_device(request, "123456").await
-        });
+        let result = tokio::runtime::Runtime::new()
+            .unwrap()
+            .block_on(async { protocol.pair_device(request, "123456").await });
 
         assert!(result.is_ok());
         assert_eq!(protocol.get_paired_devices().len(), 1);
@@ -106,11 +109,19 @@ mod tests {
             space_id: Some(space_id.clone()),
         };
 
-        let conflicts = agent.apply_deltas(&mut conn, vec![delta], &dek).expect("Failed to apply deltas");
+        let conflicts = agent
+            .apply_deltas(&mut conn, vec![delta], &dek)
+            .expect("Failed to apply deltas");
         assert!(conflicts.is_empty());
 
         // Verify note exists
-        let count: i64 = conn.query_row("SELECT count(*) FROM note WHERE id = ?", [&note_id], |row| row.get(0)).unwrap();
+        let count: i64 = conn
+            .query_row(
+                "SELECT count(*) FROM note WHERE id = ?",
+                [&note_id],
+                |row| row.get(0),
+            )
+            .unwrap();
         assert_eq!(count, 1);
     }
 }

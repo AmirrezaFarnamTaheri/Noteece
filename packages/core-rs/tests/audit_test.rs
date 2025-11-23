@@ -39,6 +39,9 @@ fn test_audit_logging() {
     assert_eq!(log.event_type, "LOGIN");
     assert_eq!(log.entity_type, "user");
     assert_eq!(log.entity_id, Some("user_123".to_string()));
-    assert_eq!(log.details_json, Some(r#"{"method": "password"}"#.to_string()));
+    assert_eq!(
+        log.details_json,
+        Some(r#"{"method": "password"}"#.to_string())
+    );
     assert_eq!(log.ip_address, Some("127.0.0.1".to_string()));
 }

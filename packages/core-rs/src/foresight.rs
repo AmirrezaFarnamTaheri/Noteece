@@ -120,7 +120,11 @@ pub fn generate_insights(
     get_active_insights(conn, &space_id.to_string())
 }
 
-fn persist_insight(conn: &Connection, insight: &Insight, space_id: Ulid) -> Result<(), ForesightError> {
+fn persist_insight(
+    conn: &Connection,
+    insight: &Insight,
+    space_id: Ulid,
+) -> Result<(), ForesightError> {
     let context_json = serde_json::to_string(&insight.context)?;
     let actions_json = serde_json::to_string(&insight.suggested_actions)?;
 
@@ -150,7 +154,10 @@ fn persist_insight(conn: &Connection, insight: &Insight, space_id: Ulid) -> Resu
     Ok(())
 }
 
-pub fn get_active_insights(conn: &Connection, space_id: &str) -> Result<Vec<Insight>, ForesightError> {
+pub fn get_active_insights(
+    conn: &Connection,
+    space_id: &str,
+) -> Result<Vec<Insight>, ForesightError> {
     let mut stmt = conn.prepare(
         "SELECT id, space_id, title, description, insight_type, severity, context_json, suggested_actions_json, created_at, dismissed
          FROM insight
@@ -186,7 +193,10 @@ pub fn get_active_insights(conn: &Connection, space_id: &str) -> Result<Vec<Insi
 }
 
 pub fn dismiss_insight(conn: &Connection, id: Ulid) -> Result<(), ForesightError> {
-    conn.execute("UPDATE insight SET dismissed = 1 WHERE id = ?1", [id.to_string()])?;
+    conn.execute(
+        "UPDATE insight SET dismissed = 1 WHERE id = ?1",
+        [id.to_string()],
+    )?;
     Ok(())
 }
 

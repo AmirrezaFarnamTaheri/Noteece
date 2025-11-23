@@ -31,7 +31,11 @@ pub fn create_backup(vault_path: &str, backup_path: &str) -> Result<(), BackupEr
         let name = match path.strip_prefix(Path::new(vault_path)) {
             Ok(n) => n,
             Err(e) => {
-                log::warn!("[backup] Skipping file {:?} due to strip prefix error: {}", path, e);
+                log::warn!(
+                    "[backup] Skipping file {:?} due to strip prefix error: {}",
+                    path,
+                    e
+                );
                 continue;
             }
         };
@@ -40,7 +44,10 @@ pub fn create_backup(vault_path: &str, backup_path: &str) -> Result<(), BackupEr
             match name.to_str() {
                 Some(n) => zip.start_file(n, options)?,
                 None => {
-                    log::warn!("[backup] Skipping file with invalid unicode name: {:?}", name);
+                    log::warn!(
+                        "[backup] Skipping file with invalid unicode name: {:?}",
+                        name
+                    );
                     continue;
                 }
             }

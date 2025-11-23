@@ -128,8 +128,10 @@ pub fn get_tracks(conn: &Connection, space_id: Ulid) -> Result<Vec<Track>, DbErr
     let tracks = stmt
         .query_map([space_id.to_string()], |row| {
             Ok(Track {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                id: Ulid::from_string(&row.get::<_, String>(0)?)
+                    .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?)
+                    .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 title: row.get(2)?,
                 artist: row.get(3)?,
                 album: row.get(4)?,
@@ -163,8 +165,10 @@ pub fn get_playlists(conn: &Connection, space_id: Ulid) -> Result<Vec<Playlist>,
     let playlists = stmt
         .query_map([space_id.to_string()], |row| {
             Ok(Playlist {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                id: Ulid::from_string(&row.get::<_, String>(0)?)
+                    .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?)
+                    .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 name: row.get(2)?,
                 description: row.get(3)?,
                 artwork_url: row.get(4)?,
