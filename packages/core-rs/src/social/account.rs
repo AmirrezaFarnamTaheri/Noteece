@@ -205,65 +205,69 @@ pub fn get_social_account(
     }
 }
 
+pub struct UpdateSocialAccountParams<'a> {
+    pub account_id: &'a str,
+    pub enabled: Option<bool>,
+    pub sync_frequency_minutes: Option<i32>,
+    pub display_name: Option<&'a str>,
+    pub username: Option<&'a str>,
+    pub credentials: Option<&'a str>,
+    pub dek: Option<&'a [u8]>,
+}
+
 /// Update social account settings
 pub fn update_social_account(
     conn: &Connection,
-    account_id: &str,
-    enabled: Option<bool>,
-    sync_frequency_minutes: Option<i32>,
-    display_name: Option<&str>,
-    username: Option<&str>,
-    credentials: Option<&str>,
-    dek: Option<&[u8]>,
+    params: UpdateSocialAccountParams,
 ) -> Result<(), SocialError> {
     log::debug!(
         "[Social::Account] Updating account {} - enabled={:?}, sync_freq={:?}, display_name={:?}, username={:?}",
-        account_id,
-        enabled,
-        sync_frequency_minutes,
-        display_name,
-        username
+        params.account_id,
+        params.enabled,
+        params.sync_frequency_minutes,
+        params.display_name,
+        params.username
     );
 
-    if let Some(enabled) = enabled {
+    if let Some(enabled) = params.enabled {
         conn.execute(
             "UPDATE social_account SET enabled = ?1 WHERE id = ?2",
-            params![if enabled { 1 } else { 0 }, account_id],
+            params![if enabled { 1 } else { 0 }, params.account_id],
         )
         .map_err(SocialError::Database)?;
     }
 
-    if let Some(frequency) = sync_frequency_minutes {
+    if let Some(frequency) = params.sync_frequency_minutes {
         conn.execute(
             "UPDATE social_account SET sync_frequency_minutes = ?1 WHERE id = ?2",
-            params![frequency, account_id],
+            params![frequency, params.account_id],
         )
         .map_err(SocialError::Database)?;
     }
 
-    if let Some(name) = display_name {
+    if let Some(name) = params.display_name {
         conn.execute(
             "UPDATE social_account SET display_name = ?1 WHERE id = ?2",
-            params![name, account_id],
+            params![name, params.account_id],
         )
         .map_err(SocialError::Database)?;
     }
 
-    if let Some(u) = username {
+    if let Some(u) = params.username {
         conn.execute(
             "UPDATE social_account SET username = ?1 WHERE id = ?2",
-            params![u, account_id],
+            params![u, params.account_id],
         )
         .map_err(SocialError::Database)?;
     }
 
-    if let Some(c) = credentials {
-        if let Some(k) = dek {
+    if let Some(c) = params.credentials {
+        if let Some(k) = params.dek {
             use crate::crypto::encrypt_string;
             let enc = encrypt_string(c, k).map_err(SocialError::Crypto)?;
             conn.execute(
                 "UPDATE social_account SET encrypted_credentials = ?1 WHERE id = ?2",
-                params![enc, account_id],
+                params![enc, params.account_id],
             )
             .map_err(SocialError::Database)?;
         } else {
@@ -273,7 +277,7 @@ pub fn update_social_account(
 
     log::info!(
         "[Social::Account] Successfully updated account {}",
-        account_id
+        params.account_id
     );
 
     Ok(())

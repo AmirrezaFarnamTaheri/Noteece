@@ -300,10 +300,8 @@ impl BackupService {
             })?;
 
             let mut table_data = Vec::new();
-            for row in rows {
-                if let Ok(data) = row {
-                    table_data.push(data);
-                }
+            for data in rows.flatten() {
+                table_data.push(data);
             }
 
             export["tables"][table] = serde_json::json!(table_data);

@@ -5,7 +5,7 @@ import '@testing-library/jest-dom';
 import { Task } from '@noteece/types';
 
 // Mock hooks
-const mockTasks = [
+const mockTasks: Task[] = [
   {
     id: '1',
     title: 'Task 1 Due Today',
@@ -13,6 +13,8 @@ const mockTasks = [
     priority: 1,
     due_at: Math.floor(Date.now() / 1000), // Today
     space_id: 'space-1',
+    created_at: 0,
+    updated_at: 0,
   },
   {
     id: '2',
@@ -21,6 +23,8 @@ const mockTasks = [
     priority: 2,
     due_at: Math.floor(Date.now() / 1000) + 86_400, // Tomorrow
     space_id: 'space-1',
+    created_at: 0,
+    updated_at: 0,
   },
   {
     id: '3',
@@ -29,8 +33,10 @@ const mockTasks = [
     priority: 3,
     due_at: Math.floor(Date.now() / 1000), // Today but done
     space_id: 'space-1',
+    created_at: 0,
+    updated_at: 0,
   },
-] as Task[];
+];
 
 const mockMutateAsync = jest.fn();
 

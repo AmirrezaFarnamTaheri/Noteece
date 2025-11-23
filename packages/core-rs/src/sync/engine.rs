@@ -221,45 +221,12 @@ impl SyncAgent {
     }
 
     /// Record sync history
-    #[allow(clippy::too_many_arguments)]
     pub fn record_sync_history(
         &self,
         conn: &Connection,
-        space_id: &str,
-        direction: &str,
-        items_synced: i64,
-        items_failed: i64,
-        _duration_ms: i64,
-        success: bool,
-        details: Option<&str>,
+        params: crate::sync::history::SyncRecordParams,
     ) -> Result<(), SyncError> {
-        let id = Ulid::new().to_string();
-        let now = chrono::Utc::now().timestamp();
-
-        let (pushed, pulled) = if direction == "push" {
-            (items_synced, 0)
-        } else {
-            (0, items_synced)
-        };
-
-        conn.execute(
-            "INSERT INTO sync_history (
-                id, space_id, device_id, sync_time, direction,
-                entities_pushed, entities_pulled, conflicts_detected, success, error_message
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
-            rusqlite::params![
-                id,
-                space_id,
-                self.device_id,
-                now,
-                direction,
-                pushed,
-                pulled,
-                items_failed,
-                success,
-                details
-            ],
-        )?;
+        SyncHistory::record(conn, params)?;
         Ok(())
     }
 

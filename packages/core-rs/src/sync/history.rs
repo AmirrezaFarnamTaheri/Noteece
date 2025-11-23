@@ -6,19 +6,20 @@ use ulid::Ulid;
 
 pub struct SyncHistory;
 
+pub struct SyncRecordParams<'a> {
+    pub device_id: &'a str,
+    pub space_id: &'a str,
+    pub direction: &'a str,
+    pub entities_pushed: u32,
+    pub entities_pulled: u32,
+    pub conflicts: u32,
+    pub success: bool,
+    pub error_message: Option<&'a str>,
+}
+
 impl SyncHistory {
     /// Record sync history
-    pub fn record(
-        conn: &Connection,
-        device_id: &str,
-        space_id: &str,
-        direction: &str,
-        entities_pushed: u32,
-        entities_pulled: u32,
-        conflicts: u32,
-        success: bool,
-        error_message: Option<&str>,
-    ) -> Result<String, SyncError> {
+    pub fn record(conn: &Connection, params: SyncRecordParams) -> Result<String, SyncError> {
         let id = Ulid::new().to_string();
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -32,15 +33,15 @@ impl SyncHistory {
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
             rusqlite::params![
                 id,
-                device_id,
-                space_id,
+                params.device_id,
+                params.space_id,
                 now,
-                direction,
-                entities_pushed as i32,
-                entities_pulled as i32,
-                conflicts as i32,
-                if success { 1 } else { 0 },
-                error_message,
+                params.direction,
+                params.entities_pushed as i32,
+                params.entities_pulled as i32,
+                params.conflicts as i32,
+                if params.success { 1 } else { 0 },
+                params.error_message,
             ],
         )?;
 

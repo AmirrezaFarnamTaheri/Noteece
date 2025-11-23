@@ -523,19 +523,17 @@ fn detect_communities(nodes: &[GraphNode], edges: &[GraphEdge]) -> u32 {
     let mut adjacency: HashMap<String, HashSet<String>> = HashMap::new();
 
     for node in nodes {
-        adjacency
-            .entry(node.id.clone())
-            .or_insert_with(HashSet::new);
+        adjacency.entry(node.id.clone()).or_default();
     }
 
     for edge in edges {
         adjacency
             .entry(edge.source_id.clone())
-            .or_insert_with(HashSet::new)
+            .or_default()
             .insert(edge.target_id.clone());
         adjacency
             .entry(edge.target_id.clone())
-            .or_insert_with(HashSet::new)
+            .or_default()
             .insert(edge.source_id.clone());
     }
 

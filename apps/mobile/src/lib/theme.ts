@@ -1,84 +1,146 @@
-export const theme = {
-  colors: {
-    // Deep Obsidian Backgrounds
-    background: "#050506",
-    backgroundSecondary: "#101113",
-    backgroundTertiary: "#1A1B1E",
+/**
+ * Noteece Mobile Theme
+ * Deep Obsidian design system implementation
+ */
 
-    // Text Colors
-    text: "#F3F0FF", // High contrast white/violet
-    textSecondary: "#C1C2C5",
-    textDimmed: "#909296",
+export const colors = {
+  // Deep Obsidian Backgrounds
+  background: "#050506",
+  backgroundSecondary: "#101113",
+  backgroundTertiary: "#1A1B1E",
 
-    // Primary Brand Colors (Violet)
-    primary: "#845EF7",
-    primaryLight: "#B197FC",
-    primaryDark: "#5F3DC4",
-    primaryFade: "rgba(132, 94, 247, 0.15)",
+  // Text Colors
+  text: "#F3F0FF", // High contrast white/violet
+  textSecondary: "#C1C2C5",
+  textDimmed: "#909296",
+  textPrimary: "#F3F0FF", // Alias for text
+  textTertiary: "#909296", // Alias for textDimmed
 
-    // Secondary Accent (Teal)
-    accent: "#20C997",
-    accentLight: "#63E6BE",
-    accentDark: "#099268",
+  // Primary Brand Colors (Violet)
+  primary: "#845EF7",
+  primaryLight: "#B197FC",
+  primaryDark: "#5F3DC4",
+  primaryFade: "rgba(132, 94, 247, 0.15)",
 
-    // Semantic Colors
-    border: "#2C2E33",
-    borderLight: "#5C5F66",
-    error: "#FA5252",
-    success: "#20C997",
-    warning: "#FCC419",
+  // Secondary Accent (Teal)
+  accent: "#20C997",
+  accentLight: "#63E6BE",
+  accentDark: "#099268",
 
-    // Overlays
-    overlay: "rgba(0, 0, 0, 0.7)",
+  // Semantic Colors
+  border: "#2C2E33",
+  borderLight: "#5C5F66",
+  error: "#FA5252",
+  success: "#20C997",
+  warning: "#FCC419",
+
+  // Surfaces
+  surface: "#101113",
+
+  // Overlays
+  overlay: "rgba(0, 0, 0, 0.7)",
+};
+
+export const spacing = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+};
+
+export const borderRadius = {
+  sm: 4,
+  md: 8,
+  lg: 16,
+  xl: 24,
+  round: 9999,
+};
+
+export const typography = {
+  fontFamily: {
+    regular: "System",
+    medium: "System",
+    semibold: "System",
+    bold: "System",
+    mono: "System",
   },
-
-  spacing: {
-    xs: 4,
-    sm: 8,
-    md: 16,
-    lg: 24,
-    xl: 32,
+  fontSize: {
+    xs: 12,
+    sm: 14,
+    base: 16,
+    lg: 18,
+    xl: 20,
+    "2xl": 24,
+    "3xl": 30,
   },
-
-  borderRadius: {
-    sm: 4,
-    md: 8,
-    lg: 16,
-    xl: 24,
-    round: 9999,
+  lineHeight: {
+    tight: 1.25,
+    normal: 1.5,
+    relaxed: 1.75,
   },
-
-  typography: {
-    h1: {
-      fontSize: 32,
-      fontWeight: "800",
-      letterSpacing: -0.5,
-    },
-    h2: {
-      fontSize: 24,
-      fontWeight: "700",
-      letterSpacing: -0.25,
-    },
-    h3: {
-      fontSize: 20,
-      fontWeight: "600",
-    },
-    body: {
-      fontSize: 16,
-      lineHeight: 24,
-    },
-    caption: {
-      fontSize: 12,
-      color: "#909296",
-    },
+  h1: {
+    fontSize: 32,
+    fontWeight: "800",
+    letterSpacing: -0.5,
   },
-
-  shadows: {
-    sm: "0 1px 2px rgba(0, 0, 0, 0.1)",
-    md: "0 4px 6px -1px rgba(0, 0, 0, 0.3)",
-    lg: "0 10px 15px -3px rgba(0, 0, 0, 0.5)",
-    primary: "0 4px 12px rgba(132, 94, 247, 0.3)",
+  h2: {
+    fontSize: 24,
+    fontWeight: "700",
+    letterSpacing: -0.25,
+  },
+  h3: {
+    fontSize: 20,
+    fontWeight: "600",
+  },
+  body: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  caption: {
+    fontSize: 12,
+    color: "#909296",
   },
 };
 
+export const shadows = {
+  sm: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.18,
+    shadowRadius: 1.0,
+    elevation: 1,
+  },
+  md: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  lg: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.34,
+    shadowRadius: 6.27,
+    elevation: 10,
+  },
+  primary: {
+    shadowColor: "#845EF7",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+};
+
+export const theme = {
+  colors,
+  spacing,
+  borderRadius,
+  typography,
+  shadows,
+};
+
+// For type inference
 export type Theme = typeof theme;

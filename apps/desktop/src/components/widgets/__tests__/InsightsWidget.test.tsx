@@ -4,9 +4,9 @@ import InsightsWidget from '../InsightsWidget';
 import '@testing-library/jest-dom';
 
 // Mock hooks with default empty values
-let mockNotes = [] as any[];
-let mockTasks = [] as any[];
-let mockProjects = [] as any[];
+let mockNotes: unknown[] = [];
+let mockTasks: unknown[] = [];
+let mockProjects: unknown[] = [];
 
 jest.mock('../../../hooks/useQueries', () => ({
   useNotes: jest.fn(() => ({ data: mockNotes, isLoading: false })),

@@ -621,14 +621,13 @@ impl SyncBatchProcessor {
                 .map(|v| v.len() as u64)
                 .unwrap_or(1024);
 
-            if current_batch.len() >= self.batch_size
-                || (current_size + estimated_size) > self.max_batch_bytes
+            if (current_batch.len() >= self.batch_size
+                || (current_size + estimated_size) > self.max_batch_bytes)
+                && !current_batch.is_empty()
             {
-                if !current_batch.is_empty() {
-                    batches.push(current_batch);
-                    current_batch = Vec::new();
-                    current_size = 0;
-                }
+                batches.push(current_batch);
+                current_batch = Vec::new();
+                current_size = 0;
             }
 
             current_batch.push(delta);

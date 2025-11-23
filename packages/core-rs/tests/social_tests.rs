@@ -1,4 +1,5 @@
 use core_rs::social::*;
+use core_rs::social::account::UpdateSocialAccountParams;
 use rusqlite::Connection;
 
 fn setup_db() -> Connection {
@@ -60,17 +61,16 @@ fn test_social_account_lifecycle() {
     assert_eq!(creds, "token");
 
     // Test Update
-    update_social_account(
-        &conn,
-        &account.id,
-        Some(false),
-        None,
-        None,
-        None,
-        None,
-        None,
-    )
-    .unwrap();
+    let params = UpdateSocialAccountParams {
+        account_id: &account.id,
+        enabled: Some(false),
+        sync_frequency_minutes: None,
+        display_name: None,
+        username: None,
+        credentials: None,
+        dek: None,
+    };
+    update_social_account(&conn, params).unwrap();
     let updated = get_social_account(&conn, &account.id).unwrap().unwrap();
     assert_eq!(updated.enabled, false);
 

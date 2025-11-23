@@ -27,17 +27,16 @@ fn test_manual_time_entry_calculation() {
     let start_time = 1000;
     let duration = 3600;
 
-    let entry = time_tracking::create_manual_time_entry(
-        &conn,
+    let params = time_tracking::CreateManualEntryParams {
         space_id,
-        Some(task.id), // Link to task
-        None,
-        None,
-        Some("Manual Entry".to_string()),
-        start_time,
-        duration,
-    )
-    .unwrap();
+        task_id: Some(task.id),
+        project_id: None,
+        note_id: None,
+        description: Some("Manual Entry".to_string()),
+        started_at: start_time,
+        duration_seconds: duration,
+    };
+    let entry = time_tracking::create_manual_time_entry(&conn, params).unwrap();
 
     assert_eq!(entry.started_at, start_time);
     assert_eq!(entry.duration_seconds, Some(duration));
@@ -59,32 +58,31 @@ fn test_manual_time_entry_constraints() {
     let start_time = 1000;
     let duration = -500;
 
-    let entry = time_tracking::create_manual_time_entry(
-        &conn,
+    let params = time_tracking::CreateManualEntryParams {
         space_id,
-        Some(task.id),
-        None,
-        None,
-        Some("Negative Duration".to_string()),
-        start_time,
-        duration,
-    )
-    .unwrap();
+        task_id: Some(task.id),
+        project_id: None,
+        note_id: None,
+        description: Some("Negative Duration".to_string()),
+        started_at: start_time,
+        duration_seconds: duration,
+    };
+    let entry = time_tracking::create_manual_time_entry(&conn, params).unwrap();
 
     assert_eq!(entry.ended_at, Some(500));
 
     // Robustness check: Ensure we can't link to non-existent task if FKs are ON
     let fake_task_id = Ulid::new();
-    let result = time_tracking::create_manual_time_entry(
-        &conn,
+    let params = time_tracking::CreateManualEntryParams {
         space_id,
-        Some(fake_task_id),
-        None,
-        None,
-        None,
-        start_time,
-        3600,
-    );
+        task_id: Some(fake_task_id),
+        project_id: None,
+        note_id: None,
+        description: None,
+        started_at: start_time,
+        duration_seconds: 3600,
+    };
+    let result = time_tracking::create_manual_time_entry(&conn, params);
 
     // Should fail due to FK constraint
     assert!(result.is_err());

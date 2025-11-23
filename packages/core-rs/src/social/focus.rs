@@ -278,73 +278,70 @@ pub fn create_preset_focus_modes(
         space_id
     );
 
-    let mut presets = Vec::new();
-
-    // Deep Work Mode
-    presets.push(create_focus_mode(
-        conn,
-        space_id,
-        "Deep Work",
-        Some("Block all social media, allow work platforms"),
-        Some("🧠"),
-        vec![
-            "twitter".to_string(),
-            "instagram".to_string(),
-            "tiktok".to_string(),
-            "facebook".to_string(),
-            "reddit".to_string(),
-        ],
-        vec!["linkedin".to_string(), "slack".to_string()],
-    )?);
-
-    // Social Time Mode
-    presets.push(create_focus_mode(
-        conn,
-        space_id,
-        "Social Time",
-        Some("Limited access to social platforms"),
-        Some("👥"),
-        vec![],
-        vec![
-            "twitter".to_string(),
-            "instagram".to_string(),
-            "facebook".to_string(),
-        ],
-    )?);
-
-    // Learning Mode
-    presets.push(create_focus_mode(
-        conn,
-        space_id,
-        "Learning",
-        Some("Educational content only"),
-        Some("📚"),
-        vec![
-            "instagram".to_string(),
-            "tiktok".to_string(),
-            "tinder".to_string(),
-        ],
-        vec!["youtube".to_string(), "reddit".to_string()],
-    )?);
-
-    // Detox Mode
-    presets.push(create_focus_mode(
-        conn,
-        space_id,
-        "Detox",
-        Some("Block all social media"),
-        Some("🌿"),
-        vec![
-            "twitter".to_string(),
-            "instagram".to_string(),
-            "tiktok".to_string(),
-            "facebook".to_string(),
-            "reddit".to_string(),
-            "youtube".to_string(),
-            "linkedin".to_string(),
-        ],
-        vec![],
-    )?);
+    let presets = vec![
+        // Deep Work Mode
+        create_focus_mode(
+            conn,
+            space_id,
+            "Deep Work",
+            Some("Block all social media, allow work platforms"),
+            Some("🧠"),
+            vec![
+                "twitter".to_string(),
+                "instagram".to_string(),
+                "tiktok".to_string(),
+                "facebook".to_string(),
+                "reddit".to_string(),
+            ],
+            vec!["linkedin".to_string(), "slack".to_string()],
+        )?,
+        // Social Time Mode
+        create_focus_mode(
+            conn,
+            space_id,
+            "Social Time",
+            Some("Limited access to social platforms"),
+            Some("👥"),
+            vec![],
+            vec![
+                "twitter".to_string(),
+                "instagram".to_string(),
+                "facebook".to_string(),
+            ],
+        )?,
+        // Learning Mode
+        create_focus_mode(
+            conn,
+            space_id,
+            "Learning",
+            Some("Educational content only"),
+            Some("📚"),
+            vec![
+                "instagram".to_string(),
+                "tiktok".to_string(),
+                "tinder".to_string(),
+            ],
+            vec!["youtube".to_string(), "reddit".to_string()],
+        )?,
+        // Detox Mode
+        create_focus_mode(
+            conn,
+            space_id,
+            "Detox",
+            Some("Block all social media"),
+            Some("🌿"),
+            vec![
+                "twitter".to_string(),
+                "instagram".to_string(),
+                "tiktok".to_string(),
+                "facebook".to_string(),
+                "reddit".to_string(),
+                "youtube".to_string(),
+                "linkedin".to_string(),
+            ],
+            vec![],
+        )?,
+    ];
 
     log::info!(
         "[Social::Focus] Created {} preset focus modes for space {}",
