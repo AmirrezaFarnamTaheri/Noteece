@@ -48,6 +48,7 @@ import {
 
 // Dashboard & Analytics
 export const getAnalyticsData = (): Promise<AnalyticsData> => invoke('get_analytics_data_cmd', {});
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getDashboardStats = (spaceId: string): Promise<any> => invoke('get_dashboard_stats_cmd', { spaceId }); // DashboardStats type needed
 
 // Forms

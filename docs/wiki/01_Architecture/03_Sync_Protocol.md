@@ -83,6 +83,22 @@ All messages are serialized as JSON (for simplicity) inside the encrypted tunnel
         - Do NOT overwrite local data.
         - Notify user.
 
+### Conflict Resolution Strategy
+
+When a conflict is detected (concurrent edits on different devices), Noteece adopts a "Safety First" approach:
+
+1.  **Detection:**
+    *   Calculated by comparing the incoming `vector_clock` with the local `vector_clock` for the specific entity ID.
+    *   If the incoming clock is neither strictly greater nor strictly less than the local clock, a concurrent edit has occurred.
+
+2.  **Quarantine:**
+    *   The incoming payload is **not** applied to the active table.
+    *   Instead, it is serialized and stored in the `sync_conflict` table with `status = 'pending'`.
+
+3.  **Resolution:**
+    *   **Manual:** The user is presented with a diff UI (Local vs. Remote) and must choose one or merge content manually.
+    *   **Last-Write-Wins (Fallback):** For non-critical data (e.g., read status), the system may auto-resolve based on the wall-clock timestamp (`updated_at`), but this is strictly opt-in per entity type.
+
 4.  **Acknowledgment:**
     - `A` sends `SyncAck`.
     - `B` updates its `sync_history` to reflect that `A` is now up to date.

@@ -48,8 +48,7 @@ export default function HabitsTracker() {
   const fetchHabits = async () => {
     if (activeSpaceId) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const fetchedHabits: any[] = await invoke('get_habits_cmd', { spaceId: activeSpaceId });
+        const fetchedHabits = await invoke<Habit[]>('get_habits_cmd', { spaceId: activeSpaceId });
 
         // Determine if "completed" today based on last_completed_at
         const today = new Date().setHours(0, 0, 0, 0);
