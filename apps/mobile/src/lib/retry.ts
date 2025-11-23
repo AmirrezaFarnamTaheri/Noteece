@@ -121,9 +121,9 @@ export async function withRetry<T>(
       finalConfig.onRetry(attempt + 1, lastError);
 
       if (__DEV__) {
-        console.log(
+        /* console.log(
           `[Retry] Attempt ${attempt + 1}/${finalConfig.maxRetries} failed: ${lastError.message}. Retrying in ${Math.round(delay)}ms...`,
-        );
+        ); */
       }
 
       // Wait before retrying
@@ -191,9 +191,9 @@ export async function retryUntil<T>(
 
       const delay = calculateDelay(attempt, finalConfig);
       if (__DEV__) {
-        console.log(
+        /* console.log(
           `[Retry] Predicate not satisfied. Attempt ${attempt + 1}/${finalConfig.maxRetries}. Retrying in ${Math.round(delay)}ms...`,
-        );
+        ); */
       }
 
       await sleep(delay);
@@ -214,9 +214,9 @@ export async function retryUntil<T>(
       finalConfig.onRetry(attempt + 1, lastError);
 
       if (__DEV__) {
-        console.log(
+        /* console.log(
           `[Retry] Attempt ${attempt + 1}/${finalConfig.maxRetries} failed. Retrying in ${Math.round(delay)}ms...`,
-        );
+        ); */
       }
 
       await sleep(delay);

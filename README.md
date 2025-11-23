@@ -1,79 +1,83 @@
 # Noteece
 
-**Noteece** is a local-first, end-to-end encrypted, Markdown-centric workspace designed for privacy, productivity, and personal growth.
+> **Local-first, End-to-End Encrypted Life OS**
 
-![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
-![Status](https://img.shields.io/badge/status-production_ready-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-![Version](https://img.shields.io/badge/version-1.0.0-violet)
+Noteece is a private, offline-first workspace that combines note-taking, project management, and personal tracking into a single, encrypted vault. It runs on your desktop and syncs directly to your mobile devices without a central server.
 
-## Overview
+## Core Philosophy
 
-Noteece combines the best of note-taking, project management, and personal growth tracking into a single, private application. Your data lives on your device, encrypted and secure.
+1.  **Local-First**: Your data lives on your device. No cloud account required.
+2.  **End-to-End Encrypted**: All content is encrypted at rest using SQLCipher (XChaCha20-Poly1305).
+3.  **Ownership**: You own your keys and your database. Export to Markdown/JSON at any time.
+4.  **Connectivity**: Optional peer-to-peer sync over local network (mDNS/WebSockets) or via encrypted relays.
 
-### Key Features
+## Architecture
 
-- **📝 Knowledge Management:** Markdown editor with backlinks, tags, and full-text search (with FTS5 fallback support).
-- **🚀 Project Hub:** Comprehensive project management with Milestones, Risks, and Kanban boards.
-- **⏱️ Time Tracking:** Built-in manual and timer-based time tracking linked to projects and tasks.
-- **🌱 Personal Growth:** Track habits, set goals, and perform weekly reviews.
-- **📱 Mobile Companion:** Sync your data securely via P2P to your mobile device (Android/iOS).
-- **🔒 Privacy First:** Local-first architecture with SQLCipher encryption (ChaCha20Poly1305, Argon2). No cloud, no tracking.
-- **🌐 Social Media Suite:** Securely aggregate, categorize, and archive your social media presence locally.
-- **🎨 Modern UI:** Revolutionary "Deep Obsidian" aesthetic with glassmorphism and smooth interactions.
+The project is a monorepo containing:
 
-## Robustness & Security
+*   `packages/core-rs`: The brain of the operation. A Rust library handling the encrypted SQLite database, business logic, sync protocol, and cryptography.
+*   `apps/desktop`: A Tauri v1 application (Rust + React/TypeScript) that wraps `core-rs`.
+*   `apps/mobile`: A React Native (Expo) application that will eventually bind to `core-rs` (currently in progress via JSI or HTTP bridge).
+*   `packages/types`: Shared TypeScript definitions for frontend-backend consistency.
 
-Noteece is built with a focus on 100% data integrity and security:
-- **End-to-End Encryption:** All data is encrypted at rest using SQLCipher. Keys are derived using Argon2.
-- **Sync Consistency:** Uses Vector Clocks and Merkle-like hashing to ensure eventual consistency across devices without central servers.
-- **Cross-Platform Verified:** CI/CD pipelines verify builds across Linux (Ubuntu), macOS, and Windows.
-- **Safe & Sound:** The backend (`core-rs`) is written in Rust with strict error handling (no unsafe unwraps in critical paths) to prevent crashes and data corruption.
+## Features
+
+*   **Notes**: Markdown-based editor with backlinking (`[[wiki-style]]`), tagging, and full-text search.
+*   **Projects**: Kanban boards, Gantt-like timelines, risk tracking, and milestone management.
+*   **Tasks**: GTD-style task manager with recurring tasks, priority queues, and project associations.
+*   **Personal Modes**: Dedicated tracking for Health (metrics, goals), Finance (transactions), and Travel (itineraries).
+*   **Social Media Suite**: Plan, draft, and archive content for social platforms locally.
+*   **Sync**: Encrypted, conflict-free sync between devices using Vector Clocks and Merkle Trees (in progress).
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js (v18+) & pnpm
-- Rust (stable)
-- System dependencies (see [WIKI.md](./WIKI.md))
+*   **Rust**: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+*   **Node.js**: v18+ (via `nvm` or `voltag`)
+*   **pnpm**: `npm install -g pnpm`
+*   **System Libs** (Ubuntu/Debian):
+    ```bash
+    sudo apt install libwebkit2gtk-4.0-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+    ```
 
 ### Installation
 
-```bash
-git clone https://github.com/yourusername/noteece.git
-cd noteece
-pnpm install
-```
+1.  **Clone**:
+    ```bash
+    git clone https://github.com/yourusername/noteece.git
+    cd noteece
+    ```
 
-### Running the Desktop App
+2.  **Install Dependencies**:
+    ```bash
+    pnpm install
+    ```
 
-```bash
-cd apps/desktop
-pnpm dev:tauri
-```
+3.  **Run Desktop App**:
+    ```bash
+    cd apps/desktop
+    pnpm tauri dev
+    ```
 
-### Running the Mobile App
+4.  **Run Mobile App**:
+    ```bash
+    cd apps/mobile
+    pnpm start
+    ```
 
-```bash
-cd apps/mobile
-pnpm start
-```
+## Development Status
 
-## Documentation
+*   [x] **Core Database**: Encrypted SQLite with SQLCipher.
+*   [x] **Auth**: PBKDF2/Argon2 key derivation.
+*   [x] **Notes/Tasks/Projects**: Full CRUD and linking.
+*   [x] **Search**: Hybrid FTS5 + LIKE search for encrypted content.
+*   [x] **Sync (Beta)**: Local P2P discovery and basic delta syncing.
+*   [x] **Personal Modes**: Health tracking implemented.
+*   [ ] **Mobile Bridge**: Full JSI binding for `core-rs` on mobile (currently using mock/partial implementation).
 
-For detailed information, please refer to the **[Wiki](./WIKI.md)**.
-
-- **[User Guide](./USER_GUIDE.md)**
-- **[Developer Guide](./DEVELOPER_GUIDE.md)**
-- **[Architecture](./ARCHITECTURE.md)**
-- **[Security](./SECURITY.md)**
-- **[Issues](./ISSUES.md)** - Current known issues and workarounds.
-
-## Contributing
-
-Contributions are welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+See [ISSUES.md](./ISSUES.md) for known bugs and [PROGRESS.md](./PROGRESS.md) for roadmap.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+AGPL-3.0

@@ -129,7 +129,7 @@ const MainLayout: React.FC = () => {
                 <Title order={4} style={{ lineHeight: 1, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--mantine-color-gray-0)' }}>
                   Noteece
                 </Title>
-                <Text size="8px" c="dimmed" fw={700} tt="uppercase" ls={2} mt={2}>
+                <Text size="8px" c="dimmed" fw={700} tt="uppercase" mt={2} style={{ letterSpacing: '2px' }}>
                   Private Vault
                 </Text>
               </Box>
@@ -195,7 +195,7 @@ const MainLayout: React.FC = () => {
             <Stack gap="lg" pt="sm">
               {navLinkGroups.map((group) => (
                 <Stack key={group.title} gap={4}>
-                  <Text size="10px" fw={800} c="dimmed" tt="uppercase" pl="xs" mb={4} ls={1} style={{ opacity: 0.7 }}>
+                  <Text size="10px" fw={800} c="dimmed" tt="uppercase" pl="xs" mb={4} style={{ opacity: 0.7, letterSpacing: '1px' }}>
                     {group.title}
                   </Text>
                   {group.links.map((link) => (

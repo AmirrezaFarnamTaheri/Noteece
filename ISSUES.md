@@ -55,7 +55,7 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 
 ---
 
-## 4. Resolved Issues (Verification Complete)
+## 4. Resolved Issues
 
 ### 4.1. Sync Schema Mismatch (Resolved)
 
@@ -74,3 +74,21 @@ This document tracks persistent, hard-to-debug issues in the codebase.
 - **Status:** **Resolved**
 - **Description:** The `SyncConflict` struct lacked `space_id`, causing `NOT NULL` constraint violations in the `sync_conflict` table during inserts.
 - **Resolution:** Added `space_id` to `SyncConflict` and `SyncDelta`. Updated `sync_agent.rs` to populate this field from the database or incoming delta during conflict detection, ensuring it is persisted correctly.
+
+### 4.4. Project Monolith Refactor (Resolved)
+
+- **Status:** **Resolved**
+- **Description:** `project.rs` was growing too large and mixing struct definitions with database logic.
+- **Resolution:** Refactored into `packages/core-rs/src/project/mod.rs`, `models.rs`, and `db.rs` for better separation of concerns.
+
+### 4.5. Sync History Panic (Resolved)
+
+- **Status:** **Resolved**
+- **Description:** `sync_logic_tests.rs` was panicking with "Invalid column type Null" when checking sync history on an empty table.
+- **Resolution:** Updated `sync/history.rs` to safely handle `MAX(sync_time)` returning `NULL` by wrapping the result in `Option<i64>`.
+
+### 4.6. Personal Modes Implementation (Resolved)
+
+- **Status:** **Resolved**
+- **Description:** Features for Health, Finance, and Travel modes were planned but unimplemented or placeholders.
+- **Resolution:** Implemented `personal_modes.rs` backend logic and `HealthMode.tsx` frontend component with real database integration.

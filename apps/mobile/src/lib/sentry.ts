@@ -8,7 +8,7 @@ export function initSentry() {
     Constants.expoConfig?.extra?.sentryDsn || process.env.SENTRY_DSN;
 
   if (!sentryDsn) {
-    console.log("Sentry DSN not configured - error tracking disabled");
+    // console.log("Sentry DSN not configured - error tracking disabled");
     return;
   }
 
@@ -63,8 +63,8 @@ export function initSentry() {
     beforeSend(event, hint) {
       // Filter out events in development if needed
       if (__DEV__) {
-        console.log("Sentry Event:", event);
-        console.log("Sentry Hint:", hint);
+        // console.log("Sentry Event:", event);
+        // console.log("Sentry Hint:", hint);
       }
 
       // Don't send events for certain types of errors if needed
@@ -89,7 +89,7 @@ export function initSentry() {
     },
   });
 
-  console.log("Sentry initialized successfully");
+  // console.log("Sentry initialized successfully");
 }
 
 // Helper function to capture exceptions manually

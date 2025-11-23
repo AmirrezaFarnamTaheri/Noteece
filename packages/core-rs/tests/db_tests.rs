@@ -38,6 +38,7 @@ fn test_migrations() -> Result<(), DbError> {
             "habit",
             "habit_log",
             "health_metric",
+        "insight",
             "knowledge_card",
             "link",
             "llm_cache",
@@ -52,6 +53,7 @@ fn test_migrations() -> Result<(), DbError> {
             "project_milestone",
             "project_risk",
             "project_update",
+            "recipe",
             "review_log",
             "saved_search",
             "schema_version",
@@ -83,6 +85,8 @@ fn test_migrations() -> Result<(), DbError> {
             "task_tags",
             "time_entry",
             "track",
+            "transaction_log",
+            "trip",
             "users"
         ]
     );

@@ -200,7 +200,7 @@ const Kanban: React.FC = () => {
                   }}
                 >
                   <Group justify="space-between" mb="md">
-                    <Text fw={700} size="sm" c="gray.3" tt="uppercase" ls={0.5}>
+                    <Text fw={700} size="sm" c="gray.3" tt="uppercase" style={{ letterSpacing: 0.5 }}>
                       {columnTitle}
                     </Text>
                     <Badge variant="filled" color="dark" radius="sm">
@@ -245,9 +245,9 @@ const Kanban: React.FC = () => {
                                     {task.priority && (
                                       <Badge
                                         color={
-                                          task.priority === 'high'
+                                          (task.priority as unknown as string) === 'high'
                                             ? 'red'
-                                            : task.priority === 'medium'
+                                            : (task.priority as unknown as string) === 'medium'
                                               ? 'yellow'
                                               : 'blue'
                                         }

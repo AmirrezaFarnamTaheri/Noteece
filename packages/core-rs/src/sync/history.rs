@@ -124,9 +124,10 @@ impl SyncHistory {
             .query_row(
                 "SELECT MAX(sync_time) FROM sync_history WHERE space_id = ?1 AND success = 1",
                 [space_id],
-                |row| row.get(0),
+                |row| Ok(row.get::<_, Option<i64>>(0).unwrap_or(None)),
             )
-            .optional()?;
+            .optional()?
+            .flatten();
 
         Ok(result.unwrap_or(0))
     }

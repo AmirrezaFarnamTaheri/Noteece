@@ -4,8 +4,10 @@ pub mod error;
 pub mod models;
 pub mod db_init;
 pub mod history;
+pub mod mobile_sync;
 
 pub use engine::SyncAgent;
 pub use models::*;
 pub use error::SyncError;
 pub use conflict::{ConflictResolution, ConflictType};
+pub use mobile_sync::{SyncProtocol, DeviceInfo as MobileDeviceInfo};

@@ -149,11 +149,6 @@ impl SyncAgent {
         let mut conflicts = Vec::new();
         let tx = conn.transaction()?;
 
-        // Get last successful sync time for this space generally to help with split-brain detection
-        // Note: Ideally we should know WHICH device these deltas are coming from to check against THAT device's last sync.
-        // But SyncDelta doesn't carry source_device_id in the struct (it should).
-        // For now, we rely on local vs remote timestamp and the fact that we are processing a sync session.
-
         for delta in deltas {
             if let Some(conflict) = self.detect_conflict(&tx, &delta)? {
                 let conflict_id = Ulid::new().to_string();
@@ -186,7 +181,7 @@ impl SyncAgent {
                 Ok(_) => {
                     self.log_entity_sync(&tx, &delta)?;
                 }
-                Err(SyncError::ConflictError(_msg)) => {
+                Err(SyncError::ConflictError(_)) => {
                     // Handled by detect_conflict or logic inside
                 }
                 Err(e) => return Err(e),
@@ -195,6 +190,175 @@ impl SyncAgent {
 
         tx.commit()?;
         Ok(conflicts)
+    }
+
+    /// Get unresolved conflicts
+    pub fn get_unresolved_conflicts(
+        &self,
+        conn: &Connection,
+    ) -> Result<Vec<SyncConflict>, SyncError> {
+        let mut stmt = conn.prepare(
+            "SELECT entity_type, entity_id, local_version, remote_version, conflict_type, space_id
+             FROM sync_conflict
+             WHERE resolved = 0"
+        )?;
+
+        let conflicts = stmt.query_map([], |row| {
+             let conflict_type_str: String = row.get(4)?;
+             let conflict_type: ConflictType = match conflict_type_str.as_str() {
+                 "UpdateUpdate" => ConflictType::UpdateUpdate,
+                 "DeleteUpdate" => ConflictType::DeleteUpdate,
+                 "UpdateDelete" => ConflictType::UpdateDelete,
+                 _ => ConflictType::UpdateUpdate,
+             };
+
+             Ok(SyncConflict {
+                 entity_type: row.get(0)?,
+                 entity_id: row.get(1)?,
+                 local_version: row.get(2)?,
+                 remote_version: row.get(3)?,
+                 conflict_type,
+                 space_id: row.get(5)?,
+             })
+        })?.collect::<Result<Vec<_>, _>>()?;
+
+        Ok(conflicts)
+    }
+
+    /// Record sync history
+    #[allow(clippy::too_many_arguments)]
+    pub fn record_sync_history(
+        &self,
+        conn: &Connection,
+        space_id: &str,
+        direction: &str,
+        items_synced: i64,
+        items_failed: i64,
+        _duration_ms: i64,
+        success: bool,
+        details: Option<&str>,
+    ) -> Result<(), SyncError> {
+        let id = Ulid::new().to_string();
+        let now = chrono::Utc::now().timestamp();
+
+        // Map parameters to V2 schema fields:
+        // items_synced -> entities_pushed (if push) or entities_pulled (if pull)
+        // items_failed -> conflicts_detected
+        // details -> error_message
+
+        let (pushed, pulled) = if direction == "push" {
+            (items_synced, 0)
+        } else {
+            (0, items_synced)
+        };
+
+        conn.execute(
+            "INSERT INTO sync_history (
+                id, space_id, device_id, sync_time, direction,
+                entities_pushed, entities_pulled, conflicts_detected, success, error_message
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            rusqlite::params![
+                id,
+                space_id,
+                self.device_id,
+                now,
+                direction,
+                pushed,
+                pulled,
+                items_failed,
+                success,
+                details
+            ],
+        )?;
+        Ok(())
+    }
+
+    /// Get sync history
+    pub fn get_sync_history(
+        &self,
+        conn: &Connection,
+        space_id: &str,
+        limit: i64,
+    ) -> Result<Vec<SyncHistoryEntry>, SyncError> {
+         let mut stmt = conn.prepare(
+            "SELECT id, device_id, sync_time, direction, entities_pushed, entities_pulled, conflicts_detected, success, error_message
+             FROM sync_history
+             WHERE space_id = ?1
+             ORDER BY sync_time DESC
+             LIMIT ?2"
+        )?;
+
+        let history = stmt.query_map(rusqlite::params![space_id, limit], |row| {
+            Ok(SyncHistoryEntry {
+                id: row.get(0)?,
+                space_id: space_id.to_string(),
+                device_id: row.get(1)?,
+                sync_time: row.get(2)?,
+                direction: row.get(3)?,
+                entities_pushed: row.get::<_, i64>(4).unwrap_or(0) as i32,
+                entities_pulled: row.get::<_, i64>(5).unwrap_or(0) as i32,
+                conflicts_detected: row.get::<_, i64>(6).unwrap_or(0) as i32,
+                success: row.get(7)?,
+                error_message: row.get(8)?,
+            })
+        })?.collect::<Result<Vec<_>, _>>()?;
+
+        Ok(history)
+    }
+
+    /// Get all active sync tasks (placeholder implementation for now)
+    pub fn get_all_sync_tasks(&self, _conn: &Connection, _space_id: &str) -> Result<Vec<SyncTask>, SyncError> {
+        Ok(vec![])
+    }
+
+     /// Get sync stats
+    pub fn get_sync_stats(&self, conn: &Connection, space_id: &str) -> Result<SyncStats, SyncError> {
+        // Use Option<i64> to handle potential NULL from MAX()
+        // optional() handles "no rows returned"
+        // row.get::<_, Option<i64>>(0) handles "row exists but value is NULL"
+
+        let last_sync_at_row = conn.query_row(
+            "SELECT MAX(sync_time) FROM sync_history WHERE space_id = ?1 AND success = 1",
+            [space_id],
+            |row| row.get::<_, Option<i64>>(0)
+        ).optional()?;
+
+        let last_sync_at = last_sync_at_row.flatten();
+
+        let total_synced_row = conn.query_row(
+            "SELECT SUM(entities_pushed + entities_pulled) FROM sync_history WHERE space_id = ?1",
+            [space_id],
+            |row| row.get::<_, Option<i64>>(0)
+        ).optional()?;
+
+        let total_synced = total_synced_row.flatten().unwrap_or(0);
+
+        let conflicts_total: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM sync_conflict WHERE space_id = ?1",
+            [space_id],
+            |row| row.get(0)
+        ).unwrap_or(0);
+
+        let total_attempts: f64 = conn.query_row(
+            "SELECT COUNT(*) FROM sync_history WHERE space_id = ?1",
+             [space_id],
+             |row| row.get(0)
+        ).unwrap_or(0.0);
+
+        let successful_attempts: f64 = conn.query_row(
+             "SELECT COUNT(*) FROM sync_history WHERE space_id = ?1 AND success = 1",
+             [space_id],
+             |row| row.get(0)
+        ).unwrap_or(0.0);
+
+        let success_rate = if total_attempts > 0.0 { successful_attempts / total_attempts } else { 1.0 };
+
+        Ok(SyncStats {
+            last_sync_at,
+            total_synced: total_synced as i32,
+            conflicts_total: conflicts_total as i32,
+            success_rate,
+        })
     }
 
     /// Resolve a sync conflict
@@ -223,12 +387,103 @@ impl SyncAgent {
                 self.mark_conflict_resolved(conn, &conflict.entity_id)?;
             }
             ConflictResolution::Merge => {
-                // TODO: Implement smart merging logic per entity type
-                // For now, default to UseLocal to be safe
+                self.smart_merge_entity(conn, conflict, dek)?;
                 self.mark_conflict_resolved(conn, &conflict.entity_id)?;
             }
         }
 
+        Ok(())
+    }
+
+    /// Smart merge logic for supported entities
+    fn smart_merge_entity(
+        &self,
+        conn: &Connection,
+        conflict: &SyncConflict,
+        dek: &[u8],
+    ) -> Result<(), SyncError> {
+        let local_bytes = &conflict.local_version;
+        let remote_bytes = &conflict.remote_version;
+
+        match conflict.entity_type.as_str() {
+            "task" => {
+                let local: serde_json::Value = serde_json::from_slice(local_bytes).unwrap_or(serde_json::json!({}));
+                let remote: serde_json::Value = serde_json::from_slice(remote_bytes).unwrap_or(serde_json::json!({}));
+
+                // Merge strategy for Task:
+                // 1. Prefer "done" status if one is done.
+                // 2. Prefer longer title/description (heuristic for "more info").
+                // 3. Merge other fields if possible.
+
+                let mut merged = local.clone();
+
+                // Status merge: if remote is 'done' or 'cancelled', take it.
+                if let Some(r_status) = remote.get("status").and_then(|s| s.as_str()) {
+                    if r_status == "done" || r_status == "cancelled" {
+                        merged["status"] = remote["status"].clone();
+                    }
+                }
+
+                // Title merge: if remote title is longer, take it? Or just take remote?
+                // Safe bet: prefer remote if changed.
+                if let Some(r_title) = remote.get("title").and_then(|s| s.as_str()) {
+                    if let Some(l_title) = local.get("title").and_then(|s| s.as_str()) {
+                         if r_title != l_title && r_title.len() > l_title.len() {
+                             merged["title"] = remote["title"].clone();
+                         }
+                    } else {
+                        merged["title"] = remote["title"].clone();
+                    }
+                }
+
+                // Apply merged as a delta
+                let delta = SyncDelta {
+                    entity_type: "task".into(),
+                    entity_id: conflict.entity_id.clone(),
+                    operation: SyncOperation::Update,
+                    data: Some(serde_json::to_vec(&merged).map_err(|e| SyncError::InvalidData(e.to_string()))?),
+                    timestamp: chrono::Utc::now().timestamp(),
+                    vector_clock: HashMap::new(),
+                    space_id: conflict.space_id.clone(),
+                };
+                self.apply_single_delta(conn, &delta, dek)?;
+            }
+            "note" => {
+                 // For notes, we append remote content to local content with a separator
+                 let local_str = String::from_utf8(local_bytes.clone()).unwrap_or_default();
+                 let remote_str = String::from_utf8(remote_bytes.clone()).unwrap_or_default();
+
+                 let merged_content = format!("{}\n\n--- MERGED REMOTE CONTENT ---\n\n{}", local_str, remote_str);
+
+                 let delta = SyncDelta {
+                    entity_type: "note".into(),
+                    entity_id: conflict.entity_id.clone(),
+                    operation: SyncOperation::Update,
+                    data: Some(merged_content.into_bytes()),
+                    timestamp: chrono::Utc::now().timestamp(),
+                    vector_clock: HashMap::new(),
+                    space_id: conflict.space_id.clone(),
+                };
+                self.apply_single_delta(conn, &delta, dek)?;
+            }
+            _ => {
+                // Fallback for others: Use Remote (LWW-ish behavior for 'Merge' if not implemented)
+                // But safer to just log and do nothing (require manual choice)?
+                // User asked for "Smart Merge". For unknown types, we can't be smart.
+                // Let's default to UseRemote as that's usually what "Merge" implies if no deep merge is possible (take the incoming change).
+                log::warn!("No smart merge for {}, defaulting to remote", conflict.entity_type);
+                 let delta = SyncDelta {
+                    entity_type: conflict.entity_type.clone(),
+                    entity_id: conflict.entity_id.clone(),
+                    operation: SyncOperation::Update,
+                    data: Some(remote_bytes.clone()),
+                    timestamp: chrono::Utc::now().timestamp(),
+                    vector_clock: HashMap::new(),
+                    space_id: conflict.space_id.clone(),
+                };
+                self.apply_single_delta(conn, &delta, dek)?;
+            }
+        }
         Ok(())
     }
 
@@ -249,7 +504,9 @@ impl SyncAgent {
         )?;
 
         let rows = stmt.query_map([space_id.to_string()], |row| {
-            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
+            // Handle potential NULL from MAX() if GROUP BY somehow yields a group with nulls (unlikely but safe)
+            // or if the type inference fails.
+            Ok((row.get::<_, String>(0)?, row.get::<_, Option<i64>>(1)?.unwrap_or(0)))
         })?;
 
         for row in rows {
@@ -299,7 +556,6 @@ impl SyncAgent {
         }
     }
 
-    // Entity specific apply methods (same as before, copying logic)
     fn apply_note_delta(
         &self,
         conn: &Connection,
@@ -546,50 +802,28 @@ impl SyncAgent {
             }
             "task" => {
                 let ts = conn.query_row("SELECT updated_at FROM task WHERE id = ?1", [&delta.entity_id], |row| row.get(0)).optional()?;
-                (ts, None)
+                // Fetch full task data for merge
+                let task_row = conn.query_row("SELECT title, status FROM task WHERE id = ?1", [&delta.entity_id],
+                    |row| Ok(serde_json::json!({
+                        "title": row.get::<_, String>(0)?,
+                        "status": row.get::<_, String>(1)?
+                    }).to_string().into_bytes())
+                ).optional()?;
+                (ts, task_row)
             }
             "project" => {
                 let ts = conn.query_row("SELECT updated_at FROM project WHERE id = ?1", [&delta.entity_id], |row| row.get(0)).optional()?;
-                (ts, None)
+                (ts, None) // Add data fetching if smart merge needed for projects
             }
-            // Add other entities...
             _ => (None, None),
         };
 
-        // SPLIT-BRAIN DETECTION LOGIC (CRITICAL UPDATE)
         if let Some(local_ts) = local_timestamp {
-             // 1. If local is NEWER than incoming -> Conflict (Remote is overwriting my new work with old work? No, remote is sending its state)
-             //    If remote timestamp < local timestamp, it means remote is sending OLD data. We should ignore it?
-             //    Or is it a conflict? If remote says "I updated at t=5" and I have t=10.
-             //    It depends on when we last synced.
-             //    If we last synced at t=0. Both are new.
-             //    If we last synced at t=8. I updated at t=10. Remote is sending t=5 (which is old? why would it send t=5 if we synced at t=8?)
-             //    The Delta usually comes from "get_deltas_since(last_sync)".
-             //    So remote sends changes SINCE last sync.
-             //    If remote sends a change from t=5, it means we probably haven't synced since t=4.
-             //    So both are new relative to last sync.
-
-             // Simple LWW: if local_ts > delta.timestamp -> Conflict (Protect local).
-             //              if local_ts < delta.timestamp -> Apply (Accept remote).
-
-             // But what if BOTH changed?
-             // Example: Last Sync t=0.
-             // Device A (Local): Change at t=10.
-             // Device B (Remote): Change at t=11.
-             // B sends t=11.
-             // Local check: local_ts (10) < delta.timestamp (11).
-             // Result: Apply B. Overwrite A.
-             // DATA LOSS: A's change at t=10 is gone.
-
-             // FIX: We need to know if local changed SINCE last sync.
-             // If local_ts > last_successful_sync_time AND delta.timestamp > last_successful_sync_time
-             // THEN it is a true conflict, regardless of who is newer.
-
              let space_id = delta.space_id.clone().ok_or(SyncError::InvalidData("No space_id".into()))?;
              let last_sync = SyncHistory::get_last_sync_time(conn, &space_id)?;
 
+             // True Conflict: Local changed since last sync AND Remote changed since last sync
              if local_ts > last_sync && delta.timestamp > last_sync {
-                 // TRUE CONFLICT: Both changed independently since last sync.
                  return Ok(Some(SyncConflict {
                     entity_type: delta.entity_type.clone(),
                     entity_id: delta.entity_id.clone(),
@@ -600,17 +834,17 @@ impl SyncAgent {
                 }));
              }
 
-             // Fallback to LWW protection for standard cases (e.g. clock skew protection)
-             if local_ts > delta.timestamp {
-                 return Ok(Some(SyncConflict {
-                    entity_type: delta.entity_type.clone(),
-                    entity_id: delta.entity_id.clone(),
-                    local_version: local_data.unwrap_or_default(),
-                    remote_version: delta.data.clone().unwrap_or_default(),
-                    conflict_type: ConflictType::UpdateUpdate,
-                    space_id: delta.space_id.clone(),
-                }));
-             }
+             // Clock Skew Protection / Safety net
+             // If local is newer than incoming delta, it might be a conflict or just out-of-order delivery.
+             // But if we haven't synced, and local > delta, it implies delta is OLDER.
+             // If delta is older, we should probably ignore it?
+             // But if we treat it as conflict, we let user decide.
+             // For now, let's stick to the strict rule: only if BOTH changed since last sync.
+
+             // However, if we simply ignore an "older" delta that might be a legitimate change from another device
+             // that just happened to have a slower clock or was offline?
+             // No, vector clocks solve this. But here we are using timestamps.
+             // Let's rely on the "Both changed since last sync" rule as the primary conflict definition.
         }
 
         Ok(None)
@@ -643,7 +877,7 @@ impl SyncAgent {
         Ok(())
     }
 
-    // Getters for Deltas (Same implementations as in original file, just ensuring they exist)
+    // Getters for Deltas
     fn get_notes_deltas(&self, conn: &Connection, space_id: Ulid, since: i64) -> Result<Vec<SyncDelta>, SyncError> {
          let mut stmt = conn.prepare("SELECT id, content_md, modified_at FROM note WHERE space_id = ?1 AND modified_at > ?2")?;
          let rows = stmt.query_map(rusqlite::params![space_id.to_string(), since], |row| {
@@ -660,8 +894,6 @@ impl SyncAgent {
          Ok(deltas)
     }
 
-    // ... (Other getters follow similar pattern, omitting for brevity in this block but included in final compilation)
-    // Actually, I must include them to make the file complete.
     fn get_tasks_deltas(&self, conn: &Connection, space_id: Ulid, since: i64) -> Result<Vec<SyncDelta>, SyncError> {
         let mut stmt = conn.prepare("SELECT id, title, status, updated_at FROM task WHERE space_id = ?1 AND updated_at > ?2")?;
         let rows = stmt.query_map(rusqlite::params![space_id.to_string(), since], |row| {

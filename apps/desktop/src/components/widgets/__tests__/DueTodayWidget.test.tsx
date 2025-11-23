@@ -9,21 +9,17 @@ const mockTasks = [
   {
     id: '1',
     title: 'Task 1 Due Today',
-    status: 'todo',
+    status: 'inbox',
     priority: 1,
     due_at: Math.floor(Date.now() / 1000), // Today
-    created_at: 12_345,
-    updated_at: 12_345,
     space_id: 'space-1',
   },
   {
     id: '2',
     title: 'Task 2 Due Tomorrow',
-    status: 'todo',
+    status: 'inbox',
     priority: 2,
     due_at: Math.floor(Date.now() / 1000) + 86_400, // Tomorrow
-    created_at: 12_345,
-    updated_at: 12_345,
     space_id: 'space-1',
   },
   {
@@ -32,8 +28,6 @@ const mockTasks = [
     status: 'done',
     priority: 3,
     due_at: Math.floor(Date.now() / 1000), // Today but done
-    created_at: 12_345,
-    updated_at: 12_345,
     space_id: 'space-1',
   },
 ] as Task[];
