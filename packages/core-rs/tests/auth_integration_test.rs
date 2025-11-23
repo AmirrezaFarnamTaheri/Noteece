@@ -1,4 +1,4 @@
-use core_rs::auth::{AuthService, AuthError};
+use core_rs::auth::{AuthError, AuthService};
 use rusqlite::Connection;
 use std::sync::{Arc, Mutex};
 use tempfile::tempdir;
@@ -22,7 +22,8 @@ fn setup_db() -> (Arc<Mutex<Connection>>, tempfile::TempDir) {
             last_login_at INTEGER
         )",
         [],
-    ).unwrap();
+    )
+    .unwrap();
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS sessions (
@@ -34,7 +35,8 @@ fn setup_db() -> (Arc<Mutex<Connection>>, tempfile::TempDir) {
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )",
         [],
-    ).unwrap();
+    )
+    .unwrap();
 
     (Arc::new(Mutex::new(conn)), dir)
 }
@@ -45,7 +47,12 @@ fn test_auth_flow_integration() {
     let conn = conn_mutex.lock().unwrap();
 
     // 1. Create User
-    let user = AuthService::create_user(&conn, "integration_user", "int@example.com", "secure_password_123");
+    let user = AuthService::create_user(
+        &conn,
+        "integration_user",
+        "int@example.com",
+        "secure_password_123",
+    );
     assert!(user.is_ok());
     let user = user.unwrap();
     assert_eq!(user.username, "integration_user");
@@ -66,5 +73,8 @@ fn test_auth_flow_integration() {
 
     // 5. Validate Session again (should fail)
     let validation_after_logout = AuthService::validate_session(&conn, &session.token);
-    assert!(matches!(validation_after_logout, Err(AuthError::InvalidSession)));
+    assert!(matches!(
+        validation_after_logout,
+        Err(AuthError::InvalidSession)
+    ));
 }

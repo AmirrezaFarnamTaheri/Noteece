@@ -22,7 +22,10 @@ pub fn find_backlinks(conn: &Connection, note_id: Ulid) -> Result<Vec<Backlink>,
                 target_note_id: note_id,
             });
         } else {
-            log::warn!("[backlink] Skipping invalid backlink source ID: {}", source_id_str);
+            log::warn!(
+                "[backlink] Skipping invalid backlink source ID: {}",
+                source_id_str
+            );
         }
     }
     Ok(backlinks)
@@ -37,7 +40,8 @@ pub fn update_links(conn: &Connection, note_id: Ulid, content: &str) -> Result<(
     // Regex compilation should ideally happen once (lazy_static or similar), but unwrap on valid regex literal is "safe" if tests pass.
     // However, to be strictly robust, we can handle it or trust the literal.
     // Given "100% robustness" requirement, let's avoid panic even on regex (though unlikely).
-    let re = Regex::new(r"\[\[(.+?)\]\]").map_err(|e| DbError::Message(format!("Regex error: {}", e)))?;
+    let re = Regex::new(r"\[\[(.+?)\]\]")
+        .map_err(|e| DbError::Message(format!("Regex error: {}", e)))?;
     for cap in re.captures_iter(content) {
         let target_note_id_str = &cap[1];
         if let Ok(target_note_id) = Ulid::from_string(target_note_id_str) {

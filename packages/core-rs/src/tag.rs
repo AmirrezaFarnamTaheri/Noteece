@@ -47,8 +47,10 @@ pub fn get_all_tags_in_space(conn: &Connection, space_id: Ulid) -> Result<Vec<Ta
     let tags = stmt
         .query_map([space_id.to_string()], |row| {
             Ok(Tag {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                id: Ulid::from_string(&row.get::<_, String>(0)?)
+                    .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?)
+                    .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 name: row.get(2)?,
                 color: row.get(3)?,
             })

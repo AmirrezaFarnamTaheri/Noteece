@@ -49,11 +49,7 @@ pub fn log_event(
     Ok(id)
 }
 
-pub fn get_audit_logs(
-    conn: &Connection,
-    limit: usize,
-    offset: usize,
-) -> Result<Vec<AuditLog>> {
+pub fn get_audit_logs(conn: &Connection, limit: usize, offset: usize) -> Result<Vec<AuditLog>> {
     let mut stmt = conn.prepare(
         "SELECT id, user_id, event_type, entity_type, entity_id,
                 details_json, ip_address, user_agent, created_at

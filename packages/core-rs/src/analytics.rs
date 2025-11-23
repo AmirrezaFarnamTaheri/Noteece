@@ -52,7 +52,7 @@ pub fn calculate_habit_correlation(
         SELECT t.task_count, h.health_val
         FROM daily_tasks t
         JOIN daily_health h ON t.day = h.day
-        "
+        ",
     )?;
 
     let rows = stmt.query_map([metric_type], |row| {
@@ -94,9 +94,15 @@ pub fn calculate_habit_correlation(
     };
 
     let insight = if r > 0.5 {
-        format!("Strong positive link: Higher {} leads to more tasks.", metric_type)
+        format!(
+            "Strong positive link: Higher {} leads to more tasks.",
+            metric_type
+        )
     } else if r < -0.5 {
-        format!("Strong negative link: Higher {} leads to fewer tasks.", metric_type)
+        format!(
+            "Strong negative link: Higher {} leads to fewer tasks.",
+            metric_type
+        )
     } else {
         format!("No significant link found for {}.", metric_type)
     };

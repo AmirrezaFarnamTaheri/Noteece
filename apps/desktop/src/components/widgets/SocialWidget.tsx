@@ -10,10 +10,18 @@ export const SocialWidget = () => {
 
   const getIcon = (platform: string) => {
     switch (platform) {
-      case 'twitter': return <IconBrandTwitter size={16} />;
-      case 'instagram': return <IconBrandInstagram size={16} />;
-      case 'linkedin': return <IconBrandLinkedin size={16} />;
-      default: return null;
+      case 'twitter': {
+        return <IconBrandTwitter size={16} />;
+      }
+      case 'instagram': {
+        return <IconBrandInstagram size={16} />;
+      }
+      case 'linkedin': {
+        return <IconBrandLinkedin size={16} />;
+      }
+      default: {
+        return null;
+      }
     }
   };
 
@@ -28,12 +36,21 @@ export const SocialWidget = () => {
 
       <Stack gap="xs">
         {accounts.map((account) => (
-          <Group key={account.id} justify="space-between" p="xs" style={{ backgroundColor: 'var(--mantine-color-dark-6)', borderRadius: 'var(--mantine-radius-md)' }}>
+          <Group
+            key={account.id}
+            justify="space-between"
+            p="xs"
+            style={{ backgroundColor: 'var(--mantine-color-dark-6)', borderRadius: 'var(--mantine-radius-md)' }}
+          >
             <Group gap="xs">
               {getIcon(account.platform)}
-              <Text size="sm" fw={500}>{account.handle}</Text>
+              <Text size="sm" fw={500}>
+                {account.handle}
+              </Text>
             </Group>
-            <Text size="xs" c="dimmed">{account.followers}</Text>
+            <Text size="xs" c="dimmed">
+              {account.followers}
+            </Text>
           </Group>
         ))}
       </Stack>

@@ -34,7 +34,8 @@ fn test_form_template_crud() {
     ];
 
     // Create
-    let template = form::create_form_template(&conn, &space_str, "Test Form", fields.clone()).unwrap();
+    let template =
+        form::create_form_template(&conn, &space_str, "Test Form", fields.clone()).unwrap();
     assert_eq!(template.name, "Test Form");
     assert_eq!(template.fields.len(), 2);
 

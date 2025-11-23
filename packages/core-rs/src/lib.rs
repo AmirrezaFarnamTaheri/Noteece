@@ -28,8 +28,8 @@ pub mod import;
 pub mod llm;
 pub mod logger;
 pub mod meeting;
-pub mod music;
 pub mod mode;
+pub mod music;
 pub mod note;
 pub mod ocr;
 pub mod personal_modes;
@@ -49,12 +49,13 @@ pub mod weekly_review;
 
 // Re-exports to satisfy dependencies that expect them at top level or in sync_agent
 pub mod sync_agent {
-    pub use crate::sync::engine::SyncAgent;
-    pub use crate::sync::models::{
-        DeviceInfo, DeviceType, SyncDelta, SyncOperation, SyncConflict, SyncStats, SyncTask, SyncHistoryEntry
-    };
     pub use crate::sync::conflict::{ConflictResolution, ConflictType};
     pub use crate::sync::db_init::init_sync_tables;
+    pub use crate::sync::engine::SyncAgent;
+    pub use crate::sync::models::{
+        DeviceInfo, DeviceType, SyncConflict, SyncDelta, SyncHistoryEntry, SyncOperation,
+        SyncStats, SyncTask,
+    };
 }
 
 pub use sync::engine::SyncAgent;

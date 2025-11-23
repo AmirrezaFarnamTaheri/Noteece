@@ -16,7 +16,7 @@ import {
   useMantineTheme,
   Stack,
   ThemeIcon,
-  MantineTheme,
+  type MantineTheme,
 } from '@mantine/core';
 import {
   IconPlus,
@@ -29,10 +29,27 @@ import {
   IconFolder,
   IconLayoutGrid,
 } from '@tabler/icons-react';
-import { useNavigate, NavigateFunction } from 'react-router-dom';
+import { useNavigate, type NavigateFunction } from 'react-router-dom';
 import { useProjects } from '../hooks/useQueries';
 import { useStore } from '../store';
 import { Project } from '@noteece/types';
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'done': {
+      return 'teal';
+    }
+    case 'active': {
+      return 'violet';
+    }
+    case 'blocked': {
+      return 'red';
+    }
+    default: {
+      return 'gray';
+    }
+  }
+};
 
 const ProjectHub: React.FC = () => {
   const theme = useMantineTheme();
@@ -43,27 +60,20 @@ const ProjectHub: React.FC = () => {
   const [search, setSearch] = useState('');
 
   const filteredProjects = useMemo(() => {
-    return projects.filter((p) =>
-      p.title.toLowerCase().includes(search.toLowerCase())
-    );
+    return projects.filter((p) => p.title.toLowerCase().includes(search.toLowerCase()));
   }, [projects, search]);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'done': return 'teal';
-      case 'active': return 'violet';
-      case 'blocked': return 'red';
-      default: return 'gray';
-    }
-  };
 
   return (
     <Container fluid p="xl" style={{ minHeight: '100vh', backgroundColor: theme.colors.dark[9] }}>
       <Stack gap="xl">
         <Group justify="space-between" align="center">
           <div>
-            <Title order={2} fw={800}>Projects</Title>
-            <Text c="dimmed" size="sm">Manage your ongoing initiatives</Text>
+            <Title order={2} fw={800}>
+              Projects
+            </Title>
+            <Text c="dimmed" size="sm">
+              Manage your ongoing initiatives
+            </Text>
           </div>
           <Button
             leftSection={<IconPlus size={18} />}
@@ -110,27 +120,36 @@ const ProjectHub: React.FC = () => {
 
         {viewMode === 'list' && (
           <Paper withBorder radius="lg" style={{ backgroundColor: theme.colors.dark[8], overflow: 'hidden' }}>
-             <Stack gap={0}>
-                {filteredProjects.map(project => (
-                    <Group key={project.id} p="md" style={{ borderBottom: `1px solid ${theme.colors.dark[6]}` }} justify="space-between">
-                        <Group>
-                            <ThemeIcon color={getStatusColor(project.status)} variant="light">
-                                <IconFolder size={18} />
-                            </ThemeIcon>
-                            <Text fw={600}>{project.title}</Text>
-                        </Group>
-                        <Group>
-                            <Badge color={getStatusColor(project.status)}>{project.status}</Badge>
-                            <Button variant="default" size="xs" onClick={() => navigate(`/main/projects/${project.id}`)}>Open</Button>
-                        </Group>
-                    </Group>
-                ))}
-             </Stack>
+            <Stack gap={0}>
+              {filteredProjects.map((project) => (
+                <Group
+                  key={project.id}
+                  p="md"
+                  style={{ borderBottom: `1px solid ${theme.colors.dark[6]}` }}
+                  justify="space-between"
+                >
+                  <Group>
+                    <ThemeIcon color={getStatusColor(project.status)} variant="light">
+                      <IconFolder size={18} />
+                    </ThemeIcon>
+                    <Text fw={600}>{project.title}</Text>
+                  </Group>
+                  <Group>
+                    <Badge color={getStatusColor(project.status)}>{project.status}</Badge>
+                    <Button variant="default" size="xs" onClick={() => navigate(`/main/projects/${project.id}`)}>
+                      Open
+                    </Button>
+                  </Group>
+                </Group>
+              ))}
+            </Stack>
           </Paper>
         )}
 
         {viewMode === 'kanban' && (
-            <Text c="dimmed" ta="center" py="xl">Kanban view for projects coming soon...</Text>
+          <Text c="dimmed" ta="center" py="xl">
+            Kanban view for projects coming soon...
+          </Text>
         )}
       </Stack>
     </Container>
@@ -138,44 +157,44 @@ const ProjectHub: React.FC = () => {
 };
 
 interface SegmentedControlProps {
-    viewMode: 'grid' | 'list' | 'kanban';
-    setViewMode: (mode: 'grid' | 'list' | 'kanban') => void;
+  viewMode: 'grid' | 'list' | 'kanban';
+  setViewMode: (mode: 'grid' | 'list' | 'kanban') => void;
 }
 
 const SegmentedControlWithIcons: React.FC<SegmentedControlProps> = ({ viewMode, setViewMode }) => (
-    <Group gap={4}>
-        <ActionIcon
-            variant={viewMode === 'grid' ? 'filled' : 'subtle'}
-            color={viewMode === 'grid' ? 'violet' : 'gray'}
-            onClick={() => setViewMode('grid')}
-            radius="md"
-        >
-            <IconLayoutGrid size={18} />
-        </ActionIcon>
-        <ActionIcon
-            variant={viewMode === 'list' ? 'filled' : 'subtle'}
-            color={viewMode === 'list' ? 'violet' : 'gray'}
-            onClick={() => setViewMode('list')}
-            radius="md"
-        >
-            <IconList size={18} />
-        </ActionIcon>
-        <ActionIcon
-            variant={viewMode === 'kanban' ? 'filled' : 'subtle'}
-            color={viewMode === 'kanban' ? 'violet' : 'gray'}
-            onClick={() => setViewMode('kanban')}
-            radius="md"
-        >
-            <IconLayoutKanban size={18} />
-        </ActionIcon>
-    </Group>
+  <Group gap={4}>
+    <ActionIcon
+      variant={viewMode === 'grid' ? 'filled' : 'subtle'}
+      color={viewMode === 'grid' ? 'violet' : 'gray'}
+      onClick={() => setViewMode('grid')}
+      radius="md"
+    >
+      <IconLayoutGrid size={18} />
+    </ActionIcon>
+    <ActionIcon
+      variant={viewMode === 'list' ? 'filled' : 'subtle'}
+      color={viewMode === 'list' ? 'violet' : 'gray'}
+      onClick={() => setViewMode('list')}
+      radius="md"
+    >
+      <IconList size={18} />
+    </ActionIcon>
+    <ActionIcon
+      variant={viewMode === 'kanban' ? 'filled' : 'subtle'}
+      color={viewMode === 'kanban' ? 'violet' : 'gray'}
+      onClick={() => setViewMode('kanban')}
+      radius="md"
+    >
+      <IconLayoutKanban size={18} />
+    </ActionIcon>
+  </Group>
 );
 
 interface ProjectCardProps {
-    project: Project;
-    navigate: NavigateFunction;
-    theme: MantineTheme;
-    getStatusColor: (status: string) => string;
+  project: Project;
+  navigate: NavigateFunction;
+  theme: MantineTheme;
+  getStatusColor: (status: string) => string;
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, navigate, theme, getStatusColor }) => (
@@ -184,9 +203,9 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, navigate, theme, get
     radius="lg"
     withBorder
     style={{
-        backgroundColor: theme.colors.dark[7],
-        cursor: 'pointer',
-        transition: 'transform 0.2s ease, border-color 0.2s ease',
+      backgroundColor: theme.colors.dark[7],
+      cursor: 'pointer',
+      transition: 'transform 0.2s ease, border-color 0.2s ease',
     }}
     className="project-card-hover"
     onClick={() => navigate(`/main/projects/${project.id}`)}
@@ -213,11 +232,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, navigate, theme, get
     </Text>
 
     <Text size="sm" c="dimmed" lineClamp={2} mb="md" h={40}>
-      {project.goal_outcome || "No description provided."}
+      {project.goal_outcome || 'No description provided.'}
     </Text>
 
     <Group justify="space-between" mt="md" align="center">
-      <Text size="xs" c="dimmed">Confidence: {project.confidence || 0}%</Text>
+      <Text size="xs" c="dimmed">
+        Confidence: {project.confidence || 0}%
+      </Text>
       <Progress value={project.confidence || 30} size="sm" w={100} color={getStatusColor(project.status)} />
     </Group>
   </Card>

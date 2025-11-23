@@ -31,7 +31,8 @@ pub fn get_all_spaces(conn: &Connection) -> Result<Vec<Space>, DbError> {
     let spaces = stmt
         .query_map([], |row| {
             Ok(Space {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                id: Ulid::from_string(&row.get::<_, String>(0)?)
+                    .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 name: row.get(1)?,
                 icon: row.get(2)?,
                 enabled_modes_json: row.get(3)?,

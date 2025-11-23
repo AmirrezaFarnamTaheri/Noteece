@@ -177,19 +177,31 @@ pub fn update_caldav_account(
     }
 
     if let Some(u) = url {
-        conn.execute("UPDATE caldav_account SET url = ?1 WHERE id = ?2", [u, account_id])?;
+        conn.execute(
+            "UPDATE caldav_account SET url = ?1 WHERE id = ?2",
+            [u, account_id],
+        )?;
     }
     if let Some(u) = username {
-        conn.execute("UPDATE caldav_account SET username = ?1 WHERE id = ?2", [u, account_id])?;
+        conn.execute(
+            "UPDATE caldav_account SET username = ?1 WHERE id = ?2",
+            [u, account_id],
+        )?;
     }
     if let Some(c) = calendar_path {
-        conn.execute("UPDATE caldav_account SET calendar_path = ?1 WHERE id = ?2", [c, account_id])?;
+        conn.execute(
+            "UPDATE caldav_account SET calendar_path = ?1 WHERE id = ?2",
+            [c, account_id],
+        )?;
     }
     if let Some(p) = password {
         if let Some(k) = dek {
-             use crate::crypto::encrypt_string;
-             let enc = encrypt_string(p, k).map_err(|e| CalDavError::Parse(e.to_string()))?;
-             conn.execute("UPDATE caldav_account SET encrypted_password = ?1 WHERE id = ?2", [&enc, account_id])?;
+            use crate::crypto::encrypt_string;
+            let enc = encrypt_string(p, k).map_err(|e| CalDavError::Parse(e.to_string()))?;
+            conn.execute(
+                "UPDATE caldav_account SET encrypted_password = ?1 WHERE id = ?2",
+                [&enc, account_id],
+            )?;
         } else {
             return Err(CalDavError::Authentication); // Missing DEK
         }

@@ -75,8 +75,10 @@ pub fn get_habits(conn: &Connection, space_id: Ulid) -> Result<Vec<Habit>, DbErr
     let habits = stmt
         .query_map([space_id.to_string()], |row| {
             Ok(Habit {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                id: Ulid::from_string(&row.get::<_, String>(0)?)
+                    .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?)
+                    .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 name: row.get(2)?,
                 description: row.get(3)?,
                 frequency: row.get(4)?,
@@ -96,7 +98,12 @@ pub fn get_habits(conn: &Connection, space_id: Ulid) -> Result<Vec<Habit>, DbErr
 pub fn complete_habit(conn: &Connection, habit_id: Ulid) -> Result<Habit, DbError> {
     let now = chrono::Utc::now().timestamp();
 
-    let (last_completed, current_streak, longest_streak, frequency): (Option<i64>, i32, i32, String) = conn.query_row(
+    let (last_completed, current_streak, longest_streak, frequency): (
+        Option<i64>,
+        i32,
+        i32,
+        String,
+    ) = conn.query_row(
         "SELECT last_completed_at, streak, longest_streak, frequency FROM habit WHERE id = ?1",
         [&habit_id.to_string()],
         |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
@@ -105,24 +112,36 @@ pub fn complete_habit(conn: &Connection, habit_id: Ulid) -> Result<Habit, DbErro
     let mut new_streak = current_streak;
 
     if let Some(last) = last_completed {
-        let last_date = chrono::DateTime::from_timestamp(last, 0).ok_or_else(|| rusqlite::Error::ToSqlConversionFailure(Box::new(DbError::Message("Invalid last completed timestamp".to_string()))))?.date_naive();
-        let today = chrono::DateTime::from_timestamp(now, 0).ok_or_else(|| rusqlite::Error::ToSqlConversionFailure(Box::new(DbError::Message("Invalid current timestamp".to_string()))))?.date_naive();
+        let last_date = chrono::DateTime::from_timestamp(last, 0)
+            .ok_or_else(|| {
+                rusqlite::Error::ToSqlConversionFailure(Box::new(DbError::Message(
+                    "Invalid last completed timestamp".to_string(),
+                )))
+            })?
+            .date_naive();
+        let today = chrono::DateTime::from_timestamp(now, 0)
+            .ok_or_else(|| {
+                rusqlite::Error::ToSqlConversionFailure(Box::new(DbError::Message(
+                    "Invalid current timestamp".to_string(),
+                )))
+            })?
+            .date_naive();
         let diff = today.signed_duration_since(last_date).num_days();
 
         if frequency == "weekly" {
-             // For weekly habits, we allow a gap of up to 7 days to maintain streak
-             if diff > 0 && diff <= 7 {
-                 new_streak += 1;
-             } else if diff > 7 {
-                 new_streak = 1;
-             }
+            // For weekly habits, we allow a gap of up to 7 days to maintain streak
+            if diff > 0 && diff <= 7 {
+                new_streak += 1;
+            } else if diff > 7 {
+                new_streak = 1;
+            }
         } else {
-             // Daily habits
-             if diff == 1 {
-                 new_streak += 1;
-             } else if diff > 1 {
-                 new_streak = 1;
-             }
+            // Daily habits
+            if diff == 1 {
+                new_streak += 1;
+            } else if diff > 1 {
+                new_streak = 1;
+            }
         }
     } else {
         new_streak = 1;
@@ -148,7 +167,10 @@ pub fn complete_habit(conn: &Connection, habit_id: Ulid) -> Result<Habit, DbErro
         "HABIT_COMPLETED",
         "habit",
         Some(&habit_id.to_string()),
-        Some(&format!(r#"{{"streak": {}, "longest_streak": {}}}"#, new_streak, new_longest)),
+        Some(&format!(
+            r#"{{"streak": {}, "longest_streak": {}}}"#,
+            new_streak, new_longest
+        )),
         None,
         None,
     );
@@ -161,8 +183,10 @@ pub fn complete_habit(conn: &Connection, habit_id: Ulid) -> Result<Habit, DbErro
         [&habit_id.to_string()],
         |row| {
             Ok(Habit {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
-                space_id: Ulid::from_string(&row.get::<_, String>(1)?).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                id: Ulid::from_string(&row.get::<_, String>(0)?)
+                    .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
+                space_id: Ulid::from_string(&row.get::<_, String>(1)?)
+                    .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 name: row.get(2)?,
                 description: row.get(3)?,
                 frequency: row.get(4)?,
@@ -174,13 +198,11 @@ pub fn complete_habit(conn: &Connection, habit_id: Ulid) -> Result<Habit, DbErro
                 updated_at: row.get(10)?,
             })
         },
-    ).map_err(|e| e.into())
+    )
+    .map_err(|e| e.into())
 }
 
 pub fn delete_habit(conn: &Connection, habit_id: Ulid) -> Result<(), DbError> {
-    conn.execute(
-        "DELETE FROM habit WHERE id = ?1",
-        [&habit_id.to_string()],
-    )?;
+    conn.execute("DELETE FROM habit WHERE id = ?1", [&habit_id.to_string()])?;
     Ok(())
 }

@@ -74,11 +74,7 @@ export class SyncClient {
         resolve(devices);
       }, scanDurationMs);
 
-      this.zeroconf.scan(
-        "noteece-sync",
-        "tcp",
-        "local.",
-      );
+      this.zeroconf.scan("noteece-sync", "tcp", "local.");
 
       this.zeroconf.on("resolved", (data: any) => {
         // Filter for our service type

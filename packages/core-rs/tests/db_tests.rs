@@ -38,7 +38,7 @@ fn test_migrations() -> Result<(), DbError> {
             "habit",
             "habit_log",
             "health_metric",
-        "insight",
+            "insight",
             "knowledge_card",
             "link",
             "llm_cache",

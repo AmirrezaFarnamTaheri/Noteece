@@ -1,5 +1,5 @@
-use rusqlite::Connection;
 use crate::sync::error::SyncError;
+use rusqlite::Connection;
 
 /// Initialize sync database tables
 pub fn init_sync_tables(conn: &Connection) -> Result<(), SyncError> {

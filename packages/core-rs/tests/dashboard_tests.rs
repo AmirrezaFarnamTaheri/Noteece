@@ -57,7 +57,8 @@ fn test_get_dashboard_stats_with_data() {
     conn.execute(
         "INSERT INTO track (id, space_id, title, added_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5)",
         rusqlite::params![Ulid::new().to_string(), space_str, "Song 1", 100, 100],
-    ).unwrap();
+    )
+    .unwrap();
     conn.execute(
         "INSERT INTO playlist (id, space_id, name, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5)",
         rusqlite::params![Ulid::new().to_string(), space_str, "Playlist 1", 100, 100],

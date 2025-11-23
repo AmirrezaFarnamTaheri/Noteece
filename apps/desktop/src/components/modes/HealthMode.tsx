@@ -100,7 +100,7 @@ const HealthMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       setMetrics(metricsData);
 
       // Filter goals for health category
-      const healthGoals = allGoals.filter(g => g.category === 'health');
+      const healthGoals = allGoals.filter((g) => g.category === 'health');
       setGoals(healthGoals);
     } catch (error) {
       logger.error('Failed to load health data:', error as Error);
@@ -120,14 +120,14 @@ const HealthMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       });
 
       // Update related goals automatically
-      const relatedGoals = goals.filter(g => g.description === formMetricType);
+      const relatedGoals = goals.filter((g) => g.description === formMetricType);
       for (const goal of relatedGoals) {
         // Simple logic: if new metric > current goal progress (or cumulative), update it
         // For now, we just set current = new value for things like Weight.
         // For Steps/Water, it should be cumulative for the day. Complexity omitted for brevity.
-         if (formMetricType === 'weight') {
-             await invoke('update_goal_progress_cmd', { goalId: goal.id, current: formValue });
-         }
+        if (formMetricType === 'weight') {
+          await invoke('update_goal_progress_cmd', { goalId: goal.id, current: formValue });
+        }
       }
 
       setModalOpened(false);
@@ -140,21 +140,21 @@ const HealthMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
   };
 
   const addGoal = async () => {
-      try {
-          await invoke('create_goal_cmd', {
-              spaceId,
-              title: goalTitle,
-              target: goalTarget,
-              category: 'health',
-              // We overload description to store the metric type linkage
-              description: goalMetricType
-          });
-          setGoalModalOpened(false);
-          setGoalTitle('');
-          await loadData();
-      } catch (error) {
-          logger.error('Failed to create goal:', error as Error);
-      }
+    try {
+      await invoke('create_goal_cmd', {
+        spaceId,
+        title: goalTitle,
+        target: goalTarget,
+        category: 'health',
+        // We overload description to store the metric type linkage
+        description: goalMetricType,
+      });
+      setGoalModalOpened(false);
+      setGoalTitle('');
+      await loadData();
+    } catch (error) {
+      logger.error('Failed to create goal:', error as Error);
+    }
   };
 
   const getMetricsByType = (type: string) => {
@@ -193,7 +193,7 @@ const HealthMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
   }
 
   const selectedStats = calculateStats(selectedMetricType);
-  const activeGoal = goals.find(g => g.description === selectedMetricType && !g.is_completed);
+  const activeGoal = goals.find((g) => g.description === selectedMetricType && !g.is_completed);
 
   return (
     <Container size="xl" py="xl">
@@ -207,24 +207,30 @@ const HealthMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
           </div>
           <Group>
             <Button variant="light" leftSection={<IconTarget size={16} />} onClick={() => setGoalModalOpened(true)}>
-                Set Goal
+              Set Goal
             </Button>
             <Button leftSection={<IconPlus size={16} />} onClick={() => setModalOpened(true)}>
-                Log Metric
+              Log Metric
             </Button>
           </Group>
         </Group>
 
         {/* Active Goal Card */}
         {activeGoal && (
-             <Card shadow="sm" padding="md" radius="md" withBorder>
-                <Title order={4} mb="xs">{activeGoal.title}</Title>
-                <Group justify="space-between" mb="xs">
-                    <Text size="sm">{activeGoal.current} / {activeGoal.target} {activeGoal.unit}</Text>
-                    <Badge color={activeGoal.is_completed ? "green" : "blue"}>{Math.round((activeGoal.current / activeGoal.target) * 100)}%</Badge>
-                </Group>
-                <Progress value={(activeGoal.current / activeGoal.target) * 100} />
-             </Card>
+          <Card shadow="sm" padding="md" radius="md" withBorder>
+            <Title order={4} mb="xs">
+              {activeGoal.title}
+            </Title>
+            <Group justify="space-between" mb="xs">
+              <Text size="sm">
+                {activeGoal.current} / {activeGoal.target} {activeGoal.unit}
+              </Text>
+              <Badge color={activeGoal.is_completed ? 'green' : 'blue'}>
+                {Math.round((activeGoal.current / activeGoal.target) * 100)}%
+              </Badge>
+            </Group>
+            <Progress value={(activeGoal.current / activeGoal.target) * 100} />
+          </Card>
         )}
 
         {/* Stats Cards */}
@@ -429,26 +435,28 @@ const HealthMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
 
       {/* Add Goal Modal */}
       <Modal opened={goalModalOpened} onClose={() => setGoalModalOpened(false)} title="Set Health Goal">
-          <Stack gap="md">
-            <Select
-                label="Metric Type"
-                value={goalMetricType}
-                onChange={(value) => setGoalMetricType(value || 'weight')}
-                data={metricTypes}
-                required
-            />
-            <Text size="xs" c="dimmed">This will link the goal to the selected metric type.</Text>
+        <Stack gap="md">
+          <Select
+            label="Metric Type"
+            value={goalMetricType}
+            onChange={(value) => setGoalMetricType(value || 'weight')}
+            data={metricTypes}
+            required
+          />
+          <Text size="xs" c="dimmed">
+            This will link the goal to the selected metric type.
+          </Text>
 
-            <NumberInput
-                label="Target Value"
-                value={goalTarget}
-                onChange={(value) => setGoalTarget(Number(value))}
-                required
-            />
-             <Button onClick={addGoal} disabled={goalTarget === 0}>
-              Set Goal
-            </Button>
-          </Stack>
+          <NumberInput
+            label="Target Value"
+            value={goalTarget}
+            onChange={(value) => setGoalTarget(Number(value))}
+            required
+          />
+          <Button onClick={addGoal} disabled={goalTarget === 0}>
+            Set Goal
+          </Button>
+        </Stack>
       </Modal>
     </Container>
   );

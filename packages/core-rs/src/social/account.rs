@@ -456,9 +456,13 @@ mod tests {
         assert_eq!(account.enabled, true);
 
         // Retrieve account
-        let retrieved = get_social_account(&conn, &account.id).expect("Failed to get social account");
+        let retrieved =
+            get_social_account(&conn, &account.id).expect("Failed to get social account");
         assert!(retrieved.is_some());
-        assert_eq!(retrieved.expect("Account should exist").username, "testuser");
+        assert_eq!(
+            retrieved.expect("Account should exist").username,
+            "testuser"
+        );
 
         // Get all accounts
         let accounts = get_social_accounts(&conn, "test_space").expect("Failed to get accounts");
