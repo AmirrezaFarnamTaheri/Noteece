@@ -1,136 +1,24 @@
-import { NativeModules, Linking } from "react-native";
+/* eslint-disable no-undef */
+import "react-native-gesture-handler/jestSetup";
+import mockAsyncStorage from "@react-native-async-storage/async-storage/jest/async-storage-mock";
 
-// Mock Linking
-jest.mock("react-native/Libraries/Linking/Linking", () => ({
-  getInitialURL: jest.fn(() => Promise.resolve(null)),
-  openURL: jest.fn(() => Promise.resolve(true)),
-  canOpenURL: jest.fn(() => Promise.resolve(true)),
-  addEventListener: jest.fn(() => ({ remove: jest.fn() })),
-  removeEventListener: jest.fn(),
-  sendIntent: jest.fn(),
-}));
+// Silence the warning: Animated: `useNativeDriver` is not supported because the native animated module is missing
+jest.mock("react-native/Libraries/Animated/NativeAnimatedHelper");
 
-// Mock crypto
-global.crypto = {
-  getRandomValues: (buffer) => {
-    for (let i = 0; i < buffer.length; i++) {
-      buffer[i] = Math.floor(Math.random() * 256);
-    }
-    return buffer;
-  },
-};
-
-// Mock NativeModules for Expo modules
-NativeModules.ExpoCrypto = {
-  digestStringAsync: jest.fn(),
-  getRandomBytesAsync: jest.fn().mockResolvedValue(new Uint8Array(32)),
-};
-
-// Mock AsyncStorage
-jest.mock("@react-native-async-storage/async-storage", () =>
-  require("@react-native-async-storage/async-storage/jest/async-storage-mock"),
-);
-
-// Mock Expo SQLite
-jest.mock("expo-sqlite", () => ({
-  openDatabase: jest.fn(() => ({
-    transaction: jest.fn((callback) => {
-      callback({
-        executeSql: jest.fn((query, params, success, error) => {
-          if (success)
-            success([], { rows: { length: 0, item: () => null, _array: [] } });
-        }),
-      });
-    }),
-  })),
-}));
-
-// Mock react-native-zeroconf
-jest.mock("react-native-zeroconf", () => {
-  return class Zeroconf {
-    scan = jest.fn();
-    stop = jest.fn();
-    removeDeviceListeners = jest.fn();
-    on = jest.fn();
-    off = jest.fn();
-  };
-});
-
-// Mock expo-file-system
-jest.mock("expo-file-system", () => ({
-  documentDirectory: "file:///test/directory/",
-  readAsStringAsync: jest.fn(),
-  writeAsStringAsync: jest.fn(),
-}));
-
-// Mock Expo Font
-jest.mock("expo-font", () => ({
-  isLoaded: jest.fn().mockReturnValue(true),
-  loadAsync: jest.fn().mockResolvedValue(true),
-}));
-
-// Mock Vector Icons
-jest.mock("@expo/vector-icons", () => ({
-  Ionicons: "Ionicons",
-  MaterialIcons: "MaterialIcons",
-  MaterialCommunityIcons: "MaterialCommunityIcons",
-  FontAwesome: "FontAwesome",
-}));
-
-// Mock Linear Gradient
-jest.mock("expo-linear-gradient", () => ({
-  LinearGradient: "LinearGradient",
-}));
-
-// Mock React Native Gesture Handler
-jest.mock("react-native-gesture-handler", () => ({
-  Swipeable: "Swipeable",
-  DrawerLayout: "DrawerLayout",
-  State: {},
-  ScrollView: "ScrollView",
-  Slider: "Slider",
-  Switch: "Switch",
-  TextInput: "TextInput",
-  ToolbarAndroid: "ToolbarAndroid",
-  ViewPagerAndroid: "ViewPagerAndroid",
-  DrawerLayoutAndroid: "DrawerLayoutAndroid",
-  WebView: "WebView",
-  NativeViewGestureHandler: "NativeViewGestureHandler",
-  TapGestureHandler: "TapGestureHandler",
-  FlingGestureHandler: "FlingGestureHandler",
-  ForceTouchGestureHandler: "ForceTouchGestureHandler",
-  LongPressGestureHandler: "LongPressGestureHandler",
-  PanGestureHandler: "PanGestureHandler",
-  PinchGestureHandler: "PinchGestureHandler",
-  RotationGestureHandler: "RotationGestureHandler",
-  /* Buttons */
-  RawButton: "RawButton",
-  BaseButton: "BaseButton",
-  RectButton: "RectButton",
-  BorderlessButton: "BorderlessButton",
-  /* Other */
-  FlatList: "FlatList",
-  gestureHandlerRootHOC: jest.fn(),
-  Directions: {},
-}));
-
-// Mock Reanimated
+// Mock common native modules
 jest.mock("react-native-reanimated", () => {
   const Reanimated = require("react-native-reanimated/mock");
-  // The mock for `call` immediately calls the callback which is incorrect
-  // So we override it with a no-op
   Reanimated.default.call = () => {};
   return Reanimated;
 });
 
-// Mock Task Manager
-jest.mock("expo-task-manager", () => ({
-  defineTask: jest.fn(),
-  isTaskRegisteredAsync: jest.fn().mockResolvedValue(false),
-}));
+jest.mock("react-native/Libraries/EventEmitter/NativeEventEmitter");
 
-// Mock Expo Haptics
+// Mock Expo modules
 jest.mock("expo-haptics", () => ({
+  selectionAsync: jest.fn(),
+  notificationAsync: jest.fn(),
+  impactAsync: jest.fn(),
   NotificationFeedbackType: {
     Success: "success",
     Warning: "warning",
@@ -141,59 +29,93 @@ jest.mock("expo-haptics", () => ({
     Medium: "medium",
     Heavy: "heavy",
   },
-  notificationAsync: jest.fn(),
-  impactAsync: jest.fn(),
 }));
 
-// Mock Expo Sharing
 jest.mock("expo-sharing", () => ({
   shareAsync: jest.fn(),
-  isAvailableAsync: jest.fn(() => Promise.resolve(true)),
 }));
 
-// Mock Expo Linking
+jest.mock("expo-task-manager", () => ({
+  defineTask: jest.fn(),
+  isTaskRegisteredAsync: jest.fn(),
+}));
+
+jest.mock("expo-sqlite", () => ({
+  openDatabase: jest.fn(() => ({
+    transaction: jest.fn((cb) => cb({ executeSql: jest.fn() })),
+  })),
+}));
+
+jest.mock("expo-linear-gradient", () => ({
+  LinearGradient: "LinearGradient",
+}));
+
+jest.mock("expo-crypto", () => ({
+  randomUUID: jest.fn(() => "test-uuid"),
+  digestStringAsync: jest.fn(() => Promise.resolve("hashed")),
+}));
+
 jest.mock("expo-linking", () => ({
-  createURL: jest.fn(),
+  createURL: jest.fn((path) => `exp://localhost/${path}`),
   openURL: jest.fn(),
-  getInitialURL: jest.fn(() => Promise.resolve(null)),
   addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+  removeEventListener: jest.fn(),
+  getInitialURL: jest.fn(() => Promise.resolve(null)),
 }));
 
-// Mock React Native Share
+jest.mock("react-native/Libraries/Linking/Linking", () => ({
+  getInitialURL: jest.fn(() => Promise.resolve(null)),
+  openURL: jest.fn(),
+  addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+  removeEventListener: jest.fn(),
+}));
+
 jest.mock("react-native/Libraries/Share/Share", () => ({
   share: jest.fn(),
 }));
 
-// Mock console.log and console.error to reduce noise
-const originalConsoleLog = console.log;
+// Mock Ionicons
+jest.mock("@expo/vector-icons", () => ({
+  Ionicons: "Ionicons",
+  MaterialCommunityIcons: "MaterialCommunityIcons",
+}));
+
+// Mock safe area context
+jest.mock("react-native-safe-area-context", () => ({
+  SafeAreaProvider: ({ children }) => children,
+  SafeAreaView: ({ children }) => children,
+  useSafeAreaInsets: () => ({ top: 0, left: 0, right: 0, bottom: 0 }),
+}));
+
+// Mock AsyncStorage
+jest.mock("@react-native-async-storage/async-storage", () => mockAsyncStorage);
+
+// Mock database - ONLY if not already mocked in individual tests
+// This fallback allows tests to override it, but provides a safe default for components
+if (!jest.isMockFunction(require("./src/lib/database").dbQuery)) {
+  jest.mock("./src/lib/database", () => ({
+    dbQuery: jest.fn(() => Promise.resolve([])),
+    initDatabase: jest.fn(() => Promise.resolve()),
+    initializeDatabase: jest.fn(() => Promise.resolve()),
+  }));
+}
+
+// Global console error/warn suppression for noise
 const originalConsoleError = console.error;
-
-console.log = (...args) => {
-  if (
-    typeof args[0] === "string" &&
-    (args[0].includes("iOS App Group access") ||
-      args[0].includes("Running in non-browser environment") ||
-      args[0].includes("Database initialized") ||
-      args[0].includes("Running migration") ||
-      args[0].includes("Added") ||
-      args[0].includes("Migration"))
-  ) {
-    return;
-  }
-  originalConsoleLog(...args);
-};
-
 console.error = (...args) => {
   if (
     typeof args[0] === "string" &&
-    (args[0].includes("Warning: An update to ForwardRef") ||
-      args[0].includes(
-        "You are trying to `import` a file after the Jest environment has been torn down",
-      ) ||
-      args[0].includes("Sync failed: Error: WebSocket connection failed") ||
-      args[0].includes("Failed to load timeline: Error: DB Error"))
+    (args[0].includes("Warning: An update to") ||
+      args[0].includes("act(...)") ||
+      args[0].includes("JSON parse error"))
   ) {
     return;
   }
   originalConsoleError(...args);
+};
+
+// Add database logging mock
+global.console = {
+  ...console,
+  log: jest.fn(),
 };
