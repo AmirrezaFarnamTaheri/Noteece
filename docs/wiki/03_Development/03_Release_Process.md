@@ -36,11 +36,12 @@ We follow **Semantic Versioning (SemVer)**: `MAJOR.MINOR.PATCH`.
 
 2.  **CI/CD Build (GitHub Actions):**
     - The `.github/workflows/release.yml` workflow triggers on tags starting with `v*`.
-    - It builds binaries for:
-        - **Linux:** `.deb`, `.AppImage`
-        - **macOS:** `.dmg`, `.app`
-        - **Windows:** `.msi`, `.exe`
-    - It creates a **GitHub Release** and uploads these artifacts.
+    - It uses `tauri-apps/tauri-action` to compile native binaries.
+    - **Platform Specifics:**
+        - **Linux:** Uses Ubuntu 22.04 runner for compatibility. Builds `.deb` and `.AppImage`.
+        - **macOS:** Builds Universal binaries (`.dmg`, `.app`) for Apple Silicon and Intel.
+        - **Windows:** Builds `.msi` and `.exe` installers.
+    - It automatically creates a **GitHub Release** and uploads these artifacts as assets.
 
 3.  **Post-Release:**
     - Verify the artifacts by downloading and running them on a clean VM.
