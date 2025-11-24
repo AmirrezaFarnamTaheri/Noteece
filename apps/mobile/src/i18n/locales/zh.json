@@ -4,11 +4,292 @@
     "tagline": "您的个人智能保险库",
     "ok": "确定",
     "cancel": "取消",
-    "save": "保存"
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "close": "关闭",
+    "back": "返回",
+    "next": "下一步",
+    "done": "完成",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "tryAgain": "重试",
+    "noData": "暂无数据"
   },
+
   "onboarding": {
-    "step1": { "title": "您的个人智能保险库" },
-    "password": { "title": "创建您的保险库", "createButton": "创建保险库" }
+    "step1": {
+      "title": "您的个人智能保险库",
+      "description": "Noteece 是您的加密个人知识库，它从您的数据中学习，帮助您更智能地工作。",
+      "features": {
+        "encryption": "端到端加密",
+        "offline": "本地优先，离线可用",
+        "zeroKnowledge": "零知识架构"
+      }
+    },
+    "step2": {
+      "title": "Foresight 3.0 智能",
+      "description": "先进的相关性引擎，将您的任务、时间、健康和财务状况综合为可操作的见解。",
+      "features": {
+        "briefs": "每日简报和预测",
+        "burnout": "职业倦怠风险分析",
+        "recommendations": "智能推荐"
+      }
+    },
+    "step3": {
+      "title": "无缝本地同步",
+      "description": "在局域网内的设备之间安全同步。无需云端。",
+      "features": {
+        "p2p": "点对点加密",
+        "conflicts": "自动冲突解决",
+        "background": "后台同步"
+      }
+    },
+    "step4": {
+      "title": "物理-数字桥梁",
+      "description": "使用 NFC 标签和地理围栏将您的数字和物理工作流程融合。",
+      "features": {
+        "nfc": "NFC 触发动作",
+        "location": "基于位置的提醒",
+        "capture": "快速捕获快捷方式"
+      }
+    },
+    "password": {
+      "title": "创建您的保险库",
+      "description": "选择一个强密码。这将本地加密您的所有数据。",
+      "placeholder": "密码（至少 8 个字符）",
+      "confirmPlaceholder": "确认密码",
+      "warning": "此密码无法恢复。请妥善保管。",
+      "tooShort": "密码长度必须至少为 8 个字符",
+      "mismatch": "密码不匹配",
+      "creating": "创建中...",
+      "createButton": "创建保险库"
+    },
+    "getStarted": "开始使用"
   },
-  "unlock": { "title": "Noteece", "unlockButton": "解锁保险库" }
+
+  "unlock": {
+    "title": "Noteece",
+    "subtitle": "输入密码解锁",
+    "placeholder": "保险库密码",
+    "unlocking": "解锁中...",
+    "unlockButton": "解锁保险库",
+    "biometric": "使用生物识别",
+    "biometricComingSoon": "生物识别验证将在未来的更新中提供。",
+    "forgotPassword": "忘记密码？",
+    "forgotMessage": "出于安全原因，如果您忘记了保险库密码，您需要重置应用并丢失所有加密数据。请确保定期备份您的数据。",
+    "incorrectPassword": "密码错误",
+    "incorrectMessage": "您输入的密码不正确。请重试。",
+    "securityBadge": "端到端加密 • 零知识"
+  },
+
+  "tabs": {
+    "today": "今天",
+    "tasks": "任务",
+    "capture": "捕获",
+    "insights": "见解",
+    "more": "更多"
+  },
+
+  "today": {
+    "greeting": {
+      "morning": "早上好",
+      "afternoon": "下午好",
+      "evening": "晚上好"
+    },
+    "pullToRefresh": "下拉刷新",
+    "emptyState": {
+      "title": "您今天很空闲",
+      "message": "今天没有安排任务或事件"
+    },
+    "dailyBrief": "每日简报"
+  },
+
+  "tasks": {
+    "filters": {
+      "all": "全部",
+      "today": "今天",
+      "upcoming": "即将到来",
+      "completed": "已完成"
+    },
+    "addTask": "添加任务",
+    "taskPlaceholder": "任务标题...",
+    "emptyState": {
+      "noTasks": "暂无任务",
+      "noCompleted": "暂无已完成任务",
+      "addFirst": "点击 + 添加您的第一个任务",
+      "completeMessage": "完成一些任务后在这里查看"
+    }
+  },
+
+  "capture": {
+    "title": "快速捕获",
+    "types": {
+      "note": {
+        "label": "笔记",
+        "description": "记录想法和灵感"
+      },
+      "task": {
+        "label": "任务",
+        "description": "添加快速任务"
+      },
+      "voice": {
+        "label": "语音",
+        "description": "录制语音备忘录"
+      },
+      "photo": {
+        "label": "照片",
+        "description": "OCR 捕获"
+      }
+    },
+    "titlePlaceholder": {
+      "note": "笔记标题...",
+      "task": "任务标题..."
+    },
+    "contentPlaceholder": {
+      "note": "开始编写您的笔记...",
+      "task": "添加任务描述..."
+    },
+    "comingSoon": {
+      "title": "即将推出",
+      "voice": "语音录制即将推出",
+      "photo": "带 OCR 的照片捕获即将推出"
+    },
+    "quickActions": {
+      "title": "快速操作",
+      "addDate": "添加日期到标题",
+      "clear": "全部清除"
+    },
+    "emptyContent": "请输入要捕获的内容",
+    "captured": "{{type}} 捕获成功"
+  },
+
+  "insights": {
+    "title": "见解",
+    "subtitle": "由 Foresight 3.0 提供支持",
+    "filters": {
+      "all": "全部",
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "suggestedActions": "建议操作",
+    "emptyState": {
+      "title": "暂无见解",
+      "message": "使用应用几天后，Foresight 将开始生成个性化见解"
+    },
+    "types": {
+      "daily_brief": "每日简报",
+      "productivity_trend": "生产力",
+      "goal_progress": "目标进度",
+      "mood_correlation": "健康状况",
+      "milestone_risk": "风险警报"
+    }
+  },
+
+  "more": {
+    "title": "更多",
+    "user": {
+      "name": "Noteece 用户",
+      "status": "加密保险库已激活"
+    },
+    "sections": {
+      "syncBackup": {
+        "title": "同步与备份",
+        "manualSync": "手动同步",
+        "manualSyncDesc": "与局域网内的设备同步",
+        "backgroundSync": "后台同步",
+        "backgroundSyncDesc": "每 15 分钟自动同步"
+      },
+      "features": {
+        "title": "功能",
+        "nfc": "NFC 触发器",
+        "nfcDesc": "使用 NFC 标签进行快速操作",
+        "location": "位置提醒",
+        "locationDesc": "基于地理围栏的任务提醒"
+      },
+      "dataPrivacy": {
+        "title": "数据与隐私",
+        "changePassword": "更改保险库密码",
+        "export": "导出数据",
+        "exportDesc": "导出您的所有数据",
+        "clearData": "清除所有数据",
+        "clearDataDesc": "删除所有本地数据"
+      },
+      "about": {
+        "title": "关于",
+        "version": "版本",
+        "documentation": "文档",
+        "openSource": "开源",
+        "openSourceDesc": "用 ❤️ 构建的开源软件"
+      }
+    },
+    "lockVault": {
+      "title": "锁定保险库",
+      "message": "您确定要锁定保险库吗？",
+      "confirm": "锁定"
+    },
+    "syncSuccess": "同步成功完成",
+    "syncNoDevices": "未找到可同步的设备",
+    "syncError": "同步失败。请重试。",
+    "nfcNotAvailable": "此设备不支持 NFC 或已在设置中禁用",
+    "nfcEnabled": "您现在可以使用 NFC 标签触发快速操作",
+    "comingSoon": "即将推出",
+    "locationComingSoon": "位置提醒即将推出",
+    "clearDataWarning": "这将永久删除您的所有本地数据。此操作无法撤销。"
+  },
+
+  "errors": {
+    "general": "发生错误",
+    "network": "网络错误。请检查您的连接。",
+    "database": "数据库错误。请重试。",
+    "unknown": "发生意外错误",
+    "tryAgainLater": "请稍后重试"
+  },
+
+  "legal": {
+    "privacy": {
+      "title": "隐私政策",
+      "lastUpdated": "最后更新：2025 年 11 月 6 日",
+      "intro": "Noteece 致力于通过零知识和本地优先架构保护您的隐私。",
+      "noDataCollection": "我们不收集、传输或访问：",
+      "items": {
+        "personal": "您的个人信息",
+        "content": "您的笔记、任务或任何内容",
+        "location": "您的位置数据",
+        "usage": "您的使用模式或分析"
+      },
+      "localFirst": "所有数据均使用行业标准加密技术加密存储在您的设备上。",
+      "openSource": "Noteece 是开源的。您可以通过查看源代码来验证我们的隐私声明。",
+      "contact": "有关隐私问题，请联系我们：privacy@noteece.app",
+      "fullPolicy": "查看完整隐私政策"
+    },
+    "terms": {
+      "title": "服务条款",
+      "lastUpdated": "最后更新：2025 年 11 月 6 日",
+      "intro": "使用 Noteece 即表示您同意这些条款。",
+      "license": "Noteece 采用 GNU 通用公共许可证 v3.0 (GPL v3) 许可。",
+      "yourData": "您保留对数据的所有权利。我们无法访问它。",
+      "noWarranty": "本应用按“原样”提供，没有任何形式的保证。",
+      "passwordWarning": "如果您丢失密码，您的数据将被永久加密且无法恢复。",
+      "lawfulUse": "您同意仅将本应用用于合法目的。",
+      "contact": "有关法律问题，请联系我们：legal@noteece.app",
+      "fullTerms": "查看完整服务条款"
+    },
+    "license": {
+      "title": "开源许可证",
+      "type": "GNU 通用公共许可证 v3.0",
+      "description": "Noteece 是自由开源软件。您可以根据 GPL v3 的条款自由使用、研究、修改和分发本软件。",
+      "freedoms": "此许可证确保您的以下自由：",
+      "items": {
+        "use": "出于任何目的使用本应用",
+        "study": "研究本应用的工作原理",
+        "modify": "修改本应用以适应您的需求",
+        "distribute": "分发副本和修改版"
+      },
+      "repository": "源代码可用位置：github.com/[your-username]/Noteece",
+      "fullLicense": "查看完整许可证"
+    }
+  }
 }

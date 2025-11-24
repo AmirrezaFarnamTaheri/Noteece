@@ -1,17 +1,295 @@
 {
   "common": {
     "appName": "Noteece",
-    "tagline": "Ihr Persönlicher Intelligenz-Tresor",
+    "tagline": "Ihr persönlicher Intelligenz-Tresor",
     "ok": "OK",
     "cancel": "Abbrechen",
-    "save": "Speichern"
+    "save": "Speichern",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "close": "Schließen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "done": "Fertig",
+    "loading": "Laden...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "tryAgain": "Erneut versuchen",
+    "noData": "Keine Daten verfügbar"
   },
+
   "onboarding": {
-    "step1": { "title": "Ihr Persönlicher Intelligenz-Tresor" },
+    "step1": {
+      "title": "Ihr persönlicher Intelligenz-Tresor",
+      "description": "Noteece ist Ihre verschlüsselte persönliche Wissensdatenbank, die aus Ihren Daten lernt, um Ihnen zu helfen, intelligenter zu arbeiten.",
+      "features": {
+        "encryption": "End-to-End-Verschlüsselung",
+        "offline": "Local-First, offlinefähig",
+        "zeroKnowledge": "Zero-Knowledge-Architektur"
+      }
+    },
+    "step2": {
+      "title": "Foresight 3.0 Intelligenz",
+      "description": "Fortschrittliche Korrelations-Engine, die Ihre Aufgaben, Zeit, Gesundheit und Finanzen zu handlungsrelevanten Erkenntnissen synthetisiert.",
+      "features": {
+        "briefs": "Tägliche Briefings und Vorhersagen",
+        "burnout": "Burnout-Risikoanalyse",
+        "recommendations": "Smarte Empfehlungen"
+      }
+    },
+    "step3": {
+      "title": "Nahtlose lokale Synchronisierung",
+      "description": "Synchronisieren Sie sicher zwischen Ihren Geräten in Ihrem lokalen Netzwerk. Keine Cloud erforderlich.",
+      "features": {
+        "p2p": "Peer-to-Peer-Verschlüsselung",
+        "conflicts": "Automatische Konfliktlösung",
+        "background": "Hintergrund-Synchronisierung"
+      }
+    },
+    "step4": {
+      "title": "Physisch-Digitale Brücke",
+      "description": "Nutzen Sie NFC-Tags und Geofencing, um Ihre digitalen und physischen Arbeitsabläufe zu verbinden.",
+      "features": {
+        "nfc": "NFC-Trigger-Aktionen",
+        "location": "Standortbezogene Erinnerungen",
+        "capture": "Schnellzugriff-Shortcuts"
+      }
+    },
     "password": {
       "title": "Erstellen Sie Ihren Tresor",
-      "createButton": "Tresor Erstellen"
+      "description": "Wählen Sie ein starkes Passwort. Dies verschlüsselt alle Ihre Daten lokal.",
+      "placeholder": "Passwort (min. 8 Zeichen)",
+      "confirmPlaceholder": "Passwort bestätigen",
+      "warning": "Dieses Passwort kann nicht wiederhergestellt werden. Bewahren Sie es sicher auf.",
+      "tooShort": "Passwort muss mindestens 8 Zeichen lang sein",
+      "mismatch": "Passwörter stimmen nicht überein",
+      "creating": "Wird erstellt...",
+      "createButton": "Tresor erstellen"
+    },
+    "getStarted": "Loslegen"
+  },
+
+  "unlock": {
+    "title": "Noteece",
+    "subtitle": "Geben Sie Ihr Passwort ein, um zu entsperren",
+    "placeholder": "Tresor-Passwort",
+    "unlocking": "Entsperren...",
+    "unlockButton": "Tresor entsperren",
+    "biometric": "Biometrie verwenden",
+    "biometricComingSoon": "Biometrische Authentifizierung wird in einem zukünftigen Update verfügbar sein.",
+    "forgotPassword": "Passwort vergessen?",
+    "forgotMessage": "Aus Sicherheitsgründen müssen Sie bei Verlust Ihres Tresor-Passworts die App zurücksetzen und verlieren alle verschlüsselten Daten. Stellen Sie sicher, dass Sie Ihre Daten regelmäßig sichern.",
+    "incorrectPassword": "Falsches Passwort",
+    "incorrectMessage": "Das eingegebene Passwort ist falsch. Bitte versuchen Sie es erneut.",
+    "securityBadge": "End-to-End verschlüsselt • Zero-Knowledge"
+  },
+
+  "tabs": {
+    "today": "Heute",
+    "tasks": "Aufgaben",
+    "capture": "Erfassen",
+    "insights": "Einblicke",
+    "more": "Mehr"
+  },
+
+  "today": {
+    "greeting": {
+      "morning": "Guten Morgen",
+      "afternoon": "Guten Tag",
+      "evening": "Guten Abend"
+    },
+    "pullToRefresh": "Zum Aktualisieren ziehen",
+    "emptyState": {
+      "title": "Ihr Tag ist frei",
+      "message": "Keine Aufgaben oder Ereignisse für heute geplant"
+    },
+    "dailyBrief": "Tagesüberblick"
+  },
+
+  "tasks": {
+    "filters": {
+      "all": "Alle",
+      "today": "Heute",
+      "upcoming": "Demnächst",
+      "completed": "Erledigt"
+    },
+    "addTask": "Aufgabe hinzufügen",
+    "taskPlaceholder": "Aufgabentitel...",
+    "emptyState": {
+      "noTasks": "Noch keine Aufgaben",
+      "noCompleted": "Keine erledigten Aufgaben",
+      "addFirst": "Tippen Sie auf +, um Ihre erste Aufgabe hinzuzufügen",
+      "completeMessage": "Erledigen Sie einige Aufgaben, um sie hier zu sehen"
     }
   },
-  "unlock": { "title": "Noteece", "unlockButton": "Tresor Entsperren" }
+
+  "capture": {
+    "title": "Schnellerfassung",
+    "types": {
+      "note": {
+        "label": "Notiz",
+        "description": "Gedanken und Ideen erfassen"
+      },
+      "task": {
+        "label": "Aufgabe",
+        "description": "Schnelle Aufgabe hinzufügen"
+      },
+      "voice": {
+        "label": "Sprache",
+        "description": "Sprachnotiz aufnehmen"
+      },
+      "photo": {
+        "label": "Foto",
+        "description": "Erfassen mit OCR"
+      }
+    },
+    "titlePlaceholder": {
+      "note": "Notiztitel...",
+      "task": "Aufgabentitel..."
+    },
+    "contentPlaceholder": {
+      "note": "Beginnen Sie mit Ihrer Notiz...",
+      "task": "Aufgabenbeschreibung hinzufügen..."
+    },
+    "comingSoon": {
+      "title": "Demnächst verfügbar",
+      "voice": "Sprachaufzeichnung wird bald verfügbar sein",
+      "photo": "Fotoerfassung mit OCR wird bald verfügbar sein"
+    },
+    "quickActions": {
+      "title": "Schnellaktionen",
+      "addDate": "Datum zum Titel hinzufügen",
+      "clear": "Alles löschen"
+    },
+    "emptyContent": "Bitte geben Sie Inhalt zum Erfassen ein",
+    "captured": "{{type}} erfolgreich erfasst"
+  },
+
+  "insights": {
+    "title": "Einblicke",
+    "subtitle": "Powered by Foresight 3.0",
+    "filters": {
+      "all": "Alle",
+      "high": "Hoch",
+      "medium": "Mittel",
+      "low": "Niedrig"
+    },
+    "suggestedActions": "Vorgeschlagene Aktionen",
+    "emptyState": {
+      "title": "Noch keine Einblicke",
+      "message": "Nutzen Sie die App einige Tage, und Foresight wird personalisierte Einblicke generieren"
+    },
+    "types": {
+      "daily_brief": "Tagesüberblick",
+      "productivity_trend": "Produktivität",
+      "goal_progress": "Zielfortschritt",
+      "mood_correlation": "Wohlbefinden",
+      "milestone_risk": "Risiko-Warnung"
+    }
+  },
+
+  "more": {
+    "title": "Mehr",
+    "user": {
+      "name": "Noteece Benutzer",
+      "status": "Verschlüsselter Tresor aktiv"
+    },
+    "sections": {
+      "syncBackup": {
+        "title": "Sync & Backup",
+        "manualSync": "Manuelle Synchronisierung",
+        "manualSyncDesc": "Mit Geräten im lokalen Netzwerk synchronisieren",
+        "backgroundSync": "Hintergrund-Synchronisierung",
+        "backgroundSyncDesc": "Automatisch alle 15 Minuten"
+      },
+      "features": {
+        "title": "Funktionen",
+        "nfc": "NFC-Trigger",
+        "nfcDesc": "NFC-Tags für Schnellaktionen nutzen",
+        "location": "Standort-Erinnerungen",
+        "locationDesc": "Geofence-basierte Aufgabenerinnerungen"
+      },
+      "dataPrivacy": {
+        "title": "Daten & Datenschutz",
+        "changePassword": "Tresor-Passwort ändern",
+        "export": "Daten exportieren",
+        "exportDesc": "Alle Ihre Daten exportieren",
+        "clearData": "Alle Daten löschen",
+        "clearDataDesc": "Alle lokalen Daten entfernen"
+      },
+      "about": {
+        "title": "Über",
+        "version": "Version",
+        "documentation": "Dokumentation",
+        "openSource": "Open Source",
+        "openSourceDesc": "Mit ❤️ als Open Source entwickelt"
+      }
+    },
+    "lockVault": {
+      "title": "Tresor sperren",
+      "message": "Sind Sie sicher, dass Sie den Tresor sperren möchten?",
+      "confirm": "Sperren"
+    },
+    "syncSuccess": "Synchronisierung erfolgreich abgeschlossen",
+    "syncNoDevices": "Keine Geräte zum Synchronisieren gefunden",
+    "syncError": "Synchronisierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "nfcNotAvailable": "NFC ist auf diesem Gerät nicht verfügbar oder deaktiviert",
+    "nfcEnabled": "Sie können jetzt NFC-Tags für Schnellaktionen verwenden",
+    "comingSoon": "Demnächst verfügbar",
+    "locationComingSoon": "Standort-Erinnerungen werden bald verfügbar sein",
+    "clearDataWarning": "Dies wird alle Ihre lokalen Daten dauerhaft löschen. Diese Aktion kann nicht rückgängig gemacht werden."
+  },
+
+  "errors": {
+    "general": "Ein Fehler ist aufgetreten",
+    "network": "Netzwerkfehler. Bitte prüfen Sie Ihre Verbindung.",
+    "database": "Datenbankfehler. Bitte versuchen Sie es erneut.",
+    "unknown": "Ein unerwarteter Fehler ist aufgetreten",
+    "tryAgainLater": "Bitte versuchen Sie es später erneut"
+  },
+
+  "legal": {
+    "privacy": {
+      "title": "Datenschutzrichtlinie",
+      "lastUpdated": "Zuletzt aktualisiert: 6. November 2025",
+      "intro": "Noteece verpflichtet sich, Ihre Privatsphäre mit einer Zero-Knowledge- und Local-First-Architektur zu schützen.",
+      "noDataCollection": "Wir sammeln, übertragen oder haben KEINEN Zugriff auf:",
+      "items": {
+        "personal": "Ihre persönlichen Informationen",
+        "content": "Ihre Notizen, Aufgaben oder sonstige Inhalte",
+        "location": "Ihre Standortdaten",
+        "usage": "Ihre Nutzungsmuster oder Analysen"
+      },
+      "localFirst": "Alle Daten werden verschlüsselt auf Ihrem Gerät gespeichert, unter Verwendung von Industriestandards.",
+      "openSource": "Noteece ist Open Source. Sie können unsere Datenschutzansprüche durch Überprüfung des Quellcodes verifizieren.",
+      "contact": "Für Datenschutzfragen kontaktieren Sie uns unter: privacy@noteece.app",
+      "fullPolicy": "Vollständige Datenschutzrichtlinie anzeigen"
+    },
+    "terms": {
+      "title": "Nutzungsbedingungen",
+      "lastUpdated": "Zuletzt aktualisiert: 6. November 2025",
+      "intro": "Durch die Nutzung von Noteece stimmen Sie diesen Bedingungen zu.",
+      "license": "Noteece ist unter der GNU General Public License v3.0 (GPL v3) lizenziert.",
+      "yourData": "Sie behalten alle Rechte an Ihren Daten. Wir haben keinen Zugriff darauf.",
+      "noWarranty": "Die App wird 'wie besehen' ohne jegliche Garantie bereitgestellt.",
+      "passwordWarning": "Wenn Sie Ihr Passwort verlieren, sind Ihre Daten dauerhaft verschlüsselt und nicht wiederherstellbar.",
+      "lawfulUse": "Sie stimmen zu, die App nur für rechtmäßige Zwecke zu nutzen.",
+      "contact": "Für rechtliche Fragen kontaktieren Sie uns unter: legal@noteece.app",
+      "fullTerms": "Vollständige Nutzungsbedingungen anzeigen"
+    },
+    "license": {
+      "title": "Open-Source-Lizenz",
+      "type": "GNU General Public License v3.0",
+      "description": "Noteece ist freie und Open-Source-Software. Es steht Ihnen frei, diese Software unter den Bedingungen der GPL v3 zu nutzen, zu studieren, zu ändern und zu verbreiten.",
+      "freedoms": "Diese Lizenz garantiert Ihre Freiheit zu:",
+      "items": {
+        "use": "Die App für jeden Zweck zu nutzen",
+        "study": "Zu studieren, wie die App funktioniert",
+        "modify": "Die App an Ihre Bedürfnisse anzupassen",
+        "distribute": "Kopien und Modifikationen zu verbreiten"
+      },
+      "repository": "Quellcode verfügbar unter: github.com/[Ihr-Benutzername]/Noteece",
+      "fullLicense": "Vollständige Lizenz anzeigen"
+    }
+  }
 }

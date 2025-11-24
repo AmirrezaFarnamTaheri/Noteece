@@ -1,26 +1,295 @@
 {
   "common": {
     "appName": "Noteece",
-    "tagline": "Votre Coffre d'Intelligence Personnelle",
+    "tagline": "Votre coffre-fort d'intelligence personnelle",
     "ok": "OK",
     "cancel": "Annuler",
     "save": "Enregistrer",
     "delete": "Supprimer",
+    "edit": "Modifier",
+    "close": "Fermer",
     "back": "Retour",
-    "next": "Suivant"
+    "next": "Suivant",
+    "done": "Terminé",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "tryAgain": "Réessayer",
+    "noData": "Aucune donnée disponible"
   },
+
   "onboarding": {
     "step1": {
-      "title": "Votre Coffre d'Intelligence Personnelle",
-      "description": "Noteece est votre base de connaissances personnelle chiffrée."
+      "title": "Votre coffre-fort d'intelligence personnelle",
+      "description": "Noteece est votre base de connaissances personnelle chiffrée qui apprend de vos données pour vous aider à travailler plus intelligemment.",
+      "features": {
+        "encryption": "Chiffrement de bout en bout",
+        "offline": "Local-first, fonctionne hors ligne",
+        "zeroKnowledge": "Architecture à connaissance nulle"
+      }
+    },
+    "step2": {
+      "title": "Intelligence Foresight 3.0",
+      "description": "Moteur de corrélation avancé qui synthétise vos tâches, votre temps, votre santé et vos finances en informations exploitables.",
+      "features": {
+        "briefs": "Briefings quotidiens et prévisions",
+        "burnout": "Analyse du risque d'épuisement",
+        "recommendations": "Recommandations intelligentes"
+      }
+    },
+    "step3": {
+      "title": "Synchronisation locale fluide",
+      "description": "Synchronisez en toute sécurité entre vos appareils sur votre réseau local. Aucun cloud requis.",
+      "features": {
+        "p2p": "Chiffrement pair-à-pair",
+        "conflicts": "Résolution automatique des conflits",
+        "background": "Synchronisation en arrière-plan"
+      }
+    },
+    "step4": {
+      "title": "Pont physique-numérique",
+      "description": "Utilisez des tags NFC et le géorepérage pour fusionner vos flux de travail numériques et physiques.",
+      "features": {
+        "nfc": "Actions déclenchées par NFC",
+        "location": "Rappels basés sur la localisation",
+        "capture": "Raccourcis de capture rapide"
+      }
     },
     "password": {
-      "title": "Créez Votre Coffre",
-      "createButton": "Créer le Coffre"
-    }
+      "title": "Créez votre coffre",
+      "description": "Choisissez un mot de passe fort. Cela chiffre toutes vos données localement.",
+      "placeholder": "Mot de passe (min 8 caractères)",
+      "confirmPlaceholder": "Confirmer le mot de passe",
+      "warning": "Ce mot de passe ne peut pas être récupéré. Conservez-le en lieu sûr.",
+      "tooShort": "Le mot de passe doit contenir au moins 8 caractères",
+      "mismatch": "Les mots de passe ne correspondent pas",
+      "creating": "Création en cours...",
+      "createButton": "Créer le coffre"
+    },
+    "getStarted": "Commencer"
   },
+
   "unlock": {
     "title": "Noteece",
-    "unlockButton": "Déverrouiller le Coffre"
+    "subtitle": "Entrez votre mot de passe pour déverrouiller",
+    "placeholder": "Mot de passe du coffre",
+    "unlocking": "Déverrouillage...",
+    "unlockButton": "Déverrouiller le coffre",
+    "biometric": "Utiliser la biométrie",
+    "biometricComingSoon": "L'authentification biométrique sera disponible dans une future mise à jour.",
+    "forgotPassword": "Mot de passe oublié ?",
+    "forgotMessage": "Pour des raisons de sécurité, si vous oubliez le mot de passe de votre coffre, vous devrez réinitialiser l'application et perdrez toutes les données chiffrées. Assurez-vous de sauvegarder vos données régulièrement.",
+    "incorrectPassword": "Mot de passe incorrect",
+    "incorrectMessage": "Le mot de passe que vous avez saisi est incorrect. Veuillez réessayer.",
+    "securityBadge": "Chiffré de bout en bout • Connaissance nulle"
+  },
+
+  "tabs": {
+    "today": "Aujourd'hui",
+    "tasks": "Tâches",
+    "capture": "Capturer",
+    "insights": "Aperçus",
+    "more": "Plus"
+  },
+
+  "today": {
+    "greeting": {
+      "morning": "Bonjour",
+      "afternoon": "Bon après-midi",
+      "evening": "Bonsoir"
+    },
+    "pullToRefresh": "Tirer pour rafraîchir",
+    "emptyState": {
+      "title": "Votre journée est libre",
+      "message": "Aucune tâche ou événement prévu pour aujourd'hui"
+    },
+    "dailyBrief": "Briefing quotidien"
+  },
+
+  "tasks": {
+    "filters": {
+      "all": "Toutes",
+      "today": "Aujourd'hui",
+      "upcoming": "À venir",
+      "completed": "Terminées"
+    },
+    "addTask": "Ajouter une tâche",
+    "taskPlaceholder": "Titre de la tâche...",
+    "emptyState": {
+      "noTasks": "Pas encore de tâches",
+      "noCompleted": "Aucune tâche terminée",
+      "addFirst": "Appuyez sur + pour ajouter votre première tâche",
+      "completeMessage": "Terminez quelques tâches pour les voir ici"
+    }
+  },
+
+  "capture": {
+    "title": "Capture rapide",
+    "types": {
+      "note": {
+        "label": "Note",
+        "description": "Capturer des pensées et des idées"
+      },
+      "task": {
+        "label": "Tâche",
+        "description": "Ajouter une tâche rapide"
+      },
+      "voice": {
+        "label": "Voix",
+        "description": "Enregistrer un mémo vocal"
+      },
+      "photo": {
+        "label": "Photo",
+        "description": "Capturer avec OCR"
+      }
+    },
+    "titlePlaceholder": {
+      "note": "Titre de la note...",
+      "task": "Titre de la tâche..."
+    },
+    "contentPlaceholder": {
+      "note": "Commencez à écrire votre note...",
+      "task": "Ajoutez une description de la tâche..."
+    },
+    "comingSoon": {
+      "title": "Bientôt disponible",
+      "voice": "L'enregistrement vocal sera bientôt disponible",
+      "photo": "La capture photo avec OCR sera bientôt disponible"
+    },
+    "quickActions": {
+      "title": "Actions rapides",
+      "addDate": "Ajouter la date au titre",
+      "clear": "Tout effacer"
+    },
+    "emptyContent": "Veuillez saisir du contenu à capturer",
+    "captured": "{{type}} capturé avec succès"
+  },
+
+  "insights": {
+    "title": "Aperçus",
+    "subtitle": "Propulsé par Foresight 3.0",
+    "filters": {
+      "all": "Tous",
+      "high": "Élevé",
+      "medium": "Moyen",
+      "low": "Faible"
+    },
+    "suggestedActions": "Actions suggérées",
+    "emptyState": {
+      "title": "Pas encore d'aperçus",
+      "message": "Utilisez l'application pendant quelques jours et Foresight commencera à générer des aperçus personnalisés"
+    },
+    "types": {
+      "daily_brief": "Briefing quotidien",
+      "productivity_trend": "Productivité",
+      "goal_progress": "Progression des objectifs",
+      "mood_correlation": "Bien-être",
+      "milestone_risk": "Alerte de risque"
+    }
+  },
+
+  "more": {
+    "title": "Plus",
+    "user": {
+      "name": "Utilisateur Noteece",
+      "status": "Coffre chiffré actif"
+    },
+    "sections": {
+      "syncBackup": {
+        "title": "Sync & Sauvegarde",
+        "manualSync": "Synchronisation manuelle",
+        "manualSyncDesc": "Synchroniser avec les appareils du réseau local",
+        "backgroundSync": "Synchronisation en arrière-plan",
+        "backgroundSyncDesc": "Synchro auto toutes les 15 minutes"
+      },
+      "features": {
+        "title": "Fonctionnalités",
+        "nfc": "Déclencheurs NFC",
+        "nfcDesc": "Utiliser des tags NFC pour des actions rapides",
+        "location": "Rappels de localisation",
+        "locationDesc": "Rappels de tâches basés sur la géolocalisation"
+      },
+      "dataPrivacy": {
+        "title": "Données & Confidentialité",
+        "changePassword": "Changer le mot de passe du coffre",
+        "export": "Exporter les données",
+        "exportDesc": "Exporter toutes vos données",
+        "clearData": "Effacer toutes les données",
+        "clearDataDesc": "Supprimer toutes les données locales"
+      },
+      "about": {
+        "title": "À propos",
+        "version": "Version",
+        "documentation": "Documentation",
+        "openSource": "Open Source",
+        "openSourceDesc": "Construit avec ❤️ en open source"
+      }
+    },
+    "lockVault": {
+      "title": "Verrouiller le coffre",
+      "message": "Êtes-vous sûr de vouloir verrouiller le coffre ?",
+      "confirm": "Verrouiller"
+    },
+    "syncSuccess": "Synchronisation terminée avec succès",
+    "syncNoDevices": "Aucun appareil trouvé pour la synchronisation",
+    "syncError": "Échec de la synchronisation. Veuillez réessayer.",
+    "nfcNotAvailable": "Le NFC n'est pas disponible sur cet appareil ou est désactivé dans les paramètres",
+    "nfcEnabled": "Vous pouvez maintenant utiliser des tags NFC pour déclencher des actions rapides",
+    "comingSoon": "Bientôt disponible",
+    "locationComingSoon": "Les rappels de localisation seront bientôt disponibles",
+    "clearDataWarning": "Cela supprimera définitivement toutes vos données locales. Cette action est irréversible."
+  },
+
+  "errors": {
+    "general": "Une erreur est survenue",
+    "network": "Erreur réseau. Veuillez vérifier votre connexion.",
+    "database": "Erreur de base de données. Veuillez réessayer.",
+    "unknown": "Une erreur inattendue est survenue",
+    "tryAgainLater": "Veuillez réessayer plus tard"
+  },
+
+  "legal": {
+    "privacy": {
+      "title": "Politique de confidentialité",
+      "lastUpdated": "Dernière mise à jour : 6 novembre 2025",
+      "intro": "Noteece s'engage à protéger votre vie privée avec une architecture à connaissance nulle et locale.",
+      "noDataCollection": "Nous NE collectons PAS, NE transmettons PAS et N'avons PAS accès à :",
+      "items": {
+        "personal": "Vos informations personnelles",
+        "content": "Vos notes, tâches ou tout contenu",
+        "location": "Vos données de localisation",
+        "usage": "Vos habitudes d'utilisation ou analyses"
+      },
+      "localFirst": "Toutes les données sont stockées chiffrées sur votre appareil en utilisant un chiffrement standard de l'industrie.",
+      "openSource": "Noteece est open source. Vous pouvez vérifier nos affirmations de confidentialité en examinant le code source.",
+      "contact": "Pour toute question relative à la confidentialité, contactez-nous à : privacy@noteece.app",
+      "fullPolicy": "Voir la politique de confidentialité complète"
+    },
+    "terms": {
+      "title": "Conditions d'utilisation",
+      "lastUpdated": "Dernière mise à jour : 6 novembre 2025",
+      "intro": "En utilisant Noteece, vous acceptez ces conditions.",
+      "license": "Noteece est sous licence GNU General Public License v3.0 (GPL v3).",
+      "yourData": "Vous conservez tous les droits sur vos données. Nous n'y avons aucun accès.",
+      "noWarranty": "L'application est fournie 'telle quelle' sans garantie d'aucune sorte.",
+      "passwordWarning": "Si vous perdez votre mot de passe, vos données sont définitivement chiffrées et irrécupérables.",
+      "lawfulUse": "Vous acceptez d'utiliser l'application uniquement à des fins légales.",
+      "contact": "Pour toute question juridique, contactez-nous à : legal@noteece.app",
+      "fullTerms": "Voir les conditions d'utilisation complètes"
+    },
+    "license": {
+      "title": "Licence Open Source",
+      "type": "GNU General Public License v3.0",
+      "description": "Noteece est un logiciel libre et open source. Vous êtes libre d'utiliser, d'étudier, de modifier et de distribuer ce logiciel selon les termes de la GPL v3.",
+      "freedoms": "Cette licence garantit votre liberté de :",
+      "items": {
+        "use": "Utiliser l'application pour n'importe quel but",
+        "study": "Étudier comment l'application fonctionne",
+        "modify": "Modifier l'application pour répondre à vos besoins",
+        "distribute": "Distribuer des copies et des modifications"
+      },
+      "repository": "Code source disponible sur : github.com/[votre-nom-utilisateur]/Noteece",
+      "fullLicense": "Voir la licence complète"
+    }
   }
 }

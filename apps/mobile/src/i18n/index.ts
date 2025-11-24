@@ -10,6 +10,7 @@ import fr from "./locales/fr.json";
 import de from "./locales/de.json";
 import ja from "./locales/ja.json";
 import zh from "./locales/zh.json";
+import fa from "./locales/fa.json";
 
 const LANGUAGE_KEY = "@noteece_language";
 
@@ -56,6 +57,7 @@ i18n
       de: { translation: de },
       ja: { translation: ja },
       zh: { translation: zh },
+      fa: { translation: fa },
     },
     fallbackLng: "en",
     interpolation: {

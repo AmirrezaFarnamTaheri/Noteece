@@ -65,6 +65,7 @@ fn test_migrations() -> Result<(), DbError> {
             "social_category",
             "social_focus_mode",
             "social_post",
+            "social_post_archive",
             "social_post_category",
             "social_post_fts",
             "social_post_fts_config",

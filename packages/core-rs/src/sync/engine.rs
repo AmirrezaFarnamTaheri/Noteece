@@ -265,13 +265,29 @@ impl SyncAgent {
         Ok(history)
     }
 
-    /// Get all active sync tasks (placeholder implementation for now)
+    /// Get all active sync tasks
     pub fn get_all_sync_tasks(
         &self,
-        _conn: &Connection,
-        _space_id: &str,
+        conn: &Connection,
+        space_id: &str,
     ) -> Result<Vec<SyncTask>, SyncError> {
-        Ok(vec![])
+        // Query unresolved conflicts as active sync tasks
+        let mut stmt = conn.prepare(
+            "SELECT id, entity_type, entity_id, conflict_type, detected_at
+             FROM sync_conflict
+             WHERE space_id = ?1 AND resolved = 0"
+        )?;
+
+        let tasks = stmt.query_map([space_id], |row| {
+             Ok(SyncTask {
+                 id: row.get(0)?,
+                 description: format!("Conflict: {} {}", row.get::<_, String>(1)?, row.get::<_, String>(2)?),
+                 status: "conflict".to_string(),
+                 progress: 0.0,
+             })
+        })?.collect::<Result<Vec<_>, _>>().map_err(|e| SyncError::DatabaseError(e.into()))?;
+
+        Ok(tasks)
     }
 
     /// Get sync stats

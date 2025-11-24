@@ -4,11 +4,292 @@
     "tagline": "あなたの個人インテリジェンス金庫",
     "ok": "OK",
     "cancel": "キャンセル",
-    "save": "保存"
+    "save": "保存",
+    "delete": "削除",
+    "edit": "編集",
+    "close": "閉じる",
+    "back": "戻る",
+    "next": "次へ",
+    "done": "完了",
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "success": "成功",
+    "tryAgain": "再試行",
+    "noData": "データがありません"
   },
+
   "onboarding": {
-    "step1": { "title": "あなたの個人インテリジェンス金庫" },
-    "password": { "title": "金庫を作成", "createButton": "金庫を作成" }
+    "step1": {
+      "title": "あなたの個人インテリジェンス金庫",
+      "description": "Noteeceは、あなたのデータから学習し、よりスマートに働くのを助ける、暗号化された個人の知識ベースです。",
+      "features": {
+        "encryption": "エンドツーエンド暗号化",
+        "offline": "ローカルファースト、オフライン対応",
+        "zeroKnowledge": "ゼロ知識アーキテクチャ"
+      }
+    },
+    "step2": {
+      "title": "Foresight 3.0 インテリジェンス",
+      "description": "タスク、時間、健康、財務を実用的な洞察に統合する高度な相関エンジン。",
+      "features": {
+        "briefs": "毎日のブリーフと予測",
+        "burnout": "燃え尽きリスク分析",
+        "recommendations": "スマートな推奨事項"
+      }
+    },
+    "step3": {
+      "title": "シームレスなローカル同期",
+      "description": "ローカルネットワーク上のデバイス間で安全に同期します。クラウドは不要です。",
+      "features": {
+        "p2p": "ピアツーピア暗号化",
+        "conflicts": "自動競合解決",
+        "background": "バックグラウンド同期"
+      }
+    },
+    "step4": {
+      "title": "物理とデジタルの架け橋",
+      "description": "NFCタグとジオフェンシングを使用して、デジタルと物理的なワークフローを融合させます。",
+      "features": {
+        "nfc": "NFCトリガーアクション",
+        "location": "位置情報リマインダー",
+        "capture": "クイックキャプチャショートカット"
+      }
+    },
+    "password": {
+      "title": "金庫を作成",
+      "description": "強力なパスワードを選択してください。これにより、すべてのデータがローカルで暗号化されます。",
+      "placeholder": "パスワード（最低8文字）",
+      "confirmPlaceholder": "パスワードの確認",
+      "warning": "このパスワードは復元できません。安全に保管してください。",
+      "tooShort": "パスワードは8文字以上である必要があります",
+      "mismatch": "パスワードが一致しません",
+      "creating": "作成中...",
+      "createButton": "金庫を作成"
+    },
+    "getStarted": "始める"
   },
-  "unlock": { "title": "Noteece", "unlockButton": "金庫をロック解除" }
+
+  "unlock": {
+    "title": "Noteece",
+    "subtitle": "パスワードを入力してロック解除",
+    "placeholder": "金庫のパスワード",
+    "unlocking": "ロック解除中...",
+    "unlockButton": "金庫をロック解除",
+    "biometric": "生体認証を使用",
+    "biometricComingSoon": "生体認証は将来のアップデートで利用可能になります。",
+    "forgotPassword": "パスワードをお忘れですか？",
+    "forgotMessage": "セキュリティ上の理由から、金庫のパスワードを忘れた場合、アプリをリセットする必要があり、暗号化されたすべてのデータが失われます。定期的にデータをバックアップしてください。",
+    "incorrectPassword": "パスワードが間違っています",
+    "incorrectMessage": "入力されたパスワードが間違っています。もう一度お試しください。",
+    "securityBadge": "エンドツーエンド暗号化 • ゼロ知識"
+  },
+
+  "tabs": {
+    "today": "今日",
+    "tasks": "タスク",
+    "capture": "キャプチャ",
+    "insights": "洞察",
+    "more": "その他"
+  },
+
+  "today": {
+    "greeting": {
+      "morning": "おはようございます",
+      "afternoon": "こんにちは",
+      "evening": "こんばんは"
+    },
+    "pullToRefresh": "引いて更新",
+    "emptyState": {
+      "title": "今日の予定はありません",
+      "message": "今日予定されているタスクやイベントはありません"
+    },
+    "dailyBrief": "デイリーブリーフ"
+  },
+
+  "tasks": {
+    "filters": {
+      "all": "すべて",
+      "today": "今日",
+      "upcoming": "今後",
+      "completed": "完了"
+    },
+    "addTask": "タスクを追加",
+    "taskPlaceholder": "タスクのタイトル...",
+    "emptyState": {
+      "noTasks": "タスクはまだありません",
+      "noCompleted": "完了したタスクはありません",
+      "addFirst": "+ をタップして最初のタスクを追加",
+      "completeMessage": "タスクを完了するとここに表示されます"
+    }
+  },
+
+  "capture": {
+    "title": "クイックキャプチャ",
+    "types": {
+      "note": {
+        "label": "メモ",
+        "description": "思考やアイデアを記録"
+      },
+      "task": {
+        "label": "タスク",
+        "description": "クイックタスクを追加"
+      },
+      "voice": {
+        "label": "音声",
+        "description": "ボイスメモを録音"
+      },
+      "photo": {
+        "label": "写真",
+        "description": "OCRでキャプチャ"
+      }
+    },
+    "titlePlaceholder": {
+      "note": "メモのタイトル...",
+      "task": "タスクのタイトル..."
+    },
+    "contentPlaceholder": {
+      "note": "メモを書き始めてください...",
+      "task": "タスクの説明を追加..."
+    },
+    "comingSoon": {
+      "title": "近日公開",
+      "voice": "音声録音はまもなく利用可能になります",
+      "photo": "OCR付き写真キャプチャはまもなく利用可能になります"
+    },
+    "quickActions": {
+      "title": "クイックアクション",
+      "addDate": "タイトルに日付を追加",
+      "clear": "すべてクリア"
+    },
+    "emptyContent": "キャプチャする内容を入力してください",
+    "captured": "{{type}} が正常にキャプチャされました"
+  },
+
+  "insights": {
+    "title": "洞察",
+    "subtitle": "Foresight 3.0 搭載",
+    "filters": {
+      "all": "すべて",
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "suggestedActions": "推奨アクション",
+    "emptyState": {
+      "title": "洞察はまだありません",
+      "message": "アプリを数日間使用すると、Foresightがパーソナライズされた洞察を生成し始めます"
+    },
+    "types": {
+      "daily_brief": "デイリーブリーフ",
+      "productivity_trend": "生産性",
+      "goal_progress": "目標の進捗",
+      "mood_correlation": "幸福度",
+      "milestone_risk": "リスクアラート"
+    }
+  },
+
+  "more": {
+    "title": "その他",
+    "user": {
+      "name": "Noteece ユーザー",
+      "status": "暗号化された金庫がアクティブ"
+    },
+    "sections": {
+      "syncBackup": {
+        "title": "同期とバックアップ",
+        "manualSync": "手動同期",
+        "manualSyncDesc": "ローカルネットワーク上のデバイスと同期",
+        "backgroundSync": "バックグラウンド同期",
+        "backgroundSyncDesc": "15分ごとに自動同期"
+      },
+      "features": {
+        "title": "機能",
+        "nfc": "NFCトリガー",
+        "nfcDesc": "NFCタグを使用してクイックアクションを実行",
+        "location": "位置情報リマインダー",
+        "locationDesc": "ジオフェンスベースのタスクリマインダー"
+      },
+      "dataPrivacy": {
+        "title": "データとプライバシー",
+        "changePassword": "金庫のパスワードを変更",
+        "export": "データをエクスポート",
+        "exportDesc": "すべてのデータをエクスポート",
+        "clearData": "すべてのデータを消去",
+        "clearDataDesc": "すべてのローカルデータを削除"
+      },
+      "about": {
+        "title": "アプリについて",
+        "version": "バージョン",
+        "documentation": "ドキュメント",
+        "openSource": "オープンソース",
+        "openSourceDesc": "❤️ を込めてオープンソースとして構築"
+      }
+    },
+    "lockVault": {
+      "title": "金庫をロック",
+      "message": "金庫をロックしてもよろしいですか？",
+      "confirm": "ロック"
+    },
+    "syncSuccess": "同期が正常に完了しました",
+    "syncNoDevices": "同期するデバイスが見つかりませんでした",
+    "syncError": "同期に失敗しました。もう一度お試しください。",
+    "nfcNotAvailable": "NFCはこのデバイスで利用できないか、設定で無効になっています",
+    "nfcEnabled": "NFCタグを使用してクイックアクションをトリガーできるようになりました",
+    "comingSoon": "近日公開",
+    "locationComingSoon": "位置情報リマインダーはまもなく利用可能になります",
+    "clearDataWarning": "これにより、すべてのローカルデータが完全に削除されます。この操作は取り消せません。"
+  },
+
+  "errors": {
+    "general": "エラーが発生しました",
+    "network": "ネットワークエラー。接続を確認してください。",
+    "database": "データベースエラー。もう一度お試しください。",
+    "unknown": "予期しないエラーが発生しました",
+    "tryAgainLater": "後でもう一度お試しください"
+  },
+
+  "legal": {
+    "privacy": {
+      "title": "プライバシーポリシー",
+      "lastUpdated": "最終更新日：2025年11月6日",
+      "intro": "Noteeceは、ゼロ知識およびローカルファーストのアーキテクチャでお客様のプライバシーを保護することをお約束します。",
+      "noDataCollection": "私たちは以下を収集、送信、またはアクセスしません：",
+      "items": {
+        "personal": "あなたの個人情報",
+        "content": "あなたのメモ、タスク、またはその他のコンテンツ",
+        "location": "あなたの位置情報データ",
+        "usage": "あなたの使用パターンまたは分析"
+      },
+      "localFirst": "すべてのデータは、業界標準の暗号化を使用してデバイス上に暗号化されて保存されます。",
+      "openSource": "Noteeceはオープンソースです。ソースコードを確認することで、当社のプライバシーに関する主張を確認できます。",
+      "contact": "プライバシーに関する質問は、privacy@noteece.app までお問い合わせください。",
+      "fullPolicy": "プライバシーポリシー全文を表示"
+    },
+    "terms": {
+      "title": "利用規約",
+      "lastUpdated": "最終更新日：2025年11月6日",
+      "intro": "Noteeceを使用することにより、これらの条件に同意したことになります。",
+      "license": "NoteeceはGNU General Public License v3.0 (GPL v3)の下でライセンスされています。",
+      "yourData": "あなたは自分のデータに対するすべての権利を保持します。私たちはそれにアクセスできません。",
+      "noWarranty": "アプリは、いかなる種類の保証もなく「現状のまま」提供されます。",
+      "passwordWarning": "パスワードを紛失した場合、データは永久に暗号化され、復元できなくなります。",
+      "lawfulUse": "あなたは、合法的な目的でのみアプリを使用することに同意します。",
+      "contact": "法的な質問は、legal@noteece.app までお問い合わせください。",
+      "fullTerms": "利用規約全文を表示"
+    },
+    "license": {
+      "title": "オープンソースライセンス",
+      "type": "GNU General Public License v3.0",
+      "description": "Noteeceはフリーおよびオープンソースソフトウェアです。GPL v3の条件下で、このソフトウェアを使用、研究、変更、および配布することは自由です。",
+      "freedoms": "このライセンスは、以下の自由を保証します：",
+      "items": {
+        "use": "あらゆる目的でアプリを使用する",
+        "study": "アプリの仕組みを研究する",
+        "modify": "ニーズに合わせてアプリを変更する",
+        "distribute": "コピーおよび変更を配布する"
+      },
+      "repository": "ソースコードは以下で入手可能です：github.com/[your-username]/Noteece",
+      "fullLicense": "ライセンス全文を表示"
+    }
+  }
 }
