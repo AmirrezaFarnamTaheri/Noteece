@@ -53,6 +53,16 @@ class OverlayService : Service() {
             // Trigger Rust Capture
             val result = com.noteece.RustBridge.anchorLatest()
             Log.i("NoteeceOverlay", "Anchored: $result")
+
+            // Send to React Native via Broadcast
+            val intent = Intent("com.noteece.ACTION_ANCHOR_CAPTURED")
+            intent.putExtra("PAYLOAD", result)
+            // Since AppLauncherModule registers with local context but via global broadcast system,
+            // we use sendBroadcast(intent).
+            // Note: If AppLauncherModule uses registerReceiver without export flag on Android 14+,
+            // and we are sending from same UID, it should work.
+            intent.setPackage(packageName) // Restrict to own package for security
+            sendBroadcast(intent)
         }
     }
 
