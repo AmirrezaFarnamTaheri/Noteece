@@ -22,7 +22,7 @@ fn setup_db() -> (Connection, TempDir, String) {
     let space_id = Ulid::new().to_string();
     conn.execute(
         "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
-        &[&space_id],
+        [&space_id],
     )
     .unwrap();
 
@@ -585,7 +585,7 @@ fn test_entity_sync_log_operation_types() {
                 op
             ],
         )
-        .expect(&format!("Failed to insert {} operation", op));
+        .unwrap_or_else(|_| panic!("Failed to insert {} operation", op));
     }
 
     let count: i64 = conn

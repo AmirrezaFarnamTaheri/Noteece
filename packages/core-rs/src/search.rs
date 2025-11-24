@@ -162,7 +162,6 @@ pub struct SearchResult {
     pub metadata: serde_json::Value,
 }
 
-
 impl Default for SortOptions {
     fn default() -> Self {
         SortOptions {

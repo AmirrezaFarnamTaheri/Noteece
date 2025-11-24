@@ -10,6 +10,7 @@ pub mod category;
 pub mod focus;
 pub mod intelligence;
 pub mod post;
+pub mod stream_processor;
 pub mod sync;
 pub mod timeline;
 pub mod webview;

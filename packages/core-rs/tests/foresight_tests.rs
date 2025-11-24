@@ -23,7 +23,7 @@ fn test_generate_insights() {
     // A space must exist first.
     conn.execute(
         "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
-        &[&space_id.to_string()],
+        [&space_id.to_string()],
     )
     .unwrap();
     let project = project::create_project(&conn, &space_id.to_string(), "Test Project").unwrap();
@@ -47,7 +47,7 @@ fn test_insight_severity() {
 
     conn.execute(
         "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
-        &[&space_id.to_string()],
+        [&space_id.to_string()],
     )
     .unwrap();
 
@@ -74,7 +74,7 @@ fn test_project_stagnation_detection() {
     let space_id = Ulid::new();
     conn.execute(
         "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
-        &[&space_id.to_string()],
+        [&space_id.to_string()],
     )
     .unwrap();
 

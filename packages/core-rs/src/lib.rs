@@ -47,6 +47,9 @@ pub mod vault;
 pub mod versioning;
 pub mod weekly_review;
 
+#[cfg(feature = "android")]
+pub mod jni;
+
 // Re-exports to satisfy dependencies that expect them at top level or in sync_agent
 pub mod sync_agent {
     pub use crate::sync::conflict::{ConflictResolution, ConflictType};

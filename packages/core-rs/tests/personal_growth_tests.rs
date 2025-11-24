@@ -10,7 +10,7 @@ mod tests {
     fn test_goal_lifecycle() {
         let mut conn = Connection::open_in_memory().unwrap();
         // Enable foreign keys to be strict
-        conn.pragma_update(None, "foreign_keys", &"ON").unwrap();
+        conn.pragma_update(None, "foreign_keys", "ON").unwrap();
 
         migrate(&mut conn).unwrap();
 
@@ -25,10 +25,10 @@ mod tests {
         // Update
         let updated = update_goal_progress(&conn, goal.id, 50.0).unwrap();
         assert_eq!(updated.current, 50.0);
-        assert_eq!(updated.is_completed, false);
+        assert!(!updated.is_completed);
 
         let completed = update_goal_progress(&conn, goal.id, 100.0).unwrap();
-        assert_eq!(completed.is_completed, true);
+        assert!(completed.is_completed);
 
         // Get
         let goals = get_goals(&conn, space_id).unwrap();
@@ -43,7 +43,7 @@ mod tests {
     #[test]
     fn test_habit_lifecycle() {
         let mut conn = Connection::open_in_memory().unwrap();
-        conn.pragma_update(None, "foreign_keys", &"ON").unwrap();
+        conn.pragma_update(None, "foreign_keys", "ON").unwrap();
 
         migrate(&mut conn).unwrap();
 

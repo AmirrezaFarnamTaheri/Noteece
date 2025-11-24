@@ -1,8 +1,8 @@
+use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use ulid::Ulid;
-use lazy_static::lazy_static;
 
 lazy_static! {
     // Heuristic: Matches @handle (Twitter-style) or u/user (Reddit-style)
@@ -30,6 +30,13 @@ pub struct StreamProcessor {
     buffer: VecDeque<String>,
     buffer_size: usize,
     dedup_filter: bloomfilter::Bloom<String>, // Requires adding bloomfilter crate
+    latest_candidate: Option<CapturedPost>,
+}
+
+impl Default for StreamProcessor {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl StreamProcessor {
@@ -37,7 +44,9 @@ impl StreamProcessor {
         StreamProcessor {
             buffer: VecDeque::with_capacity(20),
             buffer_size: 20,
-            dedup_filter: bloomfilter::Bloom::new_for_fp_rate(10000, 0.01),
+            dedup_filter: bloomfilter::Bloom::new_for_fp_rate(10000, 0.01)
+                .expect("Failed to create bloom filter"),
+            latest_candidate: None,
         }
     }
 
@@ -51,6 +60,24 @@ impl StreamProcessor {
                 self.buffer.push_back(trimmed.to_string());
             }
         }
+
+        // Auto-analyze after ingestion
+        if let Some(post) = self.analyze_buffer() {
+            // Check dedup filter (using ID or content hash)
+            // For now, simple ID check or content check
+            if !self.dedup_filter.check(&post.content_text) {
+                self.dedup_filter.set(&post.content_text);
+                self.latest_candidate = Some(post);
+                log::info!(
+                    "[StreamProcessor] New candidate found: {:?}",
+                    self.latest_candidate.as_ref().map(|p| &p.author_handle)
+                );
+            }
+        }
+    }
+
+    pub fn get_latest_candidate(&self) -> Option<CapturedPost> {
+        self.latest_candidate.clone()
     }
 
     pub fn analyze_buffer(&self) -> Option<CapturedPost> {
@@ -58,10 +85,11 @@ impl StreamProcessor {
         // This is a simplified sliding window implementation
         let snapshot: Vec<&String> = self.buffer.iter().collect();
 
-        for i in 0..snapshot.len().saturating_sub(2) {
+        // Iterate in reverse to find the most recent post candidate first
+        for i in (0..snapshot.len().saturating_sub(2)).rev() {
             let line1 = snapshot[i];
-            let line2 = snapshot[i+1];
-            let line3 = snapshot[i+2];
+            let line2 = snapshot[i + 1];
+            let line3 = snapshot[i + 2];
 
             // Heuristic Check
             let has_handle = HANDLE_REGEX.is_match(line1);

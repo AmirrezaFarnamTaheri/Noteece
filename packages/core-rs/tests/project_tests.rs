@@ -9,7 +9,7 @@ fn setup_db() -> (tempfile::TempDir, Connection) {
     let dir = tempdir().unwrap();
     let file_path = dir.path().join("test.db");
     let mut conn = Connection::open(&file_path).unwrap();
-    conn.pragma_update(None, "foreign_keys", &"ON").unwrap();
+    conn.pragma_update(None, "foreign_keys", "ON").unwrap();
     migrate(&mut conn).unwrap();
     (dir, conn)
 }

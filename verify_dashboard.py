@@ -38,8 +38,11 @@ def verify_dashboard(page):
         print("Social Feed widget missing")
 
     # Take a screenshot
-    page.screenshot(path="/home/jules/verification/dashboard_verification.png", full_page=True)
-    print("Screenshot saved to /home/jules/verification/dashboard_verification.png")
+    # Use relative path or a temp dir for compatibility
+    import os
+    os.makedirs("verification", exist_ok=True)
+    page.screenshot(path="verification/dashboard_verification.png", full_page=True)
+    print("Screenshot saved to verification/dashboard_verification.png")
 
 if __name__ == "__main__":
     with sync_playwright() as p:

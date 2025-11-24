@@ -52,6 +52,12 @@ pub struct CorrelationContext {
 
 pub struct CorrelationEngine;
 
+impl Default for CorrelationEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CorrelationEngine {
     pub fn new() -> Self {
         Self {}

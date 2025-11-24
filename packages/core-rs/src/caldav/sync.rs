@@ -60,7 +60,7 @@ pub fn record_sync_history(
             &events_pushed.to_string(),
             &conflicts.to_string(),
             &(if success { 1 } else { 0 }).to_string(),
-            &error_message.unwrap_or("").to_string(),
+            error_message.unwrap_or(""),
         ],
     )?;
 

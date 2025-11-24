@@ -25,7 +25,7 @@ fn test_collaboration_add_and_remove_user() {
     // We need a space to exist for foreign key constraints
     conn.execute(
         "INSERT INTO space (id, name) VALUES (?, ?)",
-        &[space_id.as_str(), "Test Space"],
+        [space_id.as_str(), "Test Space"],
     )
     .unwrap();
 
@@ -36,7 +36,7 @@ fn test_collaboration_add_and_remove_user() {
     let user_exists: bool = conn
         .query_row(
             "SELECT EXISTS(SELECT 1 FROM space_users WHERE space_id = ? AND user_id = ? AND email = ?)",
-            &[&space_id, &user_id, &user_email.to_string()],
+            [&space_id, &user_id, &user_email.to_string()],
             |row| row.get(0),
         )
         .unwrap();
@@ -46,7 +46,7 @@ fn test_collaboration_add_and_remove_user() {
     let assigned_role: String = conn
         .query_row(
             "SELECT role_id FROM space_user_roles WHERE space_id = ? AND user_id = ?",
-            &[&space_id, &user_id],
+            [&space_id, &user_id],
             |row| row.get(0),
         )
         .unwrap();
@@ -59,7 +59,7 @@ fn test_collaboration_add_and_remove_user() {
     let user_exists_after_remove: bool = conn
         .query_row(
             "SELECT EXISTS(SELECT 1 FROM space_users WHERE space_id = ? AND user_id = ?)",
-            &[&space_id, &user_id],
+            [&space_id, &user_id],
             |row| row.get(0),
         )
         .unwrap();
@@ -72,7 +72,7 @@ fn test_collaboration_add_and_remove_user() {
     let role_exists_after_remove: bool = conn
         .query_row(
             "SELECT EXISTS(SELECT 1 FROM space_user_roles WHERE space_id = ? AND user_id = ?)",
-            &[&space_id, &user_id],
+            [&space_id, &user_id],
             |row| row.get(0),
         )
         .unwrap();

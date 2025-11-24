@@ -1,0 +1,19 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <service
+            android:name="com.noteece.services.NoteeceAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <!-- Meta-data referencing the configuration resource -->
+            <!-- <meta-data android:name="android.accessibilityservice" android:resource="@xml/accessibility_service_config" /> -->
+        </service>
+
+        <service android:name="com.noteece.services.OverlayService"
+                 android:permission="android.permission.SYSTEM_ALERT_WINDOW" />
+    </application>
+
+</manifest>
