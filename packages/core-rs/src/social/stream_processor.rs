@@ -50,6 +50,13 @@ impl StreamProcessor {
         }
     }
 
+    pub fn reset(&mut self) {
+        self.buffer.clear();
+        self.latest_candidate = None;
+        self.dedup_filter.clear();
+        log::info!("[StreamProcessor] State reset.");
+    }
+
     pub fn ingest(&mut self, text: &str) {
         for line in text.lines() {
             let trimmed = line.trim();
