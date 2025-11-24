@@ -458,7 +458,10 @@ pub fn sync_caldav_account(
     if account.sync_direction == SyncDirection::Push
         || account.sync_direction == SyncDirection::Bidirectional
     {
-        // PUSH logic placeholder
+        // For now, we only log that push is not fully implemented but don't fail.
+        // This allows bi-directional accounts to at least pull data.
+        // In a real implementation, we would query local changes and PUT them to the server.
+        log::info!("[caldav] Push sync requested for account {}, but currently only pull is fully supported. Skipping push.", account_id);
     }
 
     let result = SyncResult {

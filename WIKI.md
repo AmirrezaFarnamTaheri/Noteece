@@ -28,6 +28,18 @@ Welcome to the **Noteece** documentation hub.
 - **JSI Bridge:** Initial scaffolding for C++ integration in Mobile.
 - **Database:** Added `social_post_archive` for automated pruning.
 - **AI:** Inference engine skeleton (ONNX) integrated into Core.
+ - **Codebase:** Refactored `task` module for better separation of concerns.
+
+## 🌐 Localization
+
+Noteece is now available in:
+- English (en)
+- Spanish (es)
+- French (fr)
+- German (de)
+- Japanese (ja)
+- Chinese (zh)
+- Farsi (fa)
 
 ---
 

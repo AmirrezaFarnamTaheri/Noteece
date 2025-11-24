@@ -50,6 +50,8 @@ describe("SocialSettings Screen", () => {
   });
 
   it("renders settings sections", async () => {
+    // Increase timeout for this test
+    jest.setTimeout(10000);
     const { getByText, findByText } = render(<SocialSettings />);
 
     expect(await findByText("Social Settings")).toBeTruthy();

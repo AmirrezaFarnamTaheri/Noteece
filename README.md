@@ -39,6 +39,7 @@ pnpm dev:tauri
 - **📝 Markdown Centric:** First-class writing experience with backlinks and tags.
 - **📊 Integrated Workflow:** Tasks, Projects, Habits, and Goals in one place.
 - **📱 Mobile Companion:** React Native app for iOS and Android.
+ - **🌐 Multi-Language:** Support for English, Spanish, French, German, Japanese, Chinese, and Farsi.
 
 ## 🤝 Contributing
 
