@@ -281,11 +281,15 @@ impl SyncAgent {
         let tasks = stmt.query_map([space_id], |row| {
              Ok(SyncTask {
                  id: row.get(0)?,
+                 device_id: "".to_string(), // Filled by UI
+                 space_id: space_id.to_string(),
+                 direction: "conflict".to_string(),
+                 created_at: row.get(4)?,
                  description: format!("Conflict: {} {}", row.get::<_, String>(1)?, row.get::<_, String>(2)?),
                  status: "conflict".to_string(),
                  progress: 0.0,
              })
-        })?.collect::<Result<Vec<_>, _>>().map_err(|e| SyncError::DatabaseError(e.into()))?;
+        })?.collect::<Result<Vec<_>, _>>().map_err(|e| SyncError::DatabaseError(e.to_string()))?;
 
         Ok(tasks)
     }

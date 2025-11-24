@@ -8,6 +8,7 @@ import android.content.IntentFilter
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.util.Log
+import android.graphics.Rect
 
 // Active implementation for Sideload flavor
 class NoteeceAccessibilityService : AccessibilityService() {
@@ -30,9 +31,6 @@ class NoteeceAccessibilityService : AccessibilityService() {
                 }
                 Intent.ACTION_SCREEN_ON -> {
                     // We do not auto-resume on screen on for security/privacy.
-                    // User must explicitly re-engage via the app or widget if needed,
-                    // or we rely on the session state if we want to be more aggressive.
-                    // For now, let's keep it safe:
                     Log.i(TAG, "Screen ON - Waiting for session start")
                 }
             }
@@ -40,7 +38,6 @@ class NoteeceAccessibilityService : AccessibilityService() {
     }
 
     // Allowed packages whitelist - Must match config XML
-    // Adding runtime check as a second layer of defense
     private val allowedPackages = setOf(
         "com.twitter.android",
         "com.instagram.android",
@@ -122,7 +119,18 @@ class NoteeceAccessibilityService : AccessibilityService() {
         if (node == null || depth > 10) return
 
         if (node.text != null && node.text.isNotEmpty()) {
-            builder.append(node.text).append("\n")
+            val rect = Rect()
+            node.getBoundsInScreen(rect)
+
+            // Format: [x,y,w,h] Text
+            builder.append("[")
+                .append(rect.left).append(",")
+                .append(rect.top).append(",")
+                .append(rect.width()).append(",")
+                .append(rect.height())
+                .append("] ")
+                .append(node.text)
+                .append("\n")
         }
 
         // Optimization: Use child count to iterate

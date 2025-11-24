@@ -47,7 +47,7 @@ pub extern "system" fn Java_com_noteece_RustBridge_ingest(
 #[cfg(feature = "android")]
 #[no_mangle]
 pub extern "system" fn Java_com_noteece_RustBridge_anchorLatest(
-    mut env: JNIEnv,
+    env: JNIEnv,
     _class: JClass,
 ) -> jstring {
     let processor = match PROCESSOR.lock() {

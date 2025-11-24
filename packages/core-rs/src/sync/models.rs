@@ -78,8 +78,9 @@ pub struct SyncTask {
     pub device_id: String,
     pub space_id: String,
     pub direction: String,
+    pub description: String,
     pub status: String,
-    pub progress: i32,
+    pub progress: f64,
     pub created_at: i64,
 }
 
