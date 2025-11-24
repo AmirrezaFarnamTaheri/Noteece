@@ -1,8 +1,9 @@
 /// ECDH (Elliptic Curve Diffie-Hellman) Key Exchange
 /// Enables secure key establishment between desktop and mobile devices
-/// Uses P-256 curve for compatibility and security
+/// Uses X25519 (Curve25519) for security and performance
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+use x25519_dalek::{PublicKey as X25519PublicKey, StaticSecret};
 
 #[derive(Error, Debug)]
 pub enum ECDHError {
@@ -22,104 +23,45 @@ pub enum ECDHError {
 /// ECDH public key representation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublicKey {
-    /// Raw public key bytes (P-256, uncompressed format)
+    /// Raw public key bytes (32 bytes for X25519)
     pub bytes: Vec<u8>,
-}
-
-/// ECDH private key (kept secret)
-#[derive(Debug, Clone)]
-pub struct PrivateKey {
-    /// Raw private key bytes (32 bytes for P-256)
-    bytes: Vec<u8>,
 }
 
 /// ECDH key pair for a device
 pub struct KeyPair {
-    pub private_key: PrivateKey,
+    // StaticSecret is not Clone/Serialize, so we wrap it
+    // We don't expose private key bytes directly
+    secret: StaticSecret,
     pub public_key: PublicKey,
 }
 
 impl KeyPair {
-    /// Generate new ECDH key pair using P-256 curve
+    /// Generate new ECDH key pair using X25519
     pub fn generate() -> Result<Self, ECDHError> {
-        // Generate random 32-byte private key
-        let mut private_bytes = [0u8; 32];
-        use rand::RngCore;
-        rand::thread_rng().fill_bytes(&mut private_bytes);
-
-        let private_key = PrivateKey {
-            bytes: private_bytes.to_vec(),
-        };
-
-        // Derive public key from private key
-        // For P-256, this involves point multiplication
-        let public_key = PublicKey {
-            bytes: derive_public_key(&private_bytes)?,
-        };
+        let secret = StaticSecret::random_from_rng(rand_core::OsRng);
+        let public_key_obj = X25519PublicKey::from(&secret);
 
         Ok(KeyPair {
-            private_key,
-            public_key,
+            secret,
+            public_key: PublicKey {
+                bytes: public_key_obj.to_bytes().to_vec(),
+            },
         })
     }
 
     /// Perform ECDH: derive shared secret from our private key and peer's public key
     pub fn shared_secret(&self, peer_public_key: &PublicKey) -> Result<Vec<u8>, ECDHError> {
-        compute_shared_secret(&self.private_key.bytes, &peer_public_key.bytes)
-    }
-}
-
-/// Derive public key from private key using P-256
-fn derive_public_key(private_key: &[u8]) -> Result<Vec<u8>, ECDHError> {
-    if private_key.len() != 32 {
-        return Err(ECDHError::KeyGenerationFailed);
-    }
-
-    #[cfg(any(test, debug_assertions, feature = "insecure-test-crypto"))]
-    {
-        // SECURITY WARNING: Mock implementation for testing only
-        // This is NOT cryptographically secure and must NEVER be used in production
-        let mut public_key = vec![0x04]; // Uncompressed point format prefix
-        public_key.extend_from_slice(private_key);
-        public_key.extend_from_slice(private_key);
-        return Ok(public_key);
-    }
-
-    #[cfg(not(any(test, debug_assertions, feature = "insecure-test-crypto")))]
-    {
-        // Production builds must use real cryptography
-        // Fail securely if proper implementation not available
-        Err(ECDHError::KeyGenerationFailed)
-    }
-}
-
-/// Compute shared secret from private key and peer's public key
-fn compute_shared_secret(private_key: &[u8], peer_public_key: &[u8]) -> Result<Vec<u8>, ECDHError> {
-    if private_key.len() != 32 {
-        return Err(ECDHError::SharedSecretFailed);
-    }
-
-    if peer_public_key.len() != 65 && peer_public_key.len() != 66 {
-        return Err(ECDHError::InvalidPublicKey);
-    }
-
-    #[cfg(any(test, debug_assertions, feature = "insecure-test-crypto"))]
-    {
-        // SECURITY WARNING: Mock implementation for testing only
-        // This is NOT cryptographically secure and must NEVER be used in production
-        let mut shared = Vec::with_capacity(32);
-        for i in 0..32 {
-            let peer_byte = peer_public_key.get(i + 1).copied().unwrap_or(0);
-            shared.push(private_key[i] ^ peer_byte);
+        if peer_public_key.bytes.len() != 32 {
+            return Err(ECDHError::InvalidPublicKey);
         }
-        return Ok(shared);
-    }
 
-    #[cfg(not(any(test, debug_assertions, feature = "insecure-test-crypto")))]
-    {
-        // Production builds must use real cryptography
-        // Fail securely if proper implementation not available
-        Err(ECDHError::SharedSecretFailed)
+        let mut peer_bytes = [0u8; 32];
+        peer_bytes.copy_from_slice(&peer_public_key.bytes);
+
+        let peer_point = X25519PublicKey::from(peer_bytes);
+        let shared_secret = self.secret.diffie_hellman(&peer_point);
+
+        Ok(shared_secret.to_bytes().to_vec())
     }
 }
 
@@ -141,6 +83,7 @@ pub enum PairingState {
 /// Device pairing manager
 pub struct PairingManager {
     pub device_id: String,
+    // We store the KeyPair struct which holds the secret
     key_pair: Option<KeyPair>,
     peer_public_key: Option<PublicKey>,
     state: PairingState,
@@ -168,6 +111,9 @@ impl PairingManager {
 
     /// Exchange public keys
     pub fn exchange_keys(&mut self, peer_public_key: PublicKey) -> Result<(), ECDHError> {
+        if peer_public_key.bytes.len() != 32 {
+            return Err(ECDHError::InvalidPublicKey);
+        }
         self.peer_public_key = Some(peer_public_key);
         self.state = PairingState::KeysExchanged;
         Ok(())
@@ -202,8 +148,7 @@ mod tests {
     #[test]
     fn test_keypair_generation() {
         let keypair = KeyPair::generate().expect("Failed to generate keypair");
-        assert_eq!(keypair.private_key.bytes.len(), 32);
-        assert_eq!(keypair.public_key.bytes.len(), 65);
+        assert_eq!(keypair.public_key.bytes.len(), 32);
     }
 
     #[test]
@@ -220,6 +165,7 @@ mod tests {
 
         assert_eq!(secret1.len(), 32);
         assert_eq!(secret2.len(), 32);
+        assert_eq!(secret1, secret2);
     }
 
     #[test]

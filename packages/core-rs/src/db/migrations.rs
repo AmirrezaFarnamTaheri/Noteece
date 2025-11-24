@@ -473,7 +473,7 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
                 -- Step 2: Copy data from the old table to the new table, converting 0 to NULL
                 INSERT INTO task_new (id, space_id, note_id, project_id, parent_task_id, title, description, status, due_at, start_at, completed_at, priority, estimate_minutes, recur_rule, context, area)
                 SELECT id, space_id, note_id, project_id, parent_task_id, title, description, status, due_at, start_at,
-                       CASE WHEN completed_at = 0 THEN NULL ELSE completed_at END,
+                       NULLIF(completed_at, 0),
                        priority, estimate_minutes, recur_rule, context, area
                 FROM task;
 
@@ -746,6 +746,44 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
             CREATE INDEX IF NOT EXISTS idx_insight_space ON insight(space_id, dismissed);
 
             INSERT INTO schema_version (version) VALUES (16);
+            ",
+        )?;
+    }
+
+    if current_version < 17 {
+        log::info!("[db] Migrating to version 17 - Generated Columns");
+        tx.execute_batch(
+            "
+            -- Add generated columns for performance optimization
+            -- Only adding completed_date as created_at is not present in task table
+            ALTER TABLE task ADD COLUMN completed_date TEXT
+            GENERATED ALWAYS AS (date(completed_at, 'unixepoch')) STORED;
+
+            CREATE INDEX idx_task_completed_date ON task(completed_date);
+
+            INSERT INTO schema_version (version) VALUES (17);
+            ",
+        )?;
+    }
+
+    if current_version < 18 {
+        log::info!("[db] Migrating to version 18 - Social Archive");
+        tx.execute_batch(
+            "
+            -- Create archive table for old social posts to reduce bloat
+            -- Stores essential metadata but drops heavy raw_json
+            CREATE TABLE IF NOT EXISTS social_post_archive (
+                id TEXT PRIMARY KEY,
+                account_id TEXT NOT NULL REFERENCES social_account(id) ON DELETE CASCADE,
+                platform TEXT NOT NULL,
+                author TEXT NOT NULL,
+                content TEXT,
+                timestamp INTEGER NOT NULL,
+                archived_at INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_social_archive_timestamp ON social_post_archive(timestamp);
+
+            INSERT INTO schema_version (version) VALUES (18);
             ",
         )?;
     }

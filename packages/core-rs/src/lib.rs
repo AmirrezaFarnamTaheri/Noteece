@@ -70,6 +70,33 @@ pub fn init() {
     log::info!("[core-rs] Library initialized");
 }
 
+// CXX Bridge for JSI Integration (Scaffolding)
+#[cfg(feature = "android")]
+#[cxx::bridge]
+mod ffi {
+    // Shared structs would be defined here
+    struct JsiSyncStatus {
+        connected: bool,
+        last_sync: u64,
+    }
+
+    extern "Rust" {
+        // Expose Rust functions to C++
+        fn create_sync_agent_wrapper(path: &str) -> Box<SyncAgentWrapper>;
+    }
+}
+
+// Wrapper struct for CXX to hold (SyncAgent is complex, so we wrap it)
+#[cfg(feature = "android")]
+pub struct SyncAgentWrapper {
+    // inner: std::sync::Mutex<SyncAgent>, // Real impl would wrap the agent
+}
+
+#[cfg(feature = "android")]
+pub fn create_sync_agent_wrapper(_path: &str) -> Box<SyncAgentWrapper> {
+    Box::new(SyncAgentWrapper {})
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
