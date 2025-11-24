@@ -9,6 +9,7 @@ import { dbQuery, dbExecute } from "@/lib/database";
 import { chacha20poly1305 } from "@noble/ciphers/chacha";
 import { sha256 } from "@noble/hashes/sha256";
 import { hmac } from "@noble/hashes/hmac";
+import { x25519 } from "@noble/curves/ed25519";
 import Zeroconf from "react-native-zeroconf";
 
 export interface SyncManifest {
@@ -148,26 +149,58 @@ export class SyncClient {
     return new Promise((resolve, reject) => {
       const ws = new WebSocket(`ws://${address}:${port}/sync`);
 
+      // Generate ephemeral keys for this session
+      const privateKey = x25519.utils.randomPrivateKey();
+      const publicKey = x25519.getPublicKey(privateKey);
+      const publicKeyHex = Buffer.from(publicKey).toString("hex");
+
       ws.onopen = async () => {
         try {
-          // Perform Key Exchange Handshake here
-          // For Beta/Hotfix, we use the fixed key, but we simulate the handshake message
+          // Send handshake with our public key
           ws.send(
             JSON.stringify({
               type: "handshake",
               deviceId: this.deviceId,
               version: "1.0",
+              publicKey: publicKeyHex,
             }),
           );
 
-          // In a real implementation, we would wait for the server's public key
-          // calculate the shared secret, and then resolve.
+          // Wait for handshake response with peer's public key
+          const handshakeHandler = (e: WebSocketMessageEvent) => {
+            try {
+              const data = JSON.parse(e.data);
+              if (data.type === "handshake_response") {
+                 ws.removeEventListener("message", handshakeHandler);
 
-          // HOTFIX: Hardcoded key
-          this.sessionKey = new Uint8Array(32).fill(1);
-          this.peerAuthenticated = true;
+                 if (!data.publicKey) {
+                   reject(new Error("Peer did not provide public key"));
+                   return;
+                 }
 
-          resolve(ws);
+                 // Peer public key (hex to bytes)
+                 const peerPublicKey = Uint8Array.from(Buffer.from(data.publicKey, "hex"));
+
+                 // Compute Shared Secret
+                 const sharedSecret = x25519.getSharedSecret(privateKey, peerPublicKey);
+
+                 // Derive Session Key using HMAC-SHA256 (acting as simple KDF)
+                 // In a full implementation, we would use HKDF with salt and info
+                 this.sessionKey = hmac(sha256, sharedSecret, new Uint8Array(0)); // using shared secret as key, empty salt
+
+                 this.peerAuthenticated = true;
+                 resolve(ws);
+              } else if (data.type === "error") {
+                 ws.removeEventListener("message", handshakeHandler);
+                 reject(new Error(`Handshake error: ${data.message}`));
+              }
+            } catch (err) {
+               reject(err);
+            }
+          };
+
+          ws.addEventListener("message", handshakeHandler);
+
         } catch (e) {
           reject(e);
         }
@@ -385,7 +418,7 @@ export class SyncClient {
       const ciphertext = encryptedPayload.slice(12);
 
       // Create cipher instance and decrypt
-      const cipher = chacha20poly1305(this.sessionKey, nonce);
+      const cipher = chacha20poly1305(this.sessionKey!, nonce);
       const decrypted = cipher.decrypt(ciphertext);
 
       // Parse JSON
@@ -737,7 +770,7 @@ export class SyncClient {
       const plaintext = new TextEncoder().encode(jsonString);
       const nonce = await Crypto.getRandomBytesAsync(12);
 
-      const cipher = chacha20poly1305(this.sessionKey, nonce);
+      const cipher = chacha20poly1305(this.sessionKey!, nonce);
       const ciphertext = cipher.encrypt(plaintext);
 
       const encrypted = new Uint8Array(nonce.length + ciphertext.length);
@@ -763,7 +796,7 @@ export class SyncClient {
     }
 
     try {
-      const signature = hmac(sha256, this.sessionKey, payload);
+      const signature = hmac(sha256, this.sessionKey!, payload);
       return Array.from(signature)
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");

@@ -8,7 +8,9 @@ pub mod analytics;
 pub mod backup;
 pub mod category;
 pub mod focus;
+pub mod inference;
 pub mod intelligence;
+pub mod maintenance;
 pub mod post;
 pub mod stream_processor;
 pub mod sync;
@@ -60,9 +62,13 @@ pub use intelligence::{
     ContentInsight, RuleType, Sentiment,
 };
 
+pub use inference::{InferenceEngine, InferenceError, InferenceResult};
+
 pub use focus::{
     activate_focus_mode, create_automation_rule, create_focus_mode, create_preset_focus_modes,
     deactivate_all_focus_modes, delete_focus_mode, get_automation_rules, get_focus_modes,
     is_platform_blocked, toggle_automation_rule, ActionType, AutomationRule, FocusMode, TimeLimit,
     TriggerType,
 };
+
+pub use maintenance::prune_old_posts;

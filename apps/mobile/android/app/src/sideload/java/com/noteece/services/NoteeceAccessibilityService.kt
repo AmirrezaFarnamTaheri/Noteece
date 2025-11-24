@@ -1,15 +1,12 @@
 package com.noteece.services
 
 import android.accessibilityservice.AccessibilityService
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
-import android.graphics.PixelFormat
-import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.View
-import android.view.WindowManager
+import android.content.IntentFilter
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import android.widget.FrameLayout
 import android.util.Log
 
 // Active implementation for Sideload flavor
@@ -24,9 +21,43 @@ class NoteeceAccessibilityService : AccessibilityService() {
         const val ACTION_START_SESSION = "com.noteece.ACTION_START_SESSION"
     }
 
+    private val screenStateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                Intent.ACTION_SCREEN_OFF -> {
+                    Log.i(TAG, "Screen OFF - Pausing Ingestion")
+                    isRecording = false
+                }
+                Intent.ACTION_SCREEN_ON -> {
+                    // We do not auto-resume on screen on for security/privacy.
+                    // User must explicitly re-engage via the app or widget if needed,
+                    // or we rely on the session state if we want to be more aggressive.
+                    // For now, let's keep it safe:
+                    Log.i(TAG, "Screen ON - Waiting for session start")
+                }
+            }
+        }
+    }
+
+    // Allowed packages whitelist - Must match config XML
+    // Adding runtime check as a second layer of defense
+    private val allowedPackages = setOf(
+        "com.twitter.android",
+        "com.instagram.android",
+        "com.linkedin.android",
+        "com.facebook.katana"
+    )
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         Log.i(TAG, "Noteece Eyes Connected")
+
+        // Register Screen State Receiver
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_SCREEN_ON)
+        }
+        registerReceiver(screenStateReceiver, filter)
 
         // Launch the Overlay Service when accessibility is enabled
         startService(Intent(this, OverlayService::class.java))
@@ -47,6 +78,11 @@ class NoteeceAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (!isRecording || event == null) return
+
+        // 0. Runtime Package Whitelist Check
+        if (event.packageName == null || !allowedPackages.contains(event.packageName.toString())) {
+            return
+        }
 
         // 1. Event Filtering
         if (event.eventType != AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED &&
@@ -99,5 +135,14 @@ class NoteeceAccessibilityService : AccessibilityService() {
 
     override fun onInterrupt() {
         isRecording = false
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            unregisterReceiver(screenStateReceiver)
+        } catch (e: IllegalArgumentException) {
+            // Receiver not registered
+        }
     }
 }

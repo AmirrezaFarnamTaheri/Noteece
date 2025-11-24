@@ -1,6 +1,6 @@
 use crate::social::stream_processor::StreamProcessor;
 use lazy_static::lazy_static;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 #[cfg(feature = "android")]
 use jni::objects::{JClass, JString};
@@ -9,8 +9,10 @@ use jni::sys::jstring;
 #[cfg(feature = "android")]
 use jni::JNIEnv;
 
+// We use an Arc<Mutex> to allow thread-safe access.
+// We handle poisoning by restarting the processor if a panic occurred previously.
 lazy_static! {
-    static ref PROCESSOR: Mutex<StreamProcessor> = Mutex::new(StreamProcessor::new());
+    static ref PROCESSOR: Arc<Mutex<StreamProcessor>> = Arc::new(Mutex::new(StreamProcessor::new()));
 }
 
 #[cfg(feature = "android")]
@@ -28,12 +30,13 @@ pub extern "system" fn Java_com_noteece_RustBridge_ingest(
         }
     };
 
+    // Safe lock handling
     let mut processor = match PROCESSOR.lock() {
         Ok(guard) => guard,
         Err(poisoned) => {
-            log::warn!("Mutex poisoned, recovering...");
+            log::error!("Mutex was poisoned. Resetting processor state.");
             let mut guard = poisoned.into_inner();
-            guard.reset();
+            *guard = StreamProcessor::new(); // Completely replace state
             guard
         }
     };
@@ -50,11 +53,9 @@ pub extern "system" fn Java_com_noteece_RustBridge_anchorLatest(
     let processor = match PROCESSOR.lock() {
         Ok(guard) => guard,
         Err(poisoned) => {
-            log::warn!("Mutex poisoned (read), recovering...");
+            log::error!("Mutex was poisoned (read). Resetting processor state.");
             let mut guard = poisoned.into_inner();
-            // If poisoned, state might be corrupted, but we can try to return what we have or reset
-            // Just returning empty if reset
-            guard.reset();
+            *guard = StreamProcessor::new();
             guard
         }
     };
@@ -82,7 +83,7 @@ pub extern "system" fn Java_com_noteece_RustBridge_reset(
     let mut processor = match PROCESSOR.lock() {
         Ok(guard) => guard,
         Err(poisoned) => {
-            log::warn!("Mutex poisoned during reset, recovering...");
+            log::warn!("Mutex poisoned during reset. Recovering.");
             poisoned.into_inner()
         }
     };

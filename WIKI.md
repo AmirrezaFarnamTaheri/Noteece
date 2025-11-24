@@ -17,6 +17,18 @@ Welcome to the **Noteece** documentation hub.
 - [Issues](ISSUES.md) - Known bugs and workarounds.
 - [Progress](PROGRESS.md) - Development status tracker.
 
+## 🛡️ Recent Security Updates
+
+- **Mobile Sync Hardening:** Implemented X25519 ECDH for secure key exchange.
+- **Biometric Security:** Hardened storage using `expo-secure-store`.
+- **Privacy:** Added strict package whitelisting to Accessibility Service.
+
+## 🏗️ Architecture Updates
+
+- **JSI Bridge:** Initial scaffolding for C++ integration in Mobile.
+- **Database:** Added `social_post_archive` for automated pruning.
+- **AI:** Inference engine skeleton (ONNX) integrated into Core.
+
 ---
 
 *Note: This wiki serves as the single source of truth for the project's documentation.*

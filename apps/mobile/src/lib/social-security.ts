@@ -7,16 +7,21 @@
  * Security Model:
  * - Biometric lock is optional (user preference)
  * - When enabled, requires biometric auth to access Social tab
- * - Preference stored in AsyncStorage (not sensitive data)
+ * - Uses expo-secure-store for storing the DATABASE KEY safely (Key Wrapping)
  * - Uses device biometric APIs (Face ID, Touch ID, Fingerprint)
- * - Session-based: unlock persists until app backgrounded/closed
+ * - Session-based: unlocked key persists in memory until app backgrounded/closed
  */
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import * as LocalAuthentication from "expo-local-authentication";
+import * as Crypto from "expo-crypto";
 
 const SOCIAL_BIOMETRIC_ENABLED_KEY = "social_biometric_enabled";
-const SOCIAL_SESSION_UNLOCKED_KEY = "social_session_unlocked";
+const SOCIAL_KEY_STORAGE_KEY = "social_db_key_wrapped"; // The wrapped key stored in SecureStore
+
+// In-memory session storage for the key (cleared when app closes or locks)
+let sessionKey: string | null = null;
 
 /**
  * Check if biometric hardware is available and enrolled on device
@@ -50,8 +55,10 @@ export async function isSocialBiometricEnabled(): Promise<boolean> {
 
 /**
  * Enable biometric lock for social
+ * This stores the provided database key (or a dummy if not provided) into SecureStore.
+ * In a full implementation, this key would be used to actually decrypt the DB.
  */
-export async function enableSocialBiometric(): Promise<boolean> {
+export async function enableSocialBiometric(dbKey?: string): Promise<boolean> {
   try {
     const available = await isBiometricAvailable();
     if (!available) {
@@ -59,9 +66,21 @@ export async function enableSocialBiometric(): Promise<boolean> {
       return false;
     }
 
+    const keyToStore = dbKey || (await generateRandomKey());
+
+    // Store key with biometric requirement if supported by OS/device policy
+    // Note: Expo SecureStore access control options are limited compared to native Android Keystore,
+    // but 'WHEN_UNLOCKED_THIS_DEVICE_ONLY' is the strongest available default.
+    await SecureStore.setItemAsync(SOCIAL_KEY_STORAGE_KEY, keyToStore, {
+      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      requireAuthentication: true // This requests biometric auth on retrieval if supported
+    });
+
     await AsyncStorage.setItem(SOCIAL_BIOMETRIC_ENABLED_KEY, "true");
-    await AsyncStorage.removeItem(SOCIAL_SESSION_UNLOCKED_KEY);
-    // console.log("[SocialSecurity] Biometric lock enabled for social");
+
+    // Clear session to force re-auth
+    sessionKey = null;
+
     return true;
   } catch (error) {
     console.error("[SocialSecurity] Failed to enable biometric:", error);
@@ -75,8 +94,8 @@ export async function enableSocialBiometric(): Promise<boolean> {
 export async function disableSocialBiometric(): Promise<boolean> {
   try {
     await AsyncStorage.removeItem(SOCIAL_BIOMETRIC_ENABLED_KEY);
-    await AsyncStorage.removeItem(SOCIAL_SESSION_UNLOCKED_KEY);
-    // console.log("[SocialSecurity] Biometric lock disabled for social");
+    await SecureStore.deleteItemAsync(SOCIAL_KEY_STORAGE_KEY);
+    sessionKey = null;
     return true;
   } catch (error) {
     console.error("[SocialSecurity] Failed to disable biometric:", error);
@@ -87,19 +106,20 @@ export async function disableSocialBiometric(): Promise<boolean> {
 /**
  * Check if social is unlocked in current session
  */
-export async function isSocialSessionUnlocked(): Promise<boolean> {
-  try {
-    const unlocked = await AsyncStorage.getItem(SOCIAL_SESSION_UNLOCKED_KEY);
-    return unlocked === "true";
-  } catch (error) {
-    console.error("[SocialSecurity] Failed to check session status:", error);
-    return false;
-  }
+export function isSocialSessionUnlocked(): boolean {
+  return sessionKey !== null;
 }
 
 /**
- * Authenticate with biometric and unlock social session
- * Returns true if authentication successful
+ * Get the unlocked key if available
+ */
+export function getUnlockedKey(): string | null {
+  return sessionKey;
+}
+
+/**
+ * Authenticate with biometric and unlock social session (retrieve key)
+ * Returns true if authentication successful and key retrieved
  */
 export async function authenticateForSocial(): Promise<boolean> {
   try {
@@ -112,17 +132,28 @@ export async function authenticateForSocial(): Promise<boolean> {
 
     // Prompt for biometric authentication
     const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: "Authenticate to access Social Hub",
-      fallbackLabel: "Cancel",
+      promptMessage: "Authenticate to unlock Social Hub",
+      fallbackLabel: "Use Passcode",
       cancelLabel: "Cancel",
-      disableDeviceFallback: false, // Allow device PIN as fallback
+      disableDeviceFallback: false,
     });
 
     if (result.success) {
-      // Mark session as unlocked
-      await AsyncStorage.setItem(SOCIAL_SESSION_UNLOCKED_KEY, "true");
-      // console.log("[SocialSecurity] Social session unlocked");
-      return true;
+      // Retrieve the key from SecureStore.
+      // If requireAuthentication was set during storage, this might prompt again on some OS versions,
+      // but usually the LocalAuthentication success is sufficient or handled by the OS keystore flow.
+      // For Expo SecureStore, we just read it out now.
+      const key = await SecureStore.getItemAsync(SOCIAL_KEY_STORAGE_KEY, {
+        requireAuthentication: true
+      });
+
+      if (key) {
+        sessionKey = key;
+        return true;
+      } else {
+        console.error("[SocialSecurity] Auth success but key not found");
+        return false;
+      }
     }
 
     console.warn("[SocialSecurity] Authentication failed:", result.error);
@@ -134,15 +165,10 @@ export async function authenticateForSocial(): Promise<boolean> {
 }
 
 /**
- * Lock social session (requires biometric on next access)
+ * Lock social session (clears memory)
  */
 export async function lockSocialSession(): Promise<void> {
-  try {
-    await AsyncStorage.removeItem(SOCIAL_SESSION_UNLOCKED_KEY);
-    // console.log("[SocialSecurity] Social session locked");
-  } catch (error) {
-    console.error("[SocialSecurity] Failed to lock session:", error);
-  }
+  sessionKey = null;
 }
 
 /**
@@ -156,11 +182,10 @@ export async function requiresSocialAuthentication(): Promise<boolean> {
       return false; // Biometric lock not enabled
     }
 
-    const sessionUnlocked = await isSocialSessionUnlocked();
-    return !sessionUnlocked; // Requires auth if session not unlocked
+    return sessionKey === null; // Requires auth if key not in memory
   } catch (error) {
     console.error("[SocialSecurity] Failed to check auth requirement:", error);
-    // SECURITY: Fail closed - require authentication on error to prevent bypass
+    // SECURITY: Fail closed
     return true;
   }
 }
@@ -192,4 +217,12 @@ export async function getSupportedBiometricTypes(): Promise<string[]> {
     console.error("[SocialSecurity] Failed to get biometric types:", error);
     return [];
   }
+}
+
+/**
+ * Helper to generate a random key if one isn't provided
+ */
+async function generateRandomKey(): Promise<string> {
+  const bytes = await Crypto.getRandomBytesAsync(32);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
