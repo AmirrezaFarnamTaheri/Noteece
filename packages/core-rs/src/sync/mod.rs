@@ -11,5 +11,5 @@ pub use engine::SyncAgent;
 pub use error::SyncError;
 pub use mobile_sync::{DeviceInfo as MobileDeviceInfo, SyncProtocol};
 pub use models::*;
-pub mod delta_gatherer;
 pub mod delta_applier;
+pub mod delta_gatherer;

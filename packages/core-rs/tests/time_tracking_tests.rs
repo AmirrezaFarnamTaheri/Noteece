@@ -41,7 +41,7 @@ fn test_manual_time_entry_calculation() {
     assert_eq!(entry.started_at, start_time);
     assert_eq!(entry.duration_seconds, Some(duration));
     assert_eq!(entry.ended_at, Some(start_time + duration));
-    assert_eq!(entry.is_running, false);
+    assert!(!entry.is_running);
 
     let retrieved = time_tracking::get_time_entry(&conn, entry.id)
         .unwrap()

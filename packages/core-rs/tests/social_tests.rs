@@ -1,5 +1,5 @@
-use core_rs::social::*;
 use core_rs::social::account::UpdateSocialAccountParams;
+use core_rs::social::*;
 use rusqlite::Connection;
 
 fn setup_db() -> Connection {
@@ -46,7 +46,7 @@ fn test_social_account_lifecycle() {
 
     assert_eq!(account.platform, "twitter");
     assert_eq!(account.username, "user1");
-    assert_eq!(account.enabled, true);
+    assert!(account.enabled);
 
     // Test Retrieval
     let fetched = get_social_account(&conn, &account.id).unwrap().unwrap();
@@ -72,7 +72,7 @@ fn test_social_account_lifecycle() {
     };
     update_social_account(&conn, params).unwrap();
     let updated = get_social_account(&conn, &account.id).unwrap().unwrap();
-    assert_eq!(updated.enabled, false);
+    assert!(!updated.enabled);
 
     // Test Deletion
     delete_social_account(&conn, &account.id).unwrap();

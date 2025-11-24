@@ -75,7 +75,7 @@ class NoteeceAccessibilityService : AccessibilityService() {
         if (rawText.isNotEmpty() && rawText != lastCapturedText) {
             lastCapturedText = rawText
             // Send to Rust Bridge
-            // RustBridge.ingest(rawText)
+            com.noteece.RustBridge.ingest(rawText)
             Log.d(TAG, "Captured: ${rawText.take(50)}...")
         }
 

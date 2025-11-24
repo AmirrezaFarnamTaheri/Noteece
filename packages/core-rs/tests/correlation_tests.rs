@@ -24,7 +24,7 @@ fn test_gather_context() {
 
     conn.execute(
         "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
-        &[&space_id.to_string()],
+        [&space_id.to_string()],
     )
     .unwrap();
 
@@ -93,7 +93,7 @@ fn test_time_range_filtering() {
 
     conn.execute(
         "INSERT INTO space (id, name) VALUES (?1, 'Test Space')",
-        &[&space_id.to_string()],
+        [&space_id.to_string()],
     )
     .unwrap();
 

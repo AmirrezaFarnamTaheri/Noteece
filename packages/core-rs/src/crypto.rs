@@ -129,7 +129,7 @@ pub fn decrypt_string(encrypted: &str, dek: &[u8]) -> Result<String, CryptoError
 
     let cipher = XChaCha20Poly1305::new(dek.into());
     let plaintext = cipher
-        .decrypt(&nonce, ciphertext)
+        .decrypt(nonce, ciphertext)
         .map_err(|e| CryptoError::AesKw(e.to_string()))?;
 
     String::from_utf8(plaintext)
@@ -206,7 +206,7 @@ pub fn decrypt_bytes(encrypted: &[u8], dek: &[u8]) -> Result<Vec<u8>, CryptoErro
 
     let cipher = XChaCha20Poly1305::new(dek.into());
     let plaintext = cipher
-        .decrypt(&nonce, ciphertext)
+        .decrypt(nonce, ciphertext)
         .map_err(|e| CryptoError::AesKw(e.to_string()))?;
 
     Ok(plaintext)

@@ -82,3 +82,21 @@ The "Foresight" engine is a local heuristic system that provides intelligent sug
 - **Sandboxing:** The frontend runs in a restricted WebView with strict CSP.
 
 See `SECURITY.md` for a detailed audit.
+
+## Mobile Active Interception (Cyborg-Life OS)
+
+The mobile application features a "Prime" flavor that implements active UI interception for life-logging.
+
+### Architecture
+- **Flavors:**
+    - `store`: Standard Google Play compliant build. Contains a "stub" accessibility service.
+    - `sideload`: The "Prime" build. Contains the real `NoteeceAccessibilityService`.
+- **Active Interception:**
+    - `NoteeceAccessibilityService.kt`: Listens for scroll events and traverses the UI tree.
+    - **JNI Bridge:** Passes raw text strings from Kotlin to Rust via `RustBridge.java`.
+    - **Stream Processor (`core-rs`):** A Rust module that uses regex heuristics and a bloom filter to detect and extract social media posts (Tweets, Reddit posts) from the raw accessibility stream.
+    - **Bloom Filter:** Prevents duplicate ingestion of the same post during scrolling.
+- **Privacy:**
+    - Active interception is **opt-in** via a specific "Session Start" intent.
+    - All processing happens in-memory within the Rust core.
+    - Data is encrypted immediately upon capture.

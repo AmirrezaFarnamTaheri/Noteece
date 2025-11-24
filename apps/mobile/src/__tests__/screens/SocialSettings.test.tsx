@@ -1,12 +1,7 @@
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import { SocialSettings } from "../../screens/SocialSettings";
-import * as TaskManager from "expo-task-manager";
 import * as Sharing from "expo-sharing";
-import {
-  isBiometricAvailable,
-  enableSocialBiometric,
-} from "@/lib/social-security";
 import { triggerManualSync } from "@/lib/sync/background-sync";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -65,7 +60,7 @@ describe("SocialSettings Screen", () => {
   });
 
   it("toggles background sync", async () => {
-    const { getByText, getAllByRole } = render(<SocialSettings />);
+    const { getByText } = render(<SocialSettings />);
 
     // Find switch for background sync (index 2 in settings list)
     // Settings: Auto Sync, Wifi Only, Background Sync
@@ -80,7 +75,7 @@ describe("SocialSettings Screen", () => {
   });
 
   it("handles manual sync", async () => {
-    const { getByText, findByText } = render(<SocialSettings />);
+    const { findByText } = render(<SocialSettings />);
 
     const syncBtn = await findByText("Sync Now");
     fireEvent.press(syncBtn);

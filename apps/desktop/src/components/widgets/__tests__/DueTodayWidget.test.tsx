@@ -110,8 +110,9 @@ describe('DueTodayWidget', () => {
     // Override useTasks mock for this test
     // eslint-disable-next-line @typescript-eslint/no-var-requires, unicorn/prefer-module
     const { useTasks } = require('../../../hooks/useQueries');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-    (useTasks as any).mockReturnValue({ data: [], isLoading: false });
+
+    // safe mock override
+    (useTasks as jest.Mock).mockReturnValue({ data: [], isLoading: false });
 
     renderWithProviders(<DueTodayWidget />);
     expect(screen.getByText('All clear for today!')).toBeInTheDocument();

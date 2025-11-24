@@ -457,7 +457,7 @@ mod tests {
 
         assert_eq!(account.platform, "twitter");
         assert_eq!(account.username, "testuser");
-        assert_eq!(account.enabled, true);
+        assert!(account.enabled);
 
         // Retrieve account
         let retrieved =

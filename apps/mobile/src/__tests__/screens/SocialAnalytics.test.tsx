@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import { render, fireEvent } from "@testing-library/react-native";
 import { SocialAnalytics } from "../../screens/SocialAnalytics";
 import {
   getPlatformStats,
@@ -58,7 +58,7 @@ describe("SocialAnalytics Screen", () => {
     ]);
     (getTotalPostCount as jest.Mock).mockResolvedValue(20);
 
-    const { findByText, getAllByText, getByText } = render(<SocialAnalytics />);
+    const { findByText, getAllByText } = render(<SocialAnalytics />);
 
     expect(await findByText("20")).toBeTruthy(); // Total posts
     expect(getAllByText("twitter").length).toBeGreaterThan(0);

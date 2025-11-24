@@ -81,7 +81,7 @@ describe("MusicHub Screen", () => {
       return Promise.resolve([]);
     });
 
-    const { findByText, getByText } = render(<MusicHub />);
+    const { findByText } = render(<MusicHub />);
 
     const trackItem = await findByText("Song A");
     fireEvent.press(trackItem);

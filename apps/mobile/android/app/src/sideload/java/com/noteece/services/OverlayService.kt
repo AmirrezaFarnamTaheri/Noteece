@@ -51,6 +51,8 @@ class OverlayService : Service() {
         overlayView?.setOnClickListener {
             Log.i("NoteeceOverlay", "Anchor Tapped!")
             // Trigger Rust Capture
+            val result = com.noteece.RustBridge.anchorLatest()
+            Log.i("NoteeceOverlay", "Anchored: $result")
         }
     }
 

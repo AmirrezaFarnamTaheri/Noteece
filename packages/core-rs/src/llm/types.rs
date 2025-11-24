@@ -437,7 +437,7 @@ mod tests {
         assert_eq!(response.model, "gpt-4");
         assert_eq!(response.tokens_used, 42);
         assert_eq!(response.finish_reason, None);
-        assert_eq!(response.cached, false);
+        assert!(!response.cached);
     }
 
     #[test]

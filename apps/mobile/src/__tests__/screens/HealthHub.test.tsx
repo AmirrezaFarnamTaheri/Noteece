@@ -1,13 +1,16 @@
 import React from "react";
-import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
+import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import { HealthHub } from "../../screens/HealthHub";
 import { dbQuery, dbExecute } from "@/lib/database";
-import { Ionicons } from "@expo/vector-icons";
 
 // Mock dependencies
 jest.mock("@/lib/database", () => ({
   dbQuery: jest.fn(),
   dbExecute: jest.fn(),
+}));
+
+jest.mock("@expo/vector-icons", () => ({
+  Ionicons: "Ionicons",
 }));
 
 jest.mock("@/lib/haptics", () => ({
@@ -37,7 +40,7 @@ describe("HealthHub Screen", () => {
 
   it("renders loading state initially", async () => {
     (dbQuery as jest.Mock).mockImplementation(() => new Promise(() => {})); // Never resolves
-    const { getByText, queryByText } = render(<HealthHub />);
+    const { getByText } = render(<HealthHub />);
 
     // Check for header but content should be skeleton (which we mocked as null)
     // Actually renderLoadingSkeleton renders header too.
@@ -54,6 +57,8 @@ describe("HealthHub Screen", () => {
     const { getByText, findByText } = render(<HealthHub />);
 
     await waitFor(() => expect(dbQuery).toHaveBeenCalled());
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _ignore = getByText;
 
     // Check for Today view metrics
     // Use regex for values that might be part of a larger string
@@ -95,7 +100,7 @@ describe("HealthHub Screen", () => {
 
   it("refreshes data on pull to refresh", async () => {
     (dbQuery as jest.Mock).mockResolvedValue([]);
-    const { getByTestId } = render(<HealthHub />);
+    render(<HealthHub />);
 
     // In React Native testing library, refresh control is often on the ScrollView
     // We can simulate the refresh prop if we could access it, or just manually call the handler if we extracted it.
