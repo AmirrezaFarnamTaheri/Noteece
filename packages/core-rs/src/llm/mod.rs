@@ -1,18 +1,47 @@
-// LLM Integration Module
-//
-// Provides unified interface for interacting with Language Models (both local and cloud).
-// Supports automatic fallback, response caching, and hybrid routing strategies.
+//! LLM Integration Module
+//!
+//! Provides unified interface for interacting with Language Models (both local and cloud).
+//! 
+//! ## Features
+//! 
+//! - **Multi-Provider Support**: Ollama (local), OpenAI, Claude, Gemini
+//! - **Automatic Fallback**: Configurable fallback chain between providers
+//! - **Response Caching**: SQLite-based persistent cache
+//! - **Streaming Responses**: Real-time token-by-token output
+//! - **Batch Processing**: Concurrent execution with rate limiting
+//! - **Response Validation**: JSON schema, length, and content validation
+//! - **Token Counting**: Pre-request token estimation
+//! - **Cost Tracking**: Per-request and aggregate cost monitoring
+//! - **Auto-Retry**: Exponential backoff with circuit breaker
+//! - **Request Prioritization**: Priority queues with aging
 
+pub mod batch;
 pub mod cache;
 pub mod config;
+pub mod cost;
 pub mod error;
+pub mod priority;
 pub mod providers;
+pub mod retry;
+pub mod streaming;
+pub mod tokenizer;
 pub mod types;
+pub mod validation;
 
+pub use batch::{BatchBuilder, BatchConfig, BatchProcessor, BatchResult};
 pub use config::LLMConfig;
-pub use error::LLMError;
-pub use providers::{LLMProvider, OllamaProvider, OpenAIProvider};
+pub use cost::{CostRecord, CostStats, CostTracker};
+pub use error::{LLMError, LLMResult};
+pub use priority::{AsyncPriorityQueue, Priority, PriorityQueue, PrioritizedRequest};
+pub use providers::{ClaudeProvider, GeminiProvider, LLMProvider, OllamaProvider, OpenAIProvider};
+pub use retry::{CircuitBreaker, RetryConfig, with_retry};
+pub use streaming::{StreamChunk, StreamCollector, StreamHandler, StreamRequest};
+pub use tokenizer::{ModelLimits, SimpleTokenCounter, TokenCount, TokenCounter};
 pub use types::{LLMRequest, LLMResponse, Message, Role};
+pub use validation::{
+    CompositeValidator, ContentFilter, JsonValidator, LengthValidator, ResponseValidator,
+    ValidationResult,
+};
 
 use rusqlite::Connection;
 
@@ -121,16 +150,22 @@ impl LLMClient {
                         "OpenAI API key not configured".to_string(),
                     ))?,
             )?),
-            providers::ProviderType::Claude => {
-                return Err(LLMError::ProviderNotImplemented(
-                    "Claude provider coming soon".to_string(),
-                ))
-            }
-            providers::ProviderType::Gemini => {
-                return Err(LLMError::ProviderNotImplemented(
-                    "Gemini provider coming soon".to_string(),
-                ))
-            }
+            providers::ProviderType::Claude => Box::new(ClaudeProvider::new(
+                self.config
+                    .anthropic_api_key
+                    .clone()
+                    .ok_or(LLMError::ConfigError(
+                        "Anthropic API key not configured".to_string(),
+                    ))?,
+            )?),
+            providers::ProviderType::Gemini => Box::new(GeminiProvider::new(
+                self.config
+                    .google_api_key
+                    .clone()
+                    .ok_or(LLMError::ConfigError(
+                        "Google API key not configured".to_string(),
+                    ))?,
+            )?),
         };
 
         provider.complete(request).await
@@ -155,11 +190,22 @@ impl LLMClient {
                         "OpenAI API key not configured".to_string(),
                     ))?,
             )?),
-            _ => {
-                return Err(LLMError::ProviderNotImplemented(
-                    "Provider not yet implemented".to_string(),
-                ))
-            }
+            providers::ProviderType::Claude => Box::new(ClaudeProvider::new(
+                self.config
+                    .anthropic_api_key
+                    .clone()
+                    .ok_or(LLMError::ConfigError(
+                        "Anthropic API key not configured".to_string(),
+                    ))?,
+            )?),
+            providers::ProviderType::Gemini => Box::new(GeminiProvider::new(
+                self.config
+                    .google_api_key
+                    .clone()
+                    .ok_or(LLMError::ConfigError(
+                        "Google API key not configured".to_string(),
+                    ))?,
+            )?),
         };
 
         provider.list_models().await

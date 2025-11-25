@@ -5,28 +5,50 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+env:
+  TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+  TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
 
 jobs:
-  release:
-    permissions:
-      contents: write
+  # Build Desktop binaries for all platforms
+  build-desktop:
     strategy:
       fail-fast: false
       matrix:
         include:
           - platform: 'macos-latest'
-            args: '--target universal-apple-darwin'
+            target: 'universal-apple-darwin'
+            bundles: 'dmg'
+            asset_name: 'Noteece-macos-universal'
+          - platform: 'macos-latest'
+            target: 'aarch64-apple-darwin'
+            bundles: 'dmg'
+            asset_name: 'Noteece-macos-arm64'
           - platform: 'ubuntu-22.04'
-            args: ''
+            target: ''
+            bundles: 'deb,appimage'
+            asset_name: 'Noteece-linux-amd64'
           - platform: 'windows-latest'
-            args: ''
+            target: ''
+            bundles: 'msi,nsis'
+            asset_name: 'Noteece-windows-x64'
 
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v3
         with:
           version: 8
 
@@ -55,20 +77,55 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          projectPath: apps/desktop
           tagName: ${{ github.ref_name }}
           releaseName: 'Noteece ${{ github.ref_name }}'
-          releaseBody: 'See the assets to download this version and install.'
+          releaseBody: |
+            ## Noteece ${{ github.ref_name }}
+            
+            ### Downloads
+            
+            **Desktop:**
+            - **Windows**: `.msi` (recommended) or `.exe` (NSIS installer)
+            - **macOS**: `.dmg` (Universal binary works on Intel and Apple Silicon)
+            - **Linux**: `.AppImage` (recommended) or `.deb` (Debian/Ubuntu)
+            
+            **Mobile:**
+            - Android APK attached below (or install from Play Store when available)
+            - iOS: Available on TestFlight (contact maintainers for access)
+            
+            ### Checksums
+            See the release assets for SHA256 checksums.
+            
+            ### Changes
+            See [CHANGELOG.md](https://github.com/AmirrezaFarnamTaheri/Noteece/blob/main/CHANGELOG.md) for full details.
           releaseDraft: true
           prerelease: false
-          args: ${{ matrix.args }}
+          args: ${{ matrix.target && format('--target {0}', matrix.target) || '' }} --bundles ${{ matrix.bundles }}
 
-  mobile-android:
+      - name: Upload Desktop Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.asset_name }}
+          path: |
+            apps/desktop/src-tauri/target/**/release/bundle/**/*.dmg
+            apps/desktop/src-tauri/target/**/release/bundle/**/*.app
+            apps/desktop/src-tauri/target/**/release/bundle/**/*.deb
+            apps/desktop/src-tauri/target/**/release/bundle/**/*.AppImage
+            apps/desktop/src-tauri/target/**/release/bundle/**/*.msi
+            apps/desktop/src-tauri/target/**/release/bundle/**/*.exe
+          if-no-files-found: warn
+
+  # Build Android APK
+  build-android:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: apps/mobile
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -87,24 +144,59 @@ jobs:
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Build APK (Preview)
-        run: npx expo prebuild --platform android --no-install && cd android && ./gradlew assembleRelease
-        continue-on-error: true # Allow failure if signing config is missing in this generic workflow
+      - name: Configure Keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
+            echo "RELEASE_STORE_FILE=release.keystore" >> android/gradle.properties
+            echo "RELEASE_STORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD" >> android/gradle.properties
+            echo "RELEASE_KEY_ALIAS=$ANDROID_KEY_ALIAS" >> android/gradle.properties
+            echo "RELEASE_KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> android/gradle.properties
+          fi
+
+      - name: Prebuild Android
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build Release APK
+        run: |
+          cd android
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Build Release AAB (for Play Store)
+        run: |
+          cd android
+          ./gradlew bundleRelease --no-daemon
+        continue-on-error: true
 
       - name: Upload APK Artifact
-        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: app-release.apk
-          path: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+          name: android-apk
+          path: apps/mobile/android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
 
-  mobile-ios:
+      - name: Upload AAB Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-aab
+          path: apps/mobile/android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: ignore
+
+  # Build iOS (requires macOS runner with certificates)
+  build-ios:
     runs-on: macos-latest
     defaults:
       run:
         working-directory: apps/mobile
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -117,13 +209,74 @@ jobs:
       - name: Prebuild iOS
         run: npx expo prebuild --platform ios --no-install
 
-      - name: Build iOS (Simulator)
+      - name: Install CocoaPods
         run: |
           cd ios
-          xcodebuild -workspace Noteece.xcworkspace -scheme Noteece -configuration Release -sdk iphonesimulator -derivedDataPath build
+          pod install
 
-      - name: Upload App Artifact
+      - name: Build iOS Simulator App
+        run: |
+          cd ios
+          xcodebuild -workspace Noteece.xcworkspace \
+            -scheme Noteece \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Archive iOS Simulator App
+        run: |
+          cd ios/build/Build/Products/Release-iphonesimulator
+          zip -r Noteece-ios-simulator.zip Noteece.app
+
+      - name: Upload iOS Simulator App
         uses: actions/upload-artifact@v4
         with:
-          name: Noteece.app
-          path: apps/mobile/ios/build/Build/Products/Release-iphonesimulator/Noteece.app
+          name: ios-simulator
+          path: apps/mobile/ios/build/Build/Products/Release-iphonesimulator/Noteece-ios-simulator.zip
+          if-no-files-found: warn
+
+  # Create GitHub Release with all artifacts
+  create-release:
+    needs: [build-desktop, build-android, build-ios]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -la artifacts/
+
+      - name: Generate Checksums
+        run: |
+          cd artifacts
+          find . -type f \( -name "*.dmg" -o -name "*.deb" -o -name "*.AppImage" -o -name "*.msi" -o -name "*.exe" -o -name "*.apk" -o -name "*.aab" -o -name "*.zip" \) -exec sha256sum {} \; > checksums.txt
+          cat checksums.txt
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/**/*.dmg
+            artifacts/**/*.deb
+            artifacts/**/*.AppImage
+            artifacts/**/*.msi
+            artifacts/**/*.exe
+            artifacts/**/*.apk
+            artifacts/**/*.aab
+            artifacts/**/*.zip
+            artifacts/checksums.txt
+          draft: true
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

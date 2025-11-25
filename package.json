@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "A local-first, end-to-end encrypted workspace designed for speed-of-thought productivity",
   "author": {
-    "name": "Amirreza Farnam Taheri",
-    "email": "taheri.farnam@gmail.com"
+    "name": "Amirreza \"Farnam\" Taheri",
+    "email": "taherifarnam@gmail.com"
   },
   "license": "AGPL-3.0",
   "private": true,

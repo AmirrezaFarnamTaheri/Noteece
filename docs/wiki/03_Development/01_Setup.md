@@ -1,68 +1,307 @@
-# Setup Guide
+# Development Setup Guide
+
+Complete guide to setting up your Noteece development environment.
+
+---
+
+## Table of Contents
+
+1. [Prerequisites](#prerequisites)
+2. [Installation](#installation)
+3. [Running the Application](#running-the-application)
+4. [IDE Setup](#ide-setup)
+5. [Troubleshooting](#troubleshooting)
+
+---
 
 ## Prerequisites
 
-Before you begin, ensure your development environment is set up.
+### Required Software
 
-### General
-- **Node.js:** v18.0.0 or higher.
-- **pnpm:** v8+ (We use pnpm workspaces).
-- **Rust:** Latest stable version (`rustup update`).
+| Software | Minimum Version | Purpose |
+|----------|-----------------|---------|
+| Node.js | v18.0.0+ | JavaScript runtime |
+| pnpm | v8.15.0+ | Package manager |
+| Rust | Latest stable | Core library |
+| Git | v2.30+ | Version control |
 
-### Linux (Debian/Ubuntu)
-You need system libraries for Tauri (WebKitGTK).
+### Platform-Specific Requirements
+
+#### Linux (Debian/Ubuntu)
+
 ```bash
+# Install system dependencies for Tauri
 sudo apt update
-sudo apt install build-essential libwebkit2gtk-4.0-dev libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev curl wget file
+sudo apt install -y \
+  build-essential \
+  libwebkit2gtk-4.0-dev \
+  libssl-dev \
+  libgtk-3-dev \
+  libayatana-appindicator3-dev \
+  librsvg2-dev \
+  curl \
+  wget \
+  file
+
+# Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source ~/.cargo/env
+
+# Install Node.js (via nvm)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+nvm install 20
+nvm use 20
+
+# Install pnpm
+npm install -g pnpm
 ```
-*Note: On Ubuntu 24.04, `libwebkit2gtk-4.0-dev` is removed. You may need to use `4.1` and adjust `tauri.conf.json` or develop in a container.*
 
-### macOS
-- Install **Xcode Command Line Tools**: `xcode-select --install`.
+> **Note:** On Ubuntu 24.04, `libwebkit2gtk-4.0-dev` is deprecated. Use Ubuntu 22.04 or a container for development.
 
-### Windows
-- Install **C++ Build Tools** via Visual Studio Installer.
+#### macOS
+
+```bash
+# Install Xcode Command Line Tools
+xcode-select --install
+
+# Install Homebrew (if not installed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install dependencies
+brew install node@20 rustup
+
+# Setup Rust
+rustup-init
+
+# Install pnpm
+npm install -g pnpm
+```
+
+#### Windows
+
+1. **Install Visual Studio Build Tools:**
+   - Download from [Visual Studio](https://visualstudio.microsoft.com/downloads/)
+   - Select "Desktop development with C++"
+
+2. **Install Rust:**
+   - Download from [rustup.rs](https://rustup.rs/)
+
+3. **Install Node.js:**
+   - Download from [nodejs.org](https://nodejs.org/) (LTS version)
+
+4. **Install pnpm:**
+   ```powershell
+   npm install -g pnpm
+   ```
+
+---
 
 ## Installation
 
-1.  **Clone the Repository:**
-    ```bash
-    git clone https://github.com/yourusername/noteece.git
-    cd noteece
-    ```
+### 1. Clone the Repository
 
-2.  **Install Dependencies:**
-    ```bash
-    pnpm install
-    ```
-    This command installs dependencies for the root, `core-rs`, `apps/desktop`, and `apps/mobile`.
+```bash
+git clone https://github.com/AmirrezaFarnamTaheri/noteece.git
+cd noteece
+```
 
-3.  **Initialize Database (Optional):**
-    The app automatically creates and migrates the database on first run.
+### 2. Install Dependencies
+
+```bash
+# Install all workspace dependencies
+pnpm install
+```
+
+This installs dependencies for:
+- Root workspace
+- `packages/core-rs` (Rust core)
+- `apps/desktop` (Tauri desktop app)
+- `apps/mobile` (Expo mobile app)
+- All shared packages
+
+### 3. Build the Rust Core (Optional)
+
+```bash
+cd packages/core-rs
+cargo build
+cd ../..
+```
+
+### 4. Verify Installation
+
+```bash
+# Check Rust
+rustc --version
+cargo --version
+
+# Check Node
+node --version
+pnpm --version
+
+# Check Tauri CLI
+cd apps/desktop
+pnpm tauri --version
+```
+
+---
 
 ## Running the Application
 
-### Desktop (Tauri)
+### Desktop Application (Tauri)
+
 ```bash
 cd apps/desktop
 pnpm dev:tauri
 ```
-This will:
-1.  Start the React dev server (Vite).
-2.  Compile the Rust core.
-3.  Launch the Tauri window.
 
-### Mobile (Expo)
+This will:
+1. Start the Vite dev server (React frontend)
+2. Compile the Rust core library
+3. Compile the Tauri backend
+4. Launch the desktop window
+
+**First build may take 5-10 minutes** as Rust compiles all dependencies.
+
+### Mobile Application (Expo)
+
 ```bash
 cd apps/mobile
-pnpm start
+npm install --legacy-peer-deps
+npm start
 ```
-Scan the QR code with the Expo Go app on your phone.
+
+**Running on device:**
+- **iOS Simulator:** Press `i`
+- **Android Emulator:** Press `a`
+- **Physical Device:** Scan QR code with Expo Go app
+
+### Running Tests
+
+```bash
+# Desktop tests
+cd apps/desktop
+pnpm test
+
+# Desktop tests with coverage
+pnpm test:coverage
+
+# Mobile tests
+cd apps/mobile
+npm test
+
+# Rust tests
+cd packages/core-rs
+cargo test
+```
+
+### Linting and Formatting
+
+```bash
+# From root directory
+pnpm lint
+pnpm format
+
+# Rust formatting
+cd packages/core-rs
+cargo fmt
+cargo clippy
+```
+
+---
 
 ## IDE Setup
 
-- **VS Code:** Recommended.
-- **Extensions:**
-    - `rust-analyzer` (for Rust).
-    - `ESLint` & `Prettier` (for TS/JS).
-    - `Tauri` (helper).
+### Visual Studio Code (Recommended)
+
+#### Essential Extensions
+
+| Extension | Purpose |
+|-----------|---------|
+| `rust-analyzer` | Rust language support |
+| `ESLint` | JavaScript/TypeScript linting |
+| `Prettier` | Code formatting |
+| `Tauri` | Tauri development helpers |
+| `Even Better TOML` | Cargo.toml syntax |
+
+#### Recommended Settings
+
+Create `.vscode/settings.json`:
+
+```json
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer"
+  },
+  "rust-analyzer.check.command": "clippy",
+  "typescript.preferences.importModuleSpecifier": "relative"
+}
+```
+
+### JetBrains (WebStorm/IntelliJ)
+
+1. Install the Rust plugin
+2. Configure ESLint in Preferences → Languages & Frameworks
+3. Enable Prettier as default formatter
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+#### Rust Compilation Errors
+
+```bash
+# Update Rust toolchain
+rustup update stable
+
+# Clean and rebuild
+cd packages/core-rs
+cargo clean
+cargo build
+```
+
+#### Node Module Issues
+
+```bash
+# Clear pnpm cache
+pnpm store prune
+
+# Reinstall dependencies
+rm -rf node_modules
+rm pnpm-lock.yaml
+pnpm install
+```
+
+#### Tauri Build Failures
+
+```bash
+# Ensure system dependencies are installed (Linux)
+sudo apt install libwebkit2gtk-4.0-dev
+
+# Check Tauri CLI version
+cd apps/desktop
+pnpm tauri info
+```
+
+#### Mobile Build Issues
+
+```bash
+# Clear Expo cache
+cd apps/mobile
+npx expo start --clear
+
+# Reset Metro bundler
+npx react-native start --reset-cache
+```
+
+### Getting Help
+
+- **GitHub Issues:** Report bugs at [github.com/AmirrezaFarnamTaheri/noteece/issues](https://github.com/AmirrezaFarnamTaheri/noteece/issues)
+- **Email:** taherifarnam@gmail.com
+
+---
+
+*Created by Amirreza "Farnam" Taheri*

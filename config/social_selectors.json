@@ -1,11 +1,112 @@
 {
-  "twitter": {
-    "timeline": ".timeline-selector",
-    "post": ".post-selector",
-    "likeButton": ".like-button-selector"
+  "version": "1.0.0",
+  "platforms": {
+    "twitter": {
+      "name": "Twitter/X",
+      "enabled": true,
+      "selectors": {
+        "timeline": "[data-testid='primaryColumn']",
+        "post": "[data-testid='tweet']",
+        "postText": "[data-testid='tweetText']",
+        "author": "[data-testid='User-Name']",
+        "timestamp": "time",
+        "likeButton": "[data-testid='like']",
+        "retweetButton": "[data-testid='retweet']",
+        "replyButton": "[data-testid='reply']",
+        "media": "[data-testid='tweetPhoto'], [data-testid='videoPlayer']"
+      },
+      "patterns": {
+        "handle": "@[\\w_]+",
+        "hashtag": "#[\\w_]+",
+        "url": "https?://t\\.co/[\\w]+"
+      }
+    },
+    "instagram": {
+      "name": "Instagram",
+      "enabled": true,
+      "selectors": {
+        "feed": "article[role='presentation']",
+        "post": "article",
+        "postText": "._a9zs span",
+        "author": "header a",
+        "timestamp": "time",
+        "likeButton": "[aria-label*='Like']",
+        "commentButton": "[aria-label*='Comment']",
+        "media": "img[srcset], video"
+      },
+      "patterns": {
+        "handle": "@[\\w_.]+",
+        "hashtag": "#[\\w_]+"
+      }
+    },
+    "linkedin": {
+      "name": "LinkedIn",
+      "enabled": true,
+      "selectors": {
+        "feed": ".scaffold-finite-scroll__content",
+        "post": ".feed-shared-update-v2",
+        "postText": ".feed-shared-update-v2__description",
+        "author": ".update-components-actor__name",
+        "timestamp": ".update-components-actor__sub-description",
+        "likeButton": ".react-button",
+        "commentButton": ".comment-button"
+      },
+      "patterns": {
+        "mention": "@[\\w\\s]+"
+      }
+    },
+    "reddit": {
+      "name": "Reddit",
+      "enabled": true,
+      "selectors": {
+        "feed": "[data-testid='posts-list']",
+        "post": "shreddit-post",
+        "postTitle": "[slot='title']",
+        "postText": "[slot='text-body']",
+        "author": "[data-testid='post-author-link']",
+        "timestamp": "time",
+        "upvoteButton": "[aria-label*='upvote']",
+        "downvoteButton": "[aria-label*='downvote']"
+      },
+      "patterns": {
+        "subreddit": "r/[\\w_]+",
+        "user": "u/[\\w_]+"
+      }
+    },
+    "facebook": {
+      "name": "Facebook",
+      "enabled": true,
+      "selectors": {
+        "feed": "[role='feed']",
+        "post": "[data-pagelet*='FeedUnit']",
+        "postText": "[data-ad-preview='message']",
+        "author": "h4 a strong",
+        "timestamp": "abbr[data-utime]",
+        "likeButton": "[aria-label*='Like']"
+      }
+    },
+    "telegram": {
+      "name": "Telegram Web",
+      "enabled": true,
+      "selectors": {
+        "chat": ".chat-container",
+        "message": ".message",
+        "messageText": ".text-content",
+        "author": ".peer-title",
+        "timestamp": ".time"
+      }
+    }
   },
-  "instagram": {
-    "feed": "._main-feed",
-    "story": "._story-item"
+  "captureSettings": {
+    "debounceMs": 150,
+    "maxBufferSize": 100,
+    "autoSaveInterval": 30000,
+    "enableScreenshots": false,
+    "enableTextCapture": true
+  },
+  "privacySettings": {
+    "redactEmails": true,
+    "redactPhoneNumbers": true,
+    "excludePrivateMessages": true
   }
 }

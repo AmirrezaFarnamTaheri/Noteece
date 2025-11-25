@@ -1,4 +1,17 @@
 {
-  "name": "locale",
-  "version": "0.0.1"
+  "name": "@noteece/locale",
+  "version": "1.0.0",
+  "description": "Internationalization files for Noteece",
+  "license": "AGPL-3.0",
+  "private": true,
+  "main": "./locales/en.json",
+  "exports": {
+    "./en": "./locales/en.json",
+    "./es": "./locales/es.json",
+    "./fr": "./locales/fr.json",
+    "./de": "./locales/de.json",
+    "./ja": "./locales/ja.json",
+    "./zh": "./locales/zh.json",
+    "./fa": "./locales/fa.json"
+  }
 }

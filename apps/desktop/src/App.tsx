@@ -1,9 +1,13 @@
 import { MantineProvider } from '@mantine/core';
-import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
-import { useEffect } from 'react';
+import { createMemoryRouter, RouterProvider, Outlet } from 'react-router-dom';
+import { useEffect, useMemo } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { Notifications } from '@mantine/notifications';
 import { theme } from './theme';
 import { useStore } from './store';
 import { useSpaces } from './hooks/useQueries';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import VaultManagement from './components/VaultManagement';
 import MainLayout from './components/MainLayout';
 import Dashboard from './components/Dashboard';
@@ -28,7 +32,23 @@ import FormTemplates from './components/FormTemplates';
 import LocalAnalytics from './components/LocalAnalytics';
 import { OcrManager } from './components/OcrManager';
 
-function App() {
+// Create a client with optimized settings
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5000, // 5 seconds
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+    mutations: {
+      retry: 0,
+    },
+  },
+});
+
+// Wrapper component to initialize spaces
+function SpaceInitializer({ children }: { children: React.ReactNode }) {
   const { setSpaces, setActiveSpaceId, activeSpaceId } = useStore();
   const { data: spaces } = useSpaces();
 
@@ -42,38 +62,86 @@ function App() {
     }
   }, [spaces, setSpaces, setActiveSpaceId, activeSpaceId]);
 
+  return <>{children}</>;
+}
+
+// Route wrapper for components that need activeSpaceId
+function ActiveSpaceRoute({ Component }: { Component: React.ComponentType<{ spaceId: string }> }) {
+  const { activeSpaceId } = useStore();
+  return <Component spaceId={activeSpaceId || ''} />;
+}
+
+function App() {
+  const { activeSpaceId } = useStore();
+
+  // Create router with future flags to eliminate warnings
+  const router = useMemo(
+    () =>
+      createMemoryRouter(
+        [
+          {
+            path: '/',
+            element: <VaultManagement />,
+            errorElement: <ErrorBoundary />,
+          },
+          {
+            path: '/main',
+            element: (
+              <SpaceInitializer>
+                <MainLayout />
+              </SpaceInitializer>
+            ),
+            errorElement: <ErrorBoundary />,
+            children: [
+              { index: true, element: <Dashboard /> },
+              { path: 'editor', element: <NoteEditor /> },
+              { path: 'tasks', element: <TaskBoard /> },
+              {
+                path: 'projects',
+                element: <ProjectHub />,
+                children: [
+                  { index: true, element: <Overview /> },
+                  { path: 'kanban', element: <Kanban /> },
+                  { path: 'timeline', element: <Timeline /> },
+                  { path: 'risks', element: <Risks /> },
+                ],
+              },
+              { path: 'searches', element: <ActiveSpaceRoute Component={SavedSearches} /> },
+              { path: 'review', element: <ActiveSpaceRoute Component={WeeklyReview} /> },
+              { path: 'meetings', element: <MeetingNotes /> },
+              { path: 'modes', element: <ActiveSpaceRoute Component={ModeStore} /> },
+              { path: 'srs', element: <SpacedRepetition /> },
+              { path: 'settings', element: <Settings /> },
+              { path: 'import', element: <ActiveSpaceRoute Component={AdvancedImport} /> },
+              { path: 'search', element: <EnhancedSearch /> },
+              { path: 'sync', element: <SyncStatus /> },
+              { path: 'users', element: <UserManagement /> },
+              { path: 'templates', element: <FormTemplates /> },
+              { path: 'analytics', element: <LocalAnalytics /> },
+              { path: 'ocr', element: <OcrManager /> },
+            ],
+          },
+        ],
+        {
+          future: {
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          },
+        },
+      ),
+    [],
+  );
+
   return (
-    <MantineProvider theme={theme}>
-      <Router>
-        <Routes>
-          <Route path="/" element={<VaultManagement />} />
-          <Route path="/main" element={<MainLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="editor" element={<NoteEditor />} />
-            <Route path="tasks" element={<TaskBoard />} />
-            <Route path="projects" element={<ProjectHub />}>
-              <Route index element={<Overview />} />
-              <Route path="kanban" element={<Kanban />} />
-              <Route path="timeline" element={<Timeline />} />
-              <Route path="risks" element={<Risks />} />
-            </Route>
-            <Route path="searches" element={<SavedSearches spaceId={activeSpaceId || ''} />} />
-            <Route path="review" element={<WeeklyReview spaceId={activeSpaceId || ''} />} />
-            <Route path="meetings" element={<MeetingNotes />} />
-            <Route path="modes" element={<ModeStore spaceId={activeSpaceId || ''} />} />
-            <Route path="srs" element={<SpacedRepetition />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="import" element={<AdvancedImport spaceId={activeSpaceId || ''} />} />
-            <Route path="search" element={<EnhancedSearch />} />
-            <Route path="sync" element={<SyncStatus />} />
-            <Route path="users" element={<UserManagement />} />
-            <Route path="templates" element={<FormTemplates />} />
-            <Route path="analytics" element={<LocalAnalytics />} />
-            <Route path="ocr" element={<OcrManager />} />
-          </Route>
-        </Routes>
-      </Router>
-    </MantineProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <MantineProvider theme={theme}>
+          <Notifications position="top-right" zIndex={9999} />
+          <RouterProvider router={router} />
+        </MantineProvider>
+        {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

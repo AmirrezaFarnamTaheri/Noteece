@@ -1,4 +1,11 @@
 {
-  "name": "modes",
-  "version": "0.0.1"
+  "name": "@noteece/modes",
+  "version": "1.0.0",
+  "description": "Mode system definitions for Noteece",
+  "license": "AGPL-3.0",
+  "private": true,
+  "main": "./modes.json",
+  "exports": {
+    ".": "./modes.json"
+  }
 }

@@ -1,8 +1,11 @@
 [package]
 name = "core-rs"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 license = "AGPL-3.0"
+description = "Noteece Core - Rust business logic library"
+authors = ["Amirreza \"Farnam\" Taheri <taherifarnam@gmail.com>"]
+repository = "https://github.com/AmirrezaFarnamTaheri/Noteece"
 
 [dependencies]
 generic-array = "1.0.0"

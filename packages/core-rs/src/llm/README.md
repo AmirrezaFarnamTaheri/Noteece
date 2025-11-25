@@ -20,7 +20,9 @@ llm/
 └── providers/
     ├── mod.rs          # Provider trait
     ├── ollama.rs       # Local Ollama provider
-    └── openai.rs       # OpenAI cloud provider
+    ├── openai.rs       # OpenAI cloud provider
+    ├── claude.rs       # Anthropic Claude provider
+    └── gemini.rs       # Google Gemini provider
 ```
 
 ## Features
@@ -29,7 +31,8 @@ llm/
 
 - Local: Ollama (Llama 3, Mistral, Code Llama, etc.)
 - Cloud: OpenAI (GPT-4, GPT-3.5-turbo)
-- Coming Soon: Claude (Anthropic), Gemini (Google)
+- Cloud: Claude (Claude 3 Opus, Sonnet, Haiku)
+- Cloud: Gemini (Gemini 1.5 Pro, Flash)
 
 ✅ **Intelligent Fallback**
 
@@ -526,25 +529,36 @@ println!("{:?}", stats);
 
 ## Roadmap
 
-### Coming Soon
+### ✅ Completed (v1.1.0)
 
-- [ ] Claude provider (Anthropic)
-- [ ] Gemini provider (Google)
-- [ ] Streaming responses
-- [ ] Batch processing
-- [ ] Custom model endpoints
-- [ ] Response validation
-- [ ] Token counting before requests
-- [ ] Cost tracking per provider
+**Providers:**
+- [x] Ollama provider (local) - Llama 3, Mistral, CodeLlama
+- [x] OpenAI provider - GPT-4, GPT-3.5-turbo
+- [x] Claude provider (Anthropic) - Claude 3 Opus, Sonnet, Haiku
+- [x] Gemini provider (Google) - Gemini 1.5 Pro, Flash
+- [x] Automatic provider fallback
+- [x] Health checking for all providers
+
+**Core Features:**
+- [x] Response caching with SQLite
+- [x] Streaming responses (`streaming.rs`)
+- [x] Batch processing (`batch.rs`)
+- [x] Response validation (`validation.rs`)
+- [x] Token counting before requests (`tokenizer.rs`)
+- [x] Cost tracking per provider (`cost.rs`)
+- [x] Auto-retry with exponential backoff (`retry.rs`)
+- [x] Circuit breaker pattern
+- [x] Request prioritization (`priority.rs`)
+- [x] Model context limits database
 
 ### Future Enhancements
 
-- [ ] Auto-retry with exponential backoff
-- [ ] Request prioritization
 - [ ] Multi-model ensemble
 - [ ] A/B testing framework
 - [ ] Fine-tuning integration
 - [ ] Prompt template library
+- [ ] Semantic caching (embedding-based)
+- [ ] Usage analytics dashboard
 
 ## Testing
 

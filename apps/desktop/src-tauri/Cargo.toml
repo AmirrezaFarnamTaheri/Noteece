@@ -1,11 +1,11 @@
 [package]
-name = "app"
-version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
-repository = ""
-default-run = "app"
+name = "noteece-desktop"
+version = "1.0.0"
+description = "Noteece Desktop - Local-first encrypted knowledge management"
+authors = ["Amirreza Farnam Taheri <taheri.farnam@gmail.com>"]
+license = "AGPL-3.0"
+repository = "https://github.com/AmirrezaFarnamTaheri/Noteece"
+default-run = "noteece-desktop"
 edition = "2021"
 rust-version = "1.60"
 

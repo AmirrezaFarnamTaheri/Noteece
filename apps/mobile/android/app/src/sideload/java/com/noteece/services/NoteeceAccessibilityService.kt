@@ -41,11 +41,56 @@ class NoteeceAccessibilityService : AccessibilityService() {
 
     // Allowed packages whitelist - Must match config XML
     // Adding runtime check as a second layer of defense
+    // Categorized for clarity and maintenance
     private val allowedPackages = setOf(
+        // Social Media - Primary
         "com.twitter.android",
         "com.instagram.android",
         "com.linkedin.android",
-        "com.facebook.katana"
+        "com.facebook.katana",
+        
+        // Messaging - Telegram
+        "org.telegram.messenger",
+        "org.telegram.messenger.web",
+        "org.thunderdog.challegram",  // Telegram X
+        
+        // Messaging - Other
+        "com.discord",
+        "com.slack",
+        "com.whatsapp",
+        "com.viber.voip",
+        "org.thoughtcrime.securesms",  // Signal
+        "com.snapchat.android",
+        
+        // Dating Apps
+        "com.tinder",
+        "com.bumble.app",
+        "co.hinge.app",
+        "com.okcupid.okcupid",
+        "com.match.android.matchmobile",
+        
+        // Browsers (for capturing articles/content)
+        "com.android.chrome",
+        "org.mozilla.firefox",
+        "com.microsoft.emmx",  // Edge
+        "com.opera.browser",
+        "com.brave.browser",
+        "com.duckduckgo.mobile.android",
+        
+        // Content Platforms
+        "com.reddit.frontpage",
+        "com.pinterest",
+        "com.tumblr",
+        "com.zhiliaoapp.musically",  // TikTok
+        "com.ss.android.ugc.trill",   // TikTok (alternate)
+        "tv.twitch.android.app",
+        "com.google.android.youtube",
+        "com.spotify.music",
+        
+        // Reading/News
+        "com.medium.reader",
+        "com.nytimes.android",
+        "news.ycombinator.hackernews"
     )
 
     override fun onServiceConnected() {

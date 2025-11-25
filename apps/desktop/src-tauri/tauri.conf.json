@@ -4,15 +4,47 @@
     "beforeBuildCommand": "pnpm build",
     "beforeDevCommand": "pnpm dev",
     "devPath": "http://localhost:5173",
-    "distDir": "../build"
+    "distDir": "../dist"
   },
   "package": {
     "productName": "Noteece",
-    "version": "0.1.0"
+    "version": "1.0.0"
   },
   "tauri": {
     "allowlist": {
-      "all": false
+      "all": false,
+      "dialog": {
+        "all": true,
+        "open": true,
+        "save": true,
+        "message": true,
+        "confirm": true
+      },
+      "fs": {
+        "all": true,
+        "scope": ["$APP/*", "$DATA/*", "$DOWNLOAD/*", "$DOCUMENT/*"]
+      },
+      "path": {
+        "all": true
+      },
+      "shell": {
+        "open": true
+      },
+      "notification": {
+        "all": true
+      },
+      "os": {
+        "all": true
+      },
+      "globalShortcut": {
+        "all": true
+      },
+      "window": {
+        "all": true
+      },
+      "clipboard": {
+        "all": true
+      }
     },
     "bundle": {
       "active": true,

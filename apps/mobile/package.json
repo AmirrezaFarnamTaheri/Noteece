@@ -1,7 +1,11 @@
 {
   "name": "@noteece/mobile",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "license": "AGPL-3.0",
+  "author": {
+    "name": "Amirreza \"Farnam\" Taheri",
+    "email": "taherifarnam@gmail.com"
+  },
   "description": "Noteece Mobile - Your Life OS on the go",
   "main": "expo-router",
   "scripts": {

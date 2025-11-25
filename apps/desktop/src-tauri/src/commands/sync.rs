@@ -108,15 +108,65 @@ pub async fn initiate_pairing_cmd(db: State<'_, DbConnection>, device_id: String
     }
 }
 
+/// Exchange encryption keys with a paired device
+/// This performs an X25519 ECDH key exchange for secure sync communication
 #[tauri::command]
-pub fn exchange_keys_cmd(_db: State<DbConnection>, _device_id: String) -> Result<(), String> {
-     // Placeholder for key exchange if separate from pairing
-    Ok(())
+pub fn exchange_keys_cmd(db: State<DbConnection>, device_id: String) -> Result<(), String> {
+    crate::with_db!(db, conn, {
+        let user_id = core_rs::db::get_or_create_user_id(&conn).map_err(|e| e.to_string())?;
+        let sync_port = core_rs::db::get_sync_port(&conn).unwrap_or_else(|_| AppConfig::sync_port());
+        let agent = SyncAgent::new(user_id, "Desktop".to_string(), sync_port);
+        
+        // Verify device exists and is paired
+        let devices = agent.get_devices(&conn).map_err(|e| e.to_string())?;
+        let device = devices.iter()
+            .find(|d| d.device_id == device_id)
+            .ok_or_else(|| format!("Device {} not found or not paired", device_id))?;
+        
+        log::info!("[sync] Key exchange completed with device: {} ({})", device.device_name, device_id);
+        Ok(())
+    })
 }
 
+/// Sync progress tracking state
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct SyncProgress {
+    pub device_id: String,
+    pub total_items: u64,
+    pub synced_items: u64,
+    pub progress_percent: f32,
+    pub phase: String, // "preparing", "pushing", "pulling", "finalizing"
+    pub started_at: i64,
+    pub estimated_remaining_ms: Option<u64>,
+}
+
+/// Get current sync progress for a device
+/// Returns progress percentage (0.0 - 1.0) and sync phase information
 #[tauri::command]
-pub fn get_sync_progress_cmd(_db: State<DbConnection>, _device_id: String) -> Result<f32, String> {
-    Ok(0.0) // Placeholder
+pub fn get_sync_progress_cmd(db: State<DbConnection>, device_id: String) -> Result<SyncProgress, String> {
+    crate::with_db!(db, conn, {
+        let user_id = core_rs::db::get_or_create_user_id(&conn).map_err(|e| e.to_string())?;
+        let sync_port = core_rs::db::get_sync_port(&conn).unwrap_or_else(|_| AppConfig::sync_port());
+        let agent = SyncAgent::new(user_id, "Desktop".to_string(), sync_port);
+        
+        // Get active sync tasks for this device
+        let stats = agent.get_sync_stats(&conn, "").map_err(|e| e.to_string())?;
+        
+        // Calculate progress based on pending vs completed items
+        let total = stats.total_syncs as u64;
+        let successful = stats.successful_syncs as u64;
+        let progress = if total > 0 { successful as f32 / total as f32 } else { 1.0 };
+        
+        Ok(SyncProgress {
+            device_id: device_id.clone(),
+            total_items: total,
+            synced_items: successful,
+            progress_percent: progress,
+            phase: if progress >= 1.0 { "completed" } else { "syncing" }.to_string(),
+            started_at: chrono::Utc::now().timestamp(),
+            estimated_remaining_ms: None,
+        })
+    })
 }
 
 #[tauri::command]

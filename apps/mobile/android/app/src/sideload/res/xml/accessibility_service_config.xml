@@ -1,6 +1,6 @@
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/accessibility_service_description"
-    android:packageNames="com.twitter.android,com.instagram.android,com.linkedin.android,com.facebook.katana"
+    android:packageNames="com.twitter.android,com.instagram.android,com.linkedin.android,com.facebook.katana,org.telegram.messenger,org.telegram.messenger.web,org.thunderdog.challegram,com.android.chrome,org.mozilla.firefox,com.microsoft.emmx,com.opera.browser,com.brave.browser,com.duckduckgo.mobile.android,com.tinder,com.bumble.app,co.hinge.app,com.okcupid.okcupid,com.match.android.matchmobile,com.discord,com.slack,com.whatsapp,com.viber.voip,org.thoughtcrime.securesms,com.snapchat.android,com.pinterest,com.tumblr,com.reddit.frontpage,com.zhiliaoapp.musically,com.ss.android.ugc.trill,tv.twitch.android.app,com.google.android.youtube,com.spotify.music,com.medium.reader,com.nytimes.android,news.ycombinator.hackernews"
     android:accessibilityEventTypes="typeViewScrolled|typeWindowContentChanged"
     android:accessibilityFeedbackType="feedbackGeneric"
     android:notificationTimeout="100"
