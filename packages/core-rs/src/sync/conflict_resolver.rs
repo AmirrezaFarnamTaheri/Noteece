@@ -232,7 +232,7 @@ impl ConflictResolver {
 }
 
 /// Merge two JSON objects with deep-merge strategy
-/// Recursively merges nested objects and prefers remote values on conflict
+/// Recursively merges nested objects and performs SET UNION on arrays
 /// to avoid losing updates from concurrent devices
 fn merge_json_objects(local: &serde_json::Value, remote: &serde_json::Value) -> serde_json::Value {
     use serde_json::Value::*;
@@ -254,9 +254,10 @@ fn merge_json_objects(local: &serde_json::Value, remote: &serde_json::Value) -> 
                                     merge_json_objects(local_val, remote_val_ref),
                                 );
                             }
-                            // Both are arrays: prefer remote (avoid duplication)
-                            (Array(_), Array(_)) => {
-                                merged.insert(key.clone(), remote_val_ref.clone());
+                            // Both are arrays: SET UNION merge to preserve all items
+                            (Array(local_arr), Array(remote_arr)) => {
+                                let union = merge_arrays(local_arr, remote_arr);
+                                merged.insert(key.clone(), Array(union));
                             }
                             // Different types or scalars: prefer remote (assume newer)
                             _ => {
@@ -273,12 +274,41 @@ fn merge_json_objects(local: &serde_json::Value, remote: &serde_json::Value) -> 
 
             Object(merged)
         }
+        // Both are arrays at top level: SET UNION
+        (Array(local_arr), Array(remote_arr)) => {
+            Array(merge_arrays(local_arr, remote_arr))
+        }
         // Handle nulls
         (_, Null) => local.clone(),
         (Null, _) => remote.clone(),
         // Different types or scalars: prefer remote (assume it's newer)
         _ => remote.clone(),
     }
+}
+
+/// Merge two JSON arrays using SET UNION strategy
+/// Preserves all unique items from both arrays, deduplicating by value
+fn merge_arrays(local: &Vec<serde_json::Value>, remote: &Vec<serde_json::Value>) -> Vec<serde_json::Value> {
+    use std::collections::HashSet;
+    
+    let mut result = local.clone();
+    let mut seen: HashSet<String> = HashSet::new();
+    
+    // Add all local items to seen set (use JSON string repr for comparison)
+    for item in local.iter() {
+        seen.insert(item.to_string());
+    }
+    
+    // Add remote items that aren't already present
+    for item in remote.iter() {
+        let key = item.to_string();
+        if !seen.contains(&key) {
+            result.push(item.clone());
+            seen.insert(key);
+        }
+    }
+    
+    result
 }
 
 #[cfg(test)]
@@ -351,5 +381,61 @@ mod tests {
         assert_eq!(winning_version.data["a"], 1);
         assert!(winning_version.data["b"].is_number());
         assert_eq!(winning_version.data["c"], 4);
+    }
+
+    #[test]
+    fn test_array_merge_set_union() {
+        // Test that arrays are merged with SET UNION, not replaced
+        let mut local = create_entity("entity1", "device1", 100);
+        local.data = serde_json::json!({
+            "tags": ["work", "important"],
+            "subtasks": [{"id": "1", "name": "Task A"}]
+        });
+
+        let mut remote = create_entity("entity1", "device2", 100);
+        remote.data = serde_json::json!({
+            "tags": ["important", "urgent"],
+            "subtasks": [{"id": "2", "name": "Task B"}]
+        });
+
+        let resolver = ConflictResolver::new(ResolutionStrategy::Merge);
+        let result = resolver.resolve(&local, &remote);
+
+        let winning_version = match result {
+            ConflictResolution::Resolved {
+                winning_version, ..
+            } => winning_version,
+            _ => panic!("Expected resolved conflict but got: {:?}", result),
+        };
+
+        // Tags should contain all unique values: work, important, urgent
+        let tags = winning_version.data["tags"].as_array().unwrap();
+        assert_eq!(tags.len(), 3);
+        assert!(tags.contains(&serde_json::json!("work")));
+        assert!(tags.contains(&serde_json::json!("important")));
+        assert!(tags.contains(&serde_json::json!("urgent")));
+
+        // Subtasks should contain both tasks
+        let subtasks = winning_version.data["subtasks"].as_array().unwrap();
+        assert_eq!(subtasks.len(), 2);
+    }
+
+    #[test]
+    fn test_array_merge_deduplication() {
+        // Test that duplicate items are not added twice
+        let local_arr = vec![
+            serde_json::json!("tag1"),
+            serde_json::json!("tag2"),
+        ];
+        let remote_arr = vec![
+            serde_json::json!("tag2"),
+            serde_json::json!("tag3"),
+        ];
+
+        let result = super::merge_arrays(&local_arr, &remote_arr);
+        assert_eq!(result.len(), 3);
+        assert!(result.contains(&serde_json::json!("tag1")));
+        assert!(result.contains(&serde_json::json!("tag2")));
+        assert!(result.contains(&serde_json::json!("tag3")));
     }
 }

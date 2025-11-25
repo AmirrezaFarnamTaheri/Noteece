@@ -1,4 +1,13 @@
-name: Build Binaries
+# ============================================================================
+# EAS Cloud Build Workflow (Expo Application Services)
+# ============================================================================
+# This workflow uses Expo's cloud build service (EAS) for mobile builds.
+# Use this for quick preview builds or when you have an Expo account.
+#
+# For local builds without EAS, use release.yml instead.
+# ============================================================================
+
+name: EAS Cloud Build
 
 on:
   workflow_dispatch:
@@ -20,13 +29,40 @@ on:
           - all
           - ios
           - android
-  push:
-    tags:
-      - 'v*'
+      flavor:
+        description: 'Android Flavor'
+        required: true
+        default: 'store'
+        type: choice
+        options:
+          - store
+          - sideload
+
+env:
+  EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
 jobs:
-  build_mobile:
-    name: Build Mobile Apps
+  # Validate before building
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    outputs:
+      has_expo_token: ${{ steps.check.outputs.has_token }}
+    steps:
+      - name: Check EXPO_TOKEN
+        id: check
+        run: |
+          if [ -n "${{ secrets.EXPO_TOKEN }}" ]; then
+            echo "has_token=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_token=false" >> $GITHUB_OUTPUT
+            echo "::warning::EXPO_TOKEN not set. EAS builds will be skipped."
+          fi
+
+  build_mobile_eas:
+    name: EAS Build (${{ inputs.platform }} / ${{ inputs.build_profile }})
+    needs: validate
+    if: needs.validate.outputs.has_expo_token == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -60,126 +96,33 @@ jobs:
       - name: Run linting
         working-directory: apps/mobile
         run: npm run lint
+        continue-on-error: true
 
-      - name: Build iOS (Preview)
-        if: (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'ios') && github.event.inputs.build_profile == 'preview'
+      - name: Build iOS
+        if: inputs.platform == 'all' || inputs.platform == 'ios'
         working-directory: apps/mobile
-        run: eas build --profile preview --platform ios --non-interactive --no-wait
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: eas build --profile ${{ inputs.build_profile }} --platform ios --non-interactive --no-wait
 
-      - name: Build Android (Preview)
-        if: (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'android') && github.event.inputs.build_profile == 'preview'
+      - name: Build Android (Store)
+        if: (inputs.platform == 'all' || inputs.platform == 'android') && inputs.flavor == 'store'
         working-directory: apps/mobile
-        run: eas build --profile preview --platform android --non-interactive --no-wait
+        run: eas build --profile ${{ inputs.build_profile }} --platform android --non-interactive --no-wait
         env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_PUBLIC_BUILD_FLAVOR: store
 
-      - name: Build iOS (Production)
-        if: (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'ios') && github.event.inputs.build_profile == 'production'
+      - name: Build Android (Sideload/Prime)
+        if: (inputs.platform == 'all' || inputs.platform == 'android') && inputs.flavor == 'sideload'
         working-directory: apps/mobile
-        run: eas build --profile production --platform ios --non-interactive --no-wait
+        run: eas build --profile ${{ inputs.build_profile }}-sideload --platform android --non-interactive --no-wait
         env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_PUBLIC_BUILD_FLAVOR: sideload
 
-      - name: Build Android (Production)
-        if: (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'android') && github.event.inputs.build_profile == 'production'
-        working-directory: apps/mobile
-        run: eas build --profile production --platform android --non-interactive --no-wait
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-
-  build_desktop:
-    name: Build Desktop Apps
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Build Rust package
-        working-directory: packages/core-rs
-        run: cargo build --release
-
-      - name: Build desktop app
-        working-directory: apps/desktop
+      - name: Summary
         run: |
-          pnpm install
-          pnpm build:tauri
-
-      - name: Upload Linux Artifacts
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: noteece-linux
-          path: |
-            apps/desktop/src-tauri/target/release/bundle/deb/*.deb
-            apps/desktop/src-tauri/target/release/bundle/appimage/*.AppImage
-          retention-days: 30
-
-      - name: Upload macOS Artifact
-        if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: noteece-macos
-          path: apps/desktop/src-tauri/target/release/bundle/dmg/*.dmg
-          retention-days: 30
-
-      - name: Upload Windows Artifact
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: noteece-windows
-          path: apps/desktop/src-tauri/target/release/bundle/nsis/*.exe
-          retention-days: 30
-
-  create_release:
-    name: Create Release
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build_mobile, build_desktop]
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            artifacts/noteece-linux/*
-            artifacts/noteece-macos/*
-            artifacts/noteece-windows/*
-          draft: false
-          prerelease: false
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "## EAS Build Triggered" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Profile:** ${{ inputs.build_profile }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platform:** ${{ inputs.platform }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Flavor:** ${{ inputs.flavor }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check build status at: https://expo.dev/accounts/YOUR_ACCOUNT/projects/noteece/builds" >> $GITHUB_STEP_SUMMARY

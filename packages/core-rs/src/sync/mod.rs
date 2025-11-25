@@ -1,15 +1,24 @@
 pub mod conflict;
+pub mod conflict_resolver;
 pub mod db_init;
+pub mod delta_applier;
+pub mod delta_gatherer;
+pub mod discovery;
 pub mod engine;
 pub mod error;
 pub mod history;
 pub mod mobile_sync;
 pub mod models;
+pub mod p2p;
+pub mod relay;
+pub mod tofu;
+pub mod vector_clock;
 
 pub use conflict::{ConflictResolution, ConflictType};
+pub use conflict_resolver::{ConflictResolver, ResolutionStrategy, VersionedEntity};
 pub use engine::SyncAgent;
 pub use error::SyncError;
 pub use mobile_sync::{DeviceInfo as MobileDeviceInfo, SyncProtocol};
 pub use models::*;
-pub mod delta_applier;
-pub mod delta_gatherer;
+pub use relay::{BlindRelayServer, RelayClient, RelayEnvelope, RelayError};
+pub use tofu::{TofuStore, DeviceTrust, TrustLevel};

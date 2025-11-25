@@ -1,6 +1,6 @@
 {
   "name": "@noteece/automation-dsl",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Domain-Specific Language for Noteece automation and workflows",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

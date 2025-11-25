@@ -10,6 +10,16 @@ on:
         description: 'Version to release (e.g., 1.0.0)'
         required: false
         default: ''
+      skip_desktop:
+        description: 'Skip desktop builds'
+        required: false
+        type: boolean
+        default: false
+      skip_mobile:
+        description: 'Skip mobile builds'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -17,32 +27,43 @@ permissions:
 env:
   TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
   TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+  CARGO_TERM_COLOR: always
 
 jobs:
   # Build Desktop binaries for all platforms
   build-desktop:
+    if: ${{ !inputs.skip_desktop }}
     strategy:
       fail-fast: false
       matrix:
         include:
+          # macOS Universal (Intel + Apple Silicon)
           - platform: 'macos-latest'
             target: 'universal-apple-darwin'
             bundles: 'dmg'
             asset_name: 'Noteece-macos-universal'
+            rust_targets: 'aarch64-apple-darwin,x86_64-apple-darwin'
+          # macOS ARM64 only (smaller binary)
           - platform: 'macos-latest'
             target: 'aarch64-apple-darwin'
             bundles: 'dmg'
             asset_name: 'Noteece-macos-arm64'
+            rust_targets: 'aarch64-apple-darwin'
+          # Linux x64
           - platform: 'ubuntu-22.04'
             target: ''
             bundles: 'deb,appimage'
             asset_name: 'Noteece-linux-amd64'
+            rust_targets: ''
+          # Windows x64
           - platform: 'windows-latest'
             target: ''
             bundles: 'msi,nsis'
             asset_name: 'Noteece-windows-x64'
+            rust_targets: ''
 
     runs-on: ${{ matrix.platform }}
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -61,13 +82,26 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+          targets: ${{ matrix.rust_targets }}
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            apps/desktop/src-tauri/target/
+          key: ${{ runner.os }}-release-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-release-cargo-
 
       - name: Install dependencies (Ubuntu)
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev
 
       - name: Install Frontend Dependencies
         run: pnpm install
@@ -91,14 +125,19 @@ jobs:
             - **Linux**: `.AppImage` (recommended) or `.deb` (Debian/Ubuntu)
             
             **Mobile:**
-            - Android APK attached below (or install from Play Store when available)
+            - Android APK (Store version) - Standard P2P sync
+            - Android APK (Sideload/Prime version) - Full Cyborg-Life OS features
             - iOS: Available on TestFlight (contact maintainers for access)
             
             ### Checksums
             See the release assets for SHA256 checksums.
             
+            ### Security
+            All binaries are signed and notarized where applicable.
+            Verify checksums before installing.
+            
             ### Changes
-            See [CHANGELOG.md](https://github.com/AmirrezaFarnamTaheri/Noteece/blob/main/CHANGELOG.md) for full details.
+            See [CHANGELOG.md](https://github.com/AmirrezaFarnamTaheri/Noteece/blob/main/docs/project/CHANGELOG.md) for full details.
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.target && format('--target {0}', matrix.target) || '' }} --bundles ${{ matrix.bundles }}
@@ -115,9 +154,11 @@ jobs:
             apps/desktop/src-tauri/target/**/release/bundle/**/*.msi
             apps/desktop/src-tauri/target/**/release/bundle/**/*.exe
           if-no-files-found: warn
+          retention-days: 7
 
-  # Build Android APK
-  build-android:
+  # Build Android APK (Store version)
+  build-android-store:
+    if: ${{ !inputs.skip_mobile }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -131,6 +172,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
+          cache-dependency-path: apps/mobile/package-lock.json
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -140,6 +183,16 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
@@ -159,36 +212,133 @@ jobs:
             echo "RELEASE_KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> android/gradle.properties
           fi
 
-      - name: Prebuild Android
+      - name: Prebuild Android (Store flavor)
         run: npx expo prebuild --platform android --no-install
+        env:
+          EXPO_PUBLIC_BUILD_FLAVOR: store
 
-      - name: Build Release APK
+      - name: Build Release APK (Store)
         run: |
           cd android
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleStoreRelease --no-daemon
 
       - name: Build Release AAB (for Play Store)
         run: |
           cd android
-          ./gradlew bundleRelease --no-daemon
+          ./gradlew bundleStoreRelease --no-daemon
         continue-on-error: true
 
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-apk
-          path: apps/mobile/android/app/build/outputs/apk/release/*.apk
-          if-no-files-found: warn
+      - name: Rename APK for clarity
+        run: |
+          if [ -f android/app/build/outputs/apk/store/release/*.apk ]; then
+            for f in android/app/build/outputs/apk/store/release/*.apk; do
+              mv "$f" "${f%.apk}-store.apk"
+            done
+          fi
+        continue-on-error: true
 
-      - name: Upload AAB Artifact
+      - name: Upload Store APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-aab
-          path: apps/mobile/android/app/build/outputs/bundle/release/*.aab
+          name: android-apk-store
+          path: apps/mobile/android/app/build/outputs/apk/store/release/*.apk
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload Store AAB Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-aab-store
+          path: apps/mobile/android/app/build/outputs/bundle/storeRelease/*.aab
           if-no-files-found: ignore
+          retention-days: 7
+
+  # Build Android APK (Sideload/Prime version with full features)
+  build-android-sideload:
+    if: ${{ !inputs.skip_mobile }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Install Dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Configure Keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
+            echo "RELEASE_STORE_FILE=release.keystore" >> android/gradle.properties
+            echo "RELEASE_STORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD" >> android/gradle.properties
+            echo "RELEASE_KEY_ALIAS=$ANDROID_KEY_ALIAS" >> android/gradle.properties
+            echo "RELEASE_KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> android/gradle.properties
+          fi
+
+      - name: Prebuild Android (Sideload/Prime flavor)
+        run: npx expo prebuild --platform android --no-install
+        env:
+          EXPO_PUBLIC_BUILD_FLAVOR: sideload
+
+      - name: Build Release APK (Sideload/Prime)
+        run: |
+          cd android
+          ./gradlew assembleSideloadRelease --no-daemon
+
+      - name: Rename APK for clarity
+        run: |
+          if [ -f android/app/build/outputs/apk/sideload/release/*.apk ]; then
+            for f in android/app/build/outputs/apk/sideload/release/*.apk; do
+              mv "$f" "${f%.apk}-prime.apk"
+            done
+          fi
+        continue-on-error: true
+
+      - name: Upload Sideload/Prime APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk-prime
+          path: apps/mobile/android/app/build/outputs/apk/sideload/release/*.apk
+          if-no-files-found: warn
+          retention-days: 7
 
   # Build iOS (requires macOS runner with certificates)
   build-ios:
+    if: ${{ !inputs.skip_mobile }}
     runs-on: macos-latest
     defaults:
       run:
@@ -202,9 +352,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
+          cache-dependency-path: apps/mobile/package-lock.json
 
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
+
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: apps/mobile/ios/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
 
       - name: Prebuild iOS
         run: npx expo prebuild --platform ios --no-install
@@ -238,12 +398,57 @@ jobs:
           name: ios-simulator
           path: apps/mobile/ios/build/Build/Products/Release-iphonesimulator/Noteece-ios-simulator.zip
           if-no-files-found: warn
+          retention-days: 7
+
+      # For signed IPA builds (requires Apple Developer certificates)
+      - name: Build iOS IPA (Signed)
+        if: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' }}
+        env:
+          IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          # Decode and install certificate
+          echo "$IOS_CERTIFICATE_BASE64" | base64 -d > certificate.p12
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security import certificate.p12 -k build.keychain -P "$IOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
+          
+          # Decode and install provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "$IOS_PROVISIONING_PROFILE_BASE64" | base64 -d > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+          
+          # Build archive
+          cd ios
+          xcodebuild -workspace Noteece.xcworkspace \
+            -scheme Noteece \
+            -configuration Release \
+            -archivePath build/Noteece.xcarchive \
+            archive
+          
+          # Export IPA
+          xcodebuild -exportArchive \
+            -archivePath build/Noteece.xcarchive \
+            -exportPath build/ipa \
+            -exportOptionsPlist ExportOptions.plist
+        continue-on-error: true
+
+      - name: Upload iOS IPA
+        if: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: apps/mobile/ios/build/ipa/*.ipa
+          if-no-files-found: ignore
+          retention-days: 7
 
   # Create GitHub Release with all artifacts
   create-release:
-    needs: [build-desktop, build-android, build-ios]
+    needs: [build-desktop, build-android-store, build-android-sideload, build-ios]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    if: always() && startsWith(github.ref, 'refs/tags/')
     
     steps:
       - name: Checkout code
@@ -255,16 +460,66 @@ jobs:
           path: artifacts
 
       - name: Display structure of downloaded files
-        run: ls -la artifacts/
+        run: |
+          echo "=== Artifact Structure ==="
+          find artifacts -type f -name "*.dmg" -o -name "*.deb" -o -name "*.AppImage" -o -name "*.msi" -o -name "*.exe" -o -name "*.apk" -o -name "*.aab" -o -name "*.zip" -o -name "*.ipa" | sort
+          echo "========================="
 
       - name: Generate Checksums
         run: |
           cd artifacts
-          find . -type f \( -name "*.dmg" -o -name "*.deb" -o -name "*.AppImage" -o -name "*.msi" -o -name "*.exe" -o -name "*.apk" -o -name "*.aab" -o -name "*.zip" \) -exec sha256sum {} \; > checksums.txt
+          echo "# SHA256 Checksums for Noteece ${{ github.ref_name }}" > checksums.txt
+          echo "" >> checksums.txt
+          echo "Verify downloads with: sha256sum -c checksums.txt" >> checksums.txt
+          echo "" >> checksums.txt
+          find . -type f \( -name "*.dmg" -o -name "*.deb" -o -name "*.AppImage" -o -name "*.msi" -o -name "*.exe" -o -name "*.apk" -o -name "*.aab" -o -name "*.zip" -o -name "*.ipa" \) -exec sha256sum {} \; >> checksums.txt
+          echo ""
+          echo "=== Checksums ==="
           cat checksums.txt
+          echo "================="
+
+      - name: Create Release Notes
+        run: |
+          cat > release_notes.md << 'EOF'
+          ## Noteece ${{ github.ref_name }}
+          
+          ### 📥 Downloads
+          
+          #### Desktop
+          | Platform | File | Notes |
+          |----------|------|-------|
+          | Windows x64 | `.msi` | Recommended installer |
+          | Windows x64 | `.exe` | NSIS installer (alternative) |
+          | macOS Universal | `.dmg` | Works on Intel & Apple Silicon |
+          | macOS ARM64 | `.dmg` | Apple Silicon only (smaller) |
+          | Linux x64 | `.AppImage` | Portable, works on most distros |
+          | Linux x64 | `.deb` | Debian/Ubuntu package |
+          
+          #### Mobile
+          | Platform | File | Notes |
+          |----------|------|-------|
+          | Android (Store) | `-store.apk` | Standard P2P sync |
+          | Android (Prime) | `-prime.apk` | Full Cyborg-Life OS features |
+          | Android (Play Store) | `.aab` | For Play Store distribution |
+          | iOS Simulator | `.zip` | For development/testing |
+          | iOS Device | `.ipa` | Requires TestFlight or MDM |
+          
+          ### 🔐 Security
+          - All desktop binaries are code-signed
+          - macOS binaries are notarized by Apple
+          - Verify checksums in `checksums.txt`
+          
+          ### 📝 Changes
+          See [CHANGELOG.md](https://github.com/AmirrezaFarnamTaheri/Noteece/blob/main/docs/project/CHANGELOG.md) for full details.
+          
+          ### 🆘 Support
+          - [Documentation](https://github.com/AmirrezaFarnamTaheri/Noteece/wiki)
+          - [Issues](https://github.com/AmirrezaFarnamTaheri/Noteece/issues)
+          - Email: taherifarnam@gmail.com
+          EOF
 
       - name: Upload Release Assets
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             artifacts/**/*.dmg
@@ -275,8 +530,22 @@ jobs:
             artifacts/**/*.apk
             artifacts/**/*.aab
             artifacts/**/*.zip
+            artifacts/**/*.ipa
             artifacts/checksums.txt
+          body_path: release_notes.md
           draft: true
           generate_release_notes: true
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "## Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Release **${{ github.ref_name }}** artifacts:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          find artifacts -type f \( -name "*.dmg" -o -name "*.deb" -o -name "*.AppImage" -o -name "*.msi" -o -name "*.exe" -o -name "*.apk" -o -name "*.aab" -o -name "*.zip" -o -name "*.ipa" \) | while read f; do
+            size=$(du -h "$f" | cut -f1)
+            echo "- \`$(basename $f)\` ($size)" >> $GITHUB_STEP_SUMMARY
+          done

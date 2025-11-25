@@ -1,4 +1,5 @@
 pub mod migrations;
+pub mod vault_backup;
 
 use chrono;
 use rusqlite::{Connection, OptionalExtension, Result};
@@ -110,3 +111,9 @@ pub fn init_llm_tables(_conn: &Connection) -> Result<(), DbError> {
     // Implemented via migration v13, keeping stub for backward compatibility if any
     Ok(())
 }
+
+// Re-export vault backup functions
+pub use vault_backup::{
+    init_vault_backup_table, store_vault_backup, get_vault_backup, 
+    verify_vault_backup, recover_from_backup, has_valid_backup, VaultConfigBackup,
+};

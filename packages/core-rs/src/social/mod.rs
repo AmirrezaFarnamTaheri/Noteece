@@ -12,6 +12,7 @@ pub mod inference;
 pub mod intelligence;
 pub mod maintenance;
 pub mod post;
+pub mod selector_verification;
 pub mod stream_processor;
 pub mod sync;
 pub mod timeline;
@@ -71,4 +72,8 @@ pub use focus::{
     TriggerType,
 };
 
-pub use maintenance::prune_old_posts;
+pub use maintenance::{prune_old_posts, run_startup_maintenance, MaintenanceResult};
+
+pub use selector_verification::{
+    load_verified_selectors, get_bundled_selectors, SignedSelectors, VerificationError,
+};

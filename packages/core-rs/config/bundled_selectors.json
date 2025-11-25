@@ -1,0 +1,75 @@
+{
+  "version": "1.1.0",
+  "platforms": {
+    "twitter": {
+      "post": "[data-testid='tweet']",
+      "author": "[data-testid='User-Name']",
+      "content": "[data-testid='tweetText']",
+      "timestamp": "time",
+      "metrics": "[data-testid='reply'], [data-testid='retweet'], [data-testid='like']"
+    },
+    "instagram": {
+      "post": "article",
+      "author": "header a",
+      "content": "div[class*='Caption'] span",
+      "timestamp": "time",
+      "metrics": "section button"
+    },
+    "linkedin": {
+      "post": ".feed-shared-update-v2",
+      "author": ".update-components-actor__name",
+      "content": ".feed-shared-update-v2__description",
+      "timestamp": ".update-components-actor__sub-description",
+      "metrics": ".social-details-social-counts"
+    },
+    "reddit": {
+      "post": "[data-testid='post-container']",
+      "author": "[data-testid='post_author_link']",
+      "content": "[data-testid='post-rtjson-content']",
+      "timestamp": "[data-testid='post_timestamp']",
+      "metrics": "[data-testid='post-votes-number']"
+    },
+    "facebook": {
+      "post": "[data-pagelet*='FeedUnit']",
+      "author": "a[role='link'] strong",
+      "content": "[data-ad-preview='message']",
+      "timestamp": "abbr",
+      "metrics": "[aria-label*='reactions']"
+    },
+    "tiktok": {
+      "post": "[class*='DivItemContainer']",
+      "author": "[data-e2e='video-author-uniqueid']",
+      "content": "[data-e2e='video-desc']",
+      "timestamp": "",
+      "metrics": "[data-e2e='like-count'], [data-e2e='comment-count']"
+    }
+  },
+  "browsers": {
+    "generic": {
+      "url": "window.location.href",
+      "title": "document.title",
+      "content": "document.body.innerText"
+    }
+  },
+  "messaging": {
+    "telegram": {
+      "message": ".message",
+      "sender": ".peer-title",
+      "content": ".message-content",
+      "timestamp": ".message-time"
+    },
+    "discord": {
+      "message": "[class*='messageContent']",
+      "sender": "[class*='username']",
+      "content": "[class*='messageContent'] span",
+      "timestamp": "time"
+    },
+    "whatsapp": {
+      "message": "[data-testid='msg-container']",
+      "sender": "[data-testid='author']",
+      "content": "[data-testid='conversation-compose-box-input']",
+      "timestamp": "[data-testid='msg-meta'] span"
+    }
+  }
+}
+

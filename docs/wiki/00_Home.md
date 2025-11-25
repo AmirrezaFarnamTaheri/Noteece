@@ -34,6 +34,10 @@ Understanding the system.
 | [06. Search Engine](01_Architecture/06_Search_Engine.md) | FTS5 + hybrid fallback |
 | [07. LLM Integration](01_Architecture/07_LLM_Integration.md) | AI provider architecture |
 | [08. Prime Interception](01_Architecture/08_Prime_Interception.md) | Mobile content capture |
+| [09. Security Hardening](01_Architecture/09_Security_Hardening.md) | Security measures (v1.1.0) |
+| [10. Sync Architecture](01_Architecture/10_Sync_Architecture.md) | P2P sync deep dive |
+| [11. Blind Relay](01_Architecture/11_Blind_Relay.md) | Internet sync without cloud trust |
+| [12. TOFU Authentication](01_Architecture/12_TOFU.md) | Trust On First Use |
 
 ## Features
 
