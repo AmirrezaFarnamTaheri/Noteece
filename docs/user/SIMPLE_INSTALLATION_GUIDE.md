@@ -422,6 +422,6 @@ We hope you enjoy having a private, secure life management system that respects 
 
 ---
 
-**Version**: 1.0.0
+**Version**: 1.1.0
 **Last Updated**: 2025-11-06
-**License**: Apache 2.0
+**License**: AGPL-3.0

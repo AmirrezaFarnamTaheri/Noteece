@@ -1,6 +1,6 @@
 # Noteece Social Media Suite - Troubleshooting Guide
 
-**Version:** 1.0
+**Version:** 1.1
 **Last Updated:** January 2025
 
 This guide helps you diagnose and fix common issues with the Noteece Social Media Suite.

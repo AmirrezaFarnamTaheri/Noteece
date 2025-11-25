@@ -33,7 +33,7 @@ Complete guide for submitting Noteece to iOS App Store and Google Play Store.
 
 **Terms of Service URL**: https://github.com/[your-username]/Noteece/blob/main/TERMS.md
 
-**Version**: 1.0.0
+**Version**: 1.1.0
 
 **Build Number**: 1
 

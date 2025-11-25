@@ -1,29 +1,29 @@
-# GNU GPL v3 License Review for Noteece
+# GNU AGPL-3.0 License Review for Noteece
 
 **Date**: November 6, 2025
-**License**: GNU General Public License v3.0
+**License**: GNU Affero General Public License v3.0
 **Project**: Noteece - Personal Intelligence Vault
 
 ## Executive Summary
 
-Noteece is licensed under the **GNU General Public License version 3.0 (GPL v3)**. This document reviews what this means for users, contributors, and anyone who wants to modify or distribute the software.
+Noteece is licensed under the **GNU Affero General Public License version 3.0 (AGPL-3.0)**. This document reviews what this means for users, contributors, and anyone who wants to modify or distribute the software.
 
-## Why GPL v3?
+## Why AGPL-3.0?
 
-We chose GPL v3 for Noteece because:
+We chose AGPL-3.0 for Noteece because:
 
 1. **Copyleft Protection**: Ensures the software remains free and open source
 2. **User Freedom**: Guarantees users' rights to use, study, modify, and share
 3. **Privacy Alignment**: Prevents proprietary forks that could add tracking/spying
 4. **Anti-Tivoization**: Protects against hardware locks that prevent user modifications
 5. **Patent Protection**: Provides explicit patent licenses and retaliation clauses
-6. **Community Standards**: GPL v3 is well-understood and widely used
+6. **Community Standards**: AGPL-3.0 is well-understood and widely used
 
-## What GPL v3 Means
+## What AGPL-3.0 Means
 
 ### The Four Essential Freedoms
 
-GPL v3 guarantees users four essential freedoms:
+AGPL-3.0 guarantees users four essential freedoms:
 
 **Freedom 0**: The freedom to **run the program** for any purpose
 
@@ -40,7 +40,7 @@ GPL v3 guarantees users four essential freedoms:
 
 - Share Noteece with others
 - Distribute on app stores, websites, or any medium
-- Cannot charge for the GPL v3 code itself (but can charge for distribution services)
+- Cannot charge for the AGPL-3.0 code itself (but can charge for distribution services)
 
 **Freedom 3**: The freedom to **distribute modified versions**
 
@@ -50,20 +50,20 @@ GPL v3 guarantees users four essential freedoms:
 
 ### Copyleft: The Key Principle
 
-GPL v3 is a **copyleft** license, meaning:
+AGPL-3.0 is a **copyleft** license, meaning:
 
 ✅ **Anyone can use the software freely**
 ✅ **Anyone can modify the software**
 ❗ **But** if you distribute modified versions, you **must**:
 
-- Keep the same GPL v3 license
+- Keep the same AGPL-3.0 license
 - Provide source code
 - Preserve copyright notices
 - Document your changes
 
 **Bottom Line**: Copyleft ensures that Noteece and all derivatives remain free software forever.
 
-## Permissions Under GPL v3
+## Permissions Under AGPL-3.0
 
 ### What You CAN Do
 
@@ -103,12 +103,12 @@ GPL v3 is a **copyleft** license, meaning:
 - Fork the project on GitHub
 - Create your own variant
 - Distribute your improvements
-- **Must**: Provide source code under GPL v3
+- **Must**: Provide source code under AGPL-3.0
 
 ✅ **Use in commercial products** (with conditions)
 
 - Integrate into a larger application
-- **But**: The Noteece parts remain GPL v3
+- **But**: The Noteece parts remain AGPL-3.0
 - **And**: If you distribute, you must provide source
 
 ### What You CANNOT Do
@@ -124,11 +124,11 @@ GPL v3 is a **copyleft** license, meaning:
 - Cannot add proprietary licenses on top
 - Cannot add DRM or technical protection measures
 - Cannot restrict further redistribution
-- Cannot add patent restrictions beyond what GPL v3 allows
+- Cannot add patent restrictions beyond what AGPL-3.0 allows
 
 ❌ **Sublicense under different terms**
 
-- All derivatives must be GPL v3 (or later)
+- All derivatives must be AGPL-3.0 (or later)
 - Cannot relicense as MIT, Apache, proprietary, etc.
 - Cannot make a proprietary fork
 
@@ -144,7 +144,7 @@ GPL v3 is a **copyleft** license, meaning:
 - Must preserve license notices
 - Must preserve disclaimer of warranty
 
-## Key GPL v3 Provisions
+## Key AGPL-3.0 Provisions
 
 ### 1. Source Code Disclosure
 
@@ -165,20 +165,20 @@ GPL v3 is a **copyleft** license, meaning:
 
 ### 2. Copyleft / Derivative Works
 
-**Requirement**: Modified versions must also be GPL v3.
+**Requirement**: Modified versions must also be AGPL-3.0.
 
 **What counts as a "derivative work"**:
 
-- ✅ Modified Noteece with bug fixes → GPL v3
-- ✅ Noteece with added features → GPL v3
-- ✅ Noteece UI with different theme → GPL v3
-- ✅ Noteece core + proprietary plugin (linked together) → Entire work GPL v3
+- ✅ Modified Noteece with bug fixes → AGPL-3.0
+- ✅ Noteece with added features → AGPL-3.0
+- ✅ Noteece UI with different theme → AGPL-3.0
+- ✅ Noteece core + proprietary plugin (linked together) → Entire work AGPL-3.0
 - ❓ Noteece communicating via API with separate app → Separate work may use different license
 - ❓ Noteece alongside proprietary app in a "mere aggregation" → Separate licenses OK
 
 **The "viral" nature**:
 
-- GPL v3 "propagates" to linked code
+- AGPL-3.0 "propagates" to linked code
 - This ensures freedom is preserved
 - Some call it "viral" (negative) others "copyleft protection" (positive)
 
@@ -192,15 +192,15 @@ GPL v3 is a **copyleft** license, meaning:
 
 **Patent retaliation**:
 
-- If you sue someone for patent infringement based on GPL v3 software
-- You lose your GPL v3 license
+- If you sue someone for patent infringement based on AGPL-3.0 software
+- You lose your AGPL-3.0 license
 - This discourages patent trolling
 
 ### 4. Anti-Tivoization
 
 **Prohibition on hardware restrictions**:
 
-- Cannot distribute GPL v3 software on hardware that prevents user modifications
+- Cannot distribute AGPL-3.0 software on hardware that prevents user modifications
 - If hardware checks signatures, must provide keys
 - Applies to "User Products" (consumer devices)
 - Does NOT apply to industrial/commercial products
@@ -208,7 +208,7 @@ GPL v3 is a **copyleft** license, meaning:
 **Why this matters**:
 
 - Some vendors lock bootloaders to prevent modified software
-- GPL v3 says if you use GPL v3 software, users must be able to run modified versions
+- AGPL-3.0 says if you use AGPL-3.0 software, users must be able to run modified versions
 - Only applies if you distribute the hardware
 
 ### 5. No Additional Restrictions
@@ -229,33 +229,33 @@ GPL v3 is a **copyleft** license, meaning:
 
 ### 6. License Compatibility
 
-**Compatible licenses** (can combine with GPL v3):
+**Compatible licenses** (can combine with AGPL-3.0):
 
 - MIT License ✅
 - Apache License 2.0 ✅
 - BSD Licenses (2-clause, 3-clause) ✅
-- Other GPL v3 code ✅
-- GPL v2 "or later" ✅ (can upgrade to v3)
+- Other AGPL-3.0 code ✅
+- AGPL-3.0 "or later" ✅ (can upgrade to v3)
 
 **Incompatible licenses**:
 
-- GPL v2 only (without "or later") ❌
+- AGPL-3.0 only (without "or later") ❌
 - Proprietary licenses ❌
 - Licenses with additional restrictions ❌
 - Some Creative Commons licenses (e.g., CC BY-NC) ❌
 
 ### 7. "Or Later" Clause
 
-Noteece is licensed as **GPL v3 or later**:
+Noteece is licensed as **AGPL-3.0 or later**:
 
-- You can choose to use under GPL v3
+- You can choose to use under AGPL-3.0
 - Or under any later version (e.g., hypothetical GPL v4)
 - Gives flexibility for future license updates
 - FSF can release newer versions that address new issues
 
 ### 8. Disclaimers of Warranty
 
-**GPL v3 Section 15** - No Warranty:
+**AGPL-3.0 Section 15** - No Warranty:
 
 > THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.
 
@@ -274,7 +274,7 @@ Noteece is licensed as **GPL v3 or later**:
 
 ### 9. Limitation of Liability
 
-**GPL v3 Section 16** - Limitation of Liability:
+**AGPL-3.0 Section 16** - Limitation of Liability:
 
 > IN NO EVENT...SHALL THE COPYRIGHT HOLDER BE LIABLE...FOR DAMAGES
 
@@ -292,7 +292,7 @@ If you want to distribute Noteece (modified or not), follow this checklist:
 ### For Unmodified Distribution
 
 - [ ] Preserve all copyright notices in source files
-- [ ] Include the LICENSE file (GNU GPL v3 text)
+- [ ] Include the LICENSE file (GNU AGPL-3.0 text)
 - [ ] Include the README and attributions
 - [ ] Provide source code or link to official GitHub repo
 - [ ] Do not add additional restrictions
@@ -304,7 +304,7 @@ If you want to distribute Noteece (modified or not), follow this checklist:
 - [ ] Update copyright statements (add your own)
 - [ ] Include the LICENSE file
 - [ ] Provide complete source code for your modifications
-- [ ] License your modifications under GPL v3 (or later)
+- [ ] License your modifications under AGPL-3.0 (or later)
 - [ ] Do not remove original copyright notices
 - [ ] Clearly state you modified the software
 - [ ] Provide build instructions
@@ -315,13 +315,13 @@ If you want to distribute Noteece (modified or not), follow this checklist:
 - [ ] You can use Noteece internally without restrictions
 - [ ] If you distribute (even to customers), follow distribution rules above
 - [ ] Consider: Do you really need to distribute, or can you provide SaaS?
-- [ ] Note: SaaS loophole - GPL v3 doesn't require source for network services (consider AGPL v3 for stricter copyleft)
+- [ ] Network use triggers AGPL-3.0 Section 13 — if users interact over a network, you must offer the complete corresponding source
 - [ ] You can charge for services, support, customization
-- [ ] You CANNOT charge for the GPL v3 licensed software itself (but can charge for distribution media, support, etc.)
+- [ ] You CANNOT charge for the AGPL-3.0 licensed software itself (but can charge for distribution media, support, etc.)
 
 ### For App Store Distribution
 
-- [ ] iOS App Store: Compatible (Apple's terms don't restrict GPL apps)
+- [ ] iOS App Store: Compatible (Apple's terms don't restrict AGPL apps)
 - [ ] Google Play: Compatible
 - [ ] F-Droid: Preferred for FOSS (highly compatible)
 - [ ] Ensure source code is accessible to all recipients
@@ -329,13 +329,13 @@ If you want to distribute Noteece (modified or not), follow this checklist:
 
 ## Dependencies Review
 
-Noteece uses the following dependencies - all GPL v3 compatible:
+Noteece uses the following dependencies - all AGPL-3.0 compatible:
 
 ### Core Dependencies
 
 1. **React Native** (MIT License) ✅
    - Permissive, GPL-compatible
-   - Can be used in GPL v3 projects
+   - Can be used in AGPL-3.0 projects
 
 2. **Expo SDK** (MIT License) ✅
    - Permissive, GPL-compatible
@@ -350,7 +350,7 @@ Noteece uses the following dependencies - all GPL v3 compatible:
    - Both are GPL-compatible
 
 5. **TypeScript** (Apache 2.0) ✅
-   - GPL v3 compatible
+   - AGPL-3.0 compatible
    - Compiled output has no license restrictions
 
 ### JavaScript/React Native Libraries
@@ -366,7 +366,7 @@ All dependencies in `package.json` have been reviewed:
 All dependencies in `Cargo.toml` have been reviewed:
 
 - Mostly MIT, Apache 2.0, or dual-licensed
-- All are GPL v3 compatible
+- All are AGPL-3.0 compatible
 - See `Cargo.toml` for complete list
 
 **Recommendation**: Run `cargo license` and `license-checker` (npm) to generate detailed reports.
@@ -384,27 +384,27 @@ You can charge for **services** like:
 - Custom development
 - Support and training
 - Distribution and installation
-- Hosting (though GPL v3 doesn't require source for SaaS)
+- Hosting (though AGPL-3.0 doesn't require source for SaaS)
 
 You cannot prevent recipients from redistributing for free.
 
 ### Can I create a proprietary fork?
 
-**No**. Any derivative of Noteece must also be GPL v3. This is the point of copyleft.
+**No**. Any derivative of Noteece must also be AGPL-3.0. This is the point of copyleft.
 
 ### Can I use Noteece with a proprietary app?
 
 **Maybe**:
 
 - If they communicate via IPC/API and are separate programs → Likely OK
-- If you link them together into one program → Likely GPL v3 applies to all
+- If you link them together into one program → Likely AGPL-3.0 applies to all
 - Gray area: consult a lawyer for specific cases
 
 ### Can I remove the GPL?
 
 **No**. The copyright holders (contributors) own the copyright. Only they can relicense. You'd need permission from all contributors to change the license.
 
-### What if I violate GPL v3?
+### What if I violate AGPL-3.0?
 
 - Your license is automatically terminated
 - You must stop distributing immediately
@@ -416,7 +416,7 @@ You cannot prevent recipients from redistributing for free.
 
 **Yes**! Contributions are welcome:
 
-- Contributions are assumed to be under GPL v3 (or later)
+- Contributions are assumed to be under AGPL-3.0 (or later)
 - You retain copyright to your contributions
 - See CONTRIBUTING.md for details
 - No CLA (Contributor License Agreement) required
@@ -432,7 +432,7 @@ You cannot prevent recipients from redistributing for free.
 
 ### For Forkers
 
-1. ✅ Keep the GPL v3 license
+1. ✅ Keep the AGPL-3.0 license
 2. ✅ Document your changes clearly
 3. ✅ Consider contributing back upstream
 4. ✅ Rename your fork to avoid confusion
@@ -447,14 +447,14 @@ You cannot prevent recipients from redistributing for free.
 
 ## Additional Resources
 
-- **Full GPL v3 Text**: See `LICENSE` file or https://www.gnu.org/licenses/gpl-3.0.html
-- **GPL v3 FAQ**: https://www.gnu.org/licenses/gpl-faq.html
+- **Full AGPL-3.0 Text**: See `LICENSE` file or https://www.gnu.org/licenses/gpl-3.0.html
+- **AGPL-3.0 FAQ**: https://www.gnu.org/licenses/gpl-faq.html
 - **FSF GPL Guide**: https://www.gnu.org/licenses/quick-guide-gplv3.html
 - **License Compatibility**: https://www.gnu.org/licenses/license-list.html
 
 ## Legal Disclaimer
 
-**This document is not legal advice.** It's a practical guide to understanding GPL v3 as applied to Noteece. For legal questions, consult a lawyer familiar with open source licensing.
+**This document is not legal advice.** It's a practical guide to understanding AGPL-3.0 as applied to Noteece. For legal questions, consult a lawyer familiar with open source licensing.
 
 ## Contact
 
@@ -468,15 +468,15 @@ For licensing questions:
 
 ## Summary
 
-**GNU GPL v3** ensures that Noteece remains free and open source forever:
+**GNU AGPL-3.0** ensures that Noteece remains free and open source forever:
 
 ✅ **Use freely** for any purpose
 ✅ **Study** the source code
 ✅ **Modify** to suit your needs
 ✅ **Share** with others
-❗ **But** keep derivatives under GPL v3
+❗ **But** keep derivatives under AGPL-3.0
 ❗ **And** provide source code when distributing
 
 This protects user freedom and prevents proprietary capture of the software.
 
-**Bottom Line**: GPL v3 aligns perfectly with Noteece's mission of user privacy, security, and freedom. Your data, your software, your freedom.
+**Bottom Line**: AGPL-3.0 aligns perfectly with Noteece's mission of user privacy, security, and freedom. Your data, your software, your freedom.

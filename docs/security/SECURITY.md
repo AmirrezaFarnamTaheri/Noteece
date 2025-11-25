@@ -792,4 +792,4 @@ For security-related questions (non-vulnerabilities):
 ---
 
 _Last Updated: January 2025_
-_Security Policy Version: 1.0.0_
+_Security Policy Version: 1.1.0_

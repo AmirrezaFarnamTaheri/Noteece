@@ -1,6 +1,6 @@
 # Noteece Social Media Suite - User Guide
 
-**Version:** 1.0
+**Version:** 1.1
 **Last Updated:** January 2025
 **Status:** Desktop Edition
 

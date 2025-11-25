@@ -255,4 +255,4 @@ We follow responsible disclosure and will:
 
 **Last Updated**: 2025-11-06
 **Security Contact**: security@noteece.com
-**Version**: 1.0.0
+**Version**: 1.1.0

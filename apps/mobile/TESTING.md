@@ -662,7 +662,7 @@ Use this template to document test results:
 **Tester**: [Name]
 **Platform**: iOS 16.0 / Android 13
 **Device**: iPhone 14 Pro / Pixel 7
-**App Version**: 1.0.0 (Build 1)
+**App Version**: 1.1.0 (Build 1)
 
 ### Results
 

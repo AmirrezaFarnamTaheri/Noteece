@@ -661,7 +661,7 @@ If you prefer not to use the automated scripts, see **INSTALLATION.md** for step
 
 ## Version Info
 
-- **Noteece Version**: 1.0.0
+- **Noteece Version**: 1.1.0
 - **Node.js Required**: 18.0.0+
 - **Rust Required**: 1.70.0+
 - **pnpm Required**: 8.0.0+
