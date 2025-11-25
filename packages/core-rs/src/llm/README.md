@@ -1,6 +1,6 @@
 # LLM Integration Module
 
-**Version:** 1.0
+**Version:** 1.1
 **Status:** Production Ready
 **Language:** Rust
 

@@ -1,6 +1,6 @@
 # Social Media Platform Extractors
 
-**Version:** 1.0
+**Version:** 1.1
 **Status:** Production Ready
 **Language:** JavaScript (ES6+)
 
