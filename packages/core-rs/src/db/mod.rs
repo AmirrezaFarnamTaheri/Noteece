@@ -1,4 +1,6 @@
+pub mod materialized_views;
 pub mod migrations;
+pub mod pragma_tuning;
 pub mod vault_backup;
 
 use chrono;
@@ -116,4 +118,15 @@ pub fn init_llm_tables(_conn: &Connection) -> Result<(), DbError> {
 pub use vault_backup::{
     init_vault_backup_table, store_vault_backup, get_vault_backup, 
     verify_vault_backup, recover_from_backup, has_valid_backup, VaultConfigBackup,
+};
+
+// Re-export pragma tuning
+pub use pragma_tuning::{
+    DatabaseStats, DeviceProfile, PragmaConfig, PragmaTuner,
+};
+
+// Re-export materialized views
+pub use materialized_views::{
+    init_materialized_views, get_dashboard_stats, refresh_dashboard_stats,
+    refresh_all_dashboard_stats, DashboardStats,
 };

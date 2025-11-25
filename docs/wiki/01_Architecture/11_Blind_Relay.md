@@ -26,14 +26,14 @@ Blind Relay Servers enable Noteece devices to synchronize over the internet **wi
 
 ### What the Relay Sees
 
-| Data | Visible to Relay? |
-|------|-------------------|
-| Device IDs | ✅ Yes (routing) |
+| Data              | Visible to Relay?    |
+| ----------------- | -------------------- |
+| Device IDs        | ✅ Yes (routing)     |
 | Encrypted Payload | ✅ Yes (opaque blob) |
-| Payload Size | ✅ Yes |
-| Timestamps | ✅ Yes |
-| Plaintext Content | ❌ Never |
-| Encryption Keys | ❌ Never |
+| Payload Size      | ✅ Yes               |
+| Timestamps        | ✅ Yes               |
+| Plaintext Content | ❌ Never             |
+| Encryption Keys   | ❌ Never             |
 
 ### What the Relay Cannot Do
 
@@ -50,20 +50,20 @@ Blind Relay Servers enable Noteece devices to synchronize over the internet **wi
 pub enum RelayMessage {
     // Device registration
     RegisterDevice { device_id: String, public_key: Vec<u8> },
-    
+
     // Send encrypted packet
-    SendPacket { 
-        recipient_id: String, 
-        sender_id: String, 
-        encrypted_payload: Vec<u8> 
+    SendPacket {
+        recipient_id: String,
+        sender_id: String,
+        encrypted_payload: Vec<u8>
     },
-    
+
     // Fetch queued packets
     FetchPackets { device_id: String },
-    
+
     // Notifications
     PacketsAvailable { sender_id: String, count: usize },
-    
+
     // Responses
     Success,
     Error { message: String },
@@ -164,12 +164,12 @@ docker run -d -p 8443:8443 noteece/relay-server
 
 To prevent abuse:
 
-| Limit | Value |
-|-------|-------|
-| Max packet size | 1 MB |
-| Packets per minute | 100 |
-| Queue TTL | 24 hours |
-| Max queued packets | 1000 |
+| Limit              | Value    |
+| ------------------ | -------- |
+| Max packet size    | 1 MB     |
+| Packets per minute | 100      |
+| Queue TTL          | 24 hours |
+| Max queued packets | 1000     |
 
 ## Future Enhancements
 
@@ -180,5 +180,4 @@ To prevent abuse:
 
 ---
 
-*See also: [Sync Architecture](10_Sync_Architecture.md) | [Security Hardening](09_Security_Hardening.md)*
-
+_See also: [Sync Architecture](10_Sync_Architecture.md) | [Security Hardening](09_Security_Hardening.md)_

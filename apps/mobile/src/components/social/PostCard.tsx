@@ -6,24 +6,15 @@
  * and category tags.
  */
 
-import React, { useState, useRef } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  Share,
-  Alert,
-  Animated,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { Swipeable } from "react-native-gesture-handler";
-import { format } from "date-fns";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { haptics } from "../../lib/haptics";
-import type { TimelinePost, Platform } from "../../types/social";
-import { PLATFORM_CONFIGS } from "../../types/social";
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Share, Alert, Animated } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Swipeable } from 'react-native-gesture-handler';
+import { format } from 'date-fns';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { haptics } from '../../lib/haptics';
+import type { TimelinePost, Platform } from '../../types/social';
+import { PLATFORM_CONFIGS } from '../../types/social';
 
 interface PostCardProps {
   post: TimelinePost;
@@ -33,13 +24,7 @@ interface PostCardProps {
   onHide?: () => void;
 }
 
-export function PostCard({
-  post,
-  onPress,
-  onCategoryPress,
-  onAssignCategory,
-  onHide,
-}: PostCardProps) {
+export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onHide }: PostCardProps) {
   const platformConfig = PLATFORM_CONFIGS[post.platform as Platform];
   const [isBookmarked, setIsBookmarked] = useState(false);
   const swipeableRef = useRef<Swipeable>(null);
@@ -52,19 +37,19 @@ export function PostCard({
 
   const loadBookmarkStatus = async () => {
     try {
-      const bookmarks = await AsyncStorage.getItem("social_bookmarks");
+      const bookmarks = await AsyncStorage.getItem('social_bookmarks');
       if (bookmarks) {
         const bookmarkedIds: string[] = JSON.parse(bookmarks);
         setIsBookmarked(bookmarkedIds.includes(post.id));
       }
     } catch (error) {
-      console.error("Failed to load bookmark status:", error);
+      console.error('Failed to load bookmark status:', error);
     }
   };
 
   const handleBookmark = async () => {
     try {
-      const bookmarks = await AsyncStorage.getItem("social_bookmarks");
+      const bookmarks = await AsyncStorage.getItem('social_bookmarks');
       let bookmarkedIds: string[] = bookmarks ? JSON.parse(bookmarks) : [];
 
       if (isBookmarked) {
@@ -73,17 +58,14 @@ export function PostCard({
         bookmarkedIds.push(post.id);
       }
 
-      await AsyncStorage.setItem(
-        "social_bookmarks",
-        JSON.stringify(bookmarkedIds),
-      );
+      await AsyncStorage.setItem('social_bookmarks', JSON.stringify(bookmarkedIds));
       setIsBookmarked(!isBookmarked);
 
       // Close swipeable after action
       swipeableRef.current?.close();
     } catch (error) {
-      console.error("Failed to update bookmark:", error);
-      Alert.alert("Error", "Failed to update bookmark");
+      console.error('Failed to update bookmark:', error);
+      Alert.alert('Error', 'Failed to update bookmark');
     }
   };
 
@@ -103,22 +85,22 @@ export function PostCard({
 
   const handleShare = async () => {
     try {
-      const message = `${post.author} on ${platformConfig.name}:\n\n${post.content || ""}\n\n${post.url || ""}`;
+      const message = `${post.author} on ${platformConfig.name}:\n\n${post.content || ''}\n\n${post.url || ''}`;
       await Share.share({
         message,
         url: post.url,
       });
     } catch (error) {
-      console.error("Failed to share:", error);
+      console.error('Failed to share:', error);
     }
   };
 
   const handleHide = () => {
-    Alert.alert("Hide Post", "Hide this post from your timeline?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert('Hide Post', 'Hide this post from your timeline?', [
+      { text: 'Cancel', style: 'cancel' },
       {
-        text: "Hide",
-        style: "destructive",
+        text: 'Hide',
+        style: 'destructive',
         onPress: () => onHide?.(),
       },
     ]);
@@ -132,25 +114,14 @@ export function PostCard({
     const scale = dragX.interpolate({
       inputRange: [-100, 0],
       outputRange: [1, 0],
-      extrapolate: "clamp",
+      extrapolate: 'clamp',
     });
 
     return (
-      <Animated.View
-        style={[styles.swipeRightAction, { transform: [{ scale }] }]}
-      >
-        <TouchableOpacity
-          style={styles.swipeActionButton}
-          onPress={handleSwipeBookmark}
-        >
-          <Ionicons
-            name={isBookmarked ? "bookmark" : "bookmark-outline"}
-            size={24}
-            color="#FFF"
-          />
-          <Text style={styles.swipeActionText}>
-            {isBookmarked ? "Unsave" : "Save"}
-          </Text>
+      <Animated.View style={[styles.swipeRightAction, { transform: [{ scale }] }]}>
+        <TouchableOpacity style={styles.swipeActionButton} onPress={handleSwipeBookmark}>
+          <Ionicons name={isBookmarked ? 'bookmark' : 'bookmark-outline'} size={24} color="#FFF" />
+          <Text style={styles.swipeActionText}>{isBookmarked ? 'Unsave' : 'Save'}</Text>
         </TouchableOpacity>
       </Animated.View>
     );
@@ -164,17 +135,12 @@ export function PostCard({
     const scale = dragX.interpolate({
       inputRange: [0, 100],
       outputRange: [0, 1],
-      extrapolate: "clamp",
+      extrapolate: 'clamp',
     });
 
     return (
-      <Animated.View
-        style={[styles.swipeLeftAction, { transform: [{ scale }] }]}
-      >
-        <TouchableOpacity
-          style={styles.swipeActionButton}
-          onPress={handleSwipeHide}
-        >
+      <Animated.View style={[styles.swipeLeftAction, { transform: [{ scale }] }]}>
+        <TouchableOpacity style={styles.swipeActionButton} onPress={handleSwipeHide}>
           <Ionicons name="eye-off-outline" size={24} color="#FFF" />
           <Text style={styles.swipeActionText}>Hide</Text>
         </TouchableOpacity>
@@ -191,32 +157,19 @@ export function PostCard({
       overshootLeft={false}
       friction={2}
     >
-      <TouchableOpacity
-        style={styles.card}
-        onPress={onPress}
-        activeOpacity={0.7}
-      >
+      <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
         {/* Header: Platform Badge + Author Info */}
         <View style={styles.header}>
-          <View
-            style={[
-              styles.platformBadge,
-              { backgroundColor: platformConfig.color },
-            ]}
-          >
+          <View style={[styles.platformBadge, { backgroundColor: platformConfig.color }]}>
             <Text style={styles.platformIcon}>{platformConfig.icon}</Text>
           </View>
 
           <View style={styles.authorInfo}>
             <View style={styles.authorNameRow}>
               <Text style={styles.authorName}>{post.author}</Text>
-              {post.account_display_name && (
-                <Text style={styles.accountName}>@{post.account_username}</Text>
-              )}
+              {post.account_display_name && <Text style={styles.accountName}>@{post.account_username}</Text>}
             </View>
-            <Text style={styles.timestamp}>
-              {format(new Date(post.created_at), "MMM d, h:mm a")}
-            </Text>
+            <Text style={styles.timestamp}>{format(new Date(post.created_at), 'MMM d, h:mm a')}</Text>
           </View>
         </View>
 
@@ -231,18 +184,11 @@ export function PostCard({
         {post.media_urls && post.media_urls.length > 0 && (
           <View style={styles.mediaContainer}>
             {post.media_urls.slice(0, 4).map((url, index) => (
-              <Image
-                key={index}
-                source={{ uri: url }}
-                style={styles.mediaThumbnail}
-                resizeMode="cover"
-              />
+              <Image key={index} source={{ uri: url }} style={styles.mediaThumbnail} resizeMode="cover" />
             ))}
             {post.media_urls.length > 4 && (
               <View style={styles.mediaOverlay}>
-                <Text style={styles.mediaOverlayText}>
-                  +{post.media_urls.length - 4}
-                </Text>
+                <Text style={styles.mediaOverlayText}>+{post.media_urls.length - 4}</Text>
               </View>
             )}
           </View>
@@ -251,63 +197,43 @@ export function PostCard({
         {/* Engagement Metrics */}
         {post.engagement && (
           <View style={styles.engagement}>
-            {post.engagement.likes !== undefined &&
-              post.engagement.likes > 0 && (
-                <View style={styles.engagementItem}>
-                  <Text style={styles.engagementIcon}>❤️</Text>
-                  <Text style={styles.engagementText}>
-                    {formatNumber(post.engagement.likes)}
-                  </Text>
-                </View>
-              )}
-            {post.engagement.comments !== undefined &&
-              post.engagement.comments > 0 && (
-                <View style={styles.engagementItem}>
-                  <Text style={styles.engagementIcon}>💬</Text>
-                  <Text style={styles.engagementText}>
-                    {formatNumber(post.engagement.comments)}
-                  </Text>
-                </View>
-              )}
-            {post.engagement.shares !== undefined &&
-              post.engagement.shares > 0 && (
-                <View style={styles.engagementItem}>
-                  <Text style={styles.engagementIcon}>🔄</Text>
-                  <Text style={styles.engagementText}>
-                    {formatNumber(post.engagement.shares)}
-                  </Text>
-                </View>
-              )}
-            {post.engagement.views !== undefined &&
-              post.engagement.views > 0 && (
-                <View style={styles.engagementItem}>
-                  <Text style={styles.engagementIcon}>👁️</Text>
-                  <Text style={styles.engagementText}>
-                    {formatNumber(post.engagement.views)}
-                  </Text>
-                </View>
-              )}
+            {post.engagement.likes !== undefined && post.engagement.likes > 0 && (
+              <View style={styles.engagementItem}>
+                <Text style={styles.engagementIcon}>❤️</Text>
+                <Text style={styles.engagementText}>{formatNumber(post.engagement.likes)}</Text>
+              </View>
+            )}
+            {post.engagement.comments !== undefined && post.engagement.comments > 0 && (
+              <View style={styles.engagementItem}>
+                <Text style={styles.engagementIcon}>💬</Text>
+                <Text style={styles.engagementText}>{formatNumber(post.engagement.comments)}</Text>
+              </View>
+            )}
+            {post.engagement.shares !== undefined && post.engagement.shares > 0 && (
+              <View style={styles.engagementItem}>
+                <Text style={styles.engagementIcon}>🔄</Text>
+                <Text style={styles.engagementText}>{formatNumber(post.engagement.shares)}</Text>
+              </View>
+            )}
+            {post.engagement.views !== undefined && post.engagement.views > 0 && (
+              <View style={styles.engagementItem}>
+                <Text style={styles.engagementIcon}>👁️</Text>
+                <Text style={styles.engagementText}>{formatNumber(post.engagement.views)}</Text>
+              </View>
+            )}
           </View>
         )}
 
         {/* Action Buttons */}
         <View style={styles.actions}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleBookmark}
-          >
+          <TouchableOpacity style={styles.actionButton} onPress={handleBookmark}>
             <Ionicons
-              name={isBookmarked ? "bookmark" : "bookmark-outline"}
+              name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
               size={20}
-              color={isBookmarked ? "#007AFF" : "#666"}
+              color={isBookmarked ? '#007AFF' : '#666'}
             />
-            <Text
-              style={[
-                styles.actionText,
-                isBookmarked && styles.actionTextActive,
-              ]}
-            >
-              {isBookmarked ? "Saved" : "Save"}
+            <Text style={[styles.actionText, isBookmarked && styles.actionTextActive]}>
+              {isBookmarked ? 'Saved' : 'Save'}
             </Text>
           </TouchableOpacity>
 
@@ -331,33 +257,19 @@ export function PostCard({
                 style={[
                   styles.categoryTag,
                   {
-                    backgroundColor: category.color
-                      ? `${category.color}20`
-                      : "#E0E0E0",
-                    borderColor: category.color || "#999",
+                    backgroundColor: category.color ? `${category.color}20` : '#E0E0E0',
+                    borderColor: category.color || '#999',
                   },
                 ]}
                 onPress={() => onCategoryPress?.(category.id)}
               >
-                {category.icon && (
-                  <Text style={styles.categoryIcon}>{category.icon}</Text>
-                )}
-                <Text
-                  style={[
-                    styles.categoryText,
-                    { color: category.color || "#666" },
-                  ]}
-                >
-                  {category.name}
-                </Text>
+                {category.icon && <Text style={styles.categoryIcon}>{category.icon}</Text>}
+                <Text style={[styles.categoryText, { color: category.color || '#666' }]}>{category.name}</Text>
               </TouchableOpacity>
             ))}
 
             {/* Add Category Button */}
-            <TouchableOpacity
-              style={styles.addCategoryButton}
-              onPress={onAssignCategory}
-            >
+            <TouchableOpacity style={styles.addCategoryButton} onPress={onAssignCategory}>
               <Text style={styles.addCategoryText}>+ Category</Text>
             </TouchableOpacity>
           </View>
@@ -379,28 +291,28 @@ function formatNumber(num: number): string {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     marginHorizontal: 16,
     marginVertical: 8,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   header: {
-    flexDirection: "row",
-    alignItems: "flex-start",
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     marginBottom: 12,
   },
   platformBadge: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 12,
   },
   platformIcon: {
@@ -410,66 +322,66 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   authorNameRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 2,
   },
   authorName: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#000",
+    fontWeight: '600',
+    color: '#000',
     marginRight: 8,
   },
   accountName: {
     fontSize: 14,
-    color: "#666",
+    color: '#666',
   },
   timestamp: {
     fontSize: 12,
-    color: "#999",
+    color: '#999',
   },
   content: {
     fontSize: 15,
     lineHeight: 22,
-    color: "#333",
+    color: '#333',
     marginBottom: 12,
   },
   mediaContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     marginBottom: 12,
     gap: 4,
   },
   mediaThumbnail: {
-    width: "48%",
+    width: '48%',
     height: 120,
     borderRadius: 8,
   },
   mediaOverlay: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 4,
     right: 4,
-    width: "48%",
+    width: '48%',
     height: 120,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   mediaOverlayText: {
-    color: "#FFF",
+    color: '#FFF',
     fontSize: 24,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   engagement: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
     gap: 16,
   },
   engagementItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 4,
   },
   engagementIcon: {
@@ -477,22 +389,22 @@ const styles = StyleSheet.create({
   },
   engagementText: {
     fontSize: 14,
-    color: "#666",
-    fontWeight: "500",
+    color: '#666',
+    fontWeight: '500',
   },
   footer: {
     borderTopWidth: 1,
-    borderTopColor: "#F0F0F0",
+    borderTopColor: '#F0F0F0',
     paddingTop: 12,
   },
   categories: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
   categoryTag: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -504,49 +416,49 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   addCategoryButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#DDD",
-    borderStyle: "dashed",
+    borderColor: '#DDD',
+    borderStyle: 'dashed',
   },
   addCategoryText: {
     fontSize: 13,
-    color: "#666",
-    fontWeight: "500",
+    color: '#666',
+    fontWeight: '500',
   },
   actions: {
-    flexDirection: "row",
+    flexDirection: 'row',
     borderTopWidth: 1,
-    borderTopColor: "#EEE",
+    borderTopColor: '#EEE',
     paddingTop: 12,
     marginTop: 12,
     gap: 8,
   },
   actionButton: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 8,
     gap: 6,
   },
   actionText: {
     fontSize: 14,
-    color: "#666",
-    fontWeight: "500",
+    color: '#666',
+    fontWeight: '500',
   },
   actionTextActive: {
-    color: "#007AFF",
+    color: '#007AFF',
   },
   swipeRightAction: {
-    backgroundColor: "#007AFF",
-    justifyContent: "center",
-    alignItems: "flex-end",
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
     borderRadius: 12,
     marginVertical: 8,
     marginRight: 16,
@@ -554,9 +466,9 @@ const styles = StyleSheet.create({
     minWidth: 80,
   },
   swipeLeftAction: {
-    backgroundColor: "#FF3B30",
-    justifyContent: "center",
-    alignItems: "flex-start",
+    backgroundColor: '#FF3B30',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
     borderRadius: 12,
     marginVertical: 8,
     marginLeft: 16,
@@ -564,14 +476,14 @@ const styles = StyleSheet.create({
     minWidth: 80,
   },
   swipeActionButton: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 20,
   },
   swipeActionText: {
-    color: "#FFF",
+    color: '#FFF',
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: '600',
     marginTop: 4,
   },
 });

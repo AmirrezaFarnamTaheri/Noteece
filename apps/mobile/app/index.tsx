@@ -1,8 +1,8 @@
-import { useEffect } from "react";
-import { router } from "expo-router";
-import { View, ActivityIndicator, StyleSheet } from "react-native";
-import { useVaultStore } from "@/store/vault";
-import { colors } from "@/lib/theme";
+import { useEffect } from 'react';
+import { router } from 'expo-router';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { useVaultStore } from '@/store/vault';
+import { colors } from '@/lib/theme';
 
 export default function Index() {
   const { isUnlocked, hasVault } = useVaultStore();
@@ -12,13 +12,13 @@ export default function Index() {
     const checkVault = async () => {
       if (!hasVault) {
         // No vault exists, go to onboarding
-        router.replace("/onboarding");
+        router.replace('/onboarding');
       } else if (!isUnlocked) {
         // Vault exists but locked, go to unlock screen
-        router.replace("/unlock");
+        router.replace('/unlock');
       } else {
         // Vault unlocked, go to main app
-        router.replace("/(tabs)/today");
+        router.replace('/(tabs)/today');
       }
     };
 
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

@@ -1,31 +1,18 @@
-import { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Switch,
-  Alert,
-  Platform,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import { typography, spacing } from "@/lib/theme";
-import { useVaultStore } from "@/store/vault";
-import { useSettings, useUpdateSetting } from "@/store/app-context";
-import { useTheme, useThemeColors } from "@/contexts/ThemeContext";
-import { haptics } from "@/lib/haptics";
-import {
-  startBackgroundSync,
-  stopBackgroundSync,
-  triggerManualSync,
-} from "@/lib/sync/background-sync";
-import { nfcTriggerManager } from "@/lib/features/nfc-triggers";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { changeVaultPassword } from "@/lib/vault-utils";
-import { exportAllData, clearAllData, getDataStats } from "@/lib/data-utils";
+import { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { typography, spacing } from '@/lib/theme';
+import { useVaultStore } from '@/store/vault';
+import { useSettings, useUpdateSetting } from '@/store/app-context';
+import { useTheme, useThemeColors } from '@/contexts/ThemeContext';
+import { haptics } from '@/lib/haptics';
+import { startBackgroundSync, stopBackgroundSync, triggerManualSync } from '@/lib/sync/background-sync';
+import { nfcTriggerManager } from '@/lib/features/nfc-triggers';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { changeVaultPassword } from '@/lib/vault-utils';
+import { exportAllData, clearAllData, getDataStats } from '@/lib/data-utils';
 
 export default function MoreScreen() {
   const { lockVault } = useVaultStore();
@@ -38,15 +25,15 @@ export default function MoreScreen() {
 
   const handleLockVault = () => {
     haptics.warning();
-    Alert.alert("Lock Vault", "Are you sure you want to lock the vault?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert('Lock Vault', 'Are you sure you want to lock the vault?', [
+      { text: 'Cancel', style: 'cancel' },
       {
-        text: "Lock",
-        style: "destructive",
+        text: 'Lock',
+        style: 'destructive',
         onPress: () => {
           haptics.heavy();
           lockVault();
-          router.replace("/unlock");
+          router.replace('/unlock');
         },
       },
     ]);
@@ -62,16 +49,16 @@ export default function MoreScreen() {
       } else {
         await stopBackgroundSync();
       }
-      await AsyncStorage.setItem("background_sync_enabled", value.toString());
+      await AsyncStorage.setItem('background_sync_enabled', value.toString());
 
       // Only update state after all operations succeed
       setBackgroundSyncEnabled(value);
     } catch (error) {
-      console.error("Failed to toggle background sync:", error);
+      console.error('Failed to toggle background sync:', error);
       haptics.error();
       // Revert to previous state on failure
       setBackgroundSyncEnabled(previous);
-      Alert.alert("Error", "Failed to update background sync setting");
+      Alert.alert('Error', 'Failed to update background sync setting');
     }
   };
 
@@ -81,31 +68,25 @@ export default function MoreScreen() {
 
       if (!available && value) {
         haptics.error();
-        Alert.alert(
-          "NFC Not Available",
-          "NFC is not available on this device or is disabled in settings",
-        );
+        Alert.alert('NFC Not Available', 'NFC is not available on this device or is disabled in settings');
         return;
       }
 
       haptics.medium();
       // Persist to storage first
-      await AsyncStorage.setItem("nfc_enabled", value.toString());
+      await AsyncStorage.setItem('nfc_enabled', value.toString());
 
       // Only update state after storage write succeeds
       setNfcEnabled(value);
 
       if (value) {
         haptics.success();
-        Alert.alert(
-          "NFC Enabled",
-          "You can now use NFC tags to trigger quick actions",
-        );
+        Alert.alert('NFC Enabled', 'You can now use NFC tags to trigger quick actions');
       }
     } catch (error) {
-      console.error("Failed to toggle NFC:", error);
+      console.error('Failed to toggle NFC:', error);
       haptics.error();
-      Alert.alert("Error", "Failed to update NFC setting");
+      Alert.alert('Error', 'Failed to update NFC setting');
     }
   };
 
@@ -116,123 +97,109 @@ export default function MoreScreen() {
       const success = await triggerManualSync();
       if (success) {
         haptics.success();
-        Alert.alert("Success", "Sync completed successfully");
+        Alert.alert('Success', 'Sync completed successfully');
       } else {
         haptics.warning();
-        Alert.alert("No Devices", "No devices found to sync with");
+        Alert.alert('No Devices', 'No devices found to sync with');
       }
     } catch (error) {
-      console.error("Failed to sync:", error);
+      console.error('Failed to sync:', error);
       haptics.error();
-      Alert.alert("Error", "Sync failed. Please try again.");
+      Alert.alert('Error', 'Sync failed. Please try again.');
     } finally {
       setSyncing(false);
     }
   };
 
   const handleChangePassword = () => {
-    if (Platform.OS === "ios") {
+    if (Platform.OS === 'ios') {
       // iOS supports Alert.prompt
       Alert.prompt(
-        "Change Vault Password",
-        "Enter your current password:",
+        'Change Vault Password',
+        'Enter your current password:',
         [
-          { text: "Cancel", style: "cancel" },
+          { text: 'Cancel', style: 'cancel' },
           {
-            text: "Next",
+            text: 'Next',
             onPress: (rawCurrentPassword) => {
-              const currentPassword = (rawCurrentPassword ?? "").trim();
+              const currentPassword = (rawCurrentPassword ?? '').trim();
               if (!currentPassword) {
-                Alert.alert("Error", "Current password is required");
+                Alert.alert('Error', 'Current password is required');
                 return;
               }
               Alert.prompt(
-                "New Password",
-                "Enter your new password (min 8 characters):",
+                'New Password',
+                'Enter your new password (min 8 characters):',
                 [
-                  { text: "Cancel", style: "cancel" },
+                  { text: 'Cancel', style: 'cancel' },
                   {
-                    text: "Next",
+                    text: 'Next',
                     onPress: (rawNewPassword) => {
-                      const newPassword = (rawNewPassword ?? "").trim();
+                      const newPassword = (rawNewPassword ?? '').trim();
                       if (newPassword.length < 8) {
-                        Alert.alert(
-                          "Error",
-                          "New password must be at least 8 characters",
-                        );
+                        Alert.alert('Error', 'New password must be at least 8 characters');
                         return;
                       }
                       Alert.prompt(
-                        "Confirm Password",
-                        "Confirm your new password:",
+                        'Confirm Password',
+                        'Confirm your new password:',
                         [
-                          { text: "Cancel", style: "cancel" },
+                          { text: 'Cancel', style: 'cancel' },
                           {
-                            text: "Change",
+                            text: 'Change',
                             onPress: async (rawConfirmPassword) => {
-                              const confirmPassword = (
-                                rawConfirmPassword ?? ""
-                              ).trim();
+                              const confirmPassword = (rawConfirmPassword ?? '').trim();
                               if (newPassword !== confirmPassword) {
-                                Alert.alert("Error", "Passwords do not match");
+                                Alert.alert('Error', 'Passwords do not match');
                                 return;
                               }
                               try {
-                                const result = await changeVaultPassword(
-                                  currentPassword,
-                                  newPassword,
-                                );
+                                const result = await changeVaultPassword(currentPassword, newPassword);
                                 if (result.success) {
                                   // Lock vault to clear DEK from memory (security best practice)
                                   lockVault();
                                   Alert.alert(
-                                    "Password Changed",
-                                    "Your vault password has been changed successfully.\n\n" +
-                                      "For security, the vault has been locked. Please unlock with your NEW password.\n\n" +
-                                      "Note: Biometric unlock has been disabled and must be re-enabled.",
+                                    'Password Changed',
+                                    'Your vault password has been changed successfully.\n\n' +
+                                      'For security, the vault has been locked. Please unlock with your NEW password.\n\n' +
+                                      'Note: Biometric unlock has been disabled and must be re-enabled.',
                                     [
                                       {
-                                        text: "OK",
+                                        text: 'OK',
                                         onPress: () => {
-                                          router.replace("/unlock");
+                                          router.replace('/unlock');
                                         },
                                       },
                                     ],
                                   );
                                 } else {
-                                  Alert.alert(
-                                    "Error",
-                                    result.error || "Failed to change password",
-                                  );
+                                  Alert.alert('Error', result.error || 'Failed to change password');
                                 }
                               } catch (error) {
-                                console.error("Change password failed:", error);
-                                Alert.alert(
-                                  "Error",
-                                  "Failed to change password. Please try again.",
-                                );
+                                console.error('Change password failed:', error);
+                                Alert.alert('Error', 'Failed to change password. Please try again.');
                               }
                             },
                           },
                         ],
-                        "secure-text",
+                        'secure-text',
                       );
                     },
                   },
                 ],
-                "secure-text",
+                'secure-text',
               );
             },
           },
         ],
-        "secure-text",
+        'secure-text',
       );
     } else {
       // Android doesn't support Alert.prompt
       Alert.alert(
-        "Change Password",
-        "Password change is currently only available on iOS. For Android, please use the web app or reinstall to create a new vault.",
-        [{ text: "OK" }],
+        'Change Password',
+        'Password change is currently only available on iOS. For Android, please use the web app or reinstall to create a new vault.',
+        [{ text: 'OK' }],
       );
     }
   };
@@ -244,7 +211,7 @@ export default function MoreScreen() {
 
       haptics.warning();
       Alert.alert(
-        "⚠️ Export Data (Unencrypted)",
+        '⚠️ Export Data (Unencrypted)',
         `SECURITY WARNING: Exported data is UNENCRYPTED!\n\n` +
           `Export ${stats.total} items?\n` +
           `• ${stats.tasks} tasks\n` +
@@ -252,38 +219,38 @@ export default function MoreScreen() {
           `• ${stats.timeEntries} time entries\n` +
           `• ${stats.healthMetrics} health metrics\n` +
           `• ${stats.calendarEvents} calendar events\n\n` +
-          "⚠️ The exported JSON file will contain your data in PLAIN TEXT.\n\n" +
-          "• Store it securely\n" +
-          "• Delete after use\n" +
-          "• DO NOT upload to cloud services\n" +
-          "• DO NOT share via unsecured channels",
+          '⚠️ The exported JSON file will contain your data in PLAIN TEXT.\n\n' +
+          '• Store it securely\n' +
+          '• Delete after use\n' +
+          '• DO NOT upload to cloud services\n' +
+          '• DO NOT share via unsecured channels',
         [
-          { text: "Cancel", style: "cancel" },
+          { text: 'Cancel', style: 'cancel' },
           {
-            text: "I Understand, Export",
-            style: "destructive",
+            text: 'I Understand, Export',
+            style: 'destructive',
             onPress: async () => {
               haptics.heavy();
               const result = await exportAllData();
               if (result.success) {
                 haptics.success();
                 Alert.alert(
-                  "Export Complete",
-                  "⚠️ REMINDER: This file contains UNENCRYPTED data.\n\nStore it securely and delete after use.",
-                  [{ text: "OK" }],
+                  'Export Complete',
+                  '⚠️ REMINDER: This file contains UNENCRYPTED data.\n\nStore it securely and delete after use.',
+                  [{ text: 'OK' }],
                 );
               } else {
                 haptics.error();
-                Alert.alert("Error", result.error || "Failed to export data");
+                Alert.alert('Error', result.error || 'Failed to export data');
               }
             },
           },
         ],
       );
     } catch (error) {
-      console.error("Failed to export data:", error);
+      console.error('Failed to export data:', error);
       haptics.error();
-      Alert.alert("Error", "Failed to export data. Please try again.");
+      Alert.alert('Error', 'Failed to export data. Please try again.');
     }
   };
 
@@ -294,54 +261,51 @@ export default function MoreScreen() {
 
       haptics.warning();
       Alert.alert(
-        "Clear All Data",
+        'Clear All Data',
         `This will permanently delete all your local data:\n\n` +
           `• ${stats.tasks} tasks\n` +
           `• ${stats.notes} notes\n` +
           `• ${stats.timeEntries} time entries\n` +
           `• ${stats.healthMetrics} health metrics\n` +
           `• ${stats.calendarEvents} calendar events\n\n` +
-          "This action cannot be undone!\n\n" +
-          "Consider exporting your data first.",
+          'This action cannot be undone!\n\n' +
+          'Consider exporting your data first.',
         [
-          { text: "Cancel", style: "cancel" },
+          { text: 'Cancel', style: 'cancel' },
           {
-            text: "Delete Everything",
-            style: "destructive",
+            text: 'Delete Everything',
+            style: 'destructive',
             onPress: () => {
               haptics.error();
               Alert.alert(
-                "Are You Sure?",
-                "This will delete EVERYTHING and you will be logged out. This cannot be undone!",
+                'Are You Sure?',
+                'This will delete EVERYTHING and you will be logged out. This cannot be undone!',
                 [
-                  { text: "Cancel", style: "cancel" },
+                  { text: 'Cancel', style: 'cancel' },
                   {
-                    text: "Yes, Delete All",
-                    style: "destructive",
+                    text: 'Yes, Delete All',
+                    style: 'destructive',
                     onPress: async () => {
                       haptics.heavy();
                       const result = await clearAllData();
                       if (result.success) {
                         haptics.success();
                         Alert.alert(
-                          "Data Cleared",
-                          "All data has been deleted. You will now be returned to onboarding.",
+                          'Data Cleared',
+                          'All data has been deleted. You will now be returned to onboarding.',
                           [
                             {
-                              text: "OK",
+                              text: 'OK',
                               onPress: () => {
                                 lockVault();
-                                router.replace("/onboarding");
+                                router.replace('/onboarding');
                               },
                             },
                           ],
                         );
                       } else {
                         haptics.error();
-                        Alert.alert(
-                          "Error",
-                          result.error || "Failed to clear data",
-                        );
+                        Alert.alert('Error', result.error || 'Failed to clear data');
                       }
                     },
                   },
@@ -352,35 +316,35 @@ export default function MoreScreen() {
         ],
       );
     } catch (error) {
-      console.error("Failed to clear data:", error);
+      console.error('Failed to clear data:', error);
       haptics.error();
-      Alert.alert("Error", "Failed to clear data. Please try again.");
+      Alert.alert('Error', 'Failed to clear data. Please try again.');
     }
   };
 
   const handleThemeModeChange = () => {
     haptics.light();
-    Alert.alert("Theme Mode", "Choose your preferred theme", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert('Theme Mode', 'Choose your preferred theme', [
+      { text: 'Cancel', style: 'cancel' },
       {
-        text: "Light",
+        text: 'Light',
         onPress: () => {
           haptics.selection();
-          setThemeMode("light");
+          setThemeMode('light');
         },
       },
       {
-        text: "Dark",
+        text: 'Dark',
         onPress: () => {
           haptics.selection();
-          setThemeMode("dark");
+          setThemeMode('dark');
         },
       },
       {
-        text: "Auto (System)",
+        text: 'Auto (System)',
         onPress: () => {
           haptics.selection();
-          setThemeMode("auto");
+          setThemeMode('auto');
         },
       },
     ]);
@@ -388,27 +352,27 @@ export default function MoreScreen() {
 
   const handleFontSizeChange = () => {
     haptics.light();
-    Alert.alert("Font Size", "Choose your preferred font size", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert('Font Size', 'Choose your preferred font size', [
+      { text: 'Cancel', style: 'cancel' },
       {
-        text: "Small",
+        text: 'Small',
         onPress: () => {
           haptics.selection();
-          updateSetting("theme", { ...settings.theme, fontSize: "small" });
+          updateSetting('theme', { ...settings.theme, fontSize: 'small' });
         },
       },
       {
-        text: "Medium",
+        text: 'Medium',
         onPress: () => {
           haptics.selection();
-          updateSetting("theme", { ...settings.theme, fontSize: "medium" });
+          updateSetting('theme', { ...settings.theme, fontSize: 'medium' });
         },
       },
       {
-        text: "Large",
+        text: 'Large',
         onPress: () => {
           haptics.selection();
-          updateSetting("theme", { ...settings.theme, fontSize: "large" });
+          updateSetting('theme', { ...settings.theme, fontSize: 'large' });
         },
       },
     ]);
@@ -416,29 +380,29 @@ export default function MoreScreen() {
 
   const handleFontFamilyChange = () => {
     haptics.light();
-    Alert.alert("Font Family", "Choose your preferred font", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert('Font Family', 'Choose your preferred font', [
+      { text: 'Cancel', style: 'cancel' },
       {
-        text: "Default",
+        text: 'Default',
         onPress: () => {
           haptics.selection();
-          updateSetting("theme", { ...settings.theme, fontFamily: "default" });
+          updateSetting('theme', { ...settings.theme, fontFamily: 'default' });
         },
       },
       {
-        text: "Dyslexic-Friendly",
+        text: 'Dyslexic-Friendly',
         onPress: () => {
           haptics.selection();
-          updateSetting("theme", { ...settings.theme, fontFamily: "dyslexic" });
+          updateSetting('theme', { ...settings.theme, fontFamily: 'dyslexic' });
         },
       },
       {
-        text: "Monospace",
+        text: 'Monospace',
         onPress: () => {
           haptics.selection();
-          updateSetting("theme", {
+          updateSetting('theme', {
             ...settings.theme,
-            fontFamily: "monospace",
+            fontFamily: 'monospace',
           });
         },
       },
@@ -448,11 +412,11 @@ export default function MoreScreen() {
   const handleToggleNotifications = async (value: boolean) => {
     try {
       haptics.medium();
-      await updateSetting("notifications", value);
+      await updateSetting('notifications', value);
     } catch (error) {
-      console.error("Failed to toggle notifications:", error);
+      console.error('Failed to toggle notifications:', error);
       haptics.error();
-      Alert.alert("Error", "Failed to update notification settings");
+      Alert.alert('Error', 'Failed to update notification settings');
     }
   };
 
@@ -462,63 +426,60 @@ export default function MoreScreen() {
       if (value) {
         haptics.medium();
       }
-      await updateSetting("haptics", value);
+      await updateSetting('haptics', value);
     } catch (error) {
-      console.error("Failed to toggle haptics:", error);
+      console.error('Failed to toggle haptics:', error);
       haptics.error();
-      Alert.alert("Error", "Failed to update haptic settings");
+      Alert.alert('Error', 'Failed to update haptic settings');
     }
   };
 
   const getThemeModeLabel = () => {
     switch (themeMode) {
-      case "light":
-        return "Light";
-      case "dark":
-        return "Dark";
-      case "auto":
-        return "Auto (System)";
+      case 'light':
+        return 'Light';
+      case 'dark':
+        return 'Dark';
+      case 'auto':
+        return 'Auto (System)';
       default:
-        return "Auto (System)";
+        return 'Auto (System)';
     }
   };
 
   const getFontSizeLabel = () => {
-    return (
-      settings.theme.fontSize.charAt(0).toUpperCase() +
-      settings.theme.fontSize.slice(1)
-    );
+    return settings.theme.fontSize.charAt(0).toUpperCase() + settings.theme.fontSize.slice(1);
   };
 
   const getFontFamilyLabel = () => {
     switch (settings.theme.fontFamily) {
-      case "default":
-        return "Default";
-      case "dyslexic":
-        return "Dyslexic-Friendly";
-      case "monospace":
-        return "Monospace";
+      case 'default':
+        return 'Default';
+      case 'dyslexic':
+        return 'Dyslexic-Friendly';
+      case 'monospace':
+        return 'Monospace';
       default:
-        return "Default";
+        return 'Default';
     }
   };
 
   const settingsSections = [
     {
-      title: "General",
+      title: 'General',
       items: [
         {
-          icon: "notifications-outline",
-          label: "Notifications",
-          subtitle: "Push notifications and alerts",
+          icon: 'notifications-outline',
+          label: 'Notifications',
+          subtitle: 'Push notifications and alerts',
           toggle: true,
           value: settings.notifications,
           onToggle: handleToggleNotifications,
         },
         {
-          icon: "phone-portrait-outline",
-          label: "Haptic Feedback",
-          subtitle: "Vibration on interactions",
+          icon: 'phone-portrait-outline',
+          label: 'Haptic Feedback',
+          subtitle: 'Vibration on interactions',
           toggle: true,
           value: settings.haptics,
           onToggle: handleToggleHaptics,
@@ -526,25 +487,25 @@ export default function MoreScreen() {
       ],
     },
     {
-      title: "Appearance",
+      title: 'Appearance',
       items: [
         {
-          icon: "color-palette-outline",
-          label: "Theme Mode",
+          icon: 'color-palette-outline',
+          label: 'Theme Mode',
           subtitle: getThemeModeLabel(),
           onPress: handleThemeModeChange,
           showChevron: true,
         },
         {
-          icon: "text-outline",
-          label: "Font Size",
+          icon: 'text-outline',
+          label: 'Font Size',
           subtitle: getFontSizeLabel(),
           onPress: handleFontSizeChange,
           showChevron: true,
         },
         {
-          icon: "list-outline",
-          label: "Font Family",
+          icon: 'list-outline',
+          label: 'Font Family',
           subtitle: getFontFamilyLabel(),
           onPress: handleFontFamilyChange,
           showChevron: true,
@@ -552,19 +513,19 @@ export default function MoreScreen() {
       ],
     },
     {
-      title: "Sync & Backup",
+      title: 'Sync & Backup',
       items: [
         {
-          icon: "sync-outline",
-          label: "Manual Sync",
-          subtitle: "Sync with devices on local network",
+          icon: 'sync-outline',
+          label: 'Manual Sync',
+          subtitle: 'Sync with devices on local network',
           onPress: handleManualSync,
           showChevron: true,
         },
         {
-          icon: "cloud-upload-outline",
-          label: "Background Sync",
-          subtitle: "Auto-sync every 15 minutes",
+          icon: 'cloud-upload-outline',
+          label: 'Background Sync',
+          subtitle: 'Auto-sync every 15 minutes',
           toggle: true,
           value: backgroundSyncEnabled,
           onToggle: handleToggleBackgroundSync,
@@ -572,52 +533,52 @@ export default function MoreScreen() {
       ],
     },
     {
-      title: "Features",
+      title: 'Features',
       items: [
         {
-          icon: "hardware-chip-outline",
-          label: "NFC Triggers",
-          subtitle: "Use NFC tags for quick actions",
+          icon: 'hardware-chip-outline',
+          label: 'NFC Triggers',
+          subtitle: 'Use NFC tags for quick actions',
           toggle: true,
           value: nfcEnabled,
           onToggle: handleToggleNFC,
         },
         {
-          icon: "location-outline",
-          label: "Location Reminders",
-          subtitle: "Geofence-based task reminders",
+          icon: 'location-outline',
+          label: 'Location Reminders',
+          subtitle: 'Geofence-based task reminders',
           onPress: () =>
             Alert.alert(
-              "Location Reminders",
-              "Location-based reminders allow you to get notified when you arrive at or leave specific locations.\n\n" +
-                "This feature uses geofencing to trigger task reminders based on your location. " +
-                "Currently configured in task creation screen.",
-              [{ text: "Got it" }],
+              'Location Reminders',
+              'Location-based reminders allow you to get notified when you arrive at or leave specific locations.\n\n' +
+                'This feature uses geofencing to trigger task reminders based on your location. ' +
+                'Currently configured in task creation screen.',
+              [{ text: 'Got it' }],
             ),
           showChevron: true,
         },
       ],
     },
     {
-      title: "Data & Privacy",
+      title: 'Data & Privacy',
       items: [
         {
-          icon: "lock-closed-outline",
-          label: "Change Vault Password",
+          icon: 'lock-closed-outline',
+          label: 'Change Vault Password',
           onPress: handleChangePassword,
           showChevron: true,
         },
         {
-          icon: "download-outline",
-          label: "Export Data",
-          subtitle: "Export all your data",
+          icon: 'download-outline',
+          label: 'Export Data',
+          subtitle: 'Export all your data',
           onPress: handleExportData,
           showChevron: true,
         },
         {
-          icon: "trash-outline",
-          label: "Clear All Data",
-          subtitle: "Delete all local data",
+          icon: 'trash-outline',
+          label: 'Clear All Data',
+          subtitle: 'Delete all local data',
           onPress: handleClearAllData,
           showChevron: true,
           destructive: true,
@@ -625,29 +586,24 @@ export default function MoreScreen() {
       ],
     },
     {
-      title: "About",
+      title: 'About',
       items: [
         {
-          icon: "information-circle-outline",
-          label: "Version",
-          subtitle: "1.0.0",
+          icon: 'information-circle-outline',
+          label: 'Version',
+          subtitle: '1.0.0',
         },
         {
-          icon: "document-text-outline",
-          label: "Documentation",
-          onPress: () =>
-            Alert.alert(
-              "Documentation",
-              "View the full documentation at noteece.com",
-            ),
+          icon: 'document-text-outline',
+          label: 'Documentation',
+          onPress: () => Alert.alert('Documentation', 'View the full documentation at noteece.com'),
           showChevron: true,
         },
         {
-          icon: "heart-outline",
-          label: "Open Source",
-          subtitle: "Built with ❤️ as open source",
-          onPress: () =>
-            Alert.alert("Open Source", "Noteece is open source on GitHub"),
+          icon: 'heart-outline',
+          label: 'Open Source',
+          subtitle: 'Built with ❤️ as open source',
+          onPress: () => Alert.alert('Open Source', 'Noteece is open source on GitHub'),
           showChevron: true,
         },
       ],
@@ -664,7 +620,7 @@ export default function MoreScreen() {
       paddingVertical: spacing.md,
     },
     headerTitle: {
-      fontSize: typography.fontSize["2xl"],
+      fontSize: typography.fontSize['2xl'],
       fontFamily: typography.fontFamily.bold,
       color: colors.text,
     },
@@ -675,8 +631,8 @@ export default function MoreScreen() {
       padding: spacing.lg,
     },
     userCard: {
-      flexDirection: "row",
-      alignItems: "center",
+      flexDirection: 'row',
+      alignItems: 'center',
       backgroundColor: colors.surface,
       borderRadius: 16,
       padding: spacing.md,
@@ -688,8 +644,8 @@ export default function MoreScreen() {
       height: 56,
       borderRadius: 28,
       backgroundColor: `${colors.primary}20`,
-      alignItems: "center",
-      justifyContent: "center",
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     userInfo: {
       flex: 1,
@@ -710,8 +666,8 @@ export default function MoreScreen() {
       height: 40,
       borderRadius: 20,
       backgroundColor: `${colors.error}10`,
-      alignItems: "center",
-      justifyContent: "center",
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     section: {
       marginBottom: spacing.xl,
@@ -722,18 +678,18 @@ export default function MoreScreen() {
       color: colors.textTertiary,
       marginBottom: spacing.sm,
       paddingLeft: spacing.sm,
-      textTransform: "uppercase",
+      textTransform: 'uppercase',
       letterSpacing: 0.5,
     },
     sectionItems: {
       backgroundColor: colors.surface,
       borderRadius: 12,
-      overflow: "hidden",
+      overflow: 'hidden',
     },
     settingItem: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       padding: spacing.md,
     },
     settingItemBorder: {
@@ -741,8 +697,8 @@ export default function MoreScreen() {
       borderBottomColor: colors.border,
     },
     settingItemLeft: {
-      flexDirection: "row",
-      alignItems: "center",
+      flexDirection: 'row',
+      alignItems: 'center',
       flex: 1,
       gap: spacing.md,
     },
@@ -751,8 +707,8 @@ export default function MoreScreen() {
       height: 40,
       borderRadius: 20,
       backgroundColor: `${colors.primary}10`,
-      alignItems: "center",
-      justifyContent: "center",
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     settingIconDestructive: {
       backgroundColor: `${colors.error}10`,
@@ -777,15 +733,12 @@ export default function MoreScreen() {
   });
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>More</Text>
       </View>
 
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.scrollContent}
-      >
+      <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
         {/* User Info Card */}
         <View style={styles.userCard}>
           <View style={styles.userAvatar}>
@@ -796,11 +749,7 @@ export default function MoreScreen() {
             <Text style={styles.userEmail}>Encrypted vault active</Text>
           </View>
           <TouchableOpacity style={styles.lockButton} onPress={handleLockVault}>
-            <Ionicons
-              name="lock-closed-outline"
-              size={20}
-              color={colors.error}
-            />
+            <Ionicons name="lock-closed-outline" size={20} color={colors.error} />
           </TouchableOpacity>
         </View>
 
@@ -812,71 +761,49 @@ export default function MoreScreen() {
               {section.items.map((item, itemIndex) => (
                 <TouchableOpacity
                   key={itemIndex}
-                  style={[
-                    styles.settingItem,
-                    itemIndex !== section.items.length - 1 &&
-                      styles.settingItemBorder,
-                  ]}
-                  onPress={"toggle" in item ? undefined : item.onPress}
-                  disabled={!("onPress" in item) && !("toggle" in item)}
-                  activeOpacity={"toggle" in item ? 1 : 0.7}
+                  style={[styles.settingItem, itemIndex !== section.items.length - 1 && styles.settingItemBorder]}
+                  onPress={'toggle' in item ? undefined : item.onPress}
+                  disabled={!('onPress' in item) && !('toggle' in item)}
+                  activeOpacity={'toggle' in item ? 1 : 0.7}
                 >
                   <View style={styles.settingItemLeft}>
                     <View
                       style={[
                         styles.settingIcon,
-                        "destructive" in item &&
-                          item.destructive &&
-                          styles.settingIconDestructive,
+                        'destructive' in item && item.destructive && styles.settingIconDestructive,
                       ]}
                     >
                       <Ionicons
                         name={item.icon as any}
                         size={22}
-                        color={
-                          "destructive" in item && item.destructive
-                            ? colors.error
-                            : colors.primary
-                        }
+                        color={'destructive' in item && item.destructive ? colors.error : colors.primary}
                       />
                     </View>
                     <View style={styles.settingItemText}>
                       <Text
                         style={[
                           styles.settingLabel,
-                          "destructive" in item &&
-                            item.destructive &&
-                            styles.settingLabelDestructive,
+                          'destructive' in item && item.destructive && styles.settingLabelDestructive,
                         ]}
                       >
                         {item.label}
                       </Text>
-                      {item.subtitle && (
-                        <Text style={styles.settingSubtitle}>
-                          {item.subtitle}
-                        </Text>
-                      )}
+                      {item.subtitle && <Text style={styles.settingSubtitle}>{item.subtitle}</Text>}
                     </View>
                   </View>
 
-                  {"toggle" in item && item.toggle ? (
+                  {'toggle' in item && item.toggle ? (
                     <Switch
-                      value={"value" in item ? item.value : false}
-                      onValueChange={
-                        "onToggle" in item ? item.onToggle : undefined
-                      }
+                      value={'value' in item ? item.value : false}
+                      onValueChange={'onToggle' in item ? item.onToggle : undefined}
                       trackColor={{
                         false: colors.surface,
                         true: colors.primary,
                       }}
                       thumbColor={colors.text}
                     />
-                  ) : "showChevron" in item && item.showChevron ? (
-                    <Ionicons
-                      name="chevron-forward"
-                      size={20}
-                      color={colors.textTertiary}
-                    />
+                  ) : 'showChevron' in item && item.showChevron ? (
+                    <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
                   ) : null}
                 </TouchableOpacity>
               ))}

@@ -1,6 +1,6 @@
 /**
  * Social Config Service
- * 
+ *
  * Connects the externalized social_selectors.json to the Desktop app's
  * WebView components for social media content capture.
  */
@@ -74,7 +74,7 @@ const DEFAULT_CONFIG: SocialConfig = {
   captureSettings: {
     debounceMs: 150,
     maxBufferSize: 100,
-    autoSaveInterval: 30000,
+    autoSaveInterval: 30_000,
     enableScreenshots: false,
     enableTextCapture: true,
   },
@@ -103,9 +103,9 @@ class SocialConfigService {
       const configText = await readTextFile(resourcePath);
       this.config = JSON.parse(configText) as SocialConfig;
       this.loaded = true;
-      logger.info('[SocialConfig] Loaded configuration', { 
+      logger.info('[SocialConfig] Loaded configuration', {
         version: this.config.version,
-        platforms: Object.keys(this.config.platforms).length 
+        platforms: Object.keys(this.config.platforms).length,
       });
     } catch (error) {
       logger.warn('[SocialConfig] Failed to load config, using defaults', { error });
@@ -300,4 +300,3 @@ class SocialConfigService {
 
 // Singleton instance
 export const socialConfigService = new SocialConfigService();
-

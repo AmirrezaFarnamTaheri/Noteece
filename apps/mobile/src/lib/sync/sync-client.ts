@@ -3,14 +3,14 @@
  * Implements the sync protocol for offline-first, encrypted synchronization
  */
 
-import { nanoid } from "nanoid/non-secure";
-import * as Crypto from "expo-crypto";
-import { dbQuery, dbExecute } from "@/lib/database";
-import { chacha20poly1305 } from "@noble/ciphers/chacha";
-import { sha256 } from "@noble/hashes/sha256";
-import { hmac } from "@noble/hashes/hmac";
-import { x25519 } from "@noble/curves/ed25519";
-import Zeroconf from "react-native-zeroconf";
+import { nanoid } from 'nanoid/non-secure';
+import * as Crypto from 'expo-crypto';
+import { dbQuery, dbExecute } from '@/lib/database';
+import { chacha20poly1305 } from '@noble/ciphers/chacha';
+import { sha256 } from '@noble/hashes/sha256';
+import { hmac } from '@noble/hashes/hmac';
+import { x25519 } from '@noble/curves/ed25519';
+import Zeroconf from 'react-native-zeroconf';
 
 export interface SyncManifest {
   deviceId: string;
@@ -20,17 +20,9 @@ export interface SyncManifest {
 }
 
 export interface ChangeEntry {
-  entityType:
-    | "note"
-    | "task"
-    | "project"
-    | "time_entry"
-    | "health_metric"
-    | "track"
-    | "playlist"
-    | "calendar_event";
+  entityType: 'note' | 'task' | 'project' | 'time_entry' | 'health_metric' | 'track' | 'playlist' | 'calendar_event';
   entityId: string;
-  operation: "create" | "update" | "delete";
+  operation: 'create' | 'update' | 'delete';
   timestamp: number;
   dependencyChain: string[];
 }
@@ -75,9 +67,9 @@ export class SyncClient {
         resolve(devices);
       }, scanDurationMs);
 
-      this.zeroconf.scan("noteece-sync", "tcp", "local.");
+      this.zeroconf.scan('noteece-sync', 'tcp', 'local.');
 
-      this.zeroconf.on("resolved", (data: any) => {
+      this.zeroconf.on('resolved', (data: any) => {
         // Filter for our service type
         if (data.name && data.addresses && data.addresses.length > 0) {
           devices.push({
@@ -89,7 +81,7 @@ export class SyncClient {
         }
       });
 
-      this.zeroconf.on("error", (err: any) => {
+      this.zeroconf.on('error', (err: any) => {
         clearTimeout(timeout);
         this.zeroconf.stop();
         reject(err);
@@ -100,27 +92,16 @@ export class SyncClient {
   /**
    * Initiate sync with a discovered device
    */
-  async initiateSync(
-    targetDeviceId: string,
-    targetAddress: string,
-    targetPort: number = 8765,
-  ): Promise<boolean> {
+  async initiateSync(targetDeviceId: string, targetAddress: string, targetPort: number = 8765): Promise<boolean> {
     try {
       // 1. Establish secure connection
-      const ws = await this.establishSecureConnection(
-        targetAddress,
-        targetPort,
-      );
+      const ws = await this.establishSecureConnection(targetAddress, targetPort);
 
       // 2. Get last sync timestamp
       const lastSync = await this.getLastSyncTimestamp(targetDeviceId);
 
       // 3. Request sync manifest from target
-      const manifest = await this.requestSyncManifest(
-        ws,
-        targetDeviceId,
-        lastSync,
-      );
+      const manifest = await this.requestSyncManifest(ws, targetDeviceId, lastSync);
 
       // 4. Pull changes
       await this.pullChanges(ws, manifest);
@@ -134,7 +115,7 @@ export class SyncClient {
       ws.close();
       return true;
     } catch (error) {
-      console.error("Sync failed:", error);
+      console.error('Sync failed:', error);
       return false;
     }
   }
@@ -142,26 +123,23 @@ export class SyncClient {
   /**
    * Establish secure connection with ECDH key exchange
    */
-  private async establishSecureConnection(
-    address: string,
-    port: number,
-  ): Promise<WebSocket> {
+  private async establishSecureConnection(address: string, port: number): Promise<WebSocket> {
     return new Promise((resolve, reject) => {
       const ws = new WebSocket(`ws://${address}:${port}/sync`);
 
       // Generate ephemeral keys for this session
       const privateKey = x25519.utils.randomPrivateKey();
       const publicKey = x25519.getPublicKey(privateKey);
-      const publicKeyHex = Buffer.from(publicKey).toString("hex");
+      const publicKeyHex = Buffer.from(publicKey).toString('hex');
 
       ws.onopen = async () => {
         try {
           // Send handshake with our public key
           ws.send(
             JSON.stringify({
-              type: "handshake",
+              type: 'handshake',
               deviceId: this.deviceId,
-              version: "1.0",
+              version: '1.0',
               publicKey: publicKeyHex,
             }),
           );
@@ -170,37 +148,36 @@ export class SyncClient {
           const handshakeHandler = (e: WebSocketMessageEvent) => {
             try {
               const data = JSON.parse(e.data);
-              if (data.type === "handshake_response") {
-                 ws.removeEventListener("message", handshakeHandler);
+              if (data.type === 'handshake_response') {
+                ws.removeEventListener('message', handshakeHandler);
 
-                 if (!data.publicKey) {
-                   reject(new Error("Peer did not provide public key"));
-                   return;
-                 }
+                if (!data.publicKey) {
+                  reject(new Error('Peer did not provide public key'));
+                  return;
+                }
 
-                 // Peer public key (hex to bytes)
-                 const peerPublicKey = Uint8Array.from(Buffer.from(data.publicKey, "hex"));
+                // Peer public key (hex to bytes)
+                const peerPublicKey = Uint8Array.from(Buffer.from(data.publicKey, 'hex'));
 
-                 // Compute Shared Secret
-                 const sharedSecret = x25519.getSharedSecret(privateKey, peerPublicKey);
+                // Compute Shared Secret
+                const sharedSecret = x25519.getSharedSecret(privateKey, peerPublicKey);
 
-                 // Derive Session Key using HMAC-SHA256 (acting as simple KDF)
-                 // In a full implementation, we would use HKDF with salt and info
-                 this.sessionKey = hmac(sha256, sharedSecret, new Uint8Array(0)); // using shared secret as key, empty salt
+                // Derive Session Key using HMAC-SHA256 (acting as simple KDF)
+                // In a full implementation, we would use HKDF with salt and info
+                this.sessionKey = hmac(sha256, sharedSecret, new Uint8Array(0)); // using shared secret as key, empty salt
 
-                 this.peerAuthenticated = true;
-                 resolve(ws);
-              } else if (data.type === "error") {
-                 ws.removeEventListener("message", handshakeHandler);
-                 reject(new Error(`Handshake error: ${data.message}`));
+                this.peerAuthenticated = true;
+                resolve(ws);
+              } else if (data.type === 'error') {
+                ws.removeEventListener('message', handshakeHandler);
+                reject(new Error(`Handshake error: ${data.message}`));
               }
             } catch (err) {
-               reject(err);
+              reject(err);
             }
           };
 
-          ws.addEventListener("message", handshakeHandler);
-
+          ws.addEventListener('message', handshakeHandler);
         } catch (e) {
           reject(e);
         }
@@ -216,10 +193,7 @@ export class SyncClient {
    * Get last sync timestamp for a device
    */
   private async getLastSyncTimestamp(deviceId: string): Promise<number> {
-    const result = await dbQuery(
-      `SELECT last_sync_timestamp FROM sync_state WHERE device_id = ?`,
-      [deviceId],
-    );
+    const result = await dbQuery(`SELECT last_sync_timestamp FROM sync_state WHERE device_id = ?`, [deviceId]);
 
     return result.length > 0 ? result[0].last_sync_timestamp : 0;
   }
@@ -227,27 +201,23 @@ export class SyncClient {
   /**
    * Request sync manifest from target device via WebSocket
    */
-  private async requestSyncManifest(
-    ws: WebSocket,
-    deviceId: string,
-    sinceTimestamp: number,
-  ): Promise<SyncManifest> {
+  private async requestSyncManifest(ws: WebSocket, deviceId: string, sinceTimestamp: number): Promise<SyncManifest> {
     return new Promise((resolve, reject) => {
       const requestId = nanoid();
 
       const handler = (e: WebSocketMessageEvent) => {
         const data = JSON.parse(e.data);
-        if (data.type === "manifest_response" && data.requestId === requestId) {
-          ws.removeEventListener("message", handler);
+        if (data.type === 'manifest_response' && data.requestId === requestId) {
+          ws.removeEventListener('message', handler);
           resolve(data.manifest);
         }
       };
 
-      ws.addEventListener("message", handler);
+      ws.addEventListener('message', handler);
 
       ws.send(
         JSON.stringify({
-          type: "get_manifest",
+          type: 'get_manifest',
           requestId,
           since: sinceTimestamp,
         }),
@@ -255,8 +225,8 @@ export class SyncClient {
 
       // Timeout fallback
       setTimeout(() => {
-        ws.removeEventListener("message", handler);
-        reject(new Error("Timeout waiting for manifest"));
+        ws.removeEventListener('message', handler);
+        reject(new Error('Timeout waiting for manifest'));
       }, 10000);
     });
   }
@@ -264,10 +234,7 @@ export class SyncClient {
   /**
    * Pull changes from remote device
    */
-  private async pullChanges(
-    ws: WebSocket,
-    manifest: SyncManifest,
-  ): Promise<void> {
+  private async pullChanges(ws: WebSocket, manifest: SyncManifest): Promise<void> {
     for (const change of manifest.changes) {
       const delta = await this.requestDelta(ws, change);
       await this.applyChange(delta);
@@ -277,16 +244,13 @@ export class SyncClient {
   /**
    * Request encrypted delta for a change
    */
-  private async requestDelta(
-    ws: WebSocket,
-    change: ChangeEntry,
-  ): Promise<SyncDelta> {
+  private async requestDelta(ws: WebSocket, change: ChangeEntry): Promise<SyncDelta> {
     return new Promise((resolve, reject) => {
       const requestId = nanoid();
       const handler = (e: WebSocketMessageEvent) => {
         const data = JSON.parse(e.data);
-        if (data.type === "delta_response" && data.requestId === requestId) {
-          ws.removeEventListener("message", handler);
+        if (data.type === 'delta_response' && data.requestId === requestId) {
+          ws.removeEventListener('message', handler);
           // Convert hex/base64 payload back to Uint8Array if needed
           // Assuming server sends base64
           // const payload = Uint8Array.from(atob(data.delta.payload), c => c.charCodeAt(0));
@@ -294,11 +258,11 @@ export class SyncClient {
           resolve(data.delta);
         }
       };
-      ws.addEventListener("message", handler);
+      ws.addEventListener('message', handler);
 
       ws.send(
         JSON.stringify({
-          type: "get_delta",
+          type: 'get_delta',
           requestId,
           entityId: change.entityId,
           entityType: change.entityType,
@@ -312,75 +276,64 @@ export class SyncClient {
    */
   private async applyChange(delta: SyncDelta): Promise<void> {
     // Validate operation type
-    const validOps = new Set(["create", "update", "delete"]);
+    const validOps = new Set(['create', 'update', 'delete']);
     if (!validOps.has(delta.operation)) {
       throw new Error(`Invalid operation: ${delta.operation}`);
     }
 
     // Validate entity type
     const validTypes = new Set([
-      "task",
-      "note",
-      "time_entry",
-      "health_metric",
-      "track",
-      "playlist",
-      "calendar_event",
-      "location_trigger",
-      "nfc_trigger",
+      'task',
+      'note',
+      'time_entry',
+      'health_metric',
+      'track',
+      'playlist',
+      'calendar_event',
+      'location_trigger',
+      'nfc_trigger',
     ]);
     if (!validTypes.has(delta.entityType)) {
       throw new Error(`Invalid entity type: ${delta.entityType}`);
     }
 
     // Validate entity ID
-    if (
-      !delta.entityId ||
-      typeof delta.entityId !== "string" ||
-      delta.entityId.length === 0
-    ) {
-      throw new Error("Invalid entity ID");
+    if (!delta.entityId || typeof delta.entityId !== 'string' || delta.entityId.length === 0) {
+      throw new Error('Invalid entity ID');
     }
 
     // Verify signature
     if (delta.signature) {
-      const isValid = await this.verifyDeltaSignature(
-        delta.encryptedPayload,
-        delta.signature,
-      );
+      const isValid = await this.verifyDeltaSignature(delta.encryptedPayload, delta.signature);
       if (!isValid) {
-        throw new Error(
-          "Delta signature verification failed - possible tampering detected",
-        );
+        throw new Error('Delta signature verification failed - possible tampering detected');
       }
     }
 
     // Decrypt payload when needed
     let payload: any = null;
-    if (delta.operation === "create" || delta.operation === "update") {
+    if (delta.operation === 'create' || delta.operation === 'update') {
       // Validate payload exists
       if (!delta.encryptedPayload || delta.encryptedPayload.length === 0) {
-        throw new Error(
-          "Missing encrypted payload for create/update operation",
-        );
+        throw new Error('Missing encrypted payload for create/update operation');
       }
 
       // Decrypt payload
       payload = await this.decryptPayload(delta.encryptedPayload);
 
       // Validate decrypted payload
-      if (!payload || typeof payload !== "object") {
-        throw new Error("Decrypted payload is invalid or not an object");
+      if (!payload || typeof payload !== 'object') {
+        throw new Error('Decrypted payload is invalid or not an object');
       }
     }
 
     // Apply based on operation type
     switch (delta.operation) {
-      case "create":
-      case "update":
+      case 'create':
+      case 'update':
         await this.upsertEntity(delta.entityType, delta.entityId, payload);
         break;
-      case "delete":
+      case 'delete':
         await this.deleteEntity(delta.entityType, delta.entityId);
         break;
     }
@@ -394,7 +347,7 @@ export class SyncClient {
    */
   private ensureAuthenticatedSession(): void {
     if (!this.sessionKey || !this.peerAuthenticated) {
-      throw new Error("No authenticated secure session established");
+      throw new Error('No authenticated secure session established');
     }
   }
 
@@ -407,9 +360,7 @@ export class SyncClient {
 
     // Validate payload (minimum: 12 bytes nonce + 16 bytes tag + 1 byte data)
     if (!encryptedPayload || encryptedPayload.length < 29) {
-      throw new Error(
-        "Cannot decrypt payload: payload is too small or invalid",
-      );
+      throw new Error('Cannot decrypt payload: payload is too small or invalid');
     }
 
     try {
@@ -425,141 +376,112 @@ export class SyncClient {
       const jsonString = new TextDecoder().decode(decrypted);
       return JSON.parse(jsonString);
     } catch (error) {
-      throw new Error(
-        `Payload decryption failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      throw new Error(`Payload decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   /**
    * Upsert entity into database with column validation
    */
-  private async upsertEntity(
-    entityType: string,
-    entityId: string,
-    data: any,
-  ): Promise<void> {
+  private async upsertEntity(entityType: string, entityId: string, data: any): Promise<void> {
     // Use explicit table mapping to prevent SQL injection
     const tableMap: Record<string, string> = {
-      task: "task",
-      note: "note",
-      time_entry: "time_entry",
-      health_metric: "health_metric",
-      track: "track",
-      playlist: "playlist",
-      calendar_event: "calendar_event",
-      location_trigger: "location_trigger",
-      nfc_trigger: "nfc_trigger",
+      task: 'task',
+      note: 'note',
+      time_entry: 'time_entry',
+      health_metric: 'health_metric',
+      track: 'track',
+      playlist: 'playlist',
+      calendar_event: 'calendar_event',
+      location_trigger: 'location_trigger',
+      nfc_trigger: 'nfc_trigger',
     };
 
     // Define allowed columns for each table to prevent SQL injection
     const allowedColumns: Record<string, Set<string>> = {
       task: new Set([
-        "id",
-        "space_id",
-        "project_id",
-        "title",
-        "description",
-        "status",
-        "priority",
-        "due_at",
-        "completed_at",
-        "progress",
-        "created_at",
-        "updated_at",
+        'id',
+        'space_id',
+        'project_id',
+        'title',
+        'description',
+        'status',
+        'priority',
+        'due_at',
+        'completed_at',
+        'progress',
+        'created_at',
+        'updated_at',
       ]),
-      note: new Set([
-        "id",
-        "space_id",
-        "title",
-        "content",
-        "tags",
-        "created_at",
-        "updated_at",
-      ]),
+      note: new Set(['id', 'space_id', 'title', 'content', 'tags', 'created_at', 'updated_at']),
       time_entry: new Set([
-        "id",
-        "space_id",
-        "task_id",
-        "project_id",
-        "description",
-        "started_at",
-        "ended_at",
-        "duration_seconds",
-        "is_running",
+        'id',
+        'space_id',
+        'task_id',
+        'project_id',
+        'description',
+        'started_at',
+        'ended_at',
+        'duration_seconds',
+        'is_running',
       ]),
-      health_metric: new Set([
-        "id",
-        "space_id",
-        "metric_type",
-        "value",
-        "unit",
-        "notes",
-        "recorded_at",
-        "created_at",
-      ]),
+      health_metric: new Set(['id', 'space_id', 'metric_type', 'value', 'unit', 'notes', 'recorded_at', 'created_at']),
       track: new Set([
-        "id",
-        "space_id",
-        "title",
-        "artist",
-        "album",
-        "duration",
-        "uri",
-        "artwork_url",
-        "genre",
-        "year",
-        "track_number",
-        "play_count",
-        "last_played_at",
-        "is_favorite",
-        "added_at",
-        "updated_at",
+        'id',
+        'space_id',
+        'title',
+        'artist',
+        'album',
+        'duration',
+        'uri',
+        'artwork_url',
+        'genre',
+        'year',
+        'track_number',
+        'play_count',
+        'last_played_at',
+        'is_favorite',
+        'added_at',
+        'updated_at',
       ]),
       playlist: new Set([
-        "id",
-        "space_id",
-        "name",
-        "description",
-        "artwork_url",
-        "is_smart_playlist",
-        "smart_criteria_json",
-        "created_at",
-        "updated_at",
+        'id',
+        'space_id',
+        'name',
+        'description',
+        'artwork_url',
+        'is_smart_playlist',
+        'smart_criteria_json',
+        'created_at',
+        'updated_at',
       ]),
       calendar_event: new Set([
-        "id",
-        "space_id",
-        "title",
-        "description",
-        "start_time",
-        "end_time",
-        "location",
-        "source",
-        "color",
-        "all_day",
-        "recurrence_rule",
-        "created_at",
-        "updated_at",
-        "synced_at",
+        'id',
+        'space_id',
+        'title',
+        'description',
+        'start_time',
+        'end_time',
+        'location',
+        'source',
+        'color',
+        'all_day',
+        'recurrence_rule',
+        'created_at',
+        'updated_at',
+        'synced_at',
       ]),
       location_trigger: new Set([
-        "id",
-        "task_id",
-        "location_type",
-        "latitude",
-        "longitude",
-        "radius_meters",
-        "enabled",
-        "created_at",
+        'id',
+        'task_id',
+        'location_type',
+        'latitude',
+        'longitude',
+        'radius_meters',
+        'enabled',
+        'created_at',
       ]),
-      nfc_trigger: new Set([
-        "id",
-        "tag_id",
-        "action_type",
-        "parameters",
-        "created_at",
-      ]),
+      nfc_trigger: new Set(['id', 'tag_id', 'action_type', 'parameters', 'created_at']),
     };
 
     const tableName = tableMap[entityType];
@@ -567,50 +489,46 @@ export class SyncClient {
       throw new Error(`Invalid entity type: ${entityType}`);
     }
 
-    if (!data || typeof data !== "object") {
-      throw new Error("Invalid entity data: must be an object");
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid entity data: must be an object');
     }
 
     // Build column names and values dynamically from data
     const columns = Object.keys(data);
     if (columns.length === 0) {
-      throw new Error("Entity data cannot be empty");
+      throw new Error('Entity data cannot be empty');
     }
 
     // Validate all columns are allowed for this table
     const allowed = allowedColumns[entityType];
     if (!allowed) {
-      throw new Error(
-        `No column whitelist defined for entity type: ${entityType}`,
-      );
+      throw new Error(`No column whitelist defined for entity type: ${entityType}`);
     }
 
     for (const col of columns) {
       if (!allowed.has(col)) {
-        throw new Error(
-          `Column '${col}' is not allowed for entity type '${entityType}'`,
-        );
+        throw new Error(`Column '${col}' is not allowed for entity type '${entityType}'`);
       }
     }
 
     // Ensure id is included
-    if (!columns.includes("id")) {
+    if (!columns.includes('id')) {
       data.id = entityId;
-      columns.push("id");
+      columns.push('id');
     }
 
-    const placeholders = columns.map(() => "?").join(", ");
+    const placeholders = columns.map(() => '?').join(', ');
     const values = columns.map((col) => data[col]);
 
     // Build UPDATE clause for ON CONFLICT
     const updateClauses = columns
-      .filter((col) => col !== "id") // Don't update id
+      .filter((col) => col !== 'id') // Don't update id
       .map((col) => `${col} = excluded.${col}`)
-      .join(", ");
+      .join(', ');
 
     // SQLite UPSERT syntax: INSERT ... ON CONFLICT DO UPDATE
     const query = `
-      INSERT INTO ${tableName} (${columns.join(", ")})
+      INSERT INTO ${tableName} (${columns.join(', ')})
       VALUES (${placeholders})
       ON CONFLICT(id) DO UPDATE SET ${updateClauses}
     `;
@@ -619,30 +537,25 @@ export class SyncClient {
       await dbExecute(query, values);
     } catch (error) {
       console.error(`Failed to upsert ${entityType} entity:`, error);
-      throw new Error(
-        `Upsert failed for ${entityType}: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      throw new Error(`Upsert failed for ${entityType}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   /**
    * Delete entity from database
    */
-  private async deleteEntity(
-    entityType: string,
-    entityId: string,
-  ): Promise<void> {
+  private async deleteEntity(entityType: string, entityId: string): Promise<void> {
     // Use explicit table mapping to prevent SQL injection
     const tableMap: Record<string, string> = {
-      task: "task",
-      note: "note",
-      time_entry: "time_entry",
-      health_metric: "health_metric",
-      track: "track",
-      playlist: "playlist",
-      calendar_event: "calendar_event",
-      location_trigger: "location_trigger",
-      nfc_trigger: "nfc_trigger",
+      task: 'task',
+      note: 'note',
+      time_entry: 'time_entry',
+      health_metric: 'health_metric',
+      track: 'track',
+      playlist: 'playlist',
+      calendar_event: 'calendar_event',
+      location_trigger: 'location_trigger',
+      nfc_trigger: 'nfc_trigger',
     };
 
     const tableName = tableMap[entityType];
@@ -656,21 +569,14 @@ export class SyncClient {
   /**
    * Update vector clock for entity
    */
-  private async updateVectorClock(
-    entityId: string,
-    clock: Record<string, number>,
-  ): Promise<void> {
+  private async updateVectorClock(entityId: string, clock: Record<string, number>): Promise<void> {
     // Store vector clock for CRDT conflict resolution
   }
 
   /**
    * Push local changes to remote device
    */
-  private async pushChanges(
-    ws: WebSocket,
-    targetDeviceId: string,
-    sinceTimestamp: number,
-  ): Promise<void> {
+  private async pushChanges(ws: WebSocket, targetDeviceId: string, sinceTimestamp: number): Promise<void> {
     const localChanges = await this.getLocalChanges(sinceTimestamp);
 
     for (const change of localChanges) {
@@ -682,9 +588,7 @@ export class SyncClient {
   /**
    * Get local changes since timestamp
    */
-  private async getLocalChanges(
-    sinceTimestamp: number,
-  ): Promise<ChangeEntry[]> {
+  private async getLocalChanges(sinceTimestamp: number): Promise<ChangeEntry[]> {
     const changes = await dbQuery(
       `SELECT * FROM sync_queue
        WHERE created_at > ? AND synced = 0
@@ -705,10 +609,7 @@ export class SyncClient {
    * Create encrypted delta from change
    */
   private async createEncryptedDelta(change: ChangeEntry): Promise<SyncDelta> {
-    const entityData = await this.fetchEntityData(
-      change.entityType,
-      change.entityId,
-    );
+    const entityData = await this.fetchEntityData(change.entityType, change.entityId);
 
     const encryptedPayload = await this.encryptPayload(entityData);
     const signature = await this.signDelta(encryptedPayload);
@@ -727,20 +628,17 @@ export class SyncClient {
   /**
    * Fetch entity data from database
    */
-  private async fetchEntityData(
-    entityType: string,
-    entityId: string,
-  ): Promise<any> {
+  private async fetchEntityData(entityType: string, entityId: string): Promise<any> {
     const tableMap: Record<string, string> = {
-      task: "task",
-      note: "note",
-      time_entry: "time_entry",
-      health_metric: "health_metric",
-      track: "track",
-      playlist: "playlist",
-      calendar_event: "calendar_event",
-      location_trigger: "location_trigger",
-      nfc_trigger: "nfc_trigger",
+      task: 'task',
+      note: 'note',
+      time_entry: 'time_entry',
+      health_metric: 'health_metric',
+      track: 'track',
+      playlist: 'playlist',
+      calendar_event: 'calendar_event',
+      location_trigger: 'location_trigger',
+      nfc_trigger: 'nfc_trigger',
     };
 
     const tableName = tableMap[entityType];
@@ -748,9 +646,7 @@ export class SyncClient {
       throw new Error(`Invalid entity type: ${entityType}`);
     }
 
-    const result = await dbQuery(`SELECT * FROM ${tableName} WHERE id = ?`, [
-      entityId,
-    ]);
+    const result = await dbQuery(`SELECT * FROM ${tableName} WHERE id = ?`, [entityId]);
 
     return result.length > 0 ? result[0] : null;
   }
@@ -761,8 +657,8 @@ export class SyncClient {
   private async encryptPayload(data: any): Promise<Uint8Array> {
     this.ensureAuthenticatedSession();
 
-    if (!data || typeof data !== "object") {
-      throw new Error("Cannot encrypt payload: data must be an object");
+    if (!data || typeof data !== 'object') {
+      throw new Error('Cannot encrypt payload: data must be an object');
     }
 
     try {
@@ -779,9 +675,7 @@ export class SyncClient {
 
       return encrypted;
     } catch (error) {
-      throw new Error(
-        `Payload encryption failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      throw new Error(`Payload encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -792,28 +686,23 @@ export class SyncClient {
     this.ensureAuthenticatedSession();
 
     if (!payload || payload.length === 0) {
-      throw new Error("Cannot sign delta: payload is empty or invalid");
+      throw new Error('Cannot sign delta: payload is empty or invalid');
     }
 
     try {
       const signature = hmac(sha256, this.sessionKey!, payload);
       return Array.from(signature)
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
     } catch (error) {
-      throw new Error(
-        `Delta signing failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      throw new Error(`Delta signing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   /**
    * Verify delta signature
    */
-  private async verifyDeltaSignature(
-    payload: Uint8Array,
-    signature: string,
-  ): Promise<boolean> {
+  private async verifyDeltaSignature(payload: Uint8Array, signature: string): Promise<boolean> {
     this.ensureAuthenticatedSession();
 
     try {
@@ -827,7 +716,7 @@ export class SyncClient {
       }
       return diff === 0;
     } catch (error) {
-      console.error("Signature verification failed:", error);
+      console.error('Signature verification failed:', error);
       return false;
     }
   }
@@ -835,14 +724,10 @@ export class SyncClient {
   /**
    * Send delta to remote device via WebSocket
    */
-  private async sendDelta(
-    ws: WebSocket,
-    deviceId: string,
-    delta: SyncDelta,
-  ): Promise<void> {
+  private async sendDelta(ws: WebSocket, deviceId: string, delta: SyncDelta): Promise<void> {
     ws.send(
       JSON.stringify({
-        type: "push_delta",
+        type: 'push_delta',
         delta,
       }),
     );
@@ -870,7 +755,7 @@ export class SyncClient {
          last_sync_timestamp = excluded.last_sync_timestamp,
          last_sync_direction = excluded.last_sync_direction,
          updated_at = excluded.updated_at`,
-      [deviceId, "Desktop", now, "bidirectional", now, now],
+      [deviceId, 'Desktop', now, 'bidirectional', now, now],
     );
   }
 
@@ -880,7 +765,7 @@ export class SyncClient {
   async queueChange(
     entityType: string,
     entityId: string,
-    operation: "create" | "update" | "delete",
+    operation: 'create' | 'update' | 'delete',
     data: any,
   ): Promise<void> {
     const now = Date.now();

@@ -34,11 +34,7 @@ import { useStore } from '../../store';
 import { DeviceList } from './DeviceList';
 import { SyncHistory } from './SyncHistory';
 import { ConflictResolver } from './ConflictResolver';
-import type {
-  SyncDevice,
-  SyncConflict,
-  SyncHistoryEntry,
-} from './types';
+import type { SyncDevice, SyncConflict, SyncHistoryEntry } from './types';
 
 // Map backend types to component types
 interface BackendSyncDevice {
@@ -121,7 +117,7 @@ const SyncStatus: React.FC = () => {
       if (!activeSpaceId) throw new Error('No active space');
       setIsSyncing(true);
       setSyncProgress(0);
-      
+
       // Simulate progress
       const interval = setInterval(() => {
         setSyncProgress((p) => Math.min(p + 10, 90));
@@ -252,9 +248,13 @@ const SyncStatus: React.FC = () => {
           <Group justify="space-between" mb="xs">
             <Group gap="xs">
               <IconCloudUpload size={16} />
-              <Text size="sm" fw={500}>Syncing...</Text>
+              <Text size="sm" fw={500}>
+                Syncing...
+              </Text>
             </Group>
-            <Text size="sm" c="dimmed">{syncProgress}%</Text>
+            <Text size="sm" c="dimmed">
+              {syncProgress}%
+            </Text>
           </Group>
           <Progress value={syncProgress} animated />
         </Card>
@@ -262,12 +262,8 @@ const SyncStatus: React.FC = () => {
 
       {/* Conflict Alert */}
       {mappedConflicts.length > 0 && (
-        <Alert
-          icon={<IconAlertCircle size={16} />}
-          color="orange"
-          title="Sync Conflicts Detected"
-        >
-          {mappedConflicts.length} conflict{mappedConflicts.length !== 1 ? 's' : ''} need your attention.
+        <Alert icon={<IconAlertCircle size={16} />} color="orange" title="Sync Conflicts Detected">
+          {mappedConflicts.length} conflict{mappedConflicts.length === 1 ? '' : 's'} need your attention.
         </Alert>
       )}
 
@@ -297,8 +293,12 @@ const SyncStatus: React.FC = () => {
               <DeviceList
                 devices={mappedDevices}
                 onSync={(deviceId) => syncMutation.mutate(deviceId)}
-                onPair={() => {/* Open pair modal */}}
-                onUnpair={(deviceId) => {/* Unpair device */}}
+                onPair={() => {
+                  /* Open pair modal */
+                }}
+                onUnpair={(deviceId) => {
+                  /* Unpair device */
+                }}
               />
             </Tabs.Panel>
 
@@ -309,9 +309,7 @@ const SyncStatus: React.FC = () => {
             <Tabs.Panel value="conflicts" pt="md">
               <ConflictResolver
                 conflicts={mappedConflicts}
-                onResolve={(conflictId, resolution) =>
-                  resolveConflictMutation.mutate({ conflictId, resolution })
-                }
+                onResolve={(conflictId, resolution) => resolveConflictMutation.mutate({ conflictId, resolution })}
               />
             </Tabs.Panel>
           </Tabs>
@@ -319,11 +317,7 @@ const SyncStatus: React.FC = () => {
       </Card>
 
       {/* Settings Modal */}
-      <Modal
-        opened={settingsModalOpened}
-        onClose={() => setSettingsModalOpened(false)}
-        title="Sync Settings"
-      >
+      <Modal opened={settingsModalOpened} onClose={() => setSettingsModalOpened(false)} title="Sync Settings">
         <Stack gap="md">
           <Switch
             label="Enable Sync"
@@ -347,15 +341,9 @@ const SyncStatus: React.FC = () => {
               { value: '30', label: 'Every 30 minutes' },
             ]}
           />
-          <TextInput
-            label="Device Name"
-            defaultValue="My Desktop"
-            description="How this device appears to others"
-          />
+          <TextInput label="Device Name" defaultValue="My Desktop" description="How this device appears to others" />
           <Group justify="flex-end" mt="md">
-            <Button onClick={() => setSettingsModalOpened(false)}>
-              Save Settings
-            </Button>
+            <Button onClick={() => setSettingsModalOpened(false)}>Save Settings</Button>
           </Group>
         </Stack>
       </Modal>
@@ -364,4 +352,3 @@ const SyncStatus: React.FC = () => {
 };
 
 export default SyncStatus;
-

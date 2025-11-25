@@ -532,6 +532,7 @@ println!("{:?}", stats);
 ### ✅ Completed (v1.1.0)
 
 **Providers:**
+
 - [x] Ollama provider (local) - Llama 3, Mistral, CodeLlama
 - [x] OpenAI provider - GPT-4, GPT-3.5-turbo
 - [x] Claude provider (Anthropic) - Claude 3 Opus, Sonnet, Haiku
@@ -540,6 +541,7 @@ println!("{:?}", stats);
 - [x] Health checking for all providers
 
 **Core Features:**
+
 - [x] Response caching with SQLite
 - [x] Streaming responses (`streaming.rs`)
 - [x] Batch processing (`batch.rs`)

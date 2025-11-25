@@ -17,9 +17,7 @@ interface ReviewStatsProps {
  * Review Stats Component - Shows session statistics
  */
 export const ReviewStats: React.FC<ReviewStatsProps> = ({ stats }) => {
-  const accuracy = stats.reviewed > 0 
-    ? Math.round((stats.correct / stats.reviewed) * 100) 
-    : 0;
+  const accuracy = stats.reviewed > 0 ? Math.round((stats.correct / stats.reviewed) * 100) : 0;
 
   return (
     <Card withBorder p="md">
@@ -36,37 +34,50 @@ export const ReviewStats: React.FC<ReviewStatsProps> = ({ stats }) => {
               </Text>
             }
           />
-          <Text size="sm" c="dimmed">Accuracy</Text>
+          <Text size="sm" c="dimmed">
+            Accuracy
+          </Text>
         </Stack>
 
         {/* Reviewed Count */}
         <Stack align="center" gap="xs">
           <Group gap={4}>
             <IconBrain size={24} />
-            <Text fw={700} size="xl">{stats.reviewed}</Text>
+            <Text fw={700} size="xl">
+              {stats.reviewed}
+            </Text>
           </Group>
-          <Text size="sm" c="dimmed">Reviewed</Text>
+          <Text size="sm" c="dimmed">
+            Reviewed
+          </Text>
         </Stack>
 
         {/* Correct Count */}
         <Stack align="center" gap="xs">
           <Group gap={4}>
             <IconTrophy size={24} color="gold" />
-            <Text fw={700} size="xl">{stats.correct}</Text>
+            <Text fw={700} size="xl">
+              {stats.correct}
+            </Text>
           </Group>
-          <Text size="sm" c="dimmed">Correct</Text>
+          <Text size="sm" c="dimmed">
+            Correct
+          </Text>
         </Stack>
 
         {/* Streak */}
         <Stack align="center" gap="xs">
           <Group gap={4}>
             <IconFlame size={24} color="orange" />
-            <Text fw={700} size="xl">{stats.streak}</Text>
+            <Text fw={700} size="xl">
+              {stats.streak}
+            </Text>
           </Group>
-          <Text size="sm" c="dimmed">Streak</Text>
+          <Text size="sm" c="dimmed">
+            Streak
+          </Text>
         </Stack>
       </Group>
     </Card>
   );
 };
-

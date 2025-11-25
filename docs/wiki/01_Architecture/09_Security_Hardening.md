@@ -6,12 +6,12 @@ This document describes the security measures implemented in Noteece v1.1.0.
 
 Noteece has achieved **"Secure Beta"** status with industry-standard security practices:
 
-| Security Area | Status | Implementation |
-|--------------|--------|----------------|
-| Transport Encryption | ✅ Secure | ECDH + ChaCha20-Poly1305 |
-| Key Storage | ✅ Secure | Hardware-backed Keystore |
-| Data at Rest | ✅ Secure | SQLCipher AES-256 |
-| Config Backup | ✅ Secure | SQLite redundancy |
+| Security Area         | Status    | Implementation                |
+| --------------------- | --------- | ----------------------------- |
+| Transport Encryption  | ✅ Secure | ECDH + ChaCha20-Poly1305      |
+| Key Storage           | ✅ Secure | Hardware-backed Keystore      |
+| Data at Rest          | ✅ Secure | SQLCipher AES-256             |
+| Config Backup         | ✅ Secure | SQLite redundancy             |
 | Selector Verification | ✅ Secure | Hash + signature verification |
 
 ---
@@ -50,7 +50,7 @@ this.sessionKey = hmac(sha256, sharedSecret, new Uint8Array(0));
 ```typescript
 await SecureStore.setItemAsync(SOCIAL_KEY_STORAGE_KEY, keyToStore, {
   keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-  requireAuthentication: true // Forces biometric prompt
+  requireAuthentication: true, // Forces biometric prompt
 });
 ```
 
@@ -67,6 +67,7 @@ await SecureStore.setItemAsync(SOCIAL_KEY_STORAGE_KEY, keyToStore, {
 ### Problem
 
 The vault's `config.json` contains critical encryption parameters:
+
 - `salt` for key derivation
 - `wrapped_dek` (encrypted Data Encryption Key)
 
@@ -143,8 +144,8 @@ Arrays now merge using SET UNION:
 
 Device A adds "Tag A", Device B adds "Tag B":
 
-| Before | After |
-|--------|-------|
+| Before       | After             |
+| ------------ | ----------------- |
 | Only "Tag B" | "Tag A" + "Tag B" |
 
 ---
@@ -235,5 +236,4 @@ run_startup_maintenance(&mut conn, 7)?; // 7-day retention
 
 ---
 
-*See also: [Security Model](04_Security.md)*
-
+_See also: [Security Model](04_Security.md)_

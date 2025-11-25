@@ -3,15 +3,7 @@
  */
 
 import React, { useMemo } from 'react';
-import {
-  Card,
-  Title,
-  Text,
-  Group,
-  Select,
-  Stack,
-  Badge,
-} from '@mantine/core';
+import { Card, Title, Text, Group, Select, Stack, Badge } from '@mantine/core';
 import {
   LineChart,
   Line,
@@ -55,9 +47,9 @@ export const HealthCharts: React.FC<HealthChartsProps> = ({
     const cutoff = now - rangeMs;
 
     return metrics
-      .filter(m => m.metric_type === selectedType && m.recorded_at * 1000 >= cutoff)
+      .filter((m) => m.metric_type === selectedType && m.recorded_at * 1000 >= cutoff)
       .sort((a, b) => a.recorded_at - b.recorded_at)
-      .map(m => ({
+      .map((m) => ({
         date: new Date(m.recorded_at * 1000).toLocaleDateString(),
         value: m.value,
         notes: m.notes,
@@ -67,11 +59,12 @@ export const HealthCharts: React.FC<HealthChartsProps> = ({
   // Calculate trend
   const trend = useMemo(() => {
     if (chartData.length < 2) return { direction: 'neutral', percentage: 0 };
-    
+
     const first = chartData[0].value;
-    const last = chartData[chartData.length - 1].value;
+    const lastItem = chartData.at(-1);
+    const last = lastItem?.value ?? first;
     const percentage = ((last - first) / first) * 100;
-    
+
     return {
       direction: percentage > 1 ? 'up' : percentage < -1 ? 'down' : 'neutral',
       percentage: Math.abs(percentage),
@@ -84,7 +77,7 @@ export const HealthCharts: React.FC<HealthChartsProps> = ({
     return chartData.reduce((sum, d) => sum + d.value, 0) / chartData.length;
   }, [chartData]);
 
-  const selectedTypeInfo = METRIC_TYPES.find(m => m.value === selectedType);
+  const selectedTypeInfo = METRIC_TYPES.find((m) => m.value === selectedType);
 
   return (
     <Card withBorder>
@@ -122,25 +115,31 @@ export const HealthCharts: React.FC<HealthChartsProps> = ({
           {/* Stats Row */}
           <Group mb="md" gap="lg">
             <Stack gap={0}>
-              <Text size="xs" c="dimmed">Average</Text>
+              <Text size="xs" c="dimmed">
+                Average
+              </Text>
               <Group gap={4}>
                 <Text fw={600}>{average.toFixed(1)}</Text>
-                <Text size="xs" c="dimmed">{selectedTypeInfo?.unit}</Text>
-              </Group>
-            </Stack>
-            <Stack gap={0}>
-              <Text size="xs" c="dimmed">Trend</Text>
-              <Group gap={4}>
-                {trend.direction === 'up' && <IconTrendingUp size={16} color="green" />}
-                {trend.direction === 'down' && <IconTrendingDown size={16} color="red" />}
-                {trend.direction === 'neutral' && <IconMinus size={16} color="gray" />}
-                <Text fw={600}>
-                  {trend.percentage.toFixed(1)}%
+                <Text size="xs" c="dimmed">
+                  {selectedTypeInfo?.unit}
                 </Text>
               </Group>
             </Stack>
             <Stack gap={0}>
-              <Text size="xs" c="dimmed">Data Points</Text>
+              <Text size="xs" c="dimmed">
+                Trend
+              </Text>
+              <Group gap={4}>
+                {trend.direction === 'up' && <IconTrendingUp size={16} color="green" />}
+                {trend.direction === 'down' && <IconTrendingDown size={16} color="red" />}
+                {trend.direction === 'neutral' && <IconMinus size={16} color="gray" />}
+                <Text fw={600}>{trend.percentage.toFixed(1)}%</Text>
+              </Group>
+            </Stack>
+            <Stack gap={0}>
+              <Text size="xs" c="dimmed">
+                Data Points
+              </Text>
               <Text fw={600}>{chartData.length}</Text>
             </Stack>
           </Group>
@@ -151,15 +150,15 @@ export const HealthCharts: React.FC<HealthChartsProps> = ({
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip 
+              <Tooltip
                 formatter={(value: number) => [
-                  `${value} ${selectedTypeInfo?.unit || ''}`, 
-                  selectedTypeInfo?.label || selectedType
+                  `${value} ${selectedTypeInfo?.unit || ''}`,
+                  selectedTypeInfo?.label || selectedType,
                 ]}
               />
-              <Area 
-                type="monotone" 
-                dataKey="value" 
+              <Area
+                type="monotone"
+                dataKey="value"
                 stroke="var(--mantine-color-blue-6)"
                 fill="var(--mantine-color-blue-1)"
                 strokeWidth={2}
@@ -171,4 +170,3 @@ export const HealthCharts: React.FC<HealthChartsProps> = ({
     </Card>
   );
 };
-

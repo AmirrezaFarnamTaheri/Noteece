@@ -5,16 +5,10 @@
  * Prevents app crashes and provides recovery options.
  */
 
-import React, { Component, ReactNode } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { colors, typography, spacing } from "@/lib/theme";
+import React, { Component, ReactNode } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, typography, spacing } from '@/lib/theme';
 
 interface Props {
   children: ReactNode;
@@ -46,7 +40,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("[ErrorBoundary] Caught error:", error, errorInfo);
+    console.error('[ErrorBoundary] Caught error:', error, errorInfo);
 
     this.setState({
       error,
@@ -81,22 +75,13 @@ export class ErrorBoundary extends Component<Props, State> {
             </View>
 
             <Text style={styles.title}>Something went wrong</Text>
-            <Text style={styles.message}>
-              We encountered an unexpected error. Don't worry, your data is
-              safe.
-            </Text>
+            <Text style={styles.message}>We encountered an unexpected error. Don't worry, your data is safe.</Text>
 
             {__DEV__ && this.state.error && (
               <ScrollView style={styles.errorDetails}>
                 <Text style={styles.errorTitle}>Error Details (Dev Only):</Text>
-                <Text style={styles.errorText}>
-                  {this.state.error.toString()}
-                </Text>
-                {this.state.errorInfo && (
-                  <Text style={styles.errorStack}>
-                    {this.state.errorInfo.componentStack}
-                  </Text>
-                )}
+                <Text style={styles.errorText}>{this.state.error.toString()}</Text>
+                {this.state.errorInfo && <Text style={styles.errorStack}>{this.state.errorInfo.componentStack}</Text>}
               </ScrollView>
             )}
 
@@ -116,34 +101,34 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: spacing.xl,
   },
   content: {
     maxWidth: 400,
-    alignItems: "center",
+    alignItems: 'center',
   },
   iconContainer: {
     marginBottom: spacing.xl,
   },
   title: {
-    fontSize: typography.fontSize["2xl"],
+    fontSize: typography.fontSize['2xl'],
     fontFamily: typography.fontFamily.bold,
     color: colors.textPrimary,
     marginBottom: spacing.md,
-    textAlign: "center",
+    textAlign: 'center',
   },
   message: {
     fontSize: typography.fontSize.base,
     fontFamily: typography.fontFamily.regular,
     color: colors.textSecondary,
-    textAlign: "center",
+    textAlign: 'center',
     marginBottom: spacing.xl,
     lineHeight: 24,
   },
   errorDetails: {
-    width: "100%",
+    width: '100%',
     maxHeight: 200,
     backgroundColor: colors.surface,
     borderRadius: 8,
@@ -178,6 +163,6 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.base,
     fontFamily: typography.fontFamily.semibold,
     color: colors.textPrimary,
-    textAlign: "center",
+    textAlign: 'center',
   },
 });

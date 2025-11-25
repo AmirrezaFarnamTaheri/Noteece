@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { TimelineItem, Insight, Task, CalendarEvent } from "@/types";
-import { dbQuery } from "@/lib/database";
-import { colors } from "@/lib/theme";
+import { useState, useEffect } from 'react';
+import { TimelineItem, Insight, Task, CalendarEvent } from '@/types';
+import { dbQuery } from '@/lib/database';
+import { colors } from '@/lib/theme';
 
 interface UseTodayTimelineReturn {
   timeline: TimelineItem[];
@@ -20,11 +20,7 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
       setLoading(true);
 
       const now = new Date();
-      const todayStart = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-      ).getTime();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
       const todayEnd = todayStart + 86400000; // 24 hours
 
       // Fetch daily brief (Foresight insight)
@@ -42,11 +38,9 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
         let suggestedActions = [];
 
         try {
-          suggestedActions = JSON.parse(
-            insightRow.suggested_actions_json || "[]",
-          );
+          suggestedActions = JSON.parse(insightRow.suggested_actions_json || '[]');
         } catch (parseError) {
-          console.error("Failed to parse suggested actions JSON:", parseError);
+          console.error('Failed to parse suggested actions JSON:', parseError);
           suggestedActions = [];
         }
 
@@ -55,8 +49,8 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
           id: insightRow.id,
           insightType: insightRow.insight_type,
           title: insightRow.title,
-          description: insightRow.summary || "", // Map summary to description
-          severity: insightRow.priority || "info", // Map priority to severity
+          description: insightRow.summary || '', // Map summary to description
+          severity: insightRow.priority || 'info', // Map priority to severity
           suggestedActions,
           dismissed: insightRow.dismissed,
           createdAt: insightRow.created_at,
@@ -89,7 +83,7 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
       events.forEach((eventRow) => {
         items.push({
           id: eventRow.id,
-          type: "event",
+          type: 'event',
           time: eventRow.start_time,
           endTime: eventRow.end_time,
           title: eventRow.title,
@@ -102,7 +96,7 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
             location: eventRow.location,
             startTime: eventRow.start_time,
             endTime: eventRow.end_time,
-            source: eventRow.source || "internal",
+            source: eventRow.source || 'internal',
             color: eventRow.color || colors.calendar,
           } as CalendarEvent,
         });
@@ -112,7 +106,7 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
       tasks.forEach((taskRow) => {
         items.push({
           id: taskRow.id,
-          type: "task",
+          type: 'task',
           time: taskRow.due_at || todayStart,
           title: taskRow.title,
           subtitle: taskRow.description,
@@ -139,7 +133,7 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
 
       setTimeline(items);
     } catch (error) {
-      console.error("Failed to load timeline:", error);
+      console.error('Failed to load timeline:', error);
     } finally {
       setLoading(false);
     }

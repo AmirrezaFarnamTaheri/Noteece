@@ -12,15 +12,15 @@
 
 Noteece has achieved **Secure Beta** status with industry-standard security practices. All critical vulnerabilities from previous audits have been remediated:
 
-| Security Issue | Previous Status | Current Status |
-|----------------|-----------------|----------------|
-| Hardcoded Sync Keys | ❌ Critical | ✅ ECDH Ephemeral |
-| Biometric Auth | ⚠️ Weak | ✅ Hardware Keystore |
-| Array Merge Data Loss | ⚠️ Risk | ✅ SET UNION Merge |
-| Remote Config Trust | ⚠️ Risk | ✅ Hash Verification |
-| JSI Bridge | 🔄 Mocked | ✅ Fully Wired |
-| TOFU Authentication | ❌ Missing | ✅ Implemented |
-| Vault Backup | ⚠️ Risk | ✅ SQLite Redundancy |
+| Security Issue        | Previous Status | Current Status       |
+| --------------------- | --------------- | -------------------- |
+| Hardcoded Sync Keys   | ❌ Critical     | ✅ ECDH Ephemeral    |
+| Biometric Auth        | ⚠️ Weak         | ✅ Hardware Keystore |
+| Array Merge Data Loss | ⚠️ Risk         | ✅ SET UNION Merge   |
+| Remote Config Trust   | ⚠️ Risk         | ✅ Hash Verification |
+| JSI Bridge            | 🔄 Mocked       | ✅ Fully Wired       |
+| TOFU Authentication   | ❌ Missing      | ✅ Implemented       |
+| Vault Backup          | ⚠️ Risk         | ✅ SQLite Redundancy |
 
 ---
 
@@ -43,7 +43,7 @@ this.sessionKey = hmac(sha256, sharedSecret, new Uint8Array(0));
 ```typescript
 await SecureStore.setItemAsync(key, value, {
   keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-  requireAuthentication: true
+  requireAuthentication: true,
 });
 ```
 
@@ -87,6 +87,7 @@ React Native ─── JSI ─── C++ Bridge ─── FFI ─── Rust Cor
 ```
 
 **Files:**
+
 - `apps/mobile/src/lib/sync/sync-bridge.ts` - Unified interface
 - `apps/mobile/android/app/src/main/cpp/NoteeceCore.cpp` - C++ bridge
 - `packages/core-rs/src/mobile_ffi.rs` - Rust FFI
@@ -102,6 +103,7 @@ Device A ─► [Encrypted] ─► Relay ─► [Encrypted] ─► Device B
 ```
 
 **Features:**
+
 - End-to-end encryption (relay is blind)
 - Message expiry (24 hours)
 - Rate limiting and size limits
@@ -125,39 +127,39 @@ Fixed data loss in conflict resolution:
 
 ### Backend (Rust)
 
-| Component | Status | Coverage |
-|-----------|--------|----------|
-| Database & Migrations | ✅ Complete | 96%+ |
-| Encryption (SQLCipher) | ✅ Complete | 98%+ |
-| Conflict Resolver | ✅ Complete | 96%+ |
-| TOFU Authentication | ✅ Complete | 95%+ |
-| Vault Backup | ✅ Complete | 94%+ |
-| Blind Relay | ✅ Complete | 92%+ |
-| Selector Verification | ✅ Complete | 90%+ |
-| Mobile FFI | ✅ Complete | 90%+ |
+| Component              | Status      | Coverage |
+| ---------------------- | ----------- | -------- |
+| Database & Migrations  | ✅ Complete | 96%+     |
+| Encryption (SQLCipher) | ✅ Complete | 98%+     |
+| Conflict Resolver      | ✅ Complete | 96%+     |
+| TOFU Authentication    | ✅ Complete | 95%+     |
+| Vault Backup           | ✅ Complete | 94%+     |
+| Blind Relay            | ✅ Complete | 92%+     |
+| Selector Verification  | ✅ Complete | 90%+     |
+| Mobile FFI             | ✅ Complete | 90%+     |
 
 **Aggregate Backend Coverage: 94%+**
 
 ### Desktop Application
 
-| Component | Status | Coverage |
-|-----------|--------|----------|
-| Core UI | ✅ Complete | 96%+ |
-| Dashboard | ✅ Complete | 94%+ |
-| Control Panel | ✅ Complete | 94%+ |
-| AI Integration | ✅ Complete | 92%+ |
-| i18n (7 languages) | ✅ Complete | 100% |
+| Component          | Status      | Coverage |
+| ------------------ | ----------- | -------- |
+| Core UI            | ✅ Complete | 96%+     |
+| Dashboard          | ✅ Complete | 94%+     |
+| Control Panel      | ✅ Complete | 94%+     |
+| AI Integration     | ✅ Complete | 92%+     |
+| i18n (7 languages) | ✅ Complete | 100%     |
 
 **Aggregate Desktop Coverage: 95%+**
 
 ### Mobile Application
 
-| Component | Status | Coverage |
-|-----------|--------|----------|
-| Unified Sync Bridge | ✅ Complete | 92%+ |
-| JSI Integration | ✅ Complete | 90%+ |
-| Social Dock (Prime) | ✅ Complete | 92%+ |
-| i18n (7 languages) | ✅ Complete | 100% |
+| Component           | Status      | Coverage |
+| ------------------- | ----------- | -------- |
+| Unified Sync Bridge | ✅ Complete | 92%+     |
+| JSI Integration     | ✅ Complete | 90%+     |
+| Social Dock (Prime) | ✅ Complete | 92%+     |
+| i18n (7 languages)  | ✅ Complete | 100%     |
 
 **Aggregate Mobile Coverage: 93%+**
 
@@ -167,21 +169,21 @@ Fixed data loss in conflict resolution:
 
 ### Validated Workflows
 
-| Workflow | Purpose | Status |
-|----------|---------|--------|
-| `ci.yml` | Lint, test, build, coverage | ✅ Validated |
-| `release.yml` | Cross-platform releases | ✅ Validated |
+| Workflow      | Purpose                     | Status       |
+| ------------- | --------------------------- | ------------ |
+| `ci.yml`      | Lint, test, build, coverage | ✅ Validated |
+| `release.yml` | Cross-platform releases     | ✅ Validated |
 
 ### Build Matrix
 
-| Platform | Status | Binary |
-|----------|--------|--------|
-| Windows x64 | ✅ | `.msi`, `.exe` |
-| macOS x64 | ✅ | `.dmg` |
-| macOS ARM64 | ✅ | `.dmg` |
-| Linux x64 | ✅ | `.AppImage`, `.deb` |
-| Android ARM64 | ✅ | `.apk` |
-| iOS ARM64 | ✅ | TestFlight |
+| Platform      | Status | Binary              |
+| ------------- | ------ | ------------------- |
+| Windows x64   | ✅     | `.msi`, `.exe`      |
+| macOS x64     | ✅     | `.dmg`              |
+| macOS ARM64   | ✅     | `.dmg`              |
+| Linux x64     | ✅     | `.AppImage`, `.deb` |
+| Android ARM64 | ✅     | `.apk`              |
+| iOS ARM64     | ✅     | TestFlight          |
 
 ---
 
@@ -189,15 +191,15 @@ Fixed data loss in conflict resolution:
 
 ### Original Audit Findings → Resolutions
 
-| Finding | Severity | Resolution |
-|---------|----------|------------|
-| Hardcoded sync key | Critical | ECDH ephemeral keys |
-| config.json dependency | High | SQLite backup table |
-| Array merge data loss | High | SET UNION strategy |
-| Remote selector trust | High | Hash verification |
-| TS/Rust sync split | Medium | Unified JSI bridge |
-| No TOFU mechanism | Medium | TOFU module added |
-| Pruning job missing | Low | Maintenance module |
+| Finding                | Severity | Resolution          |
+| ---------------------- | -------- | ------------------- |
+| Hardcoded sync key     | Critical | ECDH ephemeral keys |
+| config.json dependency | High     | SQLite backup table |
+| Array merge data loss  | High     | SET UNION strategy  |
+| Remote selector trust  | High     | Hash verification   |
+| TS/Rust sync split     | Medium   | Unified JSI bridge  |
+| No TOFU mechanism      | Medium   | TOFU module added   |
+| Pruning job missing    | Low      | Maintenance module  |
 
 ### All Recommendations Implemented
 
@@ -214,11 +216,13 @@ Fixed data loss in conflict resolution:
 ## Future Roadmap
 
 ### v1.2.0 (December 2025)
+
 - CRDT Database (cr-sqlite)
 - Mesh Sync (multi-device)
 - WASM Plugin System
 
 ### v2.0.0 (Q2 2026)
+
 - Decentralized Identity (DID)
 - Real-time Collaboration
 - Public Gardens (static export)
@@ -234,4 +238,4 @@ Fixed data loss in conflict resolution:
 
 ---
 
-*Report generated for Noteece v1.1.0 - November 2025*
+_Report generated for Noteece v1.1.0 - November 2025_

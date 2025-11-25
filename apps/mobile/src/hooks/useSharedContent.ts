@@ -8,16 +8,16 @@
  *   const { hasSharedContent, sharedItems, processItems } = useSharedContent();
  */
 
-import { useEffect, useState } from "react";
-import { AppState, AppStateStatus } from "react-native";
-import * as Linking from "expo-linking";
+import { useEffect, useState } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
+import * as Linking from 'expo-linking';
 import {
   processSharedItems,
   getPendingItems,
   markItemsProcessed,
   cleanupProcessedItems,
   SharedItem,
-} from "../lib/share-handler";
+} from '../lib/share-handler';
 
 interface PendingItem extends SharedItem {
   savedAt: number;
@@ -32,10 +32,7 @@ export function useSharedContent() {
   useEffect(() => {
     checkForSharedContent();
 
-    const subscription = AppState.addEventListener(
-      "change",
-      handleAppStateChange,
-    );
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
 
     return () => {
       subscription.remove();
@@ -46,20 +43,20 @@ export function useSharedContent() {
   // Listen for deep link events (share extension may use deep links)
   useEffect(() => {
     const handleUrl = async (event: { url: string }) => {
-      if (event.url.includes("shared_content=true")) {
+      if (event.url.includes('shared_content=true')) {
         await checkForSharedContent();
       }
     };
 
     // Check initial URL
     Linking.getInitialURL().then((url) => {
-      if (url && url.includes("shared_content=true")) {
+      if (url && url.includes('shared_content=true')) {
         checkForSharedContent();
       }
     });
 
     // Listen for URL events
-    const subscription = Linking.addEventListener("url", handleUrl);
+    const subscription = Linking.addEventListener('url', handleUrl);
 
     return () => {
       subscription.remove();
@@ -67,7 +64,7 @@ export function useSharedContent() {
   }, []);
 
   const handleAppStateChange = async (nextAppState: AppStateStatus) => {
-    if (nextAppState === "active") {
+    if (nextAppState === 'active') {
       await checkForSharedContent();
     }
   };
@@ -89,10 +86,7 @@ export function useSharedContent() {
       // Cleanup old processed items
       await cleanupProcessedItems();
     } catch (error) {
-      console.error(
-        "[useSharedContent] Failed to check for shared content:",
-        error,
-      );
+      console.error('[useSharedContent] Failed to check for shared content:', error);
     }
   };
 
@@ -101,7 +95,7 @@ export function useSharedContent() {
       await markItemsProcessed(timestamps);
       await checkForSharedContent();
     } catch (error) {
-      console.error("[useSharedContent] Failed to process items:", error);
+      console.error('[useSharedContent] Failed to process items:', error);
     }
   };
 

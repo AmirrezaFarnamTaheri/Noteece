@@ -70,7 +70,7 @@ describe('TimeTrackingWidget', () => {
   it('displays running entry', async () => {
     const now = Math.floor(Date.now() / 1000);
     mockGetRunningEntries.mockResolvedValue([
-      { id: '1', started_at: now - 3600, description: 'Working on Feature A', is_running: true },
+      { id: '1', started_at: now - 3600, description: 'Working on Feature A', is_running: true, space_id: 'space-1' },
     ]);
 
     renderWithProviders(<TimeTrackingWidget />);
@@ -96,6 +96,7 @@ describe('TimeTrackingWidget', () => {
         duration_seconds: 3600,
         description: 'Old Task',
         is_running: false,
+        space_id: 'space-1',
       },
     ]);
 
@@ -109,8 +110,18 @@ describe('TimeTrackingWidget', () => {
 
   it('stops a running timer', async () => {
     const now = Math.floor(Date.now() / 1000);
-    mockGetRunningEntries.mockResolvedValue([{ id: '1', started_at: now, description: 'Task', is_running: true }]);
-    mockStopTimeEntry.mockResolvedValue({});
+    mockGetRunningEntries.mockResolvedValue([
+      { id: '1', started_at: now, description: 'Task', is_running: true, space_id: 'space-1' },
+    ]);
+    mockStopTimeEntry.mockResolvedValue({
+      id: '1',
+      started_at: now,
+      ended_at: now + 100,
+      duration_seconds: 100,
+      description: 'Task',
+      is_running: false,
+      space_id: 'space-1',
+    });
 
     renderWithProviders(<TimeTrackingWidget />);
 
@@ -128,9 +139,16 @@ describe('TimeTrackingWidget', () => {
   it('deletes an entry', async () => {
     const now = Math.floor(Date.now() / 1000);
     mockGetRecentTimeEntries.mockResolvedValue([
-      { id: '2', started_at: now, duration_seconds: 60, description: 'To Delete', is_running: false },
+      {
+        id: '2',
+        started_at: now,
+        duration_seconds: 60,
+        description: 'To Delete',
+        is_running: false,
+        space_id: 'space-1',
+      },
     ]);
-    mockDeleteTimeEntry.mockResolvedValue({});
+    mockDeleteTimeEntry.mockResolvedValue();
 
     renderWithProviders(<TimeTrackingWidget />);
 

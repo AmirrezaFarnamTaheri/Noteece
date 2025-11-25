@@ -5,8 +5,8 @@
  * Uses React Native's Animated API for optimal performance.
  */
 
-import React, { useEffect, useRef } from "react";
-import { Animated, ViewStyle } from "react-native";
+import React, { useEffect, useRef } from 'react';
+import { Animated, ViewStyle } from 'react-native';
 
 interface RotationProps {
   children: React.ReactNode;
@@ -48,14 +48,8 @@ export function Rotation({
 
   const rotate = rotateAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: clockwise
-      ? ["0deg", `${degrees}deg`]
-      : ["0deg", `-${degrees}deg`],
+    outputRange: clockwise ? ['0deg', `${degrees}deg`] : ['0deg', `-${degrees}deg`],
   });
 
-  return (
-    <Animated.View style={[style, { transform: [{ rotate }] }]}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={[style, { transform: [{ rotate }] }]}>{children}</Animated.View>;
 }

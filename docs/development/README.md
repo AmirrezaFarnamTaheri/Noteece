@@ -18,4 +18,3 @@ This folder contains guides for developers contributing to Noteece.
 - [Code Review Guide](../../CODE_REVIEW_GUIDE.md) - Review standards
 - [Testing Strategy](../../TESTING_STRATEGY.md) - Test coverage goals
 - [Lint Reference](../../LINT_QUICK_REFERENCE.md) - Linting quick reference
-

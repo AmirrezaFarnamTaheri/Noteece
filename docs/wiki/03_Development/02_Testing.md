@@ -7,7 +7,8 @@ Noteece employs a multi-layered testing strategy to ensure reliability across th
 This is the most critical layer. It uses standard `cargo test`.
 
 ### Structure
-- **Unit Tests (`src/**/*.rs`):**
+
+- **Unit Tests (`src/**/\*.rs`):\*\*
   - Co-located with code using `#[cfg(test)]`.
   - Focus on pure functions (e.g., Markdown parsing, RRule expansion).
 
@@ -22,6 +23,7 @@ This is the most critical layer. It uses standard `cargo test`.
   - **Coverage:** We aim for >85% coverage on core business logic (Sync, Auth, Database).
 
 **Running Tests:**
+
 ```bash
 cd packages/core-rs
 # Run all tests
@@ -39,6 +41,7 @@ RUST_LOG=debug cargo test --test sync_agent_comprehensive_tests -- --nocapture
 Uses **Jest** and **React Testing Library**.
 
 ### Structure
+
 - **Component Tests (`__tests__`):**
   - Verify UI rendering and user interactions.
   - Example: `ProjectHub.test.tsx` checks if the project list renders correctly.
@@ -49,6 +52,7 @@ Uses **Jest** and **React Testing Library**.
   - **Zustand:** The global store is reset between tests to ensure isolation.
 
 **Running Tests:**
+
 ```bash
 cd apps/desktop
 pnpm test
@@ -62,10 +66,12 @@ pnpm test -- --coverage
 Uses **Jest** and **React Native Testing Library**.
 
 ### Challenges & Solutions
+
 - **Native Modules:** Libraries like `expo-sqlite` and `expo-file-system` are native bindings. They must be mocked in the Jest environment.
 - **Setup:** `jest.pre-setup.js` handles the extensive mocking required for Expo.
 
 **Running Tests:**
+
 ```bash
 cd apps/mobile
 pnpm test
@@ -73,10 +79,11 @@ pnpm test
 
 ## 4. End-to-End (E2E) Testing
 
-*Currently Manual.*
+_Currently Manual._
 
 We do not yet have automated E2E tests (e.g., Playwright driving the Tauri app). This is a planned improvement.
 **Current Workflow:**
+
 1.  Build the app (`pnpm tauri build`).
 2.  Launch on a clean VM.
 3.  Perform the "Smoke Test" script (Create Note, Sync with Mobile, Search).
@@ -84,9 +91,10 @@ We do not yet have automated E2E tests (e.g., Playwright driving the Tauri app).
 ## 5. CI/CD Pipeline
 
 The project uses GitHub Actions (see `.github/workflows/ci.yml`).
+
 - **Triggers:** Push to `main`, Pull Requests.
 - **Steps:**
-    1.  Lint (ESLint, Cargo Clippy).
-    2.  Format Check (Prettier, Rustfmt).
-    3.  Test (Rust, Desktop, Mobile).
-    4.  Build (Check if binaries compile).
+  1.  Lint (ESLint, Cargo Clippy).
+  2.  Format Check (Prettier, Rustfmt).
+  3.  Test (Rust, Desktop, Mobile).
+  4.  Build (Check if binaries compile).

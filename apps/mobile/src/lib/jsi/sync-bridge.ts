@@ -1,6 +1,6 @@
 /**
  * JSI Bridge for Sync Operations
- * 
+ *
  * Provides a high-performance bridge to Rust core sync functions.
  * Falls back to native module if JSI is not available.
  */
@@ -45,20 +45,20 @@ interface SyncJSI {
   // Device Discovery
   discoverDevices(): Promise<SyncDevice[]>;
   registerDevice(device: SyncDevice): Promise<void>;
-  
+
   // Key Exchange
   initiateKeyExchange(deviceId: string): Promise<string>;
   completeKeyExchange(deviceId: string, peerPublicKey: string): Promise<void>;
-  
+
   // Sync Operations
   startSync(deviceId: string): Promise<void>;
   cancelSync(deviceId: string): Promise<void>;
   getSyncProgress(deviceId: string): Promise<SyncProgress>;
-  
+
   // Conflict Resolution
   getConflicts(): Promise<SyncConflict[]>;
   resolveConflict(conflictId: string, resolution: ConflictResolution): Promise<void>;
-  
+
   // History
   getSyncHistory(limit: number): Promise<SyncHistoryEntry[]>;
 }
@@ -103,7 +103,7 @@ class SyncBridge implements SyncJSI {
   constructor() {
     this.jsi = getJSISyncModule();
     this.useJSI = this.jsi !== null;
-    
+
     if (this.useJSI) {
       console.log('[SyncBridge] Using JSI for sync operations');
     } else {
@@ -125,12 +125,12 @@ class SyncBridge implements SyncJSI {
     if (this.jsi) {
       return this.jsi.discoverDevices();
     }
-    
+
     // Fallback to native module
     if (NativeSyncModule?.discoverDevices) {
       return NativeSyncModule.discoverDevices();
     }
-    
+
     throw new Error('Sync module not available');
   }
 
@@ -141,11 +141,11 @@ class SyncBridge implements SyncJSI {
     if (this.jsi) {
       return this.jsi.registerDevice(device);
     }
-    
+
     if (NativeSyncModule?.registerDevice) {
       return NativeSyncModule.registerDevice(device);
     }
-    
+
     throw new Error('Sync module not available');
   }
 
@@ -156,11 +156,11 @@ class SyncBridge implements SyncJSI {
     if (this.jsi) {
       return this.jsi.initiateKeyExchange(deviceId);
     }
-    
+
     if (NativeSyncModule?.initiateKeyExchange) {
       return NativeSyncModule.initiateKeyExchange(deviceId);
     }
-    
+
     throw new Error('Sync module not available');
   }
 
@@ -171,11 +171,11 @@ class SyncBridge implements SyncJSI {
     if (this.jsi) {
       return this.jsi.completeKeyExchange(deviceId, peerPublicKey);
     }
-    
+
     if (NativeSyncModule?.completeKeyExchange) {
       return NativeSyncModule.completeKeyExchange(deviceId, peerPublicKey);
     }
-    
+
     throw new Error('Sync module not available');
   }
 
@@ -186,11 +186,11 @@ class SyncBridge implements SyncJSI {
     if (this.jsi) {
       return this.jsi.startSync(deviceId);
     }
-    
+
     if (NativeSyncModule?.startSync) {
       return NativeSyncModule.startSync(deviceId);
     }
-    
+
     throw new Error('Sync module not available');
   }
 
@@ -201,11 +201,11 @@ class SyncBridge implements SyncJSI {
     if (this.jsi) {
       return this.jsi.cancelSync(deviceId);
     }
-    
+
     if (NativeSyncModule?.cancelSync) {
       return NativeSyncModule.cancelSync(deviceId);
     }
-    
+
     throw new Error('Sync module not available');
   }
 
@@ -216,11 +216,11 @@ class SyncBridge implements SyncJSI {
     if (this.jsi) {
       return this.jsi.getSyncProgress(deviceId);
     }
-    
+
     if (NativeSyncModule?.getSyncProgress) {
       return NativeSyncModule.getSyncProgress(deviceId);
     }
-    
+
     throw new Error('Sync module not available');
   }
 
@@ -231,11 +231,11 @@ class SyncBridge implements SyncJSI {
     if (this.jsi) {
       return this.jsi.getConflicts();
     }
-    
+
     if (NativeSyncModule?.getConflicts) {
       return NativeSyncModule.getConflicts();
     }
-    
+
     throw new Error('Sync module not available');
   }
 
@@ -246,11 +246,11 @@ class SyncBridge implements SyncJSI {
     if (this.jsi) {
       return this.jsi.resolveConflict(conflictId, resolution);
     }
-    
+
     if (NativeSyncModule?.resolveConflict) {
       return NativeSyncModule.resolveConflict(conflictId, resolution);
     }
-    
+
     throw new Error('Sync module not available');
   }
 
@@ -261,15 +261,14 @@ class SyncBridge implements SyncJSI {
     if (this.jsi) {
       return this.jsi.getSyncHistory(limit);
     }
-    
+
     if (NativeSyncModule?.getSyncHistory) {
       return NativeSyncModule.getSyncHistory(limit);
     }
-    
+
     throw new Error('Sync module not available');
   }
 }
 
 // Singleton instance
 export const syncBridge = new SyncBridge();
-

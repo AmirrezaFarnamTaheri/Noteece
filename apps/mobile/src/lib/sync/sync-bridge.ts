@@ -1,10 +1,10 @@
 /**
  * Unified Sync Bridge
- * 
+ *
  * Provides a unified interface for sync operations that:
  * 1. Uses the native JSI bridge (Rust core) when available (preferred)
  * 2. Falls back to TypeScript implementation when JSI is not available
- * 
+ *
  * This architecture eliminates the "brain split" where sync logic
  * was implemented twice (Rust and TypeScript).
  */
@@ -91,7 +91,7 @@ export class UnifiedSyncBridge {
     this.deviceId = deviceId;
     this.dbPath = dbPath;
     this.useJSI = NoteeceCoreJSI !== null;
-    
+
     console.log(`[SyncBridge] Initialized with ${this.useJSI ? 'JSI (Rust)' : 'TypeScript'} engine`);
   }
 
@@ -164,7 +164,7 @@ export class UnifiedSyncBridge {
 
     if (this.tsFallback) {
       const devices = await this.tsFallback.discoverDevices(timeoutMs);
-      return devices.map(d => ({
+      return devices.map((d) => ({
         ...d,
         protocol: 'typescript',
       }));
@@ -226,7 +226,9 @@ export class UnifiedSyncBridge {
     }
 
     // TypeScript fallback would handle this in the full sync flow
-    return JSON.stringify({ error: 'TypeScript fallback requires full sync flow' });
+    return JSON.stringify({
+      error: 'TypeScript fallback requires full sync flow',
+    });
   }
 
   /**
@@ -259,10 +261,10 @@ export class UnifiedSyncBridge {
    */
   async startSync(
     device: DiscoveredDevice,
-    options?: { 
+    options?: {
       fullSync?: boolean;
       entityTypes?: string[];
-    }
+    },
   ): Promise<SyncResult> {
     await this.ensureInitialized();
     const startTime = Date.now();
@@ -311,14 +313,10 @@ export class UnifiedSyncBridge {
     if (this.tsFallback) {
       try {
         await this.tsFallback.initiateKeyExchange(device.address, device.port);
-        
+
         // Perform sync using TypeScript implementation
         const manifest = await this.tsFallback.buildManifest(0);
-        const result = await this.tsFallback.sendManifest(
-          device.address,
-          device.port,
-          manifest
-        );
+        const result = await this.tsFallback.sendManifest(device.address, device.port, manifest);
 
         return {
           success: true,
@@ -404,11 +402,11 @@ export function getSyncBridge(deviceId?: string, dbPath?: string): UnifiedSyncBr
   if (!bridgeInstance && deviceId && dbPath) {
     bridgeInstance = new UnifiedSyncBridge(deviceId, dbPath);
   }
-  
+
   if (!bridgeInstance) {
     throw new Error('SyncBridge not initialized. Call with deviceId and dbPath first.');
   }
-  
+
   return bridgeInstance;
 }
 
@@ -418,4 +416,3 @@ export function resetSyncBridge(): void {
     bridgeInstance = null;
   }
 }
-

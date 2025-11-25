@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  Table,
-  Avatar,
-  Badge,
-  Group,
-  Text,
-  ActionIcon,
-  Menu,
-} from '@mantine/core';
+import { Table, Avatar, Badge, Group, Text, ActionIcon, Menu } from '@mantine/core';
 import { IconDots, IconEdit, IconTrash, IconLock } from '@tabler/icons-react';
 import { SpaceUser, roleColors, statusColors } from './types';
 
@@ -21,12 +13,7 @@ interface UserTableProps {
 /**
  * User Table Component - Displays list of users with actions
  */
-export const UserTable: React.FC<UserTableProps> = ({
-  users,
-  onEdit,
-  onToggleStatus,
-  onRemove,
-}) => {
+export const UserTable: React.FC<UserTableProps> = ({ users, onEdit, onToggleStatus, onRemove }) => {
   const formatDate = (timestamp: number | null) => {
     if (!timestamp) return 'Never';
     return new Date(timestamp * 1000).toLocaleDateString();
@@ -81,24 +68,14 @@ export const UserTable: React.FC<UserTableProps> = ({
             </ActionIcon>
           </Menu.Target>
           <Menu.Dropdown>
-            <Menu.Item
-              leftSection={<IconEdit size={14} />}
-              onClick={() => onEdit(user)}
-            >
+            <Menu.Item leftSection={<IconEdit size={14} />} onClick={() => onEdit(user)}>
               Edit Role
             </Menu.Item>
-            <Menu.Item
-              leftSection={<IconLock size={14} />}
-              onClick={() => onToggleStatus(user.user_id, user.status)}
-            >
+            <Menu.Item leftSection={<IconLock size={14} />} onClick={() => onToggleStatus(user.user_id, user.status)}>
               {user.status === 'suspended' ? 'Activate' : 'Suspend'}
             </Menu.Item>
             <Menu.Divider />
-            <Menu.Item
-              color="red"
-              leftSection={<IconTrash size={14} />}
-              onClick={() => onRemove(user.user_id)}
-            >
+            <Menu.Item color="red" leftSection={<IconTrash size={14} />} onClick={() => onRemove(user.user_id)}>
               Remove
             </Menu.Item>
           </Menu.Dropdown>
@@ -123,4 +100,3 @@ export const UserTable: React.FC<UserTableProps> = ({
     </Table>
   );
 };
-

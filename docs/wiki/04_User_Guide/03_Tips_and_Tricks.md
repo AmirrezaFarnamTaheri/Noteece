@@ -9,6 +9,7 @@ Power user techniques to maximize your Noteece experience.
 ### 1. Use Consistent Naming
 
 Adopt a naming convention for notes:
+
 - `YYYY-MM-DD - Daily Note`
 - `Project - Topic`
 - `Area - Subtopic`
@@ -16,6 +17,7 @@ Adopt a naming convention for notes:
 ### 2. Leverage Tags Strategically
 
 Create a tag taxonomy:
+
 ```
 #status/active
 #status/archived
@@ -46,11 +48,11 @@ If a task takes less than 2 minutes, do it immediately.
 
 ### 2. Prioritize with Eisenhower Matrix
 
-| Urgent & Important | Important, Not Urgent |
-|-------------------|----------------------|
-| Do First | Schedule |
-| **Not Urgent & Important** | **Neither** |
-| Delegate | Eliminate |
+| Urgent & Important         | Important, Not Urgent |
+| -------------------------- | --------------------- |
+| Do First                   | Schedule              |
+| **Not Urgent & Important** | **Neither**           |
+| Delegate                   | Eliminate             |
 
 ### 3. Break Down Large Tasks
 
@@ -65,6 +67,7 @@ If a task takes less than 2 minutes, do it immediately.
 ### 1. Use Milestones
 
 Break projects into phases:
+
 1. Planning
 2. Execution
 3. Review
@@ -73,6 +76,7 @@ Break projects into phases:
 ### 2. Track Risks
 
 Use the **Risks** tab in Project Hub:
+
 - Identify potential blockers
 - Assign mitigation strategies
 - Review weekly
@@ -80,6 +84,7 @@ Use the **Risks** tab in Project Hub:
 ### 3. Review with Timeline
 
 Use the **Timeline** view for:
+
 - Visualizing project progress
 - Identifying bottlenecks
 - Planning resource allocation
@@ -90,19 +95,19 @@ Use the **Timeline** view for:
 
 ### Navigation Speed
 
-| Action | Shortcut |
-|--------|----------|
+| Action           | Shortcut                  |
+| ---------------- | ------------------------- |
 | Jump to any note | `Cmd/Ctrl + K`, type name |
-| Recent notes | `Cmd/Ctrl + E` |
-| Switch modules | `Cmd/Ctrl + 1-9` |
+| Recent notes     | `Cmd/Ctrl + E`            |
+| Switch modules   | `Cmd/Ctrl + 1-9`          |
 
 ### Editor Speed
 
-| Action | Shortcut |
-|--------|----------|
-| Create heading | `Cmd/Ctrl + 1-6` |
-| Create list | `Cmd/Ctrl + Shift + L` |
-| Toggle checkbox | `Cmd/Ctrl + Enter` |
+| Action          | Shortcut               |
+| --------------- | ---------------------- |
+| Create heading  | `Cmd/Ctrl + 1-6`       |
+| Create list     | `Cmd/Ctrl + Shift + L` |
+| Toggle checkbox | `Cmd/Ctrl + Enter`     |
 
 ---
 
@@ -111,12 +116,15 @@ Use the **Timeline** view for:
 ### Effective Prompts
 
 **Summarization:**
+
 > "Summarize my notes from last week's project meetings"
 
 **Task Generation:**
+
 > "Create a task list for implementing the new feature based on my notes"
 
 **Analysis:**
+
 > "What patterns do you see in my productivity notes?"
 
 ### Context Matters
@@ -176,5 +184,4 @@ Use the **Timeline** view for:
 
 ---
 
-*Created by Amirreza "Farnam" Taheri*
-
+_Created by Amirreza "Farnam" Taheri_

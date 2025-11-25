@@ -41,4 +41,3 @@ export const statusColors: Record<OcrStatus, string> = {
   completed: 'green',
   failed: 'red',
 };
-

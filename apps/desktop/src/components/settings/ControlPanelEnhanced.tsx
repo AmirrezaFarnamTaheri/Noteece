@@ -39,7 +39,7 @@ import {
   IconTarget,
   IconHeart,
   IconCloud,
-  IconZap,
+  IconBolt,
   IconShield,
   IconEye,
   IconEyeOff,
@@ -87,8 +87,35 @@ const PRESETS: Preset[] = [
     name: 'Power User',
     description: 'Everything enabled',
     icon: '🚀',
-    widgets: ['quickStats', 'dueToday', 'recentNotes', 'calendar', 'focusTimer', 'habits', 'goals', 'insights', 'weeklyProgress', 'recentProjects'],
-    features: ['notes', 'tasks', 'projects', 'calendar', 'habits', 'goals', 'health', 'localAI', 'cloudAI', 'aiInsights', 'aiChat', 'p2pSync', 'ocr', 'spacedRepetition', 'foresight'],
+    widgets: [
+      'quickStats',
+      'dueToday',
+      'recentNotes',
+      'calendar',
+      'focusTimer',
+      'habits',
+      'goals',
+      'insights',
+      'weeklyProgress',
+      'recentProjects',
+    ],
+    features: [
+      'notes',
+      'tasks',
+      'projects',
+      'calendar',
+      'habits',
+      'goals',
+      'health',
+      'localAI',
+      'cloudAI',
+      'aiInsights',
+      'aiChat',
+      'p2pSync',
+      'ocr',
+      'spacedRepetition',
+      'foresight',
+    ],
   },
 ];
 
@@ -121,7 +148,8 @@ const categoryColors: Record<string, string> = {
  */
 export const ControlPanelEnhanced: React.FC = () => {
   const { t } = useI18n();
-  const { widgets, features, toggleWidget, toggleFeature, resetWidgets, resetFeatures, setWidgetOrder } = useControlPanelStore();
+  const { widgets, features, toggleWidget, toggleFeature, resetWidgets, resetFeatures, setWidgetOrder } =
+    useControlPanelStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [activePreset, setActivePreset] = useState<string | null>(null);
 
@@ -129,17 +157,13 @@ export const ControlPanelEnhanced: React.FC = () => {
   const filteredWidgets = useMemo(() => {
     if (!searchQuery) return widgets;
     const query = searchQuery.toLowerCase();
-    return widgets.filter(
-      w => w.name.toLowerCase().includes(query) || w.description.toLowerCase().includes(query)
-    );
+    return widgets.filter((w) => w.name.toLowerCase().includes(query) || w.description.toLowerCase().includes(query));
   }, [widgets, searchQuery]);
 
   const filteredFeatures = useMemo(() => {
     if (!searchQuery) return features;
     const query = searchQuery.toLowerCase();
-    return features.filter(
-      f => f.name.toLowerCase().includes(query) || f.description.toLowerCase().includes(query)
-    );
+    return features.filter((f) => f.name.toLowerCase().includes(query) || f.description.toLowerCase().includes(query));
   }, [features, searchQuery]);
 
   // Group by category
@@ -160,43 +184,51 @@ export const ControlPanelEnhanced: React.FC = () => {
   }, [filteredFeatures]);
 
   // Stats
-  const enabledWidgets = widgets.filter(w => w.enabled).length;
-  const enabledFeatures = features.filter(f => f.enabled).length;
-  const betaFeatures = features.filter(f => f.beta && f.enabled).length;
+  const enabledWidgets = widgets.filter((w) => w.enabled).length;
+  const enabledFeatures = features.filter((f) => f.enabled).length;
+  const betaFeatures = features.filter((f) => f.beta && f.enabled).length;
 
   // Apply preset
   const applyPreset = (preset: Preset) => {
-    const updatedWidgets = widgets.map(w => ({
+    const updatedWidgets = widgets.map((w) => ({
       ...w,
       enabled: preset.widgets.includes(w.id),
     }));
     setWidgetOrder(updatedWidgets);
-    
+
     // Toggle features to match preset
-    features.forEach(f => {
+    for (const f of features) {
       const shouldBeEnabled = preset.features.includes(f.id);
       if (f.enabled !== shouldBeEnabled) {
         toggleFeature(f.id);
       }
-    });
-    
+    }
+
     setActivePreset(preset.id);
   };
 
   // Quick actions
   const enableAll = (type: 'widgets' | 'features') => {
     if (type === 'widgets') {
-      widgets.forEach(w => !w.enabled && toggleWidget(w.id));
+      for (const w of widgets) {
+        if (!w.enabled) toggleWidget(w.id);
+      }
     } else {
-      features.forEach(f => !f.enabled && toggleFeature(f.id));
+      for (const f of features) {
+        if (!f.enabled) toggleFeature(f.id);
+      }
     }
   };
 
   const disableAll = (type: 'widgets' | 'features') => {
     if (type === 'widgets') {
-      widgets.forEach(w => w.enabled && toggleWidget(w.id));
+      for (const w of widgets) {
+        if (w.enabled) toggleWidget(w.id);
+      }
     } else {
-      features.forEach(f => f.enabled && toggleFeature(f.id));
+      for (const f of features) {
+        if (f.enabled) toggleFeature(f.id);
+      }
     }
   };
 
@@ -208,7 +240,9 @@ export const ControlPanelEnhanced: React.FC = () => {
           <IconSettings size={24} />
         </div>
         <div>
-          <Title order={3}>{t('settings.widgets')} & {t('settings.features')}</Title>
+          <Title order={3}>
+            {t('settings.widgets')} & {t('settings.features')}
+          </Title>
           <Text c="dimmed" size="sm">
             Customize your workspace experience
           </Text>
@@ -237,9 +271,11 @@ export const ControlPanelEnhanced: React.FC = () => {
 
       {/* Presets */}
       <Card withBorder p="md">
-        <Text fw={600} mb="sm">Quick Presets</Text>
+        <Text fw={600} mb="sm">
+          Quick Presets
+        </Text>
         <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="sm">
-          {PRESETS.map(preset => (
+          {PRESETS.map((preset) => (
             <Paper
               key={preset.id}
               className={`${classes.presetButton} ${activePreset === preset.id ? classes.active : ''}`}
@@ -299,12 +335,7 @@ export const ControlPanelEnhanced: React.FC = () => {
                   Disable All
                 </Button>
               </Tooltip>
-              <Button
-                variant="subtle"
-                size="xs"
-                leftSection={<IconRefresh size={14} />}
-                onClick={resetWidgets}
-              >
+              <Button variant="subtle" size="xs" leftSection={<IconRefresh size={14} />} onClick={resetWidgets}>
                 Reset
               </Button>
             </div>
@@ -323,9 +354,11 @@ export const ControlPanelEnhanced: React.FC = () => {
                         <ThemeIcon size="sm" variant="light" color={categoryColors[category]}>
                           {categoryIcons[category]}
                         </ThemeIcon>
-                        <Text tt="capitalize" fw={500}>{category}</Text>
+                        <Text tt="capitalize" fw={500}>
+                          {category}
+                        </Text>
                         <Badge size="xs" variant="light" color={categoryColors[category]}>
-                          {categoryWidgets.filter(w => w.enabled).length}/{categoryWidgets.length}
+                          {categoryWidgets.filter((w) => w.enabled).length}/{categoryWidgets.length}
                         </Badge>
                       </Group>
                     </Accordion.Control>
@@ -341,15 +374,9 @@ export const ControlPanelEnhanced: React.FC = () => {
                                 {widget.name}
                                 <span className={classes.sizeBadge}>{widget.size}</span>
                               </div>
-                              <div className={classes.widgetDescription}>
-                                {widget.description}
-                              </div>
+                              <div className={classes.widgetDescription}>{widget.description}</div>
                             </div>
-                            <Switch
-                              checked={widget.enabled}
-                              onChange={() => toggleWidget(widget.id)}
-                              size="md"
-                            />
+                            <Switch checked={widget.enabled} onChange={() => toggleWidget(widget.id)} size="md" />
                           </div>
                         ))}
                       </Stack>
@@ -387,12 +414,7 @@ export const ControlPanelEnhanced: React.FC = () => {
                   Disable All
                 </Button>
               </Tooltip>
-              <Button
-                variant="subtle"
-                size="xs"
-                leftSection={<IconRefresh size={14} />}
-                onClick={resetFeatures}
-              >
+              <Button variant="subtle" size="xs" leftSection={<IconRefresh size={14} />} onClick={resetFeatures}>
                 Reset
               </Button>
             </div>
@@ -411,9 +433,11 @@ export const ControlPanelEnhanced: React.FC = () => {
                         <ThemeIcon size="sm" variant="light" color={categoryColors[category]}>
                           {categoryIcons[category]}
                         </ThemeIcon>
-                        <Text tt="capitalize" fw={500}>{category}</Text>
+                        <Text tt="capitalize" fw={500}>
+                          {category}
+                        </Text>
                         <Badge size="xs" variant="light" color={categoryColors[category]}>
-                          {categoryFeatures.filter(f => f.enabled).length}/{categoryFeatures.length}
+                          {categoryFeatures.filter((f) => f.enabled).length}/{categoryFeatures.length}
                         </Badge>
                       </Group>
                     </Accordion.Control>
@@ -429,15 +453,9 @@ export const ControlPanelEnhanced: React.FC = () => {
                                 {feature.name}
                                 {feature.beta && <span className={classes.betaBadge}>Beta</span>}
                               </div>
-                              <div className={classes.widgetDescription}>
-                                {feature.description}
-                              </div>
+                              <div className={classes.widgetDescription}>{feature.description}</div>
                             </div>
-                            <Switch
-                              checked={feature.enabled}
-                              onChange={() => toggleFeature(feature.id)}
-                              size="md"
-                            />
+                            <Switch checked={feature.enabled} onChange={() => toggleFeature(feature.id)} size="md" />
                           </div>
                         ))}
                       </Stack>
@@ -454,4 +472,3 @@ export const ControlPanelEnhanced: React.FC = () => {
 };
 
 export default ControlPanelEnhanced;
-

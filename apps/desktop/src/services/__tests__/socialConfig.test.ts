@@ -101,11 +101,10 @@ describe('SocialConfig Types', () => {
     const settings = {
       debounceMs: 150,
       maxBufferSize: 100,
-      autoSaveInterval: 30000,
+      autoSaveInterval: 30_000,
       enableScreenshots: false,
       enableTextCapture: true,
     };
     expect(settings.debounceMs).toBe(150);
   });
 });
-

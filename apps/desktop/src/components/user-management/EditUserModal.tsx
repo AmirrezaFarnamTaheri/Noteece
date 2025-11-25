@@ -1,15 +1,5 @@
 import React, { useEffect } from 'react';
-import {
-  Modal,
-  Select,
-  Checkbox,
-  Stack,
-  Group,
-  Button,
-  Text,
-  Avatar,
-  Badge,
-} from '@mantine/core';
+import { Modal, Select, Checkbox, Stack, Group, Button, Text, Avatar, Badge } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { IconShield } from '@tabler/icons-react';
 import { SpaceUser, Role, allPermissions, roleColors, statusColors } from './types';
@@ -26,14 +16,7 @@ interface EditUserModalProps {
 /**
  * Modal for editing user role and permissions
  */
-export const EditUserModal: React.FC<EditUserModalProps> = ({
-  opened,
-  onClose,
-  user,
-  roles,
-  isLoading,
-  onSubmit,
-}) => {
+export const EditUserModal: React.FC<EditUserModalProps> = ({ opened, onClose, user, roles, isLoading, onSubmit }) => {
   const form = useForm({
     initialValues: {
       roleId: '',
@@ -46,9 +29,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     if (user) {
       const userRole = roles.find((r) => r.name === user.role);
       const rolePermissions = userRole?.permissions || [];
-      const customPermissions = user.permissions.filter(
-        (p) => !rolePermissions.includes(p)
-      );
+      const customPermissions = user.permissions.filter((p) => !rolePermissions.includes(p));
 
       form.setValues({
         roleId: userRole?.id || '',
@@ -63,9 +44,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   const rolePermissions = selectedRole?.permissions || [];
 
   // Get permissions not included in the selected role
-  const additionalPermissions = allPermissions.filter(
-    (p) => !rolePermissions.includes(p)
-  );
+  const additionalPermissions = allPermissions.filter((p) => !rolePermissions.includes(p));
 
   const handleSubmit = (values: typeof form.values) => {
     onSubmit({
@@ -133,16 +112,11 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                     checked={form.values.customPermissions.includes(permission)}
                     onChange={(e) => {
                       if (e.currentTarget.checked) {
-                        form.setFieldValue('customPermissions', [
-                          ...form.values.customPermissions,
-                          permission,
-                        ]);
+                        form.setFieldValue('customPermissions', [...form.values.customPermissions, permission]);
                       } else {
                         form.setFieldValue(
                           'customPermissions',
-                          form.values.customPermissions.filter(
-                            (p) => p !== permission
-                          )
+                          form.values.customPermissions.filter((p) => p !== permission),
                         );
                       }
                     }}
@@ -165,4 +139,3 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     </Modal>
   );
 };
-

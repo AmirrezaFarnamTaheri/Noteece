@@ -15,16 +15,16 @@ export interface HealthMetric {
 }
 
 export type MetricType =
-  | "steps"
-  | "distance"
-  | "calories"
-  | "heart_rate"
-  | "weight"
-  | "blood_pressure"
-  | "sleep"
-  | "water"
-  | "exercise"
-  | "mood";
+  | 'steps'
+  | 'distance'
+  | 'calories'
+  | 'heart_rate'
+  | 'weight'
+  | 'blood_pressure'
+  | 'sleep'
+  | 'water'
+  | 'exercise'
+  | 'mood';
 
 export interface Activity {
   id: string;
@@ -38,22 +38,14 @@ export interface Activity {
   notes: string | null;
 }
 
-export type ActivityType =
-  | "running"
-  | "walking"
-  | "cycling"
-  | "swimming"
-  | "yoga"
-  | "gym"
-  | "sports"
-  | "other";
+export type ActivityType = 'running' | 'walking' | 'cycling' | 'swimming' | 'yoga' | 'gym' | 'sports' | 'other';
 
 export interface HealthGoal {
   id: string;
   type: MetricType;
   target: number;
   unit: string;
-  period: "daily" | "weekly" | "monthly";
+  period: 'daily' | 'weekly' | 'monthly';
   isActive: boolean;
   createdAt: number;
 }
@@ -109,25 +101,25 @@ export interface GoalProgress {
 }
 
 export const ACTIVITY_ICONS: Record<ActivityType, string> = {
-  running: "🏃",
-  walking: "🚶",
-  cycling: "🚴",
-  swimming: "🏊",
-  yoga: "🧘",
-  gym: "💪",
-  sports: "⚽",
-  other: "🎯",
+  running: '🏃',
+  walking: '🚶',
+  cycling: '🚴',
+  swimming: '🏊',
+  yoga: '🧘',
+  gym: '💪',
+  sports: '⚽',
+  other: '🎯',
 };
 
 export const METRIC_ICONS: Record<MetricType, string> = {
-  steps: "footsteps",
-  distance: "navigate",
-  calories: "flame",
-  heart_rate: "heart",
-  weight: "fitness",
-  blood_pressure: "pulse",
-  sleep: "moon",
-  water: "water",
-  exercise: "barbell",
-  mood: "happy",
+  steps: 'footsteps',
+  distance: 'navigate',
+  calories: 'flame',
+  heart_rate: 'heart',
+  weight: 'fitness',
+  blood_pressure: 'pulse',
+  sleep: 'moon',
+  water: 'water',
+  exercise: 'barbell',
+  mood: 'happy',
 };

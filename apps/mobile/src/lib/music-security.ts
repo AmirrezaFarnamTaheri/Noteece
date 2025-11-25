@@ -11,17 +11,17 @@
  */
 const ALLOWED_MUSIC_DOMAINS = [
   // Incompetech (Kevin MacLeod) - CC BY 4.0
-  "incompetech.com",
-  "www.incompetech.com",
+  'incompetech.com',
+  'www.incompetech.com',
 
   // Bensound - Royalty Free Music
-  "bensound.com",
-  "www.bensound.com",
+  'bensound.com',
+  'www.bensound.com',
 
   // Free Music Archive
-  "freemusicarchive.org",
-  "www.freemusicarchive.org",
-  "files.freemusicarchive.org",
+  'freemusicarchive.org',
+  'www.freemusicarchive.org',
+  'files.freemusicarchive.org',
 
   // Additional trusted sources (can be extended)
   // Add more domains here as needed
@@ -37,7 +37,7 @@ function normalizeHostname(hostname: string): {
 } {
   try {
     let normalized = hostname.trim().toLowerCase();
-    if (normalized.endsWith(".")) normalized = normalized.slice(0, -1);
+    if (normalized.endsWith('.')) normalized = normalized.slice(0, -1);
     // Reject IDN/non-ascii without throwing (React Native often lacks punycode)
     if (!/^[\x00-\x7F]*$/.test(normalized)) return { ok: false };
     return { ok: true, value: normalized };
@@ -49,7 +49,7 @@ function normalizeHostname(hostname: string): {
 /**
  * List of safe audio file extensions
  */
-const SAFE_AUDIO_EXTENSIONS = [".mp3", ".ogg", ".wav", ".m4a"];
+const SAFE_AUDIO_EXTENSIONS = ['.mp3', '.ogg', '.wav', '.m4a'];
 
 /**
  * Validate a music URL against the allowlist
@@ -60,35 +60,31 @@ const SAFE_AUDIO_EXTENSIONS = [".mp3", ".ogg", ".wav", ".m4a"];
 export function isValidMusicUrl(url: string): boolean {
   try {
     // Disallow non-network schemes explicitly
-    if (url.startsWith("blob:") || url.startsWith("data:")) {
-      console.warn("Music URL blocked: Non-network scheme not allowed");
+    if (url.startsWith('blob:') || url.startsWith('data:')) {
+      console.warn('Music URL blocked: Non-network scheme not allowed');
       return false;
     }
 
     const urlObj = new URL(url);
 
-    if (urlObj.protocol !== "https:") {
-      console.warn(
-        `Music URL blocked: Only HTTPS is allowed, got ${urlObj.protocol}`,
-      );
+    if (urlObj.protocol !== 'https:') {
+      console.warn(`Music URL blocked: Only HTTPS is allowed, got ${urlObj.protocol}`);
       return false;
     }
 
     if (urlObj.username || urlObj.password) {
-      console.warn("Music URL blocked: URLs with credentials are not allowed");
+      console.warn('Music URL blocked: URLs with credentials are not allowed');
       return false;
     }
 
-    if (urlObj.port && urlObj.port !== "443") {
-      console.warn(
-        `Music URL blocked: Non-standard port ${urlObj.port} not allowed`,
-      );
+    if (urlObj.port && urlObj.port !== '443') {
+      console.warn(`Music URL blocked: Non-standard port ${urlObj.port} not allowed`);
       return false;
     }
 
     const norm = normalizeHostname(urlObj.hostname);
     if (!norm.ok || !norm.value) {
-      console.warn("Music URL blocked: Unsupported hostname");
+      console.warn('Music URL blocked: Unsupported hostname');
       return false;
     }
     const hostname = norm.value;
@@ -105,25 +101,21 @@ export function isValidMusicUrl(url: string): boolean {
 
     // Enforce safe audio file extensions
     const pathname = urlObj.pathname.toLowerCase();
-    const hasSafeExt = SAFE_AUDIO_EXTENSIONS.some((ext) =>
-      pathname.endsWith(ext),
-    );
+    const hasSafeExt = SAFE_AUDIO_EXTENSIONS.some((ext) => pathname.endsWith(ext));
     if (!hasSafeExt) {
-      console.warn(
-        "Music URL blocked: Path does not end with a safe audio extension",
-      );
+      console.warn('Music URL blocked: Path does not end with a safe audio extension');
       return false;
     }
 
     // Basic traversal guard
-    if (pathname.includes("..")) {
-      console.warn("Music URL blocked: Path traversal detected");
+    if (pathname.includes('..')) {
+      console.warn('Music URL blocked: Path traversal detected');
       return false;
     }
 
     return true;
   } catch (error) {
-    console.error("Invalid music URL:", error);
+    console.error('Invalid music URL:', error);
     return false;
   }
 }
@@ -142,7 +134,7 @@ export function getAllowedMusicDomains(): readonly string[] {
 export function validateMusicUrlOrThrow(url: string): void {
   if (!isValidMusicUrl(url)) {
     throw new Error(
-      `Music URL from untrusted domain. Only URLs from the following domains are allowed: ${ALLOWED_MUSIC_DOMAINS.join(", ")}`,
+      `Music URL from untrusted domain. Only URLs from the following domains are allowed: ${ALLOWED_MUSIC_DOMAINS.join(', ')}`,
     );
   }
 }

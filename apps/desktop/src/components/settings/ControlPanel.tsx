@@ -3,19 +3,7 @@
  */
 
 import React from 'react';
-import {
-  Card,
-  Title,
-  Text,
-  Group,
-  Stack,
-  Switch,
-  Tabs,
-  Badge,
-  Button,
-  Accordion,
-  SimpleGrid,
-} from '@mantine/core';
+import { Card, Title, Text, Group, Stack, Switch, Tabs, Badge, Button, Accordion, SimpleGrid } from '@mantine/core';
 import {
   IconLayoutDashboard,
   IconPuzzle,
@@ -50,18 +38,18 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, onToggle }) => (
     <Group justify="space-between" wrap="nowrap">
       <div style={{ flex: 1 }}>
         <Group gap="xs" mb={4}>
-          <Text fw={500} size="sm">{widget.name}</Text>
-          <Badge size="xs" variant="light">{widget.size}</Badge>
+          <Text fw={500} size="sm">
+            {widget.name}
+          </Text>
+          <Badge size="xs" variant="light">
+            {widget.size}
+          </Badge>
         </Group>
         <Text size="xs" c="dimmed" lineClamp={1}>
           {widget.description}
         </Text>
       </div>
-      <Switch
-        checked={widget.enabled}
-        onChange={onToggle}
-        size="md"
-      />
+      <Switch checked={widget.enabled} onChange={onToggle} size="md" />
     </Group>
   </Card>
 );
@@ -76,20 +64,20 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ feature, onToggle }) => (
     <Group justify="space-between" wrap="nowrap">
       <div style={{ flex: 1 }}>
         <Group gap="xs" mb={4}>
-          <Text fw={500} size="sm">{feature.name}</Text>
+          <Text fw={500} size="sm">
+            {feature.name}
+          </Text>
           {feature.beta && (
-            <Badge size="xs" color="violet" variant="light">Beta</Badge>
+            <Badge size="xs" color="violet" variant="light">
+              Beta
+            </Badge>
           )}
         </Group>
         <Text size="xs" c="dimmed" lineClamp={1}>
           {feature.description}
         </Text>
       </div>
-      <Switch
-        checked={feature.enabled}
-        onChange={onToggle}
-        size="md"
-      />
+      <Switch checked={feature.enabled} onChange={onToggle} size="md" />
     </Group>
   </Card>
 );
@@ -114,8 +102,8 @@ export const ControlPanel: React.FC = () => {
     return acc;
   }, {});
 
-  const enabledWidgets = widgets.filter(w => w.enabled).length;
-  const enabledFeatures = features.filter(f => f.enabled).length;
+  const enabledWidgets = widgets.filter((w) => w.enabled).length;
+  const enabledFeatures = features.filter((f) => f.enabled).length;
 
   return (
     <Stack gap="lg">
@@ -139,12 +127,7 @@ export const ControlPanel: React.FC = () => {
         <Tabs.Panel value="widgets" pt="md">
           <Stack gap="md">
             <Group justify="flex-end">
-              <Button
-                variant="subtle"
-                size="xs"
-                leftSection={<IconRefresh size={14} />}
-                onClick={resetWidgets}
-              >
+              <Button variant="subtle" size="xs" leftSection={<IconRefresh size={14} />} onClick={resetWidgets}>
                 Reset to Defaults
               </Button>
             </Group>
@@ -156,18 +139,14 @@ export const ControlPanel: React.FC = () => {
                     <Group gap="xs">
                       <Text tt="capitalize">{category}</Text>
                       <Badge size="xs" variant="light">
-                        {categoryWidgets.filter(w => w.enabled).length}/{categoryWidgets.length}
+                        {categoryWidgets.filter((w) => w.enabled).length}/{categoryWidgets.length}
                       </Badge>
                     </Group>
                   </Accordion.Control>
                   <Accordion.Panel>
                     <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
                       {categoryWidgets.map((widget) => (
-                        <WidgetCard
-                          key={widget.id}
-                          widget={widget}
-                          onToggle={() => toggleWidget(widget.id)}
-                        />
+                        <WidgetCard key={widget.id} widget={widget} onToggle={() => toggleWidget(widget.id)} />
                       ))}
                     </SimpleGrid>
                   </Accordion.Panel>
@@ -180,12 +159,7 @@ export const ControlPanel: React.FC = () => {
         <Tabs.Panel value="features" pt="md">
           <Stack gap="md">
             <Group justify="flex-end">
-              <Button
-                variant="subtle"
-                size="xs"
-                leftSection={<IconRefresh size={14} />}
-                onClick={resetFeatures}
-              >
+              <Button variant="subtle" size="xs" leftSection={<IconRefresh size={14} />} onClick={resetFeatures}>
                 Reset to Defaults
               </Button>
             </Group>
@@ -197,18 +171,14 @@ export const ControlPanel: React.FC = () => {
                     <Group gap="xs">
                       <Text tt="capitalize">{category}</Text>
                       <Badge size="xs" variant="light">
-                        {categoryFeatures.filter(f => f.enabled).length}/{categoryFeatures.length}
+                        {categoryFeatures.filter((f) => f.enabled).length}/{categoryFeatures.length}
                       </Badge>
                     </Group>
                   </Accordion.Control>
                   <Accordion.Panel>
                     <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
                       {categoryFeatures.map((feature) => (
-                        <FeatureCard
-                          key={feature.id}
-                          feature={feature}
-                          onToggle={() => toggleFeature(feature.id)}
-                        />
+                        <FeatureCard key={feature.id} feature={feature} onToggle={() => toggleFeature(feature.id)} />
                       ))}
                     </SimpleGrid>
                   </Accordion.Panel>
@@ -226,4 +196,3 @@ export default ControlPanel;
 
 // Re-export enhanced version
 export { ControlPanelEnhanced } from './ControlPanelEnhanced';
-

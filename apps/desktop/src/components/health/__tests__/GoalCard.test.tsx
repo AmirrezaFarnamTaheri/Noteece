@@ -8,13 +8,13 @@ const mockGoal: HealthGoal = {
   id: '1',
   space_id: 'space1',
   title: 'Lose 5kg',
-  target: 65,
-  current: 68,
+  target: 100,
+  current: 50,
   unit: 'kg',
   category: 'health',
-  start_date: Date.now() / 1000 - 86400 * 30,
+  start_date: Date.now() / 1000 - 86_400 * 30,
   is_completed: false,
-  created_at: Date.now() / 1000 - 86400 * 30,
+  created_at: Date.now() / 1000 - 86_400 * 30,
   updated_at: Date.now() / 1000,
 };
 
@@ -41,14 +41,13 @@ describe('GoalCard', () => {
 
   it('displays current and target values', () => {
     renderWithProviders(<GoalCard goal={mockGoal} />);
-    expect(screen.getByText('Current: 68 kg')).toBeInTheDocument();
-    expect(screen.getByText('Target: 65 kg')).toBeInTheDocument();
+    expect(screen.getByText('Current: 50 kg')).toBeInTheDocument();
+    expect(screen.getByText('Target: 100 kg')).toBeInTheDocument();
   });
 
   it('shows Complete badge when progress is 100%', () => {
-    const completedGoal = { ...mockGoal, current: 65 };
+    const completedGoal = { ...mockGoal, current: 100 };
     renderWithProviders(<GoalCard goal={completedGoal} />);
     expect(screen.getByText('Complete')).toBeInTheDocument();
   });
 });
-

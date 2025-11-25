@@ -5,17 +5,14 @@
  * Displays the unified social timeline with optional biometric lock.
  */
 
-import { useState, useEffect } from "react";
-import { View, StyleSheet } from "react-native";
-import { useRouter } from "expo-router";
-import { SocialHub } from "@/screens/SocialHub";
-import { BiometricLockScreen } from "@/components/social/BiometricLockScreen";
-import {
-  requiresSocialAuthentication,
-  lockSocialSession,
-} from "@/lib/social-security";
-import { colors } from "@/lib/theme";
-import { AppState, AppStateStatus } from "react-native";
+import { useState, useEffect } from 'react';
+import { View, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { SocialHub } from '@/screens/SocialHub';
+import { BiometricLockScreen } from '@/components/social/BiometricLockScreen';
+import { requiresSocialAuthentication, lockSocialSession } from '@/lib/social-security';
+import { colors } from '@/lib/theme';
+import { AppState, AppStateStatus } from 'react-native';
 
 export default function SocialTab() {
   const router = useRouter();
@@ -29,10 +26,7 @@ export default function SocialTab() {
 
   // Lock session when app goes to background
   useEffect(() => {
-    const subscription = AppState.addEventListener(
-      "change",
-      handleAppStateChange,
-    );
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
 
     return () => {
       subscription.remove();
@@ -46,7 +40,7 @@ export default function SocialTab() {
   };
 
   const handleAppStateChange = async (nextAppState: AppStateStatus) => {
-    if (nextAppState === "background" || nextAppState === "inactive") {
+    if (nextAppState === 'background' || nextAppState === 'inactive') {
       // Lock session when app goes to background
       await lockSocialSession();
       const required = await requiresSocialAuthentication();
@@ -70,9 +64,7 @@ export default function SocialTab() {
 
   // Show lock screen if authentication required
   if (isLocked) {
-    return (
-      <BiometricLockScreen onUnlock={handleUnlock} onCancel={handleCancel} />
-    );
+    return <BiometricLockScreen onUnlock={handleUnlock} onCancel={handleCancel} />;
   }
 
   // Show social hub once authenticated

@@ -1,14 +1,5 @@
 import React from 'react';
-import {
-  Card,
-  Group,
-  Stack,
-  Text,
-  Badge,
-  Progress,
-  ActionIcon,
-  Tooltip,
-} from '@mantine/core';
+import { Card, Group, Stack, Text, Badge, Progress, ActionIcon, Tooltip } from '@mantine/core';
 import {
   IconDeviceDesktop,
   IconDeviceMobile,
@@ -29,12 +20,15 @@ interface DeviceListProps {
 
 const DeviceIcon: React.FC<{ type: string }> = ({ type }) => {
   switch (type) {
-    case 'mobile':
+    case 'mobile': {
       return <IconDeviceMobile size={24} />;
-    case 'tablet':
+    }
+    case 'tablet': {
       return <IconDeviceTablet size={24} />;
-    default:
+    }
+    default: {
       return <IconDeviceDesktop size={24} />;
+    }
   }
 };
 
@@ -44,32 +38,21 @@ const formatLastSeen = (timestamp: number): string => {
 
   if (diff < 60) return 'Just now';
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 86_400) return `${Math.floor(diff / 3600)}h ago`;
   return new Date(timestamp * 1000).toLocaleDateString();
 };
 
 /**
  * Device List Component - Shows connected devices and their sync status
  */
-export const DeviceList: React.FC<DeviceListProps> = ({
-  devices,
-  currentDeviceId,
-  onSync,
-  onPair,
-  onUnpair,
-}) => {
+export const DeviceList: React.FC<DeviceListProps> = ({ devices, currentDeviceId, onSync, onPair, onUnpair }) => {
   if (devices.length === 0) {
     return (
       <Card withBorder p="lg">
         <Stack align="center" gap="md">
           <IconDeviceDesktop size={48} opacity={0.5} />
           <Text c="dimmed">No devices paired</Text>
-          <ActionIcon
-            variant="light"
-            size="lg"
-            onClick={onPair}
-            title="Pair a device"
-          >
+          <ActionIcon variant="light" size="lg" onClick={onPair} title="Pair a device">
             <IconLink size={20} />
           </ActionIcon>
         </Stack>
@@ -119,11 +102,7 @@ export const DeviceList: React.FC<DeviceListProps> = ({
                       </ActionIcon>
                     </Tooltip>
                     <Tooltip label="Unpair device">
-                      <ActionIcon
-                        variant="subtle"
-                        color="red"
-                        onClick={() => onUnpair(device.id)}
-                      >
+                      <ActionIcon variant="subtle" color="red" onClick={() => onUnpair(device.id)}>
                         <IconUnlink size={16} />
                       </ActionIcon>
                     </Tooltip>
@@ -133,12 +112,7 @@ export const DeviceList: React.FC<DeviceListProps> = ({
             </Group>
 
             {device.status === 'syncing' && device.sync_progress !== undefined && (
-              <Progress
-                value={device.sync_progress}
-                size="xs"
-                mt="sm"
-                animated
-              />
+              <Progress value={device.sync_progress} size="xs" mt="sm" animated />
             )}
           </Card>
         );
@@ -146,4 +120,3 @@ export const DeviceList: React.FC<DeviceListProps> = ({
     </Stack>
   );
 };
-

@@ -22,4 +22,3 @@ This folder contains security-related documentation for Noteece.
 3. **E2E Encryption:** AES-256-GCM for data at rest
 4. **P2P Security:** X25519 ECDH key exchange for sync
 5. **No Telemetry:** No data collection without explicit opt-in
-

@@ -8,13 +8,9 @@
  * Android: Configures intent filters for sharing
  */
 
-const {
-  withEntitlementsPlist,
-  withAndroidManifest,
-  withDangerousMod,
-} = require("@expo/config-plugins");
-const fs = require("fs");
-const path = require("path");
+const { withEntitlementsPlist, withAndroidManifest, withDangerousMod } = require('@expo/config-plugins');
+const fs = require('fs');
+const path = require('path');
 
 /**
  * Main plugin function
@@ -35,18 +31,16 @@ function withShareExtension(config) {
 function withShareExtensionIOS(config) {
   // Add app groups entitlement (required for sharing data between app and extension)
   config = withEntitlementsPlist(config, (config) => {
-    config.modResults["com.apple.security.application-groups"] = [
-      `group.${config.ios.bundleIdentifier}.social`,
-    ];
+    config.modResults['com.apple.security.application-groups'] = [`group.${config.ios.bundleIdentifier}.social`];
     return config;
   });
 
   // Create the share extension files
   config = withDangerousMod(config, [
-    "ios",
+    'ios',
     async (config) => {
       const iosRoot = config.modRequest.platformProjectRoot;
-      const shareExtensionPath = path.join(iosRoot, "ShareExtension");
+      const shareExtensionPath = path.join(iosRoot, 'ShareExtension');
 
       // Create ShareExtension directory
       if (!fs.existsSync(shareExtensionPath)) {
@@ -277,17 +271,11 @@ class ShareViewController: UIViewController {
 `;
 
   // Write files
-  fs.writeFileSync(
-    path.join(targetPath, "ShareViewController.swift"),
-    shareViewControllerContent,
-  );
-  fs.writeFileSync(path.join(targetPath, "Info.plist"), infoPlistContent);
-  fs.writeFileSync(
-    path.join(targetPath, "MainInterface.storyboard"),
-    storyboardContent,
-  );
+  fs.writeFileSync(path.join(targetPath, 'ShareViewController.swift'), shareViewControllerContent);
+  fs.writeFileSync(path.join(targetPath, 'Info.plist'), infoPlistContent);
+  fs.writeFileSync(path.join(targetPath, 'MainInterface.storyboard'), storyboardContent);
 
-  console.log("✅ iOS Share Extension files created");
+  console.log('✅ iOS Share Extension files created');
 }
 
 /**
@@ -300,30 +288,21 @@ function withShareExtensionAndroid(config) {
     // Add share target activity
     const shareActivity = {
       $: {
-        "android:name": ".ShareActivity",
-        "android:label": "Share to Noteece",
-        "android:theme": "@style/Theme.Transparent",
-        "android:exported": "true",
+        'android:name': '.ShareActivity',
+        'android:label': 'Share to Noteece',
+        'android:theme': '@style/Theme.Transparent',
+        'android:exported': 'true',
       },
-      "intent-filter": [
+      'intent-filter': [
         {
-          action: [{ $: { "android:name": "android.intent.action.SEND" } }],
-          category: [
-            { $: { "android:name": "android.intent.category.DEFAULT" } },
-          ],
-          data: [
-            { $: { "android:mimeType": "text/plain" } },
-            { $: { "android:mimeType": "image/*" } },
-          ],
+          action: [{ $: { 'android:name': 'android.intent.action.SEND' } }],
+          category: [{ $: { 'android:name': 'android.intent.category.DEFAULT' } }],
+          data: [{ $: { 'android:mimeType': 'text/plain' } }, { $: { 'android:mimeType': 'image/*' } }],
         },
         {
-          action: [
-            { $: { "android:name": "android.intent.action.SEND_MULTIPLE" } },
-          ],
-          category: [
-            { $: { "android:name": "android.intent.category.DEFAULT" } },
-          ],
-          data: [{ $: { "android:mimeType": "image/*" } }],
+          action: [{ $: { 'android:name': 'android.intent.action.SEND_MULTIPLE' } }],
+          category: [{ $: { 'android:name': 'android.intent.category.DEFAULT' } }],
+          data: [{ $: { 'android:mimeType': 'image/*' } }],
         },
       ],
     };
@@ -335,7 +314,7 @@ function withShareExtensionAndroid(config) {
 
     // Remove existing share activity if present
     mainApplication.activity = mainApplication.activity.filter(
-      (activity) => activity.$["android:name"] !== ".ShareActivity",
+      (activity) => activity.$['android:name'] !== '.ShareActivity',
     );
 
     // Add share activity
@@ -346,15 +325,11 @@ function withShareExtensionAndroid(config) {
 
   // Create ShareActivity.kt file
   config = withDangerousMod(config, [
-    "android",
+    'android',
     async (config) => {
       const androidRoot = config.modRequest.platformProjectRoot;
-      const packagePath = config.android.package.replace(/\./g, "/");
-      const activityPath = path.join(
-        androidRoot,
-        "app/src/main/java",
-        packagePath,
-      );
+      const packagePath = config.android.package.replace(/\./g, '/');
+      const activityPath = path.join(androidRoot, 'app/src/main/java', packagePath);
 
       // Create directory if it doesn't exist
       if (!fs.existsSync(activityPath)) {
@@ -466,10 +441,10 @@ class ShareActivity : Activity() {
 }
 `;
 
-      const activityFile = path.join(activityPath, "ShareActivity.kt");
+      const activityFile = path.join(activityPath, 'ShareActivity.kt');
       fs.writeFileSync(activityFile, shareActivityContent);
 
-      console.log("✅ Android ShareActivity created");
+      console.log('✅ Android ShareActivity created');
 
       return config;
     },

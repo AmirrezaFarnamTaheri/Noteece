@@ -167,4 +167,4 @@ When reporting a new issue, please include:
 
 ---
 
-*For security vulnerabilities, please see [SECURITY.md](SECURITY.md) for responsible disclosure.*
+_For security vulnerabilities, please see [SECURITY.md](SECURITY.md) for responsible disclosure._

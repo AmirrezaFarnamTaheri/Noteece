@@ -5,6 +5,7 @@ Noteece is committed to **Data Sovereignty**. You should always be able to get y
 ## Export Formats
 
 ### 1. JSON (Full Dump)
+
 A complete, machine-readable dump of the database. Useful for backups or migration to other tools.
 
 - **Structure:**
@@ -28,6 +29,7 @@ A complete, machine-readable dump of the database. Useful for backups or migrati
   ```
 
 ### 2. Markdown (Vault Export)
+
 Designed for interoperability with other PKM tools (Obsidian, Logseq).
 
 - **Directory Structure:**
@@ -42,19 +44,22 @@ Designed for interoperability with other PKM tools (Obsidian, Logseq).
   tags: [journal]
   created: 2023-10-27
   ---
-
   # Content...
   ```
 
 ### 3. ZIP Archive
+
 A comprehensive backup that includes:
+
 - The `database.json` dump.
 - The `blobs/` directory (images/attachments) decrypted.
 
 ## Import Capabilities
 
 ### 1. Obsidian Vaults
+
 Noteece can import an existing Obsidian vault.
+
 - **Conversion:**
   - Folders are converted to **Tags** (since Noteece uses a flat, tag-based hierarchy).
   - `[[Links]]` remain as WikiLinks.
@@ -62,13 +67,17 @@ Noteece can import an existing Obsidian vault.
   - Attachments are imported into the Blob store.
 
 ### 2. Notion Export (ZIP)
+
 Supports importing the standard "Export to Markdown & CSV" from Notion.
+
 - **Mapping:**
   - Notion "Pages" -> Noteece **Notes**.
   - Notion "Databases" -> Noteece **Projects** (best effort mapping).
   - Properties -> YAML Frontmatter.
 
 ### 3. CSV (Tasks)
+
 Import tasks from Todoist, TickTick, or generic CSVs.
+
 - **Required Columns:** `Title`.
 - **Optional Columns:** `Due Date`, `Priority`, `Description`, `Status`.

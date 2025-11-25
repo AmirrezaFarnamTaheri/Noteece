@@ -5,40 +5,40 @@
 
 export const colors = {
   // Deep Obsidian Backgrounds
-  background: "#050506",
-  backgroundSecondary: "#101113",
-  backgroundTertiary: "#1A1B1E",
+  background: '#050506',
+  backgroundSecondary: '#101113',
+  backgroundTertiary: '#1A1B1E',
 
   // Text Colors
-  text: "#F3F0FF", // High contrast white/violet
-  textSecondary: "#C1C2C5",
-  textDimmed: "#909296",
-  textPrimary: "#F3F0FF", // Alias for text
-  textTertiary: "#909296", // Alias for textDimmed
+  text: '#F3F0FF', // High contrast white/violet
+  textSecondary: '#C1C2C5',
+  textDimmed: '#909296',
+  textPrimary: '#F3F0FF', // Alias for text
+  textTertiary: '#909296', // Alias for textDimmed
 
   // Primary Brand Colors (Violet)
-  primary: "#845EF7",
-  primaryLight: "#B197FC",
-  primaryDark: "#5F3DC4",
-  primaryFade: "rgba(132, 94, 247, 0.15)",
+  primary: '#845EF7',
+  primaryLight: '#B197FC',
+  primaryDark: '#5F3DC4',
+  primaryFade: 'rgba(132, 94, 247, 0.15)',
 
   // Secondary Accent (Teal)
-  accent: "#20C997",
-  accentLight: "#63E6BE",
-  accentDark: "#099268",
+  accent: '#20C997',
+  accentLight: '#63E6BE',
+  accentDark: '#099268',
 
   // Semantic Colors
-  border: "#2C2E33",
-  borderLight: "#5C5F66",
-  error: "#FA5252",
-  success: "#20C997",
-  warning: "#FCC419",
+  border: '#2C2E33',
+  borderLight: '#5C5F66',
+  error: '#FA5252',
+  success: '#20C997',
+  warning: '#FCC419',
 
   // Surfaces
-  surface: "#101113",
+  surface: '#101113',
 
   // Overlays
-  overlay: "rgba(0, 0, 0, 0.7)",
+  overlay: 'rgba(0, 0, 0, 0.7)',
 };
 
 export const spacing = {
@@ -59,11 +59,11 @@ export const borderRadius = {
 
 export const typography = {
   fontFamily: {
-    regular: "System",
-    medium: "System",
-    semibold: "System",
-    bold: "System",
-    mono: "System",
+    regular: 'System',
+    medium: 'System',
+    semibold: 'System',
+    bold: 'System',
+    mono: 'System',
   },
   fontSize: {
     xs: 12,
@@ -71,8 +71,8 @@ export const typography = {
     base: 16,
     lg: 18,
     xl: 20,
-    "2xl": 24,
-    "3xl": 30,
+    '2xl': 24,
+    '3xl': 30,
   },
   lineHeight: {
     tight: 1.25,
@@ -81,17 +81,17 @@ export const typography = {
   },
   h1: {
     fontSize: 32,
-    fontWeight: "800",
+    fontWeight: '800',
     letterSpacing: -0.5,
   },
   h2: {
     fontSize: 24,
-    fontWeight: "700",
+    fontWeight: '700',
     letterSpacing: -0.25,
   },
   h3: {
     fontSize: 20,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   body: {
     fontSize: 16,
@@ -99,34 +99,34 @@ export const typography = {
   },
   caption: {
     fontSize: 12,
-    color: "#909296",
+    color: '#909296',
   },
 };
 
 export const shadows = {
   sm: {
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.18,
     shadowRadius: 1.0,
     elevation: 1,
   },
   md: {
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
   },
   lg: {
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.34,
     shadowRadius: 6.27,
     elevation: 10,
   },
   primary: {
-    shadowColor: "#845EF7",
+    shadowColor: '#845EF7',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

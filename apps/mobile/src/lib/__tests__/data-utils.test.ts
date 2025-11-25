@@ -1,34 +1,32 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as SecureStore from "expo-secure-store";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 
-import { clearAllData, getDataStats } from "../data-utils";
-import { getDatabase } from "../database";
+import { clearAllData, getDataStats } from '../data-utils';
+import { getDatabase } from '../database';
 
-jest.mock("../database", () => ({
+jest.mock('../database', () => ({
   getDatabase: jest.fn(),
 }));
 
-jest.mock("expo-secure-store", () => ({
+jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(() => Promise.resolve()),
 }));
 
-jest.mock("expo-sharing", () => ({
+jest.mock('expo-sharing', () => ({
   isAvailableAsync: jest.fn(async () => false),
   shareAsync: jest.fn(async () => ({})),
 }));
 
-const mockedGetDatabase = getDatabase as jest.MockedFunction<
-  typeof getDatabase
->;
+const mockedGetDatabase = getDatabase as jest.MockedFunction<typeof getDatabase>;
 const mockedSecureStore = SecureStore as jest.Mocked<typeof SecureStore>;
 
-describe("data-utils", () => {
+describe('data-utils', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe("getDataStats", () => {
-    it("returns counts from the database and computes totals", async () => {
+  describe('getDataStats', () => {
+    it('returns counts from the database and computes totals', async () => {
       const fakeDb = {
         getFirstAsync: jest
           .fn()
@@ -54,14 +52,12 @@ describe("data-utils", () => {
       expect(fakeDb.getFirstAsync).toHaveBeenCalledTimes(5);
     });
 
-    it("returns zeros when database throws", async () => {
+    it('returns zeros when database throws', async () => {
       // Mock console.error to suppress expected error log
-      const consoleSpy = jest
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
       const failingDb = {
-        getFirstAsync: jest.fn().mockRejectedValue(new Error("DB error")),
+        getFirstAsync: jest.fn().mockRejectedValue(new Error('DB error')),
       };
 
       mockedGetDatabase.mockReturnValue(failingDb as any);
@@ -81,17 +77,15 @@ describe("data-utils", () => {
     });
   });
 
-  describe("clearAllData", () => {
-    it("drops tables and clears relevant storage keys", async () => {
+  describe('clearAllData', () => {
+    it('drops tables and clears relevant storage keys', async () => {
       const execAsync = jest.fn().mockResolvedValue(undefined);
       const fakeDb = { execAsync };
 
       mockedGetDatabase.mockReturnValue(fakeDb as any);
 
       const asyncStorageMock = AsyncStorage as any;
-      asyncStorageMock.getAllKeys = jest
-        .fn()
-        .mockResolvedValue(["foo", "expo-system", "has_completed_onboarding"]);
+      asyncStorageMock.getAllKeys = jest.fn().mockResolvedValue(['foo', 'expo-system', 'has_completed_onboarding']);
       asyncStorageMock.multiRemove = jest.fn().mockResolvedValue(undefined);
 
       const result = await clearAllData();
@@ -99,10 +93,8 @@ describe("data-utils", () => {
       expect(result.success).toBe(true);
       expect(execAsync).toHaveBeenCalledTimes(1);
       expect(asyncStorageMock.getAllKeys).toHaveBeenCalledTimes(1);
-      expect(asyncStorageMock.multiRemove).toHaveBeenCalledWith(["foo"]);
-      expect(mockedSecureStore.deleteItemAsync).toHaveBeenCalledWith(
-        "biometric_vault_data",
-      );
+      expect(asyncStorageMock.multiRemove).toHaveBeenCalledWith(['foo']);
+      expect(mockedSecureStore.deleteItemAsync).toHaveBeenCalledWith('biometric_vault_data');
     });
   });
 });

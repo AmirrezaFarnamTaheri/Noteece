@@ -5,8 +5,8 @@
  * Respects user's haptic feedback preference from settings.
  */
 
-import * as Haptics from "expo-haptics";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Haptics from 'expo-haptics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class HapticManager {
   private enabled: boolean = true;
@@ -16,13 +16,13 @@ class HapticManager {
    */
   async initialize() {
     try {
-      const settings = await AsyncStorage.getItem("app_settings");
+      const settings = await AsyncStorage.getItem('app_settings');
       if (settings) {
         const parsed = JSON.parse(settings);
         this.enabled = parsed.haptics !== false;
       }
     } catch (error) {
-      console.error("Failed to load haptic preferences:", error);
+      console.error('Failed to load haptic preferences:', error);
       this.enabled = true; // Default to enabled
     }
   }

@@ -1,8 +1,8 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { format } from "date-fns";
-import { colors, spacing, typography, borderRadius } from "@/lib/theme";
-import { TimelineItem } from "@/types";
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { format } from 'date-fns';
+import { colors, spacing, typography, borderRadius } from '@/lib/theme';
+import { TimelineItem } from '@/types';
 
 interface TimelineItemCardProps {
   item: TimelineItem;
@@ -10,29 +10,25 @@ interface TimelineItemCardProps {
   isLast?: boolean;
 }
 
-export function TimelineItemCard({
-  item,
-  isFirst,
-  isLast,
-}: TimelineItemCardProps) {
+export function TimelineItemCard({ item, isFirst, isLast }: TimelineItemCardProps) {
   const getIcon = () => {
     switch (item.type) {
-      case "task":
-        return "checkmark-circle-outline";
-      case "event":
-        return "calendar-outline";
-      case "insight":
-        return "bulb-outline";
-      case "block":
-        return "time-outline";
+      case 'task':
+        return 'checkmark-circle-outline';
+      case 'event':
+        return 'calendar-outline';
+      case 'insight':
+        return 'bulb-outline';
+      case 'block':
+        return 'time-outline';
       default:
-        return "ellipse-outline";
+        return 'ellipse-outline';
     }
   };
 
   // Validate and normalize timestamps
   const isValidTimestamp = (ts: any): ts is number => {
-    return typeof ts === "number" && Number.isFinite(ts) && ts > 0;
+    return typeof ts === 'number' && Number.isFinite(ts) && ts > 0;
   };
 
   const validTime = isValidTimestamp(item.time) ? item.time : Date.now();
@@ -50,35 +46,25 @@ export function TimelineItemCard({
       <View style={[styles.card, isPast && styles.cardPast]}>
         <View style={styles.header}>
           <View style={styles.timeContainer}>
-            <Text style={[styles.time, isPast && styles.timePast]}>
-              {format(new Date(validTime), "HH:mm")}
-            </Text>
+            <Text style={[styles.time, isPast && styles.timePast]}>{format(new Date(validTime), 'HH:mm')}</Text>
             {validEndTime && validEndTime > validTime && (
               <Text style={[styles.duration, isPast && styles.timePast]}>
-                {" · "}
+                {' · '}
                 {Math.round((validEndTime - validTime) / 60000)}m
               </Text>
             )}
           </View>
-          <View
-            style={[styles.typeIcon, { backgroundColor: item.color + "20" }]}
-          >
+          <View style={[styles.typeIcon, { backgroundColor: item.color + '20' }]}>
             <Ionicons name={getIcon()} size={16} color={item.color} />
           </View>
         </View>
 
-        <Text
-          style={[styles.title, isPast && styles.titlePast]}
-          numberOfLines={2}
-        >
+        <Text style={[styles.title, isPast && styles.titlePast]} numberOfLines={2}>
           {item.title}
         </Text>
 
         {item.subtitle && (
-          <Text
-            style={[styles.subtitle, isPast && styles.subtitlePast]}
-            numberOfLines={1}
-          >
+          <Text style={[styles.subtitle, isPast && styles.subtitlePast]} numberOfLines={1}>
             {item.subtitle}
           </Text>
         )}
@@ -89,12 +75,12 @@ export function TimelineItemCard({
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: "row",
+    flexDirection: 'row',
     marginBottom: spacing.xs,
   },
   timeline: {
     width: 24,
-    alignItems: "center",
+    alignItems: 'center',
     paddingTop: 6,
   },
   dot: {
@@ -121,14 +107,14 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: spacing.xs,
   },
   timeContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   time: {
     fontSize: typography.fontSize.sm,
@@ -147,8 +133,8 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: borderRadius.sm,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontSize: typography.fontSize.base,

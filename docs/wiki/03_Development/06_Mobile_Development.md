@@ -32,6 +32,7 @@ The mobile app (`apps/mobile`) is built with **Expo** (Managed Workflow) and **R
 ## Sync Client Implementation
 
 The file `src/lib/sync/sync-client.ts` is the heart of the mobile app. It implements:
+
 1.  **Service Discovery:** Using `react-native-zeroconf` (or Expo equivalent).
 2.  **Handshake:** ECDH key exchange manually implemented using `expo-crypto`.
 3.  **Protocol:** Binary packet parsing matching `packages/core-rs/src/sync/models.rs`.
@@ -44,5 +45,6 @@ The file `src/lib/sync/sync-client.ts` is the heart of the mobile app. It implem
 ## Deployment
 
 We use **EAS Build** (Expo Application Services).
+
 - `eas build -p android --profile preview`
 - `eas build -p ios --profile preview`

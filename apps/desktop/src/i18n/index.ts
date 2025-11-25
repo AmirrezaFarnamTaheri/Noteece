@@ -1,6 +1,6 @@
 /**
  * Internationalization (i18n) System for Desktop App
- * 
+ *
  * Supports 7 languages: en, es, fr, de, ja, zh, fa
  */
 
@@ -317,7 +317,7 @@ export const translations = {
     'tasks.completed': 'Terminées',
     'tasks.pending': 'En attente',
     'tasks.overdue': 'En retard',
-    'tasks.dueToday': 'Pour aujourd\'hui',
+    'tasks.dueToday': "Pour aujourd'hui",
     'tasks.priority': 'Priorité',
     'tasks.high': 'Haute',
     'tasks.medium': 'Moyenne',
@@ -823,30 +823,30 @@ export const useI18n = create<I18nState>()(
   persist(
     (set, get) => ({
       locale: 'en',
-      
+
       setLocale: (locale: Locale) => {
         set({ locale });
         // Update document direction for RTL languages
-        document.documentElement.dir = SUPPORTED_LOCALES.find(l => l.code === locale)?.direction || 'ltr';
+        document.documentElement.dir = SUPPORTED_LOCALES.find((l) => l.code === locale)?.direction || 'ltr';
         document.documentElement.lang = locale;
       },
-      
+
       t: (key: TranslationKey): string => {
         const { locale } = get();
         const messages = translations[locale] as TranslationMessages;
         return messages[key] || translations.en[key] || key;
       },
-      
+
       getDirection: (): 'ltr' | 'rtl' => {
         const { locale } = get();
-        return SUPPORTED_LOCALES.find(l => l.code === locale)?.direction || 'ltr';
+        return SUPPORTED_LOCALES.find((l) => l.code === locale)?.direction || 'ltr';
       },
     }),
     {
       name: 'noteece-i18n',
       partialize: (state) => ({ locale: state.locale }),
-    }
-  )
+    },
+  ),
 );
 
 /**
@@ -863,4 +863,3 @@ export const useLocaleInfo = (): LocaleInfo => {
   const locale = useI18n((state) => state.locale);
   return SUPPORTED_LOCALES.find((l) => l.code === locale) || SUPPORTED_LOCALES[0];
 };
-

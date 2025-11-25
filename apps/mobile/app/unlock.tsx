@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,22 +9,17 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import { colors, typography, spacing } from "@/lib/theme";
-import { useVaultStore } from "@/store/vault";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, typography, spacing } from '@/lib/theme';
+import { useVaultStore } from '@/store/vault';
 
 export default function UnlockScreen() {
-  const {
-    unlockVault,
-    unlockWithBiometric,
-    isBiometricAvailable,
-    isBiometricEnabled,
-  } = useVaultStore();
-  const [password, setPassword] = useState("");
+  const { unlockVault, unlockWithBiometric, isBiometricAvailable, isBiometricEnabled } = useVaultStore();
+  const [password, setPassword] = useState('');
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [shakeAnimation] = useState(new Animated.Value(0));
@@ -84,7 +79,7 @@ export default function UnlockScreen() {
     }
 
     if (!password) {
-      Alert.alert("Password Required", "Please enter your vault password");
+      Alert.alert('Password Required', 'Please enter your vault password');
       return;
     }
 
@@ -98,19 +93,16 @@ export default function UnlockScreen() {
 
       if (success) {
         // Navigate to main app
-        router.replace("/(tabs)/today");
+        router.replace('/(tabs)/today');
       } else {
         shake();
-        setPassword("");
-        Alert.alert(
-          "Incorrect Password",
-          "The password you entered is incorrect. Please try again.",
-        );
+        setPassword('');
+        Alert.alert('Incorrect Password', 'The password you entered is incorrect. Please try again.');
       }
     } catch (error) {
-      console.error("Unlock error:", error);
+      console.error('Unlock error:', error);
       shake();
-      Alert.alert("Error", "Failed to unlock vault. Please try again.");
+      Alert.alert('Error', 'Failed to unlock vault. Please try again.');
     } finally {
       setIsUnlocking(false);
     }
@@ -119,18 +111,18 @@ export default function UnlockScreen() {
   const handleBiometricUnlock = async () => {
     if (!biometricAvailable) {
       Alert.alert(
-        "Biometric Not Available",
-        "Biometric authentication is not available on this device or no biometric data is enrolled.",
-        [{ text: "OK" }],
+        'Biometric Not Available',
+        'Biometric authentication is not available on this device or no biometric data is enrolled.',
+        [{ text: 'OK' }],
       );
       return;
     }
 
     if (!biometricEnabled) {
       Alert.alert(
-        "Biometric Not Enabled",
-        "Biometric unlock is not enabled for this vault. Please unlock with your password first and enable it in Settings.",
-        [{ text: "OK" }],
+        'Biometric Not Enabled',
+        'Biometric unlock is not enabled for this vault. Please unlock with your password first and enable it in Settings.',
+        [{ text: 'OK' }],
       );
       return;
     }
@@ -142,45 +134,38 @@ export default function UnlockScreen() {
 
       if (success) {
         // Navigate to main app
-        router.replace("/(tabs)/today");
+        router.replace('/(tabs)/today');
       } else {
         shake();
         Alert.alert(
-          "Authentication Failed",
-          "Biometric authentication failed. Please try again or use your password.",
-          [{ text: "OK" }],
+          'Authentication Failed',
+          'Biometric authentication failed. Please try again or use your password.',
+          [{ text: 'OK' }],
         );
       }
     } catch (error) {
-      console.error("Biometric unlock error:", error);
+      console.error('Biometric unlock error:', error);
       shake();
-      Alert.alert(
-        "Error",
-        "Failed to unlock with biometrics. Please use your password.",
-        [{ text: "OK" }],
-      );
+      Alert.alert('Error', 'Failed to unlock with biometrics. Please use your password.', [{ text: 'OK' }]);
     } finally {
       setIsUnlocking(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <LinearGradient
-        colors={["#0A0E27", "#1E2235", "#0A0E27"]}
+        colors={['#0A0E27', '#1E2235', '#0A0E27']}
         style={styles.gradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.keyboardView}
-        >
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardView}>
           {/* Logo/Icon Area */}
           <View style={styles.header}>
             <View style={styles.iconContainer}>
               <LinearGradient
-                colors={["#6366F1", "#8B5CF6"]}
+                colors={['#6366F1', '#8B5CF6']}
                 style={styles.iconGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -194,19 +179,9 @@ export default function UnlockScreen() {
           </View>
 
           {/* Password Input */}
-          <Animated.View
-            style={[
-              styles.formContainer,
-              { transform: [{ translateX: shakeAnimation }] },
-            ]}
-          >
+          <Animated.View style={[styles.formContainer, { transform: [{ translateX: shakeAnimation }] }]}>
             <View style={styles.inputContainer}>
-              <Ionicons
-                name="key-outline"
-                size={24}
-                color={colors.textSecondary}
-                style={styles.inputIcon}
-              />
+              <Ionicons name="key-outline" size={24} color={colors.textSecondary} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Vault password"
@@ -220,12 +195,9 @@ export default function UnlockScreen() {
                 editable={!isUnlocking}
                 autoFocus
               />
-              <TouchableOpacity
-                style={styles.togglePasswordButton}
-                onPress={() => setShowPassword(!showPassword)}
-              >
+              <TouchableOpacity style={styles.togglePasswordButton} onPress={() => setShowPassword(!showPassword)}>
                 <Ionicons
-                  name={showPassword ? "eye-off-outline" : "eye-outline"}
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                   size={24}
                   color={colors.textSecondary}
                 />
@@ -233,18 +205,13 @@ export default function UnlockScreen() {
             </View>
 
             <TouchableOpacity
-              style={[
-                styles.unlockButton,
-                isUnlocking && styles.unlockButtonDisabled,
-              ]}
+              style={[styles.unlockButton, isUnlocking && styles.unlockButtonDisabled]}
               onPress={handleUnlock}
               disabled={isUnlocking}
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={
-                  isUnlocking ? ["#4B5563", "#6B7280"] : ["#6366F1", "#8B5CF6"]
-                }
+                colors={isUnlocking ? ['#4B5563', '#6B7280'] : ['#6366F1', '#8B5CF6']}
                 style={styles.unlockButtonGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
@@ -255,11 +222,7 @@ export default function UnlockScreen() {
                   </View>
                 ) : (
                   <View style={styles.unlockButtonContent}>
-                    <Ionicons
-                      name="lock-open-outline"
-                      size={24}
-                      color="#FFFFFF"
-                    />
+                    <Ionicons name="lock-open-outline" size={24} color="#FFFFFF" />
                     <Text style={styles.unlockButtonText}>Unlock Vault</Text>
                   </View>
                 )}
@@ -276,16 +239,8 @@ export default function UnlockScreen() {
                 <View style={styles.dividerLine} />
               </View>
 
-              <TouchableOpacity
-                style={styles.biometricButton}
-                onPress={handleBiometricUnlock}
-                disabled={isUnlocking}
-              >
-                <Ionicons
-                  name="finger-print"
-                  size={32}
-                  color={colors.primary}
-                />
+              <TouchableOpacity style={styles.biometricButton} onPress={handleBiometricUnlock} disabled={isUnlocking}>
+                <Ionicons name="finger-print" size={32} color={colors.primary} />
                 <Text style={styles.biometricButtonText}>Use Biometrics</Text>
               </TouchableOpacity>
             </View>
@@ -297,9 +252,9 @@ export default function UnlockScreen() {
               style={styles.helpButton}
               onPress={() => {
                 Alert.alert(
-                  "Forgot Password?",
-                  "For security reasons, if you forget your vault password, you will need to reset the app and lose all encrypted data. Make sure to back up your data regularly.",
-                  [{ text: "OK" }],
+                  'Forgot Password?',
+                  'For security reasons, if you forget your vault password, you will need to reset the app and lose all encrypted data. Make sure to back up your data regularly.',
+                  [{ text: 'OK' }],
                 );
               }}
             >
@@ -307,14 +262,8 @@ export default function UnlockScreen() {
             </TouchableOpacity>
 
             <View style={styles.securityBadge}>
-              <Ionicons
-                name="shield-checkmark"
-                size={16}
-                color={colors.success}
-              />
-              <Text style={styles.securityBadgeText}>
-                End-to-end encrypted • Zero-knowledge
-              </Text>
+              <Ionicons name="shield-checkmark" size={16} color={colors.success} />
+              <Text style={styles.securityBadgeText}>End-to-end encrypted • Zero-knowledge</Text>
             </View>
           </View>
         </KeyboardAvoidingView>
@@ -333,12 +282,12 @@ const styles = StyleSheet.create({
   },
   keyboardView: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: 'center',
     paddingHorizontal: spacing.xl,
   },
   header: {
-    alignItems: "center",
-    marginBottom: spacing["3xl"],
+    alignItems: 'center',
+    marginBottom: spacing['3xl'],
   },
   iconContainer: {
     marginBottom: spacing.xl,
@@ -347,8 +296,8 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
@@ -356,7 +305,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   title: {
-    fontSize: typography.fontSize["3xl"],
+    fontSize: typography.fontSize['3xl'],
     fontFamily: typography.fontFamily.bold,
     color: colors.textPrimary,
     marginBottom: spacing.xs,
@@ -370,8 +319,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 16,
     paddingHorizontal: spacing.md,
@@ -394,7 +343,7 @@ const styles = StyleSheet.create({
   },
   unlockButton: {
     borderRadius: 16,
-    overflow: "hidden",
+    overflow: 'hidden',
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -409,22 +358,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   unlockButtonContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: spacing.sm,
   },
   unlockButtonText: {
     fontSize: typography.fontSize.lg,
     fontFamily: typography.fontFamily.semibold,
-    color: "#FFFFFF",
+    color: '#FFFFFF',
   },
   alternativeContainer: {
     marginBottom: spacing.xl,
   },
   divider: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: spacing.lg,
   },
   dividerLine: {
@@ -439,9 +388,9 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
   },
   biometricButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: colors.surface,
     borderRadius: 16,
     paddingVertical: spacing.md,
@@ -456,7 +405,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   footer: {
-    alignItems: "center",
+    alignItems: 'center',
     gap: spacing.lg,
   },
   helpButton: {
@@ -468,8 +417,8 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   securityBadge: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.xs,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,

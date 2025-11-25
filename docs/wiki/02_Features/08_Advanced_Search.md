@@ -14,18 +14,23 @@ Type any text to search across **Note Titles**, **Note Content**, **Task Titles*
 You can combine multiple filters. Filters are space-separated.
 
 ### 1. Tags
+
 Filter by `#tag`.
+
 - `tag:journal` -> Items with the tag `#journal`.
 - `tag:project/alpha` -> Nested tags.
 
 ### 2. Date
+
 Filter by creation or modification date.
+
 - `created:today`
 - `created:yesterday`
 - `created:2023-10-01`
 - `modified:week` (Last 7 days)
 
 ### 3. Task Specific
+
 - `is:task` -> Only show tasks.
 - `is:done` -> Completed tasks.
 - `is:todo` -> Incomplete tasks.
@@ -34,6 +39,7 @@ Filter by creation or modification date.
 - `due:overdue`
 
 ### 4. Logic
+
 - `AND` is implicit. `tag:journal created:today` means (tag=journal AND created=today).
 - `OR` is not currently supported in the UI syntax (use two searches).
 - `-` (Negation): `-tag:archive` -> Exclude archived items.

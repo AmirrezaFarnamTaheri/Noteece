@@ -1,6 +1,6 @@
 /**
  * Theme Store with OS Preference Sync
- * 
+ *
  * Provides dark mode synchronization with system preferences
  */
 
@@ -75,16 +75,22 @@ export const useThemeStore = create<ThemeState>()(
           applyTheme(actualTheme);
         }
       },
-    }
-  )
+    },
+  ),
 );
 
 /**
  * Apply theme to document
  */
 function applyTheme(theme: ActualTheme): void {
-  if (typeof document !== 'undefined') {
-    document.documentElement.setAttribute('data-mantine-color-scheme', theme);
+  if (typeof document !== 'undefined' && document.documentElement) {
+    // Use dataset primarily, setAttribute as fallback for test environments
+    if (document.documentElement.dataset) {
+      document.documentElement.dataset.mantineColorScheme = theme;
+    } else {
+      // eslint-disable-next-line unicorn/prefer-dom-node-dataset -- fallback for test environments
+      document.documentElement.setAttribute('data-mantine-color-scheme', theme);
+    }
     document.documentElement.classList.remove('light', 'dark');
     document.documentElement.classList.add(theme);
   }
@@ -95,14 +101,14 @@ function applyTheme(theme: ActualTheme): void {
  */
 export function initializeTheme(): () => void {
   const store = useThemeStore.getState();
-  
+
   // Apply initial theme
   applyTheme(store.actualTheme);
 
   // Listen for system theme changes
   if (typeof window !== 'undefined' && window.matchMedia) {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
+
     const handleChange = () => {
       store.syncWithSystem();
     };
@@ -127,4 +133,3 @@ export function initializeTheme(): () => void {
 
   return () => {};
 }
-

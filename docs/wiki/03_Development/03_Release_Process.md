@@ -5,6 +5,7 @@ This document outlines the steps to release a new version of Noteece.
 ## Versioning Strategy
 
 We follow **Semantic Versioning (SemVer)**: `MAJOR.MINOR.PATCH`.
+
 - **MAJOR:** Breaking changes (e.g., incompatible database schema without auto-migration).
 - **MINOR:** New features (backward compatible).
 - **PATCH:** Bug fixes.
@@ -28,6 +29,7 @@ We follow **Semantic Versioning (SemVer)**: `MAJOR.MINOR.PATCH`.
 ## The Release Workflow
 
 1.  **Commit & Tag:**
+
     ```bash
     git commit -am "chore: release v1.2.0"
     git tag v1.2.0
@@ -38,9 +40,9 @@ We follow **Semantic Versioning (SemVer)**: `MAJOR.MINOR.PATCH`.
     - The `.github/workflows/release.yml` workflow triggers on tags starting with `v*`.
     - It uses `tauri-apps/tauri-action` to compile native binaries.
     - **Platform Specifics:**
-        - **Linux:** Uses Ubuntu 22.04 runner for compatibility. Builds `.deb` and `.AppImage`.
-        - **macOS:** Builds Universal binaries (`.dmg`, `.app`) for Apple Silicon and Intel.
-        - **Windows:** Builds `.msi` and `.exe` installers.
+      - **Linux:** Uses Ubuntu 22.04 runner for compatibility. Builds `.deb` and `.AppImage`.
+      - **macOS:** Builds Universal binaries (`.dmg`, `.app`) for Apple Silicon and Intel.
+      - **Windows:** Builds `.msi` and `.exe` installers.
     - It automatically creates a **GitHub Release** and uploads these artifacts as assets.
 
 3.  **Post-Release:**
@@ -50,6 +52,7 @@ We follow **Semantic Versioning (SemVer)**: `MAJOR.MINOR.PATCH`.
 ## Hotfixes
 
 If a critical bug is found in production:
+
 1.  Branch from the tag: `git checkout -b hotfix/v1.2.1 v1.2.0`.
 2.  Apply the fix.
 3.  Bump version to `v1.2.1`.

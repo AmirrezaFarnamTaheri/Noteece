@@ -41,8 +41,8 @@ export interface SmartPlaylistCriteria {
   maxDuration?: number;
   isFavorite?: boolean;
   addedAfter?: number;
-  sortBy?: "title" | "artist" | "playCount" | "addedAt";
-  sortOrder?: "asc" | "desc";
+  sortBy?: 'title' | 'artist' | 'playCount' | 'addedAt';
+  sortOrder?: 'asc' | 'desc';
   limit?: number;
 }
 
@@ -59,7 +59,7 @@ export interface PlaybackState {
   position: number; // current position in seconds
   queue: Track[];
   queueIndex: number;
-  repeatMode: "off" | "one" | "all";
+  repeatMode: 'off' | 'one' | 'all';
   shuffleEnabled: boolean;
   volume: number; // 0.0 to 1.0
 }

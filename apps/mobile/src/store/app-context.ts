@@ -5,16 +5,16 @@
  * Uses Zustand for simple, performant state management.
  */
 
-import { create } from "zustand";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { hapticManager } from "@/lib/haptics";
+import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { hapticManager } from '@/lib/haptics';
 
 export interface ThemeConfig {
-  mode: "light" | "dark" | "auto";
+  mode: 'light' | 'dark' | 'auto';
   primaryColor: string;
   accentColor: string;
-  fontSize: "small" | "medium" | "large";
-  fontFamily: "default" | "dyslexic" | "monospace";
+  fontSize: 'small' | 'medium' | 'large';
+  fontFamily: 'default' | 'dyslexic' | 'monospace';
 }
 
 export interface AppSettings {
@@ -43,7 +43,7 @@ export interface AppSettings {
 
   // Data
   autoBackup: boolean;
-  backupFrequency: "daily" | "weekly" | "monthly";
+  backupFrequency: 'daily' | 'weekly' | 'monthly';
 }
 
 export interface UserSpace {
@@ -81,15 +81,15 @@ interface AppState {
 }
 
 const DEFAULT_THEME: ThemeConfig = {
-  mode: "dark",
-  primaryColor: "#6366F1",
-  accentColor: "#8B5CF6",
-  fontSize: "medium",
-  fontFamily: "default",
+  mode: 'dark',
+  primaryColor: '#6366F1',
+  accentColor: '#8B5CF6',
+  fontSize: 'medium',
+  fontFamily: 'default',
 };
 
 const DEFAULT_SETTINGS: AppSettings = {
-  language: "en",
+  language: 'en',
   notifications: true,
   haptics: true,
   theme: DEFAULT_THEME,
@@ -103,15 +103,15 @@ const DEFAULT_SETTINGS: AppSettings = {
   pomodoroLength: 25,
   breakLength: 5,
   autoBackup: false,
-  backupFrequency: "weekly",
+  backupFrequency: 'weekly',
 };
 
 export const useAppContext = create<AppState>((set, get) => ({
-  currentSpaceId: "default",
+  currentSpaceId: 'default',
   spaces: [
     {
-      id: "default",
-      name: "My Space",
+      id: 'default',
+      name: 'My Space',
       createdAt: Date.now(),
       lastSyncedAt: null,
     },
@@ -129,7 +129,7 @@ export const useAppContext = create<AppState>((set, get) => ({
     }
 
     set({ currentSpaceId: spaceId });
-    await AsyncStorage.setItem("current_space_id", spaceId);
+    await AsyncStorage.setItem('current_space_id', spaceId);
   },
 
   createSpace: async (name: string) => {
@@ -144,7 +144,7 @@ export const useAppContext = create<AppState>((set, get) => ({
     const updatedSpaces = [...spaces, newSpace];
 
     set({ spaces: updatedSpaces });
-    await AsyncStorage.setItem("user_spaces", JSON.stringify(updatedSpaces));
+    await AsyncStorage.setItem('user_spaces', JSON.stringify(updatedSpaces));
 
     return newSpace;
   },
@@ -152,18 +152,18 @@ export const useAppContext = create<AppState>((set, get) => ({
   deleteSpace: async (spaceId: string) => {
     const { spaces, currentSpaceId } = get();
 
-    if (spaceId === "default") {
-      throw new Error("Cannot delete default space");
+    if (spaceId === 'default') {
+      throw new Error('Cannot delete default space');
     }
 
     const updatedSpaces = spaces.filter((s) => s.id !== spaceId);
     set({ spaces: updatedSpaces });
 
-    await AsyncStorage.setItem("user_spaces", JSON.stringify(updatedSpaces));
+    await AsyncStorage.setItem('user_spaces', JSON.stringify(updatedSpaces));
 
     // If deleting current space, switch to default
     if (currentSpaceId === spaceId) {
-      await get().setCurrentSpace("default");
+      await get().setCurrentSpace('default');
     }
   },
 
@@ -172,17 +172,17 @@ export const useAppContext = create<AppState>((set, get) => ({
     const updatedSettings = { ...settings, ...newSettings };
 
     set({ settings: updatedSettings });
-    await AsyncStorage.setItem("app_settings", JSON.stringify(updatedSettings));
+    await AsyncStorage.setItem('app_settings', JSON.stringify(updatedSettings));
 
     // Update haptic manager if haptics setting changed
-    if ("haptics" in newSettings && newSettings.haptics !== undefined) {
+    if ('haptics' in newSettings && newSettings.haptics !== undefined) {
       hapticManager.setEnabled(newSettings.haptics);
     }
   },
 
   loadSettings: async () => {
     try {
-      const stored = await AsyncStorage.getItem("app_settings");
+      const stored = await AsyncStorage.getItem('app_settings');
       if (stored) {
         const settings = JSON.parse(stored);
         set({ settings: { ...DEFAULT_SETTINGS, ...settings } });
@@ -191,36 +191,36 @@ export const useAppContext = create<AppState>((set, get) => ({
         hapticManager.setEnabled(settings.haptics !== false);
       }
     } catch (error) {
-      console.error("[AppContext] Failed to load settings:", error);
+      console.error('[AppContext] Failed to load settings:', error);
     }
   },
 
   setOnboarded: async (value: boolean) => {
     set({ isOnboarded: value });
-    await AsyncStorage.setItem("is_onboarded", value.toString());
+    await AsyncStorage.setItem('is_onboarded', value.toString());
   },
 
   setLastActiveTab: (tab: string) => {
     set({ lastActiveTab: tab });
-    AsyncStorage.setItem("last_active_tab", tab);
+    AsyncStorage.setItem('last_active_tab', tab);
   },
 
   initialize: async () => {
     try {
       // Load onboarded status
-      const onboarded = await AsyncStorage.getItem("is_onboarded");
+      const onboarded = await AsyncStorage.getItem('is_onboarded');
       if (onboarded) {
-        set({ isOnboarded: onboarded === "true" });
+        set({ isOnboarded: onboarded === 'true' });
       }
 
       // Load current space
-      const currentSpace = await AsyncStorage.getItem("current_space_id");
+      const currentSpace = await AsyncStorage.getItem('current_space_id');
       if (currentSpace) {
         set({ currentSpaceId: currentSpace });
       }
 
       // Load spaces
-      const spacesData = await AsyncStorage.getItem("user_spaces");
+      const spacesData = await AsyncStorage.getItem('user_spaces');
       if (spacesData) {
         const spaces = JSON.parse(spacesData);
         set({ spaces });
@@ -230,14 +230,14 @@ export const useAppContext = create<AppState>((set, get) => ({
       await get().loadSettings();
 
       // Load last active tab
-      const lastTab = await AsyncStorage.getItem("last_active_tab");
+      const lastTab = await AsyncStorage.getItem('last_active_tab');
       if (lastTab) {
         set({ lastActiveTab: lastTab });
       }
 
-      console.log("[AppContext] Initialized successfully");
+      console.log('[AppContext] Initialized successfully');
     } catch (error) {
-      console.error("[AppContext] Initialization failed:", error);
+      console.error('[AppContext] Initialization failed:', error);
     }
   },
 }));

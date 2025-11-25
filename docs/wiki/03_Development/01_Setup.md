@@ -18,12 +18,12 @@ Complete guide to setting up your Noteece development environment.
 
 ### Required Software
 
-| Software | Minimum Version | Purpose |
-|----------|-----------------|---------|
-| Node.js | v18.0.0+ | JavaScript runtime |
-| pnpm | v8.15.0+ | Package manager |
-| Rust | Latest stable | Core library |
-| Git | v2.30+ | Version control |
+| Software | Minimum Version | Purpose            |
+| -------- | --------------- | ------------------ |
+| Node.js  | v18.0.0+        | JavaScript runtime |
+| pnpm     | v8.15.0+        | Package manager    |
+| Rust     | Latest stable   | Core library       |
+| Git      | v2.30+          | Version control    |
 
 ### Platform-Specific Requirements
 
@@ -113,6 +113,7 @@ pnpm install
 ```
 
 This installs dependencies for:
+
 - Root workspace
 - `packages/core-rs` (Rust core)
 - `apps/desktop` (Tauri desktop app)
@@ -155,6 +156,7 @@ pnpm dev:tauri
 ```
 
 This will:
+
 1. Start the Vite dev server (React frontend)
 2. Compile the Rust core library
 3. Compile the Tauri backend
@@ -171,6 +173,7 @@ npm start
 ```
 
 **Running on device:**
+
 - **iOS Simulator:** Press `i`
 - **Android Emulator:** Press `a`
 - **Physical Device:** Scan QR code with Expo Go app
@@ -215,13 +218,13 @@ cargo clippy
 
 #### Essential Extensions
 
-| Extension | Purpose |
-|-----------|---------|
-| `rust-analyzer` | Rust language support |
-| `ESLint` | JavaScript/TypeScript linting |
-| `Prettier` | Code formatting |
-| `Tauri` | Tauri development helpers |
-| `Even Better TOML` | Cargo.toml syntax |
+| Extension          | Purpose                       |
+| ------------------ | ----------------------------- |
+| `rust-analyzer`    | Rust language support         |
+| `ESLint`           | JavaScript/TypeScript linting |
+| `Prettier`         | Code formatting               |
+| `Tauri`            | Tauri development helpers     |
+| `Even Better TOML` | Cargo.toml syntax             |
 
 #### Recommended Settings
 
@@ -304,4 +307,4 @@ npx react-native start --reset-cache
 
 ---
 
-*Created by Amirreza "Farnam" Taheri*
+_Created by Amirreza "Farnam" Taheri_

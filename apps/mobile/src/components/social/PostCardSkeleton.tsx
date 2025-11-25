@@ -5,8 +5,8 @@
  * Shows animated loading state while posts are being fetched.
  */
 
-import React, { useEffect, useRef } from "react";
-import { View, StyleSheet, Animated } from "react-native";
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, Animated } from 'react-native';
 
 interface PostCardSkeletonProps {
   count?: number;
@@ -95,41 +95,41 @@ export function PostCardSkeleton({ count = 3 }: PostCardSkeletonProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#1e1e1e",
+    backgroundColor: '#1e1e1e',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#2a2a2a",
+    borderColor: '#2a2a2a',
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
   },
   platformBadge: {
     width: 80,
     height: 24,
     borderRadius: 12,
-    backgroundColor: "#2a2a2a",
+    backgroundColor: '#2a2a2a',
   },
   timestamp: {
     width: 60,
     height: 14,
     borderRadius: 7,
-    backgroundColor: "#2a2a2a",
+    backgroundColor: '#2a2a2a',
   },
   authorSection: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
   },
   avatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#2a2a2a",
+    backgroundColor: '#2a2a2a',
     marginRight: 12,
   },
   authorInfo: {
@@ -139,38 +139,38 @@ const styles = StyleSheet.create({
     width: 120,
     height: 16,
     borderRadius: 8,
-    backgroundColor: "#2a2a2a",
+    backgroundColor: '#2a2a2a',
     marginBottom: 6,
   },
   authorHandle: {
     width: 80,
     height: 12,
     borderRadius: 6,
-    backgroundColor: "#2a2a2a",
+    backgroundColor: '#2a2a2a',
   },
   contentLine1: {
-    width: "100%",
+    width: '100%',
     height: 14,
     borderRadius: 7,
-    backgroundColor: "#2a2a2a",
+    backgroundColor: '#2a2a2a',
     marginBottom: 8,
   },
   contentLine2: {
-    width: "95%",
+    width: '95%',
     height: 14,
     borderRadius: 7,
-    backgroundColor: "#2a2a2a",
+    backgroundColor: '#2a2a2a',
     marginBottom: 8,
   },
   contentLine3: {
-    width: "70%",
+    width: '70%',
     height: 14,
     borderRadius: 7,
-    backgroundColor: "#2a2a2a",
+    backgroundColor: '#2a2a2a',
     marginBottom: 16,
   },
   engagement: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 16,
     marginBottom: 12,
   },
@@ -178,10 +178,10 @@ const styles = StyleSheet.create({
     width: 50,
     height: 20,
     borderRadius: 10,
-    backgroundColor: "#2a2a2a",
+    backgroundColor: '#2a2a2a',
   },
   categoriesSection: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 8,
     marginTop: 8,
   },
@@ -189,6 +189,6 @@ const styles = StyleSheet.create({
     width: 60,
     height: 24,
     borderRadius: 12,
-    backgroundColor: "#2a2a2a",
+    backgroundColor: '#2a2a2a',
   },
 });

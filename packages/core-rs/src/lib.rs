@@ -3,6 +3,7 @@
 //! This library provides the backend logic for the Noteece application,
 //! including database management, encryption, sync, and business logic.
 
+pub mod ai;
 pub mod analytics;
 pub mod audit;
 pub mod auth;

@@ -5,8 +5,8 @@ export interface Task {
   projectId?: string;
   title: string;
   description?: string;
-  status: "todo" | "in_progress" | "completed";
-  priority?: "low" | "medium" | "high" | "urgent";
+  status: 'todo' | 'in_progress' | 'completed';
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
   dueAt?: number;
   completedAt?: number;
   progress?: number;
@@ -31,7 +31,7 @@ export interface CalendarEvent {
   startTime: number;
   endTime?: number;
   location?: string;
-  source: "caldav" | "internal";
+  source: 'caldav' | 'internal';
   color: string;
 }
 
@@ -50,7 +50,7 @@ export interface TimeEntry {
 export interface HealthMetric {
   id: string;
   spaceId: string;
-  metricType: "mood" | "energy" | "sleep" | "exercise" | "weight" | "custom";
+  metricType: 'mood' | 'energy' | 'sleep' | 'exercise' | 'weight' | 'custom';
   value: number;
   unit?: string;
   notes?: string;
@@ -63,7 +63,7 @@ export interface Insight {
   insightType: string;
   title: string;
   description: string;
-  severity: "info" | "low" | "medium" | "high" | "critical";
+  severity: 'info' | 'low' | 'medium' | 'high' | 'critical';
   suggestedActions: SuggestedAction[];
   createdAt: number;
   dismissed: boolean;
@@ -78,7 +78,7 @@ export interface SuggestedAction {
 
 export interface TimelineItem {
   id: string;
-  type: "task" | "event" | "insight" | "block";
+  type: 'task' | 'event' | 'insight' | 'block';
   time: number;
   endTime?: number;
   title: string;
@@ -90,7 +90,7 @@ export interface TimelineItem {
 export interface NFCTrigger {
   id: string;
   tagId: string;
-  actionType: "start_time" | "log_habit" | "open_note" | "quick_capture";
+  actionType: 'start_time' | 'log_habit' | 'open_note' | 'quick_capture';
   parameters: Record<string, any>;
   createdAt: number;
 }
@@ -98,7 +98,7 @@ export interface NFCTrigger {
 export interface LocationTrigger {
   id: string;
   taskId: string;
-  locationType: "arrive" | "leave";
+  locationType: 'arrive' | 'leave';
   latitude: number;
   longitude: number;
   radiusMeters: number;
@@ -110,13 +110,13 @@ export interface SyncState {
   deviceId: string;
   deviceName: string;
   lastSyncTimestamp: number;
-  lastSyncDirection: "pull" | "push" | "bidirectional";
+  lastSyncDirection: 'pull' | 'push' | 'bidirectional';
   totalSyncedEntities: number;
   updatedAt: number;
 }
 
 export interface QuickCapture {
-  type: "thought" | "task" | "health" | "expense";
+  type: 'thought' | 'task' | 'health' | 'expense';
   content: string;
   location?: {
     latitude: number;

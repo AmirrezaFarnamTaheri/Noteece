@@ -5,9 +5,9 @@
  * Uses shimmer effect for better visual feedback.
  */
 
-import React, { useEffect, useRef } from "react";
-import { Animated, StyleSheet, View, ViewStyle } from "react-native";
-import { colors } from "@/lib/theme";
+import React, { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, View, ViewStyle } from 'react-native';
+import { colors } from '@/lib/theme';
 
 interface SkeletonBoxProps {
   width?: number | string;
@@ -16,12 +16,7 @@ interface SkeletonBoxProps {
   style?: ViewStyle;
 }
 
-export function SkeletonBox({
-  width = "100%",
-  height = 20,
-  borderRadius = 4,
-  style,
-}: SkeletonBoxProps) {
+export function SkeletonBox({ width = '100%', height = 20, borderRadius = 4, style }: SkeletonBoxProps) {
   const shimmerAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -64,7 +59,7 @@ export function SkeletonBox({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.surface,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
   shimmer: {
     flex: 1,

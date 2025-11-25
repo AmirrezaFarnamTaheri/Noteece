@@ -3,10 +3,10 @@
  * Handle NFC tag reading and action execution
  */
 
-import * as NFC from "expo-nfc";
-import { dbQuery, dbExecute } from "@/lib/database";
-import { NFCTrigger } from "@/types";
-import { nanoid } from "nanoid";
+import * as NFC from 'expo-nfc';
+import { dbQuery, dbExecute } from '@/lib/database';
+import { NFCTrigger } from '@/types';
+import { nanoid } from 'nanoid';
 
 export class NFCTriggerManager {
   private isScanning = false;
@@ -21,7 +21,7 @@ export class NFCTriggerManager {
       const isEnabled = await NFC.isEnabledAsync();
       return isSupported && isEnabled;
     } catch (error) {
-      console.error("NFC check failed:", error);
+      console.error('NFC check failed:', error);
       return false;
     }
   }
@@ -29,9 +29,7 @@ export class NFCTriggerManager {
   /**
    * Start scanning for NFC tags
    */
-  async startScanning(
-    onTagDetected: (trigger: NFCTrigger | null) => void,
-  ): Promise<void> {
+  async startScanning(onTagDetected: (trigger: NFCTrigger | null) => void): Promise<void> {
     if (this.isScanning) {
       return;
     }
@@ -45,7 +43,7 @@ export class NFCTriggerManager {
       await NFC.requestPermissionsAsync();
 
       // Listen for NFC tags - store reference to remove later
-      this.tagListener = NFC.addListener("tag", async (event) => {
+      this.tagListener = NFC.addListener('tag', async (event) => {
         const tagId = event.id || event.serialNumber;
 
         if (tagId) {
@@ -55,7 +53,7 @@ export class NFCTriggerManager {
         }
       });
     } catch (error) {
-      console.error("Failed to start NFC scanning:", error);
+      console.error('Failed to start NFC scanning:', error);
       this.isScanning = false;
       this.tagListener = null;
     }
@@ -75,7 +73,7 @@ export class NFCTriggerManager {
       this.tagListener = null;
     } else {
       // Fallback to removing all listeners
-      NFC.removeAllListeners("tag");
+      NFC.removeAllListeners('tag');
     }
 
     this.isScanning = false;
@@ -85,10 +83,7 @@ export class NFCTriggerManager {
    * Get trigger by NFC tag ID
    */
   private async getTriggerByTagId(tagId: string): Promise<NFCTrigger | null> {
-    const results = await dbQuery<NFCTrigger>(
-      `SELECT * FROM nfc_trigger WHERE tag_id = ? LIMIT 1`,
-      [tagId],
-    );
+    const results = await dbQuery<NFCTrigger>(`SELECT * FROM nfc_trigger WHERE tag_id = ? LIMIT 1`, [tagId]);
 
     if (results.length > 0) {
       return {
@@ -105,36 +100,27 @@ export class NFCTriggerManager {
    */
   async registerTrigger(
     tagId: string,
-    actionType: NFCTrigger["actionType"],
+    actionType: NFCTrigger['actionType'],
     parameters: Record<string, any>,
   ): Promise<string> {
     // Validate tag ID
-    if (!tagId || typeof tagId !== "string" || tagId.trim().length === 0) {
-      throw new Error("Invalid tag ID: must be a non-empty string");
+    if (!tagId || typeof tagId !== 'string' || tagId.trim().length === 0) {
+      throw new Error('Invalid tag ID: must be a non-empty string');
     }
 
     if (tagId.length > 256) {
-      throw new Error(
-        "Invalid tag ID: exceeds maximum length of 256 characters",
-      );
+      throw new Error('Invalid tag ID: exceeds maximum length of 256 characters');
     }
 
     // Validate action type
-    const validActionTypes = [
-      "start_time",
-      "log_habit",
-      "open_note",
-      "quick_capture",
-    ];
+    const validActionTypes = ['start_time', 'log_habit', 'open_note', 'quick_capture'];
     if (!validActionTypes.includes(actionType)) {
-      throw new Error(
-        `Invalid action type: must be one of ${validActionTypes.join(", ")}`,
-      );
+      throw new Error(`Invalid action type: must be one of ${validActionTypes.join(', ')}`);
     }
 
     // Validate parameters
-    if (!parameters || typeof parameters !== "object") {
-      throw new Error("Invalid parameters: must be an object");
+    if (!parameters || typeof parameters !== 'object') {
+      throw new Error('Invalid parameters: must be an object');
     }
 
     // Validate parameters based on action type
@@ -155,61 +141,53 @@ export class NFCTriggerManager {
   /**
    * Validate parameters for specific action types
    */
-  private validateActionParameters(
-    actionType: string,
-    params: Record<string, any>,
-  ): void {
+  private validateActionParameters(actionType: string, params: Record<string, any>): void {
     switch (actionType) {
-      case "start_time":
-        if (!params.spaceId || typeof params.spaceId !== "string") {
-          throw new Error("start_time requires valid spaceId");
+      case 'start_time':
+        if (!params.spaceId || typeof params.spaceId !== 'string') {
+          throw new Error('start_time requires valid spaceId');
         }
-        if (params.taskId && typeof params.taskId !== "string") {
-          throw new Error("taskId must be a string if provided");
+        if (params.taskId && typeof params.taskId !== 'string') {
+          throw new Error('taskId must be a string if provided');
         }
-        if (params.description && typeof params.description !== "string") {
-          throw new Error("description must be a string if provided");
+        if (params.description && typeof params.description !== 'string') {
+          throw new Error('description must be a string if provided');
         }
         if (params.description && params.description.length > 1000) {
-          throw new Error(
-            "description exceeds maximum length of 1000 characters",
-          );
+          throw new Error('description exceeds maximum length of 1000 characters');
         }
         break;
 
-      case "log_habit":
-        if (!params.spaceId || typeof params.spaceId !== "string") {
-          throw new Error("log_habit requires valid spaceId");
+      case 'log_habit':
+        if (!params.spaceId || typeof params.spaceId !== 'string') {
+          throw new Error('log_habit requires valid spaceId');
         }
-        if (!params.metricType || typeof params.metricType !== "string") {
-          throw new Error("log_habit requires valid metricType");
+        if (!params.metricType || typeof params.metricType !== 'string') {
+          throw new Error('log_habit requires valid metricType');
         }
         if (params.value === undefined || params.value === null) {
-          throw new Error("log_habit requires value");
+          throw new Error('log_habit requires value');
         }
-        if (
-          typeof params.value !== "number" &&
-          typeof params.value !== "string"
-        ) {
-          throw new Error("value must be a number or string");
+        if (typeof params.value !== 'number' && typeof params.value !== 'string') {
+          throw new Error('value must be a number or string');
         }
-        if (params.unit && typeof params.unit !== "string") {
-          throw new Error("unit must be a string if provided");
+        if (params.unit && typeof params.unit !== 'string') {
+          throw new Error('unit must be a string if provided');
         }
         break;
 
-      case "open_note":
-        if (!params.noteId || typeof params.noteId !== "string") {
-          throw new Error("open_note requires valid noteId");
+      case 'open_note':
+        if (!params.noteId || typeof params.noteId !== 'string') {
+          throw new Error('open_note requires valid noteId');
         }
         break;
 
-      case "quick_capture":
-        if (params.content && typeof params.content !== "string") {
-          throw new Error("content must be a string if provided");
+      case 'quick_capture':
+        if (params.content && typeof params.content !== 'string') {
+          throw new Error('content must be a string if provided');
         }
         if (params.content && params.content.length > 10000) {
-          throw new Error("content exceeds maximum length of 10000 characters");
+          throw new Error('content exceeds maximum length of 10000 characters');
         }
         break;
     }
@@ -226,9 +204,7 @@ export class NFCTriggerManager {
    * Get all registered triggers
    */
   async getAllTriggers(): Promise<NFCTrigger[]> {
-    const results = await dbQuery<NFCTrigger>(
-      `SELECT * FROM nfc_trigger ORDER BY created_at DESC`,
-    );
+    const results = await dbQuery<NFCTrigger>(`SELECT * FROM nfc_trigger ORDER BY created_at DESC`);
 
     return results.map((row) => ({
       ...row,
@@ -241,16 +217,16 @@ export class NFCTriggerManager {
    */
   async executeTrigger(trigger: NFCTrigger): Promise<void> {
     switch (trigger.actionType) {
-      case "start_time":
+      case 'start_time':
         await this.executeStartTime(trigger.parameters);
         break;
-      case "log_habit":
+      case 'log_habit':
         await this.executeLogHabit(trigger.parameters);
         break;
-      case "open_note":
+      case 'open_note':
         await this.executeOpenNote(trigger.parameters);
         break;
-      case "quick_capture":
+      case 'quick_capture':
         await this.executeQuickCapture(trigger.parameters);
         break;
     }
@@ -258,21 +234,19 @@ export class NFCTriggerManager {
 
   private async executeStartTime(params: any): Promise<void> {
     // Validate required parameters
-    if (!params.spaceId || typeof params.spaceId !== "string") {
-      throw new Error("Invalid spaceId for start_time action");
+    if (!params.spaceId || typeof params.spaceId !== 'string') {
+      throw new Error('Invalid spaceId for start_time action');
     }
 
     // Validate optional parameters
-    const taskId =
-      params.taskId && typeof params.taskId === "string" ? params.taskId : null;
+    const taskId = params.taskId && typeof params.taskId === 'string' ? params.taskId : null;
     const description =
-      params.description && typeof params.description === "string"
+      params.description && typeof params.description === 'string'
         ? params.description.substring(0, 1000).trim()
-        : "NFC triggered time entry";
+        : 'NFC triggered time entry';
 
     // Ensure description is not empty after trimming
-    const finalDescription =
-      description.length > 0 ? description : "NFC triggered time entry";
+    const finalDescription = description.length > 0 ? description : 'NFC triggered time entry';
 
     const now = Date.now();
 
@@ -285,77 +259,65 @@ export class NFCTriggerManager {
 
   private async executeLogHabit(params: any): Promise<void> {
     // Validate required parameters
-    if (!params.spaceId || typeof params.spaceId !== "string") {
-      throw new Error("Invalid spaceId for log_habit action");
+    if (!params.spaceId || typeof params.spaceId !== 'string') {
+      throw new Error('Invalid spaceId for log_habit action');
     }
 
-    if (!params.metricType || typeof params.metricType !== "string") {
-      throw new Error("Invalid metricType for log_habit action");
+    if (!params.metricType || typeof params.metricType !== 'string') {
+      throw new Error('Invalid metricType for log_habit action');
     }
 
     if (params.value === undefined || params.value === null) {
-      throw new Error("Invalid value for log_habit action");
+      throw new Error('Invalid value for log_habit action');
     }
 
     // Validate and sanitize value
     let value: number | string;
-    if (typeof params.value === "number") {
+    if (typeof params.value === 'number') {
       if (!Number.isFinite(params.value)) {
-        throw new Error("value must be a finite number");
+        throw new Error('value must be a finite number');
       }
       value = params.value;
-    } else if (typeof params.value === "string") {
+    } else if (typeof params.value === 'string') {
       value = params.value.substring(0, 100).trim();
       if (value.length === 0) {
-        throw new Error("value cannot be empty");
+        throw new Error('value cannot be empty');
       }
     } else {
-      throw new Error("value must be a number or string");
+      throw new Error('value must be a number or string');
     }
 
     // Validate and sanitize optional parameters
-    const unit =
-      params.unit && typeof params.unit === "string"
-        ? params.unit.substring(0, 50).trim()
-        : "";
+    const unit = params.unit && typeof params.unit === 'string' ? params.unit.substring(0, 50).trim() : '';
 
     const now = Date.now();
 
     await dbExecute(
       `INSERT INTO health_metric (id, space_id, metric_type, value, unit, notes, recorded_at, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        nanoid(),
-        params.spaceId,
-        params.metricType,
-        value,
-        unit,
-        "NFC logged",
-        now,
-        now,
-      ],
+      [nanoid(), params.spaceId, params.metricType, value, unit, 'NFC logged', now, now],
     );
   }
 
   private async executeOpenNote(params: any): Promise<void> {
     // Validate note ID
-    if (!params.noteId || typeof params.noteId !== "string") {
-      throw new Error("Invalid noteId for open_note action");
+    if (!params.noteId || typeof params.noteId !== 'string') {
+      throw new Error('Invalid noteId for open_note action');
     }
 
     if (params.noteId.trim().length === 0) {
-      throw new Error("noteId cannot be empty");
+      throw new Error('noteId cannot be empty');
     }
 
     // Open a specific note (handled by navigation)
-    console.log("Open note:", params.noteId);
+    console.log('Open note:', params.noteId);
   }
 
   private async executeQuickCapture(params: any): Promise<void> {
     // Validate and sanitize content if provided
     if (params.content !== undefined && params.content !== null) {
-      if (typeof params.content !== "string") {
-        throw new Error("content must be a string if provided");
+      if (typeof params.content !== 'string') {
+        throw new Error('content must be a string if provided');
       }
 
       // Limit content length to prevent abuse
@@ -363,7 +325,7 @@ export class NFCTriggerManager {
     }
 
     // Open quick capture with pre-filled data
-    console.log("Quick capture:", params);
+    console.log('Quick capture:', params);
   }
 }
 

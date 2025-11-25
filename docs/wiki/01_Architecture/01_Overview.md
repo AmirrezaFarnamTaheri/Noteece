@@ -31,6 +31,7 @@ graph TD
 ## 3. Core Components
 
 ### 3.1 `packages/core-rs` (The Brain)
+
 This Rust crate acts as the central source of truth for the desktop application. It is a library crate, not a binary, designed to be embedded into the Tauri application.
 
 - **Database Logic:**
@@ -53,6 +54,7 @@ This Rust crate acts as the central source of truth for the desktop application.
   - Handles mDNS discovery, TCP transport, and conflict resolution.
 
 ### 3.2 `apps/desktop` (The Workstation)
+
 Built with **Tauri v1**, this application provides a native desktop experience.
 
 - **Frontend:**
@@ -67,6 +69,7 @@ Built with **Tauri v1**, this application provides a native desktop experience.
   - **Isolation:** The webview has NO direct access to the file system or Node.js. All operations go through the IPC bridge, which acts as a security boundary.
 
 ### 3.3 `apps/mobile` (The Companion)
+
 Built with **Expo** and **React Native**.
 
 - **Database:**
@@ -92,12 +95,15 @@ We use **TurboRepo** to orchestrate the build process.
 ## 5. Design Patterns
 
 ### Local-First
+
 Data is always written to the local encrypted database first. Sync is an optional, background process. This ensures zero latency and full offline capability.
 
 ### Monorepo Strategy
+
 - **`packages/types`**: Shared TypeScript definitions. This is the "Rosetta Stone" ensuring the Rust backend (serialized via `serde`) and TypeScript frontend speak the same language.
 - **`packages/ui`**: Shared React components (buttons, inputs) to maintain visual consistency between Desktop (Web) and Mobile (Native).
 
 ### Security by Design
+
 - **Zero Knowledge (Serverless):** No central server holds your encryption keys.
 - **End-to-End Encryption:** Sync traffic is encrypted using ephemeral keys derived from the pairing process (ECDH).

@@ -5,8 +5,8 @@
  * Uses React Native's Animated API for optimal performance.
  */
 
-import React, { useEffect, useRef } from "react";
-import { Animated, ViewStyle } from "react-native";
+import React, { useEffect, useRef } from 'react';
+import { Animated, ViewStyle } from 'react-native';
 
 interface ShakeProps {
   children: React.ReactNode;
@@ -17,14 +17,7 @@ interface ShakeProps {
   trigger?: boolean; // Trigger the animation when this changes to true
 }
 
-export function Shake({
-  children,
-  duration = 400,
-  intensity = 10,
-  repeat = 1,
-  style,
-  trigger = true,
-}: ShakeProps) {
+export function Shake({ children, duration = 400, intensity = 10, repeat = 1, style, trigger = true }: ShakeProps) {
   const translateX = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -58,8 +51,7 @@ export function Shake({
       }),
     ]);
 
-    const anim =
-      repeat > 1 ? Animated.loop(baseShake, { iterations: repeat }) : baseShake;
+    const anim = repeat > 1 ? Animated.loop(baseShake, { iterations: repeat }) : baseShake;
     anim.start();
 
     return () => {
@@ -68,9 +60,5 @@ export function Shake({
     };
   }, [translateX, duration, intensity, repeat, trigger]);
 
-  return (
-    <Animated.View style={[style, { transform: [{ translateX }] }]}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={[style, { transform: [{ translateX }] }]}>{children}</Animated.View>;
 }

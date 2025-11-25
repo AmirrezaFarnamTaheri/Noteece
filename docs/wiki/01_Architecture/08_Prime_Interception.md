@@ -44,19 +44,20 @@ The entry point for passive capture sessions.
 **Component**: `SocialDock.tsx`
 
 **Function**:
+
 - Displays a grid of supported social applications
 - Triggers a `START_SESSION` intent before launching apps
 - Categories: Social Media, Messaging, Dating, Browsers, Media
 
 **Supported Platforms** (30+):
 
-| Category | Platforms |
-|----------|-----------|
+| Category     | Platforms                                                                 |
+| ------------ | ------------------------------------------------------------------------- |
 | Social Media | Twitter, Instagram, LinkedIn, Reddit, Facebook, TikTok, Pinterest, Tumblr |
-| Messaging | Telegram, Discord, WhatsApp, Signal, Slack, Snapchat |
-| Dating | Tinder, Bumble, Hinge, OkCupid, Match |
-| Browsers | Chrome, Firefox, Brave, Edge, DuckDuckGo |
-| Media | YouTube, Twitch, Spotify, Medium, NYTimes, Hacker News |
+| Messaging    | Telegram, Discord, WhatsApp, Signal, Slack, Snapchat                      |
+| Dating       | Tinder, Bumble, Hinge, OkCupid, Match                                     |
+| Browsers     | Chrome, Firefox, Brave, Edge, DuckDuckGo                                  |
+| Media        | YouTube, Twitch, Spotify, Medium, NYTimes, Hacker News                    |
 
 ### Layer 2: The Eyes (Accessibility Service)
 
@@ -65,6 +66,7 @@ Passive screen content reader.
 **Component**: `NoteeceAccessibilityService.kt`
 
 **Function**:
+
 - Reads the UI tree from the screen buffer
 - Bypasses SSL pinning by reading decrypted text at the view layer
 - Streams raw text to Rust Core via JNI bridge
@@ -75,28 +77,29 @@ Passive screen content reader.
 ```kotlin
 override fun onAccessibilityEvent(event: AccessibilityEvent?) {
     if (!isRecording || event == null) return
-    
+
     // Runtime package whitelist check
     if (!allowedPackages.contains(event.packageName.toString())) {
         return
     }
-    
+
     // Event filtering
     if (event.eventType != TYPE_WINDOW_CONTENT_CHANGED &&
         event.eventType != TYPE_VIEW_SCROLLED) {
         return
     }
-    
+
     // Debounce and capture
     val now = System.currentTimeMillis()
     if (now - lastScrollTime < DEBOUNCE_MS) return
     lastScrollTime = now
-    
+
     scanScreen()
 }
 ```
 
 **Privacy Controls**:
+
 - Strict package whitelist (runtime + XML config)
 - Screen state awareness (pauses on screen off)
 - No network access from service
@@ -109,6 +112,7 @@ User interface for capture control.
 **Component**: `OverlayService.kt`
 
 **Function**:
+
 - Draws a floating "Green Dot" indicator
 - Indicates active capture session
 - Provides "Anchor" action to save current screen
@@ -123,6 +127,7 @@ The Rust-based pattern recognition system.
 **Component**: `packages/core-rs/src/social/stream_processor.rs`
 
 **Function**:
+
 - Processes raw text streams from the accessibility service
 - Applies regex patterns to identify structured content
 - Reconstructs posts, messages, and profiles from fragments
@@ -134,18 +139,18 @@ The Rust-based pattern recognition system.
 lazy_static! {
     // Twitter/Instagram handles
     static ref HANDLE_REGEX: Regex = Regex::new(r"(@[\w_]+|u/[\w_]+)").unwrap();
-    
+
     // Relative timestamps
     static ref TIME_REGEX: Regex = Regex::new(r"(\d+[mhdw])").unwrap();
-    
+
     // Engagement metrics
     static ref METRICS_REGEX: Regex = Regex::new(
         r"(\d+(?:\.\d+)?[KMB]?)\s+(Comments|Retweets|Likes|Views)"
     ).unwrap();
-    
+
     // URLs in browser content
     static ref URL_REGEX: Regex = Regex::new(r"(https?://[^\s]+)").unwrap();
-    
+
     // Dating app profiles
     static ref DATING_PROFILE_REGEX: Regex = Regex::new(
         r"(^|\n)([\w\s]+, \d{1,2}(?:, \w+)?)\n"
@@ -207,12 +212,14 @@ pub struct CapturedPost {
 ## Build Flavors
 
 ### Store Build
+
 - Standard P2P companion app
 - Google Play compliant
 - No accessibility service
 - No overlay permissions
 
 ### Sideload (Prime) Build
+
 - Full "Cyborg-Life OS" experience
 - Accessibility service enabled
 - Overlay HUD enabled
@@ -242,6 +249,7 @@ captureSettings: {
 ### Selective Capture
 
 Users can:
+
 - Enable/disable specific platforms
 - Choose capture categories
 - Review before saving
@@ -249,13 +257,13 @@ Users can:
 
 ## Performance
 
-| Metric | Value |
-|--------|-------|
-| Debounce interval | 150ms |
-| Buffer size | 20 lines |
-| Pattern matching | <5ms |
-| JNI overhead | <1ms |
-| Memory footprint | ~15MB |
+| Metric            | Value    |
+| ----------------- | -------- |
+| Debounce interval | 150ms    |
+| Buffer size       | 20 lines |
+| Pattern matching  | <5ms     |
+| JNI overhead      | <1ms     |
+| Memory footprint  | ~15MB    |
 
 ## Limitations
 
@@ -266,5 +274,4 @@ Users can:
 
 ---
 
-*See also: [Social Suite Feature Guide](../02_Features/04_Social_Suite.md)*
-
+_See also: [Social Suite Feature Guide](../02_Features/04_Social_Suite.md)_

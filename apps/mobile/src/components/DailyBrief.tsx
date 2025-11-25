@@ -1,20 +1,8 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  ViewStyle,
-  TouchableOpacity,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import {
-  colors,
-  spacing,
-  typography,
-  borderRadius,
-  shadows,
-} from "@/lib/theme";
-import { Insight } from "@/types";
+import { View, Text, StyleSheet, ViewStyle, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, spacing, typography, borderRadius, shadows } from '@/lib/theme';
+import { Insight } from '@/types';
 
 interface DailyBriefProps {
   brief: Insight;
@@ -24,10 +12,7 @@ interface DailyBriefProps {
 export function DailyBrief({ brief, style }: DailyBriefProps) {
   return (
     <View style={[styles.container, style]}>
-      <LinearGradient
-        colors={[colors.primary + "15", colors.primary + "05"]}
-        style={styles.gradient}
-      >
+      <LinearGradient colors={[colors.primary + '15', colors.primary + '05']} style={styles.gradient}>
         <View style={styles.header}>
           <View style={styles.iconContainer}>
             <Ionicons name="bulb" size={20} color={colors.primary} />
@@ -45,15 +30,11 @@ export function DailyBrief({ brief, style }: DailyBriefProps) {
                 style={styles.actionButton}
                 onPress={() => {
                   // Handle action
-                  console.log("Action pressed:", action.actionType);
+                  console.log('Action pressed:', action.actionType);
                 }}
               >
                 <Text style={styles.actionLabel}>{action.label}</Text>
-                <Ionicons
-                  name="chevron-forward"
-                  size={16}
-                  color={colors.primary}
-                />
+                <Ionicons name="chevron-forward" size={16} color={colors.primary} />
               </TouchableOpacity>
             ))}
           </View>
@@ -66,27 +47,27 @@ export function DailyBrief({ brief, style }: DailyBriefProps) {
 const styles = StyleSheet.create({
   container: {
     borderRadius: borderRadius.lg,
-    overflow: "hidden",
+    overflow: 'hidden',
     ...shadows.md,
   },
   gradient: {
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: colors.primary + "30",
+    borderColor: colors.primary + '30',
     borderRadius: borderRadius.lg,
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: spacing.sm,
   },
   iconContainer: {
     width: 32,
     height: 32,
     borderRadius: borderRadius.sm,
-    backgroundColor: colors.primary + "20",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: colors.primary + '20',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: spacing.sm,
   },
   title: {
@@ -106,9 +87,9 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   actionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: colors.surface,
     padding: spacing.sm,
     borderRadius: borderRadius.sm,

@@ -104,10 +104,10 @@ jobs:
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev
 
       - name: Install Frontend Dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Build Desktop App
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v0.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -448,16 +448,32 @@ jobs:
   create-release:
     needs: [build-desktop, build-android-store, build-android-sideload, build-ios]
     runs-on: ubuntu-latest
-    if: always() && startsWith(github.ref, 'refs/tags/')
+    # Run only on tags and if at least one build job succeeded
+    if: |
+      always() && 
+      startsWith(github.ref, 'refs/tags/') &&
+      (needs.build-desktop.result == 'success' || 
+       needs.build-android-store.result == 'success' || 
+       needs.build-android-sideload.result == 'success' || 
+       needs.build-ios.result == 'success')
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Check build status
+        run: |
+          echo "Build Status Summary:"
+          echo "  Desktop: ${{ needs.build-desktop.result }}"
+          echo "  Android Store: ${{ needs.build-android-store.result }}"
+          echo "  Android Sideload: ${{ needs.build-android-sideload.result }}"
+          echo "  iOS: ${{ needs.build-ios.result }}"
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+        continue-on-error: true
 
       - name: Display structure of downloaded files
         run: |

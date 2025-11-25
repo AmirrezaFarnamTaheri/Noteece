@@ -30,7 +30,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Run lint
         run: pnpm lint
@@ -40,12 +40,13 @@ jobs:
         run: pnpm format --check
         continue-on-error: true
 
+      - name: TypeScript check
+        run: pnpm type-check
+        continue-on-error: true
+
   desktop_tests:
     name: "Desktop Tests"
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/desktop
 
     steps:
       - name: Checkout code
@@ -63,24 +64,32 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Run tests
+        working-directory: apps/desktop
         run: pnpm test --passWithNoTests
         continue-on-error: true
 
       - name: Run tests with coverage
+        working-directory: apps/desktop
         run: pnpm test:coverage --passWithNoTests
         continue-on-error: true
 
       - name: Check coverage threshold
+        working-directory: apps/desktop
         run: |
           if [ -f coverage/coverage-summary.json ]; then
-            COVERAGE=$(cat coverage/coverage-summary.json | jq '.total.lines.pct')
+            COVERAGE=$(cat coverage/coverage-summary.json | jq -r '.total.lines.pct')
             echo "Line coverage: $COVERAGE%"
-            if (( $(echo "$COVERAGE < 90" | bc -l) )); then
-              echo "Coverage below 90% threshold"
+            # Use awk for float comparison (bc not always available)
+            if echo "$COVERAGE" | awk '{exit !($1 < 90)}'; then
+              echo "::warning::Coverage ($COVERAGE%) is below 90% threshold"
+            else
+              echo "Coverage check passed: $COVERAGE%"
             fi
+          else
+            echo "::warning::No coverage report found"
           fi
         continue-on-error: true
 
@@ -233,7 +242,7 @@ jobs:
             ${{ runner.os }}-tauri-
 
       - name: Install dependencies (Project)
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Build Frontend
         run: cd apps/desktop && pnpm build

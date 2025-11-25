@@ -5,10 +5,10 @@
  * Uses React Native's Animated API for optimal performance.
  */
 
-import React, { useEffect, useRef } from "react";
-import { Animated, ViewStyle } from "react-native";
+import React, { useEffect, useRef } from 'react';
+import { Animated, ViewStyle } from 'react-native';
 
-type Direction = "left" | "right" | "top" | "bottom";
+type Direction = 'left' | 'right' | 'top' | 'bottom';
 
 interface SlideInProps {
   children: React.ReactNode;
@@ -21,7 +21,7 @@ interface SlideInProps {
 
 export function SlideIn({
   children,
-  direction = "bottom",
+  direction = 'bottom',
   duration = 300,
   delay = 0,
   distance = 50,
@@ -34,16 +34,16 @@ export function SlideIn({
   useEffect(() => {
     // Set initial position based on direction
     switch (direction) {
-      case "left":
+      case 'left':
         translateX.setValue(-distance);
         break;
-      case "right":
+      case 'right':
         translateX.setValue(distance);
         break;
-      case "top":
+      case 'top':
         translateY.setValue(-distance);
         break;
-      case "bottom":
+      case 'bottom':
         translateY.setValue(distance);
         break;
     }

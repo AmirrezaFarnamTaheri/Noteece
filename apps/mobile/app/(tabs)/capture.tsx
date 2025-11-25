@@ -1,30 +1,22 @@
-import { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import { colors, typography, spacing } from "@/lib/theme";
-import { dbExecute } from "@/lib/database";
-import { nanoid } from "nanoid";
+import { useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, typography, spacing } from '@/lib/theme';
+import { dbExecute } from '@/lib/database';
+import { nanoid } from 'nanoid';
 
-type CaptureType = "note" | "task" | "voice" | "photo";
+type CaptureType = 'note' | 'task' | 'voice' | 'photo';
 
 export default function CaptureScreen() {
-  const [captureType, setCaptureType] = useState<CaptureType>("note");
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  const [captureType, setCaptureType] = useState<CaptureType>('note');
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
 
   const handleCapture = async () => {
     if (!title.trim() && !content.trim()) {
-      Alert.alert("Empty Content", "Please enter some content to capture");
+      Alert.alert('Empty Content', 'Please enter some content to capture');
       return;
     }
 
@@ -32,68 +24,64 @@ export default function CaptureScreen() {
       const now = Date.now();
       const id = nanoid();
 
-      if (captureType === "note") {
+      if (captureType === 'note') {
         // Ensure title is non-empty with proper trimming and fallback
-        const noteTitle = (title?.trim() || "Quick Note").substring(0, 200);
-        const finalNoteTitle = noteTitle.length > 0 ? noteTitle : "Quick Note";
+        const noteTitle = (title?.trim() || 'Quick Note').substring(0, 200);
+        const finalNoteTitle = noteTitle.length > 0 ? noteTitle : 'Quick Note';
 
         await dbExecute(
           `INSERT INTO note (id, space_id, title, content, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, ?)`,
-          [id, "default", finalNoteTitle, content, now, now],
+          [id, 'default', finalNoteTitle, content, now, now],
         );
-      } else if (captureType === "task") {
+      } else if (captureType === 'task') {
         // Ensure task title is non-empty with proper trimming and fallback
         let taskTitle = title?.trim();
 
         // If no title, try to extract from first line of content
         if (!taskTitle || taskTitle.length === 0) {
-          const firstLine = content?.split("\n")[0]?.trim();
-          taskTitle =
-            firstLine && firstLine.length > 0 ? firstLine : "New Task";
+          const firstLine = content?.split('\n')[0]?.trim();
+          taskTitle = firstLine && firstLine.length > 0 ? firstLine : 'New Task';
         }
 
         // Limit length and ensure non-empty
         taskTitle = taskTitle.substring(0, 200);
-        const finalTaskTitle = taskTitle.length > 0 ? taskTitle : "New Task";
+        const finalTaskTitle = taskTitle.length > 0 ? taskTitle : 'New Task';
 
         // Initialize all task fields with default values to prevent NULL issues
         await dbExecute(
           `INSERT INTO task (id, space_id, title, description, status, created_at, completed_at, priority, due_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [id, "default", finalTaskTitle, content, "todo", now, 0, "normal", 0],
+          [id, 'default', finalTaskTitle, content, 'todo', now, 0, 'normal', 0],
         );
       }
 
       // Clear form
-      setTitle("");
-      setContent("");
+      setTitle('');
+      setContent('');
 
       // Navigate back
       router.back();
 
-      Alert.alert(
-        "Success",
-        `${captureType === "note" ? "Note" : "Task"} captured successfully`,
-      );
+      Alert.alert('Success', `${captureType === 'note' ? 'Note' : 'Task'} captured successfully`);
     } catch (error) {
-      console.error("Failed to capture:", error);
-      Alert.alert("Error", "Failed to capture. Please try again.");
+      console.error('Failed to capture:', error);
+      Alert.alert('Error', 'Failed to capture. Please try again.');
     }
   };
 
   const captureOptions = [
     {
-      type: "note" as CaptureType,
-      icon: "document-text-outline",
-      label: "Note",
-      description: "Capture thoughts and ideas",
+      type: 'note' as CaptureType,
+      icon: 'document-text-outline',
+      label: 'Note',
+      description: 'Capture thoughts and ideas',
     },
     {
-      type: "task" as CaptureType,
-      icon: "checkmark-circle-outline",
-      label: "Task",
-      description: "Add a quick task",
+      type: 'task' as CaptureType,
+      icon: 'checkmark-circle-outline',
+      label: 'Task',
+      description: 'Add a quick task',
     },
     // {
     //   type: "voice" as CaptureType,
@@ -112,26 +100,14 @@ export default function CaptureScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
           <Ionicons name="close" size={28} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Quick Capture</Text>
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={handleCapture}
-          disabled={!title.trim() && !content.trim()}
-        >
-          <Text
-            style={[
-              styles.saveButtonText,
-              !title.trim() && !content.trim() && styles.saveButtonTextDisabled,
-            ]}
-          >
+        <TouchableOpacity style={styles.saveButton} onPress={handleCapture} disabled={!title.trim() && !content.trim()}>
+          <Text style={[styles.saveButtonText, !title.trim() && !content.trim() && styles.saveButtonTextDisabled]}>
             Save
           </Text>
         </TouchableOpacity>
@@ -173,21 +149,17 @@ export default function CaptureScreen() {
               >
                 {option.label}
               </Text>
-              <Text style={styles.typeOptionDescription}>
-                {option.description}
-              </Text>
+              <Text style={styles.typeOptionDescription}>{option.description}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
         {/* Capture Form */}
-        {(captureType === "note" || captureType === "task") && (
+        {(captureType === 'note' || captureType === 'task') && (
           <View style={styles.form}>
             <TextInput
               style={styles.titleInput}
-              placeholder={
-                captureType === "note" ? "Note title..." : "Task title..."
-              }
+              placeholder={captureType === 'note' ? 'Note title...' : 'Task title...'}
               placeholderTextColor={colors.textTertiary}
               value={title}
               onChangeText={setTitle}
@@ -196,11 +168,7 @@ export default function CaptureScreen() {
 
             <TextInput
               style={styles.contentInput}
-              placeholder={
-                captureType === "note"
-                  ? "Start writing your note..."
-                  : "Add task description..."
-              }
+              placeholder={captureType === 'note' ? 'Start writing your note...' : 'Add task description...'}
               placeholderTextColor={colors.textTertiary}
               value={content}
               onChangeText={setContent}
@@ -211,18 +179,14 @@ export default function CaptureScreen() {
         )}
 
         {/* Coming Soon for Voice/Photo */}
-        {(captureType === "voice" || captureType === "photo") && (
+        {(captureType === 'voice' || captureType === 'photo') && (
           <View style={styles.comingSoon}>
-            <Ionicons
-              name="construct-outline"
-              size={64}
-              color={colors.textTertiary}
-            />
+            <Ionicons name="construct-outline" size={64} color={colors.textTertiary} />
             <Text style={styles.comingSoonText}>Coming Soon</Text>
             <Text style={styles.comingSoonSubtext}>
-              {captureType === "voice"
-                ? "Voice recording will be available soon"
-                : "Photo capture with OCR will be available soon"}
+              {captureType === 'voice'
+                ? 'Voice recording will be available soon'
+                : 'Photo capture with OCR will be available soon'}
             </Text>
           </View>
         )}
@@ -235,25 +199,18 @@ export default function CaptureScreen() {
             style={styles.quickActionButton}
             onPress={() => {
               const now = new Date();
-              setTitle(
-                title ||
-                  `${captureType === "note" ? "Note" : "Task"} - ${now.toLocaleDateString()}`,
-              );
+              setTitle(title || `${captureType === 'note' ? 'Note' : 'Task'} - ${now.toLocaleDateString()}`);
             }}
           >
-            <Ionicons
-              name="calendar-outline"
-              size={20}
-              color={colors.primary}
-            />
+            <Ionicons name="calendar-outline" size={20} color={colors.primary} />
             <Text style={styles.quickActionText}>Add Date to Title</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.quickActionButton}
             onPress={() => {
-              setTitle("");
-              setContent("");
+              setTitle('');
+              setContent('');
             }}
           >
             <Ionicons name="refresh-outline" size={20} color={colors.primary} />
@@ -271,9 +228,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
@@ -283,8 +240,8 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: typography.fontSize.xl,
@@ -307,7 +264,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   typeSelector: {
-    flexDirection: "row",
+    flexDirection: 'row',
     padding: spacing.lg,
     gap: spacing.md,
   },
@@ -316,9 +273,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: 12,
     padding: spacing.md,
-    alignItems: "center",
+    alignItems: 'center',
     borderWidth: 2,
-    borderColor: "transparent",
+    borderColor: 'transparent',
   },
   typeOptionActive: {
     borderColor: colors.primary,
@@ -346,7 +303,7 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.xs,
     fontFamily: typography.fontFamily.regular,
     color: colors.textTertiary,
-    textAlign: "center",
+    textAlign: 'center',
   },
   form: {
     padding: spacing.lg,
@@ -370,9 +327,9 @@ const styles = StyleSheet.create({
     minHeight: 200,
   },
   comingSoon: {
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing["3xl"],
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing['3xl'],
   },
   comingSoonText: {
     fontSize: typography.fontSize.xl,
@@ -385,7 +342,7 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.regular,
     color: colors.textTertiary,
     marginTop: spacing.sm,
-    textAlign: "center",
+    textAlign: 'center',
   },
   quickActions: {
     padding: spacing.lg,
@@ -396,12 +353,12 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.semibold,
     color: colors.textSecondary,
     marginBottom: spacing.md,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   quickActionButton: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 12,
     padding: spacing.md,

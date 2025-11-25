@@ -92,6 +92,7 @@ This guide covers recommended daily workflows to get the most out of Noteece.
 ### Use Templates
 
 Create note templates for:
+
 - Daily journals
 - Meeting notes
 - Project kickoffs
@@ -111,5 +112,4 @@ Create note templates for:
 
 ---
 
-*Created by Amirreza "Farnam" Taheri*
-
+_Created by Amirreza "Farnam" Taheri_

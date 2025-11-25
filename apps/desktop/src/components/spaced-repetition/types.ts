@@ -46,4 +46,3 @@ export const ratingLabels: Record<ReviewRating, string> = {
   good: 'Good',
   easy: 'Easy',
 };
-

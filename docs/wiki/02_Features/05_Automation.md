@@ -11,21 +11,23 @@ The goal is to provide a safe, sandboxed scripting environment (likely based on 
 ### Potential Use Cases
 
 1.  **Daily Review Generator:**
+
     ```javascript
     on("daily_cron", () => {
-        const yesterday = date.yesterday();
-        const done = tasks.find({ status: "done", date: yesterday });
-        const note = notes.create(`Review: ${yesterday}`);
-        note.append(done.format_list());
+      const yesterday = date.yesterday();
+      const done = tasks.find({ status: "done", date: yesterday });
+      const note = notes.create(`Review: ${yesterday}`);
+      note.append(done.format_list());
     });
     ```
 
 2.  **Automatic Tagging:**
+
     ```javascript
     on("note_save", (note) => {
-        if (note.content.includes("Project X")) {
-            note.add_tag("project/x");
-        }
+      if (note.content.includes("Project X")) {
+        note.add_tag("project/x");
+      }
     });
     ```
 

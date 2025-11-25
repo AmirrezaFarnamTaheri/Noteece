@@ -12,7 +12,7 @@ const mockUsers: SpaceUser[] = [
     status: 'active',
     permissions: ['note.read', 'note.write'],
     last_active: Date.now() / 1000 - 3600,
-    joined_at: Date.now() / 1000 - 86400 * 30,
+    joined_at: Date.now() / 1000 - 86_400 * 30,
   },
   {
     user_id: 'user2',
@@ -21,7 +21,7 @@ const mockUsers: SpaceUser[] = [
     status: 'active',
     permissions: ['note.read'],
     last_active: null,
-    joined_at: Date.now() / 1000 - 86400 * 7,
+    joined_at: Date.now() / 1000 - 86_400 * 7,
   },
   {
     user_id: 'user3',
@@ -29,8 +29,8 @@ const mockUsers: SpaceUser[] = [
     role: 'viewer',
     status: 'suspended',
     permissions: [],
-    last_active: Date.now() / 1000 - 86400 * 14,
-    joined_at: Date.now() / 1000 - 86400 * 60,
+    last_active: Date.now() / 1000 - 86_400 * 14,
+    joined_at: Date.now() / 1000 - 86_400 * 60,
   },
 ];
 
@@ -49,12 +49,7 @@ describe('UserTable', () => {
 
   it('renders all users', () => {
     renderWithProviders(
-      <UserTable
-        users={mockUsers}
-        onEdit={mockOnEdit}
-        onToggleStatus={mockOnToggleStatus}
-        onRemove={mockOnRemove}
-      />
+      <UserTable users={mockUsers} onEdit={mockOnEdit} onToggleStatus={mockOnToggleStatus} onRemove={mockOnRemove} />,
     );
     expect(screen.getByText('admin@example.com')).toBeInTheDocument();
     expect(screen.getByText('editor@example.com')).toBeInTheDocument();
@@ -63,12 +58,7 @@ describe('UserTable', () => {
 
   it('displays role badges', () => {
     renderWithProviders(
-      <UserTable
-        users={mockUsers}
-        onEdit={mockOnEdit}
-        onToggleStatus={mockOnToggleStatus}
-        onRemove={mockOnRemove}
-      />
+      <UserTable users={mockUsers} onEdit={mockOnEdit} onToggleStatus={mockOnToggleStatus} onRemove={mockOnRemove} />,
     );
     expect(screen.getByText('admin')).toBeInTheDocument();
     expect(screen.getByText('editor')).toBeInTheDocument();
@@ -77,12 +67,7 @@ describe('UserTable', () => {
 
   it('displays status badges', () => {
     renderWithProviders(
-      <UserTable
-        users={mockUsers}
-        onEdit={mockOnEdit}
-        onToggleStatus={mockOnToggleStatus}
-        onRemove={mockOnRemove}
-      />
+      <UserTable users={mockUsers} onEdit={mockOnEdit} onToggleStatus={mockOnToggleStatus} onRemove={mockOnRemove} />,
     );
     const activeStatuses = screen.getAllByText('active');
     expect(activeStatuses.length).toBe(2);
@@ -91,40 +76,24 @@ describe('UserTable', () => {
 
   it('shows Never for users with no last_active', () => {
     renderWithProviders(
-      <UserTable
-        users={mockUsers}
-        onEdit={mockOnEdit}
-        onToggleStatus={mockOnToggleStatus}
-        onRemove={mockOnRemove}
-      />
+      <UserTable users={mockUsers} onEdit={mockOnEdit} onToggleStatus={mockOnToggleStatus} onRemove={mockOnRemove} />,
     );
     expect(screen.getByText('Never')).toBeInTheDocument();
   });
 
   it('shows empty message when no users', () => {
     renderWithProviders(
-      <UserTable
-        users={[]}
-        onEdit={mockOnEdit}
-        onToggleStatus={mockOnToggleStatus}
-        onRemove={mockOnRemove}
-      />
+      <UserTable users={[]} onEdit={mockOnEdit} onToggleStatus={mockOnToggleStatus} onRemove={mockOnRemove} />,
     );
     expect(screen.getByText('No users found')).toBeInTheDocument();
   });
 
   it('displays user avatars with first letter', () => {
     renderWithProviders(
-      <UserTable
-        users={mockUsers}
-        onEdit={mockOnEdit}
-        onToggleStatus={mockOnToggleStatus}
-        onRemove={mockOnRemove}
-      />
+      <UserTable users={mockUsers} onEdit={mockOnEdit} onToggleStatus={mockOnToggleStatus} onRemove={mockOnRemove} />,
     );
     expect(screen.getByText('A')).toBeInTheDocument();
     expect(screen.getByText('E')).toBeInTheDocument();
     expect(screen.getByText('S')).toBeInTheDocument();
   });
 });
-

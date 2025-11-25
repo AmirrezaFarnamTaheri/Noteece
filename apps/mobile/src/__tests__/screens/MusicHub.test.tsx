@@ -1,26 +1,26 @@
-import React from "react";
-import { render, fireEvent, waitFor } from "@testing-library/react-native";
-import { MusicHub } from "../../screens/MusicHub";
-import { dbQuery, dbExecute } from "@/lib/database";
+import React from 'react';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { MusicHub } from '../../screens/MusicHub';
+import { dbQuery, dbExecute } from '@/lib/database';
 
 // Mock dependencies
-jest.mock("@/lib/database", () => ({
+jest.mock('@/lib/database', () => ({
   dbQuery: jest.fn(),
   dbExecute: jest.fn(),
 }));
 
-describe("MusicHub Screen", () => {
+describe('MusicHub Screen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("renders loading state initially", async () => {
+  it('renders loading state initially', async () => {
     (dbQuery as jest.Mock).mockImplementation(() => new Promise(() => {}));
     const { getByText } = render(<MusicHub />);
-    expect(getByText("Music")).toBeTruthy();
+    expect(getByText('Music')).toBeTruthy();
   });
 
-  it("seeds and loads music library when empty", async () => {
+  it('seeds and loads music library when empty', async () => {
     // First call returns empty array
     (dbQuery as jest.Mock)
       .mockResolvedValueOnce([])
@@ -34,56 +34,51 @@ describe("MusicHub Screen", () => {
     });
   });
 
-  it("displays tracks library", async () => {
+  it('displays tracks library', async () => {
     const mockTracks = [
-      { id: "1", title: "Track 1", artist: "Artist 1", duration: 180 },
-      { id: "2", title: "Track 2", artist: "Artist 2", duration: 200 },
+      { id: '1', title: 'Track 1', artist: 'Artist 1', duration: 180 },
+      { id: '2', title: 'Track 2', artist: 'Artist 2', duration: 200 },
     ];
     // Mock track loading query and playlist query
     (dbQuery as jest.Mock).mockImplementation((sql: string) => {
-      if (sql.includes("FROM track")) return Promise.resolve(mockTracks);
-      if (sql.includes("FROM playlist")) return Promise.resolve([]);
+      if (sql.includes('FROM track')) return Promise.resolve(mockTracks);
+      if (sql.includes('FROM playlist')) return Promise.resolve([]);
       return Promise.resolve([]);
     });
 
     const { findByText } = render(<MusicHub />);
 
-    expect(await findByText("Track 1")).toBeTruthy();
-    expect(await findByText("Artist 1")).toBeTruthy();
+    expect(await findByText('Track 1')).toBeTruthy();
+    expect(await findByText('Artist 1')).toBeTruthy();
   });
 
-  it("switches to playlist view", async () => {
-    const mockPlaylists = [
-      { id: "p1", name: "My Playlist", is_smart_playlist: 0 },
-    ];
+  it('switches to playlist view', async () => {
+    const mockPlaylists = [{ id: 'p1', name: 'My Playlist', is_smart_playlist: 0 }];
     (dbQuery as jest.Mock).mockImplementation((sql: string) => {
-      if (sql.includes("FROM track")) return Promise.resolve([]);
-      if (sql.includes("FROM playlist")) return Promise.resolve(mockPlaylists);
-      if (sql.includes("COUNT(*)"))
-        return Promise.resolve([{ count: 5, total_duration: 1000 }]);
+      if (sql.includes('FROM track')) return Promise.resolve([]);
+      if (sql.includes('FROM playlist')) return Promise.resolve(mockPlaylists);
+      if (sql.includes('COUNT(*)')) return Promise.resolve([{ count: 5, total_duration: 1000 }]);
       return Promise.resolve([]);
     });
 
     const { getByText, findByText } = render(<MusicHub />);
 
-    fireEvent.press(getByText("Playlists"));
+    fireEvent.press(getByText('Playlists'));
 
-    expect(await findByText("My Playlist")).toBeTruthy();
+    expect(await findByText('My Playlist')).toBeTruthy();
   });
 
-  it("shows now playing when track selected", async () => {
-    const mockTracks = [
-      { id: "1", title: "Song A", artist: "Band B", duration: 180 },
-    ];
+  it('shows now playing when track selected', async () => {
+    const mockTracks = [{ id: '1', title: 'Song A', artist: 'Band B', duration: 180 }];
     (dbQuery as jest.Mock).mockImplementation((sql: string) => {
-      if (sql.includes("FROM track")) return Promise.resolve(mockTracks);
-      if (sql.includes("FROM playlist")) return Promise.resolve([]);
+      if (sql.includes('FROM track')) return Promise.resolve(mockTracks);
+      if (sql.includes('FROM playlist')) return Promise.resolve([]);
       return Promise.resolve([]);
     });
 
     const { findByText } = render(<MusicHub />);
 
-    const trackItem = await findByText("Song A");
+    const trackItem = await findByText('Song A');
     fireEvent.press(trackItem);
 
     // Now playing bar should appear at bottom

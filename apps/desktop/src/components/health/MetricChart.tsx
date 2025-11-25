@@ -1,15 +1,6 @@
 import React from 'react';
 import { Card, Title, Select, Group } from '@mantine/core';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { HealthMetric, metricTypes } from './types';
 
 interface MetricChartProps {
@@ -21,13 +12,9 @@ interface MetricChartProps {
 /**
  * Health Metric Chart - Displays metric trends over time
  */
-export const MetricChart: React.FC<MetricChartProps> = ({
-  metrics,
-  selectedType,
-  onTypeChange,
-}) => {
+export const MetricChart: React.FC<MetricChartProps> = ({ metrics, selectedType, onTypeChange }) => {
   const filteredMetrics = metrics.filter((m) => m.metric_type === selectedType);
-  
+
   const chartData = filteredMetrics
     .sort((a, b) => a.recorded_at - b.recorded_at)
     .map((m) => ({
@@ -39,13 +26,7 @@ export const MetricChart: React.FC<MetricChartProps> = ({
     <Card withBorder p="lg">
       <Group justify="space-between" mb="md">
         <Title order={4}>Trend</Title>
-        <Select
-          value={selectedType}
-          onChange={(v) => v && onTypeChange(v)}
-          data={metricTypes}
-          size="xs"
-          w={150}
-        />
+        <Select value={selectedType} onChange={(v) => v && onTypeChange(v)} data={metricTypes} size="xs" w={150} />
       </Group>
 
       {chartData.length > 0 ? (
@@ -74,4 +55,3 @@ export const MetricChart: React.FC<MetricChartProps> = ({
     </Card>
   );
 };
-

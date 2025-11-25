@@ -1,19 +1,6 @@
 import React from 'react';
-import {
-  Table,
-  Badge,
-  Group,
-  Text,
-  Tooltip,
-  ScrollArea,
-} from '@mantine/core';
-import {
-  IconArrowUp,
-  IconArrowDown,
-  IconCheck,
-  IconX,
-  IconAlertTriangle,
-} from '@tabler/icons-react';
+import { Table, Badge, Group, Text, Tooltip, ScrollArea } from '@mantine/core';
+import { IconArrowUp, IconArrowDown, IconCheck, IconX, IconAlertTriangle } from '@tabler/icons-react';
 import { SyncHistoryEntry, statusColors } from './types';
 
 interface SyncHistoryProps {
@@ -22,23 +9,23 @@ interface SyncHistoryProps {
 }
 
 const DirectionIcon: React.FC<{ direction: 'push' | 'pull' }> = ({ direction }) => {
-  return direction === 'push' ? (
-    <IconArrowUp size={16} />
-  ) : (
-    <IconArrowDown size={16} />
-  );
+  return direction === 'push' ? <IconArrowUp size={16} /> : <IconArrowDown size={16} />;
 };
 
 const StatusIcon: React.FC<{ status: string }> = ({ status }) => {
   switch (status) {
-    case 'success':
+    case 'success': {
       return <IconCheck size={16} color="green" />;
-    case 'partial':
+    }
+    case 'partial': {
       return <IconAlertTriangle size={16} color="orange" />;
-    case 'failed':
+    }
+    case 'failed': {
       return <IconX size={16} color="red" />;
-    default:
+    }
+    default: {
       return null;
+    }
   }
 };
 
@@ -59,10 +46,7 @@ const formatTime = (timestamp: number): string => {
 /**
  * Sync History Component - Shows recent sync operations
  */
-export const SyncHistory: React.FC<SyncHistoryProps> = ({
-  history,
-  limit = 20,
-}) => {
+export const SyncHistory: React.FC<SyncHistoryProps> = ({ history, limit = 20 }) => {
   const displayHistory = limit ? history.slice(0, limit) : history;
 
   if (displayHistory.length === 0) {
@@ -85,26 +69,18 @@ export const SyncHistory: React.FC<SyncHistoryProps> = ({
         <Text size="sm">{entry.entities_synced} items</Text>
       </Table.Td>
       <Table.Td>
-        <Text size="sm">
-          {formatDuration(entry.started_at, entry.completed_at)}
-        </Text>
+        <Text size="sm">{formatDuration(entry.started_at, entry.completed_at)}</Text>
       </Table.Td>
       <Table.Td>
         <Group gap="xs">
           <StatusIcon status={entry.status} />
-          <Badge
-            size="sm"
-            color={statusColors[entry.status]}
-            variant="light"
-          >
+          <Badge size="sm" color={statusColors[entry.status]} variant="light">
             {entry.status}
           </Badge>
         </Group>
       </Table.Td>
       <Table.Td>
-        <Tooltip
-          label={new Date(entry.completed_at * 1000).toLocaleString()}
-        >
+        <Tooltip label={new Date(entry.completed_at * 1000).toLocaleString()}>
           <Text size="sm" c="dimmed">
             {formatTime(entry.completed_at)}
           </Text>
@@ -130,4 +106,3 @@ export const SyncHistory: React.FC<SyncHistoryProps> = ({
     </ScrollArea>
   );
 };
-

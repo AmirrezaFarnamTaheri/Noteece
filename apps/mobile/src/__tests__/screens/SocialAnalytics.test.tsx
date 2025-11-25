@@ -1,92 +1,86 @@
-import React from "react";
-import { render, fireEvent } from "@testing-library/react-native";
-import { SocialAnalytics } from "../../screens/SocialAnalytics";
-import {
-  getPlatformStats,
-  getCategoryStats,
-  getTotalPostCount,
-} from "@/lib/social-database";
-import { Share } from "react-native";
+import React from 'react';
+import { render, fireEvent } from '@testing-library/react-native';
+import { SocialAnalytics } from '../../screens/SocialAnalytics';
+import { getPlatformStats, getCategoryStats, getTotalPostCount } from '@/lib/social-database';
+import { Share } from 'react-native';
 
 // Mock dependencies
-jest.mock("@/lib/social-database", () => ({
+jest.mock('@/lib/social-database', () => ({
   getPlatformStats: jest.fn(),
   getCategoryStats: jest.fn(),
   getTotalPostCount: jest.fn(),
 }));
 
-jest.mock("@/store/app-context", () => ({
-  useCurrentSpace: jest.fn(() => "default"),
+jest.mock('@/store/app-context', () => ({
+  useCurrentSpace: jest.fn(() => 'default'),
 }));
 
-jest.mock("expo-file-system", () => ({
-  documentDirectory: "file://",
+jest.mock('expo-file-system', () => ({
+  documentDirectory: 'file://',
   writeAsStringAsync: jest.fn(),
-  EncodingType: { UTF8: "utf8" },
+  EncodingType: { UTF8: 'utf8' },
 }));
 
-jest.mock("expo-sharing", () => ({
+jest.mock('expo-sharing', () => ({
   isAvailableAsync: jest.fn(() => Promise.resolve(true)),
   shareAsync: jest.fn(),
 }));
 
-describe("SocialAnalytics Screen", () => {
+describe('SocialAnalytics Screen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("renders loading state initially", async () => {
-    (getPlatformStats as jest.Mock).mockImplementation(
-      () => new Promise(() => {}),
-    );
+  it('renders loading state initially', async () => {
+    (getPlatformStats as jest.Mock).mockImplementation(() => new Promise(() => {}));
     const { getByText } = render(<SocialAnalytics />);
-    expect(getByText("Loading analytics...")).toBeTruthy();
+    expect(getByText('Loading analytics...')).toBeTruthy();
   });
 
-  it("loads and displays analytics data", async () => {
+  it('loads and displays analytics data', async () => {
     (getPlatformStats as jest.Mock).mockResolvedValue([
-      { platform: "twitter", post_count: 10, percentage: 50.0, color: "blue" },
+      { platform: 'twitter', post_count: 10, percentage: 50.0, color: 'blue' },
       {
-        platform: "mastodon",
+        platform: 'mastodon',
         post_count: 10,
         percentage: 50.0,
-        color: "purple",
+        color: 'purple',
       },
     ]);
     (getCategoryStats as jest.Mock).mockResolvedValue([
-      { category_id: "1", category_name: "Tech", post_count: 15, color: "red" },
+      { category_id: '1', category_name: 'Tech', post_count: 15, color: 'red' },
     ]);
     (getTotalPostCount as jest.Mock).mockResolvedValue(20);
 
     const { findByText, getAllByText } = render(<SocialAnalytics />);
 
-    expect(await findByText("20")).toBeTruthy(); // Total posts
-    expect(getAllByText("twitter").length).toBeGreaterThan(0);
-    expect(getAllByText("Tech").length).toBeGreaterThan(0);
+    expect(await findByText('20')).toBeTruthy(); // Total posts
+    expect(getAllByText('twitter').length).toBeGreaterThan(0);
+    expect(getAllByText('Tech').length).toBeGreaterThan(0);
   });
 
-  it("handles export", async () => {
-    const shareSpy = jest.spyOn(Share, "share");
+  it('handles export', async () => {
+    const shareSpy = jest.spyOn(Share, 'share');
     (getPlatformStats as jest.Mock).mockResolvedValue([]);
     (getCategoryStats as jest.Mock).mockResolvedValue([]);
     (getTotalPostCount as jest.Mock).mockResolvedValue(0);
 
     const { findByText } = render(<SocialAnalytics />);
 
-    const exportBtn = await findByText("Export");
+    const exportBtn = await findByText('Export');
     fireEvent.press(exportBtn);
 
     expect(shareSpy).toHaveBeenCalled();
   });
 
-  it("displays empty states correctly", async () => {
+  it('displays empty states correctly', async () => {
     (getPlatformStats as jest.Mock).mockResolvedValue([]);
     (getCategoryStats as jest.Mock).mockResolvedValue([]);
     (getTotalPostCount as jest.Mock).mockResolvedValue(0);
 
     const { findByText } = render(<SocialAnalytics />);
 
-    expect(await findByText("No platform data available")).toBeTruthy();
-    expect(await findByText("No categories assigned yet")).toBeTruthy();
+    expect(await findByText('No platform data available')).toBeTruthy();
+    expect(await findByText('No categories assigned yet')).toBeTruthy();
   });
 });

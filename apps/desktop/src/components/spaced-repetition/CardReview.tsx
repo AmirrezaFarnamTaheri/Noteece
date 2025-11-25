@@ -12,11 +12,7 @@ interface CardReviewProps {
 /**
  * Card Review Component - Shows a flashcard for review
  */
-export const CardReview: React.FC<CardReviewProps> = ({
-  card,
-  onRate,
-  isLoading = false,
-}) => {
+export const CardReview: React.FC<CardReviewProps> = ({ card, onRate, isLoading = false }) => {
   const [showAnswer, setShowAnswer] = useState(false);
 
   const handleRate = (rating: ReviewRating) => {
@@ -63,12 +59,7 @@ export const CardReview: React.FC<CardReviewProps> = ({
           </Group>
         </>
       ) : (
-        <Button
-          leftSection={<IconEye size={16} />}
-          onClick={() => setShowAnswer(true)}
-          size="lg"
-          fullWidth
-        >
+        <Button leftSection={<IconEye size={16} />} onClick={() => setShowAnswer(true)} size="lg" fullWidth>
           Show Answer
         </Button>
       )}
@@ -88,4 +79,3 @@ export const CardReview: React.FC<CardReviewProps> = ({
     </Stack>
   );
 };
-

@@ -26,11 +26,7 @@
     },
     "android": {
       "package": "com.noteece.app",
-      "permissions": [
-        "VIBRATE",
-        "USE_BIOMETRIC",
-        "USE_FINGERPRINT"
-      ],
+      "permissions": ["VIBRATE", "USE_BIOMETRIC", "USE_FINGERPRINT"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0A0E27"

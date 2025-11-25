@@ -69,7 +69,7 @@ export const LocalAI: React.FC = () => {
 
   // Auto-scroll to bottom
   useEffect(() => {
-    if (scrollRef.current) {
+    if (scrollRef.current && typeof scrollRef.current.scrollTo === 'function') {
       scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
     }
   }, [messages]);
@@ -87,10 +87,12 @@ export const LocalAI: React.FC = () => {
   const loadModels = async () => {
     try {
       const modelList: string[] = await invoke('list_ollama_models_cmd');
-      setModels(modelList.map(name => ({
-        name,
-        size: 'Unknown',
-      })));
+      setModels(
+        modelList.map((name) => ({
+          name,
+          size: 'Unknown',
+        })),
+      );
       if (modelList.length > 0 && !selectedModel) {
         setSelectedModel(modelList[0]);
       }
@@ -109,14 +111,14 @@ export const LocalAI: React.FC = () => {
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
     try {
       const response: string = await invoke('chat_with_ollama_cmd', {
         model: selectedModel,
-        messages: messages.map(m => ({ role: m.role, content: m.content })),
+        messages: messages.map((m) => ({ role: m.role, content: m.content })),
         prompt: userMessage.content,
       });
 
@@ -127,7 +129,7 @@ export const LocalAI: React.FC = () => {
         timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       logger.error('AI chat failed', error as Error);
       notifications.show({
@@ -170,17 +172,19 @@ export const LocalAI: React.FC = () => {
           <Group gap="sm">
             <IconBrain size={24} />
             <Title order={4}>{t('ai.title')}</Title>
-            <Badge
-              color={isConnected ? 'green' : 'red'}
-              variant="light"
-              size="sm"
-            >
+            <Badge color={isConnected ? 'green' : 'red'} variant="light" size="sm">
               {isConnected ? 'Connected' : 'Offline'}
             </Badge>
           </Group>
           <Group gap="xs">
             <Tooltip label="Refresh connection">
-              <ActionIcon variant="subtle" onClick={() => { void checkConnection(); void loadModels(); }}>
+              <ActionIcon
+                variant="subtle"
+                onClick={() => {
+                  void checkConnection();
+                  void loadModels();
+                }}
+              >
                 <IconRefresh size={16} />
               </ActionIcon>
             </Tooltip>
@@ -199,7 +203,7 @@ export const LocalAI: React.FC = () => {
             placeholder="Select a model"
             value={selectedModel}
             onChange={(v) => setSelectedModel(v || '')}
-            data={models.map(m => ({ value: m.name, label: m.name }))}
+            data={models.map((m) => ({ value: m.name, label: m.name }))}
             disabled={!isConnected || models.length === 0}
             searchable
           />
@@ -248,7 +252,9 @@ export const LocalAI: React.FC = () => {
               {isLoading && (
                 <Group gap="xs">
                   <Loader size="sm" />
-                  <Text size="sm" c="dimmed">{t('ai.processing')}</Text>
+                  <Text size="sm" c="dimmed">
+                    {t('ai.processing')}
+                  </Text>
                 </Group>
               )}
             </Stack>
@@ -261,7 +267,7 @@ export const LocalAI: React.FC = () => {
         <Group p="md" gap="sm" align="flex-end">
           <Textarea
             style={{ flex: 1 }}
-            placeholder={isConnected ? "Ask anything..." : "Connect to Ollama first"}
+            placeholder={isConnected ? 'Ask anything...' : 'Connect to Ollama first'}
             value={input}
             onChange={(e) => setInput(e.currentTarget.value)}
             onKeyDown={handleKeyDown}
@@ -285,4 +291,3 @@ export const LocalAI: React.FC = () => {
 };
 
 export default LocalAI;
-

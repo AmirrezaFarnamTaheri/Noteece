@@ -14,7 +14,7 @@ const mockCard: KnowledgeCard = {
   interval: 1,
   repetitions: 0,
   next_review: Date.now() / 1000,
-  created_at: Date.now() / 1000 - 86400,
+  created_at: Date.now() / 1000 - 86_400,
   updated_at: Date.now() / 1000,
 };
 
@@ -73,4 +73,3 @@ describe('CardReview', () => {
     expect(screen.getByText(/Reviews: 0/)).toBeInTheDocument();
   });
 });
-

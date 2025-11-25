@@ -20,4 +20,3 @@ This folder contains guides for end-users of Noteece.
 - [User Guide](../../USER_GUIDE.md) - Comprehensive guide
 - [Installation](../../INSTALLATION.md) - Installation options
 - [Privacy Policy](../../PRIVACY.md) - Privacy information
-

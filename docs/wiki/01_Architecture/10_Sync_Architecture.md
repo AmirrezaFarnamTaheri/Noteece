@@ -48,11 +48,11 @@ Device A                    Device B
 
 Encrypted TCP with ChaCha20-Poly1305:
 
-| Field | Size | Description |
-|-------|------|-------------|
-| Nonce | 12 bytes | Unique per message |
-| Ciphertext | Variable | Encrypted payload |
-| Tag | 16 bytes | Authentication tag |
+| Field      | Size     | Description        |
+| ---------- | -------- | ------------------ |
+| Nonce      | 12 bytes | Unique per message |
+| Ciphertext | Variable | Encrypted payload  |
+| Tag        | 16 bytes | Authentication tag |
 
 ## Conflict Resolution
 
@@ -72,12 +72,12 @@ Each entity carries a vector clock for causal ordering:
 
 ### Resolution Strategies
 
-| Strategy | When Used | Behavior |
-|----------|-----------|----------|
-| Causal Ordering | Causally related | Earlier event wins |
-| Last Write Wins | Concurrent scalars | Newer timestamp wins |
-| SET UNION Merge | Arrays (tags, lists) | Union of all items |
-| Manual | Unresolvable | User prompted |
+| Strategy        | When Used            | Behavior             |
+| --------------- | -------------------- | -------------------- |
+| Causal Ordering | Causally related     | Earlier event wins   |
+| Last Write Wins | Concurrent scalars   | Newer timestamp wins |
+| SET UNION Merge | Arrays (tags, lists) | Union of all items   |
+| Manual          | Unresolvable         | User prompted        |
 
 ### Array Merge (SET UNION)
 
@@ -89,17 +89,17 @@ Each entity carries a vector clock for causal ordering:
 fn merge_arrays(local: &Vec<Value>, remote: &Vec<Value>) -> Vec<Value> {
     let mut result = local.clone();
     let mut seen: HashSet<String> = HashSet::new();
-    
+
     for item in local.iter() {
         seen.insert(item.to_string());
     }
-    
+
     for item in remote.iter() {
         if !seen.contains(&item.to_string()) {
             result.push(item.clone());
         }
     }
-    
+
     result
 }
 ```
@@ -118,7 +118,7 @@ fn merge_arrays(local: &Vec<Value>, remote: &Vec<Value>) -> Vec<Value> {
       "entityId": "note_123",
       "operation": "update",
       "timestamp": 1700000100,
-      "vectorClock": {"device_A": 5}
+      "vectorClock": { "device_A": 5 }
     }
   ]
 }
@@ -197,5 +197,4 @@ Moving from entity-level to row-level sync:
 
 ---
 
-*See also: [Sync Protocol](03_Sync_Protocol.md) | [Vector Clocks](05_Vector_Clocks.md)*
-
+_See also: [Sync Protocol](03_Sync_Protocol.md) | [Vector Clocks](05_Vector_Clocks.md)_

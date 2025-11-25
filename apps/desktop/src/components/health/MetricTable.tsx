@@ -11,9 +11,7 @@ interface MetricTableProps {
  * Metric Table - Displays recent health metrics in a table
  */
 export const MetricTable: React.FC<MetricTableProps> = ({ metrics, limit = 10 }) => {
-  const displayMetrics = metrics
-    .sort((a, b) => b.recorded_at - a.recorded_at)
-    .slice(0, limit);
+  const displayMetrics = metrics.sort((a, b) => b.recorded_at - a.recorded_at).slice(0, limit);
 
   if (displayMetrics.length === 0) {
     return (
@@ -45,7 +43,7 @@ export const MetricTable: React.FC<MetricTableProps> = ({ metrics, limit = 10 })
     <Table.Tr key={metric.id}>
       <Table.Td>
         <Badge color={getMetricColor(metric.metric_type)} variant="light">
-          {metric.metric_type.replace(/_/g, ' ')}
+          {metric.metric_type.replaceAll('_', ' ')}
         </Badge>
       </Table.Td>
       <Table.Td>
@@ -82,4 +80,3 @@ export const MetricTable: React.FC<MetricTableProps> = ({ metrics, limit = 10 })
     </ScrollArea>
   );
 };
-

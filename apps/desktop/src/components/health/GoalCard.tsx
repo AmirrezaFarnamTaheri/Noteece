@@ -27,12 +27,7 @@ export const GoalCard: React.FC<GoalCardProps> = ({ goal }) => {
       </Group>
 
       <Stack gap="xs">
-        <Progress
-          value={progress}
-          color={isComplete ? 'green' : 'blue'}
-          size="lg"
-          radius="xl"
-        />
+        <Progress value={progress} color={isComplete ? 'green' : 'blue'} size="lg" radius="xl" />
         <Group justify="space-between">
           <Text size="sm" c="dimmed">
             Current: {goal.current} {goal.unit}
@@ -45,4 +40,3 @@ export const GoalCard: React.FC<GoalCardProps> = ({ goal }) => {
     </Card>
   );
 };
-

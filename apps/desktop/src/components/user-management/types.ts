@@ -65,4 +65,3 @@ export const allPermissions = [
   'backup.create',
   'backup.restore',
 ];
-

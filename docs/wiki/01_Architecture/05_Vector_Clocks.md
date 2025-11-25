@@ -36,11 +36,11 @@ struct VectorClock {
 
 3.  **Comparison Logic:**
     - **`A > B` (A dominates B):** If every counter in A is >= every counter in B.
-      - *Result:* B is outdated. A sends updates to B.
+      - _Result:_ B is outdated. A sends updates to B.
     - **`A < B` (B dominates A):** If every counter in B is >= every counter in A.
-      - *Result:* A is outdated. B sends updates to A.
+      - _Result:_ A is outdated. B sends updates to A.
     - **`A || B` (Concurrent):** If A has updates B hasn't seen, AND B has updates A hasn't seen.
-      - *Result:* **Conflict!**
+      - _Result:_ **Conflict!**
 
 ## Conflict Resolution
 

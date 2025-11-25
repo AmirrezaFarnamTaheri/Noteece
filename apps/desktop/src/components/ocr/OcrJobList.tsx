@@ -13,12 +13,7 @@ interface OcrJobListProps {
 /**
  * OCR Job List - Displays list of OCR processing jobs
  */
-export const OcrJobList: React.FC<OcrJobListProps> = ({
-  jobs,
-  onView,
-  onRetry,
-  onDelete,
-}) => {
+export const OcrJobList: React.FC<OcrJobListProps> = ({ jobs, onView, onRetry, onDelete }) => {
   if (jobs.length === 0) {
     return (
       <Text c="dimmed" ta="center" py="xl">
@@ -47,7 +42,9 @@ export const OcrJobList: React.FC<OcrJobListProps> = ({
         {job.confidence ? (
           <Text size="sm">{(job.confidence * 100).toFixed(1)}%</Text>
         ) : (
-          <Text size="sm" c="dimmed">-</Text>
+          <Text size="sm" c="dimmed">
+            -
+          </Text>
         )}
       </Table.Td>
       <Table.Td>
@@ -98,4 +95,3 @@ export const OcrJobList: React.FC<OcrJobListProps> = ({
     </ScrollArea>
   );
 };
-

@@ -61,12 +61,12 @@ When you open Noteece for the first time, you'll be guided through vault creatio
 
 ### Key Areas
 
-| Area | Description |
-|------|-------------|
-| **Sidebar** (Left) | Navigation to all major modules |
-| **Omnibar** (Top) | Quick search with `Cmd/Ctrl + K` |
-| **Main Workspace** | Your content and tools |
-| **Dashboard** | Customizable widget grid |
+| Area               | Description                      |
+| ------------------ | -------------------------------- |
+| **Sidebar** (Left) | Navigation to all major modules  |
+| **Omnibar** (Top)  | Quick search with `Cmd/Ctrl + K` |
+| **Main Workspace** | Your content and tools           |
+| **Dashboard**      | Customizable widget grid         |
 
 ---
 
@@ -143,12 +143,12 @@ Keep your data synchronized across all your devices.
 
 ### Sync Indicators
 
-| Icon | Meaning |
-|------|---------|
-| 🟢 | Connected and synced |
-| 🟡 | Syncing in progress |
-| 🔴 | Connection issue |
-| ⚪ | No paired devices |
+| Icon | Meaning              |
+| ---- | -------------------- |
+| 🟢   | Connected and synced |
+| 🟡   | Syncing in progress  |
+| 🔴   | Connection issue     |
+| ⚪   | No paired devices    |
 
 ---
 
@@ -158,33 +158,33 @@ Master these shortcuts to boost your productivity:
 
 ### Essential Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| `Cmd/Ctrl + K` | Global Search |
-| `Cmd/Ctrl + N` | New Note |
-| `Cmd/Ctrl + T` | New Task |
-| `Cmd/Ctrl + ,` | Settings |
-| `Cmd/Ctrl + \` | Toggle Sidebar |
+| Shortcut       | Action            |
+| -------------- | ----------------- |
+| `Cmd/Ctrl + K` | Global Search     |
+| `Cmd/Ctrl + N` | New Note          |
+| `Cmd/Ctrl + T` | New Task          |
+| `Cmd/Ctrl + ,` | Settings          |
+| `Cmd/Ctrl + \` | Toggle Sidebar    |
 | `Cmd/Ctrl + J` | Open AI Assistant |
 
 ### Editor Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| `Cmd/Ctrl + B` | Bold |
-| `Cmd/Ctrl + I` | Italic |
-| `Cmd/Ctrl + Shift + K` | Code block |
-| `[[` | WikiLink autocomplete |
-| `#` | Tag autocomplete |
+| Shortcut               | Action                |
+| ---------------------- | --------------------- |
+| `Cmd/Ctrl + B`         | Bold                  |
+| `Cmd/Ctrl + I`         | Italic                |
+| `Cmd/Ctrl + Shift + K` | Code block            |
+| `[[`                   | WikiLink autocomplete |
+| `#`                    | Tag autocomplete      |
 
 ### Navigation
 
-| Shortcut | Action |
-|----------|--------|
-| `Cmd/Ctrl + 1-9` | Switch to module |
-| `Cmd/Ctrl + [` | Go back |
-| `Cmd/Ctrl + ]` | Go forward |
-| `Esc` | Close modal/panel |
+| Shortcut         | Action            |
+| ---------------- | ----------------- |
+| `Cmd/Ctrl + 1-9` | Switch to module  |
+| `Cmd/Ctrl + [`   | Go back           |
+| `Cmd/Ctrl + ]`   | Go forward        |
+| `Esc`            | Close modal/panel |
 
 ---
 
@@ -249,4 +249,4 @@ Now that you're set up, explore these features:
 
 **Welcome to Noteece! 🎉**
 
-*Created by Amirreza "Farnam" Taheri*
+_Created by Amirreza "Farnam" Taheri_

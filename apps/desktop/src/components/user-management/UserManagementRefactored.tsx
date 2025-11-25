@@ -1,23 +1,6 @@
 import React, { useState } from 'react';
-import {
-  Card,
-  Title,
-  Text,
-  Group,
-  Stack,
-  Button,
-  Tabs,
-  Alert,
-  ScrollArea,
-  LoadingOverlay,
-} from '@mantine/core';
-import {
-  IconUsers,
-  IconUserPlus,
-  IconShield,
-  IconSettings,
-  IconAlertCircle,
-} from '@tabler/icons-react';
+import { Card, Title, Text, Group, Stack, Button, Tabs, Alert, ScrollArea, LoadingOverlay } from '@mantine/core';
+import { IconUsers, IconUserPlus, IconShield, IconSettings, IconAlertCircle } from '@tabler/icons-react';
 import { useForm } from '@mantine/form';
 import { EmptyState } from '@noteece/ui';
 import { invoke } from '@tauri-apps/api/tauri';
@@ -33,7 +16,7 @@ import { EditUserModal } from './EditUserModal';
 
 /**
  * User Management Component - Refactored into smaller sub-components
- * 
+ *
  * Features:
  * - User listing with roles and status
  * - Invite new users
@@ -264,17 +247,14 @@ const UserManagement: React.FC = () => {
             Manage users, roles, and permissions for this space
           </Text>
         </div>
-        <Button
-          leftSection={<IconUserPlus size={16} />}
-          onClick={() => setInviteModalOpened(true)}
-        >
+        <Button leftSection={<IconUserPlus size={16} />} onClick={() => setInviteModalOpened(true)}>
           Invite User
         </Button>
       </Group>
 
       <Card withBorder pos="relative">
         <LoadingOverlay visible={isLoading} />
-        
+
         <Tabs defaultValue="users">
           <Tabs.List>
             <Tabs.Tab value="users" leftSection={<IconUsers size={14} />}>
@@ -306,15 +286,15 @@ const UserManagement: React.FC = () => {
                   <Group justify="space-between" mb="xs">
                     <Text fw={500}>{role.name}</Text>
                     {role.is_system && (
-                      <Text size="xs" c="dimmed">System Role</Text>
+                      <Text size="xs" c="dimmed">
+                        System Role
+                      </Text>
                     )}
                   </Group>
                   <Text size="sm" c="dimmed" mb="xs">
                     {role.description}
                   </Text>
-                  <Text size="xs">
-                    Permissions: {role.permissions.join(', ') || 'None'}
-                  </Text>
+                  <Text size="xs">Permissions: {role.permissions.join(', ') || 'None'}</Text>
                 </Card>
               ))}
             </Stack>
@@ -354,4 +334,3 @@ const UserManagement: React.FC = () => {
 };
 
 export default UserManagement;
-

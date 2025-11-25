@@ -20,14 +20,7 @@ import {
   NumberInput,
   Select,
 } from '@mantine/core';
-import {
-  IconBrain,
-  IconCloud,
-  IconServer,
-  IconCheck,
-  IconAlertCircle,
-  IconTestPipe,
-} from '@tabler/icons-react';
+import { IconBrain, IconCloud, IconServer, IconCheck, IconAlertCircle, IconTestPipe } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { logger } from '@/utils/logger';
 
@@ -35,12 +28,12 @@ interface AIConfig {
   localEnabled: boolean;
   ollamaUrl: string;
   defaultLocalModel: string;
-  
+
   cloudEnabled: boolean;
   provider: 'openai' | 'claude' | 'gemini';
   apiKey: string;
   defaultCloudModel: string;
-  
+
   maxTokens: number;
   temperature: number;
   cacheEnabled: boolean;
@@ -51,12 +44,12 @@ const DEFAULT_CONFIG: AIConfig = {
   localEnabled: true,
   ollamaUrl: 'http://localhost:11434',
   defaultLocalModel: 'llama3.2',
-  
+
   cloudEnabled: false,
   provider: 'openai',
   apiKey: '',
   defaultCloudModel: 'gpt-4o-mini',
-  
+
   maxTokens: 2048,
   temperature: 0.7,
   cacheEnabled: true,
@@ -82,7 +75,7 @@ export const AISettings: React.FC = () => {
     try {
       const savedConfig: Partial<AIConfig> = await invoke('get_ai_config_cmd');
       setConfig({ ...DEFAULT_CONFIG, ...savedConfig });
-    } catch (error) {
+    } catch {
       logger.warn('Failed to load AI config, using defaults');
     }
   };
@@ -156,7 +149,7 @@ export const AISettings: React.FC = () => {
   };
 
   const updateConfig = (updates: Partial<AIConfig>) => {
-    setConfig(prev => ({ ...prev, ...updates }));
+    setConfig((prev) => ({ ...prev, ...updates }));
     setIsDirty(true);
   };
 
@@ -287,7 +280,9 @@ export const AISettings: React.FC = () => {
 
       {/* General Settings */}
       <Card withBorder>
-        <Title order={5} mb="md">General Settings</Title>
+        <Title order={5} mb="md">
+          General Settings
+        </Title>
         <Stack gap="sm">
           <NumberInput
             label="Max Tokens"
@@ -325,10 +320,7 @@ export const AISettings: React.FC = () => {
       </Card>
 
       <Group justify="flex-end">
-        <Button
-          onClick={() => void saveConfig()}
-          disabled={!isDirty}
-        >
+        <Button onClick={() => void saveConfig()} disabled={!isDirty}>
           Save Settings
         </Button>
       </Group>
@@ -337,4 +329,3 @@ export const AISettings: React.FC = () => {
 };
 
 export default AISettings;
-

@@ -7,7 +7,7 @@ The **Project Hub** is designed to manage complex initiatives that require more 
 ## Structure
 
 1.  **Project:** The high-level container (e.g., "Launch Website", "Summer Vacation").
-    - **Goal/Outcome:** Define *why* you are doing this project.
+    - **Goal/Outcome:** Define _why_ you are doing this project.
     - **Status:** Active, On Hold, Completed, Archived.
     - **Deadline:** Optional target date.
 
@@ -22,14 +22,18 @@ The **Project Hub** is designed to manage complex initiatives that require more 
 ## Views
 
 ### 1. Dashboard Grid
+
 A visual grid of all your active projects.
+
 - **Progress Bars:** Visual indication of completion based on closed tasks.
 - **Confidence Score:** A subjective metric (0-100%) you can set to track how you feel about the project's success probability.
 
 ### 2. List View
+
 A dense, sortable list for quick management and review.
 
 ### 3. Kanban (Beta)
+
 Drag-and-drop projects between statuses (Backlog -> Active -> Blocked -> Done).
 
 ## Workflow Integration

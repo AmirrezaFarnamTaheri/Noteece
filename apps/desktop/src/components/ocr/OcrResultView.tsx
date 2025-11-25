@@ -32,11 +32,7 @@ export const OcrResultView: React.FC<OcrResultViewProps> = ({ job, onCopyToNote 
         <Badge color="blue" variant="light">
           {(job.confidence || 0) * 100}% confidence
         </Badge>
-        {job.language && (
-          <Badge variant="light">
-            {job.language}
-          </Badge>
-        )}
+        {job.language && <Badge variant="light">{job.language}</Badge>}
       </Group>
 
       {/* Extracted Text */}
@@ -77,4 +73,3 @@ export const OcrResultView: React.FC<OcrResultViewProps> = ({ job, onCopyToNote 
     </Stack>
   );
 };
-

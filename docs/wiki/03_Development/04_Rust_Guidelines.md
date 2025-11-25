@@ -12,6 +12,7 @@ The `core-rs` crate is the bedrock of the application. It must be **reliable**, 
 ## Error Handling
 
 **Do NOT panic.**
+
 - Avoid `unwrap()` and `expect()` in production code.
 - Use the `Result<T, E>` type for all fallible operations.
 - Propagate errors using the `?` operator.

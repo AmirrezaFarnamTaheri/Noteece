@@ -1,6 +1,6 @@
 /**
  * User Management Components
- * 
+ *
  * This module provides components for managing users, roles, and permissions
  * in a collaborative space.
  */
@@ -12,4 +12,3 @@ export { EditUserModal } from './EditUserModal';
 
 // Re-export the main component as default
 export { default } from './UserManagementRefactored';
-

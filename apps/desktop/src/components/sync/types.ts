@@ -60,4 +60,3 @@ export const statusColors: Record<string, string> = {
   partial: 'yellow',
   failed: 'red',
 };
-

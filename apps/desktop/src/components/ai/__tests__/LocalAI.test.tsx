@@ -33,9 +33,7 @@ jest.mock('@mantine/notifications', () => ({
 
 import { invoke } from '@tauri-apps/api/tauri';
 
-const wrapper = ({ children }: { children: React.ReactNode }) => (
-  <MantineProvider>{children}</MantineProvider>
-);
+const wrapper = ({ children }: { children: React.ReactNode }) => <MantineProvider>{children}</MantineProvider>;
 
 describe('LocalAI', () => {
   beforeEach(() => {
@@ -50,9 +48,9 @@ describe('LocalAI', () => {
 
   it('shows connection status badge', async () => {
     (invoke as jest.Mock).mockResolvedValue(true);
-    
+
     render(<LocalAI />, { wrapper });
-    
+
     await waitFor(() => {
       expect(invoke).toHaveBeenCalledWith('check_ollama_connection_cmd');
     });
@@ -62,9 +60,9 @@ describe('LocalAI', () => {
     (invoke as jest.Mock)
       .mockResolvedValueOnce(true) // connection check
       .mockResolvedValueOnce(['llama3.2', 'mistral']); // model list
-    
+
     render(<LocalAI />, { wrapper });
-    
+
     await waitFor(() => {
       const select = screen.getByPlaceholderText('Select a model');
       expect(select).toBeInTheDocument();
@@ -90,9 +88,9 @@ describe('LocalAI', () => {
 
   it('disables input when not connected', async () => {
     (invoke as jest.Mock).mockResolvedValue(false);
-    
+
     render(<LocalAI />, { wrapper });
-    
+
     await waitFor(() => {
       const input = screen.getByPlaceholderText('Connect to Ollama first');
       expect(input).toBeDisabled();
@@ -120,9 +118,9 @@ describe('LocalAI Integration', () => {
       .mockResolvedValueOnce(true) // connection check
       .mockResolvedValueOnce(['llama3.2']) // model list
       .mockResolvedValueOnce('AI response'); // chat response
-    
+
     render(<LocalAI />, { wrapper });
-    
+
     await waitFor(() => {
       expect(invoke).toHaveBeenCalledWith('check_ollama_connection_cmd');
     });
@@ -130,13 +128,12 @@ describe('LocalAI Integration', () => {
 
   it('handles connection error gracefully', async () => {
     (invoke as jest.Mock).mockRejectedValue(new Error('Connection failed'));
-    
+
     render(<LocalAI />, { wrapper });
-    
+
     await waitFor(() => {
       // Should not crash, connection status should show offline
       expect(screen.getByText('Offline')).toBeInTheDocument();
     });
   });
 });
-

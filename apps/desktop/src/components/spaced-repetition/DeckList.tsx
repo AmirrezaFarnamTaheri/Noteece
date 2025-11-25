@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Text, Group, Stack, Badge, Progress, Button } from '@mantine/core';
-import { IconCards, IconPlay } from '@tabler/icons-react';
+import { IconCards, IconPlayerPlay } from '@tabler/icons-react';
 import { DeckStats } from './types';
 
 interface DeckListProps {
@@ -29,9 +29,7 @@ export const DeckList: React.FC<DeckListProps> = ({ decks, onStartReview }) => {
   return (
     <Stack gap="md">
       {decks.map((deck) => {
-        const progressValue = deck.total > 0
-          ? ((deck.total - deck.due) / deck.total) * 100
-          : 0;
+        const progressValue = deck.total > 0 ? ((deck.total - deck.due) / deck.total) * 100 : 0;
 
         return (
           <Card key={deck.deck} withBorder p="md">
@@ -44,12 +42,7 @@ export const DeckList: React.FC<DeckListProps> = ({ decks, onStartReview }) => {
                   </Badge>
                 </Group>
 
-                <Progress
-                  value={progressValue}
-                  size="sm"
-                  radius="xl"
-                  mb="xs"
-                />
+                <Progress value={progressValue} size="sm" radius="xl" mb="xs" />
 
                 <Group gap="lg">
                   <Text size="xs" c="blue">
@@ -68,7 +61,7 @@ export const DeckList: React.FC<DeckListProps> = ({ decks, onStartReview }) => {
               </div>
 
               <Button
-                leftSection={<IconPlay size={16} />}
+                leftSection={<IconPlayerPlay size={16} />}
                 onClick={() => onStartReview(deck.deck)}
                 disabled={deck.due === 0}
               >
@@ -81,4 +74,3 @@ export const DeckList: React.FC<DeckListProps> = ({ decks, onStartReview }) => {
     </Stack>
   );
 };
-

@@ -15,24 +15,24 @@ describe('i18n System', () => {
 
     it('should have consistent keys across all locales', () => {
       const enKeys = Object.keys(translations.en);
-      
-      Object.entries(translations).forEach(([locale, trans]) => {
+
+      for (const [locale, trans] of Object.entries(translations)) {
         const keys = Object.keys(trans);
         expect(keys.length).toBe(enKeys.length);
-        enKeys.forEach(key => {
+        for (const key of enKeys) {
           expect(keys).toContain(key);
-        });
-      });
+        }
+      }
     });
 
     it('should have non-empty values for all keys', () => {
-      Object.entries(translations).forEach(([locale, trans]) => {
-        Object.entries(trans).forEach(([key, value]) => {
+      for (const [locale, trans] of Object.entries(translations)) {
+        for (const [key, value] of Object.entries(trans)) {
           expect(value).toBeTruthy();
           expect(typeof value).toBe('string');
           expect(value.length).toBeGreaterThan(0);
-        });
-      });
+        }
+      }
     });
   });
 
@@ -42,26 +42,26 @@ describe('i18n System', () => {
     });
 
     it('should have correct structure for each locale', () => {
-      SUPPORTED_LOCALES.forEach(locale => {
+      for (const locale of SUPPORTED_LOCALES) {
         expect(locale).toHaveProperty('code');
         expect(locale).toHaveProperty('name');
         expect(locale).toHaveProperty('nativeName');
         expect(locale).toHaveProperty('direction');
         expect(['ltr', 'rtl']).toContain(locale.direction);
-      });
+      }
     });
 
     it('should have Persian as RTL', () => {
-      const persian = SUPPORTED_LOCALES.find(l => l.code === 'fa');
+      const persian = SUPPORTED_LOCALES.find((l) => l.code === 'fa');
       expect(persian).toBeDefined();
       expect(persian?.direction).toBe('rtl');
     });
 
     it('should have other languages as LTR', () => {
-      const ltrLocales = SUPPORTED_LOCALES.filter(l => l.code !== 'fa');
-      ltrLocales.forEach(locale => {
+      const ltrLocales = SUPPORTED_LOCALES.filter((l) => l.code !== 'fa');
+      for (const locale of ltrLocales) {
         expect(locale.direction).toBe('ltr');
-      });
+      }
     });
   });
 
@@ -123,4 +123,3 @@ describe('i18n System', () => {
     });
   });
 });
-

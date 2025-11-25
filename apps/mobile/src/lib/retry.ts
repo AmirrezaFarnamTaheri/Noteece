@@ -22,15 +22,15 @@ const DEFAULT_CONFIG: Required<RetryConfig> = {
   backoffFactor: 2,
   jitter: true,
   retryableErrors: [
-    "network",
-    "timeout",
-    "fetch failed",
-    "connection",
-    "ECONNREFUSED",
-    "ETIMEDOUT",
-    "503", // Service Unavailable
-    "502", // Bad Gateway
-    "504", // Gateway Timeout
+    'network',
+    'timeout',
+    'fetch failed',
+    'connection',
+    'ECONNREFUSED',
+    'ETIMEDOUT',
+    '503', // Service Unavailable
+    '502', // Bad Gateway
+    '504', // Gateway Timeout
   ],
   onRetry: () => {},
 };
@@ -45,14 +45,8 @@ function sleep(ms: number): Promise<void> {
 /**
  * Calculate delay with exponential backoff and optional jitter
  */
-function calculateDelay(
-  attempt: number,
-  config: Required<RetryConfig>,
-): number {
-  const exponentialDelay = Math.min(
-    config.initialDelay * Math.pow(config.backoffFactor, attempt),
-    config.maxDelay,
-  );
+function calculateDelay(attempt: number, config: Required<RetryConfig>): number {
+  const exponentialDelay = Math.min(config.initialDelay * Math.pow(config.backoffFactor, attempt), config.maxDelay);
 
   if (config.jitter) {
     // Add random jitter: ±25% of the delay
@@ -68,13 +62,11 @@ function calculateDelay(
  * Check if an error should be retried
  */
 function shouldRetry(error: Error, config: Required<RetryConfig>): boolean {
-  const errorMessage = error.message?.toLowerCase() || "";
-  const errorName = error.name?.toLowerCase() || "";
+  const errorMessage = error.message?.toLowerCase() || '';
+  const errorName = error.name?.toLowerCase() || '';
 
   return config.retryableErrors.some(
-    (pattern) =>
-      errorMessage.includes(pattern.toLowerCase()) ||
-      errorName.includes(pattern.toLowerCase()),
+    (pattern) => errorMessage.includes(pattern.toLowerCase()) || errorName.includes(pattern.toLowerCase()),
   );
 }
 
@@ -93,12 +85,9 @@ function shouldRetry(error: Error, config: Required<RetryConfig>): boolean {
  * );
  * ```
  */
-export async function withRetry<T>(
-  fn: () => Promise<T>,
-  config: RetryConfig = {},
-): Promise<T> {
+export async function withRetry<T>(fn: () => Promise<T>, config: RetryConfig = {}): Promise<T> {
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
-  let lastError: Error = new Error("Unknown error");
+  let lastError: Error = new Error('Unknown error');
 
   for (let attempt = 0; attempt <= finalConfig.maxRetries; attempt++) {
     try {
@@ -186,7 +175,7 @@ export async function retryUntil<T>(
 
       // Don't retry on last attempt
       if (attempt === finalConfig.maxRetries) {
-        throw new Error("Retry predicate not satisfied");
+        throw new Error('Retry predicate not satisfied');
       }
 
       const delay = calculateDelay(attempt, finalConfig);
@@ -203,8 +192,7 @@ export async function retryUntil<T>(
         throw error;
       }
 
-      const lastError =
-        error instanceof Error ? error : new Error(String(error));
+      const lastError = error instanceof Error ? error : new Error(String(error));
 
       if (!shouldRetry(lastError, finalConfig)) {
         throw lastError;
@@ -223,7 +211,7 @@ export async function retryUntil<T>(
     }
   }
 
-  throw new Error("Max retries exceeded");
+  throw new Error('Max retries exceeded');
 }
 
 /**
@@ -233,10 +221,7 @@ export async function retryUntil<T>(
  * the same backoff timing (e.g., multiple API calls that all failed
  * due to network issue).
  */
-export async function batchRetry<T>(
-  operations: (() => Promise<T>)[],
-  config: RetryConfig = {},
-): Promise<T[]> {
+export async function batchRetry<T>(operations: (() => Promise<T>)[], config: RetryConfig = {}): Promise<T[]> {
   return withRetry(async () => {
     return Promise.all(operations.map((op) => op()));
   }, config);

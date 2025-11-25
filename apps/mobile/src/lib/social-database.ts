@@ -6,7 +6,7 @@
  * Write operations only for categories and category assignments.
  */
 
-import { dbQuery, dbExecute } from "./database";
+import { dbQuery, dbExecute } from './database';
 import type {
   SocialAccount,
   TimelinePost,
@@ -16,13 +16,11 @@ import type {
   CategoryStats,
   PlatformStats,
   Platform,
-} from "../types/social";
+} from '../types/social';
 
 // ===== Social Account Operations (Read-Only) =====
 
-export async function getSocialAccounts(
-  spaceId: string,
-): Promise<SocialAccount[]> {
+export async function getSocialAccounts(spaceId: string): Promise<SocialAccount[]> {
   const rows = await dbQuery<any>(
     `SELECT id, space_id, platform, username, display_name, credentials_encrypted,
             enabled, sync_frequency_minutes, last_sync, created_at
@@ -39,23 +37,20 @@ export async function getSocialAccounts(
 
     if (raw instanceof Uint8Array) {
       creds = raw;
-    } else if (raw && typeof raw.byteLength === "number") {
+    } else if (raw && typeof raw.byteLength === 'number') {
       // ArrayBuffer or similar
       creds = new Uint8Array(raw);
-    } else if (raw && typeof raw === "string") {
+    } else if (raw && typeof raw === 'string') {
       // Some SQLite drivers can yield base64 strings; safely decode without relying on atob in RN
       try {
         let bytes: Uint8Array;
-        if (
-          typeof global !== "undefined" &&
-          typeof (global as any).atob === "function"
-        ) {
+        if (typeof global !== 'undefined' && typeof (global as any).atob === 'function') {
           const bin = (global as any).atob(raw);
           const arr = new Uint8Array(bin.length);
           for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
           bytes = arr;
-        } else if (typeof Buffer !== "undefined") {
-          const buf = Buffer.from(raw, "base64");
+        } else if (typeof Buffer !== 'undefined') {
+          const buf = Buffer.from(raw, 'base64');
           bytes = new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
         } else {
           // Fallback: invalid environment for base64 decoding
@@ -77,9 +72,7 @@ export async function getSocialAccounts(
   });
 }
 
-export async function getSocialAccount(
-  accountId: string,
-): Promise<SocialAccount | null> {
+export async function getSocialAccount(accountId: string): Promise<SocialAccount | null> {
   const rows = await dbQuery<any>(
     `SELECT id, space_id, platform, username, display_name, credentials_encrypted,
             enabled, sync_frequency_minutes, last_sync, created_at
@@ -98,10 +91,10 @@ export async function getSocialAccount(
 
   if (raw instanceof Uint8Array) {
     creds = raw;
-  } else if (raw && typeof raw.byteLength === "number") {
+  } else if (raw && typeof raw.byteLength === 'number') {
     // ArrayBuffer or similar
     creds = new Uint8Array(raw);
-  } else if (raw && typeof raw === "string") {
+  } else if (raw && typeof raw === 'string') {
     // Some SQLite drivers can yield base64 strings; best-effort decode
     try {
       const bin = atob(raw);
@@ -155,18 +148,14 @@ export async function getTimelinePosts(
 
   // Add filters
   if (filters?.platforms && filters.platforms.length > 0) {
-    sql += ` AND p.platform IN (${filters.platforms.map(() => "?").join(",")})`;
+    sql += ` AND p.platform IN (${filters.platforms.map(() => '?').join(',')})`;
     params.push(...filters.platforms);
   }
 
   if (filters?.categories && filters.categories.length > 0) {
     // Normalize and validate category IDs
     const catIds = Array.from(
-      new Set(
-        filters.categories
-          .map((c) => (typeof c === "string" ? c.trim() : ""))
-          .filter((c) => c.length > 0),
-      ),
+      new Set(filters.categories.map((c) => (typeof c === 'string' ? c.trim() : '')).filter((c) => c.length > 0)),
     );
 
     if (catIds.length > 0) {
@@ -177,7 +166,7 @@ export async function getTimelinePosts(
         JOIN social_category c2 ON pc2.category_id = c2.id
         WHERE pc2.post_id = p.id
           AND c2.space_id = ?
-          AND c2.id IN (${catIds.map(() => "?").join(",")})
+          AND c2.id IN (${catIds.map(() => '?').join(',')})
       )`;
       params.push(spaceId, ...catIds);
     }
@@ -185,14 +174,10 @@ export async function getTimelinePosts(
 
   if (filters?.authors && filters.authors.length > 0) {
     const authors = Array.from(
-      new Set(
-        filters.authors
-          .map((a) => (typeof a === "string" ? a.trim() : ""))
-          .filter((a) => a.length > 0),
-      ),
+      new Set(filters.authors.map((a) => (typeof a === 'string' ? a.trim() : '')).filter((a) => a.length > 0)),
     );
     if (authors.length > 0) {
-      sql += ` AND p.author IN (${authors.map(() => "?").join(",")})`;
+      sql += ` AND p.author IN (${authors.map(() => '?').join(',')})`;
       params.push(...authors);
     }
   }
@@ -203,11 +188,10 @@ export async function getTimelinePosts(
     const sanitized = filters.search_query.trim().slice(0, MAX_SEARCH_LENGTH);
 
     if (sanitized.length >= MIN_SEARCH_LENGTH) {
-      const escapeLike = (s: string) =>
-        s.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+      const escapeLike = (s: string) => s.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
       const escaped = escapeLike(sanitized);
       // If after escaping the query is effectively empty, skip to avoid full scans
-      if (escaped.replace(/%|_/g, "").length > 0) {
+      if (escaped.replace(/%|_/g, '').length > 0) {
         sql += ` AND (COALESCE(p.content,'') LIKE ? ESCAPE '\\' OR COALESCE(p.author,'') LIKE ? ESCAPE '\\')`;
         const searchPattern = `%${escaped}%`;
         params.push(searchPattern, searchPattern);
@@ -234,12 +218,9 @@ export async function getTimelinePosts(
     let mediaUrls: string[] | undefined;
     if (row.media_urls != null) {
       try {
-        const parsed =
-          typeof row.media_urls === "string"
-            ? JSON.parse(row.media_urls)
-            : row.media_urls;
+        const parsed = typeof row.media_urls === 'string' ? JSON.parse(row.media_urls) : row.media_urls;
         if (Array.isArray(parsed)) {
-          mediaUrls = parsed.filter((u) => typeof u === "string");
+          mediaUrls = parsed.filter((u) => typeof u === 'string');
         } else {
           mediaUrls = undefined;
         }
@@ -284,9 +265,7 @@ function parseCategories(row: any): SocialCategory[] {
 
   const sep = String.fromCharCode(31);
   // Filter out empty IDs that can result from GROUP_CONCAT on posts with no categories
-  const ids = row.category_ids
-    .split(sep)
-    .filter((id: string) => id && id.length > 0);
+  const ids = row.category_ids.split(sep).filter((id: string) => id && id.length > 0);
   if (ids.length === 0) return [];
 
   const names = row.category_names?.split(sep) || [];
@@ -295,17 +274,15 @@ function parseCategories(row: any): SocialCategory[] {
 
   return ids.map((id: string, i: number) => ({
     id,
-    space_id: "", // Not needed for display
-    name: names[i] || "",
+    space_id: '', // Not needed for display
+    name: names[i] || '',
     color: colors[i] || undefined,
     icon: icons[i] || undefined,
     created_at: 0,
   }));
 }
 
-export async function getPostById(
-  postId: string,
-): Promise<TimelinePost | null> {
+export async function getPostById(postId: string): Promise<TimelinePost | null> {
   const sql = `
     SELECT
       p.id, p.account_id, p.platform, p.platform_post_id,
@@ -338,12 +315,9 @@ export async function getPostById(
   let mediaUrls: string[] | undefined;
   if (row.media_urls != null) {
     try {
-      const parsed =
-        typeof row.media_urls === "string"
-          ? JSON.parse(row.media_urls)
-          : row.media_urls;
+      const parsed = typeof row.media_urls === 'string' ? JSON.parse(row.media_urls) : row.media_urls;
       if (Array.isArray(parsed)) {
-        mediaUrls = parsed.filter((u) => typeof u === "string");
+        mediaUrls = parsed.filter((u) => typeof u === 'string');
       } else {
         mediaUrls = undefined;
       }
@@ -380,9 +354,7 @@ export async function getPostById(
 
 // ===== Social Category Operations (Read-Write) =====
 
-export async function getCategories(
-  spaceId: string,
-): Promise<SocialCategory[]> {
+export async function getCategories(spaceId: string): Promise<SocialCategory[]> {
   const rows = await dbQuery<any>(
     `SELECT id, space_id, name, color, icon, filters_json, created_at
      FROM social_category
@@ -413,7 +385,7 @@ export async function createCategory(
   );
 
   // Queue for sync to desktop
-  await queueSyncOperation("social_category", id, "create", {
+  await queueSyncOperation('social_category', id, 'create', {
     id,
     space_id: spaceId,
     name,
@@ -432,10 +404,7 @@ export async function createCategory(
   };
 }
 
-export async function assignCategory(
-  postId: string,
-  categoryId: string,
-): Promise<void> {
+export async function assignCategory(postId: string, categoryId: string): Promise<void> {
   const now = Date.now();
 
   // Enforce space isolation: post's space must match category's space
@@ -455,7 +424,7 @@ export async function assignCategory(
   const postSpace = rows?.[0]?.post_space;
   const categorySpace = rows?.[0]?.category_space;
   if (!postSpace || !categorySpace || postSpace !== categorySpace) {
-    throw new Error("Cross-space category assignment denied");
+    throw new Error('Cross-space category assignment denied');
   }
 
   await dbExecute(
@@ -464,23 +433,15 @@ export async function assignCategory(
     [postId, categoryId, now],
   );
 
-  await queueSyncOperation(
-    "social_post_category",
-    `${postId}-${categoryId}`,
-    "assign",
-    {
-      post_id: postId,
-      category_id: categoryId,
-      assigned_at: now,
-      assigned_by: "user",
-    },
-  );
+  await queueSyncOperation('social_post_category', `${postId}-${categoryId}`, 'assign', {
+    post_id: postId,
+    category_id: categoryId,
+    assigned_at: now,
+    assigned_by: 'user',
+  });
 }
 
-export async function removeCategory(
-  postId: string,
-  categoryId: string,
-): Promise<void> {
+export async function removeCategory(postId: string, categoryId: string): Promise<void> {
   await dbExecute(
     `DELETE FROM social_post_category
      WHERE post_id = ? AND category_id = ?`,
@@ -488,20 +449,13 @@ export async function removeCategory(
   );
 
   // Queue for sync to desktop
-  await queueSyncOperation(
-    "social_post_category",
-    `${postId}-${categoryId}`,
-    "remove",
-    {
-      post_id: postId,
-      category_id: categoryId,
-    },
-  );
+  await queueSyncOperation('social_post_category', `${postId}-${categoryId}`, 'remove', {
+    post_id: postId,
+    category_id: categoryId,
+  });
 }
 
-export async function getPostCategories(
-  postId: string,
-): Promise<SocialCategory[]> {
+export async function getPostCategories(postId: string): Promise<SocialCategory[]> {
   const rows = await dbQuery<any>(
     `SELECT c.id, c.space_id, c.name, c.color, c.icon, c.filters_json, c.created_at
      FROM social_category c
@@ -523,10 +477,8 @@ export async function getPostCategories(
 function safeParsePlatformArray(val: any): Platform[] {
   if (!val) return [];
   try {
-    const parsed = typeof val === "string" ? JSON.parse(val) : val;
-    return Array.isArray(parsed)
-      ? parsed.filter((p) => typeof p === "string")
-      : [];
+    const parsed = typeof val === 'string' ? JSON.parse(val) : val;
+    return Array.isArray(parsed) ? parsed.filter((p) => typeof p === 'string') : [];
   } catch {
     return [];
   }
@@ -550,9 +502,7 @@ export async function getFocusModes(spaceId: string): Promise<FocusMode[]> {
   }));
 }
 
-export async function getActiveFocusMode(
-  spaceId: string,
-): Promise<FocusMode | null> {
+export async function getActiveFocusMode(spaceId: string): Promise<FocusMode | null> {
   const rows = await dbQuery<any>(
     `SELECT id, space_id, name, description, icon, is_active,
             blocked_platforms, allowed_platforms, created_at
@@ -575,9 +525,7 @@ export async function getActiveFocusMode(
 
 // ===== Analytics Operations =====
 
-export async function getPlatformStats(
-  spaceId: string,
-): Promise<PlatformStats[]> {
+export async function getPlatformStats(spaceId: string): Promise<PlatformStats[]> {
   const rows = await dbQuery<any>(
     `SELECT
        p.platform,
@@ -600,9 +548,7 @@ export async function getPlatformStats(
   }));
 }
 
-export async function getCategoryStats(
-  spaceId: string,
-): Promise<CategoryStats[]> {
+export async function getCategoryStats(spaceId: string): Promise<CategoryStats[]> {
   const rows = await dbQuery<any>(
     `SELECT
        c.id as category_id,
@@ -636,25 +582,17 @@ export async function getTotalPostCount(spaceId: string): Promise<number> {
 
 function generateId(): string {
   // Collision-resistant 128-bit random ID encoded as hex
-  if (
-    typeof crypto !== "undefined" &&
-    typeof crypto.getRandomValues === "function"
-  ) {
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
     const bytes = new Uint8Array(16);
     crypto.getRandomValues(bytes);
-    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
   }
   // Fallback if crypto is unavailable (should not happen in React Native)
   const rand = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER).toString(36);
   return `${Date.now().toString(36)}-${rand}`;
 }
 
-async function queueSyncOperation(
-  entityType: string,
-  entityId: string,
-  operation: string,
-  data: any,
-): Promise<void> {
+async function queueSyncOperation(entityType: string, entityId: string, operation: string, data: any): Promise<void> {
   const id = generateId();
   const now = Date.now();
 
@@ -667,18 +605,18 @@ async function queueSyncOperation(
 
 function getPlatformColor(platform: string): string {
   const colors: Record<string, string> = {
-    twitter: "#1DA1F2",
-    instagram: "#E4405F",
-    tiktok: "#000000",
-    youtube: "#FF0000",
-    linkedin: "#0A66C2",
-    reddit: "#FF4500",
-    facebook: "#1877F2",
-    pinterest: "#E60023",
-    mastodon: "#6364FF",
-    bluesky: "#0085FF",
-    threads: "#000000",
+    twitter: '#1DA1F2',
+    instagram: '#E4405F',
+    tiktok: '#000000',
+    youtube: '#FF0000',
+    linkedin: '#0A66C2',
+    reddit: '#FF4500',
+    facebook: '#1877F2',
+    pinterest: '#E60023',
+    mastodon: '#6364FF',
+    bluesky: '#0085FF',
+    threads: '#000000',
   };
 
-  return colors[platform] || "#999999";
+  return colors[platform] || '#999999';
 }

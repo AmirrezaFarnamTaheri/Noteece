@@ -7,4 +7,3 @@ export type { HealthMetric } from './HealthMetricsPanel';
 export { HealthGoalsPanel } from './HealthGoalsPanel';
 export type { HealthGoal } from './HealthGoalsPanel';
 export { HealthCharts } from './HealthCharts';
-

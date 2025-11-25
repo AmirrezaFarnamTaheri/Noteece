@@ -54,4 +54,3 @@ export const metricUnits: Record<string, string> = {
 export const getDefaultUnit = (metricType: string): string => {
   return metricUnits[metricType] || '';
 };
-

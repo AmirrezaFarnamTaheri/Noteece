@@ -53,11 +53,7 @@ interface HealthMetricsPanelProps {
   onMetricAdded: () => void;
 }
 
-export const HealthMetricsPanel: React.FC<HealthMetricsPanelProps> = ({
-  spaceId,
-  metrics,
-  onMetricAdded,
-}) => {
+export const HealthMetricsPanel: React.FC<HealthMetricsPanelProps> = ({ spaceId, metrics, onMetricAdded }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<string>('');
   const [value, setValue] = useState<number>(0);
@@ -66,7 +62,7 @@ export const HealthMetricsPanel: React.FC<HealthMetricsPanelProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getUnitForType = (type: string) => {
-    return METRIC_TYPES.find(m => m.value === type)?.unit || '';
+    return METRIC_TYPES.find((m) => m.value === type)?.unit || '';
   };
 
   const handleSubmit = async () => {
@@ -118,11 +114,7 @@ export const HealthMetricsPanel: React.FC<HealthMetricsPanelProps> = ({
             <IconActivity size={20} />
             <Title order={5}>Health Metrics</Title>
           </Group>
-          <Button
-            size="xs"
-            leftSection={<IconPlus size={14} />}
-            onClick={() => setModalOpen(true)}
-          >
+          <Button size="xs" leftSection={<IconPlus size={14} />} onClick={() => setModalOpen(true)}>
             Add Metric
           </Button>
         </Group>
@@ -145,7 +137,7 @@ export const HealthMetricsPanel: React.FC<HealthMetricsPanelProps> = ({
                 <Table.Tr key={metric.id}>
                   <Table.Td>
                     <Badge variant="light">
-                      {METRIC_TYPES.find(m => m.value === metric.metric_type)?.label || metric.metric_type}
+                      {METRIC_TYPES.find((m) => m.value === metric.metric_type)?.label || metric.metric_type}
                     </Badge>
                   </Table.Td>
                   <Table.Td>
@@ -163,11 +155,7 @@ export const HealthMetricsPanel: React.FC<HealthMetricsPanelProps> = ({
         )}
       </Card>
 
-      <Modal
-        opened={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title="Add Health Metric"
-      >
+      <Modal opened={modalOpen} onClose={() => setModalOpen(false)} title="Add Health Metric">
         <Stack gap="md">
           <Select
             label="Metric Type"
@@ -190,7 +178,7 @@ export const HealthMetricsPanel: React.FC<HealthMetricsPanelProps> = ({
           <DateTimePicker
             label="Recorded At"
             value={recordedAt}
-            onChange={(d) => setRecordedAt(d || new Date())}
+            onChange={(d) => setRecordedAt(d ? new Date(d) : new Date())}
           />
 
           <Textarea
@@ -204,11 +192,7 @@ export const HealthMetricsPanel: React.FC<HealthMetricsPanelProps> = ({
             <Button variant="subtle" onClick={() => setModalOpen(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={() => void handleSubmit()}
-              loading={isSubmitting}
-              disabled={!selectedType}
-            >
+            <Button onClick={() => void handleSubmit()} loading={isSubmitting} disabled={!selectedType}>
               Add Metric
             </Button>
           </Group>
@@ -217,4 +201,3 @@ export const HealthMetricsPanel: React.FC<HealthMetricsPanelProps> = ({
     </>
   );
 };
-

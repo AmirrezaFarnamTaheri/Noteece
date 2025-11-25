@@ -5,18 +5,12 @@
  * Includes automatic theme switching based on system preferences.
  */
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
-import { useColorScheme } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useColorScheme } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type ThemeMode = "light" | "dark" | "auto";
-export type ActiveTheme = "light" | "dark";
+export type ThemeMode = 'light' | 'dark' | 'auto';
+export type ActiveTheme = 'light' | 'dark';
 
 export interface ThemeColors {
   // Base colors
@@ -61,72 +55,72 @@ export interface Theme {
 
 const lightColors: ThemeColors = {
   // Base colors
-  background: "#FFFFFF",
-  surface: "#F5F5F5",
-  surfaceVariant: "#E8E8E8",
+  background: '#FFFFFF',
+  surface: '#F5F5F5',
+  surfaceVariant: '#E8E8E8',
 
   // Text colors
-  text: "#1A1A1A",
-  textSecondary: "#666666",
-  textTertiary: "#999999",
+  text: '#1A1A1A',
+  textSecondary: '#666666',
+  textTertiary: '#999999',
 
   // Primary colors
-  primary: "#007AFF",
-  primaryContainer: "#E3F2FD",
-  onPrimary: "#FFFFFF",
+  primary: '#007AFF',
+  primaryContainer: '#E3F2FD',
+  onPrimary: '#FFFFFF',
 
   // Accent colors
-  accent: "#FF6B6B",
-  accentContainer: "#FFEBEE",
+  accent: '#FF6B6B',
+  accentContainer: '#FFEBEE',
 
   // Status colors
-  error: "#FF3B30",
-  warning: "#FF9500",
-  success: "#34C759",
-  info: "#5AC8FA",
+  error: '#FF3B30',
+  warning: '#FF9500',
+  success: '#34C759',
+  info: '#5AC8FA',
 
   // Border and divider
-  border: "#E0E0E0",
-  divider: "#F0F0F0",
+  border: '#E0E0E0',
+  divider: '#F0F0F0',
 
   // Special
-  overlay: "rgba(0, 0, 0, 0.5)",
-  shadow: "rgba(0, 0, 0, 0.1)",
+  overlay: 'rgba(0, 0, 0, 0.5)',
+  shadow: 'rgba(0, 0, 0, 0.1)',
 };
 
 const darkColors: ThemeColors = {
   // Base colors
-  background: "#121212",
-  surface: "#1E1E1E",
-  surfaceVariant: "#2A2A2A",
+  background: '#121212',
+  surface: '#1E1E1E',
+  surfaceVariant: '#2A2A2A',
 
   // Text colors
-  text: "#FFFFFF",
-  textSecondary: "#AAAAAA",
-  textTertiary: "#888888",
+  text: '#FFFFFF',
+  textSecondary: '#AAAAAA',
+  textTertiary: '#888888',
 
   // Primary colors
-  primary: "#0A84FF",
-  primaryContainer: "#1C3A5E",
-  onPrimary: "#FFFFFF",
+  primary: '#0A84FF',
+  primaryContainer: '#1C3A5E',
+  onPrimary: '#FFFFFF',
 
   // Accent colors
-  accent: "#FF6B6B",
-  accentContainer: "#4A2828",
+  accent: '#FF6B6B',
+  accentContainer: '#4A2828',
 
   // Status colors
-  error: "#FF453A",
-  warning: "#FF9F0A",
-  success: "#32D74B",
-  info: "#64D2FF",
+  error: '#FF453A',
+  warning: '#FF9F0A',
+  success: '#32D74B',
+  info: '#64D2FF',
 
   // Border and divider
-  border: "#3A3A3A",
-  divider: "#2A2A2A",
+  border: '#3A3A3A',
+  divider: '#2A2A2A',
 
   // Special
-  overlay: "rgba(0, 0, 0, 0.7)",
-  shadow: "rgba(0, 0, 0, 0.3)",
+  overlay: 'rgba(0, 0, 0, 0.7)',
+  shadow: 'rgba(0, 0, 0, 0.3)',
 };
 
 interface ThemeContextType {
@@ -138,25 +132,20 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const THEME_STORAGE_KEY = "noteece_theme_mode";
+const THEME_STORAGE_KEY = 'noteece_theme_mode';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const systemColorScheme = useColorScheme();
-  const [themeMode, setThemeModeState] = useState<ThemeMode>("auto");
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('auto');
   const [isLoading, setIsLoading] = useState(true);
 
   // Determine active theme based on mode and system preference
-  const activeTheme: ActiveTheme =
-    themeMode === "auto"
-      ? systemColorScheme === "dark"
-        ? "dark"
-        : "light"
-      : themeMode;
+  const activeTheme: ActiveTheme = themeMode === 'auto' ? (systemColorScheme === 'dark' ? 'dark' : 'light') : themeMode;
 
   const theme: Theme = {
     mode: activeTheme,
-    colors: activeTheme === "dark" ? darkColors : lightColors,
-    isDark: activeTheme === "dark",
+    colors: activeTheme === 'dark' ? darkColors : lightColors,
+    isDark: activeTheme === 'dark',
   };
 
   // Load saved theme preference
@@ -175,14 +164,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const loadThemePreference = async () => {
     try {
       const saved = await AsyncStorage.getItem(THEME_STORAGE_KEY);
-      if (
-        saved &&
-        (saved === "light" || saved === "dark" || saved === "auto")
-      ) {
+      if (saved && (saved === 'light' || saved === 'dark' || saved === 'auto')) {
         setThemeModeState(saved as ThemeMode);
       }
     } catch (error) {
-      console.error("[Theme] Failed to load theme preference:", error);
+      console.error('[Theme] Failed to load theme preference:', error);
     } finally {
       setIsLoading(false);
     }
@@ -192,7 +178,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     try {
       await AsyncStorage.setItem(THEME_STORAGE_KEY, themeMode);
     } catch (error) {
-      console.error("[Theme] Failed to save theme preference:", error);
+      console.error('[Theme] Failed to save theme preference:', error);
     }
   };
 
@@ -202,9 +188,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const toggleTheme = () => {
     setThemeModeState((current) => {
-      if (current === "auto") return "light";
-      if (current === "light") return "dark";
-      return "light";
+      if (current === 'auto') return 'light';
+      if (current === 'light') return 'dark';
+      return 'light';
     });
   };
 
@@ -214,11 +200,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       <ThemeContext.Provider
         value={{
           theme: {
-            mode: "dark",
+            mode: 'dark',
             colors: darkColors,
             isDark: true,
           },
-          themeMode: "auto",
+          themeMode: 'auto',
           setThemeMode: () => {},
           toggleTheme: () => {},
         }}
@@ -229,18 +215,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ThemeContext.Provider
-      value={{ theme, themeMode, setThemeMode, toggleTheme }}
-    >
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={{ theme, themeMode, setThemeMode, toggleTheme }}>{children}</ThemeContext.Provider>
   );
 }
 
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (!context) {
-    throw new Error("useTheme must be used within a ThemeProvider");
+    throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
 }

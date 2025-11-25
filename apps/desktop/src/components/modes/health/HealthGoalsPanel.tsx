@@ -18,7 +18,7 @@ import {
   Badge,
   TextInput,
 } from '@mantine/core';
-import { DatePicker } from '@mantine/dates';
+import { DateInput } from '@mantine/dates';
 import { IconPlus, IconTarget, IconCheck } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { logger } from '@/utils/logger';
@@ -46,12 +46,7 @@ interface HealthGoalsPanelProps {
   onGoalUpdated: () => void;
 }
 
-export const HealthGoalsPanel: React.FC<HealthGoalsPanelProps> = ({
-  spaceId,
-  goals,
-  onGoalAdded,
-  onGoalUpdated,
-}) => {
+export const HealthGoalsPanel: React.FC<HealthGoalsPanelProps> = ({ spaceId, goals, onGoalAdded, onGoalUpdated }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [metricType, setMetricType] = useState<string>('');
@@ -60,7 +55,7 @@ export const HealthGoalsPanel: React.FC<HealthGoalsPanelProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getUnitForType = (type: string) => {
-    return METRIC_TYPES.find(m => m.value === type)?.unit || '';
+    return METRIC_TYPES.find((m) => m.value === type)?.unit || '';
   };
 
   const handleSubmit = async () => {
@@ -119,7 +114,7 @@ export const HealthGoalsPanel: React.FC<HealthGoalsPanelProps> = ({
     }
   };
 
-  const activeGoals = goals.filter(g => !g.is_completed && g.category === 'health');
+  const activeGoals = goals.filter((g) => !g.is_completed && g.category === 'health');
 
   return (
     <>
@@ -129,11 +124,7 @@ export const HealthGoalsPanel: React.FC<HealthGoalsPanelProps> = ({
             <IconTarget size={20} />
             <Title order={5}>Health Goals</Title>
           </Group>
-          <Button
-            size="xs"
-            leftSection={<IconPlus size={14} />}
-            onClick={() => setModalOpen(true)}
-          >
+          <Button size="xs" leftSection={<IconPlus size={14} />} onClick={() => setModalOpen(true)}>
             Add Goal
           </Button>
         </Group>
@@ -145,10 +136,8 @@ export const HealthGoalsPanel: React.FC<HealthGoalsPanelProps> = ({
         ) : (
           <Stack gap="sm">
             {activeGoals.map((goal) => {
-              const progress = goal.target > 0 
-                ? Math.min((goal.current / goal.target) * 100, 100) 
-                : 0;
-              
+              const progress = goal.target > 0 ? Math.min((goal.current / goal.target) * 100, 100) : 0;
+
               return (
                 <Card key={goal.id} withBorder p="sm">
                   <Group justify="space-between" mb="xs">
@@ -157,26 +146,15 @@ export const HealthGoalsPanel: React.FC<HealthGoalsPanelProps> = ({
                       {goal.current} / {goal.target} {goal.unit}
                     </Badge>
                   </Group>
-                  <Progress 
-                    value={progress} 
-                    color={progress >= 100 ? 'green' : 'blue'}
-                    size="md"
-                    mb="xs"
-                  />
+                  <Progress value={progress} color={progress >= 100 ? 'green' : 'blue'} size="md" mb="xs" />
                   <Group justify="space-between">
                     <Text size="xs" c="dimmed">
-                      {goal.target_date 
+                      {goal.target_date
                         ? `Due: ${new Date(goal.target_date * 1000).toLocaleDateString()}`
-                        : 'No deadline'
-                      }
+                        : 'No deadline'}
                     </Text>
                     {progress >= 100 && (
-                      <Button
-                        size="xs"
-                        variant="light"
-                        color="green"
-                        onClick={() => void markComplete(goal.id)}
-                      >
+                      <Button size="xs" variant="light" color="green" onClick={() => void markComplete(goal.id)}>
                         Mark Complete
                       </Button>
                     )}
@@ -188,11 +166,7 @@ export const HealthGoalsPanel: React.FC<HealthGoalsPanelProps> = ({
         )}
       </Card>
 
-      <Modal
-        opened={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title="Create Health Goal"
-      >
+      <Modal opened={modalOpen} onClose={() => setModalOpen(false)} title="Create Health Goal">
         <Stack gap="md">
           <TextInput
             label="Goal Title"
@@ -220,11 +194,11 @@ export const HealthGoalsPanel: React.FC<HealthGoalsPanelProps> = ({
             required
           />
 
-          <DatePicker
+          <DateInput
             label="Target Date (optional)"
             placeholder="When do you want to achieve this?"
             value={targetDate}
-            onChange={setTargetDate}
+            onChange={(value) => setTargetDate(value ? (typeof value === 'string' ? new Date(value) : value) : null)}
             minDate={new Date()}
           />
 
@@ -245,4 +219,3 @@ export const HealthGoalsPanel: React.FC<HealthGoalsPanelProps> = ({
     </>
   );
 };
-

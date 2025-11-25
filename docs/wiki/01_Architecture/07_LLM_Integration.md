@@ -165,7 +165,7 @@ pub struct LLMConfig {
     pub use_cache: bool,
     pub cache_ttl: Duration,
     pub response_validation: Option<ValidationConfig>,
-    
+
     // Provider-specific
     pub ollama: Option<OllamaConfig>,
     pub openai: Option<OpenAIConfig>,
@@ -266,4 +266,4 @@ pub async fn chat_with_ollama_cmd(
 
 ---
 
-*See also: [AI Assistant Guide](../02_Features/09_AI_Assistant.md)*
+_See also: [AI Assistant Guide](../02_Features/09_AI_Assistant.md)_

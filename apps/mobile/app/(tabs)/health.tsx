@@ -4,9 +4,9 @@
  * Entry point for the Health Hub
  */
 
-import { View, StyleSheet } from "react-native";
-import { HealthHub } from "@/screens/HealthHub";
-import { colors } from "@/lib/theme";
+import { View, StyleSheet } from 'react-native';
+import { HealthHub } from '@/screens/HealthHub';
+import { colors } from '@/lib/theme';
 
 export default function HealthTab() {
   return (

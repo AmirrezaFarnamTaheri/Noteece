@@ -26,8 +26,8 @@ import Overview from './components/project_hub/Overview';
 import Kanban from './components/project_hub/Kanban';
 import Timeline from './components/project_hub/Timeline';
 import Risks from './components/project_hub/Risks';
-import SyncStatus from './components/SyncStatus';
-import UserManagement from './components/UserManagement';
+import { SyncStatus } from './components/sync';
+import UserManagement from './components/user-management';
 import FormTemplates from './components/FormTemplates';
 import LocalAnalytics from './components/LocalAnalytics';
 import { OcrManager } from './components/OcrManager';
@@ -124,7 +124,6 @@ function App() {
         ],
         {
           future: {
-            v7_startTransition: true,
             v7_relativeSplatPath: true,
           },
         },

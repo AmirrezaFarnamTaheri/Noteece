@@ -47,12 +47,7 @@ export const CreateCardModal: React.FC<CreateCardModalProps> = ({
           onChange={(v) => setDeck(v || 'Default')}
           data={decks.map((d) => ({ value: d, label: d }))}
           searchable
-          creatable
-          getCreateLabel={(query) => `+ Create "${query}"`}
-          onCreate={(query) => {
-            setDeck(query);
-            return query;
-          }}
+          allowDeselect={false}
         />
 
         <Textarea
@@ -90,4 +85,3 @@ export const CreateCardModal: React.FC<CreateCardModalProps> = ({
     </Modal>
   );
 };
-

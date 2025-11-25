@@ -1,20 +1,6 @@
 import React from 'react';
-import {
-  Card,
-  Group,
-  Stack,
-  Text,
-  Button,
-  Badge,
-  Code,
-  Accordion,
-} from '@mantine/core';
-import {
-  IconGitMerge,
-  IconDeviceDesktop,
-  IconCloud,
-  IconCheck,
-} from '@tabler/icons-react';
+import { Card, Group, Stack, Text, Button, Badge, Code, Accordion } from '@mantine/core';
+import { IconGitMerge, IconDeviceDesktop, IconCloud, IconCheck } from '@tabler/icons-react';
 import { SyncConflict } from './types';
 
 interface ConflictResolverProps {
@@ -23,16 +9,13 @@ interface ConflictResolverProps {
 }
 
 const formatEntityType = (type: string): string => {
-  return type.charAt(0).toUpperCase() + type.slice(1).replace(/_/g, ' ');
+  return type.charAt(0).toUpperCase() + type.slice(1).replaceAll('_', ' ');
 };
 
 /**
  * Conflict Resolver Component - Handle sync conflicts
  */
-export const ConflictResolver: React.FC<ConflictResolverProps> = ({
-  conflicts,
-  onResolve,
-}) => {
+export const ConflictResolver: React.FC<ConflictResolverProps> = ({ conflicts, onResolve }) => {
   const unresolvedConflicts = conflicts.filter((c) => !c.resolved_at);
 
   if (unresolvedConflicts.length === 0) {
@@ -53,7 +36,7 @@ export const ConflictResolver: React.FC<ConflictResolverProps> = ({
     <Stack gap="md">
       <Group justify="space-between">
         <Text fw={500}>
-          {unresolvedConflicts.length} conflict{unresolvedConflicts.length !== 1 ? 's' : ''} to resolve
+          {unresolvedConflicts.length} conflict{unresolvedConflicts.length === 1 ? '' : 's'} to resolve
         </Text>
         <Badge color="red" variant="light">
           Action Required
@@ -66,9 +49,7 @@ export const ConflictResolver: React.FC<ConflictResolverProps> = ({
             <Accordion.Control>
               <Group gap="sm">
                 <IconGitMerge size={16} />
-                <Text size="sm">
-                  {formatEntityType(conflict.entity_type)}
-                </Text>
+                <Text size="sm">{formatEntityType(conflict.entity_type)}</Text>
                 <Text size="xs" c="dimmed">
                   v{conflict.local_version} vs v{conflict.remote_version}
                 </Text>
@@ -76,9 +57,7 @@ export const ConflictResolver: React.FC<ConflictResolverProps> = ({
             </Accordion.Control>
             <Accordion.Panel>
               <Stack gap="md">
-                <Code block>
-                  {JSON.stringify(JSON.parse(conflict.conflict_data), null, 2)}
-                </Code>
+                <Code block>{JSON.stringify(JSON.parse(conflict.conflict_data), null, 2)}</Code>
 
                 <Group gap="sm">
                   <Button
@@ -111,4 +90,3 @@ export const ConflictResolver: React.FC<ConflictResolverProps> = ({
     </Stack>
   );
 };
-

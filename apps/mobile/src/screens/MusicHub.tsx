@@ -5,7 +5,7 @@
  * Features: library browsing, playlists, now playing, search.
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,17 +15,17 @@ import {
   Image,
   RefreshControl,
   ActivityIndicator,
-} from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
-import { dbQuery, dbExecute } from "@/lib/database";
-import { nanoid } from "nanoid/non-secure";
-import type { Track, Playlist } from "../types/music";
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { dbQuery, dbExecute } from '@/lib/database';
+import { nanoid } from 'nanoid/non-secure';
+import type { Track, Playlist } from '../types/music';
 
 // Database helper functions for loading music data
 async function loadTracksFromDatabase(): Promise<Track[]> {
   try {
-    const tracks = await dbQuery("SELECT * FROM track ORDER BY title ASC");
+    const tracks = await dbQuery('SELECT * FROM track ORDER BY title ASC');
     // Map snake_case DB columns to camelCase Track type if necessary,
     // but assuming direct mapping for now or that Track type matches DB.
     // Actually Track type likely uses camelCase.
@@ -46,14 +46,14 @@ async function loadTracksFromDatabase(): Promise<Track[]> {
       addedAt: t.added_at,
     }));
   } catch (e) {
-    console.error("Error loading tracks:", e);
+    console.error('Error loading tracks:', e);
     return [];
   }
 }
 
 async function loadPlaylistsFromDatabase(): Promise<Playlist[]> {
   try {
-    const playlists = await dbQuery("SELECT * FROM playlist ORDER BY name ASC");
+    const playlists = await dbQuery('SELECT * FROM playlist ORDER BY name ASC');
     // Need to get track counts and duration for each playlist
     const enhancedPlaylists = await Promise.all(
       playlists.map(async (p: any) => {
@@ -78,29 +78,27 @@ async function loadPlaylistsFromDatabase(): Promise<Playlist[]> {
           createdAt: p.created_at,
           updatedAt: p.updated_at,
           isSmartPlaylist: p.is_smart_playlist === 1,
-          smartCriteria: p.smart_criteria_json
-            ? JSON.parse(p.smart_criteria_json)
-            : null,
+          smartCriteria: p.smart_criteria_json ? JSON.parse(p.smart_criteria_json) : null,
         };
       }),
     );
     return enhancedPlaylists;
   } catch (e) {
-    console.error("Error loading playlists:", e);
+    console.error('Error loading playlists:', e);
     return [];
   }
 }
 
 async function seedMusicData() {
   const now = Date.now();
-  const spaceId = "default"; // Placeholder
+  const spaceId = 'default'; // Placeholder
 
   const tracks = [
     {
       id: nanoid(),
-      title: "Moonlight Sonata",
-      artist: "Ludwig van Beethoven",
-      album: "Piano Sonatas",
+      title: 'Moonlight Sonata',
+      artist: 'Ludwig van Beethoven',
+      album: 'Piano Sonatas',
       duration: 320,
       added_at: now,
       updated_at: now,
@@ -108,9 +106,9 @@ async function seedMusicData() {
     },
     {
       id: nanoid(),
-      title: "Clair de Lune",
-      artist: "Claude Debussy",
-      album: "Suite bergamasque",
+      title: 'Clair de Lune',
+      artist: 'Claude Debussy',
+      album: 'Suite bergamasque',
       duration: 300,
       added_at: now,
       updated_at: now,
@@ -122,25 +120,13 @@ async function seedMusicData() {
     await dbExecute(
       `INSERT OR IGNORE INTO track (id, space_id, title, artist, album, duration, added_at, updated_at, is_favorite)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        t.id,
-        spaceId,
-        t.title,
-        t.artist,
-        t.album,
-        t.duration,
-        t.added_at,
-        t.updated_at,
-        t.is_favorite,
-      ],
+      [t.id, spaceId, t.title, t.artist, t.album, t.duration, t.added_at, t.updated_at, t.is_favorite],
     );
   }
 }
 
 export function MusicHub() {
-  const [view, setView] = useState<"library" | "playlists" | "search">(
-    "library",
-  );
+  const [view, setView] = useState<'library' | 'playlists' | 'search'>('library');
   const [tracks, setTracks] = useState<Track[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -169,7 +155,7 @@ export function MusicHub() {
       setTracks(loadedTracks);
       setPlaylists(loadedPlaylists);
     } catch (error) {
-      console.error("Failed to load music:", error);
+      console.error('Failed to load music:', error);
     } finally {
       setLoading(false);
     }
@@ -184,7 +170,7 @@ export function MusicHub() {
   const formatDuration = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const formatTotalDuration = (seconds: number): string => {
@@ -206,21 +192,12 @@ export function MusicHub() {
   };
 
   const renderTrackItem = ({ item }: { item: Track }) => (
-    <TouchableOpacity
-      style={styles.trackItem}
-      onPress={() => handleTrackPress(item)}
-    >
+    <TouchableOpacity style={styles.trackItem} onPress={() => handleTrackPress(item)}>
       <View style={styles.trackArtwork}>
         {item.artworkUrl ? (
-          <Image
-            source={{ uri: item.artworkUrl }}
-            style={styles.artworkImage}
-          />
+          <Image source={{ uri: item.artworkUrl }} style={styles.artworkImage} />
         ) : (
-          <LinearGradient
-            colors={["#6366F1", "#8B5CF6"]}
-            style={styles.artworkPlaceholder}
-          >
+          <LinearGradient colors={['#6366F1', '#8B5CF6']} style={styles.artworkPlaceholder}>
             <Ionicons name="musical-notes" size={24} color="#FFF" />
           </LinearGradient>
         )}
@@ -234,17 +211,8 @@ export function MusicHub() {
         </Text>
       </View>
       <View style={styles.trackMeta}>
-        {item.isFavorite && (
-          <Ionicons
-            name="heart"
-            size={16}
-            color="#EF4444"
-            style={styles.favoriteIcon}
-          />
-        )}
-        <Text style={styles.trackDuration}>
-          {formatDuration(item.duration)}
-        </Text>
+        {item.isFavorite && <Ionicons name="heart" size={16} color="#EF4444" style={styles.favoriteIcon} />}
+        <Text style={styles.trackDuration}>{formatDuration(item.duration)}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -253,24 +221,13 @@ export function MusicHub() {
     <TouchableOpacity style={styles.playlistItem}>
       <View style={styles.playlistArtwork}>
         {item.artworkUrl ? (
-          <Image
-            source={{ uri: item.artworkUrl }}
-            style={styles.artworkImage}
-          />
+          <Image source={{ uri: item.artworkUrl }} style={styles.artworkImage} />
         ) : (
           <LinearGradient
-            colors={
-              item.isSmartPlaylist
-                ? ["#10B981", "#059669"]
-                : ["#6366F1", "#8B5CF6"]
-            }
+            colors={item.isSmartPlaylist ? ['#10B981', '#059669'] : ['#6366F1', '#8B5CF6']}
             style={styles.artworkPlaceholder}
           >
-            <Ionicons
-              name={item.isSmartPlaylist ? "sparkles" : "list"}
-              size={28}
-              color="#FFF"
-            />
+            <Ionicons name={item.isSmartPlaylist ? 'sparkles' : 'list'} size={28} color="#FFF" />
           </LinearGradient>
         )}
       </View>
@@ -291,22 +248,13 @@ export function MusicHub() {
 
     return (
       <View style={styles.nowPlaying}>
-        <LinearGradient
-          colors={["#1F2937", "#111827"]}
-          style={styles.nowPlayingGradient}
-        >
+        <LinearGradient colors={['#1F2937', '#111827']} style={styles.nowPlayingGradient}>
           <View style={styles.nowPlayingContent}>
             <View style={styles.nowPlayingArtwork}>
               {currentTrack.artworkUrl ? (
-                <Image
-                  source={{ uri: currentTrack.artworkUrl }}
-                  style={styles.nowPlayingImage}
-                />
+                <Image source={{ uri: currentTrack.artworkUrl }} style={styles.nowPlayingImage} />
               ) : (
-                <LinearGradient
-                  colors={["#6366F1", "#8B5CF6"]}
-                  style={styles.nowPlayingImage}
-                >
+                <LinearGradient colors={['#6366F1', '#8B5CF6']} style={styles.nowPlayingImage}>
                   <Ionicons name="musical-notes" size={32} color="#FFF" />
                 </LinearGradient>
               )}
@@ -319,15 +267,8 @@ export function MusicHub() {
                 {currentTrack.artist}
               </Text>
             </View>
-            <TouchableOpacity
-              style={styles.playPauseButton}
-              onPress={handlePlayPause}
-            >
-              <Ionicons
-                name={isPlaying ? "pause" : "play"}
-                size={28}
-                color="#FFF"
-              />
+            <TouchableOpacity style={styles.playPauseButton} onPress={handlePlayPause}>
+              <Ionicons name={isPlaying ? 'pause' : 'play'} size={28} color="#FFF" />
             </TouchableOpacity>
           </View>
         </LinearGradient>
@@ -338,12 +279,7 @@ export function MusicHub() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <LinearGradient
-        colors={["#6366F1", "#8B5CF6"]}
-        style={styles.header}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
+      <LinearGradient colors={['#6366F1', '#8B5CF6']} style={styles.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <Text style={styles.headerTitle}>Music</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.headerButton}>
@@ -358,27 +294,16 @@ export function MusicHub() {
       {/* View Tabs */}
       <View style={styles.tabs}>
         <TouchableOpacity
-          style={[styles.tab, view === "library" && styles.tabActive]}
-          onPress={() => setView("library")}
+          style={[styles.tab, view === 'library' && styles.tabActive]}
+          onPress={() => setView('library')}
         >
-          <Text
-            style={[styles.tabText, view === "library" && styles.tabTextActive]}
-          >
-            Library
-          </Text>
+          <Text style={[styles.tabText, view === 'library' && styles.tabTextActive]}>Library</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, view === "playlists" && styles.tabActive]}
-          onPress={() => setView("playlists")}
+          style={[styles.tab, view === 'playlists' && styles.tabActive]}
+          onPress={() => setView('playlists')}
         >
-          <Text
-            style={[
-              styles.tabText,
-              view === "playlists" && styles.tabTextActive,
-            ]}
-          >
-            Playlists
-          </Text>
+          <Text style={[styles.tabText, view === 'playlists' && styles.tabTextActive]}>Playlists</Text>
         </TouchableOpacity>
       </View>
 
@@ -387,45 +312,33 @@ export function MusicHub() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#6366F1" />
         </View>
-      ) : view === "library" ? (
+      ) : view === 'library' ? (
         <FlatList
           data={tracks}
           renderItem={renderTrackItem}
           keyExtractor={(item) => item.id}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Ionicons
-                name="musical-notes-outline"
-                size={64}
-                color="#9CA3AF"
-              />
+              <Ionicons name="musical-notes-outline" size={64} color="#9CA3AF" />
               <Text style={styles.emptyText}>No tracks yet</Text>
-              <Text style={styles.emptySubtext}>
-                Add music to your library to get started
-              </Text>
+              <Text style={styles.emptySubtext}>Add music to your library to get started</Text>
             </View>
           }
         />
-      ) : view === "playlists" ? (
+      ) : view === 'playlists' ? (
         <FlatList
           data={playlists}
           renderItem={renderPlaylistItem}
           keyExtractor={(item) => item.id}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <Ionicons name="list-outline" size={64} color="#9CA3AF" />
               <Text style={styles.emptyText}>No playlists yet</Text>
-              <Text style={styles.emptySubtext}>
-                Create a playlist to organize your music
-              </Text>
+              <Text style={styles.emptySubtext}>Create a playlist to organize your music</Text>
             </View>
           }
         />
@@ -440,68 +353,68 @@ export function MusicHub() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: '#F5F5F5',
   },
   header: {
     paddingTop: 60,
     paddingBottom: 20,
     paddingHorizontal: 20,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 32,
-    fontWeight: "700",
-    color: "#FFF",
+    fontWeight: '700',
+    color: '#FFF',
   },
   headerActions: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 12,
   },
   headerButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tabs: {
-    flexDirection: "row",
-    backgroundColor: "#FFF",
+    flexDirection: 'row',
+    backgroundColor: '#FFF',
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
+    borderBottomColor: '#E5E7EB',
   },
   tab: {
     flex: 1,
     paddingVertical: 16,
-    alignItems: "center",
+    alignItems: 'center',
   },
   tabActive: {
     borderBottomWidth: 2,
-    borderBottomColor: "#6366F1",
+    borderBottomColor: '#6366F1',
   },
   tabText: {
     fontSize: 16,
-    fontWeight: "500",
-    color: "#6B7280",
+    fontWeight: '500',
+    color: '#6B7280',
   },
   tabTextActive: {
-    color: "#6366F1",
+    color: '#6366F1',
   },
   list: {
     padding: 16,
     paddingBottom: 100,
   },
   trackItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFF",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -512,33 +425,33 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 8,
     marginRight: 12,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
   artworkImage: {
-    width: "100%",
-    height: "100%",
+    width: '100%',
+    height: '100%',
   },
   artworkPlaceholder: {
-    width: "100%",
-    height: "100%",
-    alignItems: "center",
-    justifyContent: "center",
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   trackInfo: {
     flex: 1,
   },
   trackTitle: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#111827",
+    fontWeight: '600',
+    color: '#111827',
     marginBottom: 4,
   },
   trackArtist: {
     fontSize: 14,
-    color: "#6B7280",
+    color: '#6B7280',
   },
   trackMeta: {
-    alignItems: "flex-end",
+    alignItems: 'flex-end',
     gap: 4,
   },
   favoriteIcon: {
@@ -546,16 +459,16 @@ const styles = StyleSheet.create({
   },
   trackDuration: {
     fontSize: 13,
-    color: "#9CA3AF",
+    color: '#9CA3AF',
   },
   playlistItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFF",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -566,51 +479,51 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 10,
     marginRight: 16,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
   playlistInfo: {
     flex: 1,
   },
   playlistName: {
     fontSize: 17,
-    fontWeight: "600",
-    color: "#111827",
+    fontWeight: '600',
+    color: '#111827',
     marginBottom: 6,
   },
   playlistMeta: {
     fontSize: 14,
-    color: "#6B7280",
+    color: '#6B7280',
   },
   emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 60,
   },
   emptyText: {
     fontSize: 20,
-    fontWeight: "600",
-    color: "#6B7280",
+    fontWeight: '600',
+    color: '#6B7280',
     marginTop: 16,
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 15,
-    color: "#9CA3AF",
+    color: '#9CA3AF',
   },
   loadingContainer: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   nowPlaying: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    overflow: "hidden",
-    shadowColor: "#000",
+    overflow: 'hidden',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -622,41 +535,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   nowPlayingContent: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   nowPlayingArtwork: {
     width: 48,
     height: 48,
     borderRadius: 6,
     marginRight: 12,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
   nowPlayingImage: {
-    width: "100%",
-    height: "100%",
-    alignItems: "center",
-    justifyContent: "center",
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   nowPlayingInfo: {
     flex: 1,
   },
   nowPlayingTitle: {
     fontSize: 15,
-    fontWeight: "600",
-    color: "#FFF",
+    fontWeight: '600',
+    color: '#FFF',
     marginBottom: 4,
   },
   nowPlayingArtist: {
     fontSize: 13,
-    color: "#D1D5DB",
+    color: '#D1D5DB',
   },
   playPauseButton: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#6366F1",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: '#6366F1',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

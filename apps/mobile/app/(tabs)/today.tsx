@@ -1,26 +1,12 @@
-import { useState, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  RefreshControl,
-  TouchableOpacity,
-  Animated,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { format } from "date-fns";
-import {
-  colors,
-  spacing,
-  typography,
-  borderRadius,
-  shadows,
-} from "@/lib/theme";
-import { useTodayTimeline } from "@/hooks/useTodayTimeline";
-import { DailyBrief } from "@/components/DailyBrief";
-import { TimelineItemCard } from "@/components/TimelineItemCard";
+import { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Animated } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { format } from 'date-fns';
+import { colors, spacing, typography, borderRadius, shadows } from '@/lib/theme';
+import { useTodayTimeline } from '@/hooks/useTodayTimeline';
+import { DailyBrief } from '@/components/DailyBrief';
+import { TimelineItemCard } from '@/components/TimelineItemCard';
 
 export default function TodayScreen() {
   const [refreshing, setRefreshing] = useState(false);
@@ -36,19 +22,15 @@ export default function TodayScreen() {
   const headerOpacity = scrollY.interpolate({
     inputRange: [0, 100],
     outputRange: [0, 1],
-    extrapolate: "clamp",
+    extrapolate: 'clamp',
   });
 
   const currentTime = new Date();
   const greeting =
-    currentTime.getHours() < 12
-      ? "Good morning"
-      : currentTime.getHours() < 18
-        ? "Good afternoon"
-        : "Good evening";
+    currentTime.getHours() < 12 ? 'Good morning' : currentTime.getHours() < 18 ? 'Good afternoon' : 'Good evening';
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       {/* Animated Header */}
       <Animated.View style={[styles.header, { opacity: headerOpacity }]}>
         <Text style={styles.headerTitle}>Today</Text>
@@ -57,23 +39,14 @@ export default function TodayScreen() {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.primary}
-          />
-        }
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true },
-        )}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
         scrollEventThrottle={16}
       >
         {/* Greeting */}
         <View style={styles.greetingContainer}>
           <Text style={styles.greeting}>{greeting}</Text>
-          <Text style={styles.date}>{format(new Date(), "EEEE, MMMM d")}</Text>
+          <Text style={styles.date}>{format(new Date(), 'EEEE, MMMM d')}</Text>
         </View>
 
         {/* Daily Brief (Foresight) */}
@@ -82,25 +55,15 @@ export default function TodayScreen() {
         {/* Timeline */}
         <View style={styles.timelineContainer}>
           <View style={styles.sectionHeader}>
-            <Ionicons
-              name="time-outline"
-              size={20}
-              color={colors.textSecondary}
-            />
+            <Ionicons name="time-outline" size={20} color={colors.textSecondary} />
             <Text style={styles.sectionTitle}>Your Day</Text>
           </View>
 
           {timeline.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons
-                name="sunny-outline"
-                size={48}
-                color={colors.textTertiary}
-              />
+              <Ionicons name="sunny-outline" size={48} color={colors.textTertiary} />
               <Text style={styles.emptyTitle}>Nothing scheduled</Text>
-              <Text style={styles.emptyDescription}>
-                Enjoy your free day or add some tasks to get started
-              </Text>
+              <Text style={styles.emptyDescription}>Enjoy your free day or add some tasks to get started</Text>
             </View>
           ) : (
             <View style={styles.timeline}>
@@ -118,24 +81,9 @@ export default function TodayScreen() {
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
-          <QuickActionButton
-            icon="add-outline"
-            label="Add Task"
-            onPress={() => {}}
-            color={colors.task}
-          />
-          <QuickActionButton
-            icon="create-outline"
-            label="New Note"
-            onPress={() => {}}
-            color={colors.note}
-          />
-          <QuickActionButton
-            icon="play-outline"
-            label="Start Timer"
-            onPress={() => {}}
-            color={colors.success}
-          />
+          <QuickActionButton icon="add-outline" label="Add Task" onPress={() => {}} color={colors.task} />
+          <QuickActionButton icon="create-outline" label="New Note" onPress={() => {}} color={colors.note} />
+          <QuickActionButton icon="play-outline" label="Start Timer" onPress={() => {}} color={colors.success} />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -149,15 +97,10 @@ interface QuickActionButtonProps {
   color: string;
 }
 
-function QuickActionButton({
-  icon,
-  label,
-  onPress,
-  color,
-}: QuickActionButtonProps) {
+function QuickActionButton({ icon, label, onPress, color }: QuickActionButtonProps) {
   return (
     <TouchableOpacity style={styles.quickActionButton} onPress={onPress}>
-      <View style={[styles.quickActionIcon, { backgroundColor: color + "20" }]}>
+      <View style={[styles.quickActionIcon, { backgroundColor: color + '20' }]}>
         <Ionicons name={icon} size={24} color={color} />
       </View>
       <Text style={styles.quickActionLabel}>{label}</Text>
@@ -171,7 +114,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
@@ -179,7 +122,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundElevated,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    justifyContent: "center",
+    justifyContent: 'center',
     paddingHorizontal: spacing.md,
     zIndex: 10,
     ...shadows.sm,
@@ -218,8 +161,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: spacing.md,
   },
   sectionTitle: {
@@ -232,8 +175,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: spacing.xxl,
   },
   emptyTitle: {
@@ -247,24 +190,24 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.regular,
     color: colors.textSecondary,
     marginTop: spacing.xs,
-    textAlign: "center",
+    textAlign: 'center',
   },
   quickActions: {
-    flexDirection: "row",
-    justifyContent: "space-around",
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     paddingHorizontal: spacing.md,
     paddingTop: spacing.lg,
   },
   quickActionButton: {
-    alignItems: "center",
+    alignItems: 'center',
     gap: spacing.xs,
   },
   quickActionIcon: {
     width: 56,
     height: 56,
     borderRadius: borderRadius.lg,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   quickActionLabel: {
     fontSize: typography.fontSize.xs,

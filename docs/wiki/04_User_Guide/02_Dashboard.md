@@ -10,42 +10,42 @@ The Dashboard features a customizable widget-based layout that adapts to your wo
 
 ### Productivity Widgets
 
-| Widget | Description |
-|--------|-------------|
-| **Quick Stats** | Overview of notes, tasks, and projects |
-| **Due Today** | Tasks due today |
-| **Recent Notes** | Recently edited notes |
-| **Calendar** | Mini calendar view |
-| **Focus Timer** | Pomodoro timer for focused work |
-| **Recent Projects** | Active projects overview |
-| **Time Tracking** | Time entries and tracking |
-| **Weekly Progress** | Weekly productivity statistics |
+| Widget              | Description                            |
+| ------------------- | -------------------------------------- |
+| **Quick Stats**     | Overview of notes, tasks, and projects |
+| **Due Today**       | Tasks due today                        |
+| **Recent Notes**    | Recently edited notes                  |
+| **Calendar**        | Mini calendar view                     |
+| **Focus Timer**     | Pomodoro timer for focused work        |
+| **Recent Projects** | Active projects overview               |
+| **Time Tracking**   | Time entries and tracking              |
+| **Weekly Progress** | Weekly productivity statistics         |
 
 ### Health & Wellness Widgets
 
-| Widget | Description |
-|--------|-------------|
-| **Habits Tracker** | Daily habit tracking |
-| **Goals Tracker** | Goal progress visualization |
-| **Mood Tracker** | Daily mood logging |
+| Widget             | Description                  |
+| ------------------ | ---------------------------- |
+| **Habits Tracker** | Daily habit tracking         |
+| **Goals Tracker**  | Goal progress visualization  |
+| **Mood Tracker**   | Daily mood logging           |
 | **Health Metrics** | Health statistics and trends |
 
 ### Insights Widgets
 
-| Widget | Description |
-|--------|-------------|
-| **AI Insights** | AI-powered correlations |
-| **Notes Heatmap** | Activity visualization |
+| Widget            | Description             |
+| ----------------- | ----------------------- |
+| **AI Insights**   | AI-powered correlations |
+| **Notes Heatmap** | Activity visualization  |
 
 ### Social & Other Widgets
 
-| Widget | Description |
-|--------|-------------|
-| **Social Feed** | Aggregated social posts |
-| **Bookmarks** | Saved bookmarks |
-| **Achievements** | Gamification badges |
-| **Tags Cloud** | Tag visualization |
-| **Music Player** | Music controls |
+| Widget           | Description             |
+| ---------------- | ----------------------- |
+| **Social Feed**  | Aggregated social posts |
+| **Bookmarks**    | Saved bookmarks         |
+| **Achievements** | Gamification badges     |
+| **Tags Cloud**   | Tag visualization       |
+| **Music Player** | Music controls          |
 
 ## Customization
 
@@ -65,6 +65,7 @@ Access the Control Panel via Settings → Control Panel to:
 ### Widget Sizes
 
 Widgets come in three sizes:
+
 - **Small**: Compact, essential info only
 - **Medium**: Standard size, detailed view
 - **Large**: Expanded, comprehensive data
@@ -84,12 +85,12 @@ Enable Focus Mode to hide distractions and concentrate on a single task:
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl/Cmd + D` | Go to Dashboard |
+| Shortcut               | Action            |
+| ---------------------- | ----------------- |
+| `Ctrl/Cmd + D`         | Go to Dashboard   |
 | `Ctrl/Cmd + Shift + F` | Toggle Focus Mode |
-| `Ctrl/Cmd + J` | Open AI Chat |
-| `Ctrl/Cmd + K` | Command Palette |
+| `Ctrl/Cmd + J`         | Open AI Chat      |
+| `Ctrl/Cmd + K`         | Command Palette   |
 
 ## Tips
 
@@ -100,5 +101,4 @@ Enable Focus Mode to hide distractions and concentrate on a single task:
 
 ---
 
-*See also: [Getting Started](01_Getting_Started.md)*
-
+_See also: [Getting Started](01_Getting_Started.md)_

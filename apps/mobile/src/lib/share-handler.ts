@@ -5,11 +5,11 @@
  * or Android Share Target.
  */
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Platform } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 export interface SharedItem {
-  type: "url" | "text" | "image";
+  type: 'url' | 'text' | 'image';
   url?: string;
   text?: string;
   timestamp: number;
@@ -27,16 +27,15 @@ export async function getSharedItems(): Promise<SharedItem[]> {
       return items;
     }
 
-    if (Platform.OS === "ios") {
+    if (Platform.OS === 'ios') {
       return await getSharedItemsIOS();
-    } else if (Platform.OS === "android") {
+    } else if (Platform.OS === 'android') {
       return await getSharedItemsAndroid();
     }
     return [];
   } catch (error) {
     // Silently fail in production, log in dev if needed
-    if (__DEV__)
-      console.error("[ShareHandler] Failed to get shared items:", error);
+    if (__DEV__) console.error('[ShareHandler] Failed to get shared items:', error);
     return [];
   }
 }
@@ -44,7 +43,7 @@ export async function getSharedItems(): Promise<SharedItem[]> {
 /**
  * Simulate shared items for testing without native modules
  */
-export function simulateSharedItem(item: Omit<SharedItem, "timestamp">) {
+export function simulateSharedItem(item: Omit<SharedItem, 'timestamp'>) {
   const fullItem = {
     ...item,
     timestamp: Date.now(),
@@ -66,14 +65,13 @@ declare global {
  */
 export async function clearSharedItems(): Promise<void> {
   try {
-    if (Platform.OS === "ios") {
+    if (Platform.OS === 'ios') {
       await clearSharedItemsIOS();
-    } else if (Platform.OS === "android") {
+    } else if (Platform.OS === 'android') {
       await clearSharedItemsAndroid();
     }
   } catch (error) {
-    if (__DEV__)
-      console.error("[ShareHandler] Failed to clear shared items:", error);
+    if (__DEV__) console.error('[ShareHandler] Failed to clear shared items:', error);
   }
 }
 
@@ -89,7 +87,7 @@ export async function processSharedItems(): Promise<number> {
     }
 
     // Save to pending items for processing by SocialHub
-    const pendingKey = "social_pending_items";
+    const pendingKey = 'social_pending_items';
     const MAX_QUEUE_SIZE = 1000;
     const MAX_ITEM_SIZE = 100_000;
 
@@ -129,8 +127,7 @@ export async function processSharedItems(): Promise<number> {
 
     return items.length;
   } catch (error) {
-    if (__DEV__)
-      console.error("[ShareHandler] Failed to process shared items:", error);
+    if (__DEV__) console.error('[ShareHandler] Failed to process shared items:', error);
     return 0;
   }
 }
@@ -140,12 +137,11 @@ export async function processSharedItems(): Promise<number> {
  */
 export async function getPendingItems(): Promise<any[]> {
   try {
-    const pendingKey = "social_pending_items";
+    const pendingKey = 'social_pending_items';
     const data = await AsyncStorage.getItem(pendingKey);
     return data ? JSON.parse(data) : [];
   } catch (error) {
-    if (__DEV__)
-      console.error("[ShareHandler] Failed to get pending items:", error);
+    if (__DEV__) console.error('[ShareHandler] Failed to get pending items:', error);
     return [];
   }
 }
@@ -155,7 +151,7 @@ export async function getPendingItems(): Promise<any[]> {
  */
 export async function markItemsProcessed(timestamps: number[]): Promise<void> {
   try {
-    const pendingKey = "social_pending_items";
+    const pendingKey = 'social_pending_items';
     const data = await AsyncStorage.getItem(pendingKey);
 
     if (!data) return;
@@ -172,8 +168,7 @@ export async function markItemsProcessed(timestamps: number[]): Promise<void> {
 
     await AsyncStorage.setItem(pendingKey, JSON.stringify(updated));
   } catch (error) {
-    if (__DEV__)
-      console.error("[ShareHandler] Failed to mark items processed:", error);
+    if (__DEV__) console.error('[ShareHandler] Failed to mark items processed:', error);
   }
 }
 
@@ -182,7 +177,7 @@ export async function markItemsProcessed(timestamps: number[]): Promise<void> {
  */
 export async function cleanupProcessedItems(): Promise<void> {
   try {
-    const pendingKey = "social_pending_items";
+    const pendingKey = 'social_pending_items';
     const data = await AsyncStorage.getItem(pendingKey);
 
     if (!data) return;
@@ -197,8 +192,7 @@ export async function cleanupProcessedItems(): Promise<void> {
 
     await AsyncStorage.setItem(pendingKey, JSON.stringify(filtered));
   } catch (error) {
-    if (__DEV__)
-      console.error("[ShareHandler] Failed to cleanup items:", error);
+    if (__DEV__) console.error('[ShareHandler] Failed to cleanup items:', error);
   }
 }
 

@@ -5,8 +5,8 @@
  * Uses React Native's Animated API for optimal performance.
  */
 
-import React, { useEffect, useRef } from "react";
-import { Animated, ViewStyle } from "react-native";
+import React, { useEffect, useRef } from 'react';
+import { Animated, ViewStyle } from 'react-native';
 
 interface FadeInProps {
   children: React.ReactNode;
@@ -15,12 +15,7 @@ interface FadeInProps {
   style?: ViewStyle;
 }
 
-export function FadeIn({
-  children,
-  duration = 300,
-  delay = 0,
-  style,
-}: FadeInProps) {
+export function FadeIn({ children, duration = 300, delay = 0, style }: FadeInProps) {
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {

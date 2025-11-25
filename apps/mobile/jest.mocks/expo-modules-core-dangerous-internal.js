@@ -2,7 +2,7 @@
 // Newer Expo SDKs expose this helper; on Expo 50 it may not exist.
 // We just need to ensure that globalThis.expo with the required classes exists.
 function ensureExpoGlobal() {
-  if (typeof globalThis.expo !== "object" || globalThis.expo === null) {
+  if (typeof globalThis.expo !== 'object' || globalThis.expo === null) {
     globalThis.expo = {};
   }
 

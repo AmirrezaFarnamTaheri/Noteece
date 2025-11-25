@@ -4,5 +4,5 @@
  * Exports all picker components for easy importing.
  */
 
-export { ColorPicker } from "./ColorPicker";
-export { IconPicker } from "./IconPicker";
+export { ColorPicker } from './ColorPicker';
+export { IconPicker } from './IconPicker';

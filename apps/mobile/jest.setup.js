@@ -1,16 +1,16 @@
 /**
  * Jest Setup - Mobile App
- * 
+ *
  * This file configures the test environment and mocks external dependencies
  * that don't work in Jest's node-based environment.
  */
 
 // Try to import jest-native matchers if available
 try {
-  require("@testing-library/jest-native/extend-expect");
+  require('@testing-library/jest-native/extend-expect');
 } catch {
   // jest-native is optional, continue without it
-  console.log("jest-native not available, continuing without extended matchers");
+  console.log('jest-native not available, continuing without extended matchers');
 }
 
 // Suppress noisy console warnings during tests
@@ -18,10 +18,10 @@ const originalWarn = console.warn;
 console.warn = (...args) => {
   // Filter out known warnings that are expected in test environment
   if (
-    args[0]?.includes?.("Animated") ||
-    args[0]?.includes?.("useNativeDriver") ||
-    args[0]?.includes?.("act(...)") ||
-    args[0]?.includes?.("React Router")
+    args[0]?.includes?.('Animated') ||
+    args[0]?.includes?.('useNativeDriver') ||
+    args[0]?.includes?.('act(...)') ||
+    args[0]?.includes?.('React Router')
   ) {
     return;
   }
@@ -29,7 +29,7 @@ console.warn = (...args) => {
 };
 
 // Mock expo-sqlite
-jest.mock("expo-sqlite", () => ({
+jest.mock('expo-sqlite', () => ({
   openDatabaseAsync: jest.fn(() =>
     Promise.resolve({
       execAsync: jest.fn().mockResolvedValue(undefined),
@@ -47,19 +47,17 @@ jest.mock("expo-sqlite", () => ({
 }));
 
 // Mock expo-crypto
-jest.mock("expo-crypto", () => ({
-  getRandomBytesAsync: jest.fn((size) =>
-    Promise.resolve(new Uint8Array(size).fill(0)),
-  ),
-  digestStringAsync: jest.fn().mockResolvedValue("mocked-hash"),
+jest.mock('expo-crypto', () => ({
+  getRandomBytesAsync: jest.fn((size) => Promise.resolve(new Uint8Array(size).fill(0))),
+  digestStringAsync: jest.fn().mockResolvedValue('mocked-hash'),
   CryptoDigestAlgorithm: {
-    SHA256: "SHA-256",
-    SHA512: "SHA-512",
+    SHA256: 'SHA-256',
+    SHA512: 'SHA-512',
   },
 }));
 
 // Mock expo-router
-jest.mock("expo-router", () => ({
+jest.mock('expo-router', () => ({
   useRouter: () => ({
     push: jest.fn(),
     replace: jest.fn(),
@@ -72,16 +70,16 @@ jest.mock("expo-router", () => ({
     back: jest.fn(),
     canGoBack: jest.fn().mockReturnValue(false),
   },
-  Stack: { Screen: "Screen" },
-  Tabs: { Screen: "Screen" },
-  Link: "Link",
+  Stack: { Screen: 'Screen' },
+  Tabs: { Screen: 'Screen' },
+  Link: 'Link',
   useLocalSearchParams: () => ({}),
   useSegments: () => [],
-  usePathname: () => "/",
+  usePathname: () => '/',
 }));
 
 // Mock expo-secure-store
-jest.mock("expo-secure-store", () => ({
+jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn().mockResolvedValue(null),
   setItemAsync: jest.fn().mockResolvedValue(undefined),
   deleteItemAsync: jest.fn().mockResolvedValue(undefined),
@@ -89,24 +87,24 @@ jest.mock("expo-secure-store", () => ({
 }));
 
 // Mock expo-haptics
-jest.mock("expo-haptics", () => ({
+jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn().mockResolvedValue(undefined),
   notificationAsync: jest.fn().mockResolvedValue(undefined),
   selectionAsync: jest.fn().mockResolvedValue(undefined),
   ImpactFeedbackStyle: {
-    Light: "light",
-    Medium: "medium",
-    Heavy: "heavy",
+    Light: 'light',
+    Medium: 'medium',
+    Heavy: 'heavy',
   },
   NotificationFeedbackType: {
-    Success: "success",
-    Warning: "warning",
-    Error: "error",
+    Success: 'success',
+    Warning: 'warning',
+    Error: 'error',
   },
 }));
 
 // Mock expo-local-authentication
-jest.mock("expo-local-authentication", () => ({
+jest.mock('expo-local-authentication', () => ({
   hasHardwareAsync: jest.fn().mockResolvedValue(true),
   isEnrolledAsync: jest.fn().mockResolvedValue(true),
   authenticateAsync: jest.fn().mockResolvedValue({ success: true }),
@@ -124,25 +122,27 @@ jest.mock("expo-local-authentication", () => ({
 }));
 
 // Mock expo-notifications
-jest.mock("expo-notifications", () => ({
-  getPermissionsAsync: jest.fn().mockResolvedValue({ status: "granted" }),
-  requestPermissionsAsync: jest.fn().mockResolvedValue({ status: "granted" }),
-  scheduleNotificationAsync: jest.fn().mockResolvedValue("notification-id"),
+jest.mock('expo-notifications', () => ({
+  getPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  requestPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  scheduleNotificationAsync: jest.fn().mockResolvedValue('notification-id'),
   cancelScheduledNotificationAsync: jest.fn().mockResolvedValue(undefined),
   setNotificationHandler: jest.fn(),
   addNotificationReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
-  addNotificationResponseReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  addNotificationResponseReceivedListener: jest.fn(() => ({
+    remove: jest.fn(),
+  })),
 }));
 
 // Mock expo-task-manager
-jest.mock("expo-task-manager", () => ({
+jest.mock('expo-task-manager', () => ({
   defineTask: jest.fn(),
   isTaskRegisteredAsync: jest.fn().mockResolvedValue(false),
   unregisterTaskAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
 // Mock expo-background-fetch
-jest.mock("expo-background-fetch", () => ({
+jest.mock('expo-background-fetch', () => ({
   registerTaskAsync: jest.fn().mockResolvedValue(undefined),
   unregisterTaskAsync: jest.fn().mockResolvedValue(undefined),
   getStatusAsync: jest.fn().mockResolvedValue(3),
@@ -159,7 +159,7 @@ jest.mock("expo-background-fetch", () => ({
 }));
 
 // Mock expo-av (audio/video)
-jest.mock("expo-av", () => ({
+jest.mock('expo-av', () => ({
   Audio: {
     setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
     Sound: {
@@ -179,10 +179,10 @@ jest.mock("expo-av", () => ({
 }));
 
 // Mock expo-file-system
-jest.mock("expo-file-system", () => ({
-  documentDirectory: "file:///mock/documents/",
-  cacheDirectory: "file:///mock/cache/",
-  readAsStringAsync: jest.fn().mockResolvedValue(""),
+jest.mock('expo-file-system', () => ({
+  documentDirectory: 'file:///mock/documents/',
+  cacheDirectory: 'file:///mock/cache/',
+  readAsStringAsync: jest.fn().mockResolvedValue(''),
   writeAsStringAsync: jest.fn().mockResolvedValue(undefined),
   deleteAsync: jest.fn().mockResolvedValue(undefined),
   getInfoAsync: jest.fn().mockResolvedValue({ exists: false }),
@@ -190,13 +190,13 @@ jest.mock("expo-file-system", () => ({
   copyAsync: jest.fn().mockResolvedValue(undefined),
   moveAsync: jest.fn().mockResolvedValue(undefined),
   EncodingType: {
-    UTF8: "utf8",
-    Base64: "base64",
+    UTF8: 'utf8',
+    Base64: 'base64',
   },
 }));
 
 // Mock react-native-zeroconf
-jest.mock("react-native-zeroconf", () => {
+jest.mock('react-native-zeroconf', () => {
   return class Zeroconf {
     constructor() {
       this.listeners = {};
@@ -214,47 +214,47 @@ jest.mock("react-native-zeroconf", () => {
 });
 
 // Mock react-native-reanimated
-jest.mock("react-native-reanimated", () => {
-  const Reanimated = require("react-native-reanimated/mock");
+jest.mock('react-native-reanimated', () => {
+  const Reanimated = require('react-native-reanimated/mock');
   Reanimated.default.call = () => {};
   return Reanimated;
 });
 
 // Mock react-native-gesture-handler
-jest.mock("react-native-gesture-handler", () => ({
+jest.mock('react-native-gesture-handler', () => ({
   GestureHandlerRootView: ({ children }) => children,
-  Swipeable: "Swipeable",
-  DrawerLayout: "DrawerLayout",
+  Swipeable: 'Swipeable',
+  DrawerLayout: 'DrawerLayout',
   State: {},
-  ScrollView: "ScrollView",
-  Slider: "Slider",
-  Switch: "Switch",
-  TextInput: "TextInput",
-  ToolbarAndroid: "ToolbarAndroid",
-  ViewPagerAndroid: "ViewPagerAndroid",
-  DrawerLayoutAndroid: "DrawerLayoutAndroid",
-  WebView: "WebView",
-  NativeViewGestureHandler: "NativeViewGestureHandler",
-  TapGestureHandler: "TapGestureHandler",
-  FlingGestureHandler: "FlingGestureHandler",
-  ForceTouchGestureHandler: "ForceTouchGestureHandler",
-  LongPressGestureHandler: "LongPressGestureHandler",
-  PanGestureHandler: "PanGestureHandler",
-  PinchGestureHandler: "PinchGestureHandler",
-  RotationGestureHandler: "RotationGestureHandler",
-  RawButton: "RawButton",
-  BaseButton: "BaseButton",
-  RectButton: "RectButton",
-  BorderlessButton: "BorderlessButton",
-  TouchableHighlight: "TouchableHighlight",
-  TouchableNativeFeedback: "TouchableNativeFeedback",
-  TouchableOpacity: "TouchableOpacity",
-  TouchableWithoutFeedback: "TouchableWithoutFeedback",
+  ScrollView: 'ScrollView',
+  Slider: 'Slider',
+  Switch: 'Switch',
+  TextInput: 'TextInput',
+  ToolbarAndroid: 'ToolbarAndroid',
+  ViewPagerAndroid: 'ViewPagerAndroid',
+  DrawerLayoutAndroid: 'DrawerLayoutAndroid',
+  WebView: 'WebView',
+  NativeViewGestureHandler: 'NativeViewGestureHandler',
+  TapGestureHandler: 'TapGestureHandler',
+  FlingGestureHandler: 'FlingGestureHandler',
+  ForceTouchGestureHandler: 'ForceTouchGestureHandler',
+  LongPressGestureHandler: 'LongPressGestureHandler',
+  PanGestureHandler: 'PanGestureHandler',
+  PinchGestureHandler: 'PinchGestureHandler',
+  RotationGestureHandler: 'RotationGestureHandler',
+  RawButton: 'RawButton',
+  BaseButton: 'BaseButton',
+  RectButton: 'RectButton',
+  BorderlessButton: 'BorderlessButton',
+  TouchableHighlight: 'TouchableHighlight',
+  TouchableNativeFeedback: 'TouchableNativeFeedback',
+  TouchableOpacity: 'TouchableOpacity',
+  TouchableWithoutFeedback: 'TouchableWithoutFeedback',
   Directions: {},
 }));
 
 // Mock @sentry/react-native
-jest.mock("@sentry/react-native", () => ({
+jest.mock('@sentry/react-native', () => ({
   init: jest.fn(),
   wrap: (component) => component,
   captureException: jest.fn(),
@@ -269,7 +269,7 @@ jest.mock("@sentry/react-native", () => ({
 }));
 
 // Mock AsyncStorage
-jest.mock("@react-native-async-storage/async-storage", () => ({
+jest.mock('@react-native-async-storage/async-storage', () => ({
   setItem: jest.fn().mockResolvedValue(undefined),
   getItem: jest.fn().mockResolvedValue(null),
   removeItem: jest.fn().mockResolvedValue(undefined),
@@ -281,26 +281,26 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
 }));
 
 // Mock expo-sharing
-jest.mock("expo-sharing", () => ({
+jest.mock('expo-sharing', () => ({
   shareAsync: jest.fn().mockResolvedValue(undefined),
   isAvailableAsync: jest.fn().mockResolvedValue(true),
 }));
 
 // Mock expo-camera
-jest.mock("expo-camera", () => ({
-  Camera: "Camera",
-  requestCameraPermissionsAsync: jest.fn().mockResolvedValue({ status: "granted" }),
-  getCameraPermissionsAsync: jest.fn().mockResolvedValue({ status: "granted" }),
+jest.mock('expo-camera', () => ({
+  Camera: 'Camera',
+  requestCameraPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  getCameraPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
   CameraType: {
-    back: "back",
-    front: "front",
+    back: 'back',
+    front: 'front',
   },
 }));
 
 // Mock expo-location
-jest.mock("expo-location", () => ({
-  requestForegroundPermissionsAsync: jest.fn().mockResolvedValue({ status: "granted" }),
-  requestBackgroundPermissionsAsync: jest.fn().mockResolvedValue({ status: "granted" }),
+jest.mock('expo-location', () => ({
+  requestForegroundPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  requestBackgroundPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
   getCurrentPositionAsync: jest.fn().mockResolvedValue({
     coords: {
       latitude: 0,

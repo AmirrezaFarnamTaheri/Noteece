@@ -6,12 +6,12 @@ This document provides an overview of the test coverage for Noteece, with a focu
 
 ## Quick Stats
 
-| Category          | Total Tests | Security-Specific | Coverage |
-| ----------------- | ----------- | ----------------- | -------- |
-| **Rust Core**     | 88+         | 30+               | High     |
-| **Desktop UI**    | 189         | -                 | High     |
-| **Mobile UI**     | 68          | -                 | High     |
-| **Total**         | **345+**    | **30+**           | **High** |
+| Category       | Total Tests | Security-Specific | Coverage |
+| -------------- | ----------- | ----------------- | -------- |
+| **Rust Core**  | 88+         | 30+               | High     |
+| **Desktop UI** | 189         | -                 | High     |
+| **Mobile UI**  | 68          | -                 | High     |
+| **Total**      | **345+**    | **30+**           | **High** |
 
 ## Rust Test Suites
 
@@ -282,15 +282,15 @@ Areas requiring future test expansion (low priority):
 
 ### Execution Time
 
-| Test Suite       | Approx. Time | Notes              |
-| ---------------- | ------------ | ------------------ |
-| crypto_tests     | 10-15s       | Large data tests   |
-| ocr_tests        | 2-5s         | Mock-based         |
-| import_tests     | 5-10s        | Includes ZIP I/O   |
-| search_tests     | 3-5s         | Database queries   |
-| Desktop Tests    | 22s          | 189 tests          |
-| Mobile Tests     | 7s           | 68 tests           |
-| **Total**        | **~1m**      | Parallel execution |
+| Test Suite    | Approx. Time | Notes              |
+| ------------- | ------------ | ------------------ |
+| crypto_tests  | 10-15s       | Large data tests   |
+| ocr_tests     | 2-5s         | Mock-based         |
+| import_tests  | 5-10s        | Includes ZIP I/O   |
+| search_tests  | 3-5s         | Database queries   |
+| Desktop Tests | 22s          | 189 tests          |
+| Mobile Tests  | 7s           | 68 tests           |
+| **Total**     | **~1m**      | Parallel execution |
 
 ### Test Stability
 

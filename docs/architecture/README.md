@@ -17,4 +17,3 @@ This folder contains technical architecture documentation for Noteece.
 
 - [Main Architecture Doc](../../ARCHITECTURE.md) - High-level overview
 - [Developer Guide](../../DEVELOPER_GUIDE.md) - Implementation details
-

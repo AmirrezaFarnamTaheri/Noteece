@@ -104,20 +104,30 @@ class Logger {
     }
   }
 
-  debug(message: string): void {
+  debug(message: string, context?: Record<string, unknown>): void {
+    if (context) this.setContext(context);
     this.log(LogLevel.DEBUG, message);
   }
 
-  info(message: string): void {
+  info(message: string, context?: Record<string, unknown>): void {
+    if (context) this.setContext(context);
     this.log(LogLevel.INFO, message);
   }
 
-  warn(message: string): void {
+  warn(message: string, context?: Record<string, unknown>): void {
+    if (context) this.setContext(context);
     this.log(LogLevel.WARN, message);
   }
 
-  error(message: string, error?: Error): void {
-    this.log(LogLevel.ERROR, message, error);
+  error(message: string, error?: Error | Record<string, unknown>): void {
+    if (error instanceof Error) {
+      this.log(LogLevel.ERROR, message, error);
+    } else if (error) {
+      this.setContext(error);
+      this.log(LogLevel.ERROR, message);
+    } else {
+      this.log(LogLevel.ERROR, message);
+    }
   }
 }
 

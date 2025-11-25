@@ -1,16 +1,13 @@
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { colors, typography, spacing } from "@/lib/theme";
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, typography, spacing } from '@/lib/theme';
 
 interface LoadingStateProps {
   message?: string;
-  size?: "small" | "large";
+  size?: 'small' | 'large';
 }
 
-export function LoadingState({
-  message = "Loading...",
-  size = "large",
-}: LoadingStateProps) {
+export function LoadingState({ message = 'Loading...', size = 'large' }: LoadingStateProps) {
   return (
     <View style={styles.container}>
       <ActivityIndicator size={size} color={colors.primary} />
@@ -29,12 +26,7 @@ interface EmptyStateProps {
   };
 }
 
-export function EmptyState({
-  icon = "folder-open-outline",
-  title,
-  message,
-  action,
-}: EmptyStateProps) {
+export function EmptyState({ icon = 'folder-open-outline', title, message, action }: EmptyStateProps) {
   return (
     <View style={styles.container}>
       <Ionicons name={icon as any} size={64} color={colors.textTertiary} />
@@ -47,8 +39,8 @@ export function EmptyState({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: spacing.xl,
   },
   message: {
@@ -62,14 +54,14 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.xl,
     fontFamily: typography.fontFamily.bold,
     color: colors.textSecondary,
-    textAlign: "center",
+    textAlign: 'center',
   },
   emptyMessage: {
     marginTop: spacing.sm,
     fontSize: typography.fontSize.base,
     fontFamily: typography.fontFamily.regular,
     color: colors.textTertiary,
-    textAlign: "center",
+    textAlign: 'center',
     lineHeight: typography.fontSize.base * 1.6,
   },
 });

@@ -18,11 +18,13 @@ Detailed documentation is available in the **[Wiki](docs/wiki/00_Home.md)**.
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Node.js v18+
 - Rust (Stable)
 - pnpm
 
 ### Build & Run (Desktop)
+
 ```bash
 # Install dependencies
 pnpm install
@@ -47,13 +49,13 @@ pnpm dev:tauri
 
 The mobile app includes a "Prime" sideload flavor that enables **Sovereign Interception** - capturing content from 30+ platforms including:
 
-| Category | Platforms |
-|----------|-----------|
-| Social | Twitter, Instagram, LinkedIn, Reddit, Facebook, TikTok |
-| Messaging | Telegram, Discord, WhatsApp, Signal, Slack |
-| Dating | Tinder, Bumble, Hinge, OkCupid |
-| Browsers | Chrome, Firefox, Brave, Edge |
-| Media | YouTube, Twitch, Spotify |
+| Category  | Platforms                                              |
+| --------- | ------------------------------------------------------ |
+| Social    | Twitter, Instagram, LinkedIn, Reddit, Facebook, TikTok |
+| Messaging | Telegram, Discord, WhatsApp, Signal, Slack             |
+| Dating    | Tinder, Bumble, Hinge, OkCupid                         |
+| Browsers  | Chrome, Firefox, Brave, Edge                           |
+| Media     | YouTube, Twitch, Spotify                               |
 
 All capture happens **on-device** using the Accessibility Service - no cloud required.
 

@@ -21,12 +21,12 @@ The AI Assistant provides:
 
 ### Supported Models
 
-| Model | Size | Use Case |
-|-------|------|----------|
-| llama3.2 | 3B | General assistant |
-| mistral | 7B | Complex reasoning |
-| codellama | 7B | Code assistance |
-| phi-3 | 3B | Lightweight tasks |
+| Model     | Size | Use Case          |
+| --------- | ---- | ----------------- |
+| llama3.2  | 3B   | General assistant |
+| mistral   | 7B   | Complex reasoning |
+| codellama | 7B   | Code assistance   |
+| phi-3     | 3B   | Lightweight tasks |
 
 ### Features
 
@@ -39,11 +39,11 @@ The AI Assistant provides:
 
 ### Providers
 
-| Provider | Models | Features |
-|----------|--------|----------|
-| OpenAI | GPT-4, GPT-4 Turbo, GPT-3.5 | Best accuracy |
-| Claude | Opus, Sonnet, Haiku | Long context |
-| Gemini | 1.5 Pro, 1.5 Flash | Multimodal |
+| Provider | Models                      | Features      |
+| -------- | --------------------------- | ------------- |
+| OpenAI   | GPT-4, GPT-4 Turbo, GPT-3.5 | Best accuracy |
+| Claude   | Opus, Sonnet, Haiku         | Long context  |
+| Gemini   | 1.5 Pro, 1.5 Flash          | Multimodal    |
 
 ### Configuration
 
@@ -156,4 +156,4 @@ ollama serve
 
 ---
 
-*See also: [LLM Architecture](../01_Architecture/07_LLM_Integration.md)*
+_See also: [LLM Architecture](../01_Architecture/07_LLM_Integration.md)_

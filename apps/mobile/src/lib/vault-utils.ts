@@ -1,8 +1,8 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Crypto from "expo-crypto";
-import * as SecureStore from "expo-secure-store";
-import { chacha20poly1305 } from "@noble/ciphers/chacha";
-import { argon2id } from "@noble/hashes/argon2";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Crypto from 'expo-crypto';
+import * as SecureStore from 'expo-secure-store';
+import { chacha20poly1305 } from '@noble/ciphers/chacha';
+import { argon2id } from '@noble/hashes/argon2';
 
 interface VaultMetadata {
   spaceId: string;
@@ -18,11 +18,7 @@ interface VaultMetadata {
 /**
  * Derive key using Argon2id with secure parameters
  */
-async function deriveKeyArgon2(
-  password: string,
-  salt: Uint8Array,
-  outputLength: number = 32,
-): Promise<Uint8Array> {
+async function deriveKeyArgon2(password: string, salt: Uint8Array, outputLength: number = 32): Promise<Uint8Array> {
   const passwordBytes = new TextEncoder().encode(password);
 
   const hash = argon2id(passwordBytes, salt, {
@@ -38,11 +34,7 @@ async function deriveKeyArgon2(
 /**
  * Verify password against stored Argon2 hash
  */
-async function verifyPassword(
-  password: string,
-  salt: Uint8Array,
-  storedHash: Uint8Array,
-): Promise<boolean> {
+async function verifyPassword(password: string, salt: Uint8Array, storedHash: Uint8Array): Promise<boolean> {
   const derivedHash = await deriveKeyArgon2(password, salt, 32);
 
   if (derivedHash.length !== storedHash.length) {
@@ -60,15 +52,12 @@ async function verifyPassword(
 /**
  * Encrypt DEK using ChaCha20-Poly1305
  */
-async function encryptDek(
-  dek: Uint8Array,
-  kek: Uint8Array,
-): Promise<{ encrypted: Uint8Array; nonce: Uint8Array }> {
+async function encryptDek(dek: Uint8Array, kek: Uint8Array): Promise<{ encrypted: Uint8Array; nonce: Uint8Array }> {
   if (!dek || dek.length !== 32) {
-    throw new Error("Invalid DEK: expected 32 bytes");
+    throw new Error('Invalid DEK: expected 32 bytes');
   }
   if (!kek || kek.length !== 32) {
-    throw new Error("Invalid KEK: expected 32 bytes");
+    throw new Error('Invalid KEK: expected 32 bytes');
   }
 
   const nonce = await Crypto.getRandomBytesAsync(12);
@@ -81,28 +70,22 @@ async function encryptDek(
 /**
  * Decrypt DEK using ChaCha20-Poly1305
  */
-async function decryptDek(
-  encrypted: Uint8Array,
-  kek: Uint8Array,
-  nonce: Uint8Array,
-): Promise<Uint8Array> {
+async function decryptDek(encrypted: Uint8Array, kek: Uint8Array, nonce: Uint8Array): Promise<Uint8Array> {
   if (!encrypted || encrypted.length !== 48) {
-    throw new Error(
-      "Invalid encrypted DEK: expected 48 bytes (32 data + 16 tag)",
-    );
+    throw new Error('Invalid encrypted DEK: expected 48 bytes (32 data + 16 tag)');
   }
   if (!kek || kek.length !== 32) {
-    throw new Error("Invalid KEK: expected 32 bytes");
+    throw new Error('Invalid KEK: expected 32 bytes');
   }
   if (!nonce || nonce.length !== 12) {
-    throw new Error("Invalid nonce: expected 12 bytes");
+    throw new Error('Invalid nonce: expected 12 bytes');
   }
 
   const cipher = chacha20poly1305(kek, nonce);
   const decrypted = cipher.decrypt(encrypted);
 
   if (decrypted.length !== 32) {
-    throw new Error("Decrypted DEK has invalid length");
+    throw new Error('Decrypted DEK has invalid length');
   }
 
   return decrypted;
@@ -121,57 +104,43 @@ export async function changeVaultPassword(
     if (!currentPassword || currentPassword.length < 8) {
       return {
         success: false,
-        error: "Current password must be at least 8 characters",
+        error: 'Current password must be at least 8 characters',
       };
     }
     if (!newPassword || newPassword.length < 8) {
       return {
         success: false,
-        error: "New password must be at least 8 characters",
+        error: 'New password must be at least 8 characters',
       };
     }
     if (currentPassword === newPassword) {
       return {
         success: false,
-        error: "New password must be different from current password",
+        error: 'New password must be different from current password',
       };
     }
 
     // Load vault metadata
-    const vaultData = await AsyncStorage.getItem("vault_metadata");
+    const vaultData = await AsyncStorage.getItem('vault_metadata');
     if (!vaultData) {
-      return { success: false, error: "No vault found" };
+      return { success: false, error: 'No vault found' };
     }
 
     const metadata: VaultMetadata = JSON.parse(vaultData);
 
     // Verify current password
-    const passwordSalt = Uint8Array.from(atob(metadata.passwordSalt), (c) =>
-      c.charCodeAt(0),
-    );
-    const passwordHash = Uint8Array.from(atob(metadata.passwordHash), (c) =>
-      c.charCodeAt(0),
-    );
+    const passwordSalt = Uint8Array.from(atob(metadata.passwordSalt), (c) => c.charCodeAt(0));
+    const passwordHash = Uint8Array.from(atob(metadata.passwordHash), (c) => c.charCodeAt(0));
 
-    const isValid = await verifyPassword(
-      currentPassword,
-      passwordSalt,
-      passwordHash,
-    );
+    const isValid = await verifyPassword(currentPassword, passwordSalt, passwordHash);
     if (!isValid) {
-      return { success: false, error: "Current password is incorrect" };
+      return { success: false, error: 'Current password is incorrect' };
     }
 
     // Decrypt DEK with current password
-    const dekSalt = Uint8Array.from(atob(metadata.dekSalt), (c) =>
-      c.charCodeAt(0),
-    );
-    const encryptedDek = Uint8Array.from(atob(metadata.encryptedDek), (c) =>
-      c.charCodeAt(0),
-    );
-    const dekNonce = Uint8Array.from(atob(metadata.dekNonce), (c) =>
-      c.charCodeAt(0),
-    );
+    const dekSalt = Uint8Array.from(atob(metadata.dekSalt), (c) => c.charCodeAt(0));
+    const encryptedDek = Uint8Array.from(atob(metadata.encryptedDek), (c) => c.charCodeAt(0));
+    const dekNonce = Uint8Array.from(atob(metadata.dekNonce), (c) => c.charCodeAt(0));
     const currentKek = await deriveKeyArgon2(currentPassword, dekSalt, 32);
     const dek = await decryptDek(encryptedDek, currentKek, dekNonce);
 
@@ -180,20 +149,13 @@ export async function changeVaultPassword(
     const newDekSalt = await Crypto.getRandomBytesAsync(32);
 
     // Derive new password hash
-    const newPasswordHash = await deriveKeyArgon2(
-      newPassword,
-      newPasswordSalt,
-      32,
-    );
+    const newPasswordHash = await deriveKeyArgon2(newPassword, newPasswordSalt, 32);
 
     // Derive new KEK from new password
     const newKek = await deriveKeyArgon2(newPassword, newDekSalt, 32);
 
     // Re-encrypt DEK with new KEK
-    const { encrypted: newEncryptedDek, nonce: newDekNonce } = await encryptDek(
-      dek,
-      newKek,
-    );
+    const { encrypted: newEncryptedDek, nonce: newDekNonce } = await encryptDek(dek, newKek);
 
     // Update vault metadata
     const newMetadata: VaultMetadata = {
@@ -206,25 +168,24 @@ export async function changeVaultPassword(
     };
 
     // Save updated metadata
-    await AsyncStorage.setItem("vault_metadata", JSON.stringify(newMetadata));
+    await AsyncStorage.setItem('vault_metadata', JSON.stringify(newMetadata));
 
     // Clear biometric data since password changed
     try {
-      await SecureStore.deleteItemAsync("biometric_vault_data");
+      await SecureStore.deleteItemAsync('biometric_vault_data');
     } catch {
       // Biometric data might not exist, that's okay
       if (__DEV__) {
-        console.log("No biometric data to clear");
+        console.log('No biometric data to clear');
       }
     }
 
     return { success: true };
   } catch (error) {
-    console.error("Failed to change password:", error);
+    console.error('Failed to change password:', error);
     return {
       success: false,
-      error:
-        error instanceof Error ? error.message : "Failed to change password",
+      error: error instanceof Error ? error.message : 'Failed to change password',
     };
   }
 }

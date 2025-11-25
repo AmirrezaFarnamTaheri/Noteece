@@ -1,15 +1,6 @@
 import React from 'react';
-import {
-  Modal,
-  TextInput,
-  Select,
-  Checkbox,
-  Stack,
-  Group,
-  Button,
-  Text,
-} from '@mantine/core';
-import { UseFormReturnType } from '@mantine/form';
+import { Modal, TextInput, Select, Checkbox, Stack, Group, Button, Text } from '@mantine/core';
+import { useForm } from '@mantine/form';
 import { IconMail, IconShield } from '@tabler/icons-react';
 import { Role, allPermissions } from './types';
 
@@ -19,10 +10,12 @@ interface InviteFormValues {
   customPermissions: string[];
 }
 
+type InviteForm = ReturnType<typeof useForm<InviteFormValues>>;
+
 interface InviteUserModalProps {
   opened: boolean;
   onClose: () => void;
-  form: UseFormReturnType<InviteFormValues>;
+  form: InviteForm;
   roles: Role[];
   isLoading: boolean;
   onSubmit: (values: InviteFormValues) => void;
@@ -43,9 +36,7 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({
   const rolePermissions = selectedRole?.permissions || [];
 
   // Get permissions not included in the selected role
-  const additionalPermissions = allPermissions.filter(
-    (p) => !rolePermissions.includes(p)
-  );
+  const additionalPermissions = allPermissions.filter((p) => !rolePermissions.includes(p));
 
   return (
     <Modal opened={opened} onClose={onClose} title="Invite User" size="md">
@@ -94,16 +85,11 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({
                     checked={form.values.customPermissions.includes(permission)}
                     onChange={(e) => {
                       if (e.currentTarget.checked) {
-                        form.setFieldValue('customPermissions', [
-                          ...form.values.customPermissions,
-                          permission,
-                        ]);
+                        form.setFieldValue('customPermissions', [...form.values.customPermissions, permission]);
                       } else {
                         form.setFieldValue(
                           'customPermissions',
-                          form.values.customPermissions.filter(
-                            (p) => p !== permission
-                          )
+                          form.values.customPermissions.filter((p) => p !== permission),
                         );
                       }
                     }}
@@ -126,4 +112,3 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({
     </Modal>
   );
 };
-

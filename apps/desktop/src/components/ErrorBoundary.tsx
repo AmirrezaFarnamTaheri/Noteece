@@ -4,7 +4,7 @@ import { IconAlertCircle } from '@tabler/icons-react';
 import { logger } from '@/utils/logger';
 
 interface Properties {
-  children: ReactNode;
+  children?: ReactNode;
   fallback?: ReactNode;
 }
 
@@ -93,7 +93,8 @@ export class ErrorBoundary extends Component<Properties, State> {
       );
     }
 
-    return this.props.children;
+    // When used as errorElement, children might not be present
+    return this.props.children ?? null;
   }
 }
 

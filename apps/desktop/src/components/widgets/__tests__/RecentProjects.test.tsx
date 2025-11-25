@@ -41,9 +41,9 @@ describe('RecentProjects', () => {
   it('filters and displays active projects', async () => {
     const now = Math.floor(Date.now() / 1000);
     mockGetAllProjectsInSpace.mockResolvedValue([
-      { id: '1', title: 'Active Project A', status: 'active', start_at: now },
-      { id: '2', title: 'Done Project', status: 'done', start_at: now },
-      { id: '3', title: 'Active Project B', status: 'active', start_at: now - 1000 },
+      { id: '1', title: 'Active Project A', status: 'active', start_at: now, space_id: 'space-1' },
+      { id: '2', title: 'Done Project', status: 'done', start_at: now, space_id: 'space-1' },
+      { id: '3', title: 'Active Project B', status: 'active', start_at: now - 1000, space_id: 'space-1' },
     ]);
 
     renderWithProviders(<RecentProjects />);
@@ -58,8 +58,8 @@ describe('RecentProjects', () => {
   it('sorts projects by start date descending', async () => {
     const now = Math.floor(Date.now() / 1000);
     mockGetAllProjectsInSpace.mockResolvedValue([
-      { id: '1', title: 'Old Project', status: 'active', start_at: now - 10_000 },
-      { id: '2', title: 'New Project', status: 'active', start_at: now },
+      { id: '1', title: 'Old Project', status: 'active', start_at: now - 10_000, space_id: 'space-1' },
+      { id: '2', title: 'New Project', status: 'active', start_at: now, space_id: 'space-1' },
     ]);
 
     renderWithProviders(<RecentProjects />);

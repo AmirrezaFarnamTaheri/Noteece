@@ -54,14 +54,14 @@ Noteece Prime utilizes a unique "Tri-Layer" architecture to wrap the Android OS:
 
 Prime supports content capture from 30+ platforms across 6 categories:
 
-| Category | Platforms |
-|----------|-----------|
+| Category         | Platforms                                                                 |
+| ---------------- | ------------------------------------------------------------------------- |
 | **Social Media** | Twitter, Instagram, LinkedIn, Reddit, Facebook, TikTok, Pinterest, Tumblr |
-| **Messaging** | Telegram, Discord, WhatsApp, Signal, Slack, Snapchat |
-| **Dating** | Tinder, Bumble, Hinge, OkCupid, Match |
-| **Browsers** | Chrome, Firefox, Brave, Edge, DuckDuckGo |
-| **Media** | YouTube, Twitch, Spotify |
-| **Reading** | Medium, NYTimes, Hacker News |
+| **Messaging**    | Telegram, Discord, WhatsApp, Signal, Slack, Snapchat                      |
+| **Dating**       | Tinder, Bumble, Hinge, OkCupid, Match                                     |
+| **Browsers**     | Chrome, Firefox, Brave, Edge, DuckDuckGo                                  |
+| **Media**        | YouTube, Twitch, Spotify                                                  |
+| **Reading**      | Medium, NYTimes, Hacker News                                              |
 
 ### Heuristic Engine
 

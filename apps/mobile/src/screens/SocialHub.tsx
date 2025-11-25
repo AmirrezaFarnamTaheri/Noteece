@@ -5,7 +5,7 @@
  * Displays unified timeline with filtering, search, and category management.
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -18,29 +18,24 @@ import {
   Alert,
   TextInput,
   Modal,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { PostCard } from "../components/social/PostCard";
-import { PostCardSkeleton } from "../components/social/PostCardSkeleton";
-import { CategoryPicker } from "../components/social/CategoryPicker";
-import { ErrorFallback } from "../components/errors";
-import { useSharedContent } from "../hooks/useSharedContent";
-import { useCurrentSpace } from "../store/app-context";
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PostCard } from '../components/social/PostCard';
+import { PostCardSkeleton } from '../components/social/PostCardSkeleton';
+import { CategoryPicker } from '../components/social/CategoryPicker';
+import { ErrorFallback } from '../components/errors';
+import { useSharedContent } from '../hooks/useSharedContent';
+import { useCurrentSpace } from '../store/app-context';
 import {
   getTimelinePosts,
   getCategories,
   assignCategory,
   removeCategory,
   createCategory,
-} from "../lib/social-database";
-import type {
-  TimelinePost,
-  SocialCategory,
-  TimelineFilters,
-  Platform,
-} from "../types/social";
-import { PLATFORM_CONFIGS } from "../types/social";
+} from '../lib/social-database';
+import type { TimelinePost, SocialCategory, TimelineFilters, Platform } from '../types/social';
+import { PLATFORM_CONFIGS } from '../types/social';
 
 interface SavedFilter {
   id: string;
@@ -63,13 +58,13 @@ export function SocialHub() {
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
-  const [searchQuery] = useState("");
+  const [searchQuery] = useState('');
 
   // Saved filters
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
   const [showSaveFilterModal, setShowSaveFilterModal] = useState(false);
-  const [newFilterName, setNewFilterName] = useState("");
-  const [selectedFilterIcon, setSelectedFilterIcon] = useState("📌");
+  const [newFilterName, setNewFilterName] = useState('');
+  const [selectedFilterIcon, setSelectedFilterIcon] = useState('📌');
 
   // Pagination
   const [offset, setOffset] = useState(0);
@@ -79,8 +74,7 @@ export function SocialHub() {
   const spaceId = useCurrentSpace();
 
   // Shared content from other apps
-  const { hasSharedContent, sharedItems, processItems, refresh } =
-    useSharedContent();
+  const { hasSharedContent, sharedItems, processItems, refresh } = useSharedContent();
 
   // Load initial data and saved filters
   useEffect(() => {
@@ -97,14 +91,14 @@ export function SocialHub() {
         setSavedFilters(JSON.parse(saved));
       }
     } catch (error) {
-      console.error("Failed to load saved filters:", error);
+      console.error('Failed to load saved filters:', error);
     }
   };
 
   // Save current filter as preset
   const saveCurrentFilter = async () => {
     if (!newFilterName.trim()) {
-      Alert.alert("Error", "Please enter a filter name");
+      Alert.alert('Error', 'Please enter a filter name');
       return;
     }
 
@@ -120,16 +114,13 @@ export function SocialHub() {
     setSavedFilters(updated);
 
     try {
-      await AsyncStorage.setItem(
-        `social_filters_${spaceId}`,
-        JSON.stringify(updated),
-      );
+      await AsyncStorage.setItem(`social_filters_${spaceId}`, JSON.stringify(updated));
       setShowSaveFilterModal(false);
-      setNewFilterName("");
-      Alert.alert("Success", "Filter saved successfully");
+      setNewFilterName('');
+      Alert.alert('Success', 'Filter saved successfully');
     } catch (error) {
-      console.error("Failed to save filter:", error);
-      Alert.alert("Error", "Failed to save filter");
+      console.error('Failed to save filter:', error);
+      Alert.alert('Error', 'Failed to save filter');
     }
   };
 
@@ -143,14 +134,13 @@ export function SocialHub() {
     try {
       const filters: TimelineFilters = {
         platforms: filter.platforms.length > 0 ? filter.platforms : undefined,
-        categories:
-          filter.categories.length > 0 ? filter.categories : undefined,
+        categories: filter.categories.length > 0 ? filter.categories : undefined,
       };
       const newPosts = await getTimelinePosts(spaceId, filters, 50, 0);
       setPosts(newPosts);
       setHasMore(newPosts.length === 50);
     } catch (error) {
-      console.error("Failed to apply filter:", error);
+      console.error('Failed to apply filter:', error);
     }
   };
 
@@ -160,12 +150,9 @@ export function SocialHub() {
     setSavedFilters(updated);
 
     try {
-      await AsyncStorage.setItem(
-        `social_filters_${spaceId}`,
-        JSON.stringify(updated),
-      );
+      await AsyncStorage.setItem(`social_filters_${spaceId}`, JSON.stringify(updated));
     } catch (error) {
-      console.error("Failed to delete filter:", error);
+      console.error('Failed to delete filter:', error);
     }
   };
 
@@ -173,14 +160,11 @@ export function SocialHub() {
     try {
       setLoading(true);
       setError(null);
-      const [fetchedPosts, fetchedCategories] = await Promise.all([
-        loadPosts(),
-        loadCategories(),
-      ]);
+      const [fetchedPosts, fetchedCategories] = await Promise.all([loadPosts(), loadCategories()]);
       setPosts(fetchedPosts);
       setCategories(fetchedCategories);
     } catch (err) {
-      console.error("Failed to load social data:", err);
+      console.error('Failed to load social data:', err);
       setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setLoading(false);
@@ -190,8 +174,7 @@ export function SocialHub() {
   const loadPosts = async () => {
     const filters: TimelineFilters = {
       platforms: selectedPlatforms.length > 0 ? selectedPlatforms : undefined,
-      categories:
-        selectedCategories.length > 0 ? selectedCategories : undefined,
+      categories: selectedCategories.length > 0 ? selectedCategories : undefined,
       search_query: searchQuery || undefined,
     };
 
@@ -206,10 +189,7 @@ export function SocialHub() {
     setRefreshing(true);
     try {
       setOffset(0);
-      const [newPosts, newCategories] = await Promise.all([
-        loadPosts(),
-        loadCategories(),
-      ]);
+      const [newPosts, newCategories] = await Promise.all([loadPosts(), loadCategories()]);
       setPosts(newPosts);
       setCategories(newCategories);
 
@@ -217,7 +197,7 @@ export function SocialHub() {
       await refresh();
       setHasMore(newPosts.length === 50);
     } catch (error) {
-      console.error("Failed to refresh:", error);
+      console.error('Failed to refresh:', error);
     } finally {
       setRefreshing(false);
     }
@@ -230,17 +210,11 @@ export function SocialHub() {
     try {
       const filters: TimelineFilters = {
         platforms: selectedPlatforms.length > 0 ? selectedPlatforms : undefined,
-        categories:
-          selectedCategories.length > 0 ? selectedCategories : undefined,
+        categories: selectedCategories.length > 0 ? selectedCategories : undefined,
         search_query: searchQuery || undefined,
       };
 
-      const newPosts = await getTimelinePosts(
-        spaceId,
-        filters,
-        50,
-        offset + 50,
-      );
+      const newPosts = await getTimelinePosts(spaceId, filters, 50, offset + 50);
 
       if (newPosts.length > 0) {
         setPosts([...posts, ...newPosts]);
@@ -250,25 +224,18 @@ export function SocialHub() {
         setHasMore(false);
       }
     } catch (error) {
-      console.error("Failed to load more:", error);
+      console.error('Failed to load more:', error);
     }
   };
 
-  const handleAssignCategories = async (
-    post: TimelinePost,
-    categoryIds: string[],
-  ) => {
+  const handleAssignCategories = async (post: TimelinePost, categoryIds: string[]) => {
     try {
       // Get currently assigned category IDs
       const currentCategoryIds = post.categories.map((c) => c.id);
 
       // Find categories to add and remove
-      const toAdd = categoryIds.filter(
-        (id) => !currentCategoryIds.includes(id),
-      );
-      const toRemove = currentCategoryIds.filter(
-        (id) => !categoryIds.includes(id),
-      );
+      const toAdd = categoryIds.filter((id) => !currentCategoryIds.includes(id));
+      const toRemove = currentCategoryIds.filter((id) => !categoryIds.includes(id));
 
       // Assign new categories
       for (const categoryId of toAdd) {
@@ -283,54 +250,42 @@ export function SocialHub() {
       // Refresh posts to show updated categories
       await handleRefresh();
     } catch (error) {
-      console.error("Failed to assign categories:", error);
+      console.error('Failed to assign categories:', error);
     }
   };
 
-  const handleCreateCategory = async (
-    name: string,
-    color: string,
-    icon: string,
-  ) => {
+  const handleCreateCategory = async (name: string, color: string, icon: string) => {
     try {
       const newCategory = await createCategory(spaceId, name, color, icon);
       setCategories([...categories, newCategory]);
     } catch (error) {
-      console.error("Failed to create category:", error);
+      console.error('Failed to create category:', error);
     }
   };
 
   const togglePlatformFilter = (platform: Platform) => {
     setSelectedPlatforms((prev) =>
-      prev.includes(platform)
-        ? prev.filter((p) => p !== platform)
-        : [...prev, platform],
+      prev.includes(platform) ? prev.filter((p) => p !== platform) : [...prev, platform],
     );
   };
 
   const toggleCategoryFilter = (categoryId: string) => {
     setSelectedCategories((prev) =>
-      prev.includes(categoryId)
-        ? prev.filter((c) => c !== categoryId)
-        : [...prev, categoryId],
+      prev.includes(categoryId) ? prev.filter((c) => c !== categoryId) : [...prev, categoryId],
     );
   };
 
   const handleSharedItemPress = (item: any) => {
-    Alert.alert(
-      "Shared Content",
-      `Type: ${item.type}\n${item.url || item.text || ""}`,
-      [
-        { text: "Dismiss", style: "cancel" },
-        {
-          text: "Process",
-          onPress: async () => {
-            await processItems([item.timestamp]);
-            Alert.alert("Success", "Shared content has been processed");
-          },
+    Alert.alert('Shared Content', `Type: ${item.type}\n${item.url || item.text || ''}`, [
+      { text: 'Dismiss', style: 'cancel' },
+      {
+        text: 'Process',
+        onPress: async () => {
+          await processItems([item.timestamp]);
+          Alert.alert('Success', 'Shared content has been processed');
         },
-      ],
-    );
+      },
+    ]);
   };
 
   const handleDismissSharedContent = async () => {
@@ -346,23 +301,10 @@ export function SocialHub() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPlatforms, selectedCategories, searchQuery]);
 
-  const availablePlatforms: Platform[] = [
-    "twitter",
-    "instagram",
-    "linkedin",
-    "youtube",
-    "reddit",
-    "tiktok",
-  ];
+  const availablePlatforms: Platform[] = ['twitter', 'instagram', 'linkedin', 'youtube', 'reddit', 'tiktok'];
 
   if (error && posts.length === 0) {
-    return (
-      <ErrorFallback
-        error={error}
-        message="Failed to load social feed"
-        onRetry={loadData}
-      />
-    );
+    return <ErrorFallback error={error} message="Failed to load social feed" onRetry={loadData} />;
   }
 
   if (loading && posts.length === 0) {
@@ -379,13 +321,8 @@ export function SocialHub() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Social Hub</Text>
-        <TouchableOpacity
-          style={styles.filterButton}
-          onPress={() => setShowFilters(!showFilters)}
-        >
-          <Text style={styles.filterButtonText}>
-            {showFilters ? "Hide Filters" : "Filters"}
-          </Text>
+        <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilters(!showFilters)}>
+          <Text style={styles.filterButtonText}>{showFilters ? 'Hide Filters' : 'Filters'}</Text>
         </TouchableOpacity>
       </View>
 
@@ -403,11 +340,11 @@ export function SocialHub() {
                 style={styles.savedFilterChip}
                 onPress={() => applySavedFilter(filter)}
                 onLongPress={() =>
-                  Alert.alert("Delete Filter", `Delete "${filter.name}"?`, [
-                    { text: "Cancel", style: "cancel" },
+                  Alert.alert('Delete Filter', `Delete "${filter.name}"?`, [
+                    { text: 'Cancel', style: 'cancel' },
                     {
-                      text: "Delete",
-                      style: "destructive",
+                      text: 'Delete',
+                      style: 'destructive',
                       onPress: () => deleteSavedFilter(filter.id),
                     },
                   ])
@@ -426,11 +363,7 @@ export function SocialHub() {
         <View style={styles.filterBar}>
           {/* Platform Filters */}
           <Text style={styles.filterLabel}>Platforms:</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.filterScroll}
-          >
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
             {availablePlatforms.map((platform) => {
               const config = PLATFORM_CONFIGS[platform];
               const isSelected = selectedPlatforms.includes(platform);
@@ -447,14 +380,7 @@ export function SocialHub() {
                   onPress={() => togglePlatformFilter(platform)}
                 >
                   <Text style={styles.filterChipIcon}>{config.icon}</Text>
-                  <Text
-                    style={[
-                      styles.filterChipText,
-                      isSelected && styles.filterChipTextActive,
-                    ]}
-                  >
-                    {config.name}
-                  </Text>
+                  <Text style={[styles.filterChipText, isSelected && styles.filterChipTextActive]}>{config.name}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -462,11 +388,7 @@ export function SocialHub() {
 
           {/* Category Filters */}
           <Text style={styles.filterLabel}>Categories:</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.filterScroll}
-          >
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
             {categories.map((category) => {
               const isSelected = selectedCategories.includes(category.id);
               return (
@@ -475,21 +397,14 @@ export function SocialHub() {
                   style={[
                     styles.filterChip,
                     isSelected && {
-                      backgroundColor: category.color || "#007AFF",
-                      borderColor: category.color || "#007AFF",
+                      backgroundColor: category.color || '#007AFF',
+                      borderColor: category.color || '#007AFF',
                     },
                   ]}
                   onPress={() => toggleCategoryFilter(category.id)}
                 >
-                  {category.icon && (
-                    <Text style={styles.filterChipIcon}>{category.icon}</Text>
-                  )}
-                  <Text
-                    style={[
-                      styles.filterChipText,
-                      isSelected && styles.filterChipTextActive,
-                    ]}
-                  >
+                  {category.icon && <Text style={styles.filterChipIcon}>{category.icon}</Text>}
+                  <Text style={[styles.filterChipText, isSelected && styles.filterChipTextActive]}>
                     {category.name}
                   </Text>
                 </TouchableOpacity>
@@ -500,10 +415,7 @@ export function SocialHub() {
           {/* Filter Actions */}
           {(selectedPlatforms.length > 0 || selectedCategories.length > 0) && (
             <View style={styles.filterActions}>
-              <TouchableOpacity
-                style={styles.saveFilterButton}
-                onPress={() => setShowSaveFilterModal(true)}
-              >
+              <TouchableOpacity style={styles.saveFilterButton} onPress={() => setShowSaveFilterModal(true)}>
                 <Ionicons name="bookmark-outline" size={16} color="#007AFF" />
                 <Text style={styles.saveFilterText}>Save Filter</Text>
               </TouchableOpacity>
@@ -527,21 +439,13 @@ export function SocialHub() {
           <View style={styles.sharedContentHeader}>
             <Ionicons name="share-outline" size={20} color="#007AFF" />
             <Text style={styles.sharedContentTitle}>
-              {sharedItems.length} shared{" "}
-              {sharedItems.length === 1 ? "item" : "items"}
+              {sharedItems.length} shared {sharedItems.length === 1 ? 'item' : 'items'}
             </Text>
-            <TouchableOpacity
-              onPress={handleDismissSharedContent}
-              style={styles.dismissButton}
-            >
+            <TouchableOpacity onPress={handleDismissSharedContent} style={styles.dismissButton}>
               <Ionicons name="close-circle" size={20} color="#666" />
             </TouchableOpacity>
           </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.sharedItemsScroll}
-          >
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sharedItemsScroll}>
             {sharedItems.map((item, index) => (
               <TouchableOpacity
                 key={`${item.timestamp}-${index}`}
@@ -549,19 +453,13 @@ export function SocialHub() {
                 onPress={() => handleSharedItemPress(item)}
               >
                 <Ionicons
-                  name={
-                    item.type === "url"
-                      ? "link"
-                      : item.type === "image"
-                        ? "image"
-                        : "text"
-                  }
+                  name={item.type === 'url' ? 'link' : item.type === 'image' ? 'image' : 'text'}
                   size={24}
                   color="#007AFF"
                 />
                 <Text style={styles.sharedItemType}>{item.type}</Text>
                 <Text style={styles.sharedItemPreview} numberOfLines={2}>
-                  {item.url || item.text || ""}
+                  {item.url || item.text || ''}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -587,22 +485,18 @@ export function SocialHub() {
               }}
               onCategoryPress={(categoryId) => {
                 // Navigate to category view
-                console.log("Category pressed:", categoryId);
+                console.log('Category pressed:', categoryId);
               }}
             />
           )}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyIcon}>📭</Text>
               <Text style={styles.emptyText}>No posts yet</Text>
-              <Text style={styles.emptySubtext}>
-                Pull down to refresh or add social accounts
-              </Text>
+              <Text style={styles.emptySubtext}>Pull down to refresh or add social accounts</Text>
             </View>
           }
           ListFooterComponent={
@@ -659,18 +553,11 @@ export function SocialHub() {
             />
 
             <Text style={styles.modalLabel}>Choose an icon:</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.iconPicker}
-            >
-              {["📌", "⭐", "🔥", "💼", "📰", "🎯", "💡", "🎨"].map((icon) => (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.iconPicker}>
+              {['📌', '⭐', '🔥', '💼', '📰', '🎯', '💡', '🎨'].map((icon) => (
                 <TouchableOpacity
                   key={icon}
-                  style={[
-                    styles.iconOption,
-                    selectedFilterIcon === icon && styles.iconOptionSelected,
-                  ]}
+                  style={[styles.iconOption, selectedFilterIcon === icon && styles.iconOptionSelected]}
                   onPress={() => setSelectedFilterIcon(icon)}
                 >
                   <Text style={styles.iconOptionText}>{icon}</Text>
@@ -679,16 +566,10 @@ export function SocialHub() {
             </ScrollView>
 
             <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.modalButtonSecondary}
-                onPress={() => setShowSaveFilterModal(false)}
-              >
+              <TouchableOpacity style={styles.modalButtonSecondary} onPress={() => setShowSaveFilterModal(false)}>
                 <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.modalButtonPrimary}
-                onPress={saveCurrentFilter}
-              >
+              <TouchableOpacity style={styles.modalButtonPrimary} onPress={saveCurrentFilter}>
                 <Text style={styles.modalButtonTextPrimary}>Save</Text>
               </TouchableOpacity>
             </View>
@@ -702,69 +583,69 @@ export function SocialHub() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: '#F5F5F5',
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F5F5F5",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: "#666",
+    color: '#666',
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: "#FFF",
+    backgroundColor: '#FFF',
     borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
+    borderBottomColor: '#E0E0E0',
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: "700",
-    color: "#000",
+    fontWeight: '700',
+    color: '#000',
   },
   filterButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: "#007AFF",
+    backgroundColor: '#007AFF',
   },
   filterButtonText: {
-    color: "#FFF",
+    color: '#FFF',
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   filterBar: {
-    backgroundColor: "#FFF",
+    backgroundColor: '#FFF',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
+    borderBottomColor: '#E0E0E0',
   },
   filterLabel: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#666",
+    fontWeight: '600',
+    color: '#666',
     marginBottom: 8,
   },
   filterScroll: {
     marginBottom: 16,
   },
   filterChip: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#DDD",
-    backgroundColor: "#FFF",
+    borderColor: '#DDD',
+    backgroundColor: '#FFF',
     marginRight: 8,
     gap: 6,
   },
@@ -773,26 +654,26 @@ const styles = StyleSheet.create({
   },
   filterChipText: {
     fontSize: 14,
-    color: "#666",
-    fontWeight: "500",
+    color: '#666',
+    fontWeight: '500',
   },
   filterChipTextActive: {
-    color: "#FFF",
+    color: '#FFF',
   },
   clearFiltersButton: {
     paddingVertical: 10,
-    alignItems: "center",
-    backgroundColor: "#F0F0F0",
+    alignItems: 'center',
+    backgroundColor: '#F0F0F0',
     borderRadius: 8,
   },
   clearFiltersText: {
     fontSize: 14,
-    color: "#666",
-    fontWeight: "500",
+    color: '#666',
+    fontWeight: '500',
   },
   emptyContainer: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 80,
   },
   emptyIcon: {
@@ -801,27 +682,27 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: "600",
-    color: "#666",
+    fontWeight: '600',
+    color: '#666',
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: "#999",
+    color: '#999',
   },
   footerLoader: {
     paddingVertical: 20,
-    alignItems: "center",
+    alignItems: 'center',
   },
   sharedContentBanner: {
-    backgroundColor: "#E3F2FD",
+    backgroundColor: '#E3F2FD',
     borderBottomWidth: 1,
-    borderBottomColor: "#90CAF9",
+    borderBottomColor: '#90CAF9',
     paddingVertical: 12,
   },
   sharedContentHeader: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     marginBottom: 8,
     gap: 8,
@@ -829,8 +710,8 @@ const styles = StyleSheet.create({
   sharedContentTitle: {
     flex: 1,
     fontSize: 14,
-    fontWeight: "600",
-    color: "#1976D2",
+    fontWeight: '600',
+    color: '#1976D2',
   },
   dismissButton: {
     padding: 4,
@@ -839,44 +720,44 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   sharedItemCard: {
-    backgroundColor: "#FFF",
+    backgroundColor: '#FFF',
     borderRadius: 8,
     padding: 12,
     marginRight: 12,
     width: 140,
     borderWidth: 1,
-    borderColor: "#90CAF9",
-    alignItems: "center",
+    borderColor: '#90CAF9',
+    alignItems: 'center',
   },
   sharedItemType: {
     fontSize: 12,
-    fontWeight: "600",
-    color: "#007AFF",
+    fontWeight: '600',
+    color: '#007AFF',
     marginTop: 4,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
   },
   sharedItemPreview: {
     fontSize: 11,
-    color: "#666",
+    color: '#666',
     marginTop: 4,
-    textAlign: "center",
+    textAlign: 'center',
   },
   savedFiltersRow: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#FFF",
+    backgroundColor: '#FFF',
     borderBottomWidth: 1,
-    borderBottomColor: "#EEE",
+    borderBottomColor: '#EEE',
   },
   savedFiltersScroll: {
     paddingRight: 16,
   },
   savedFilterChip: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: "#F0F0F0",
+    backgroundColor: '#F0F0F0',
     borderRadius: 20,
     marginRight: 10,
     gap: 6,
@@ -886,56 +767,56 @@ const styles = StyleSheet.create({
   },
   savedFilterText: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
+    fontWeight: '600',
+    color: '#333',
   },
   filterActions: {
-    flexDirection: "row",
+    flexDirection: 'row',
     marginTop: 12,
     gap: 10,
   },
   saveFilterButton: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 10,
-    backgroundColor: "#E3F2FD",
+    backgroundColor: '#E3F2FD',
     borderRadius: 8,
     gap: 6,
   },
   saveFilterText: {
     fontSize: 14,
-    color: "#007AFF",
-    fontWeight: "600",
+    color: '#007AFF',
+    fontWeight: '600',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: "#FFF",
+    backgroundColor: '#FFF',
     borderRadius: 16,
     padding: 24,
-    width: "85%",
+    width: '85%',
     maxWidth: 400,
   },
   modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 20,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: "700",
-    color: "#333",
+    fontWeight: '700',
+    color: '#333',
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: "#DDD",
+    borderColor: '#DDD',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
@@ -943,8 +824,8 @@ const styles = StyleSheet.create({
   },
   modalLabel: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#666",
+    fontWeight: '600',
+    color: '#666',
     marginBottom: 12,
   },
   iconPicker: {
@@ -954,43 +835,43 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#F5F5F5",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
   },
   iconOptionSelected: {
-    backgroundColor: "#007AFF",
+    backgroundColor: '#007AFF',
   },
   iconOptionText: {
     fontSize: 24,
   },
   modalActions: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 12,
   },
   modalButtonSecondary: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: "#F0F0F0",
-    alignItems: "center",
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
   },
   modalButtonTextSecondary: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#666",
+    fontWeight: '600',
+    color: '#666',
   },
   modalButtonPrimary: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: "#007AFF",
-    alignItems: "center",
+    backgroundColor: '#007AFF',
+    alignItems: 'center',
   },
   modalButtonTextPrimary: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#FFF",
+    fontWeight: '600',
+    color: '#FFF',
   },
 });

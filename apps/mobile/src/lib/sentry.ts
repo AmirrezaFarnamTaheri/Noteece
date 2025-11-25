@@ -1,11 +1,10 @@
-import * as Sentry from "@sentry/react-native";
-import Constants from "expo-constants";
+import * as Sentry from '@sentry/react-native';
+import Constants from 'expo-constants';
 
 // Initialize Sentry for error tracking
 export function initSentry() {
   // Only initialize Sentry if DSN is provided via environment variable
-  const sentryDsn =
-    Constants.expoConfig?.extra?.sentryDsn || process.env.SENTRY_DSN;
+  const sentryDsn = Constants.expoConfig?.extra?.sentryDsn || process.env.SENTRY_DSN;
 
   if (!sentryDsn) {
     // console.log("Sentry DSN not configured - error tracking disabled");
@@ -29,15 +28,13 @@ export function initSentry() {
     sampleRate: 1.0,
 
     // Environment
-    environment: __DEV__ ? "development" : "production",
+    environment: __DEV__ ? 'development' : 'production',
 
     // Release version
-    release: Constants.expoConfig?.version || "1.0.0",
+    release: Constants.expoConfig?.version || '1.0.0',
 
     // Dist (build number)
-    dist:
-      Constants.expoConfig?.ios?.buildNumber ||
-      Constants.expoConfig?.android?.versionCode?.toString(),
+    dist: Constants.expoConfig?.ios?.buildNumber || Constants.expoConfig?.android?.versionCode?.toString(),
 
     // Enable native crashes
     enableNative: true,
@@ -52,7 +49,7 @@ export function initSentry() {
         routingInstrumentation: Sentry.reactNavigationIntegration(),
 
         // Enable automatic tracing
-        tracingOrigins: ["localhost", /^\//],
+        tracingOrigins: ['localhost', /^\//],
 
         // Enable user interaction tracing
         enableUserInteractionTracing: true,
@@ -78,10 +75,7 @@ export function initSentry() {
     // Before breadcrumb hook - you can filter or modify breadcrumbs
     beforeBreadcrumb(breadcrumb, hint) {
       // Filter sensitive data from breadcrumbs
-      if (
-        breadcrumb.category === "console" &&
-        breadcrumb.message?.includes("password")
-      ) {
+      if (breadcrumb.category === 'console' && breadcrumb.message?.includes('password')) {
         return null;
       }
 
@@ -95,25 +89,18 @@ export function initSentry() {
 // Helper function to capture exceptions manually
 export function captureException(error: Error, context?: Record<string, any>) {
   if (context) {
-    Sentry.setContext("error_context", context);
+    Sentry.setContext('error_context', context);
   }
   Sentry.captureException(error);
 }
 
 // Helper function to capture messages
-export function captureMessage(
-  message: string,
-  level: Sentry.SeverityLevel = "info",
-) {
+export function captureMessage(message: string, level: Sentry.SeverityLevel = 'info') {
   Sentry.captureMessage(message, level);
 }
 
 // Helper function to set user context
-export function setUser(user: {
-  id?: string;
-  email?: string;
-  username?: string;
-}) {
+export function setUser(user: { id?: string; email?: string; username?: string }) {
   Sentry.setUser(user);
 }
 

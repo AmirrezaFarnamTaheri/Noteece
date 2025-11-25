@@ -13,13 +13,13 @@ TOFU (Trust On First Use) provides device authentication for P2P sync. When two 
 
 ### Trust Levels
 
-| Level | Description | Sync Allowed? |
-|-------|-------------|---------------|
-| `Unknown` | Never seen before | ❌ No |
-| `TrustOnFirstUse` | First connection established trust | ✅ Yes |
-| `Verified` | Explicitly verified by user | ✅ Yes |
-| `KeyChanged` | Key differs from stored | ❌ No (warning) |
-| `Revoked` | User revoked trust | ❌ No |
+| Level             | Description                        | Sync Allowed?   |
+| ----------------- | ---------------------------------- | --------------- |
+| `Unknown`         | Never seen before                  | ❌ No           |
+| `TrustOnFirstUse` | First connection established trust | ✅ Yes          |
+| `Verified`        | Explicitly verified by user        | ✅ Yes          |
+| `KeyChanged`      | Key differs from stored            | ❌ No (warning) |
+| `Revoked`         | User revoked trust                 | ❌ No           |
 
 ### Key Change Detection
 
@@ -48,6 +48,7 @@ pub fn verify_device(
 ```
 
 **Returns:**
+
 - `TrustOnFirstUse` - New device, trust established
 - `Verified` - Known device, key matches
 - `KeyChanged` - Known device, key differs (potential attack!)
@@ -103,7 +104,7 @@ When a device's key changes, the user sees:
 ```
 ⚠️ Security Warning
 
-The device "iPhone 15 Pro" is presenting a different 
+The device "iPhone 15 Pro" is presenting a different
 encryption key than previously stored.
 
 This could indicate:
@@ -121,7 +122,7 @@ What would you like to do?
 
 ```typescript
 // Desktop (Tauri)
-const trust = await invoke('get_device_trust', { deviceId: 'device-123' });
+const trust = await invoke("get_device_trust", { deviceId: "device-123" });
 console.log(trust.trust_level); // "tofu" | "verified" | "revoked" | "key_changed"
 ```
 
@@ -129,23 +130,23 @@ console.log(trust.trust_level); // "tofu" | "verified" | "revoked" | "key_change
 
 ```typescript
 // Upgrade from TOFU to Verified (after QR code scan, etc.)
-await invoke('verify_device_explicitly', { deviceId: 'device-123' });
+await invoke("verify_device_explicitly", { deviceId: "device-123" });
 ```
 
 ### Revoke Trust
 
 ```typescript
 // Block a device
-await invoke('revoke_device_trust', { deviceId: 'device-123' });
+await invoke("revoke_device_trust", { deviceId: "device-123" });
 ```
 
 ### Re-trust with New Key
 
 ```typescript
 // After user confirms the key change is legitimate
-await invoke('retrust_device', { 
-  deviceId: 'device-123',
-  newPublicKey: base64EncodedKey 
+await invoke("retrust_device", {
+  deviceId: "device-123",
+  newPublicKey: base64EncodedKey,
 });
 ```
 
@@ -201,10 +202,10 @@ fn test_key_change_detection() {
     let conn = setup_test_db();
     let key1 = b"original_key";
     let key2 = b"different_key";
-    
+
     // First connection
     TofuStore::verify_device(&conn, "device", "Test", key1).unwrap();
-    
+
     // Key change
     let (level, _) = TofuStore::verify_device(&conn, "device", "Test", key2).unwrap();
     assert_eq!(level, TrustLevel::KeyChanged);
@@ -213,5 +214,4 @@ fn test_key_change_detection() {
 
 ---
 
-*See also: [Sync Architecture](10_Sync_Architecture.md) | [Security Hardening](09_Security_Hardening.md)*
-
+_See also: [Sync Architecture](10_Sync_Architecture.md) | [Security Hardening](09_Security_Hardening.md)_

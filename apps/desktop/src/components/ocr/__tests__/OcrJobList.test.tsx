@@ -48,12 +48,7 @@ describe('OcrJobList', () => {
 
   it('renders all jobs', () => {
     renderWithProviders(
-      <OcrJobList
-        jobs={mockJobs}
-        onView={mockOnView}
-        onRetry={mockOnRetry}
-        onDelete={mockOnDelete}
-      />
+      <OcrJobList jobs={mockJobs} onView={mockOnView} onRetry={mockOnRetry} onDelete={mockOnDelete} />,
     );
     expect(screen.getByText('image1.png')).toBeInTheDocument();
     expect(screen.getByText('image2.jpg')).toBeInTheDocument();
@@ -62,12 +57,7 @@ describe('OcrJobList', () => {
 
   it('shows status badges', () => {
     renderWithProviders(
-      <OcrJobList
-        jobs={mockJobs}
-        onView={mockOnView}
-        onRetry={mockOnRetry}
-        onDelete={mockOnDelete}
-      />
+      <OcrJobList jobs={mockJobs} onView={mockOnView} onRetry={mockOnRetry} onDelete={mockOnDelete} />,
     );
     expect(screen.getByText('completed')).toBeInTheDocument();
     expect(screen.getByText('pending')).toBeInTheDocument();
@@ -76,26 +66,13 @@ describe('OcrJobList', () => {
 
   it('shows confidence for completed jobs', () => {
     renderWithProviders(
-      <OcrJobList
-        jobs={mockJobs}
-        onView={mockOnView}
-        onRetry={mockOnRetry}
-        onDelete={mockOnDelete}
-      />
+      <OcrJobList jobs={mockJobs} onView={mockOnView} onRetry={mockOnRetry} onDelete={mockOnDelete} />,
     );
     expect(screen.getByText('95.0%')).toBeInTheDocument();
   });
 
   it('shows empty state when no jobs', () => {
-    renderWithProviders(
-      <OcrJobList
-        jobs={[]}
-        onView={mockOnView}
-        onRetry={mockOnRetry}
-        onDelete={mockOnDelete}
-      />
-    );
+    renderWithProviders(<OcrJobList jobs={[]} onView={mockOnView} onRetry={mockOnRetry} onDelete={mockOnDelete} />);
     expect(screen.getByText(/No OCR jobs yet/)).toBeInTheDocument();
   });
 });
-

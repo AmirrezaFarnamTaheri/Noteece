@@ -207,7 +207,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, navigate, theme, get
       cursor: 'pointer',
       transition: 'transform 0.2s ease, border-color 0.2s ease',
     }}
-    className="hover:border-violet-500 hover:shadow-md hover:scale-[1.01]"
+    className="hover:scale-[1.01] hover:border-violet-500 hover:shadow-md"
     onClick={() => navigate(`/main/projects/${project.id}`)}
   >
     <Group justify="space-between" mb="xs">

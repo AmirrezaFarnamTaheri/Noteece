@@ -5,8 +5,8 @@
  * Uses React Native's Animated API for optimal performance.
  */
 
-import React, { useEffect, useRef } from "react";
-import { Animated, ViewStyle } from "react-native";
+import React, { useEffect, useRef } from 'react';
+import { Animated, ViewStyle } from 'react-native';
 
 interface BounceProps {
   children: React.ReactNode;
@@ -17,14 +17,7 @@ interface BounceProps {
   style?: ViewStyle;
 }
 
-export function Bounce({
-  children,
-  duration = 600,
-  scale = 1.2,
-  delay = 0,
-  loop = false,
-  style,
-}: BounceProps) {
+export function Bounce({ children, duration = 600, scale = 1.2, delay = 0, loop = false, style }: BounceProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -54,9 +47,5 @@ export function Bounce({
     }
   }, [scaleAnim, duration, scale, delay, loop]);
 
-  return (
-    <Animated.View style={[style, { transform: [{ scale: scaleAnim }] }]}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={[style, { transform: [{ scale: scaleAnim }] }]}>{children}</Animated.View>;
 }

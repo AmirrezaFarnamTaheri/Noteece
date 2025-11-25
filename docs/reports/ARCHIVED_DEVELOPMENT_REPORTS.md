@@ -15,14 +15,14 @@ All development reports from the v0.x and v1.0.x development cycles have been ar
 
 ## Archived Reports
 
-| Report | Date | Summary |
-|--------|------|---------|
+| Report                      | Date     | Summary                                    |
+| --------------------------- | -------- | ------------------------------------------ |
 | Initial Architecture Review | Oct 2024 | Established Tauri + Rust core architecture |
-| Security Audit v1 | Nov 2024 | SQLCipher integration, encryption review |
-| Social Hub Implementation | Nov 2024 | 30+ platform support implemented |
-| LLM Integration Plan | Nov 2024 | 4-provider framework completed |
-| Mobile Prime Architecture | Nov 2024 | Tri-layer accessibility architecture |
-| Final Cleanup | Nov 2025 | Codebase cleanup and standardization |
+| Security Audit v1           | Nov 2024 | SQLCipher integration, encryption review   |
+| Social Hub Implementation   | Nov 2024 | 30+ platform support implemented           |
+| LLM Integration Plan        | Nov 2024 | 4-provider framework completed             |
+| Mobile Prime Architecture   | Nov 2024 | Tri-layer accessibility architecture       |
+| Final Cleanup               | Nov 2025 | Codebase cleanup and standardization       |
 
 ## Current Status
 
@@ -34,4 +34,4 @@ All legacy reports have been superseded by:
 
 ---
 
-*Last updated: November 2025*
+_Last updated: November 2025_

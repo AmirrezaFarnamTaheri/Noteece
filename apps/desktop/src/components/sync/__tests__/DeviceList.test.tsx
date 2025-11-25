@@ -36,12 +36,7 @@ describe('DeviceList', () => {
 
   it('renders all devices', () => {
     renderWithProviders(
-      <DeviceList
-        devices={mockDevices}
-        onSync={mockOnSync}
-        onPair={mockOnPair}
-        onUnpair={mockOnUnpair}
-      />
+      <DeviceList devices={mockDevices} onSync={mockOnSync} onPair={mockOnPair} onUnpair={mockOnUnpair} />,
     );
     expect(screen.getByText('My Desktop')).toBeInTheDocument();
     expect(screen.getByText('My Phone')).toBeInTheDocument();
@@ -49,26 +44,14 @@ describe('DeviceList', () => {
 
   it('shows online badge for online devices', () => {
     renderWithProviders(
-      <DeviceList
-        devices={mockDevices}
-        onSync={mockOnSync}
-        onPair={mockOnPair}
-        onUnpair={mockOnUnpair}
-      />
+      <DeviceList devices={mockDevices} onSync={mockOnSync} onPair={mockOnPair} onUnpair={mockOnUnpair} />,
     );
     expect(screen.getByText('online')).toBeInTheDocument();
     expect(screen.getByText('offline')).toBeInTheDocument();
   });
 
   it('shows empty state when no devices', () => {
-    renderWithProviders(
-      <DeviceList
-        devices={[]}
-        onSync={mockOnSync}
-        onPair={mockOnPair}
-        onUnpair={mockOnUnpair}
-      />
-    );
+    renderWithProviders(<DeviceList devices={[]} onSync={mockOnSync} onPair={mockOnPair} onUnpair={mockOnUnpair} />);
     expect(screen.getByText('No devices paired')).toBeInTheDocument();
   });
 
@@ -80,21 +63,17 @@ describe('DeviceList', () => {
         onSync={mockOnSync}
         onPair={mockOnPair}
         onUnpair={mockOnUnpair}
-      />
+      />,
     );
     expect(screen.getByText('This device')).toBeInTheDocument();
   });
 
   it('formats last seen time correctly', () => {
     renderWithProviders(
-      <DeviceList
-        devices={mockDevices}
-        onSync={mockOnSync}
-        onPair={mockOnPair}
-        onUnpair={mockOnUnpair}
-      />
+      <DeviceList devices={mockDevices} onSync={mockOnSync} onPair={mockOnPair} onUnpair={mockOnUnpair} />,
     );
-    expect(screen.getByText(/Last seen:/)).toBeInTheDocument();
+    // There can be multiple devices with "Last seen" text
+    const lastSeenElements = screen.getAllByText(/Last seen:/);
+    expect(lastSeenElements.length).toBeGreaterThan(0);
   });
 });
-

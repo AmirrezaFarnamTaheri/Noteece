@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.0] - November 2025
 
 ### Added
+
 - **Control Panel Enhanced:** Presets (Minimal, Productivity, Health, Power User), search, quick actions
 - **Internationalization:** Full i18n support for desktop app (7 languages)
 - **Dark Mode Sync:** OS preference synchronization
@@ -25,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **AI Assistant Guide:** Feature guide for AI capabilities
 
 ### Changed
+
 - **Test Coverage:** Improved from 85% to 90%+
 - **Monolithic Files:** Broken down files over 400 lines
 - **Theme Store:** Added OS preference listening and sync
@@ -33,11 +35,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Package Versions:** Updated to 1.1.0 across all packages
 
 ### Fixed
+
 - **Control Panel Store:** Fixed widget toggle persistence
 - **Theme Initialization:** Fixed initial theme application on load
 - **i18n Direction:** Fixed RTL language support for Persian
 
 ### Removed
+
 - **Deprecated Files:** Removed old SyncStatus.tsx (replaced by refactored version)
 - **Redundant Wiki Files:** Removed duplicate wiki documents
 - **Old Reports:** Consolidated archived development reports
@@ -47,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - November 2025
 
 ### Added
+
 - **Desktop Application:** Tauri v2 + React production release
 - **Mobile Application:** Expo + React Native for iOS/Android
 - **Noteece Prime:** Android meta-layer with 30+ platform support
@@ -61,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Correlation Engine:** Cross-module insight generation
 
 ### Security
+
 - AES-256 encryption at rest (SQLCipher)
 - Argon2id key derivation
 - ECDH key exchange for sync
@@ -71,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.9.0] - October 2025
 
 ### Added
+
 - Initial beta release
 - Core note-taking functionality
 - Basic task management
@@ -87,4 +94,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-*Noteece - Your Second Brain*
+_Noteece - Your Second Brain_
