@@ -114,6 +114,15 @@ impl P2pSync {
 
 // Conversion helpers between Database SyncDelta and Protocol SyncDelta
 pub fn db_delta_to_protocol_delta(db_delta: DbSyncDelta) -> SyncDelta {
+    // TODO: Implement proper vector clock sequence numbers to ensure causal ordering.
+    // Currently using timestamp-based ordering as a fallback, which is vulnerable to clock skew.
+    // See ISSUES.md regarding "P2P Sync Vector Clocks".
+    if let Some(vc) = db_delta.vector_clock.get("local") {
+        log::trace!("[p2p] Using local vector clock sequence: {}", vc);
+    } else {
+        log::warn!("[p2p] Missing vector clock for delta {}, using 0", db_delta.entity_id);
+    }
+
     SyncDelta {
         operation: match db_delta.operation {
             DbSyncOperation::Create => DeltaOperation::Create,
@@ -125,11 +134,15 @@ pub fn db_delta_to_protocol_delta(db_delta: DbSyncDelta) -> SyncDelta {
         encrypted_data: db_delta.data, // In a real encrypted setup, this would be ciphertext
         timestamp: chrono::DateTime::from_timestamp(db_delta.timestamp, 0).unwrap_or(chrono::Utc::now()),
         data_hash: None,
-        sequence: 0, // Sequence handling needs implementation
+        sequence: 0, // Placeholder: Protocol sequence negotiation required for full consistency
     }
 }
 
 pub fn protocol_delta_to_db_delta(proto_delta: SyncDelta) -> DbSyncDelta {
+    // TODO: Integrate vector clock logic from CRDT module.
+    // This requires tracking the state vector of the remote device.
+    log::warn!("[p2p] Receiving delta without vector clock integration. Conflict resolution may be suboptimal.");
+
     DbSyncDelta {
         entity_type: proto_delta.entity_type,
         entity_id: proto_delta.entity_id,

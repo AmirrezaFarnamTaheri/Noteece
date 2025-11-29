@@ -41,6 +41,7 @@ fn main() {
             get_project_updates_cmd,
             create_project_risk_cmd,
             delete_project_cmd,
+            update_project_cmd,
             create_saved_search_cmd,
             get_saved_search_cmd,
             get_saved_searches_cmd,

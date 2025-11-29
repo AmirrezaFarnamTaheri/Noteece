@@ -58,3 +58,10 @@ pub fn delete_project_cmd(db: State<DbConnection>, id: String) -> Result<(), Str
         core_rs::project::delete_project(&mut conn, &id).map_err(|e| e.to_string())
     })
 }
+
+#[tauri::command]
+pub fn update_project_cmd(db: State<DbConnection>, project: Project) -> Result<(), String> {
+    crate::with_db!(db, conn, {
+        core_rs::project::update_project(&conn, &project).map_err(|e| e.to_string())
+    })
+}

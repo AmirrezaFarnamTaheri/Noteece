@@ -30,9 +30,13 @@ import {
   IconLayoutGrid,
 } from '@tabler/icons-react';
 import { useNavigate, type NavigateFunction } from 'react-router-dom';
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { useQueryClient } from '@tanstack/react-query';
 import { useProjects } from '../hooks/useQueries';
 import { useStore } from '../store';
 import { Project } from '@noteece/types';
+import { invoke } from '@tauri-apps/api/tauri';
+import { logger } from '@/utils/logger';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -45,6 +49,9 @@ const getStatusColor = (status: string) => {
     case 'blocked': {
       return 'red';
     }
+    case 'proposed': {
+      return 'blue';
+    }
     default: {
       return 'gray';
     }
@@ -54,6 +61,7 @@ const getStatusColor = (status: string) => {
 const ProjectHub: React.FC = () => {
   const theme = useMantineTheme();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { activeSpaceId } = useStore();
   const { data: projects = [], isLoading } = useProjects(activeSpaceId || '', !!activeSpaceId);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'kanban'>('grid');
@@ -62,6 +70,41 @@ const ProjectHub: React.FC = () => {
   const filteredProjects = useMemo(() => {
     return projects.filter((p) => p.title.toLowerCase().includes(search.toLowerCase()));
   }, [projects, search]);
+
+  const onDragEnd = async (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    if (!destination) {
+      return;
+    }
+
+    if (destination.droppableId === source.droppableId && destination.index === source.index) {
+      return;
+    }
+
+    const project = projects.find((p) => p.id === draggableId);
+    if (project) {
+      // Optimistic update
+      const updatedProject = { ...project, status: destination.droppableId };
+
+      try {
+        await invoke('update_project_cmd', { project: updatedProject });
+        queryClient.invalidateQueries({ queryKey: ['projects', activeSpaceId] });
+      } catch (error) {
+        logger.error('Failed to update project status:', error as Error);
+        // Revert on error would require more complex state management or just refetch
+        queryClient.invalidateQueries({ queryKey: ['projects', activeSpaceId] });
+      }
+    }
+  };
+
+  // Kanban columns definition
+  const columns = {
+    proposed: { title: 'Proposed', color: 'blue' },
+    active: { title: 'Active', color: 'violet' },
+    blocked: { title: 'Blocked', color: 'red' },
+    done: { title: 'Done', color: 'teal' },
+  };
 
   return (
     <Container fluid p="xl" style={{ minHeight: '100vh', backgroundColor: theme.colors.dark[9] }}>
@@ -147,9 +190,70 @@ const ProjectHub: React.FC = () => {
         )}
 
         {viewMode === 'kanban' && (
-          <Text c="dimmed" ta="center" py="xl">
-            Kanban view for projects coming soon...
-          </Text>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '16px' }}>
+              {Object.entries(columns).map(([columnId, column]) => {
+                const columnProjects = filteredProjects.filter((p) => p.status === columnId);
+                return (
+                  <Droppable droppableId={columnId} key={columnId}>
+                    {(provided, snapshot) => (
+                      <Paper
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        shadow="sm"
+                        p="md"
+                        radius="md"
+                        withBorder
+                        style={{
+                          minWidth: 300,
+                          backgroundColor: snapshot.isDraggingOver
+                            ? theme.colors.dark[6]
+                            : theme.colors.dark[8],
+                          borderColor: theme.colors.dark[6],
+                          transition: 'background-color 0.2s',
+                        }}
+                      >
+                        <Group justify="space-between" mb="md">
+                          <Group gap="xs">
+                            <ThemeIcon color={column.color} variant="light" size="sm">
+                              <IconFolder size={14} />
+                            </ThemeIcon>
+                            <Text fw={700} size="sm">{column.title}</Text>
+                          </Group>
+                          <Badge size="sm" variant="outline" color={column.color}>{columnProjects.length}</Badge>
+                        </Group>
+
+                        <Stack gap="sm">
+                          {columnProjects.map((project, index) => (
+                            <Draggable key={project.id} draggableId={project.id} index={index}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  style={{
+                                    ...provided.draggableProps.style,
+                                  }}
+                                >
+                                  <ProjectCard
+                                    project={project}
+                                    navigate={navigate}
+                                    theme={theme}
+                                    getStatusColor={getStatusColor}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </Stack>
+                      </Paper>
+                    )}
+                  </Droppable>
+                );
+              })}
+            </div>
+          </DragDropContext>
         )}
       </Stack>
     </Container>
