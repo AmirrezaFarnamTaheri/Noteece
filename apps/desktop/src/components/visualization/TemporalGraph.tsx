@@ -24,6 +24,7 @@ import {
   Box,
   Slider,
   ThemeIcon,
+  Button,
 } from '@mantine/core';
 import {
   LineChart,
@@ -41,7 +42,7 @@ import {
 } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
-import { IconChartDots3, IconZoomIn, IconZoomOut, IconRefresh, IconFilter } from '@tabler/icons-react';
+import { IconChartDots3, IconZoomIn, IconZoomOut, IconRefresh, IconFilter, IconInfoCircle } from '@tabler/icons-react';
 
 interface CorrelationPoint {
   timestamp: number;
@@ -116,9 +117,10 @@ export function TemporalGraph({
           metric2,
           timeRange,
         });
-      } catch {
-        // Return mock data
-        return generateMockData(timeRange);
+      } catch (error) {
+        // Return empty array instead of mock data
+        console.warn("Failed to fetch temporal correlations", error);
+        return [];
       }
     },
     staleTime: 300_000,
@@ -197,6 +199,25 @@ export function TemporalGraph({
         </Center>
       </Paper>
     );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <Paper shadow="sm" p="xl" radius="md" withBorder>
+        <Center>
+            <Stack align="center" gap="md">
+                <ThemeIcon size={64} radius="xl" variant="light" color="gray">
+                    <IconInfoCircle size={40} />
+                </ThemeIcon>
+                <Title order={4}>Insufficient Data</Title>
+                <Text size="sm" c="dimmed" ta="center" maw={400}>
+                    Not enough correlation data available to generate a temporal graph.
+                    Continue tracking your metrics to see insights here.
+                </Text>
+            </Stack>
+        </Center>
+      </Paper>
+    )
   }
 
   return (
@@ -425,52 +446,6 @@ export function TemporalGraph({
       </Stack>
     </Paper>
   );
-}
-
-// Generate mock data for demonstration
-function generateMockData(timeRange: string): TemporalPattern[] {
-  const days = timeRange === 'week' ? 7 : timeRange === 'month' ? 30 : 90;
-  const dataPoints: CorrelationPoint[] = [];
-
-  for (let i = 0; i < days; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() - (days - 1 - i));
-
-    const baseProductivity = 60 + Math.sin((i / 7) * Math.PI) * 20;
-    const baseSleep = 7 + Math.cos((i / 7) * Math.PI) * 1.5;
-    const noise = (Math.random() - 0.5) * 10;
-
-    dataPoints.push({
-      timestamp: date.getTime(),
-      date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      metric1: baseProductivity + noise,
-      metric2: baseSleep + (Math.random() - 0.5),
-      correlation: 0.3 + Math.sin((i / 14) * Math.PI) * 0.4,
-    });
-  }
-
-  return [
-    {
-      id: 'pattern-1',
-      name: 'Weekly Cycle',
-      description: 'Productivity follows a weekly pattern',
-      strength: 0.72,
-      start_time: dataPoints[0]?.timestamp ?? Date.now(),
-      end_time: dataPoints.at(-1)?.timestamp ?? Date.now(),
-      data_points: dataPoints,
-      type: 'cyclic',
-    },
-    {
-      id: 'pattern-2',
-      name: 'Sleep-Productivity Link',
-      description: 'Higher sleep correlates with productivity',
-      strength: 0.58,
-      start_time: dataPoints[0]?.timestamp ?? Date.now(),
-      end_time: dataPoints.at(-1)?.timestamp ?? Date.now(),
-      data_points: [],
-      type: 'positive',
-    },
-  ];
 }
 
 export default TemporalGraph;

@@ -189,7 +189,7 @@ describe('ChatWithVault', () => {
   it('clears input after sending', async () => {
     renderWithProviders(<ChatWithVault />);
 
-    const input = screen.getByPlaceholderText('Ask a question about your notes...');
+    const input = screen.getByPlaceholderText('Ask a question about your notes...') as HTMLInputElement;
     fireEvent.change(input, { target: { value: 'Test question' } });
     fireEvent.click(screen.getByRole('button'));
 

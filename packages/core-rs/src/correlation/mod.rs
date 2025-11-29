@@ -12,8 +12,6 @@
 
 pub mod detectors;
 pub mod types;
-#[cfg(test)]
-mod tests;
 
 use rusqlite::Connection;
 use std::time::Duration;

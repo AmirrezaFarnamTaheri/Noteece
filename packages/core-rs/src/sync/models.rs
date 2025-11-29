@@ -75,12 +75,14 @@ pub struct SyncConflict {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncTask {
     pub id: String,
-    pub device_id: String,
-    pub space_id: String,
-    pub direction: String,
+    // Optional fields for broader compatibility
+    pub device_id: Option<String>,
+    pub space_id: Option<String>,
+    pub direction: Option<String>,
+    pub description: Option<String>,
     pub status: String,
-    pub progress: i32,
-    pub created_at: i64,
+    pub progress: f64,
+    pub created_at: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

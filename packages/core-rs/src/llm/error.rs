@@ -91,13 +91,13 @@ pub enum LLMError {
 impl LLMError {
     /// Check if this error is retryable
     pub fn is_retryable(&self) -> bool {
-        matches!(
-            self,
-            LLMError::RateLimitExceeded
-                | LLMError::NetworkError(_)
-                | LLMError::Timeout(_)
-                | LLMError::ProviderError(ref msg) if is_transient_error(msg)
-        )
+        match self {
+            LLMError::RateLimitExceeded => true,
+            LLMError::NetworkError(_) => true,
+            LLMError::Timeout(_) => true,
+            LLMError::ProviderError(msg) => is_transient_error(msg),
+            _ => false,
+        }
     }
 
     /// Check if this is a client error (bad request)

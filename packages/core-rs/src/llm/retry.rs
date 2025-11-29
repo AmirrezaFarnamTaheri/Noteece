@@ -127,6 +127,8 @@ pub fn is_retryable(error: &LLMError) -> bool {
         LLMError::ProviderNotImplemented(_) => false,
         LLMError::CacheError(_) => false,
         LLMError::DatabaseError(_) => false,
+            // Catch-all for any new variants
+            _ => false,
     }
 }
 
@@ -409,16 +411,17 @@ mod tests {
     #[tokio::test]
     async fn test_with_retry_success() {
         let config = RetryConfig::no_retry();
-        let mut call_count = 0;
+        let call_count = std::sync::atomic::AtomicUsize::new(0);
 
         let result = with_retry(&config, || {
-            call_count += 1;
+            call_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
             async { Ok::<_, LLMError>("success") }
         })
         .await;
 
         assert!(result.success);
         assert_eq!(result.attempts, 1);
+        assert_eq!(call_count.load(std::sync::atomic::Ordering::SeqCst), 1);
     }
 
     #[tokio::test]

@@ -345,7 +345,7 @@ impl StreamProcessor {
             return hint;
         }
 
-        let full_text = snapshot.join(" ");
+        let full_text = snapshot.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(" ");
         
         // Score each platform based on indicator matches
         let scores: Vec<(DetectedPlatform, usize)> = vec![
@@ -471,7 +471,7 @@ impl StreamProcessor {
                         engagement: self.extract_engagement(&combined),
                         hashtags: HASHTAG_REGEX.find_iter(&combined).map(|m| m.as_str().to_string()).collect(),
                         urls: URL_REGEX.find_iter(&combined).map(|m| m.as_str().to_string()).collect(),
-                        raw_context_blob: Some(combined),
+                        raw_context_blob: Some(combined.clone()),
                         original_timestamp: TIME_REGEX.find(&combined).map(|m| m.as_str().to_string()),
                     });
                 }
@@ -514,7 +514,7 @@ impl StreamProcessor {
                         engagement: self.extract_engagement(&combined),
                         hashtags: HASHTAG_REGEX.find_iter(&combined).map(|m| m.as_str().to_string()).collect(),
                         urls: URL_REGEX.find_iter(&combined).map(|m| m.as_str().to_string()).collect(),
-                        raw_context_blob: Some(combined),
+                        raw_context_blob: Some(combined.clone()),
                         original_timestamp: TIME_REGEX.find(&combined).map(|m| m.as_str().to_string()),
                     });
                 }
@@ -556,7 +556,7 @@ impl StreamProcessor {
                         engagement: self.extract_engagement(&combined),
                         hashtags: vec![],
                         urls: URL_REGEX.find_iter(&combined).map(|m| m.as_str().to_string()).collect(),
-                        raw_context_blob: Some(combined),
+                        raw_context_blob: Some(combined.clone()),
                         original_timestamp: TIME_REGEX.find(&combined).map(|m| m.as_str().to_string()),
                     });
                 }
@@ -601,7 +601,7 @@ impl StreamProcessor {
                     engagement: EngagementMetrics::default(),
                     hashtags: HASHTAG_REGEX.find_iter(&combined).map(|m| m.as_str().to_string()).collect(),
                     urls: URL_REGEX.find_iter(&combined).map(|m| m.as_str().to_string()).collect(),
-                    raw_context_blob: Some(combined),
+                    raw_context_blob: Some(combined.clone()),
                     original_timestamp: TIME_REGEX.find(&combined).map(|m| m.as_str().to_string()),
                 });
             }
@@ -643,7 +643,7 @@ impl StreamProcessor {
                     engagement: EngagementMetrics::default(),
                     hashtags: vec![],
                     urls: URL_REGEX.find_iter(&combined).map(|m| m.as_str().to_string()).collect(),
-                    raw_context_blob: Some(combined),
+                    raw_context_blob: Some(combined.clone()),
                     original_timestamp: TIME_REGEX.find(&combined).map(|m| m.as_str().to_string()),
                 });
             }
@@ -653,7 +653,7 @@ impl StreamProcessor {
 
     /// Extract dating app profile information
     fn extract_dating_profile(&self, snapshot: &[&String], platform: DetectedPlatform) -> Option<CapturedPost> {
-        let combined = snapshot.join("\n");
+        let combined = snapshot.iter().map(|s| s.as_str()).collect::<Vec<_>>().join("\n");
         
         // Look for name + age pattern common in dating apps
         let name_age_pattern = regex::Regex::new(r"([A-Z][a-z]+),?\s*(\d{2})").ok()?;
@@ -686,7 +686,7 @@ impl StreamProcessor {
 
     /// Extract article content from browsers/reading apps
     fn extract_article_content(&self, snapshot: &[&String], platform: DetectedPlatform) -> Option<CapturedPost> {
-        let combined = snapshot.join("\n");
+        let combined = snapshot.iter().map(|s| s.as_str()).collect::<Vec<_>>().join("\n");
         
         // Look for article title (usually shorter, may have "by Author")
         let title = snapshot.iter()
@@ -729,7 +729,7 @@ impl StreamProcessor {
 
     /// Extract YouTube video content
     fn extract_youtube_content(&self, snapshot: &[&String]) -> Option<CapturedPost> {
-        let combined = snapshot.join("\n");
+        let combined = snapshot.iter().map(|s| s.as_str()).collect::<Vec<_>>().join("\n");
         
         // Video title is usually prominent
         let title = snapshot.iter()
@@ -759,7 +759,7 @@ impl StreamProcessor {
 
     /// Extract TikTok content
     fn extract_tiktok_content(&self, snapshot: &[&String]) -> Option<CapturedPost> {
-        let combined = snapshot.join("\n");
+        let combined = snapshot.iter().map(|s| s.as_str()).collect::<Vec<_>>().join("\n");
         
         // TikTok has @handle and description
         let handle = TWITTER_HANDLE.find(&combined).map(|m| m.as_str().to_string());
@@ -788,7 +788,7 @@ impl StreamProcessor {
 
     /// Extract chat message from WhatsApp/Signal
     fn extract_chat_message(&self, snapshot: &[&String], platform: DetectedPlatform) -> Option<CapturedPost> {
-        let combined = snapshot.join("\n");
+        let combined = snapshot.iter().map(|s| s.as_str()).collect::<Vec<_>>().join("\n");
         
         // Chat messages usually have contact name + message
         let message = snapshot.iter()
@@ -812,7 +812,7 @@ impl StreamProcessor {
             engagement: EngagementMetrics::default(),
             hashtags: vec![],
             urls: URL_REGEX.find_iter(&combined).map(|m| m.as_str().to_string()).collect(),
-            raw_context_blob: Some(combined),
+            raw_context_blob: Some(combined.clone()),
             original_timestamp: TIME_REGEX.find(&combined).map(|m| m.as_str().to_string()),
         })
     }
@@ -851,7 +851,7 @@ impl StreamProcessor {
                     engagement: self.extract_engagement(&combined),
                     hashtags: HASHTAG_REGEX.find_iter(&combined).map(|m| m.as_str().to_string()).collect(),
                     urls: URL_REGEX.find_iter(&combined).map(|m| m.as_str().to_string()).collect(),
-                    raw_context_blob: Some(combined),
+                    raw_context_blob: Some(combined.clone()),
                     original_timestamp: TIME_REGEX.find(&combined).map(|m| m.as_str().to_string()),
                 });
             }

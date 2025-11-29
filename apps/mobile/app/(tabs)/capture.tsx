@@ -83,20 +83,6 @@ export default function CaptureScreen() {
       label: 'Task',
       description: 'Add a quick task',
     },
-    // {
-    //   type: "voice" as CaptureType,
-    //   icon: "mic-outline",
-    //   label: "Voice",
-    //   description: "Record voice memo (Coming Soon)",
-    //   disabled: true,
-    // },
-    // {
-    //   type: "photo" as CaptureType,
-    //   icon: "camera-outline",
-    //   label: "Photo",
-    //   description: "Capture with OCR (Coming Soon)",
-    //   disabled: true,
-    // },
   ];
 
   return (
@@ -178,18 +164,6 @@ export default function CaptureScreen() {
           </View>
         )}
 
-        {/* Coming Soon for Voice/Photo */}
-        {(captureType === 'voice' || captureType === 'photo') && (
-          <View style={styles.comingSoon}>
-            <Ionicons name="construct-outline" size={64} color={colors.textTertiary} />
-            <Text style={styles.comingSoonText}>Coming Soon</Text>
-            <Text style={styles.comingSoonSubtext}>
-              {captureType === 'voice'
-                ? 'Voice recording will be available soon'
-                : 'Photo capture with OCR will be available soon'}
-            </Text>
-          </View>
-        )}
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
