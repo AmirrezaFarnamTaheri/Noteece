@@ -1181,4 +1181,4 @@ If you encounter issues not covered here:
 
 **Happy note-taking! 📝**
 
-For developer documentation, see [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md).
+For developer documentation, see [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)

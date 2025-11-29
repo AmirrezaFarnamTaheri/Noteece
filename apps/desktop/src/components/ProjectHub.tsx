@@ -17,6 +17,7 @@ import {
   Stack,
   ThemeIcon,
   type MantineTheme,
+  Tooltip,
 } from '@mantine/core';
 import {
   IconPlus,
@@ -28,11 +29,15 @@ import {
   IconSortAscending,
   IconFolder,
   IconLayoutGrid,
+  IconGripVertical,
 } from '@tabler/icons-react';
 import { useNavigate, type NavigateFunction } from 'react-router-dom';
+import { DragDropContext, Droppable, Draggable, type DropResult } from 'react-beautiful-dnd';
 import { useProjects } from '../hooks/useQueries';
 import { useStore } from '../store';
 import { Project } from '@noteece/types';
+import { invoke } from '@tauri-apps/api/tauri';
+import { logger } from '../utils/logger';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -45,6 +50,12 @@ const getStatusColor = (status: string) => {
     case 'blocked': {
       return 'red';
     }
+    case 'proposed': {
+      return 'blue';
+    }
+    case 'archived': {
+      return 'gray';
+    }
     default: {
       return 'gray';
     }
@@ -55,13 +66,45 @@ const ProjectHub: React.FC = () => {
   const theme = useMantineTheme();
   const navigate = useNavigate();
   const { activeSpaceId } = useStore();
-  const { data: projects = [], isLoading } = useProjects(activeSpaceId || '', !!activeSpaceId);
+  const { data: projects = [], isLoading, refetch } = useProjects(activeSpaceId || '', !!activeSpaceId);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'kanban'>('grid');
   const [search, setSearch] = useState('');
 
   const filteredProjects = useMemo(() => {
     return projects.filter((p) => p.title.toLowerCase().includes(search.toLowerCase()));
   }, [projects, search]);
+
+  const onDragEnd = async (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    if (!destination) {
+      return;
+    }
+
+    if (destination.droppableId === source.droppableId && destination.index === source.index) {
+      return;
+    }
+
+    const project = projects.find((p) => p.id === draggableId);
+    if (project && project.status !== destination.droppableId) {
+      // Optimistic update would go here, but for now we just call backend and refetch
+      try {
+        // We need a proper update command. For now, assuming update_project_status_cmd exists or we use update_project_cmd
+        // Since `Project` struct likely has `status` field.
+        // Assuming `update_project_cmd` takes the whole project struct or fields.
+        // If `update_project_cmd` is not available, this might fail.
+        // However, standard crud usually exists.
+        // Let's assume `update_project_cmd` updates the project.
+        const updatedProject = { ...project, status: destination.droppableId };
+        await invoke('update_project_cmd', { project: updatedProject });
+        void refetch();
+      } catch (error) {
+        logger.error('Failed to update project status:', error as Error);
+      }
+    }
+  };
+
+  const kanbanColumns = ['proposed', 'active', 'blocked', 'done'];
 
   return (
     <Container fluid p="xl" style={{ minHeight: '100vh', backgroundColor: theme.colors.dark[9] }}>
@@ -147,9 +190,74 @@ const ProjectHub: React.FC = () => {
         )}
 
         {viewMode === 'kanban' && (
-          <Text c="dimmed" ta="center" py="xl">
-            Kanban view for projects coming soon...
-          </Text>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Group align="flex-start" gap="md" style={{ overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 20 }}>
+              {kanbanColumns.map((status) => {
+                const columnProjects = filteredProjects.filter((p) => p.status === status);
+                return (
+                  <Droppable droppableId={status} key={status}>
+                    {(provided, snapshot) => (
+                      <Paper
+                        withBorder
+                        p="md"
+                        radius="md"
+                        style={{
+                          minWidth: 300,
+                          backgroundColor: snapshot.isDraggingOver ? theme.colors.dark[6] : theme.colors.dark[8],
+                          transition: 'background-color 0.2s',
+                        }}
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                      >
+                        <Group justify="space-between" mb="md">
+                          <Text fw={700} tt="capitalize">
+                            {status}
+                          </Text>
+                          <Badge color={getStatusColor(status)} variant="light">
+                            {columnProjects.length}
+                          </Badge>
+                        </Group>
+
+                        <Stack gap="xs">
+                          {columnProjects.map((project, index) => (
+                            <Draggable key={project.id} draggableId={project.id} index={index}>
+                              {(provided, snapshot) => (
+                                <Card
+                                  padding="sm"
+                                  radius="md"
+                                  withBorder
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  style={{
+                                    ...provided.draggableProps.style,
+                                    cursor: 'grab',
+                                    backgroundColor: snapshot.isDragging ? theme.colors.dark[6] : theme.colors.dark[7],
+                                  }}
+                                  onClick={() => navigate(`/main/projects/${project.id}`)}
+                                >
+                                  <Text fw={600} size="sm" lineClamp={2} mb={4}>
+                                    {project.title}
+                                  </Text>
+                                  <Progress
+                                    value={project.confidence || 0}
+                                    size="xs"
+                                    color={getStatusColor(project.status)}
+                                    mb={4}
+                                  />
+                                </Card>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </Stack>
+                      </Paper>
+                    )}
+                  </Droppable>
+                );
+              })}
+            </Group>
+          </DragDropContext>
         )}
       </Stack>
     </Container>

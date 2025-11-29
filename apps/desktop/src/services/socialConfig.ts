@@ -254,6 +254,8 @@ class SocialConfigService {
         }).then(() => {
           buffer = [];
         }).catch(err => {
+          // This console error runs inside the webview and cannot access the app logger.
+          // It is appropriate to leave it for webview debugging.
           console.error('[Noteece] Capture failed:', err);
         });
       }
@@ -285,6 +287,7 @@ class SocialConfigService {
   // Initial capture
   setTimeout(processCapture, 1000);
 
+  // This log is visible in the WebView developer tools
   console.log('[Noteece] Social capture initialized for', PLATFORM_ID);
 })();
 `;

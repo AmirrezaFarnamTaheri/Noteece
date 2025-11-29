@@ -8,8 +8,8 @@
 //! SPDX-License-Identifier: AGPL-3.0-or-later
 //! Copyright (c) 2024-2025 Amirreza 'Farnam' Taheri <taherifarnam@gmail.com>
 
-use crate::db::DbPool;
-use crate::llm::{LlmProvider, LlmRequest, LlmResponse};
+// use crate::db::DbPool;
+use crate::llm::{LLMProvider, LLMRequest, LLMResponse};
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -116,7 +116,7 @@ impl Default for RagConfig {
 pub struct RagPipeline {
     config: RagConfig,
     db_pool: DbPool,
-    llm_provider: Option<Box<dyn LlmProvider>>,
+    llm_provider: Option<Box<dyn LLMProvider>>,
 }
 
 impl RagPipeline {
@@ -130,7 +130,7 @@ impl RagPipeline {
     }
 
     /// Set the LLM provider for answer generation
-    pub fn with_llm_provider(mut self, provider: Box<dyn LlmProvider>) -> Self {
+    pub fn with_llm_provider(mut self, provider: Box<dyn LLMProvider>) -> Self {
         self.llm_provider = Some(provider);
         self
     }

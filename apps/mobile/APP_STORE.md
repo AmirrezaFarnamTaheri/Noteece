@@ -23,25 +23,25 @@ Complete guide for submitting Noteece to iOS App Store and Google Play Store.
 
 **Subtitle/Tagline**: Your Personal Intelligence Vault
 
-**Developer Name**: [Your Name / Company Name]
+**Developer Name**: Noteece Open Source Project
 
-**Support URL**: https://noteece.app/support (or GitHub issues)
+**Support URL**: https://noteece.app/support
 
 **Marketing URL**: https://noteece.app
 
-**Privacy Policy URL**: https://github.com/[your-username]/Noteece/blob/main/PRIVACY.md
+**Privacy Policy URL**: https://github.com/AmirrezaFarnamTaheri/Noteece/blob/main/PRIVACY.md
 
-**Terms of Service URL**: https://github.com/[your-username]/Noteece/blob/main/TERMS.md
+**Terms of Service URL**: https://github.com/AmirrezaFarnamTaheri/Noteece/blob/main/TERMS.md
 
 **Version**: 1.1.0
 
 **Build Number**: 1
 
-**Release Date**: [Target Date]
+**Release Date**: 2025-12-01
 
 **License**: GNU GPL v3.0
 
-**Open Source Repository**: https://github.com/[your-username]/Noteece
+**Open Source Repository**: https://github.com/AmirrezaFarnamTaheri/Noteece
 
 ---
 
@@ -143,8 +143,8 @@ NOTE: Your vault password is unrecoverable by design. Store it securely (we reco
 
 Download Noteece today and experience true data privacy with powerful productivity features.
 
-GitHub: github.com/[your-username]/Noteece
-Support: [support email]
+GitHub: github.com/AmirrezaFarnamTaheri/Noteece
+Support: maintainers@noteece.app
 License: GNU GPL v3.0
 ```
 
@@ -181,7 +181,7 @@ DESIGN:
 • Smooth animations and transitions
 • Optimized for both iPhone and iPad
 
-Open source on GitHub: github.com/[your-username]/Noteece
+Open source on GitHub: github.com/AmirrezaFarnamTaheri/Noteece
 
 We'd love your feedback! Report issues or suggest features on GitHub.
 ```
@@ -234,9 +234,9 @@ TESTING STEPS:
 PRIVACY:
 - No data leaves the device
 - No analytics or tracking
-- Open source: github.com/[your-username]/Noteece
+- Open source: github.com/AmirrezaFarnamTaheri/Noteece
 
-Contact: [your-email]
+Contact: maintainers@noteece.app
 ```
 
 #### App Privacy
@@ -265,7 +265,7 @@ Noteece does not collect any data. All information you create in the app is stor
 
 Optional local network sync is peer-to-peer encrypted and requires no account or cloud service.
 
-For complete details, see our Privacy Policy: github.com/[your-username]/Noteece/blob/main/PRIVACY.md
+For complete details, see our Privacy Policy: github.com/AmirrezaFarnamTaheri/Noteece/blob/main/PRIVACY.md
 ```
 
 ---
@@ -364,8 +364,8 @@ Unlike Notion, Evernote, OneNote, or Keep:
 📖 LEARN MORE
 
 Website: noteece.app
-GitHub: github.com/[your-username]/Noteece
-Support: [support-email]
+GitHub: github.com/AmirrezaFarnamTaheri/Noteece
+Support: maintainers@noteece.app
 License: GNU GPL v3.0
 
 Download now and experience privacy-first productivity!
@@ -385,14 +385,14 @@ Productivity, Notes, Tasks, Privacy, Encryption, Offline, Open Source, Secure
 
 **Contact Details**:
 
-- **Email**: [your-support-email]
+- **Email**: maintainers@noteece.app
 - **Phone**: [optional]
 - **Website**: https://noteece.app
 
 **Privacy Policy URL**:
 
 ```
-https://github.com/[your-username]/Noteece/blob/main/PRIVACY.md
+https://github.com/AmirrezaFarnamTaheri/Noteece/blob/main/PRIVACY.md
 ```
 
 #### Content Rating
@@ -432,7 +432,7 @@ https://github.com/[your-username]/Noteece/blob/main/PRIVACY.md
 ```
 Noteece does not collect, transmit, or have access to any user data. All information is stored encrypted on your device. Optional local network sync is peer-to-peer encrypted with no cloud servers involved.
 
-For details: github.com/[your-username]/Noteece/blob/main/PRIVACY.md
+For details: github.com/AmirrezaFarnamTaheri/Noteece/blob/main/PRIVACY.md
 ```
 
 ---
@@ -878,8 +878,9 @@ Location: `apps/mobile/assets/icon.png`
 
 For questions or updates to this guide:
 
-- GitHub Issues: https://github.com/[your-username]/Noteece/issues
-- Email: [your-email]
+- GitHub Issues: https://github.com/AmirrezaFarnamTaheri/Noteece/issues
+- Email: maintainers@noteece.app
 
 _Last Updated_: November 6, 2025
 _Version_: 1.0
+_Status_: Initial Release

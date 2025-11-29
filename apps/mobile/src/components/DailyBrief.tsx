@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, typography, borderRadius, shadows } from '@/lib/theme';
 import { Insight } from '@/types';
+import { logger } from '@/lib/logger';
 
 interface DailyBriefProps {
   brief: Insight;
@@ -30,7 +31,7 @@ export function DailyBrief({ brief, style }: DailyBriefProps) {
                 style={styles.actionButton}
                 onPress={() => {
                   // Handle action
-                  console.log('Action pressed:', action.actionType);
+                  logger.info('Action pressed: ' + action.actionType);
                 }}
               >
                 <Text style={styles.actionLabel}>{action.label}</Text>

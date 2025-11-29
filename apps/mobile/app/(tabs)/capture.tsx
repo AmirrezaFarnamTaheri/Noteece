@@ -7,7 +7,7 @@ import { colors, typography, spacing } from '@/lib/theme';
 import { dbExecute } from '@/lib/database';
 import { nanoid } from 'nanoid';
 
-type CaptureType = 'note' | 'task' | 'voice' | 'photo';
+type CaptureType = 'note' | 'task';
 
 export default function CaptureScreen() {
   const [captureType, setCaptureType] = useState<CaptureType>('note');
@@ -83,20 +83,6 @@ export default function CaptureScreen() {
       label: 'Task',
       description: 'Add a quick task',
     },
-    // {
-    //   type: "voice" as CaptureType,
-    //   icon: "mic-outline",
-    //   label: "Voice",
-    //   description: "Record voice memo (Coming Soon)",
-    //   disabled: true,
-    // },
-    // {
-    //   type: "photo" as CaptureType,
-    //   icon: "camera-outline",
-    //   label: "Photo",
-    //   description: "Capture with OCR (Coming Soon)",
-    //   disabled: true,
-    // },
   ];
 
   return (
@@ -122,10 +108,8 @@ export default function CaptureScreen() {
               style={[
                 styles.typeOption,
                 captureType === option.type && styles.typeOptionActive,
-                option.disabled && styles.typeOptionDisabled,
               ]}
-              onPress={() => !option.disabled && setCaptureType(option.type)}
-              disabled={option.disabled}
+              onPress={() => setCaptureType(option.type)}
             >
               <View style={styles.typeOptionIconWrapper}>
                 <Ionicons
@@ -134,9 +118,7 @@ export default function CaptureScreen() {
                   color={
                     captureType === option.type
                       ? colors.primary
-                      : option.disabled
-                        ? colors.textTertiary
-                        : colors.textSecondary
+                      : colors.textSecondary
                   }
                 />
               </View>
@@ -144,7 +126,6 @@ export default function CaptureScreen() {
                 style={[
                   styles.typeOptionLabel,
                   captureType === option.type && styles.typeOptionLabelActive,
-                  option.disabled && styles.typeOptionLabelDisabled,
                 ]}
               >
                 {option.label}
@@ -155,41 +136,26 @@ export default function CaptureScreen() {
         </View>
 
         {/* Capture Form */}
-        {(captureType === 'note' || captureType === 'task') && (
-          <View style={styles.form}>
-            <TextInput
-              style={styles.titleInput}
-              placeholder={captureType === 'note' ? 'Note title...' : 'Task title...'}
-              placeholderTextColor={colors.textTertiary}
-              value={title}
-              onChangeText={setTitle}
-              autoFocus
-            />
+        <View style={styles.form}>
+          <TextInput
+            style={styles.titleInput}
+            placeholder={captureType === 'note' ? 'Note title...' : 'Task title...'}
+            placeholderTextColor={colors.textTertiary}
+            value={title}
+            onChangeText={setTitle}
+            autoFocus
+          />
 
-            <TextInput
-              style={styles.contentInput}
-              placeholder={captureType === 'note' ? 'Start writing your note...' : 'Add task description...'}
-              placeholderTextColor={colors.textTertiary}
-              value={content}
-              onChangeText={setContent}
-              multiline
-              textAlignVertical="top"
-            />
-          </View>
-        )}
-
-        {/* Coming Soon for Voice/Photo */}
-        {(captureType === 'voice' || captureType === 'photo') && (
-          <View style={styles.comingSoon}>
-            <Ionicons name="construct-outline" size={64} color={colors.textTertiary} />
-            <Text style={styles.comingSoonText}>Coming Soon</Text>
-            <Text style={styles.comingSoonSubtext}>
-              {captureType === 'voice'
-                ? 'Voice recording will be available soon'
-                : 'Photo capture with OCR will be available soon'}
-            </Text>
-          </View>
-        )}
+          <TextInput
+            style={styles.contentInput}
+            placeholder={captureType === 'note' ? 'Start writing your note...' : 'Add task description...'}
+            placeholderTextColor={colors.textTertiary}
+            value={content}
+            onChangeText={setContent}
+            multiline
+            textAlignVertical="top"
+          />
+        </View>
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>

@@ -114,6 +114,10 @@ impl P2pSync {
 
 // Conversion helpers between Database SyncDelta and Protocol SyncDelta
 pub fn db_delta_to_protocol_delta(db_delta: DbSyncDelta) -> SyncDelta {
+    // WARNING: P2P sync currently lacks sequence numbers.
+    // This may cause ordering issues if multiple updates happen quickly.
+    log::warn!("[p2p] Converting DB delta to protocol delta without sequence number.");
+
     SyncDelta {
         operation: match db_delta.operation {
             DbSyncOperation::Create => DeltaOperation::Create,
@@ -130,6 +134,10 @@ pub fn db_delta_to_protocol_delta(db_delta: DbSyncDelta) -> SyncDelta {
 }
 
 pub fn protocol_delta_to_db_delta(proto_delta: SyncDelta) -> DbSyncDelta {
+    // WARNING: P2P sync currently lacks vector clocks.
+    // This implies eventual consistency is not guaranteed in complex conflict scenarios.
+    log::warn!("[p2p] Converting protocol delta to DB delta without vector clocks.");
+
     DbSyncDelta {
         entity_type: proto_delta.entity_type,
         entity_id: proto_delta.entity_id,
