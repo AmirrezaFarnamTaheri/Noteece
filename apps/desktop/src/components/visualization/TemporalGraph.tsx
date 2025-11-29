@@ -24,7 +24,7 @@ import {
   Box,
   Slider,
   ThemeIcon,
-  Alert,
+  Button,
 } from '@mantine/core';
 import {
   LineChart,
@@ -42,7 +42,7 @@ import {
 } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
-import { IconChartDots3, IconZoomIn, IconZoomOut, IconRefresh, IconAlertCircle } from '@tabler/icons-react';
+import { IconChartDots3, IconZoomIn, IconZoomOut, IconRefresh, IconFilter, IconInfoCircle } from '@tabler/icons-react';
 
 interface CorrelationPoint {
   timestamp: number;
@@ -107,19 +107,23 @@ export function TemporalGraph({
   const [brushRange, setBrushRange] = useState<[number, number] | null>(null);
 
   // Fetch temporal correlation data
-  const { data, isLoading, refetch, isError } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['temporal-graph', spaceId, metric1, metric2, timeRange],
     queryFn: async (): Promise<TemporalPattern[]> => {
-      // Use real data or fail. No more mock data.
-      return await invoke('get_temporal_correlations_cmd', {
-        spaceId,
-        metric1,
-        metric2,
-        timeRange,
-      });
+      try {
+        return await invoke('get_temporal_correlations_cmd', {
+          spaceId,
+          metric1,
+          metric2,
+          timeRange,
+        });
+      } catch (error) {
+        // Return empty array instead of mock data
+        console.warn("Failed to fetch temporal correlations", error);
+        return [];
+      }
     },
     staleTime: 300_000,
-    retry: false,
   });
 
   // Process data for visualization
@@ -197,33 +201,23 @@ export function TemporalGraph({
     );
   }
 
-  if (isError || !data || data.length === 0) {
-      return (
-        <Paper shadow="sm" p="md" radius="md" withBorder>
-            <Stack gap="md">
-                <Group justify="space-between" align="center">
-                    <Group gap="xs">
-                        <ThemeIcon color="indigo" variant="light" size="lg">
-                        <IconChartDots3 size={20} />
-                        </ThemeIcon>
-                        <Box>
-                        <Title order={4}>Temporal Correlations</Title>
-                        <Text size="xs" c="dimmed">
-                            {metric1} vs {metric2}
-                        </Text>
-                        </Box>
-                    </Group>
-                </Group>
-                <Center h={300}>
-                    <Stack align="center">
-                        <IconAlertCircle size={48} color="var(--mantine-color-gray-5)" />
-                        <Text c="dimmed">No correlation data available for the selected range.</Text>
-                        <Button variant="light" size="xs" onClick={() => refetch()} leftSection={<IconRefresh size={14} />}>Retry</Button>
-                    </Stack>
-                </Center>
+  if (!data || data.length === 0) {
+    return (
+      <Paper shadow="sm" p="xl" radius="md" withBorder>
+        <Center>
+            <Stack align="center" gap="md">
+                <ThemeIcon size={64} radius="xl" variant="light" color="gray">
+                    <IconInfoCircle size={40} />
+                </ThemeIcon>
+                <Title order={4}>Insufficient Data</Title>
+                <Text size="sm" c="dimmed" ta="center" maw={400}>
+                    Not enough correlation data available to generate a temporal graph.
+                    Continue tracking your metrics to see insights here.
+                </Text>
             </Stack>
-        </Paper>
-      );
+        </Center>
+      </Paper>
+    )
   }
 
   return (

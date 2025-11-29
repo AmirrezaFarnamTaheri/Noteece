@@ -95,7 +95,7 @@ impl LLMError {
             LLMError::RateLimitExceeded => true,
             LLMError::NetworkError(_) => true,
             LLMError::Timeout(_) => true,
-            LLMError::ProviderError(ref msg) if is_transient_error(msg) => true,
+            LLMError::ProviderError(msg) => is_transient_error(msg),
             _ => false,
         }
     }

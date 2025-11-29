@@ -50,6 +50,10 @@ rrule = "0.14.0"
 bloomfilter = "3.0.1"
 lazy_static = "1.5.0"
 jni = { version = "0.21.1", optional = true }
+futures = "0.3.31"
+ed25519-dalek = "2.2.0"
+r2d2 = "0.8.10"
+r2d2_sqlite = "0.31.0"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

@@ -130,3 +130,6 @@ pub use materialized_views::{
     init_materialized_views, get_dashboard_stats, refresh_dashboard_stats,
     refresh_all_dashboard_stats, DashboardStats,
 };
+
+/// Type alias for r2d2 connection pool with Sqlite
+pub type DbPool = r2d2::Pool<r2d2_sqlite::SqliteConnectionManager>;

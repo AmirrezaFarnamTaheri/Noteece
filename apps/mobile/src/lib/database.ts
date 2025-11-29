@@ -1,6 +1,5 @@
 import * as SQLite from 'expo-sqlite';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { logger } from './logger';
 
 let db: SQLite.SQLiteDatabase | null = null;
 
@@ -14,11 +13,11 @@ const DB_VERSION_KEY = 'database_version';
 async function runMigrations(currentVersion: number): Promise<void> {
   if (!db) throw new Error('Database not initialized');
 
-  logger.info(`Running migrations from version ${currentVersion} to ${CURRENT_DB_VERSION}`);
+  console.log(`Running migrations from version ${currentVersion} to ${CURRENT_DB_VERSION}`);
 
   // Migration from v1 to v2: Add new columns to calendar_event table
   if (currentVersion < 2) {
-    logger.info('Running migration v1 -> v2: Adding columns to calendar_event');
+    console.log('Running migration v1 -> v2: Adding columns to calendar_event');
 
     try {
       // Ensure table exists first (handling upgrade from v0/fresh installs via migration)
@@ -43,43 +42,43 @@ async function runMigrations(currentVersion: number): Promise<void> {
       // Add space_id if it doesn't exist
       if (!columnNames.includes('space_id')) {
         await db.execAsync('ALTER TABLE calendar_event ADD COLUMN space_id TEXT');
-        logger.info('Added space_id column');
+        console.log('Added space_id column');
       }
 
       // Add all_day if it doesn't exist
       if (!columnNames.includes('all_day')) {
         await db.execAsync('ALTER TABLE calendar_event ADD COLUMN all_day INTEGER NOT NULL DEFAULT 0');
-        logger.info('Added all_day column');
+        console.log('Added all_day column');
       }
 
       // Add recurrence_rule if it doesn't exist
       if (!columnNames.includes('recurrence_rule')) {
         await db.execAsync('ALTER TABLE calendar_event ADD COLUMN recurrence_rule TEXT');
-        logger.info('Added recurrence_rule column');
+        console.log('Added recurrence_rule column');
       }
 
       // Add created_at if it doesn't exist
       if (!columnNames.includes('created_at')) {
         await db.execAsync('ALTER TABLE calendar_event ADD COLUMN created_at INTEGER');
-        logger.info('Added created_at column');
+        console.log('Added created_at column');
       }
 
       // Add updated_at if it doesn't exist
       if (!columnNames.includes('updated_at')) {
         await db.execAsync('ALTER TABLE calendar_event ADD COLUMN updated_at INTEGER');
-        logger.info('Added updated_at column');
+        console.log('Added updated_at column');
       }
 
-      logger.info('Migration v1 -> v2 completed successfully');
+      console.log('Migration v1 -> v2 completed successfully');
     } catch (error) {
-      logger.error('Migration v1 -> v2 failed:', error as Error);
+      console.error('Migration v1 -> v2 failed:', error);
       throw error;
     }
   }
 
   // Migration from v2 to v3: Add social media suite tables
   if (currentVersion < 3) {
-    logger.info('Running migration v2 -> v3: Adding social media suite tables');
+    console.log('Running migration v2 -> v3: Adding social media suite tables');
 
     try {
       await db.execAsync(`
@@ -205,16 +204,16 @@ async function runMigrations(currentVersion: number): Promise<void> {
           WHERE platform_post_id IS NOT NULL;
       `);
 
-      logger.info('Migration v2 -> v3 completed successfully');
+      console.log('Migration v2 -> v3 completed successfully');
     } catch (error) {
-      logger.error('Migration v2 -> v3 failed:', error as Error);
+      console.error('Migration v2 -> v3 failed:', error);
       throw error;
     }
   }
 
   // Migration from v3 to v4: Add Music tables and ensure Health/Calendar tables
   if (currentVersion < 4) {
-    logger.info('Running migration v3 -> v4: Adding Music, Health, and Calendar tables');
+    console.log('Running migration v3 -> v4: Adding Music, Health, and Calendar tables');
 
     try {
       await db.execAsync(`
@@ -296,16 +295,16 @@ async function runMigrations(currentVersion: number): Promise<void> {
         CREATE INDEX IF NOT EXISTS idx_calendar_event_time ON calendar_event(start_time);
       `);
 
-      logger.info('Migration v3 -> v4 completed successfully');
+      console.log('Migration v3 -> v4 completed successfully');
     } catch (error) {
-      logger.error('Migration v3 -> v4 failed:', error as Error);
+      console.error('Migration v3 -> v4 failed:', error);
       throw error;
     }
   }
 
   // Migration from v4 to v5: Consolidate with core-rs schema
   if (currentVersion < 5) {
-    logger.info('Running migration v4 -> v5: Consolidate with core-rs schema');
+    console.log('Running migration v4 -> v5: Consolidate with core-rs schema');
     try {
       await db.execAsync(`
         -- Create Space table
@@ -419,16 +418,16 @@ async function runMigrations(currentVersion: number): Promise<void> {
 
         CREATE INDEX idx_note_mod ON note(modified_at DESC);
       `);
-      logger.info('Migration v4 -> v5 completed successfully');
+      console.log('Migration v4 -> v5 completed successfully');
     } catch (error) {
-      logger.error('Migration v4 -> v5 failed:', error as Error);
+      console.error('Migration v4 -> v5 failed:', error);
       throw error;
     }
   }
 
   // Update database version
   await AsyncStorage.setItem(DB_VERSION_KEY, CURRENT_DB_VERSION.toString());
-  logger.info(`Database migrated to version ${CURRENT_DB_VERSION}`);
+  console.log(`Database migrated to version ${CURRENT_DB_VERSION}`);
 }
 
 export const initializeDatabase = async (): Promise<void> => {
@@ -588,12 +587,12 @@ export const initializeDatabase = async (): Promise<void> => {
     if (currentVersion < CURRENT_DB_VERSION) {
       await runMigrations(currentVersion);
     } else {
-      logger.info(`Database already at version ${CURRENT_DB_VERSION}`);
+      console.log(`Database already at version ${CURRENT_DB_VERSION}`);
     }
 
-    logger.info('Database initialized successfully');
+    console.log('Database initialized successfully');
   } catch (error) {
-    logger.error('Failed to initialize database:', error as Error);
+    console.error('Failed to initialize database:', error);
     throw error;
   }
 };

@@ -8,7 +8,7 @@
 //! SPDX-License-Identifier: AGPL-3.0-or-later
 //! Copyright (c) 2024-2025 Amirreza 'Farnam' Taheri <taherifarnam@gmail.com>
 
-// use crate::db::DbPool;
+use crate::db::DbPool;
 use crate::llm::{LLMProvider, LLMRequest, LLMResponse};
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
@@ -32,6 +32,9 @@ pub enum RagError {
 
     #[error("Vector store not initialized")]
     VectorStoreNotInitialized,
+
+    #[error("Connection pool error: {0}")]
+    PoolError(#[from] r2d2::Error),
 }
 
 /// Document chunk for RAG indexing
@@ -351,15 +354,18 @@ impl RagPipeline {
                 params![fts_query, space_id, query.max_context_chunks as i64],
                 |row| self.row_to_search_result(row),
             )?
+            .filter_map(|r| r.ok())
+            .filter(|r| r.score >= query.min_relevance_score)
+            .collect()
         } else {
             stmt.query_map(
                 params![fts_query, query.max_context_chunks as i64],
                 |row| self.row_to_search_result(row),
             )?
-        }
-        .filter_map(|r| r.ok())
-        .filter(|r| r.score >= query.min_relevance_score)
-        .collect();
+            .filter_map(|r| r.ok())
+            .filter(|r| r.score >= query.min_relevance_score)
+            .collect()
+        };
 
         Ok(results)
     }
@@ -454,20 +460,22 @@ Be concise but thorough."#;
             context, query.question
         );
 
-        let request = LlmRequest {
+        let request = LLMRequest {
             messages: vec![
                 crate::llm::Message {
-                    role: "system".to_string(),
+                    role: crate::llm::Role::System,
                     content: system_prompt.to_string(),
                 },
                 crate::llm::Message {
-                    role: "user".to_string(),
+                    role: crate::llm::Role::User,
                     content: user_prompt,
                 },
             ],
             temperature: Some(0.3),
             max_tokens: Some(1024),
-            stream: false,
+            top_p: None,
+            stop_sequences: None,
+            model: None,
         };
 
         let response = llm
@@ -475,12 +483,13 @@ Be concise but thorough."#;
             .await
             .map_err(|e| RagError::LlmError(e.to_string()))?;
 
+        let confidence = self.calculate_confidence(&results);
         Ok(RagResponse {
             answer: response.content,
             sources: results,
-            tokens_used: response.usage.map(|u| u.total_tokens).unwrap_or(0),
+            tokens_used: response.tokens_used as u32,
             model: response.model,
-            confidence: self.calculate_confidence(&results),
+            confidence,
         })
     }
 

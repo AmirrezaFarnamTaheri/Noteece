@@ -5,7 +5,6 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 import { chacha20poly1305 } from '@noble/ciphers/chacha';
 import { argon2id } from '@noble/hashes/argon2';
-import { logger } from '@/lib/logger';
 
 /**
  * Vault Security Architecture
@@ -254,14 +253,14 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     try {
       // Validate password input
       if (!password || password.length < 8) {
-        logger.warn('Password must be at least 8 characters');
+        console.warn('Password must be at least 8 characters');
         return false;
       }
 
       // Load vault metadata
       const vaultData = await AsyncStorage.getItem('vault_metadata');
       if (!vaultData) {
-        logger.error('No vault found');
+        console.error('No vault found');
         return false;
       }
 
@@ -275,7 +274,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         !metadata.encryptedDek ||
         !metadata.dekNonce
       ) {
-        logger.error('Invalid vault metadata structure');
+        console.error('Invalid vault metadata structure');
         return false;
       }
 
@@ -290,7 +289,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       const isValid = await verifyPassword(password, passwordSalt, passwordHash);
 
       if (!isValid) {
-        logger.warn('Invalid password');
+        console.warn('Invalid password');
         return false;
       }
 
@@ -302,7 +301,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
       // Validate DEK
       if (dek.length !== 32) {
-        logger.error('Invalid DEK length after decryption');
+        console.error('Invalid DEK length after decryption');
         return false;
       }
 
@@ -323,7 +322,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
       return true;
     } catch (error) {
-      logger.error('Failed to unlock vault:', error as Error);
+      console.error('Failed to unlock vault:', error);
       return false;
     }
   },
@@ -339,7 +338,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     try {
       // Validate password strength
       if (!password || password.length < 8) {
-        logger.error('Password must be at least 8 characters');
+        console.error('Password must be at least 8 characters');
         return false;
       }
 
@@ -389,7 +388,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
       return true;
     } catch (error) {
-      logger.error('Failed to create vault:', error as Error);
+      console.error('Failed to create vault:', error);
       return false;
     }
   },
@@ -401,7 +400,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       set({ hasVault });
       return hasVault;
     } catch (error) {
-      logger.error('Failed to check vault:', error as Error);
+      console.error('Failed to check vault:', error);
       return false;
     }
   },
@@ -413,7 +412,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       const enrolled = await LocalAuthentication.isEnrolledAsync();
       return compatible && enrolled;
     } catch (error) {
-      logger.error('Failed to check biometric availability:', error as Error);
+      console.error('Failed to check biometric availability:', error);
       return false;
     }
   },
@@ -424,7 +423,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       const biometricData = await SecureStore.getItemAsync('biometric_vault_data');
       return biometricData !== null;
     } catch (error) {
-      logger.error('Failed to check biometric status:', error as Error);
+      console.error('Failed to check biometric status:', error);
       return false;
     }
   },
@@ -435,7 +434,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       // Verify password is correct first
       const vaultData = await AsyncStorage.getItem('vault_metadata');
       if (!vaultData) {
-        logger.error('No vault found');
+        console.error('No vault found');
         return false;
       }
 
@@ -446,7 +445,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       // Verify password
       const isValid = await verifyPassword(password, passwordSalt, passwordHash);
       if (!isValid) {
-        logger.warn('Invalid password');
+        console.warn('Invalid password');
         return false;
       }
 
@@ -492,10 +491,10 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
       await SecureStore.setItemAsync('biometric_vault_data', JSON.stringify(biometricData), secureStoreOptions);
 
-      logger.info('Biometric unlock enabled successfully');
+      console.log('Biometric unlock enabled successfully');
       return true;
     } catch (error) {
-      logger.error('Failed to enable biometric unlock:', error as Error);
+      console.error('Failed to enable biometric unlock:', error);
       return false;
     }
   },
@@ -504,10 +503,10 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   disableBiometric: async () => {
     try {
       await SecureStore.deleteItemAsync('biometric_vault_data');
-      logger.info('Biometric unlock disabled');
+      console.log('Biometric unlock disabled');
       return true;
     } catch (error) {
-      logger.error('Failed to disable biometric unlock:', error as Error);
+      console.error('Failed to disable biometric unlock:', error);
       return false;
     }
   },
@@ -520,7 +519,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       const enrolled = await LocalAuthentication.isEnrolledAsync();
 
       if (!available || !enrolled) {
-        logger.warn('Biometric authentication not available');
+        console.warn('Biometric authentication not available');
         return false;
       }
 
@@ -532,7 +531,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       });
 
       if (!result.success) {
-        logger.warn('Biometric authentication failed');
+        console.warn('Biometric authentication failed');
         return false;
       }
 
@@ -540,7 +539,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       const biometricDataStr = await SecureStore.getItemAsync('biometric_vault_data');
 
       if (!biometricDataStr) {
-        logger.error('No biometric data found');
+        console.error('No biometric data found');
         return false;
       }
 
@@ -549,7 +548,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       try {
         biometricData = JSON.parse(biometricDataStr);
       } catch (error) {
-        logger.error('Malformed biometric data JSON:', error as Error);
+        console.error('Malformed biometric data JSON:', error);
         return false;
       }
 
@@ -560,7 +559,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         typeof biometricData.dek !== 'string' ||
         (biometricData.spaceId && typeof biometricData.spaceId !== 'string')
       ) {
-        logger.error('Invalid biometric data shape');
+        console.error('Invalid biometric data shape');
         return false;
       }
 
@@ -569,13 +568,13 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       try {
         dek = Uint8Array.from(atob(biometricData.dek), (c) => c.charCodeAt(0));
       } catch (error) {
-        logger.error('Failed to decode DEK from base64:', error as Error);
+        console.error('Failed to decode DEK from base64:', error);
         return false;
       }
 
       // Validate DEK length
       if (dek.length !== 32) {
-        logger.error('Invalid DEK length');
+        console.error('Invalid DEK length');
         return false;
       }
 
@@ -595,10 +594,10 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         dek,
       });
 
-      logger.info('Vault unlocked with biometric authentication');
+      console.log('Vault unlocked with biometric authentication');
       return true;
     } catch (error) {
-      logger.error('Failed to unlock with biometric:', error as Error);
+      console.error('Failed to unlock with biometric:', error);
       return false;
     }
   },

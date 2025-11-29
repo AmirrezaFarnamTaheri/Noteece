@@ -34,7 +34,6 @@ import {
   removeCategory,
   createCategory,
 } from '../lib/social-database';
-import { logger } from '@/lib/logger';
 import type { TimelinePost, SocialCategory, TimelineFilters, Platform } from '../types/social';
 import { PLATFORM_CONFIGS } from '../types/social';
 
@@ -92,7 +91,7 @@ export function SocialHub() {
         setSavedFilters(JSON.parse(saved));
       }
     } catch (error) {
-      logger.error('Failed to load saved filters:', error as Error);
+      console.error('Failed to load saved filters:', error);
     }
   };
 
@@ -120,7 +119,7 @@ export function SocialHub() {
       setNewFilterName('');
       Alert.alert('Success', 'Filter saved successfully');
     } catch (error) {
-      logger.error('Failed to save filter:', error as Error);
+      console.error('Failed to save filter:', error);
       Alert.alert('Error', 'Failed to save filter');
     }
   };
@@ -141,7 +140,7 @@ export function SocialHub() {
       setPosts(newPosts);
       setHasMore(newPosts.length === 50);
     } catch (error) {
-      logger.error('Failed to apply filter:', error as Error);
+      console.error('Failed to apply filter:', error);
     }
   };
 
@@ -153,7 +152,7 @@ export function SocialHub() {
     try {
       await AsyncStorage.setItem(`social_filters_${spaceId}`, JSON.stringify(updated));
     } catch (error) {
-      logger.error('Failed to delete filter:', error as Error);
+      console.error('Failed to delete filter:', error);
     }
   };
 
@@ -165,7 +164,7 @@ export function SocialHub() {
       setPosts(fetchedPosts);
       setCategories(fetchedCategories);
     } catch (err) {
-      logger.error('Failed to load social data:', err as Error);
+      console.error('Failed to load social data:', err);
       setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setLoading(false);
@@ -198,7 +197,7 @@ export function SocialHub() {
       await refresh();
       setHasMore(newPosts.length === 50);
     } catch (error) {
-      logger.error('Failed to refresh:', error as Error);
+      console.error('Failed to refresh:', error);
     } finally {
       setRefreshing(false);
     }
@@ -225,7 +224,7 @@ export function SocialHub() {
         setHasMore(false);
       }
     } catch (error) {
-      logger.error('Failed to load more:', error as Error);
+      console.error('Failed to load more:', error);
     }
   };
 
@@ -251,7 +250,7 @@ export function SocialHub() {
       // Refresh posts to show updated categories
       await handleRefresh();
     } catch (error) {
-      logger.error('Failed to assign categories:', error as Error);
+      console.error('Failed to assign categories:', error);
     }
   };
 
@@ -260,7 +259,7 @@ export function SocialHub() {
       const newCategory = await createCategory(spaceId, name, color, icon);
       setCategories([...categories, newCategory]);
     } catch (error) {
-      logger.error('Failed to create category:', error as Error);
+      console.error('Failed to create category:', error);
     }
   };
 
@@ -486,7 +485,7 @@ export function SocialHub() {
               }}
               onCategoryPress={(categoryId) => {
                 // Navigate to category view
-                logger.info('Category pressed: ' + categoryId);
+                console.log('Category pressed:', categoryId);
               }}
             />
           )}

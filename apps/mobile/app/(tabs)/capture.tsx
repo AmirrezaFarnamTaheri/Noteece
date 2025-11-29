@@ -7,7 +7,7 @@ import { colors, typography, spacing } from '@/lib/theme';
 import { dbExecute } from '@/lib/database';
 import { nanoid } from 'nanoid';
 
-type CaptureType = 'note' | 'task';
+type CaptureType = 'note' | 'task' | 'voice' | 'photo';
 
 export default function CaptureScreen() {
   const [captureType, setCaptureType] = useState<CaptureType>('note');
@@ -108,8 +108,10 @@ export default function CaptureScreen() {
               style={[
                 styles.typeOption,
                 captureType === option.type && styles.typeOptionActive,
+                option.disabled && styles.typeOptionDisabled,
               ]}
-              onPress={() => setCaptureType(option.type)}
+              onPress={() => !option.disabled && setCaptureType(option.type)}
+              disabled={option.disabled}
             >
               <View style={styles.typeOptionIconWrapper}>
                 <Ionicons
@@ -118,7 +120,9 @@ export default function CaptureScreen() {
                   color={
                     captureType === option.type
                       ? colors.primary
-                      : colors.textSecondary
+                      : option.disabled
+                        ? colors.textTertiary
+                        : colors.textSecondary
                   }
                 />
               </View>
@@ -126,6 +130,7 @@ export default function CaptureScreen() {
                 style={[
                   styles.typeOptionLabel,
                   captureType === option.type && styles.typeOptionLabelActive,
+                  option.disabled && styles.typeOptionLabelDisabled,
                 ]}
               >
                 {option.label}
@@ -136,26 +141,29 @@ export default function CaptureScreen() {
         </View>
 
         {/* Capture Form */}
-        <View style={styles.form}>
-          <TextInput
-            style={styles.titleInput}
-            placeholder={captureType === 'note' ? 'Note title...' : 'Task title...'}
-            placeholderTextColor={colors.textTertiary}
-            value={title}
-            onChangeText={setTitle}
-            autoFocus
-          />
+        {(captureType === 'note' || captureType === 'task') && (
+          <View style={styles.form}>
+            <TextInput
+              style={styles.titleInput}
+              placeholder={captureType === 'note' ? 'Note title...' : 'Task title...'}
+              placeholderTextColor={colors.textTertiary}
+              value={title}
+              onChangeText={setTitle}
+              autoFocus
+            />
 
-          <TextInput
-            style={styles.contentInput}
-            placeholder={captureType === 'note' ? 'Start writing your note...' : 'Add task description...'}
-            placeholderTextColor={colors.textTertiary}
-            value={content}
-            onChangeText={setContent}
-            multiline
-            textAlignVertical="top"
-          />
-        </View>
+            <TextInput
+              style={styles.contentInput}
+              placeholder={captureType === 'note' ? 'Start writing your note...' : 'Add task description...'}
+              placeholderTextColor={colors.textTertiary}
+              value={content}
+              onChangeText={setContent}
+              multiline
+              textAlignVertical="top"
+            />
+          </View>
+        )}
+
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>

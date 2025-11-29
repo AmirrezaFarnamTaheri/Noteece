@@ -460,8 +460,8 @@ You cannot prevent recipients from redistributing for free.
 
 For licensing questions:
 
-- **Email**: maintainers@noteece.app
-- **GitHub**: https://github.com/AmirrezaFarnamTaheri/Noteece/issues
+- **Email**: legal@noteece.app (fictional - update with real contact)
+- **GitHub**: https://github.com/[your-username]/Noteece/issues
 - **License**: Full text in `LICENSE` file
 
 ---

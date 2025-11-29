@@ -2,6 +2,10 @@
 
 **Last Updated:** 2025-11-18
 
+**[NEEDS LEGAL REVIEW]**
+
+_This document is a placeholder and requires review by a qualified legal professional. The content is based on standard templates and has not been tailored to specific jurisdictions or business needs._
+
 ## Our Commitment to Privacy
 
 Your privacy is critically important to us. Noteece is designed from the ground up to be a "zero-knowledge" application. This means we, the developers, have no access to your personal data or content.
@@ -30,5 +34,5 @@ We may update this Privacy Policy from time to time. We will notify you of any c
 
 ---
 
-**Company Name:** Noteece Open Source Project
-**Contact:** maintainers@noteece.app
+**Company Name:** [Your Company Name]
+**Contact:** [Your Contact Information]

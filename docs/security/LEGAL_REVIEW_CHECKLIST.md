@@ -203,7 +203,7 @@ grep -r "noteece.app" PRIVACY.md TERMS.md LICENSE_REVIEW.md
 
 **Files to Update**:
 
-- `PRIVACY.md`: Update `https://github.com/AmirrezaFarnamTaheri/Noteece`
+- `PRIVACY.md`: Update `https://github.com/[your-username]/Noteece`
 - `TERMS.md`: Update GitHub links
 - `LICENSE_REVIEW.md`: Update GitHub links
 
@@ -211,17 +211,17 @@ grep -r "noteece.app" PRIVACY.md TERMS.md LICENSE_REVIEW.md
 
 ```bash
 # Find all placeholder GitHub links
-grep -r "github.com/AmirrezaFarnamTaheri" *.md
+grep -r "github.com/\[your-username\]" *.md
 
 # Replace with actual repository
-# Example: sed -i 's|AmirrezaFarnamTaheri|AmirrezaFarnamTaheri|g' PRIVACY.md
+# Example: sed -i 's|\[your-username\]|AmirrezaFarnamTaheri|g' PRIVACY.md
 ```
 
 ### 3. Jurisdiction
 
 **File to Update**: `TERMS.md` section 12
 
-**Current**: `California, United States`
+**Current**: `[Your Jurisdiction - Update This]`
 
 **Action**: Replace with actual jurisdiction, for example:
 
@@ -437,7 +437,7 @@ While we've done our best to create comprehensive, compliant legal documents for
 
 Questions about this checklist (not legal advice):
 
-- GitHub Issues: https://github.com/AmirrezaFarnamTaheri/Noteece/issues
+- GitHub Issues: https://github.com/[your-username]/Noteece/issues
 - Documentation: See other .md files in repository
 
 For legal advice about YOUR specific situation:

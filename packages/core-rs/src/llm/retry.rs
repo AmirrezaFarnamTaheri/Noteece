@@ -127,6 +127,8 @@ pub fn is_retryable(error: &LLMError) -> bool {
         LLMError::ProviderNotImplemented(_) => false,
         LLMError::CacheError(_) => false,
         LLMError::DatabaseError(_) => false,
+            // Catch-all for any new variants
+            _ => false,
     }
 }
 

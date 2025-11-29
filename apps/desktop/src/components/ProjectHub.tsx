@@ -17,7 +17,6 @@ import {
   Stack,
   ThemeIcon,
   type MantineTheme,
-  Tooltip,
 } from '@mantine/core';
 import {
   IconPlus,
@@ -29,15 +28,15 @@ import {
   IconSortAscending,
   IconFolder,
   IconLayoutGrid,
-  IconGripVertical,
 } from '@tabler/icons-react';
 import { useNavigate, type NavigateFunction } from 'react-router-dom';
-import { DragDropContext, Droppable, Draggable, type DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { useQueryClient } from '@tanstack/react-query';
 import { useProjects } from '../hooks/useQueries';
 import { useStore } from '../store';
 import { Project } from '@noteece/types';
 import { invoke } from '@tauri-apps/api/tauri';
-import { logger } from '../utils/logger';
+import { logger } from '@/utils/logger';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -53,9 +52,6 @@ const getStatusColor = (status: string) => {
     case 'proposed': {
       return 'blue';
     }
-    case 'archived': {
-      return 'gray';
-    }
     default: {
       return 'gray';
     }
@@ -65,8 +61,9 @@ const getStatusColor = (status: string) => {
 const ProjectHub: React.FC = () => {
   const theme = useMantineTheme();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { activeSpaceId } = useStore();
-  const { data: projects = [], isLoading, refetch } = useProjects(activeSpaceId || '', !!activeSpaceId);
+  const { data: projects = [], isLoading } = useProjects(activeSpaceId || '', !!activeSpaceId);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'kanban'>('grid');
   const [search, setSearch] = useState('');
 
@@ -86,25 +83,28 @@ const ProjectHub: React.FC = () => {
     }
 
     const project = projects.find((p) => p.id === draggableId);
-    if (project && project.status !== destination.droppableId) {
-      // Optimistic update would go here, but for now we just call backend and refetch
+    if (project) {
+      // Optimistic update
+      const updatedProject = { ...project, status: destination.droppableId };
+
       try {
-        // We need a proper update command. For now, assuming update_project_status_cmd exists or we use update_project_cmd
-        // Since `Project` struct likely has `status` field.
-        // Assuming `update_project_cmd` takes the whole project struct or fields.
-        // If `update_project_cmd` is not available, this might fail.
-        // However, standard crud usually exists.
-        // Let's assume `update_project_cmd` updates the project.
-        const updatedProject = { ...project, status: destination.droppableId };
         await invoke('update_project_cmd', { project: updatedProject });
-        void refetch();
+        queryClient.invalidateQueries({ queryKey: ['projects', activeSpaceId] });
       } catch (error) {
         logger.error('Failed to update project status:', error as Error);
+        // Revert on error would require more complex state management or just refetch
+        queryClient.invalidateQueries({ queryKey: ['projects', activeSpaceId] });
       }
     }
   };
 
-  const kanbanColumns = ['proposed', 'active', 'blocked', 'done'];
+  // Kanban columns definition
+  const columns = {
+    proposed: { title: 'Proposed', color: 'blue' },
+    active: { title: 'Active', color: 'violet' },
+    blocked: { title: 'Blocked', color: 'red' },
+    done: { title: 'Done', color: 'teal' },
+  };
 
   return (
     <Container fluid p="xl" style={{ minHeight: '100vh', backgroundColor: theme.colors.dark[9] }}>
@@ -191,61 +191,57 @@ const ProjectHub: React.FC = () => {
 
         {viewMode === 'kanban' && (
           <DragDropContext onDragEnd={onDragEnd}>
-            <Group align="flex-start" gap="md" style={{ overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 20 }}>
-              {kanbanColumns.map((status) => {
-                const columnProjects = filteredProjects.filter((p) => p.status === status);
+            <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '16px' }}>
+              {Object.entries(columns).map(([columnId, column]) => {
+                const columnProjects = filteredProjects.filter((p) => p.status === columnId);
                 return (
-                  <Droppable droppableId={status} key={status}>
+                  <Droppable droppableId={columnId} key={columnId}>
                     {(provided, snapshot) => (
                       <Paper
-                        withBorder
-                        p="md"
-                        radius="md"
-                        style={{
-                          minWidth: 300,
-                          backgroundColor: snapshot.isDraggingOver ? theme.colors.dark[6] : theme.colors.dark[8],
-                          transition: 'background-color 0.2s',
-                        }}
                         ref={provided.innerRef}
                         {...provided.droppableProps}
+                        shadow="sm"
+                        p="md"
+                        radius="md"
+                        withBorder
+                        style={{
+                          minWidth: 300,
+                          backgroundColor: snapshot.isDraggingOver
+                            ? theme.colors.dark[6]
+                            : theme.colors.dark[8],
+                          borderColor: theme.colors.dark[6],
+                          transition: 'background-color 0.2s',
+                        }}
                       >
                         <Group justify="space-between" mb="md">
-                          <Text fw={700} tt="capitalize">
-                            {status}
-                          </Text>
-                          <Badge color={getStatusColor(status)} variant="light">
-                            {columnProjects.length}
-                          </Badge>
+                          <Group gap="xs">
+                            <ThemeIcon color={column.color} variant="light" size="sm">
+                              <IconFolder size={14} />
+                            </ThemeIcon>
+                            <Text fw={700} size="sm">{column.title}</Text>
+                          </Group>
+                          <Badge size="sm" variant="outline" color={column.color}>{columnProjects.length}</Badge>
                         </Group>
 
-                        <Stack gap="xs">
+                        <Stack gap="sm">
                           {columnProjects.map((project, index) => (
                             <Draggable key={project.id} draggableId={project.id} index={index}>
                               {(provided, snapshot) => (
-                                <Card
-                                  padding="sm"
-                                  radius="md"
-                                  withBorder
+                                <div
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
                                   style={{
                                     ...provided.draggableProps.style,
-                                    cursor: 'grab',
-                                    backgroundColor: snapshot.isDragging ? theme.colors.dark[6] : theme.colors.dark[7],
                                   }}
-                                  onClick={() => navigate(`/main/projects/${project.id}`)}
                                 >
-                                  <Text fw={600} size="sm" lineClamp={2} mb={4}>
-                                    {project.title}
-                                  </Text>
-                                  <Progress
-                                    value={project.confidence || 0}
-                                    size="xs"
-                                    color={getStatusColor(project.status)}
-                                    mb={4}
+                                  <ProjectCard
+                                    project={project}
+                                    navigate={navigate}
+                                    theme={theme}
+                                    getStatusColor={getStatusColor}
                                   />
-                                </Card>
+                                </div>
                               )}
                             </Draggable>
                           ))}
@@ -256,7 +252,7 @@ const ProjectHub: React.FC = () => {
                   </Droppable>
                 );
               })}
-            </Group>
+            </div>
           </DragDropContext>
         )}
       </Stack>
