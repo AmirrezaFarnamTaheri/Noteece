@@ -14,6 +14,8 @@ pub enum InferenceError {
     RunError(String),
     #[error("Tokenizer error: {0}")]
     TokenizerError(String),
+    #[error("Feature not enabled: {0}")]
+    NotImplemented(String),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -44,8 +46,9 @@ impl InferenceEngine {
         log::info!("[inference] Loading model from {}", self.model_path);
         // let environment = ort::Environment::builder().with_name("NoteeceAI").build().unwrap();
         // self.session = ...
-        self.is_loaded = true;
-        Ok(())
+        // self.is_loaded = true;
+        // Ok(())
+        Err(InferenceError::NotImplemented("AI Inference is currently experimental and requires the 'experimental-ai' feature flag.".to_string()))
     }
 
     pub fn run_inference(&self, text: &str) -> Result<InferenceResult, InferenceError> {
@@ -53,26 +56,6 @@ impl InferenceEngine {
             return Err(InferenceError::LoadError("Model not loaded".to_string()));
         }
 
-        // 1. Tokenize input
-        // 2. Run ONNX Session
-        // 3. Post-process logits
-
-        // Mock implementation for now until `ort` dependency is fully configured
-        log::debug!("[inference] Running mock inference on: {}", text);
-
-        // Simple heuristic fallback so it returns *something* useful
-        let classification = if text.contains("happy") || text.contains("great") {
-            "Positive".to_string()
-        } else if text.contains("sad") || text.contains("error") {
-            "Negative".to_string()
-        } else {
-            "Neutral".to_string()
-        };
-
-        Ok(InferenceResult {
-            embedding: vec![0.0; 768], // Mock BERT embedding size
-            classification,
-            confidence: 0.85,
-        })
+        Err(InferenceError::NotImplemented("Inference engine not fully integrated.".to_string()))
     }
 }

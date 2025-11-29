@@ -71,8 +71,9 @@ npm run tauri dev
 ✅ **Insights** - Get smart suggestions
 ✅ **Time Tracking** - Track how you spend your time
 ✅ **Health Metrics** - Log workouts, sleep, mood
-✅ **Voice Capture** - Record quick voice notes
 ✅ **Sync** - Keep devices in sync over local network
+
+*(Note: Voice Capture and advanced physical triggers are currently experimental or coming soon)*
 
 ### Security Features
 
@@ -264,11 +265,7 @@ Settings → Export Data → Save to USB drive
 
 Keep multiple devices in sync so you never lose data.
 
-### 4. Try Voice Capture
-
-Quickest way to capture thoughts on the go.
-
-### 5. Review Insights Daily
+### 4. Review Insights Daily
 
 See patterns and get smarter about your time.
 

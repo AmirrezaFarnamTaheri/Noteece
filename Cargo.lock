@@ -96,26 +96,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
 
 [[package]]
-name = "app"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "core-rs",
- "hex",
- "log",
- "r2d2",
- "rusqlite",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tempfile",
- "tokio",
- "ulid",
- "zeroize",
-]
-
-[[package]]
 name = "arbitrary"
 version = "1.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -585,7 +565,7 @@ dependencies = [
 
 [[package]]
 name = "core-rs"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
  "aead",
  "aes",
@@ -2411,6 +2391,26 @@ name = "nodrop"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72ef4a56884ca558e5ddb05a1d1e7e1bfd9a68d9ed024c21704cc98872dae1bb"
+
+[[package]]
+name = "noteece-desktop"
+version = "1.1.0"
+dependencies = [
+ "chrono",
+ "core-rs",
+ "hex",
+ "log",
+ "r2d2",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tempfile",
+ "tokio",
+ "ulid",
+ "zeroize",
+]
 
 [[package]]
 name = "nu-ansi-term"

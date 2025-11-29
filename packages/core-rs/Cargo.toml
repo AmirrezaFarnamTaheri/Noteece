@@ -50,6 +50,9 @@ rrule = "0.14.0"
 bloomfilter = "3.0.1"
 lazy_static = "1.5.0"
 jni = { version = "0.21.1", optional = true }
+futures = "0.3"
+r2d2 = "0.8"
+r2d2_sqlite = { version = "0.25.0", features = ["bundled"] }
 
 [lib]
 crate-type = ["cdylib", "rlib"]

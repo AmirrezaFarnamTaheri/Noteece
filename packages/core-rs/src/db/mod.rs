@@ -9,6 +9,9 @@ use serde_json;
 use thiserror::Error;
 use ulid::Ulid;
 
+// Define DbPool type
+pub type DbPool = r2d2::Pool<r2d2_sqlite::SqliteConnectionManager>;
+
 #[derive(Error, Debug)]
 pub enum DbError {
     #[error("Rusqlite error: {0}")]

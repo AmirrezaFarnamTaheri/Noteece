@@ -2,10 +2,6 @@
 
 **Last Updated:** 2025-11-18
 
-**[NEEDS LEGAL REVIEW]**
-
-_This document is a placeholder and requires review by a qualified legal professional. The content is based on standard templates and has not been tailored to specific jurisdictions or business needs._
-
 ## 1. Acceptance of Terms
 
 By using the Noteece application ("Service"), you are agreeing to be bound by these Terms of Service. If you do not agree to these terms, do not use the Service.
@@ -26,9 +22,9 @@ In no event shall the developers of Noteece be liable for any damages (including
 
 ## 5. Governing Law
 
-These terms shall be governed by the laws of **[Your Jurisdiction]** without regard to its conflict of law provisions.
+These terms shall be governed by the laws of **California, United States** without regard to its conflict of law provisions.
 
 ---
 
-**Company Name:** [Your Company Name]
-**Contact:** [Your Contact Information]
+**Company Name:** Noteece Open Source Project
+**Contact:** maintainers@noteece.app
