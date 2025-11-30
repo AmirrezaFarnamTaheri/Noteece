@@ -52,7 +52,7 @@ impl Default for PragmaConfig {
     fn default() -> Self {
         Self {
             journal_mode: "WAL".to_string(),
-            synchronous: 1, // NORMAL
+            synchronous: 1,     // NORMAL
             cache_size: -64000, // 64MB
             mmap_size: 0,
             page_size: 4096,
@@ -71,8 +71,8 @@ impl PragmaConfig {
         match profile {
             DeviceProfile::HighPerformance => Self {
                 journal_mode: "WAL".to_string(),
-                synchronous: 1, // NORMAL (good balance for SSDs)
-                cache_size: -128000, // 128MB
+                synchronous: 1,       // NORMAL (good balance for SSDs)
+                cache_size: -128000,  // 128MB
                 mmap_size: 268435456, // 256MB
                 page_size: 4096,
                 foreign_keys: true,
@@ -84,7 +84,7 @@ impl PragmaConfig {
             DeviceProfile::Standard => Self {
                 journal_mode: "WAL".to_string(),
                 synchronous: 1,
-                cache_size: -64000, // 64MB
+                cache_size: -64000,   // 64MB
                 mmap_size: 134217728, // 128MB
                 page_size: 4096,
                 foreign_keys: true,
@@ -97,7 +97,7 @@ impl PragmaConfig {
                 journal_mode: "WAL".to_string(),
                 synchronous: 1,
                 cache_size: -16000, // 16MB
-                mmap_size: 0, // Disabled on mobile
+                mmap_size: 0,       // Disabled on mobile
                 page_size: 4096,
                 foreign_keys: true,
                 temp_store: 1, // FILE (save RAM)
@@ -107,14 +107,14 @@ impl PragmaConfig {
             },
             DeviceProfile::LowEnd => Self {
                 journal_mode: "DELETE".to_string(), // More compatible
-                synchronous: 2, // FULL (safer on slow storage)
-                cache_size: -8000, // 8MB
+                synchronous: 2,                     // FULL (safer on slow storage)
+                cache_size: -8000,                  // 8MB
                 mmap_size: 0,
                 page_size: 4096,
                 foreign_keys: true,
                 temp_store: 1, // FILE
                 busy_timeout: 3000,
-                auto_vacuum: 0, // NONE (manual vacuum)
+                auto_vacuum: 0,        // NONE (manual vacuum)
                 kdf_iter: Some(64000), // Faster
             },
         }
@@ -263,17 +263,14 @@ impl PragmaTuner {
 
     /// Get the current pragma values from a connection
     pub fn get_current(conn: &Connection) -> Result<PragmaConfig, rusqlite::Error> {
-        let journal_mode: String =
-            conn.query_row("PRAGMA journal_mode;", [], |row| row.get(0))?;
+        let journal_mode: String = conn.query_row("PRAGMA journal_mode;", [], |row| row.get(0))?;
         let synchronous: u8 = conn.query_row("PRAGMA synchronous;", [], |row| row.get(0))?;
         let cache_size: i32 = conn.query_row("PRAGMA cache_size;", [], |row| row.get(0))?;
         let mmap_size: u64 = conn.query_row("PRAGMA mmap_size;", [], |row| row.get(0))?;
         let page_size: u32 = conn.query_row("PRAGMA page_size;", [], |row| row.get(0))?;
-        let foreign_keys: i32 =
-            conn.query_row("PRAGMA foreign_keys;", [], |row| row.get(0))?;
+        let foreign_keys: i32 = conn.query_row("PRAGMA foreign_keys;", [], |row| row.get(0))?;
         let temp_store: u8 = conn.query_row("PRAGMA temp_store;", [], |row| row.get(0))?;
-        let busy_timeout: u32 =
-            conn.query_row("PRAGMA busy_timeout;", [], |row| row.get(0))?;
+        let busy_timeout: u32 = conn.query_row("PRAGMA busy_timeout;", [], |row| row.get(0))?;
         let auto_vacuum: u8 = conn.query_row("PRAGMA auto_vacuum;", [], |row| row.get(0))?;
 
         Ok(PragmaConfig {
@@ -300,7 +297,9 @@ impl PragmaTuner {
 
         // Optimize FTS tables if any
         let _ = conn.execute_batch("INSERT INTO note_fts(note_fts) VALUES('optimize');");
-        let _ = conn.execute_batch("INSERT INTO note_embeddings_fts(note_embeddings_fts) VALUES('optimize');");
+        let _ = conn.execute_batch(
+            "INSERT INTO note_embeddings_fts(note_embeddings_fts) VALUES('optimize');",
+        );
 
         Ok(())
     }
@@ -309,8 +308,7 @@ impl PragmaTuner {
     pub fn get_stats(conn: &Connection) -> Result<DatabaseStats, rusqlite::Error> {
         let page_count: u64 = conn.query_row("PRAGMA page_count;", [], |row| row.get(0))?;
         let page_size: u64 = conn.query_row("PRAGMA page_size;", [], |row| row.get(0))?;
-        let freelist_count: u64 =
-            conn.query_row("PRAGMA freelist_count;", [], |row| row.get(0))?;
+        let freelist_count: u64 = conn.query_row("PRAGMA freelist_count;", [], |row| row.get(0))?;
 
         Ok(DatabaseStats {
             total_pages: page_count,
@@ -393,11 +391,8 @@ mod tests {
         let conn = Connection::open_in_memory().unwrap();
 
         // Create a table to have some data
-        conn.execute(
-            "CREATE TABLE test (id INTEGER PRIMARY KEY, data TEXT)",
-            [],
-        )
-        .unwrap();
+        conn.execute("CREATE TABLE test (id INTEGER PRIMARY KEY, data TEXT)", [])
+            .unwrap();
 
         let stats = PragmaTuner::get_stats(&conn);
         assert!(stats.is_ok());
@@ -410,11 +405,8 @@ mod tests {
     fn test_optimize() {
         let conn = Connection::open_in_memory().unwrap();
 
-        conn.execute(
-            "CREATE TABLE test (id INTEGER PRIMARY KEY, data TEXT)",
-            [],
-        )
-        .unwrap();
+        conn.execute("CREATE TABLE test (id INTEGER PRIMARY KEY, data TEXT)", [])
+            .unwrap();
 
         let result = PragmaTuner::optimize(&conn);
         assert!(result.is_ok());
@@ -440,4 +432,3 @@ mod tests {
         ));
     }
 }
-

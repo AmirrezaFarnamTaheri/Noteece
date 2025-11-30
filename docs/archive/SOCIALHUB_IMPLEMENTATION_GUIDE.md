@@ -232,32 +232,32 @@ fn export_backup_to_cloud(
 
 ```typescript
 // Handle empty pages gracefully
-test("should handle empty pages gracefully", async () => {
+test('should handle empty pages gracefully', async () => {
   // All 6 extractors tested with empty HTML
 });
 
 // Handle malformed HTML
-test("should handle malformed HTML", async () => {
+test('should handle malformed HTML', async () => {
   // Unclosed tags, missing quotes - extractors still work
 });
 
 // Handle very large pages (1000+ items)
-test("should handle very large pages", async () => {
+test('should handle very large pages', async () => {
   // Performance test with 1000 posts
 });
 
 // Handle special characters
-test("should handle special characters in content", async () => {
+test('should handle special characters in content', async () => {
   // © ® ™ € £ ¥ 🚀 🎉 中文 日本語 한국어
 });
 
 // Timeout gracefully on slow pages
-test("should timeout gracefully on slow pages", async () => {
+test('should timeout gracefully on slow pages', async () => {
   // 5-second timeout handling
 });
 
 // CSS selector changes
-test("should handle CSS selector changes", async () => {
+test('should handle CSS selector changes', async () => {
   // Old vs new selectors both work
 });
 ```
@@ -266,13 +266,13 @@ test("should handle CSS selector changes", async () => {
 
 ```typescript
 // Extract 1000 posts within 1 second
-test("should extract 1000 posts within 1 second", async () => {
+test('should extract 1000 posts within 1 second', async () => {
   const duration = Date.now() - startTime;
   expect(duration).toBeLessThan(1000); // < 1 second
 });
 
 // Minimal memory overhead
-test("should extract posts with minimal memory overhead", async () => {
+test('should extract posts with minimal memory overhead', async () => {
   // Memory usage monitoring
 });
 ```
@@ -281,18 +281,18 @@ test("should extract posts with minimal memory overhead", async () => {
 
 ```typescript
 // Sanitize XSS attempts
-test("should sanitize XSS attempts in content", async () => {
+test('should sanitize XSS attempts in content', async () => {
   // <img onerror="alert('xss')" />
   // <script>alert('xss')</script>
 });
 
 // Handle HTML injection
-test("should handle HTML injection", async () => {
+test('should handle HTML injection', async () => {
   // <iframe src="http://malicious.com"></iframe>
 });
 
 // Don't leak credentials
-test("should not leak credentials in URLs", async () => {
+test('should not leak credentials in URLs', async () => {
   // https://site.com?token=SECRET123&pwd=password
 });
 ```
@@ -345,16 +345,7 @@ jobs:
 ```typescript
 // Automated monitoring for platform UI changes
 async function monitorPlatformChanges() {
-  const platforms = [
-    "twitter",
-    "instagram",
-    "youtube",
-    "linkedin",
-    "reddit",
-    "discord",
-    "tiktok",
-    "pinterest",
-  ];
+  const platforms = ['twitter', 'instagram', 'youtube', 'linkedin', 'reddit', 'discord', 'tiktok', 'pinterest'];
 
   for (const platform of platforms) {
     const extractor = getExtractor(platform);

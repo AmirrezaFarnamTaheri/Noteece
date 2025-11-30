@@ -1,14 +1,14 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod config;
 mod commands;
-mod state;
-mod db_pool;
 mod concurrency_tests;
+mod config;
+mod db_pool;
+mod state;
 
-use config::AppConfig;
 use commands::*;
+use config::AppConfig;
 use state::DbConnection;
 use std::sync::Mutex;
 use tauri::Manager;

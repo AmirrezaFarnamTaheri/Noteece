@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 export interface EditorProps {
   value: string;
@@ -11,10 +11,10 @@ export function Editor({ value, onChange }: EditorProps) {
       value={value}
       onChange={(e) => onChange(e.target.value)}
       style={{
-        width: "100%",
-        height: "400px",
-        fontSize: "16px",
-        padding: "10px",
+        width: '100%',
+        height: '400px',
+        fontSize: '16px',
+        padding: '10px',
       }}
     />
   );

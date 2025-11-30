@@ -14,8 +14,8 @@ pub fn search_notes(conn: &Connection, query: &str, scope: &str) -> Result<Vec<N
     let mut tags: Vec<String> = Vec::new();
 
     for part in query.split_whitespace() {
-        if part.starts_with("tag:") {
-            tags.push(part[4..].to_string());
+        if let Some(stripped) = part.strip_prefix("tag:") {
+            tags.push(stripped.to_string());
         } else {
             if !fts_query.is_empty() {
                 fts_query.push(' ');

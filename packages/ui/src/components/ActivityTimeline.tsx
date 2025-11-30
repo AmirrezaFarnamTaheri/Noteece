@@ -1,74 +1,68 @@
-import React from "react";
-import { Timeline, Text, Card, Group, Badge, Stack } from "@mantine/core";
-import {
-  IconNotes,
-  IconCircleCheck,
-  IconBriefcase,
-  IconClock,
-  IconTag,
-} from "@tabler/icons-react";
+import React from 'react';
+import { Timeline, Text, Card, Group, Badge, Stack } from '@mantine/core';
+import { IconNotes, IconCircleCheck, IconBriefcase, IconClock, IconTag } from '@tabler/icons-react';
 
 export interface ActivityItem {
   id: string;
-  type: "note" | "task" | "project" | "time_entry" | "tag";
+  type: 'note' | 'task' | 'project' | 'time_entry' | 'tag';
   title: string;
   description?: string;
   timestamp: number;
   metadata?: Record<string, any>;
 }
 
-const getActivityIcon = (type: ActivityItem["type"]) => {
+const getActivityIcon = (type: ActivityItem['type']) => {
   switch (type) {
-    case "note":
+    case 'note':
       return <IconNotes size={16} />;
-    case "task":
+    case 'task':
       return <IconCircleCheck size={16} />;
-    case "project":
+    case 'project':
       return <IconBriefcase size={16} />;
-    case "time_entry":
+    case 'time_entry':
       return <IconClock size={16} />;
-    case "tag":
+    case 'tag':
       return <IconTag size={16} />;
     default:
       return <IconNotes size={16} />;
   }
 };
 
-const getActivityColor = (type: ActivityItem["type"]) => {
+const getActivityColor = (type: ActivityItem['type']) => {
   switch (type) {
-    case "note":
-      return "blue";
-    case "task":
-      return "green";
-    case "project":
-      return "violet";
-    case "time_entry":
-      return "orange";
-    case "tag":
-      return "pink";
+    case 'note':
+      return 'blue';
+    case 'task':
+      return 'green';
+    case 'project':
+      return 'violet';
+    case 'time_entry':
+      return 'orange';
+    case 'tag':
+      return 'pink';
     default:
-      return "gray";
+      return 'gray';
   }
 };
 
 const formatTimestamp = (timestamp: number): string => {
   // Defensive validation to handle invalid timestamps
   const ts = Number(timestamp);
-  if (!Number.isFinite(ts) || ts <= 0) return "Unknown time";
+  if (!Number.isFinite(ts) || ts <= 0) return 'Unknown time';
 
   const now = Date.now() / 1000;
   const diff = now - ts;
 
-  if (!Number.isFinite(diff)) return "Unknown time";
-  if (diff < 0) return "In the future";
+  if (!Number.isFinite(diff)) return 'Unknown time';
+  if (diff < 0) return 'In the future';
 
-  if (diff < 60) return "Just now";
+  if (diff < 60) return 'Just now';
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
 
   const d = new Date(ts * 1000);
-  return Number.isNaN(d.getTime()) ? "Unknown time" : d.toLocaleDateString();
+  return Number.isNaN(d.getTime()) ? 'Unknown time' : d.toLocaleDateString();
 };
 
 export interface ActivityTimelineProps {
@@ -77,14 +71,8 @@ export interface ActivityTimelineProps {
   showTimeAgo?: boolean;
 }
 
-export function ActivityTimeline({
-  activities,
-  maxItems = 10,
-  showTimeAgo = true,
-}: ActivityTimelineProps) {
-  const sortedActivities = [...activities]
-    .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, maxItems);
+export function ActivityTimeline({ activities, maxItems = 10, showTimeAgo = true }: ActivityTimelineProps) {
+  const sortedActivities = [...activities].sort((a, b) => b.timestamp - a.timestamp).slice(0, maxItems);
 
   if (sortedActivities.length === 0) {
     return (
@@ -137,13 +125,8 @@ export function ActivityTimeline({
 }
 
 // Compact variant
-export function CompactActivityList({
-  activities,
-  maxItems = 5,
-}: ActivityTimelineProps) {
-  const sortedActivities = [...activities]
-    .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, maxItems);
+export function CompactActivityList({ activities, maxItems = 5 }: ActivityTimelineProps) {
+  const sortedActivities = [...activities].sort((a, b) => b.timestamp - a.timestamp).slice(0, maxItems);
 
   return (
     <Stack gap="xs">
@@ -154,7 +137,7 @@ export function CompactActivityList({
           p="xs"
           style={{
             borderRadius: 4,
-            ":hover": { backgroundColor: "var(--mantine-color-gray-0)" },
+            ':hover': { backgroundColor: 'var(--mantine-color-gray-0)' },
           }}
         >
           <div

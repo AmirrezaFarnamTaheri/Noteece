@@ -12,7 +12,7 @@ pub fn detect(
     calendar_events: &[CalendarEventData],
     projects: &[ProjectData],
     time_entries: &[TimeEntryData],
-    tasks: &[TaskData],
+    _tasks: &[TaskData],
 ) -> Option<Correlation> {
     if projects.is_empty() || (calendar_events.is_empty() && time_entries.is_empty()) {
         return None;
@@ -39,7 +39,8 @@ pub fn detect(
         let mut map = std::collections::HashMap::new();
         for entry in time_entries {
             if let Some(ref project_id) = entry.project_id {
-                *map.entry(project_id.clone()).or_insert(0.0) += entry.duration_minutes as f64 / 60.0;
+                *map.entry(project_id.clone()).or_insert(0.0) +=
+                    entry.duration_minutes as f64 / 60.0;
             }
         }
         map
@@ -125,14 +126,16 @@ mod tests {
     #[test]
     fn test_detects_conflict_many_events() {
         let project = make_project("Project A", 5);
-        let events: Vec<_> = (0..10).map(|_| make_event(3.0)).collect(); // 30 hours
+        let events: Vec<_> = (0..10).map(|_| make_event(3.5)).collect(); // 35 hours
         let time_entries: Vec<_> = (0..4).map(|_| make_time(&project.id, 10.0)).collect();
 
         let result = detect(&events, &[project], &time_entries, &[]);
         assert!(result.is_some());
 
         let correlation = result.unwrap();
-        assert_eq!(correlation.correlation_type, CorrelationType::CalendarProjects);
+        assert_eq!(
+            correlation.correlation_type,
+            CorrelationType::CalendarProjects
+        );
     }
 }
-

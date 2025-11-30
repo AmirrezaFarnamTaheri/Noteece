@@ -439,15 +439,15 @@ fn main() {
 **Add to** `apps/desktop/src/services/api.ts`:
 
 ```typescript
-import { invoke } from "@tauri-apps/api/tauri";
-import { Feature } from "@noteece/types";
+import { invoke } from '@tauri-apps/api/tauri';
+import { Feature } from '@noteece/types';
 
 export async function createFeature(name: string): Promise<Feature> {
-  return invoke<Feature>("create_feature_cmd", { name });
+  return invoke<Feature>('create_feature_cmd', { name });
 }
 
 export async function getFeature(id: string): Promise<Feature | null> {
-  return invoke<Feature | null>("get_feature_cmd", { id });
+  return invoke<Feature | null>('get_feature_cmd', { id });
 }
 ```
 
@@ -795,17 +795,12 @@ restore_vault_cmd(backup_path: String, password: String) -> Result<(), String>
 All Tauri commands are wrapped in `apps/desktop/src/services/api.ts`:
 
 ```typescript
-import { invoke } from "@tauri-apps/api/tauri";
-import type { Note, Task, Project /* ... */ } from "@noteece/types";
+import { invoke } from '@tauri-apps/api/tauri';
+import type { Note, Task, Project /* ... */ } from '@noteece/types';
 
 // Example wrappers
-export const createNote = (
-  spaceId: string,
-  title: string,
-  content: string,
-  tags: string[],
-): Promise<Note> => {
-  return invoke<Note>("create_note_cmd", {
+export const createNote = (spaceId: string, title: string, content: string, tags: string[]): Promise<Note> => {
+  return invoke<Note>('create_note_cmd', {
     spaceId,
     title,
     content,
@@ -813,11 +808,8 @@ export const createNote = (
   });
 };
 
-export const searchNotes = (
-  spaceId: string,
-  query: string,
-): Promise<SearchResults> => {
-  return invoke<SearchResults>("search_cmd", {
+export const searchNotes = (spaceId: string, query: string): Promise<SearchResults> => {
+  return invoke<SearchResults>('search_cmd', {
     spaceId,
     query,
     filters: {},
@@ -1186,7 +1178,7 @@ Example: ABCD-EFGH-IJKL-MNOP-QRST-UVWX-YZ12-3456
 **Location**: `apps/desktop/src/store/useStore.ts`
 
 ```typescript
-import { create } from "zustand";
+import { create } from 'zustand';
 
 interface AppState {
   activeSpaceId: string | null;
@@ -1195,8 +1187,8 @@ interface AppState {
   isVaultUnlocked: boolean;
   setVaultUnlocked: (unlocked: boolean) => void;
 
-  theme: "light" | "dark" | "auto";
-  setTheme: (theme: "light" | "dark" | "auto") => void;
+  theme: 'light' | 'dark' | 'auto';
+  setTheme: (theme: 'light' | 'dark' | 'auto') => void;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -1206,7 +1198,7 @@ export const useStore = create<AppState>((set) => ({
   isVaultUnlocked: false,
   setVaultUnlocked: (unlocked) => set({ isVaultUnlocked: unlocked }),
 
-  theme: "auto",
+  theme: 'auto',
   setTheme: (theme) => set({ theme }),
 }));
 ```
@@ -1214,7 +1206,7 @@ export const useStore = create<AppState>((set) => ({
 **Usage**:
 
 ```typescript
-import { useStore } from "../store/useStore";
+import { useStore } from '../store/useStore';
 
 function Component() {
   const activeSpaceId = useStore((state) => state.activeSpaceId);
@@ -1254,8 +1246,8 @@ function App() {
 **Usage**:
 
 ```typescript
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import * as api from "../services/api";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import * as api from '../services/api';
 
 function NoteList({ spaceId }: { spaceId: string }) {
   // Fetch notes
@@ -1264,7 +1256,7 @@ function NoteList({ spaceId }: { spaceId: string }) {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["notes", spaceId],
+    queryKey: ['notes', spaceId],
     queryFn: () => api.listNotes(spaceId),
   });
 
@@ -1274,7 +1266,7 @@ function NoteList({ spaceId }: { spaceId: string }) {
     mutationFn: api.createNote,
     onSuccess: () => {
       // Invalidate and refetch notes
-      queryClient.invalidateQueries(["notes", spaceId]);
+      queryClient.invalidateQueries(['notes', spaceId]);
     },
   });
 
@@ -1285,9 +1277,7 @@ function NoteList({ spaceId }: { spaceId: string }) {
 **Query Keys Convention**:
 
 ```typescript
-["notes"][("notes", spaceId)][("note", noteId)][("tasks", spaceId)][ // All notes // Notes in space // Single note // Tasks in space
-  ("tasks", spaceId, "active")
-][("search", query)]; // Active tasks in space // Search results
+['notes'][('notes', spaceId)][('note', noteId)][('tasks', spaceId)][('tasks', spaceId, 'active')][('search', query)]; // All notes // Notes in space // Single note // Tasks in space // Active tasks in space // Search results
 ```
 
 ---
@@ -1474,12 +1464,7 @@ pnpm build:tauri
   "tauri": {
     "bundle": {
       "identifier": "com.noteece.app",
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ]
+      "icon": ["icons/32x32.png", "icons/128x128.png", "icons/icon.icns", "icons/icon.ico"]
     }
   }
 }
@@ -1656,7 +1641,7 @@ hdiutil create -volname Noteece -srcfolder target/release/bundle/macos/Noteece.a
 2. **Use in components**:
 
    ```typescript
-   import type { MyType } from "@noteece/types";
+   import type { MyType } from '@noteece/types';
 
    function Component({ data }: { data: MyType }) {
      // ...
@@ -1784,7 +1769,7 @@ rusqlite = { version = "0.37", features = ["bundled-sqlcipher"] }
 const mutation = useMutation({
   mutationFn: api.updateNote,
   onSuccess: () => {
-    queryClient.invalidateQueries(["notes"]);
+    queryClient.invalidateQueries(['notes']);
   },
 });
 ```

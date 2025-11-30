@@ -39,16 +39,20 @@ Recent updates have addressed critical audit findings, cleaned up mock data, and
 ## Recent Updates (Audit Response)
 
 ### 1. Project Management Enhancements
+
 - **Kanban View**: Implemented a fully functional Kanban board in `ProjectHub.tsx` using `react-beautiful-dnd`.
 - **Backend Support**: Added `update_project_cmd` to Tauri commands to support status changes from the UI.
 
 ### 2. Mobile App Refinements
+
 - **Quick Capture**: Removed misleading "Coming Soon" buttons for Voice and Photo capture. The UI is now clean and functional for Notes and Tasks.
 
 ### 3. P2P Sync Safety
+
 - **Vector Clocks**: Clarified the current limitation regarding vector clocks in `p2p.rs`. Added warning logs to ensure developers and users are aware of the timestamp-based fallback for conflict resolution.
 
 ### 4. Mock Data Cleanup
+
 - **Music Widget**: Removed random data generation. Now displays a clear placeholder message indicating future Spotify integration.
 - **Temporal Graph**: Removed random mock data generation. Now handles "no data" states gracefully with an informative empty state.
 

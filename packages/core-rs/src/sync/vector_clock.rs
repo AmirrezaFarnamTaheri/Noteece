@@ -120,7 +120,7 @@ mod tests {
         clock1.increment();
         clock1.increment();
 
-        assert!(clock1.happens_before(&clock2) == false);
+        assert!(!clock1.happens_before(&clock2));
 
         clock2.merge(&clock1);
         assert!(clock1.happens_before(&clock2));

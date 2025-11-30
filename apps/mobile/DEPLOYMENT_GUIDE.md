@@ -385,7 +385,7 @@ on:
     branches:
       - main
     paths:
-      - "apps/mobile/**"
+      - 'apps/mobile/**'
 
 jobs:
   build:
@@ -397,7 +397,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '20'
 
       - name: Setup Expo
         uses: expo/expo-github-action@v8

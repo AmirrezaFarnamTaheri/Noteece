@@ -4,7 +4,6 @@
  * Centralized configuration management for the desktop application.
  * Supports environment variables, config files, and runtime configuration.
  */
-
 use serde::{Deserialize, Serialize};
 use std::sync::OnceLock;
 
@@ -101,7 +100,9 @@ impl AppConfig {
 
     /// Get the current configuration
     pub fn get() -> &'static AppConfig {
-        CONFIG.get().expect("Config not initialized. Call AppConfig::init() first.")
+        CONFIG
+            .get()
+            .expect("Config not initialized. Call AppConfig::init() first.")
     }
 
     /// Get server port

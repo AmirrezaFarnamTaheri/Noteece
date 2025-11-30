@@ -27,7 +27,10 @@ pub fn get_saved_search_cmd(db: State<DbConnection>, id: String) -> Result<Saved
 }
 
 #[tauri::command]
-pub fn get_saved_searches_cmd(db: State<DbConnection>, space_id: Option<String>) -> Result<Vec<SavedSearch>, String> {
+pub fn get_saved_searches_cmd(
+    db: State<DbConnection>,
+    space_id: Option<String>,
+) -> Result<Vec<SavedSearch>, String> {
     crate::with_db!(db, conn, {
         core_rs::search::get_saved_searches(&conn, space_id.as_deref()).map_err(|e| e.to_string())
     })
@@ -55,15 +58,21 @@ pub fn delete_saved_search_cmd(db: State<DbConnection>, id: String) -> Result<()
 }
 
 #[tauri::command]
-pub fn execute_saved_search_cmd(db: State<DbConnection>, id: String) -> Result<Vec<SearchResult>, String> {
+pub fn execute_saved_search_cmd(
+    db: State<DbConnection>,
+    id: String,
+) -> Result<Vec<SearchResult>, String> {
     crate::with_db!(db, conn, {
         let id = Ulid::from_string(&id).map_err(|e| e.to_string())?;
         let search = core_rs::search::get_saved_search(&conn, id)
             .map_err(|e| e.to_string())?
             .ok_or_else(|| "Saved search not found".to_string())?;
 
-        use core_rs::search::{SearchQuery, EntityType, SearchFilters, SortOptions};
-        let space_ulid = search.space_id.as_deref().map(|s| Ulid::from_string(s).unwrap_or_default());
+        use core_rs::search::{EntityType, SearchFilters, SearchQuery, SortOptions};
+        let space_ulid = search
+            .space_id
+            .as_deref()
+            .map(|s| Ulid::from_string(s).unwrap_or_default());
 
         let query = SearchQuery {
             query: search.query,

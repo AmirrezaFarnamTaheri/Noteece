@@ -1,9 +1,9 @@
 //! LLM Integration Module
 //!
 //! Provides unified interface for interacting with Language Models (both local and cloud).
-//! 
+//!
 //! ## Features
-//! 
+//!
 //! - **Multi-Provider Support**: Ollama (local), OpenAI, Claude, Gemini
 //! - **Automatic Fallback**: Configurable fallback chain between providers
 //! - **Response Caching**: SQLite-based persistent cache
@@ -32,9 +32,9 @@ pub use batch::{BatchBuilder, BatchConfig, BatchProcessor, BatchResult};
 pub use config::LLMConfig;
 pub use cost::{CostRecord, CostStats, CostTracker};
 pub use error::{LLMError, LLMResult};
-pub use priority::{AsyncPriorityQueue, Priority, PriorityQueue, PrioritizedRequest};
+pub use priority::{AsyncPriorityQueue, PrioritizedRequest, Priority, PriorityQueue};
 pub use providers::{ClaudeProvider, GeminiProvider, LLMProvider, OllamaProvider, OpenAIProvider};
-pub use retry::{CircuitBreaker, RetryConfig, with_retry};
+pub use retry::{with_retry, CircuitBreaker, RetryConfig};
 pub use streaming::{StreamChunk, StreamCollector, StreamHandler, StreamRequest};
 pub use tokenizer::{ModelLimits, SimpleTokenCounter, TokenCount, TokenCounter};
 pub use types::{LLMRequest, LLMResponse, Message, Role};

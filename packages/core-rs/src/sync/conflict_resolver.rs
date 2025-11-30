@@ -71,6 +71,7 @@ impl ConflictResolver {
     }
 
     /// Resolve conflict between two versions
+    #[allow(clippy::ptr_arg)]
     pub fn resolve(&self, local: &VersionedEntity, remote: &VersionedEntity) -> ConflictResolution {
         // Check if there's actually a conflict
         if local.vector_clock.happens_before(&remote.vector_clock) {
@@ -275,9 +276,7 @@ fn merge_json_objects(local: &serde_json::Value, remote: &serde_json::Value) -> 
             Object(merged)
         }
         // Both are arrays at top level: SET UNION
-        (Array(local_arr), Array(remote_arr)) => {
-            Array(merge_arrays(local_arr, remote_arr))
-        }
+        (Array(local_arr), Array(remote_arr)) => Array(merge_arrays(local_arr, remote_arr)),
         // Handle nulls
         (_, Null) => local.clone(),
         (Null, _) => remote.clone(),
@@ -288,17 +287,20 @@ fn merge_json_objects(local: &serde_json::Value, remote: &serde_json::Value) -> 
 
 /// Merge two JSON arrays using SET UNION strategy
 /// Preserves all unique items from both arrays, deduplicating by value
-fn merge_arrays(local: &Vec<serde_json::Value>, remote: &Vec<serde_json::Value>) -> Vec<serde_json::Value> {
+fn merge_arrays(
+    local: &[serde_json::Value],
+    remote: &[serde_json::Value],
+) -> Vec<serde_json::Value> {
     use std::collections::HashSet;
-    
-    let mut result = local.clone();
+
+    let mut result = local.to_vec();
     let mut seen: HashSet<String> = HashSet::new();
-    
+
     // Add all local items to seen set (use JSON string repr for comparison)
     for item in local.iter() {
         seen.insert(item.to_string());
     }
-    
+
     // Add remote items that aren't already present
     for item in remote.iter() {
         let key = item.to_string();
@@ -307,7 +309,7 @@ fn merge_arrays(local: &Vec<serde_json::Value>, remote: &Vec<serde_json::Value>)
             seen.insert(key);
         }
     }
-    
+
     result
 }
 
@@ -316,10 +318,12 @@ mod tests {
     use super::*;
 
     fn create_entity(id: &str, device_id: &str, timestamp: i64) -> VersionedEntity {
+        let mut vector_clock = VectorClock::new(device_id.to_string());
+        vector_clock.increment();
         VersionedEntity {
             id: id.to_string(),
             data: serde_json::json!({"value": "test"}),
-            vector_clock: VectorClock::new(device_id.to_string()),
+            vector_clock,
             timestamp,
             device_id: device_id.to_string(),
         }
@@ -327,7 +331,7 @@ mod tests {
 
     #[test]
     fn test_last_write_wins() {
-        let mut local = create_entity("entity1", "device1", 100);
+        let local = create_entity("entity1", "device1", 100);
         let remote = create_entity("entity1", "device2", 200);
 
         let resolver = ConflictResolver::new(ResolutionStrategy::LastWriteWins);
@@ -423,14 +427,8 @@ mod tests {
     #[test]
     fn test_array_merge_deduplication() {
         // Test that duplicate items are not added twice
-        let local_arr = vec![
-            serde_json::json!("tag1"),
-            serde_json::json!("tag2"),
-        ];
-        let remote_arr = vec![
-            serde_json::json!("tag2"),
-            serde_json::json!("tag3"),
-        ];
+        let local_arr = vec![serde_json::json!("tag1"), serde_json::json!("tag2")];
+        let remote_arr = vec![serde_json::json!("tag2"), serde_json::json!("tag3")];
 
         let result = super::merge_arrays(&local_arr, &remote_arr);
         assert_eq!(result.len(), 3);

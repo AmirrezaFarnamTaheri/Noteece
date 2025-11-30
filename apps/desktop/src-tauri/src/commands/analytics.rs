@@ -11,7 +11,10 @@ pub fn get_analytics_data_cmd(db: State<DbConnection>) -> Result<AnalyticsData, 
 }
 
 #[tauri::command]
-pub fn get_dashboard_stats_cmd(db: State<DbConnection>, space_id: String) -> Result<DashboardStats, String> {
+pub fn get_dashboard_stats_cmd(
+    db: State<DbConnection>,
+    space_id: String,
+) -> Result<DashboardStats, String> {
     crate::with_db!(db, conn, {
         core_rs::dashboard::get_dashboard_stats(&conn, &space_id).map_err(|e| e.to_string())
     })

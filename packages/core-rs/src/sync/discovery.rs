@@ -67,28 +67,28 @@ impl DiscoveryService {
         let start_time = std::time::Instant::now();
 
         while start_time.elapsed() < duration {
-            if let Ok(event) = receiver.recv_timeout(Duration::from_secs(1)) {
-                if let ServiceEvent::ServiceResolved(info) = event {
-                    let id = info
-                        .get_property("id")
-                        .map(|s| s.to_string())
-                        .unwrap_or_default();
-                    let name = info
-                        .get_property("name")
-                        .map(|s| s.to_string())
-                        .unwrap_or_default();
+            if let Ok(ServiceEvent::ServiceResolved(info)) =
+                receiver.recv_timeout(Duration::from_secs(1))
+            {
+                let id = info
+                    .get_property("id")
+                    .map(|s| s.to_string())
+                    .unwrap_or_default();
+                let name = info
+                    .get_property("name")
+                    .map(|s| s.to_string())
+                    .unwrap_or_default();
 
-                    if !id.is_empty() {
-                        if let Some(address) = info.get_addresses().iter().next() {
-                            let device = DiscoveredDevice {
-                                id,
-                                name,
-                                address: address.to_string(),
-                                port: info.get_port(),
-                            };
-                            log::info!("[discovery] Found device: {:?}", device);
-                            discovered_devices.push(device);
-                        }
+                if !id.is_empty() {
+                    if let Some(address) = info.get_addresses().iter().next() {
+                        let device = DiscoveredDevice {
+                            id,
+                            name,
+                            address: address.to_string(),
+                            port: info.get_port(),
+                        };
+                        log::info!("[discovery] Found device: {:?}", device);
+                        discovered_devices.push(device);
                     }
                 }
             }

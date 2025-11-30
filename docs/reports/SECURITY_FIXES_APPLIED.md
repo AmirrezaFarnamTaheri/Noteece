@@ -435,14 +435,10 @@ function getCurrentUserId(): string | null {
 
 // Callers explicitly handle null
 const inviteUserMutation = useMutation({
-  mutationFn: async (values: {
-    email: string;
-    roleId: string;
-    customPermissions: string[];
-  }) => {
+  mutationFn: async (values: { email: string; roleId: string; customPermissions: string[] }) => {
     const currentUserId = getCurrentUserId();
     if (!currentUserId) {
-      throw new Error("User not authenticated. Please log in first.");
+      throw new Error('User not authenticated. Please log in first.');
     }
     // ... use currentUserId
   },

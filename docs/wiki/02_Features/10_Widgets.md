@@ -146,7 +146,7 @@ Each widget can be individually configured:
 interface WidgetConfig {
   enabled: boolean;
   position: { row: number; col: number };
-  size: "compact" | "normal" | "expanded";
+  size: 'compact' | 'normal' | 'expanded';
   refreshInterval: number; // milliseconds
   customSettings?: Record<string, unknown>;
 }

@@ -443,7 +443,7 @@ return Date.now();
 
 ```javascript
 // NEW: Reject non-persistent URLs
-if (src && src.startsWith("https://")) {
+if (src && src.startsWith('https://')) {
   return src; // Valid HTTPS URL
 }
 // Reject blob:, data:, relative URLs
@@ -553,10 +553,7 @@ Vault Lock / App Exit → SecureDek dropped → Memory zeroed
 **Content Security Policy:**
 
 ```html
-<meta
-  http-equiv="Content-Security-Policy"
-  content="default-src 'self'; script-src 'unsafe-eval'"
-/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-eval'" />
 ```
 
 **JavaScript Injection:**

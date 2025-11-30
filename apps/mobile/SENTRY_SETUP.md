@@ -63,7 +63,7 @@ Run the app and trigger a test error:
 
 ```javascript
 // Add this to any screen to test Sentry
-throw new Error("Test Sentry error tracking");
+throw new Error('Test Sentry error tracking');
 ```
 
 You should see the error appear in your Sentry dashboard within a few seconds.
@@ -79,7 +79,7 @@ All uncaught JavaScript errors are automatically sent to Sentry via the `ErrorBo
 ```typescript
 // Errors are automatically captured with React component context
 Sentry.withScope((scope) => {
-  scope.setContext("react_error_boundary", {
+  scope.setContext('react_error_boundary', {
     componentStack: errorInfo.componentStack,
   });
   Sentry.captureException(error);
@@ -121,23 +121,23 @@ Errors are tagged with:
 You can manually report errors with additional context:
 
 ```typescript
-import { captureException, addBreadcrumb } from "@/lib/sentry";
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 
 // Capture an exception with context
 try {
   dangerousFunction();
 } catch (error) {
   captureException(error, {
-    feature: "sync",
-    operation: "manual_sync",
+    feature: 'sync',
+    operation: 'manual_sync',
   });
 }
 
 // Add breadcrumbs for debugging
 addBreadcrumb({
-  category: "sync",
-  message: "Starting manual sync",
-  level: "info",
+  category: 'sync',
+  message: 'Starting manual sync',
+  level: 'info',
 });
 ```
 
@@ -146,7 +146,7 @@ addBreadcrumb({
 Track which users are affected by errors:
 
 ```typescript
-import { setUser, clearUser } from "@/lib/sentry";
+import { setUser, clearUser } from '@/lib/sentry';
 
 // After user logs in
 setUser({
@@ -171,9 +171,9 @@ Initialize Sentry (called automatically in `app/_layout.tsx`)
 Manually capture an exception with optional context
 
 ```typescript
-captureException(new Error("Something went wrong"), {
-  action: "delete_task",
-  taskId: "123",
+captureException(new Error('Something went wrong'), {
+  action: 'delete_task',
+  taskId: '123',
 });
 ```
 
@@ -182,7 +182,7 @@ captureException(new Error("Something went wrong"), {
 Send a message to Sentry (for logging important events)
 
 ```typescript
-captureMessage("User completed onboarding", "info");
+captureMessage('User completed onboarding', 'info');
 ```
 
 ### `setUser(user)`
@@ -191,9 +191,9 @@ Set user context for all future events
 
 ```typescript
 setUser({
-  id: "user123",
-  email: "user@example.com",
-  username: "johndoe",
+  id: 'user123',
+  email: 'user@example.com',
+  username: 'johndoe',
 });
 ```
 
@@ -207,9 +207,9 @@ Add a breadcrumb for debugging
 
 ```typescript
 addBreadcrumb({
-  category: "navigation",
-  message: "User navigated to tasks screen",
-  level: "info",
+  category: 'navigation',
+  message: 'User navigated to tasks screen',
+  level: 'info',
 });
 ```
 
@@ -218,8 +218,8 @@ addBreadcrumb({
 Add tags for filtering in Sentry
 
 ```typescript
-setTag("feature", "sync");
-setTag("sync_type", "manual");
+setTag('feature', 'sync');
+setTag('sync_type', 'manual');
 ```
 
 ### `setExtra(key, value)`
@@ -227,8 +227,8 @@ setTag("sync_type", "manual");
 Add extra data to events
 
 ```typescript
-setExtra("sync_duration_ms", 1234);
-setExtra("num_items_synced", 42);
+setExtra('sync_duration_ms', 1234);
+setExtra('num_items_synced', 42);
 ```
 
 ## Best Practices
@@ -257,12 +257,12 @@ Add breadcrumbs before operations that might fail:
 
 ```typescript
 addBreadcrumb({
-  category: "database",
+  category: 'database',
   message: `Querying tasks for space ${spaceId}`,
-  level: "info",
+  level: 'info',
 });
 
-const tasks = await dbQuery("SELECT * FROM task WHERE space_id = ?", [spaceId]);
+const tasks = await dbQuery('SELECT * FROM task WHERE space_id = ?', [spaceId]);
 ```
 
 ### 3. Set Meaningful Context

@@ -42,7 +42,10 @@ pub fn delete_task_cmd(db: State<DbConnection>, id: String) -> Result<(), String
 }
 
 #[tauri::command]
-pub fn get_tasks_by_project_cmd(db: State<DbConnection>, project_id: String) -> Result<Vec<Task>, String> {
+pub fn get_tasks_by_project_cmd(
+    db: State<DbConnection>,
+    project_id: String,
+) -> Result<Vec<Task>, String> {
     crate::with_db!(db, conn, {
         let id = Ulid::from_string(&project_id).map_err(|e| e.to_string())?;
         core_rs::task::get_tasks_by_project(&conn, id).map_err(|e| e.to_string())
@@ -50,7 +53,10 @@ pub fn get_tasks_by_project_cmd(db: State<DbConnection>, project_id: String) -> 
 }
 
 #[tauri::command]
-pub fn get_all_tasks_in_space_cmd(db: State<DbConnection>, space_id: String) -> Result<Vec<Task>, String> {
+pub fn get_all_tasks_in_space_cmd(
+    db: State<DbConnection>,
+    space_id: String,
+) -> Result<Vec<Task>, String> {
     crate::with_db!(db, conn, {
         let space_ulid = Ulid::from_string(&space_id).map_err(|e| e.to_string())?;
         core_rs::task::get_all_tasks_in_space(&conn, space_ulid).map_err(|e| e.to_string())
@@ -58,7 +64,11 @@ pub fn get_all_tasks_in_space_cmd(db: State<DbConnection>, space_id: String) -> 
 }
 
 #[tauri::command]
-pub fn get_upcoming_tasks_cmd(db: State<DbConnection>, space_id: String, limit: u32) -> Result<Vec<Task>, String> {
+pub fn get_upcoming_tasks_cmd(
+    db: State<DbConnection>,
+    space_id: String,
+    limit: u32,
+) -> Result<Vec<Task>, String> {
     crate::with_db!(db, conn, {
         let space_ulid = Ulid::from_string(&space_id).map_err(|e| e.to_string())?;
         core_rs::task::get_upcoming_tasks(&conn, space_ulid, limit).map_err(|e| e.to_string())

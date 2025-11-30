@@ -2,14 +2,14 @@
 // This module integrates the discovery and mobile_sync modules to provide a complete P2P sync solution.
 
 use super::discovery::{DiscoveredDevice, DiscoveryService};
-use super::mobile_sync::{DeviceInfo, SyncCategory, SyncProtocol, SyncDelta, DeltaOperation};
+use super::mobile_sync::{DeltaOperation, DeviceInfo, SyncCategory, SyncDelta, SyncProtocol};
 use crate::sync_agent::{SyncDelta as DbSyncDelta, SyncOperation as DbSyncOperation};
 use std::sync::Arc;
-use tokio::sync::Mutex;
 use std::time::Duration;
 use thiserror::Error;
 use tokio::io::AsyncReadExt;
 use tokio::net::TcpListener;
+use tokio::sync::Mutex;
 
 #[derive(Error, Debug)]
 pub enum P2pError {
@@ -51,7 +51,10 @@ impl P2pSync {
                 .await
                 .map_err(|e| P2pError::Network(e.to_string()))?;
 
-            let peer_addr = socket.peer_addr().map(|a| a.to_string()).unwrap_or_else(|_| "unknown".to_string());
+            let peer_addr = socket
+                .peer_addr()
+                .map(|a| a.to_string())
+                .unwrap_or_else(|_| "unknown".to_string());
             log::info!("[p2p] New connection from {}", peer_addr);
 
             // In a real implementation, we would hand off the socket to the protocol handler
@@ -60,7 +63,7 @@ impl P2pSync {
                 let mut buf = [0; 1024];
                 loop {
                     let n = match socket.read(&mut buf).await {
-                        Ok(n) if n == 0 => return,
+                        Ok(0) => return,
                         Ok(n) => n,
                         Err(e) => {
                             log::error!("[p2p] failed to read from socket; err = {:?}", e);
@@ -103,8 +106,8 @@ impl P2pSync {
         let protocol = self.protocol.lock().await;
 
         if protocol.is_device_available(device_id) {
-             log::info!("[p2p] Device {} is already available/paired.", device_id);
-             return Ok(());
+            log::info!("[p2p] Device {} is already available/paired.", device_id);
+            return Ok(());
         }
 
         log::info!("[p2p] Ready to accept pairing from {}", device_id);
@@ -120,7 +123,10 @@ pub fn db_delta_to_protocol_delta(db_delta: DbSyncDelta) -> SyncDelta {
     if let Some(vc) = db_delta.vector_clock.get("local") {
         log::trace!("[p2p] Using local vector clock sequence: {}", vc);
     } else {
-        log::warn!("[p2p] Missing vector clock for delta {}, using 0", db_delta.entity_id);
+        log::warn!(
+            "[p2p] Missing vector clock for delta {}, using 0",
+            db_delta.entity_id
+        );
     }
 
     SyncDelta {
@@ -132,7 +138,8 @@ pub fn db_delta_to_protocol_delta(db_delta: DbSyncDelta) -> SyncDelta {
         entity_type: db_delta.entity_type,
         entity_id: db_delta.entity_id,
         encrypted_data: db_delta.data, // In a real encrypted setup, this would be ciphertext
-        timestamp: chrono::DateTime::from_timestamp(db_delta.timestamp, 0).unwrap_or(chrono::Utc::now()),
+        timestamp: chrono::DateTime::from_timestamp(db_delta.timestamp, 0)
+            .unwrap_or(chrono::Utc::now()),
         data_hash: None,
         sequence: 0, // Placeholder: Protocol sequence negotiation required for full consistency
     }

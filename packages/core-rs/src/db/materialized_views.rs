@@ -493,7 +493,8 @@ mod tests {
         .unwrap();
 
         // Delete the note
-        conn.execute("DELETE FROM note WHERE id = 'n1'", []).unwrap();
+        conn.execute("DELETE FROM note WHERE id = 'n1'", [])
+            .unwrap();
 
         let stats = get_dashboard_stats(&conn, "space1").unwrap();
         assert_eq!(stats.total_notes, 0);
@@ -518,4 +519,3 @@ mod tests {
         assert_eq!(count, 2);
     }
 }
-

@@ -1,11 +1,11 @@
-pub mod project;
+pub mod dependency;
 pub mod milestone;
+pub mod project;
 pub mod risk;
 pub mod update;
-pub mod dependency;
 
-pub use project::*;
+pub use dependency::*;
 pub use milestone::*;
+pub use project::*;
 pub use risk::*;
 pub use update::*;
-pub use dependency::*;

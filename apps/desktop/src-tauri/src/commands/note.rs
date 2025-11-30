@@ -1,6 +1,6 @@
 use crate::state::DbConnection;
 use core_rs::note::*;
-use core_rs::search::{SearchQuery, EntityType, SearchFilters, SortOptions, SearchResult};
+use core_rs::search::{EntityType, SearchFilters, SearchQuery, SearchResult, SortOptions};
 use tauri::State;
 use ulid::Ulid;
 
@@ -47,21 +47,31 @@ pub fn trash_note_cmd(db: State<DbConnection>, id: String) -> Result<(), String>
 }
 
 #[tauri::command]
-pub fn get_all_notes_in_space_cmd(db: State<DbConnection>, space_id: String) -> Result<Vec<Note>, String> {
+pub fn get_all_notes_in_space_cmd(
+    db: State<DbConnection>,
+    space_id: String,
+) -> Result<Vec<Note>, String> {
     crate::with_db!(db, conn, {
         core_rs::note::get_all_notes_in_space(&conn, &space_id).map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
-pub fn get_recent_notes_cmd(db: State<DbConnection>, space_id: String, limit: u32) -> Result<Vec<Note>, String> {
+pub fn get_recent_notes_cmd(
+    db: State<DbConnection>,
+    space_id: String,
+    limit: u32,
+) -> Result<Vec<Note>, String> {
     crate::with_db!(db, conn, {
         core_rs::note::get_recent_notes(&conn, &space_id, limit).map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
-pub fn get_or_create_daily_note_cmd(db: State<DbConnection>, space_id: String) -> Result<Note, String> {
+pub fn get_or_create_daily_note_cmd(
+    db: State<DbConnection>,
+    space_id: String,
+) -> Result<Note, String> {
     crate::with_db!(db, conn, {
         core_rs::note::get_or_create_daily_note(&conn, &space_id).map_err(|e| e.to_string())
     })
@@ -79,7 +89,11 @@ pub fn search_notes_cmd(
             query: query,
             entity_types: vec![EntityType::Note],
             filters: SearchFilters {
-                space_id: if !scope_str.is_empty() { Some(Ulid::from_string(scope_str).unwrap_or_default()) } else { None },
+                space_id: if !scope_str.is_empty() {
+                    Some(Ulid::from_string(scope_str).unwrap_or_default())
+                } else {
+                    None
+                },
                 ..Default::default()
             },
             sort: SortOptions::default(),

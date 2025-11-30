@@ -21,7 +21,8 @@ mod tests {
         // Initialize DB
         {
             let conn = pool.get().unwrap();
-            conn.execute("CREATE TABLE test (id INTEGER PRIMARY KEY, val TEXT)", []).unwrap();
+            conn.execute("CREATE TABLE test (id INTEGER PRIMARY KEY, val TEXT)", [])
+                .unwrap();
         }
 
         let mut handles = vec![];
@@ -31,7 +32,8 @@ mod tests {
         handles.push(thread::spawn(move || {
             for i in 0..100 {
                 let conn = pool_w.get().unwrap();
-                conn.execute("INSERT INTO test (val) VALUES (?1)", [format!("val-{}", i)]).unwrap();
+                conn.execute("INSERT INTO test (val) VALUES (?1)", [format!("val-{}", i)])
+                    .unwrap();
             }
         }));
 
@@ -42,7 +44,9 @@ mod tests {
                 for _ in 0..20 {
                     let conn = pool_r.get().unwrap();
                     // This query should not block waiting for the writer
-                    let _count: i64 = conn.query_row("SELECT COUNT(*) FROM test", [], |r| r.get(0)).unwrap();
+                    let _count: i64 = conn
+                        .query_row("SELECT COUNT(*) FROM test", [], |r| r.get(0))
+                        .unwrap();
                     // Small sleep to yield
                     thread::sleep(Duration::from_millis(1));
                 }
@@ -55,7 +59,9 @@ mod tests {
 
         // Verify final count
         let conn = pool.get().unwrap();
-        let count: i64 = conn.query_row("SELECT COUNT(*) FROM test", [], |r| r.get(0)).unwrap();
+        let count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM test", [], |r| r.get(0))
+            .unwrap();
         assert_eq!(count, 100);
     }
 }

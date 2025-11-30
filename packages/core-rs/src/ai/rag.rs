@@ -9,7 +9,7 @@
 //! Copyright (c) 2024-2025 Amirreza 'Farnam' Taheri <taherifarnam@gmail.com>
 
 use crate::db::DbPool;
-use crate::llm::{LLMProvider, LLMRequest, LLMResponse};
+use crate::llm::{LLMProvider, LLMRequest};
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -358,10 +358,9 @@ impl RagPipeline {
             .filter(|r| r.score >= query.min_relevance_score)
             .collect()
         } else {
-            stmt.query_map(
-                params![fts_query, query.max_context_chunks as i64],
-                |row| self.row_to_search_result(row),
-            )?
+            stmt.query_map(params![fts_query, query.max_context_chunks as i64], |row| {
+                self.row_to_search_result(row)
+            })?
             .filter_map(|r| r.ok())
             .filter(|r| r.score >= query.min_relevance_score)
             .collect()
@@ -427,12 +426,7 @@ impl RagPipeline {
             .iter()
             .enumerate()
             .map(|(i, r)| {
-                let title = r
-                    .chunk
-                    .metadata
-                    .get("title")
-                    .cloned()
-                    .unwrap_or_default();
+                let title = r.chunk.metadata.get("title").cloned().unwrap_or_default();
                 format!(
                     "[Source {}] {} (from: {})\n{}",
                     i + 1,
@@ -695,4 +689,3 @@ mod tests {
         assert_eq!(stats.total_notes, 0);
     }
 }
-

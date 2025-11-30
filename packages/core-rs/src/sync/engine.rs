@@ -275,21 +275,28 @@ impl SyncAgent {
         let mut stmt = conn.prepare(
             "SELECT id, entity_type, entity_id, conflict_type, detected_at
              FROM sync_conflict
-             WHERE space_id = ?1 AND resolved = 0"
+             WHERE space_id = ?1 AND resolved = 0",
         )?;
 
-        let tasks = stmt.query_map([space_id], |row| {
-             Ok(SyncTask {
-                 id: row.get(0)?,
-                 description: Some(format!("Conflict: {} {}", row.get::<_, String>(1)?, row.get::<_, String>(2)?)),
-                 status: "conflict".to_string(),
-                 progress: 0.0,
-                 device_id: None,
-                 space_id: None,
-                 direction: None,
-                 created_at: Some(row.get(4)?),
-             })
-        })?.collect::<Result<Vec<_>, _>>().map_err(|e| SyncError::DatabaseError(e.to_string()))?;
+        let tasks = stmt
+            .query_map([space_id], |row| {
+                Ok(SyncTask {
+                    id: row.get(0)?,
+                    description: Some(format!(
+                        "Conflict: {} {}",
+                        row.get::<_, String>(1)?,
+                        row.get::<_, String>(2)?
+                    )),
+                    status: "conflict".to_string(),
+                    progress: 0.0,
+                    device_id: None,
+                    space_id: None,
+                    direction: None,
+                    created_at: Some(row.get(4)?),
+                })
+            })?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| SyncError::DatabaseError(e.to_string()))?;
 
         Ok(tasks)
     }

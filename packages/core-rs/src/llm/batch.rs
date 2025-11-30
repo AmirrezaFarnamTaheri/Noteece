@@ -202,8 +202,7 @@ impl BatchProcessor {
             completed: self.completed_count.load(Ordering::Relaxed) as usize,
             succeeded: self.success_count.load(Ordering::Relaxed) as usize,
             failed: self.failure_count.load(Ordering::Relaxed) as usize,
-            in_progress: self.config.max_concurrency
-                - self.semaphore.available_permits(),
+            in_progress: self.config.max_concurrency - self.semaphore.available_permits(),
         }
     }
 
@@ -215,11 +214,7 @@ impl BatchProcessor {
     }
 
     /// Process a batch of requests using a provided completion function
-    pub async fn process<F, Fut>(
-        &self,
-        requests: Vec<LLMRequest>,
-        complete_fn: F,
-    ) -> BatchResult
+    pub async fn process<F, Fut>(&self, requests: Vec<LLMRequest>, complete_fn: F) -> BatchResult
     where
         F: Fn(LLMRequest) -> Fut + Send + Sync + Clone + 'static,
         Fut: std::future::Future<Output = Result<LLMResponse, LLMError>> + Send,
@@ -326,6 +321,7 @@ impl BatchBuilder {
     }
 
     /// Add a single request
+    #[allow(clippy::should_implement_trait)]
     pub fn add(mut self, request: LLMRequest) -> Self {
         self.requests.push(request);
         self
@@ -419,8 +415,8 @@ mod tests {
     #[test]
     fn test_batch_builder_from_prompts() {
         let prompts = vec!["Question 1", "Question 2", "Question 3"];
-        let requests = BatchBuilder::from_prompts(prompts, Some("gpt-4".to_string()), Some(0.7))
-            .build();
+        let requests =
+            BatchBuilder::from_prompts(prompts, Some("gpt-4".to_string()), Some(0.7)).build();
 
         assert_eq!(requests.len(), 3);
         assert_eq!(requests[0].model, Some("gpt-4".to_string()));
@@ -431,10 +427,7 @@ mod tests {
     async fn test_batch_processor_mock() {
         let processor = BatchProcessor::new(BatchConfig::default());
 
-        let requests = vec![
-            LLMRequest::simple("Test 1"),
-            LLMRequest::simple("Test 2"),
-        ];
+        let requests = vec![LLMRequest::simple("Test 1"), LLMRequest::simple("Test 2")];
 
         // Mock completion function
         let result = processor
@@ -452,4 +445,3 @@ mod tests {
         assert_eq!(result.success_rate(), 100.0);
     }
 }
-

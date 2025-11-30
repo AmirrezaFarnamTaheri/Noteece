@@ -426,7 +426,7 @@ jobs:
       - name: Install Node
         uses: actions/setup-node@v2
         with:
-          node-version: "18"
+          node-version: '18'
       - name: Install dependencies
         run: npm install
       - name: Run tests
@@ -460,8 +460,8 @@ fn test_[feature]_[scenario]_[expected_behavior]() {
 **TypeScript:**
 
 ```typescript
-describe("[Component/Feature]", () => {
-  it("should [expected behavior] when [scenario]", () => {
+describe('[Component/Feature]', () => {
+  it('should [expected behavior] when [scenario]', () => {
     // Example: should revoke permissions when resetting to defaults
   });
 });
@@ -571,9 +571,9 @@ fn test_tokens_are_unique() {
 
 ```typescript
 // DO: Test user-visible behavior
-it("should display error when email is invalid", () => {
+it('should display error when email is invalid', () => {
   // Interact as user would
-  fireEvent.change(input, { target: { value: "invalid" } });
+  fireEvent.change(input, { target: { value: 'invalid' } });
   fireEvent.click(submitButton);
 
   // Assert on what user sees
@@ -581,12 +581,9 @@ it("should display error when email is invalid", () => {
 });
 
 // DO: One assertion per test (mostly)
-it("should call invite API with correct email", () => {
+it('should call invite API with correct email', () => {
   // ... setup
-  expect(mockInvoke).toHaveBeenCalledWith(
-    "invite_user_cmd",
-    expect.objectContaining({ email: "test@example.com" }),
-  );
+  expect(mockInvoke).toHaveBeenCalledWith('invite_user_cmd', expect.objectContaining({ email: 'test@example.com' }));
 });
 ```
 

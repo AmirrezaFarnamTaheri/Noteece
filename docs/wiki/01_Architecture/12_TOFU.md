@@ -122,7 +122,7 @@ What would you like to do?
 
 ```typescript
 // Desktop (Tauri)
-const trust = await invoke("get_device_trust", { deviceId: "device-123" });
+const trust = await invoke('get_device_trust', { deviceId: 'device-123' });
 console.log(trust.trust_level); // "tofu" | "verified" | "revoked" | "key_changed"
 ```
 
@@ -130,22 +130,22 @@ console.log(trust.trust_level); // "tofu" | "verified" | "revoked" | "key_change
 
 ```typescript
 // Upgrade from TOFU to Verified (after QR code scan, etc.)
-await invoke("verify_device_explicitly", { deviceId: "device-123" });
+await invoke('verify_device_explicitly', { deviceId: 'device-123' });
 ```
 
 ### Revoke Trust
 
 ```typescript
 // Block a device
-await invoke("revoke_device_trust", { deviceId: "device-123" });
+await invoke('revoke_device_trust', { deviceId: 'device-123' });
 ```
 
 ### Re-trust with New Key
 
 ```typescript
 // After user confirms the key change is legitimate
-await invoke("retrust_device", {
-  deviceId: "device-123",
+await invoke('retrust_device', {
+  deviceId: 'device-123',
   newPublicKey: base64EncodedKey,
 });
 ```

@@ -65,6 +65,7 @@ export const LocalAI: React.FC = () => {
   useEffect(() => {
     void checkConnection();
     void loadModels();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-scroll to bottom

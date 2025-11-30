@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 export interface ButtonProps {
   children: React.ReactNode;
@@ -10,9 +10,9 @@ export function Button({ children, onClick }: ButtonProps) {
     <button
       onClick={onClick}
       style={{
-        padding: "10px 20px",
-        fontSize: "16px",
-        cursor: "pointer",
+        padding: '10px 20px',
+        fontSize: '16px',
+        cursor: 'pointer',
       }}
     >
       {children}

@@ -75,5 +75,5 @@ pub use focus::{
 pub use maintenance::{prune_old_posts, run_startup_maintenance, MaintenanceResult};
 
 pub use selector_verification::{
-    load_verified_selectors, get_bundled_selectors, SignedSelectors, VerificationError,
+    get_bundled_selectors, load_verified_selectors, SignedSelectors, VerificationError,
 };

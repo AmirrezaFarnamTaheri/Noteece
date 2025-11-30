@@ -83,6 +83,7 @@ mod ffi {
 
     extern "Rust" {
         // Expose Rust functions to C++
+        type SyncAgentWrapper;
         fn create_sync_agent_wrapper(path: &str) -> Box<SyncAgentWrapper>;
     }
 }
