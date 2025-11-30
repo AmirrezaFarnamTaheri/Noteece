@@ -3,7 +3,6 @@
 //! Provides cryptographic verification of social selector configurations
 //! to prevent supply chain attacks via tampered selector files.
 
-use base64::{engine::general_purpose::STANDARD, Engine as _};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 
@@ -58,8 +57,9 @@ impl SignedSelectors {
                     let signature = if sig_b64.is_empty() {
                         None
                     } else {
+                        use base64::Engine;
                         Some(
-                            STANDARD
+                            base64::engine::general_purpose::STANDARD
                                 .decode(sig_b64)
                                 .map_err(|e| VerificationError::ParseError(e.to_string()))?,
                         )
@@ -120,6 +120,7 @@ fn verify_signature(content: &str, signature: &[u8]) -> Result<(), VerificationE
     use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 
     // Skip if no public key embedded
+    #[allow(clippy::const_is_empty)]
     if SELECTOR_PUBLIC_KEY.is_empty() || SELECTOR_PUBLIC_KEY.len() != 32 {
         log::warn!("[selectors] No valid public key embedded, skipping signature verification");
         return Err(VerificationError::MissingSignature);

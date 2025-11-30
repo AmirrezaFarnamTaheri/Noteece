@@ -1066,14 +1066,8 @@ impl StreamProcessor {
             1.0
         };
 
-        // Extract numbers and decimal point
-        let num_part: String = s
-            .chars()
-            .filter(|c| c.is_ascii_digit() || *c == '.')
-            .collect();
-
-        let value = num_part.parse::<f64>().unwrap_or(0.0);
-        (value * multiplier) as u64
+        let num_part: String = s.chars().filter(|c| c.is_ascii_digit()).collect();
+        num_part.parse::<u64>().unwrap_or(0) * multiplier
     }
 }
 

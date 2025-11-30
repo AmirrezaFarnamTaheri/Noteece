@@ -84,6 +84,7 @@ impl P2pSync {
 
     /// Start sync with a specific device.
     pub async fn start_sync(&self, device_id: &str) -> Result<(), P2pError> {
+        log::info!("[p2p] Starting sync with device {}", device_id);
         let mut protocol = self.protocol.lock().await;
 
         // We are syncing all vault categories
@@ -96,10 +97,16 @@ impl P2pSync {
             SyncCategory::Calendar,
         ];
 
-        protocol
-            .start_sync(device_id, categories)
-            .await
-            .map_err(|e| P2pError::Sync(e.to_string()))
+        match protocol.start_sync(device_id, categories).await {
+            Ok(_) => {
+                log::info!("[p2p] Sync finished successfully with {}", device_id);
+                Ok(())
+            }
+            Err(e) => {
+                log::error!("[p2p] Sync failed with {}: {}", device_id, e);
+                Err(P2pError::Sync(e.to_string()))
+            }
+        }
     }
 
     pub async fn initiate_pairing(&self, device_id: &str) -> Result<(), P2pError> {

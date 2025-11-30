@@ -136,24 +136,10 @@ fn handle_recurrence(conn: &Connection, task: &Task) -> Result<(), DbError> {
                 // Try parsing as RFC 5545 RRULE
                 match rule.parse::<rrule::RRuleSet>() {
                     Ok(rrule_set) => {
-                        match chrono::Utc.timestamp_opt(current_due, 0) {
-                            chrono::LocalResult::Single(dt_start_utc) => {
-                                // Convert to rrule::Tz (UTC)
-                                let dt_start = dt_start_utc.with_timezone(&rrule::Tz::UTC);
-
-                                // RRuleSet implements IntoIterator
-                                // We want the first occurrence *after* current_due
-                                let next = rrule_set.into_iter().find(|dt| *dt > dt_start);
-                                next.map(|dt| dt.timestamp())
-                            }
-                            _ => {
-                                log::warn!(
-                                    "[task] Invalid timestamp for recurrence: {}",
-                                    current_due
-                                );
-                                None
-                            }
-                        }
+                        // RRuleSet implements IntoIterator
+                        // We want the first occurrence *after* current_due
+                        let next = rrule_set.into_iter().find(|dt| dt.timestamp() > current_due);
+                        next.map(|dt| dt.timestamp())
                     }
                     Err(e) => {
                         log::warn!("[task] Failed to parse recurrence rule '{}': {}", rule, e);

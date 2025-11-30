@@ -117,7 +117,7 @@ impl RelayEnvelope {
 #[derive(Debug, Clone)]
 struct PendingMessage {
     envelope: RelayEnvelope,
-    received_at: u64,
+    _received_at: u64,
 }
 
 /// In-memory relay server (for development/testing)
@@ -198,9 +198,7 @@ impl BlindRelayServer {
 
         {
             let mut pending = self.pending.lock().unwrap();
-            let queue = pending
-                .entry(envelope.to_device.clone())
-                .or_default();
+            let queue = pending.entry(envelope.to_device.clone()).or_default();
 
             // Check limits
             if queue.len() >= MAX_PENDING_PER_DEVICE {
@@ -214,7 +212,7 @@ impl BlindRelayServer {
 
             queue.push(PendingMessage {
                 envelope,
-                received_at: now,
+                _received_at: now,
             });
         }
 

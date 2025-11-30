@@ -385,7 +385,7 @@ impl RagPipeline {
                 end_offset: row.get(5)?,
                 metadata,
             },
-            score: row.get::<_, f64>(7)? as f32 * -1.0, // BM25 returns negative scores
+            score: -(row.get::<_, f64>(7)? as f32), // BM25 returns negative scores
             highlight_ranges: Vec::new(),
         })
     }
@@ -497,7 +497,7 @@ Be concise but thorough."#;
         let avg_score: f32 = results.iter().map(|r| r.score).sum::<f32>() / results.len() as f32;
 
         // Normalize to 0-1 range (assuming BM25 scores typically range 0-20)
-        (avg_score / 20.0).min(1.0).max(0.0)
+        (avg_score / 20.0).clamp(0.0, 1.0)
     }
 
     /// Get statistics about the indexed content

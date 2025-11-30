@@ -63,6 +63,9 @@ fn test_gather_context() {
     let conn = setup_db();
     let space_id = Ulid::new();
     let engine = CorrelationEngine::new();
+    let context = engine
+        .gather_context(&conn, space_id)
+        .expect("Failed to gather context");
 
     // Context gathering should succeed even with empty DB
     let context = engine.gather_context(&conn, space_id).unwrap();
@@ -75,24 +78,27 @@ fn test_gather_context() {
 }
 
 #[test]
-fn test_analyze_empty_context() {
-    let space_id = Ulid::new();
-    let now = chrono::Utc::now().timestamp();
-    let context = CorrelationContext {
-        space_id,
-        health_data: vec![],
-        time_entries: vec![],
-        tasks: vec![],
-        projects: vec![],
-        calendar_events: vec![],
-        window_start: now - 3600,
-        window_end: now,
+fn test_correlations_to_insights() {
+    let (_conn, _dir) = setup_db();
+    let engine = CorrelationEngine::new();
+
+    let correlation = Correlation {
+        correlation_type: CorrelationType::HealthWorkload,
+        strength: 0.85,
+        entities: vec![],
+        pattern: CorrelationPattern::HealthWorkloadNegative {
+            mood_avg: 3.0,
+            hours_logged: 20.0,
+        },
+        detected_at: chrono::Utc::now().timestamp(),
     };
 
-    let engine = CorrelationEngine::new();
-    let correlations = engine.analyze(&context);
-
-    assert!(correlations.is_empty());
+    let insights = engine.to_insights(vec![correlation]);
+    assert!(!insights.is_empty());
+    assert_eq!(
+        insights[0].correlation_type,
+        CorrelationType::HealthWorkload
+    );
 }
 
 #[test]
@@ -105,7 +111,16 @@ fn test_insight_generation() {
         CorrelationPattern::Custom("Test correlation pattern".to_string()),
     );
 
-    let insights = engine.to_insights(vec![correlation]);
+    let empty_context = CorrelationContext {
+        space_id: Ulid::new(),
+        tasks: vec![],
+        time_entries: vec![],
+        health_data: vec![],
+        projects: vec![],
+        calendar_events: vec![],
+        window_start: now,
+        window_end: now,
+    };
 
     assert_eq!(insights.len(), 1);
     let insight = &insights[0];
@@ -173,6 +188,7 @@ fn test_full_flow() {
     }
 
     let engine = CorrelationEngine::new();
+    let context = engine.gather_context(&conn, space_id).unwrap();
 
     // 1. Gather
     let context = engine.gather_context(&conn, space_id).unwrap();

@@ -275,7 +275,7 @@ impl CorrelationEngine {
     ) -> Result<Vec<TimeEntryData>, CorrelationError> {
         let mut stmt = conn
             .prepare(
-                "SELECT id, project_id, task_id, duration_minutes, started_at
+                "SELECT id, project_id, task_id, duration_seconds, started_at
              FROM time_entry
              WHERE space_id = ?1 AND started_at >= ?2
              ORDER BY started_at DESC",
@@ -284,11 +284,12 @@ impl CorrelationEngine {
 
         let entries = stmt
             .query_map([space_id.to_string(), since.to_string()], |row| {
+                let duration_seconds: i64 = row.get(3)?;
                 Ok(TimeEntryData {
                     id: row.get(0)?,
                     project_id: row.get(1)?,
                     task_id: row.get(2)?,
-                    duration_minutes: row.get(3)?,
+                    duration_minutes: duration_seconds / 60,
                     started_at: row.get(4)?,
                 })
             })
@@ -304,12 +305,14 @@ impl CorrelationEngine {
         conn: &Connection,
         space_id: Ulid,
     ) -> Result<Vec<TaskData>, CorrelationError> {
+        // Note: 'due_at' is used in schema v1 (instead of due_date)
+        // Note: 'progress' is not in schema v1, assuming 0 default
         let mut stmt = conn
             .prepare(
-                "SELECT id, title, status, priority, due_date, project_id, progress
+                "SELECT id, title, status, priority, due_at, project_id
              FROM task
-             WHERE space_id = ?1 AND status != 'completed'
-             ORDER BY due_date ASC NULLS LAST",
+             WHERE space_id = ?1 AND status != 'done'
+             ORDER BY due_at ASC NULLS LAST",
             )
             .map_err(|e| CorrelationError::Database(e.to_string()))?;
 
@@ -322,7 +325,7 @@ impl CorrelationEngine {
                     priority: row.get(3)?,
                     due_date: row.get(4)?,
                     project_id: row.get(5)?,
-                    progress: row.get::<_, Option<i32>>(6)?.unwrap_or(0),
+                    progress: 0, // Not in schema v1
                 })
             })
             .map_err(|e| CorrelationError::Database(e.to_string()))?
@@ -337,12 +340,14 @@ impl CorrelationEngine {
         conn: &Connection,
         space_id: Ulid,
     ) -> Result<Vec<ProjectData>, CorrelationError> {
+        // Note: 'title' is used in schema v1 (instead of name)
+        // Note: 'priority' is not in schema v1, assuming default 0
         let mut stmt = conn
             .prepare(
-                "SELECT id, name, status, priority
+                "SELECT id, title, status
              FROM project
-             WHERE space_id = ?1 AND status != 'completed'
-             ORDER BY priority DESC",
+             WHERE space_id = ?1 AND status != 'done'
+             ORDER BY start_at DESC", // ordering by start_at as priority column doesn't exist
             )
             .map_err(|e| CorrelationError::Database(e.to_string()))?;
 
@@ -352,7 +357,7 @@ impl CorrelationEngine {
                     id: row.get(0)?,
                     name: row.get(1)?,
                     status: row.get(2)?,
-                    priority: row.get(3)?,
+                    priority: 0, // Not in schema v1
                 })
             })
             .map_err(|e| CorrelationError::Database(e.to_string()))?
@@ -369,9 +374,10 @@ impl CorrelationEngine {
         start: i64,
         end: i64,
     ) -> Result<Vec<CalendarEventData>, CorrelationError> {
+        // Note: 'title' is used in schema v1 (instead of summary)
         let mut stmt = conn
             .prepare(
-                "SELECT id, summary, start_time, end_time
+                "SELECT id, title, start_time, end_time
              FROM calendar_event
              WHERE space_id = ?1 AND start_time >= ?2 AND start_time <= ?3
              ORDER BY start_time ASC",

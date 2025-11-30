@@ -15,13 +15,14 @@ use tokio::sync::Mutex;
 use super::types::LLMRequest;
 
 /// Priority level for requests
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum Priority {
     /// Critical - immediate processing
     Critical = 0,
     /// High - process before normal
     High = 1,
     /// Normal - default priority
+    #[default]
     Normal = 2,
     /// Low - process when resources available
     Low = 3,
@@ -44,12 +45,6 @@ impl Priority {
             3 => Priority::Low,
             _ => Priority::Background,
         }
-    }
-}
-
-impl Default for Priority {
-    fn default() -> Self {
-        Priority::Normal
     }
 }
 
@@ -386,9 +381,9 @@ impl AsyncPriorityQueue {
         queue.len()
     }
 
-    /// Check if queue is empty
     pub async fn is_empty(&self) -> bool {
-        self.len().await == 0
+        let queue = self.inner.lock().await;
+        queue.is_empty()
     }
 
     pub async fn stats(&self) -> PriorityQueueStats {

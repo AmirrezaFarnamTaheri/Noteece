@@ -80,7 +80,7 @@ describe('API Service', () => {
 
   it('getAllSpaces calls correct command', async () => {
     await api.getAllSpaces();
-    expect(mockInvoke).toHaveBeenCalledWith('get_all_spaces_cmd');
+    expect(mockInvoke).toHaveBeenCalledWith('get_all_spaces_cmd', undefined);
   });
 
   it('getAllTagsInSpace calls correct command', async () => {
