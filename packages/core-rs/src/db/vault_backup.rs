@@ -30,24 +30,21 @@ pub fn init_vault_backup_table(conn: &Connection) -> Result<()> {
                 version INTEGER NOT NULL DEFAULT 1,
                 created_at INTEGER NOT NULL,
                 last_verified INTEGER NOT NULL
-            )", VAULT_CONFIG_TABLE
+            )",
+            VAULT_CONFIG_TABLE
         ),
         [],
     )?;
-    
+
     log::info!("[vault_backup] Backup table initialized");
     Ok(())
 }
 
 /// Store vault configuration backup in SQLite
 /// This provides redundancy in case config.json is lost
-pub fn store_vault_backup(
-    conn: &Connection,
-    salt: &[u8],
-    wrapped_dek: &[u8],
-) -> Result<()> {
+pub fn store_vault_backup(conn: &Connection, salt: &[u8], wrapped_dek: &[u8]) -> Result<()> {
     let now = chrono::Utc::now().timestamp();
-    
+
     conn.execute(
         &format!(
             "INSERT OR REPLACE INTO {} (id, salt, wrapped_dek, version, created_at, last_verified)
@@ -56,7 +53,7 @@ pub fn store_vault_backup(
         ),
         params![salt, wrapped_dek, now],
     )?;
-    
+
     log::info!("[vault_backup] Vault configuration backed up to database");
     Ok(())
 }
@@ -68,7 +65,7 @@ pub fn get_vault_backup(conn: &Connection) -> Result<Option<VaultConfigBackup>> 
          FROM {} WHERE id = 1",
         VAULT_CONFIG_TABLE
     ))?;
-    
+
     let result = stmt.query_row([], |row| {
         Ok(VaultConfigBackup {
             salt: row.get(0)?,
@@ -78,7 +75,7 @@ pub fn get_vault_backup(conn: &Connection) -> Result<Option<VaultConfigBackup>> 
             last_verified: row.get(4)?,
         })
     });
-    
+
     match result {
         Ok(backup) => Ok(Some(backup)),
         Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
@@ -87,17 +84,13 @@ pub fn get_vault_backup(conn: &Connection) -> Result<Option<VaultConfigBackup>> 
 }
 
 /// Verify that the backup matches the provided configuration
-pub fn verify_vault_backup(
-    conn: &Connection,
-    salt: &[u8],
-    wrapped_dek: &[u8],
-) -> Result<bool> {
+pub fn verify_vault_backup(conn: &Connection, salt: &[u8], wrapped_dek: &[u8]) -> Result<bool> {
     let backup = get_vault_backup(conn)?;
-    
+
     match backup {
         Some(b) => {
             let matches = b.salt == salt && b.wrapped_dek == wrapped_dek;
-            
+
             if matches {
                 // Update last_verified timestamp
                 let now = chrono::Utc::now().timestamp();
@@ -111,7 +104,7 @@ pub fn verify_vault_backup(
             } else {
                 log::warn!("[vault_backup] Backup mismatch detected!");
             }
-            
+
             Ok(matches)
         }
         None => {
@@ -125,10 +118,13 @@ pub fn verify_vault_backup(
 /// Returns (salt, wrapped_dek) if backup exists
 pub fn recover_from_backup(conn: &Connection) -> Result<Option<(Vec<u8>, Vec<u8>)>> {
     let backup = get_vault_backup(conn)?;
-    
+
     match backup {
         Some(b) => {
-            log::info!("[vault_backup] Recovered configuration from backup (created: {})", b.created_at);
+            log::info!(
+                "[vault_backup] Recovered configuration from backup (created: {})",
+                b.created_at
+            );
             Ok(Some((b.salt, b.wrapped_dek)))
         }
         None => {
@@ -158,12 +154,12 @@ mod tests {
     #[test]
     fn test_store_and_retrieve_backup() {
         let conn = setup_test_db();
-        
+
         let salt = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
         let wrapped_dek = vec![100, 101, 102, 103];
-        
+
         store_vault_backup(&conn, &salt, &wrapped_dek).unwrap();
-        
+
         let backup = get_vault_backup(&conn).unwrap().unwrap();
         assert_eq!(backup.salt, salt);
         assert_eq!(backup.wrapped_dek, wrapped_dek);
@@ -173,15 +169,15 @@ mod tests {
     #[test]
     fn test_verify_backup() {
         let conn = setup_test_db();
-        
+
         let salt = vec![1, 2, 3, 4];
         let wrapped_dek = vec![5, 6, 7, 8];
-        
+
         store_vault_backup(&conn, &salt, &wrapped_dek).unwrap();
-        
+
         // Correct verification
         assert!(verify_vault_backup(&conn, &salt, &wrapped_dek).unwrap());
-        
+
         // Wrong salt
         let wrong_salt = vec![9, 10, 11, 12];
         assert!(!verify_vault_backup(&conn, &wrong_salt, &wrapped_dek).unwrap());
@@ -190,19 +186,18 @@ mod tests {
     #[test]
     fn test_recover_from_backup() {
         let conn = setup_test_db();
-        
+
         // No backup yet
         assert!(recover_from_backup(&conn).unwrap().is_none());
-        
+
         // Store backup
         let salt = vec![1, 2, 3, 4];
         let wrapped_dek = vec![5, 6, 7, 8];
         store_vault_backup(&conn, &salt, &wrapped_dek).unwrap();
-        
+
         // Recover
         let (recovered_salt, recovered_dek) = recover_from_backup(&conn).unwrap().unwrap();
         assert_eq!(recovered_salt, salt);
         assert_eq!(recovered_dek, wrapped_dek);
     }
 }
-

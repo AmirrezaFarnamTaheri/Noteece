@@ -11,8 +11,6 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
-use super::providers::ProviderType;
-
 /// Cost per 1000 tokens (in USD cents for precision)
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct TokenPricing {
@@ -44,9 +42,7 @@ pub fn get_model_pricing(model: &str) -> TokenPricing {
         // OpenAI GPT-4 models
         "gpt-4" | "gpt-4-0613" => TokenPricing::new(3.0, 6.0),
         "gpt-4-32k" | "gpt-4-32k-0613" => TokenPricing::new(6.0, 12.0),
-        "gpt-4-turbo" | "gpt-4-turbo-preview" | "gpt-4-1106-preview" => {
-            TokenPricing::new(1.0, 3.0)
-        }
+        "gpt-4-turbo" | "gpt-4-turbo-preview" | "gpt-4-1106-preview" => TokenPricing::new(1.0, 3.0),
         "gpt-4o" => TokenPricing::new(0.5, 1.5),
         "gpt-4o-mini" => TokenPricing::new(0.015, 0.06),
 
@@ -122,7 +118,10 @@ impl CostStats {
         self.total_output_tokens += record.output_tokens as u64;
         self.total_cost_usd += record.cost_usd;
 
-        *self.by_provider.entry(record.provider.clone()).or_insert(0.0) += record.cost_usd;
+        *self
+            .by_provider
+            .entry(record.provider.clone())
+            .or_insert(0.0) += record.cost_usd;
         *self.by_model.entry(record.model.clone()).or_insert(0.0) += record.cost_usd;
     }
 
@@ -396,7 +395,10 @@ impl CostTracker {
             .into_iter()
             .map(|(name, model)| {
                 let pricing = get_model_pricing(model);
-                (name.to_string(), pricing.calculate(input_tokens, output_tokens))
+                (
+                    name.to_string(),
+                    pricing.calculate(input_tokens, output_tokens),
+                )
             })
             .collect()
     }
@@ -489,4 +491,3 @@ mod tests {
         assert_eq!(stats.avg_cost_per_request(), 0.01);
     }
 }
-

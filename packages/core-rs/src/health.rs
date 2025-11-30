@@ -17,6 +17,7 @@ pub struct HealthMetric {
     pub updated_at: i64,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn create_health_metric(
     conn: &Connection,
     space_id: Ulid,

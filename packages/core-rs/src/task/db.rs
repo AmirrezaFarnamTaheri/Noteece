@@ -1,9 +1,9 @@
+use super::models::Task;
+use crate::audit;
+use crate::db::DbError;
+use chrono::TimeZone;
 use rusqlite::{Connection, OptionalExtension, Result};
 use ulid::Ulid;
-use chrono::TimeZone;
-use crate::db::DbError;
-use crate::audit;
-use super::models::Task;
 
 pub fn create_task(
     conn: &Connection,
@@ -136,24 +136,10 @@ fn handle_recurrence(conn: &Connection, task: &Task) -> Result<(), DbError> {
                 // Try parsing as RFC 5545 RRULE
                 match rule.parse::<rrule::RRuleSet>() {
                     Ok(rrule_set) => {
-                        match chrono::Utc.timestamp_opt(current_due, 0) {
-                            chrono::LocalResult::Single(dt_start_utc) => {
-                                // Convert to rrule::Tz (UTC)
-                                let dt_start = dt_start_utc.with_timezone(&rrule::Tz::UTC);
-
-                                // RRuleSet implements IntoIterator
-                                // We want the first occurrence *after* current_due
-                                let next = rrule_set.into_iter().find(|dt| *dt > dt_start);
-                                next.map(|dt| dt.timestamp())
-                            }
-                            _ => {
-                                log::warn!(
-                                    "[task] Invalid timestamp for recurrence: {}",
-                                    current_due
-                                );
-                                None
-                            }
-                        }
+                        // RRuleSet implements IntoIterator
+                        // We want the first occurrence *after* current_due
+                        let next = rrule_set.into_iter().find(|dt| dt.timestamp() > current_due);
+                        next.map(|dt| dt.timestamp())
                     }
                     Err(e) => {
                         log::warn!("[task] Failed to parse recurrence rule '{}': {}", rule, e);
@@ -260,7 +246,9 @@ pub fn get_upcoming_tasks(
     );
     let mut stmt = conn.prepare("SELECT id, space_id, note_id, project_id, parent_task_id, title, description, status, due_at, start_at, completed_at, priority, estimate_minutes, recur_rule, context, area, updated_at FROM task WHERE space_id = ?1 AND due_at IS NOT NULL AND status != 'done' ORDER BY due_at ASC LIMIT ?2")?;
     let tasks = stmt
-        .query_map([space_id.to_string(), limit.to_string()], |row| Task::try_from(row))?
+        .query_map([space_id.to_string(), limit.to_string()], |row| {
+            Task::try_from(row)
+        })?
         .collect::<Result<Vec<Task>, _>>()?;
     log::info!("[task] Found {} upcoming tasks", tasks.len());
     Ok(tasks)

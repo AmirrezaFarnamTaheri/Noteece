@@ -1,6 +1,7 @@
 // apps/desktop/src/services/api.ts
 
 import { invoke } from '@tauri-apps/api/tauri';
+import { logger } from '../utils/logger';
 import {
   AnalyticsData,
   FormTemplate,
@@ -46,52 +47,69 @@ import {
   Session,
 } from '@noteece/types';
 
+// Generic wrapper for invoke to handle logging
+async function invokeCmd<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+  const startTime = Date.now();
+  try {
+    logger.debug(`[API] Invoking ${cmd}`, args);
+    const result = await invoke<T>(cmd, args);
+    const duration = Date.now() - startTime;
+    logger.debug(`[API] ${cmd} completed in ${duration}ms`);
+    return result;
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    logger.error(`[API] ${cmd} failed after ${duration}ms`, error instanceof Error ? error : { error });
+    throw error;
+  }
+}
+
 // Dashboard & Analytics
-export const getAnalyticsData = (): Promise<AnalyticsData> => invoke('get_analytics_data_cmd', {});
+export const getAnalyticsData = (): Promise<AnalyticsData> => invokeCmd('get_analytics_data_cmd', {});
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const getDashboardStats = (spaceId: string): Promise<any> => invoke('get_dashboard_stats_cmd', { spaceId }); // DashboardStats type needed
+export const getDashboardStats = (spaceId: string): Promise<any> => invokeCmd('get_dashboard_stats_cmd', { spaceId }); // DashboardStats type needed
 
 // Forms
 export const getFormTemplatesForSpace = (spaceId: string): Promise<FormTemplate[]> =>
-  invoke('get_form_templates_for_space_cmd', { spaceId });
+  invokeCmd('get_form_templates_for_space_cmd', { spaceId });
 export const createFormTemplate = (spaceId: string, name: string, fields: FormField[]): Promise<FormTemplate> =>
-  invoke('create_form_template_cmd', { spaceId, name, fields });
+  invokeCmd('create_form_template_cmd', { spaceId, name, fields });
 export const updateFormTemplate = (id: string, name: string, fields: FormField[]): Promise<FormTemplate> =>
-  invoke('update_form_template_cmd', { id, name, fields });
-export const deleteFormTemplate = (id: string): Promise<void> => invoke('delete_form_template_cmd', { id });
+  invokeCmd('update_form_template_cmd', { id, name, fields });
+export const deleteFormTemplate = (id: string): Promise<void> => invokeCmd('delete_form_template_cmd', { id });
 
 // Projects
 export const getProjectRisks = (projectId: string): Promise<ProjectRisk[]> =>
-  invoke('get_project_risks_cmd', { projectId });
+  invokeCmd('get_project_risks_cmd', { projectId });
 export const createProjectRisk = (
   projectId: string,
   description: string,
   likelihood: string,
   impact: string,
-): Promise<ProjectRisk> => invoke('create_project_risk_cmd', { projectId, description, likelihood, impact });
+): Promise<ProjectRisk> => invokeCmd('create_project_risk_cmd', { projectId, description, likelihood, impact });
 export const getProjectMilestones = (projectId: string): Promise<ProjectMilestone[]> =>
-  invoke('get_project_milestones_cmd', { projectId });
+  invokeCmd('get_project_milestones_cmd', { projectId });
 export const getProjectUpdates = (projectId: string): Promise<ProjectUpdate[]> =>
-  invoke('get_project_updates_cmd', { projectId });
+  invokeCmd('get_project_updates_cmd', { projectId });
 export const getAllProjectsInSpace = (spaceId: string): Promise<Project[]> =>
-  invoke('get_projects_in_space_cmd', { spaceId });
+  invokeCmd('get_projects_in_space_cmd', { spaceId });
 
 // Tasks & Notes
 export const getAllTasksInSpace = (spaceId: string): Promise<Task[]> =>
-  invoke('get_all_tasks_in_space_cmd', { spaceId });
+  invokeCmd('get_all_tasks_in_space_cmd', { spaceId });
 export const getAllNotesInSpace = (spaceId: string): Promise<Note[]> =>
-  invoke('get_all_notes_in_space_cmd', { spaceId });
+  invokeCmd('get_all_notes_in_space_cmd', { spaceId });
 export const getOrCreateDailyNote = (spaceId: string): Promise<Note> =>
-  invoke('get_or_create_daily_note_cmd', { spaceId });
+  invokeCmd('get_or_create_daily_note_cmd', { spaceId });
 export const getUpcomingTasks = (spaceId: string, limit: number): Promise<Task[]> =>
-  invoke('get_upcoming_tasks_cmd', { spaceId, limit });
+  invokeCmd('get_upcoming_tasks_cmd', { spaceId, limit });
 export const getRecentNotes = (spaceId: string, limit: number): Promise<Note[]> =>
-  invoke('get_recent_notes_cmd', { spaceId, limit });
-export const updateTask = (task: Task): Promise<void> => invoke('update_task_cmd', { task });
+  invokeCmd('get_recent_notes_cmd', { spaceId, limit });
+export const updateTask = (task: Task): Promise<void> => invokeCmd('update_task_cmd', { task });
 
 // Spaces & Tags
-export const getAllSpaces = (): Promise<Space[]> => invoke('get_all_spaces_cmd');
-export const getAllTagsInSpace = (spaceId: string): Promise<Tag[]> => invoke('get_all_tags_in_space_cmd', { spaceId });
+export const getAllSpaces = (): Promise<Space[]> => invokeCmd('get_all_spaces_cmd');
+export const getAllTagsInSpace = (spaceId: string): Promise<Tag[]> =>
+  invokeCmd('get_all_tags_in_space_cmd', { spaceId });
 
 // Time Tracking
 export const startTimeEntry = (
@@ -101,7 +119,7 @@ export const startTimeEntry = (
   noteId?: string,
   description?: string,
 ): Promise<TimeEntry> =>
-  invoke('start_time_entry_cmd', {
+  invokeCmd('start_time_entry_cmd', {
     spaceId,
     taskId: taskId || null,
     projectId: projectId || null,
@@ -109,19 +127,20 @@ export const startTimeEntry = (
     description: description || null,
   });
 
-export const stopTimeEntry = (entryId: string): Promise<TimeEntry> => invoke('stop_time_entry_cmd', { entryId });
+export const stopTimeEntry = (entryId: string): Promise<TimeEntry> => invokeCmd('stop_time_entry_cmd', { entryId });
 export const getTaskTimeEntries = (taskId: string): Promise<TimeEntry[]> =>
-  invoke('get_task_time_entries_cmd', { taskId });
+  invokeCmd('get_task_time_entries_cmd', { taskId });
 export const getProjectTimeEntries = (projectId: string): Promise<TimeEntry[]> =>
-  invoke('get_project_time_entries_cmd', { projectId });
+  invokeCmd('get_project_time_entries_cmd', { projectId });
 export const getRunningEntries = (spaceId: string): Promise<TimeEntry[]> =>
-  invoke('get_running_entries_cmd', { spaceId });
+  invokeCmd('get_running_entries_cmd', { spaceId });
 export const getRecentTimeEntries = (spaceId: string, limit: number): Promise<TimeEntry[]> =>
-  invoke('get_recent_time_entries_cmd', { spaceId, limit });
-export const getTaskTimeStats = (taskId: string): Promise<TimeStats> => invoke('get_task_time_stats_cmd', { taskId });
+  invokeCmd('get_recent_time_entries_cmd', { spaceId, limit });
+export const getTaskTimeStats = (taskId: string): Promise<TimeStats> =>
+  invokeCmd('get_task_time_stats_cmd', { taskId });
 export const getProjectTimeStats = (projectId: string): Promise<TimeStats> =>
-  invoke('get_project_time_stats_cmd', { projectId });
-export const deleteTimeEntry = (entryId: string): Promise<void> => invoke('delete_time_entry_cmd', { entryId });
+  invokeCmd('get_project_time_stats_cmd', { projectId });
+export const deleteTimeEntry = (entryId: string): Promise<void> => invokeCmd('delete_time_entry_cmd', { entryId });
 export const createManualTimeEntry = (
   spaceId: string,
   taskId: string | undefined,
@@ -131,7 +150,7 @@ export const createManualTimeEntry = (
   startedAt: number,
   durationSeconds: number,
 ): Promise<TimeEntry> =>
-  invoke('create_manual_time_entry_cmd', {
+  invokeCmd('create_manual_time_entry_cmd', {
     spaceId,
     taskId: taskId || null,
     projectId: projectId || null,
@@ -142,32 +161,33 @@ export const createManualTimeEntry = (
   });
 
 // P2P Sync
-export const startSyncServer = (): Promise<void> => invoke('start_sync_server_cmd');
-export const startP2pSync = (deviceId: string): Promise<void> => invoke('start_p2p_sync_cmd', { deviceId });
-export const discoverDevices = (): Promise<DiscoveredDevice[]> => invoke('discover_devices_cmd');
-export const initiatePairing = (deviceId: string): Promise<void> => invoke('initiate_pairing_cmd', { deviceId });
-export const getDevices = (): Promise<DeviceInfo[]> => invoke('get_devices_cmd');
-export const getSyncConflicts = (): Promise<SyncConflict[]> => invoke('get_sync_conflicts_cmd');
+export const startSyncServer = (): Promise<void> => invokeCmd('start_sync_server_cmd');
+export const startP2pSync = (deviceId: string): Promise<void> => invokeCmd('start_p2p_sync_cmd', { deviceId });
+export const discoverDevices = (): Promise<DiscoveredDevice[]> => invokeCmd('discover_devices_cmd');
+export const initiatePairing = (deviceId: string): Promise<void> => invokeCmd('initiate_pairing_cmd', { deviceId });
+export const getDevices = (): Promise<DeviceInfo[]> => invokeCmd('get_devices_cmd');
+export const getSyncConflicts = (): Promise<SyncConflict[]> => invokeCmd('get_sync_conflicts_cmd');
 export const resolveSyncConflict = (conflict: SyncConflict, resolution: ConflictResolution): Promise<void> =>
-  invoke('resolve_sync_conflict_cmd', { conflict, resolution });
-export const exchangeKeys = (deviceId: string): Promise<void> => invoke('exchange_keys_cmd', { deviceId });
-export const getSyncProgress = (deviceId: string): Promise<number> => invoke('get_sync_progress_cmd', { deviceId });
-export const shutdownClearKeys = (): Promise<void> => invoke('shutdown_clear_keys_cmd');
-export const getAllSyncTasks = (spaceId: string): Promise<SyncTask[]> => invoke('get_all_sync_tasks_cmd', { spaceId });
-export const getSyncStats = (spaceId: string): Promise<SyncStats> => invoke('get_sync_stats_cmd', { spaceId });
+  invokeCmd('resolve_sync_conflict_cmd', { conflict, resolution });
+export const exchangeKeys = (deviceId: string): Promise<void> => invokeCmd('exchange_keys_cmd', { deviceId });
+export const getSyncProgress = (deviceId: string): Promise<number> => invokeCmd('get_sync_progress_cmd', { deviceId });
+export const shutdownClearKeys = (): Promise<void> => invokeCmd('shutdown_clear_keys_cmd');
+export const getAllSyncTasks = (spaceId: string): Promise<SyncTask[]> =>
+  invokeCmd('get_all_sync_tasks_cmd', { spaceId });
+export const getSyncStats = (spaceId: string): Promise<SyncStats> => invokeCmd('get_sync_stats_cmd', { spaceId });
 
 // Backup
-export const createBackup = (spaceId: string): Promise<BackupMetadata> => invoke('create_backup_cmd', { spaceId });
-export const restoreBackup = (backupId: string): Promise<void> => invoke('restore_backup_cmd', { backupId });
-export const listBackups = (spaceId: string): Promise<BackupMetadata[]> => invoke('list_backups_cmd', { spaceId });
+export const createBackup = (spaceId: string): Promise<BackupMetadata> => invokeCmd('create_backup_cmd', { spaceId });
+export const restoreBackup = (backupId: string): Promise<void> => invokeCmd('restore_backup_cmd', { backupId });
+export const listBackups = (spaceId: string): Promise<BackupMetadata[]> => invokeCmd('list_backups_cmd', { spaceId });
 export const getBackupDetails = (backupId: string): Promise<BackupMetadata> =>
-  invoke('get_backup_details_cmd', { backupId });
-export const deleteBackup = (backupId: string): Promise<void> => invoke('delete_backup_cmd', { backupId });
+  invokeCmd('get_backup_details_cmd', { backupId });
+export const deleteBackup = (backupId: string): Promise<void> => invokeCmd('delete_backup_cmd', { backupId });
 
 // Auth
 export const createUser = (username: string, email: string, password: string): Promise<User> =>
-  invoke('create_user_cmd', { username, email, password });
+  invokeCmd('create_user_cmd', { username, email, password });
 export const authenticateUser = (username: string, password: string): Promise<Session> =>
-  invoke('authenticate_user_cmd', { username, password });
-export const logoutUser = (token: string): Promise<void> => invoke('logout_user_cmd', { token });
-export const getCurrentUser = (token: string): Promise<User> => invoke('get_current_user_cmd', { token });
+  invokeCmd('authenticate_user_cmd', { username, password });
+export const logoutUser = (token: string): Promise<void> => invokeCmd('logout_user_cmd', { token });
+export const getCurrentUser = (token: string): Promise<User> => invokeCmd('get_current_user_cmd', { token });

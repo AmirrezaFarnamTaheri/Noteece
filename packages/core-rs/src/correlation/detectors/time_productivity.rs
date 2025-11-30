@@ -8,19 +8,18 @@ use crate::correlation::types::*;
 ///
 /// Analyzes the relationship between logged time and task progress
 /// to identify tasks that may have blockers or need breakdown.
-pub fn detect(
-    time_entries: &[TimeEntryData],
-    tasks: &[TaskData],
-) -> Option<Correlation> {
+pub fn detect(time_entries: &[TimeEntryData], tasks: &[TaskData]) -> Option<Correlation> {
     if time_entries.is_empty() || tasks.is_empty() {
         return None;
     }
 
     // Calculate time per task
-    let mut time_per_task: std::collections::HashMap<String, f64> = std::collections::HashMap::new();
+    let mut time_per_task: std::collections::HashMap<String, f64> =
+        std::collections::HashMap::new();
     for entry in time_entries {
         if let Some(ref task_id) = entry.task_id {
-            *time_per_task.entry(task_id.clone()).or_insert(0.0) += entry.duration_minutes as f64 / 60.0;
+            *time_per_task.entry(task_id.clone()).or_insert(0.0) +=
+                entry.duration_minutes as f64 / 60.0;
         }
     }
 
@@ -29,7 +28,7 @@ pub fn detect(
         if let Some(&hours) = time_per_task.get(&task.id) {
             // Check for mismatch: lots of time (>6 hours) but low progress (<30%)
             let progress = task.progress;
-            
+
             if hours > 6.0 && progress < 30 {
                 // Calculate strength based on severity of mismatch
                 let expected_progress = (hours / 20.0 * 100.0).min(100.0) as i32; // Assume 20 hours for 100%
@@ -39,7 +38,9 @@ pub fn detect(
                 if strength > 0.5 {
                     log::info!(
                         "[Correlation] Time-Productivity mismatch: '{}' has {} hours, {}% progress",
-                        task.title, hours, progress
+                        task.title,
+                        hours,
+                        progress
                     );
 
                     return Some(Correlation::new(
@@ -104,7 +105,10 @@ mod tests {
         assert!(result.is_some());
 
         let correlation = result.unwrap();
-        assert_eq!(correlation.correlation_type, CorrelationType::TimeProductivity);
+        assert_eq!(
+            correlation.correlation_type,
+            CorrelationType::TimeProductivity
+        );
     }
 
     #[test]
@@ -116,4 +120,3 @@ mod tests {
         assert!(result.is_none()); // Not enough time to indicate a problem
     }
 }
-

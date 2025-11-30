@@ -100,10 +100,7 @@ pub enum CorrelationType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CorrelationPattern {
     /// Negative health-workload correlation
-    HealthWorkloadNegative {
-        mood_avg: f64,
-        hours_logged: f64,
-    },
+    HealthWorkloadNegative { mood_avg: f64, hours_logged: f64 },
     /// Calendar events conflict with project deadlines
     CalendarProjectConflict {
         event_hours: f64,
@@ -167,14 +164,9 @@ pub enum SuggestedAction {
         hours_needed: i64,
     },
     /// Snooze a task until later
-    SnoozeTask {
-        task_id: String,
-        until: i64,
-    },
+    SnoozeTask { task_id: String, until: i64 },
     /// Create breakdown for a blocked task
-    CreateTaskBreakdown {
-        task_id: String,
-    },
+    CreateTaskBreakdown { task_id: String },
     /// Adjust project priority
     AdjustProjectPriority {
         project_id: String,
@@ -256,4 +248,3 @@ mod tests {
         assert!(matches!(custom, CorrelationType::Custom(_)));
     }
 }
-

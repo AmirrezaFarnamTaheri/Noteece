@@ -1,0 +1,85 @@
+   Compiling core-rs v1.1.0 (/app/packages/core-rs)
+error[E0061]: this method takes 2 arguments but 3 arguments were supplied
+  --> packages/core-rs/tests/correlation_tests.rs:36:10
+   |
+36 |         .gather_context(&conn, space_id, 7)
+   |          ^^^^^^^^^^^^^^                  - unexpected argument #3 of type `{integer}`
+   |
+note: method defined here
+  --> /app/packages/core-rs/src/correlation/mod.rs:69:12
+   |
+69 |     pub fn gather_context(
+   |            ^^^^^^^^^^^^^^
+help: remove the extra argument
+   |
+36 -         .gather_context(&conn, space_id, 7)
+36 +         .gather_context(&conn, space_id)
+   |
+
+error[E0560]: struct `core_rs::correlation::Correlation` has no field named `pattern_description`
+  --> packages/core-rs/tests/correlation_tests.rs:51:9
+   |
+51 |         pattern_description: "Test correlation".to_string(),
+   |         ^^^^^^^^^^^^^^^^^^^ `core_rs::correlation::Correlation` does not have this field
+   |
+   = note: available fields are: `pattern`, `detected_at`
+
+error[E0560]: struct `core_rs::correlation::Correlation` has no field named `metadata`
+  --> packages/core-rs/tests/correlation_tests.rs:52:9
+   |
+52 |         metadata: [
+   |         ^^^^^^^^ `core_rs::correlation::Correlation` does not have this field
+   |
+   = note: available fields are: `pattern`, `detected_at`
+
+error[E0599]: no method named `correlations_to_insights` found for struct `core_rs::correlation::CorrelationEngine` in the current scope
+  --> packages/core-rs/tests/correlation_tests.rs:61:27
+   |
+61 |     let insights = engine.correlations_to_insights(vec![correlation]);
+   |                           ^^^^^^^^^^^^^^^^^^^^^^^^ method not found in `core_rs::correlation::CorrelationEngine`
+
+error[E0560]: struct `core_rs::correlation::CorrelationContext` has no field named `transactions`
+  --> packages/core-rs/tests/correlation_tests.rs:79:9
+   |
+79 |         transactions: vec![],
+   |         ^^^^^^^^^^^^ `core_rs::correlation::CorrelationContext` does not have this field
+   |
+   = note: available fields are: `projects`, `calendar_events`, `window_start`, `window_end`
+
+error[E0560]: struct `core_rs::correlation::CorrelationContext` has no field named `start_time`
+  --> packages/core-rs/tests/correlation_tests.rs:80:9
+   |
+80 |         start_time: now,
+   |         ^^^^^^^^^^ `core_rs::correlation::CorrelationContext` does not have this field
+   |
+   = note: available fields are: `projects`, `calendar_events`, `window_start`, `window_end`
+
+error[E0560]: struct `core_rs::correlation::CorrelationContext` has no field named `end_time`
+  --> packages/core-rs/tests/correlation_tests.rs:81:9
+   |
+81 |         end_time: now,
+   |         ^^^^^^^^ `core_rs::correlation::CorrelationContext` does not have this field
+   |
+   = note: available fields are: `projects`, `calendar_events`, `window_start`, `window_end`
+
+error[E0061]: this method takes 2 arguments but 3 arguments were supplied
+   --> packages/core-rs/tests/correlation_tests.rs:110:26
+    |
+110 |     let context = engine.gather_context(&conn, space_id, 35).unwrap();
+    |                          ^^^^^^^^^^^^^^                  -- unexpected argument #3 of type `{integer}`
+    |
+note: method defined here
+   --> /app/packages/core-rs/src/correlation/mod.rs:69:12
+    |
+ 69 |     pub fn gather_context(
+    |            ^^^^^^^^^^^^^^
+help: remove the extra argument
+    |
+110 -     let context = engine.gather_context(&conn, space_id, 35).unwrap();
+110 +     let context = engine.gather_context(&conn, space_id).unwrap();
+    |
+
+Some errors have detailed explanations: E0061, E0560, E0599.
+For more information about an error, try `rustc --explain E0061`.
+error: could not compile `core-rs` (test "correlation_tests") due to 8 previous errors
+warning: build failed, waiting for other jobs to finish...

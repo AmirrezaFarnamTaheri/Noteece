@@ -11,7 +11,7 @@ use crate::correlation::types::*;
 pub fn detect(
     health_data: &[HealthMetricData],
     time_entries: &[TimeEntryData],
-    projects: &[ProjectData],
+    _projects: &[ProjectData],
 ) -> Option<Correlation> {
     // Need minimum data for meaningful analysis
     if health_data.len() < 3 || time_entries.is_empty() {
@@ -28,7 +28,8 @@ pub fn detect(
         return None;
     }
 
-    let mood_avg: f64 = mood_metrics.iter().map(|m| m.value).sum::<f64>() / mood_metrics.len() as f64;
+    let mood_avg: f64 =
+        mood_metrics.iter().map(|m| m.value).sum::<f64>() / mood_metrics.len() as f64;
 
     // Calculate total hours logged in the period
     let total_minutes: i64 = time_entries.iter().map(|t| t.duration_minutes).sum();
@@ -127,7 +128,10 @@ mod tests {
         assert!(result.is_some());
 
         let correlation = result.unwrap();
-        assert_eq!(correlation.correlation_type, CorrelationType::HealthWorkload);
+        assert_eq!(
+            correlation.correlation_type,
+            CorrelationType::HealthWorkload
+        );
         assert!(correlation.strength > 0.0);
     }
 
@@ -155,4 +159,3 @@ mod tests {
         assert!(result.is_none()); // No correlation - healthy state
     }
 }
-

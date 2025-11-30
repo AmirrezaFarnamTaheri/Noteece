@@ -312,4 +312,3 @@ struct GeminiModelsResponse {
 struct GeminiModel {
     name: String,
 }
-

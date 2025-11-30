@@ -33,6 +33,7 @@ pub fn update_sync_status(
 }
 
 /// Record sync history
+#[allow(clippy::too_many_arguments)]
 pub fn record_sync_history(
     conn: &Connection,
     account_id: &str,

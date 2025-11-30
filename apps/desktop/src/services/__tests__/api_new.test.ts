@@ -26,7 +26,7 @@ describe('API Service - New Methods', () => {
 
   test('shutdownClearKeys calls shutdown_clear_keys_cmd', async () => {
     await shutdownClearKeys();
-    expect(invoke).toHaveBeenCalledWith('shutdown_clear_keys_cmd');
+    expect(invoke).toHaveBeenCalledWith('shutdown_clear_keys_cmd', undefined);
   });
 
   test('getBackupDetails calls get_backup_details_cmd', async () => {

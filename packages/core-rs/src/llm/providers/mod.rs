@@ -33,9 +33,12 @@ pub enum ProviderType {
 impl ProviderType {
     /// Check if this provider requires an API key
     pub fn requires_api_key(&self) -> bool {
-        matches!(self, ProviderType::OpenAI | ProviderType::Claude | ProviderType::Gemini)
+        matches!(
+            self,
+            ProviderType::OpenAI | ProviderType::Claude | ProviderType::Gemini
+        )
     }
-    
+
     /// Get the default model for this provider
     pub fn default_model(&self) -> &'static str {
         match self {

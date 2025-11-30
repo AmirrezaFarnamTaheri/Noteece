@@ -5,6 +5,7 @@ use rusqlite::Connection;
 use ulid::Ulid;
 
 /// Add a CalDAV account
+#[allow(clippy::too_many_arguments)]
 pub fn add_caldav_account(
     conn: &Connection,
     url: &str,
@@ -135,6 +136,7 @@ pub fn get_caldav_account(
 }
 
 /// Update CalDAV account settings
+#[allow(clippy::too_many_arguments)]
 pub fn update_caldav_account(
     conn: &Connection,
     account_id: &str,

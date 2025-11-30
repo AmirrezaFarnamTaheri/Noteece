@@ -49,6 +49,12 @@ impl SyncAgent {
         conn: &Connection,
         device_info: &DeviceInfo,
     ) -> Result<(), SyncError> {
+        log::info!(
+            "[SyncAgent] Registering device: {} ({})",
+            device_info.device_name,
+            device_info.device_id
+        );
+
         conn.execute(
             "INSERT OR REPLACE INTO sync_state (
                 device_id, device_name, device_type, last_seen,
@@ -67,6 +73,7 @@ impl SyncAgent {
             ],
         )?;
 
+        log::debug!("[SyncAgent] Device registered successfully");
         Ok(())
     }
 
@@ -106,9 +113,16 @@ impl SyncAgent {
         conn: &Connection,
         space_id: Ulid,
     ) -> Result<SyncManifest, SyncError> {
+        log::trace!("[SyncAgent] Creating manifest for space {}", space_id);
         let last_sync_at = SyncHistory::get_last_sync_time(conn, &space_id.to_string())?;
         let vector_clock = self.get_vector_clock(conn, space_id)?;
         let entity_hashes = self.compute_entity_hashes(conn, space_id)?;
+
+        log::debug!(
+            "[SyncAgent] Manifest created. Hashes: {}, Vector clock entries: {}",
+            entity_hashes.len(),
+            vector_clock.len()
+        );
 
         Ok(SyncManifest {
             device_id: self.device_id.clone(),
@@ -136,11 +150,23 @@ impl SyncAgent {
         deltas: Vec<SyncDelta>,
         dek: &[u8],
     ) -> Result<Vec<SyncConflict>, SyncError> {
+        log::info!("[SyncAgent] Applying {} deltas", deltas.len());
         let mut conflicts = Vec::new();
         let tx = conn.transaction()?;
 
         for delta in deltas {
+            log::trace!(
+                "[SyncAgent] Processing delta: {} ({})",
+                delta.entity_id,
+                delta.entity_type
+            );
+
             if let Some(conflict) = self.detect_conflict(&tx, &delta)? {
+                log::warn!(
+                    "[SyncAgent] Conflict detected for {} ({})",
+                    delta.entity_id,
+                    delta.entity_type
+                );
                 let conflict_id = Ulid::new().to_string();
                 if let Some(space_id) = &conflict.space_id {
                     tx.execute(
@@ -173,15 +199,31 @@ impl SyncAgent {
             match DeltaApplier::apply_single_delta(&tx, &delta, dek) {
                 Ok(_) => {
                     self.log_entity_sync(&tx, &delta)?;
+                    log::trace!(
+                        "[SyncAgent] Delta applied successfully: {}",
+                        delta.entity_id
+                    );
                 }
-                Err(SyncError::ConflictError(_)) => {
+                Err(SyncError::ConflictError(e)) => {
                     // Handled by detect_conflict or logic inside
+                    log::debug!("[SyncAgent] Conflict error caught: {}", e);
                 }
-                Err(e) => return Err(e),
+                Err(e) => {
+                    log::error!(
+                        "[SyncAgent] Failed to apply delta {}: {}",
+                        delta.entity_id,
+                        e
+                    );
+                    return Err(e);
+                }
             }
         }
 
         tx.commit()?;
+        log::info!(
+            "[SyncAgent] Delta application complete. Conflicts: {}",
+            conflicts.len()
+        );
         Ok(conflicts)
     }
 
@@ -275,21 +317,28 @@ impl SyncAgent {
         let mut stmt = conn.prepare(
             "SELECT id, entity_type, entity_id, conflict_type, detected_at
              FROM sync_conflict
-             WHERE space_id = ?1 AND resolved = 0"
+             WHERE space_id = ?1 AND resolved = 0",
         )?;
 
-        let tasks = stmt.query_map([space_id], |row| {
-             Ok(SyncTask {
-                 id: row.get(0)?,
-                 description: Some(format!("Conflict: {} {}", row.get::<_, String>(1)?, row.get::<_, String>(2)?)),
-                 status: "conflict".to_string(),
-                 progress: 0.0,
-                 device_id: None,
-                 space_id: None,
-                 direction: None,
-                 created_at: Some(row.get(4)?),
-             })
-        })?.collect::<Result<Vec<_>, _>>().map_err(|e| SyncError::DatabaseError(e.to_string()))?;
+        let tasks = stmt
+            .query_map([space_id], |row| {
+                Ok(SyncTask {
+                    id: row.get(0)?,
+                    description: Some(format!(
+                        "Conflict: {} {}",
+                        row.get::<_, String>(1)?,
+                        row.get::<_, String>(2)?
+                    )),
+                    status: "conflict".to_string(),
+                    progress: 0.0,
+                    device_id: None,
+                    space_id: None,
+                    direction: None,
+                    created_at: Some(row.get(4)?),
+                })
+            })?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| SyncError::DatabaseError(e.to_string()))?;
 
         Ok(tasks)
     }
@@ -366,6 +415,11 @@ impl SyncAgent {
         resolution: ConflictResolution,
         dek: &[u8],
     ) -> Result<(), SyncError> {
+        log::info!(
+            "[SyncAgent] Resolving conflict for {} with {:?}",
+            conflict.entity_id,
+            resolution
+        );
         match resolution {
             ConflictResolution::UseLocal => {
                 self.mark_conflict_resolved(conn, &conflict.entity_id)?;

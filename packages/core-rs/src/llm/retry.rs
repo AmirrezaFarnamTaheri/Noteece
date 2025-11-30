@@ -76,8 +76,8 @@ impl RetryConfig {
 
     /// Calculate delay for a given attempt
     pub fn delay_for_attempt(&self, attempt: u32) -> Duration {
-        let base_delay = self.initial_delay_ms as f64
-            * self.backoff_multiplier.powi(attempt as i32);
+        let base_delay =
+            self.initial_delay_ms as f64 * self.backoff_multiplier.powi(attempt as i32);
         let capped_delay = base_delay.min(self.max_delay_ms as f64);
 
         let final_delay = if self.use_jitter {
@@ -127,8 +127,8 @@ pub fn is_retryable(error: &LLMError) -> bool {
         LLMError::ProviderNotImplemented(_) => false,
         LLMError::CacheError(_) => false,
         LLMError::DatabaseError(_) => false,
-            // Catch-all for any new variants
-            _ => false,
+        // Catch-all for any new variants
+        _ => false,
     }
 }
 
@@ -153,18 +153,17 @@ impl<T> RetryResult<T> {
         if let Some(result) = self.result {
             Ok(result)
         } else {
-            Err(self.errors.into_iter().last().unwrap_or(LLMError::NetworkError(
-                "Unknown error".to_string(),
-            )))
+            Err(self
+                .errors
+                .into_iter()
+                .last()
+                .unwrap_or(LLMError::NetworkError("Unknown error".to_string())))
         }
     }
 }
 
 /// Execute an async operation with retry logic
-pub async fn with_retry<T, F, Fut>(
-    config: &RetryConfig,
-    operation: F,
-) -> RetryResult<T>
+pub async fn with_retry<T, F, Fut>(config: &RetryConfig, operation: F) -> RetryResult<T>
 where
     F: Fn() -> Fut,
     Fut: std::future::Future<Output = Result<T, LLMError>>,
@@ -312,7 +311,10 @@ impl CircuitBreaker {
                 self.failure_count += 1;
                 if self.failure_count >= self.failure_threshold {
                     self.state = CircuitState::Open;
-                    log::warn!("[circuit] Circuit opened after {} failures", self.failure_count);
+                    log::warn!(
+                        "[circuit] Circuit opened after {} failures",
+                        self.failure_count
+                    );
                 }
             }
             CircuitState::HalfOpen => {
@@ -378,7 +380,9 @@ mod tests {
     fn test_is_retryable() {
         assert!(is_retryable(&LLMError::RateLimitExceeded));
         assert!(is_retryable(&LLMError::NetworkError("timeout".to_string())));
-        assert!(!is_retryable(&LLMError::ConfigError("bad config".to_string())));
+        assert!(!is_retryable(&LLMError::ConfigError(
+            "bad config".to_string()
+        )));
     }
 
     #[test]
@@ -452,4 +456,3 @@ mod tests {
         assert_eq!(result.errors.len(), 2);
     }
 }
-

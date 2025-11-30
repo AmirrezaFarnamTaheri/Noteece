@@ -48,7 +48,6 @@ pub enum SyncProtocolError {
 }
 
 /// Protocol version for compatibility checking
-
 /// Device type identifier
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum DeviceType {

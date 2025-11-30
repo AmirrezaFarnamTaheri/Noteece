@@ -18,14 +18,8 @@ export const MusicWidget: React.FC = () => {
         <Text size="sm" c="dimmed" ta="center">
           Connect your music service to see what's playing.
         </Text>
-        <Button
-            variant="light"
-            color="violet"
-            size="xs"
-            leftSection={<IconBrandSpotify size={16} />}
-            disabled
-        >
-            Connect Spotify (Coming Soon)
+        <Button variant="light" color="violet" size="xs" leftSection={<IconBrandSpotify size={16} />} disabled>
+          Connect Spotify (Coming Soon)
         </Button>
       </Stack>
     </Paper>

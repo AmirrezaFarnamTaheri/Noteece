@@ -38,9 +38,9 @@ pub struct CorrelationConfig {
 impl Default for CorrelationConfig {
     fn default() -> Self {
         Self {
-            short_term: Duration::from_secs(7 * 24 * 3600),      // 7 days
-            medium_term: Duration::from_secs(30 * 24 * 3600),   // 30 days
-            long_term: Duration::from_secs(90 * 24 * 3600),     // 90 days
+            short_term: Duration::from_secs(7 * 24 * 3600), // 7 days
+            medium_term: Duration::from_secs(30 * 24 * 3600), // 30 days
+            long_term: Duration::from_secs(90 * 24 * 3600), // 90 days
             min_strength_threshold: 0.7,
             max_insights_per_category: 3,
         }
@@ -145,10 +145,9 @@ impl CorrelationEngine {
         }
 
         // Time × Productivity correlation
-        if let Some(correlation) = detectors::time_productivity::detect(
-            &context.time_entries,
-            &context.tasks,
-        ) {
+        if let Some(correlation) =
+            detectors::time_productivity::detect(&context.time_entries, &context.tasks)
+        {
             if correlation.strength >= self.config.min_strength_threshold {
                 correlations.push(correlation);
             }
@@ -156,7 +155,9 @@ impl CorrelationEngine {
 
         // Sort by strength (highest first)
         correlations.sort_by(|a, b| {
-            b.strength.partial_cmp(&a.strength).unwrap_or(std::cmp::Ordering::Equal)
+            b.strength
+                .partial_cmp(&a.strength)
+                .unwrap_or(std::cmp::Ordering::Equal)
         });
 
         log::info!(
@@ -177,7 +178,10 @@ impl CorrelationEngine {
 
     fn correlation_to_insight(&self, correlation: Correlation) -> Option<ActionableInsight> {
         let (message, action) = match &correlation.pattern {
-            CorrelationPattern::HealthWorkloadNegative { mood_avg, hours_logged } => {
+            CorrelationPattern::HealthWorkloadNegative {
+                mood_avg,
+                hours_logged,
+            } => {
                 let msg = format!(
                     "Your mood has averaged {:.1}/10 while logging {:.0} hours. Consider taking a break.",
                     mood_avg, hours_logged
@@ -188,7 +192,11 @@ impl CorrelationEngine {
                 };
                 (msg, action)
             }
-            CorrelationPattern::CalendarProjectConflict { event_hours, project_name, available_hours } => {
+            CorrelationPattern::CalendarProjectConflict {
+                event_hours,
+                project_name,
+                available_hours,
+            } => {
                 let msg = format!(
                     "You have {} hours of calendar events, but '{}' needs attention. Only {} hours available.",
                     event_hours, project_name, available_hours
@@ -199,7 +207,11 @@ impl CorrelationEngine {
                 };
                 (msg, action)
             }
-            CorrelationPattern::TimeProductivityMismatch { task_name, hours_spent, progress_percent } => {
+            CorrelationPattern::TimeProductivityMismatch {
+                task_name,
+                hours_spent,
+                progress_percent,
+            } => {
                 let msg = format!(
                     "You've logged {} hours on '{}' but it's at {}% progress. May indicate blockers.",
                     hours_spent, task_name, progress_percent
@@ -209,9 +221,7 @@ impl CorrelationEngine {
                 };
                 (msg, action)
             }
-            CorrelationPattern::Custom(description) => {
-                (description.clone(), SuggestedAction::None)
-            }
+            CorrelationPattern::Custom(description) => (description.clone(), SuggestedAction::None),
         };
 
         Some(ActionableInsight {
@@ -232,12 +242,14 @@ impl CorrelationEngine {
         space_id: Ulid,
         since: i64,
     ) -> Result<Vec<HealthMetricData>, CorrelationError> {
-        let mut stmt = conn.prepare(
-            "SELECT id, metric_type, value, recorded_at 
+        let mut stmt = conn
+            .prepare(
+                "SELECT id, metric_type, value, recorded_at
              FROM health_metric 
              WHERE space_id = ?1 AND recorded_at >= ?2
-             ORDER BY recorded_at DESC"
-        ).map_err(|e| CorrelationError::Database(e.to_string()))?;
+             ORDER BY recorded_at DESC",
+            )
+            .map_err(|e| CorrelationError::Database(e.to_string()))?;
 
         let metrics = stmt
             .query_map([space_id.to_string(), since.to_string()], |row| {
@@ -261,20 +273,23 @@ impl CorrelationEngine {
         space_id: Ulid,
         since: i64,
     ) -> Result<Vec<TimeEntryData>, CorrelationError> {
-        let mut stmt = conn.prepare(
-            "SELECT id, project_id, task_id, duration_minutes, started_at
+        let mut stmt = conn
+            .prepare(
+                "SELECT id, project_id, task_id, duration_seconds, started_at
              FROM time_entry
              WHERE space_id = ?1 AND started_at >= ?2
-             ORDER BY started_at DESC"
-        ).map_err(|e| CorrelationError::Database(e.to_string()))?;
+             ORDER BY started_at DESC",
+            )
+            .map_err(|e| CorrelationError::Database(e.to_string()))?;
 
         let entries = stmt
             .query_map([space_id.to_string(), since.to_string()], |row| {
+                let duration_seconds: i64 = row.get(3)?;
                 Ok(TimeEntryData {
                     id: row.get(0)?,
                     project_id: row.get(1)?,
                     task_id: row.get(2)?,
-                    duration_minutes: row.get(3)?,
+                    duration_minutes: duration_seconds / 60,
                     started_at: row.get(4)?,
                 })
             })
@@ -290,12 +305,16 @@ impl CorrelationEngine {
         conn: &Connection,
         space_id: Ulid,
     ) -> Result<Vec<TaskData>, CorrelationError> {
-        let mut stmt = conn.prepare(
-            "SELECT id, title, status, priority, due_date, project_id, progress
+        // Note: 'due_at' is used in schema v1 (instead of due_date)
+        // Note: 'progress' is not in schema v1, assuming 0 default
+        let mut stmt = conn
+            .prepare(
+                "SELECT id, title, status, priority, due_at, project_id
              FROM task
-             WHERE space_id = ?1 AND status != 'completed'
-             ORDER BY due_date ASC NULLS LAST"
-        ).map_err(|e| CorrelationError::Database(e.to_string()))?;
+             WHERE space_id = ?1 AND status != 'done'
+             ORDER BY due_at ASC NULLS LAST",
+            )
+            .map_err(|e| CorrelationError::Database(e.to_string()))?;
 
         let tasks = stmt
             .query_map([space_id.to_string()], |row| {
@@ -306,7 +325,7 @@ impl CorrelationEngine {
                     priority: row.get(3)?,
                     due_date: row.get(4)?,
                     project_id: row.get(5)?,
-                    progress: row.get::<_, Option<i32>>(6)?.unwrap_or(0),
+                    progress: 0, // Not in schema v1
                 })
             })
             .map_err(|e| CorrelationError::Database(e.to_string()))?
@@ -321,12 +340,16 @@ impl CorrelationEngine {
         conn: &Connection,
         space_id: Ulid,
     ) -> Result<Vec<ProjectData>, CorrelationError> {
-        let mut stmt = conn.prepare(
-            "SELECT id, name, status, priority
+        // Note: 'title' is used in schema v1 (instead of name)
+        // Note: 'priority' is not in schema v1, assuming default 0
+        let mut stmt = conn
+            .prepare(
+                "SELECT id, title, status
              FROM project
-             WHERE space_id = ?1 AND status != 'completed'
-             ORDER BY priority DESC"
-        ).map_err(|e| CorrelationError::Database(e.to_string()))?;
+             WHERE space_id = ?1 AND status != 'done'
+             ORDER BY start_at DESC", // ordering by start_at as priority column doesn't exist
+            )
+            .map_err(|e| CorrelationError::Database(e.to_string()))?;
 
         let projects = stmt
             .query_map([space_id.to_string()], |row| {
@@ -334,7 +357,7 @@ impl CorrelationEngine {
                     id: row.get(0)?,
                     name: row.get(1)?,
                     status: row.get(2)?,
-                    priority: row.get(3)?,
+                    priority: 0, // Not in schema v1
                 })
             })
             .map_err(|e| CorrelationError::Database(e.to_string()))?
@@ -351,22 +374,28 @@ impl CorrelationEngine {
         start: i64,
         end: i64,
     ) -> Result<Vec<CalendarEventData>, CorrelationError> {
-        let mut stmt = conn.prepare(
-            "SELECT id, summary, start_time, end_time
+        // Note: 'title' is used in schema v1 (instead of summary)
+        let mut stmt = conn
+            .prepare(
+                "SELECT id, title, start_time, end_time
              FROM calendar_event
              WHERE space_id = ?1 AND start_time >= ?2 AND start_time <= ?3
-             ORDER BY start_time ASC"
-        ).map_err(|e| CorrelationError::Database(e.to_string()))?;
+             ORDER BY start_time ASC",
+            )
+            .map_err(|e| CorrelationError::Database(e.to_string()))?;
 
         let events = stmt
-            .query_map([space_id.to_string(), start.to_string(), end.to_string()], |row| {
-                Ok(CalendarEventData {
-                    id: row.get(0)?,
-                    summary: row.get(1)?,
-                    start_time: row.get(2)?,
-                    end_time: row.get(3)?,
-                })
-            })
+            .query_map(
+                [space_id.to_string(), start.to_string(), end.to_string()],
+                |row| {
+                    Ok(CalendarEventData {
+                        id: row.get(0)?,
+                        summary: row.get(1)?,
+                        start_time: row.get(2)?,
+                        end_time: row.get(3)?,
+                    })
+                },
+            )
             .map_err(|e| CorrelationError::Database(e.to_string()))?
             .filter_map(|r| r.ok())
             .collect();
@@ -399,4 +428,3 @@ mod tests {
         assert!(engine.config.min_strength_threshold > 0.0);
     }
 }
-

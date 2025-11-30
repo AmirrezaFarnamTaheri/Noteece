@@ -10,11 +10,21 @@ import { VirtualizedList } from '../VirtualizedList';
 // Mock react-window
 jest.mock('react-window', () => ({
   FixedSizeList: jest.fn(
-    ({ children, itemCount, itemData, height }: { children: (props: { index: number; style: React.CSSProperties; data: unknown }) => React.ReactNode; itemCount: number; itemData: unknown; height: number }) => (
+    ({
+      children: Child,
+      itemCount,
+      itemData,
+      height,
+    }: {
+      children: React.ComponentType<any>;
+      itemCount: number;
+      itemData: unknown;
+      height: number;
+    }) => (
       <div data-testid="virtualized-list" style={{ height }}>
         {Array.from({ length: Math.min(itemCount, 10) }).map((_, index) => (
           <div key={index} data-testid={`list-item-${index}`}>
-            {children({ index, style: {}, data: itemData })}
+            <Child index={index} style={{}} data={itemData} />
           </div>
         ))}
       </div>
@@ -59,11 +69,11 @@ describe('VirtualizedList', () => {
     expect(screen.getByTestId('virtualized-list')).toBeInTheDocument();
   });
 
-  it('renders items correctly', () => {
+  it('renders items correctly', async () => {
     renderWithProviders(<VirtualizedList {...defaultProps} />);
 
-    expect(screen.getByText('Item 1')).toBeInTheDocument();
-    expect(screen.getByText('Item 2')).toBeInTheDocument();
+    expect(await screen.findByText('Item 1')).toBeInTheDocument();
+    expect(await screen.findByText('Item 2')).toBeInTheDocument();
   });
 
   it('shows loading state', () => {

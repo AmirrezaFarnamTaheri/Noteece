@@ -54,7 +54,11 @@ fn test_task_conflict_detection_updated_at() {
         entity_type: "task".to_string(),
         entity_id: task_id.clone(),
         operation: SyncOperation::Update,
-        data: Some(serde_json::json!({"title": "Remote Task Title", "status": "done"}).to_string().into_bytes()),
+        data: Some(
+            serde_json::json!({"title": "Remote Task Title", "status": "done"})
+                .to_string()
+                .into_bytes(),
+        ),
         timestamp: remote_update_time,
         vector_clock: HashMap::new(),
         space_id: Some(space_id.clone()),
@@ -111,7 +115,11 @@ fn test_project_conflict_detection_updated_at() {
         entity_type: "project".to_string(),
         entity_id: project_id.clone(),
         operation: SyncOperation::Update,
-        data: Some(serde_json::json!({"name": "Remote Project"}).to_string().into_bytes()),
+        data: Some(
+            serde_json::json!({"name": "Remote Project"})
+                .to_string()
+                .into_bytes(),
+        ),
         timestamp: remote_update_time,
         vector_clock: HashMap::new(),
         space_id: Some(space_id.clone()),

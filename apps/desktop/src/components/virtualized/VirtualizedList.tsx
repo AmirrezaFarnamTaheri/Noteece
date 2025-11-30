@@ -60,7 +60,7 @@ function Row<T>({ index, style, data }: ListChildComponentProps<ItemData<T>>) {
 }
 
 // Cast to any to work around TypeScript variance issues with generics
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const MemoizedRow = React.memo(Row, areEqual);
 
 export function VirtualizedList<T>({

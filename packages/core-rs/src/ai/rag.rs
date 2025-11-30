@@ -9,7 +9,7 @@
 //! Copyright (c) 2024-2025 Amirreza 'Farnam' Taheri <taherifarnam@gmail.com>
 
 use crate::db::DbPool;
-use crate::llm::{LLMProvider, LLMRequest, LLMResponse};
+use crate::llm::{LLMProvider, LLMRequest};
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -358,10 +358,9 @@ impl RagPipeline {
             .filter(|r| r.score >= query.min_relevance_score)
             .collect()
         } else {
-            stmt.query_map(
-                params![fts_query, query.max_context_chunks as i64],
-                |row| self.row_to_search_result(row),
-            )?
+            stmt.query_map(params![fts_query, query.max_context_chunks as i64], |row| {
+                self.row_to_search_result(row)
+            })?
             .filter_map(|r| r.ok())
             .filter(|r| r.score >= query.min_relevance_score)
             .collect()
@@ -386,7 +385,7 @@ impl RagPipeline {
                 end_offset: row.get(5)?,
                 metadata,
             },
-            score: row.get::<_, f64>(7)? as f32 * -1.0, // BM25 returns negative scores
+            score: -(row.get::<_, f64>(7)? as f32), // BM25 returns negative scores
             highlight_ranges: Vec::new(),
         })
     }
@@ -427,12 +426,7 @@ impl RagPipeline {
             .iter()
             .enumerate()
             .map(|(i, r)| {
-                let title = r
-                    .chunk
-                    .metadata
-                    .get("title")
-                    .cloned()
-                    .unwrap_or_default();
+                let title = r.chunk.metadata.get("title").cloned().unwrap_or_default();
                 format!(
                     "[Source {}] {} (from: {})\n{}",
                     i + 1,
@@ -503,7 +497,7 @@ Be concise but thorough."#;
         let avg_score: f32 = results.iter().map(|r| r.score).sum::<f32>() / results.len() as f32;
 
         // Normalize to 0-1 range (assuming BM25 scores typically range 0-20)
-        (avg_score / 20.0).min(1.0).max(0.0)
+        (avg_score / 20.0).clamp(0.0, 1.0)
     }
 
     /// Get statistics about the indexed content
@@ -695,4 +689,3 @@ mod tests {
         assert_eq!(stats.total_notes, 0);
     }
 }
-

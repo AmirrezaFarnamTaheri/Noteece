@@ -119,7 +119,7 @@ export function TemporalGraph({
         });
       } catch (error) {
         // Return empty array instead of mock data
-        console.warn("Failed to fetch temporal correlations", error);
+        console.warn('Failed to fetch temporal correlations', error);
         return [];
       }
     },
@@ -205,19 +205,19 @@ export function TemporalGraph({
     return (
       <Paper shadow="sm" p="xl" radius="md" withBorder>
         <Center>
-            <Stack align="center" gap="md">
-                <ThemeIcon size={64} radius="xl" variant="light" color="gray">
-                    <IconInfoCircle size={40} />
-                </ThemeIcon>
-                <Title order={4}>Insufficient Data</Title>
-                <Text size="sm" c="dimmed" ta="center" maw={400}>
-                    Not enough correlation data available to generate a temporal graph.
-                    Continue tracking your metrics to see insights here.
-                </Text>
-            </Stack>
+          <Stack align="center" gap="md">
+            <ThemeIcon size={64} radius="xl" variant="light" color="gray">
+              <IconInfoCircle size={40} />
+            </ThemeIcon>
+            <Title order={4}>Insufficient Data</Title>
+            <Text size="sm" c="dimmed" ta="center" maw={400}>
+              Not enough correlation data available to generate a temporal graph. Continue tracking your metrics to see
+              insights here.
+            </Text>
+          </Stack>
         </Center>
       </Paper>
-    )
+    );
   }
 
   return (

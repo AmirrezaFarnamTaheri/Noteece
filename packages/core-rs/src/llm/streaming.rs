@@ -180,9 +180,7 @@ impl StreamCollector {
 
     /// Get the finish reason
     pub fn finish_reason(&self) -> Option<&str> {
-        self.chunks
-            .last()
-            .and_then(|c| c.finish_reason.as_deref())
+        self.chunks.last().and_then(|c| c.finish_reason.as_deref())
     }
 }
 
@@ -296,4 +294,3 @@ mod tests {
         assert_eq!(result, "Hello World");
     }
 }
-
