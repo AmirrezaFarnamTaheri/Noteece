@@ -1,6 +1,6 @@
+use rusqlite::Result;
 use serde::{Deserialize, Serialize};
 use ulid::Ulid;
-use rusqlite::Result;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Task {

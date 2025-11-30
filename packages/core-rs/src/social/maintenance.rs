@@ -22,30 +22,38 @@ pub struct MaintenanceResult {
 
 /// Initialize maintenance - runs on app startup
 /// Performs archival and cleanup of old social posts
-pub fn run_startup_maintenance(conn: &mut Connection, retention_days: u64) -> Result<MaintenanceResult> {
+pub fn run_startup_maintenance(
+    conn: &mut Connection,
+    retention_days: u64,
+) -> Result<MaintenanceResult> {
     let start = std::time::Instant::now();
-    
-    log::info!("[maintenance] Starting startup maintenance (retention: {} days)", retention_days);
-    
+
+    log::info!(
+        "[maintenance] Starting startup maintenance (retention: {} days)",
+        retention_days
+    );
+
     // Archive old posts
     let archived = prune_old_posts(conn, retention_days)?;
-    
+
     // Clean up orphaned archives (posts archived more than 30 days ago)
     let deleted = cleanup_old_archives(conn, 30)?;
-    
+
     let duration = start.elapsed().as_millis() as u64;
-    
+
     let result = MaintenanceResult {
         posts_archived: archived,
         posts_deleted: deleted,
         duration_ms: duration,
     };
-    
+
     log::info!(
         "[maintenance] Complete - Archived: {}, Deleted: {}, Duration: {}ms",
-        result.posts_archived, result.posts_deleted, result.duration_ms
+        result.posts_archived,
+        result.posts_deleted,
+        result.duration_ms
     );
-    
+
     Ok(result)
 }
 
@@ -60,7 +68,10 @@ pub fn prune_old_posts(conn: &mut Connection, retention_days: u64) -> Result<usi
     let retention_seconds = (retention_days * 24 * 60 * 60) as i64;
     let cutoff_timestamp = now - retention_seconds;
 
-    log::info!("[maintenance] Pruning posts older than timestamp {}", cutoff_timestamp);
+    log::info!(
+        "[maintenance] Pruning posts older than timestamp {}",
+        cutoff_timestamp
+    );
 
     let tx = conn.transaction()?;
 
@@ -70,7 +81,7 @@ pub fn prune_old_posts(conn: &mut Connection, retention_days: u64) -> Result<usi
         params![cutoff_timestamp],
         |row| row.get(0),
     )?;
-    
+
     if count == 0 {
         log::info!("[maintenance] No posts to archive");
         tx.commit()?;
@@ -98,7 +109,11 @@ pub fn prune_old_posts(conn: &mut Connection, retention_days: u64) -> Result<usi
 
     tx.commit()?;
 
-    log::info!("[maintenance] Archived {} posts, Deleted {} posts", rows_archived, rows_deleted);
+    log::info!(
+        "[maintenance] Archived {} posts, Deleted {} posts",
+        rows_archived,
+        rows_deleted
+    );
 
     Ok(rows_deleted)
 }
@@ -128,37 +143,35 @@ pub fn cleanup_old_archives(conn: &mut Connection, archive_retention_days: u64) 
 /// Only run occasionally as it's expensive
 pub fn optimize_database(conn: &Connection) -> Result<()> {
     log::info!("[maintenance] Running database optimization");
-    
+
     // Analyze for query optimization
     conn.execute("ANALYZE", [])?;
-    
+
     // Note: VACUUM is very expensive and locks the database
     // Only run manually or during low-activity periods
     // conn.execute("VACUUM", [])?;
-    
+
     Ok(())
 }
 
 /// Get maintenance statistics
 pub fn get_maintenance_stats(conn: &Connection) -> Result<MaintenanceStats> {
-    let hot_posts: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM social_post",
-        [],
-        |row| row.get(0),
-    )?;
-    
-    let archived_posts: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM social_post_archive",
-        [],
-        |row| row.get(0),
-    )?;
-    
-    let hot_size: i64 = conn.query_row(
-        "SELECT COALESCE(SUM(LENGTH(raw_json)), 0) FROM social_post",
-        [],
-        |row| row.get(0),
-    ).unwrap_or(0);
-    
+    let hot_posts: i64 =
+        conn.query_row("SELECT COUNT(*) FROM social_post", [], |row| row.get(0))?;
+
+    let archived_posts: i64 =
+        conn.query_row("SELECT COUNT(*) FROM social_post_archive", [], |row| {
+            row.get(0)
+        })?;
+
+    let hot_size: i64 = conn
+        .query_row(
+            "SELECT COALESCE(SUM(LENGTH(raw_json)), 0) FROM social_post",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap_or(0);
+
     Ok(MaintenanceStats {
         hot_posts: hot_posts as usize,
         archived_posts: archived_posts as usize,
@@ -180,7 +193,7 @@ mod tests {
 
     fn setup_test_db() -> Connection {
         let conn = Connection::open_in_memory().unwrap();
-        
+
         conn.execute(
             "CREATE TABLE social_post (
                 id TEXT PRIMARY KEY,
@@ -192,8 +205,9 @@ mod tests {
                 raw_json TEXT
             )",
             [],
-        ).unwrap();
-        
+        )
+        .unwrap();
+
         conn.execute(
             "CREATE TABLE social_post_archive (
                 id TEXT PRIMARY KEY,
@@ -205,62 +219,67 @@ mod tests {
                 archived_at INTEGER
             )",
             [],
-        ).unwrap();
-        
+        )
+        .unwrap();
+
         conn
     }
 
     #[test]
     fn test_prune_old_posts() {
         let mut conn = setup_test_db();
-        
+
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs() as i64;
-        
+
         // Insert old post (10 days ago)
         conn.execute(
             "INSERT INTO social_post (id, account_id, platform, author, content, timestamp, raw_json) 
              VALUES (?, ?, ?, ?, ?, ?, ?)",
             params!["old_post", "acc1", "twitter", "user1", "old content", now - 864000, "{}"],
         ).unwrap();
-        
+
         // Insert recent post
         conn.execute(
             "INSERT INTO social_post (id, account_id, platform, author, content, timestamp, raw_json) 
              VALUES (?, ?, ?, ?, ?, ?, ?)",
             params!["new_post", "acc1", "twitter", "user1", "new content", now - 3600, "{}"],
         ).unwrap();
-        
+
         // Run pruning with 7 day retention
         let pruned = prune_old_posts(&mut conn, 7).unwrap();
-        
+
         assert_eq!(pruned, 1);
-        
+
         // Verify old post is archived
-        let archived: i64 = conn.query_row(
-            "SELECT COUNT(*) FROM social_post_archive WHERE id = 'old_post'",
-            [],
-            |row| row.get(0),
-        ).unwrap();
+        let archived: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM social_post_archive WHERE id = 'old_post'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
         assert_eq!(archived, 1);
-        
+
         // Verify new post is still in hot storage
-        let hot: i64 = conn.query_row(
-            "SELECT COUNT(*) FROM social_post WHERE id = 'new_post'",
-            [],
-            |row| row.get(0),
-        ).unwrap();
+        let hot: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM social_post WHERE id = 'new_post'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
         assert_eq!(hot, 1);
     }
 
     #[test]
     fn test_startup_maintenance() {
         let mut conn = setup_test_db();
-        
+
         let result = run_startup_maintenance(&mut conn, 7).unwrap();
-        
+
         assert_eq!(result.posts_archived, 0);
         assert_eq!(result.posts_deleted, 0);
     }

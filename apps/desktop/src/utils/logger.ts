@@ -134,7 +134,9 @@ class Logger {
 export const logger = new Logger();
 
 // Configure logger for desktop app
-if (import.meta.env.DEV) {
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) {
   logger.setLevel(LogLevel.DEBUG);
 } else {
   logger.setLevel(LogLevel.INFO);
@@ -143,7 +145,9 @@ if (import.meta.env.DEV) {
 // Add desktop-specific context
 logger.setContext({
   platform: 'desktop',
-  env: import.meta.env.MODE,
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  env: typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.MODE : 'test',
 });
 
 // Persist critical logs to storage

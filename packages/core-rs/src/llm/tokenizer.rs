@@ -6,9 +6,7 @@
 //! - Optimize prompt engineering
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
-use super::providers::ProviderType;
 use super::types::{LLMRequest, Message};
 
 /// Token count result
@@ -242,8 +240,11 @@ impl TokenCounter for WordBasedCounter {
     fn count(&self, text: &str) -> usize {
         let word_count = text.split_whitespace().count();
         // Also count special characters and numbers as potential separate tokens
-        let special_count = text.chars().filter(|c| !c.is_alphanumeric() && !c.is_whitespace()).count();
-        
+        let special_count = text
+            .chars()
+            .filter(|c| !c.is_alphanumeric() && !c.is_whitespace())
+            .count();
+
         ((word_count as f32 * self.tokens_per_word) + (special_count as f32 * 0.5)).ceil() as usize
     }
 
@@ -338,7 +339,7 @@ mod tests {
     #[test]
     fn test_simple_counter() {
         let counter = SimpleTokenCounter::new();
-        
+
         // ~4 chars per token
         assert_eq!(counter.count("test"), 1); // 4 chars = 1 token
         assert_eq!(counter.count("hello world"), 3); // 11 chars = 3 tokens
@@ -347,7 +348,7 @@ mod tests {
     #[test]
     fn test_word_based_counter() {
         let counter = WordBasedCounter::new();
-        
+
         // ~1.3 tokens per word
         assert_eq!(counter.count("hello"), 2); // 1 word * 1.3 = 2
         assert_eq!(counter.count("hello world"), 3); // 2 words * 1.3 = 3
@@ -357,7 +358,7 @@ mod tests {
     fn test_request_counting() {
         let counter = SimpleTokenCounter::new();
         let request = LLMRequest::with_system("Be helpful", "What is 2+2?");
-        
+
         let count = counter.count_request(&request);
         assert!(count.total > 0);
         assert!(count.system_tokens > 0);
@@ -407,4 +408,3 @@ mod tests {
         // System message should be preserved if it fits
     }
 }
-

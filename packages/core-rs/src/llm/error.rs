@@ -115,9 +115,7 @@ impl LLMError {
     pub fn is_server_error(&self) -> bool {
         matches!(
             self,
-            LLMError::ProviderError(_)
-                | LLMError::RateLimitExceeded
-                | LLMError::CircuitBreakerOpen
+            LLMError::ProviderError(_) | LLMError::RateLimitExceeded | LLMError::CircuitBreakerOpen
         )
     }
 }

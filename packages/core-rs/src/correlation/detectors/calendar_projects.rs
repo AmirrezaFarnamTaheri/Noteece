@@ -12,7 +12,7 @@ pub fn detect(
     calendar_events: &[CalendarEventData],
     projects: &[ProjectData],
     time_entries: &[TimeEntryData],
-    tasks: &[TaskData],
+    _tasks: &[TaskData],
 ) -> Option<Correlation> {
     if projects.is_empty() || (calendar_events.is_empty() && time_entries.is_empty()) {
         return None;
@@ -39,7 +39,8 @@ pub fn detect(
         let mut map = std::collections::HashMap::new();
         for entry in time_entries {
             if let Some(ref project_id) = entry.project_id {
-                *map.entry(project_id.clone()).or_insert(0.0) += entry.duration_minutes as f64 / 60.0;
+                *map.entry(project_id.clone()).or_insert(0.0) +=
+                    entry.duration_minutes as f64 / 60.0;
             }
         }
         map
@@ -132,7 +133,9 @@ mod tests {
         assert!(result.is_some());
 
         let correlation = result.unwrap();
-        assert_eq!(correlation.correlation_type, CorrelationType::CalendarProjects);
+        assert_eq!(
+            correlation.correlation_type,
+            CorrelationType::CalendarProjects
+        );
     }
 }
-

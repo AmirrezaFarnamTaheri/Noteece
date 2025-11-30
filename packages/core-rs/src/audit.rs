@@ -15,6 +15,7 @@ pub struct AuditLog {
     pub created_at: i64,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn log_event(
     conn: &Connection,
     user_id: Option<&str>,

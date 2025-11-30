@@ -15,13 +15,14 @@ use tokio::sync::Mutex;
 use super::types::LLMRequest;
 
 /// Priority level for requests
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum Priority {
     /// Critical - immediate processing
     Critical = 0,
     /// High - process before normal
     High = 1,
     /// Normal - default priority
+    #[default]
     Normal = 2,
     /// Low - process when resources available
     Low = 3,
@@ -44,12 +45,6 @@ impl Priority {
             3 => Priority::Low,
             _ => Priority::Background,
         }
-    }
-}
-
-impl Default for Priority {
-    fn default() -> Self {
-        Priority::Normal
     }
 }
 
@@ -386,6 +381,11 @@ impl AsyncPriorityQueue {
         queue.len()
     }
 
+    pub async fn is_empty(&self) -> bool {
+        let queue = self.inner.lock().await;
+        queue.is_empty()
+    }
+
     pub async fn stats(&self) -> PriorityQueueStats {
         let queue = self.inner.lock().await;
         queue.stats()
@@ -414,9 +414,15 @@ mod tests {
     fn test_enqueue_dequeue() {
         let mut queue = PriorityQueue::default();
 
-        queue.enqueue(LLMRequest::simple("Low"), Priority::Low).unwrap();
-        queue.enqueue(LLMRequest::simple("High"), Priority::High).unwrap();
-        queue.enqueue(LLMRequest::simple("Normal"), Priority::Normal).unwrap();
+        queue
+            .enqueue(LLMRequest::simple("Low"), Priority::Low)
+            .unwrap();
+        queue
+            .enqueue(LLMRequest::simple("High"), Priority::High)
+            .unwrap();
+        queue
+            .enqueue(LLMRequest::simple("Normal"), Priority::Normal)
+            .unwrap();
 
         // Should dequeue in priority order
         let first = queue.dequeue().unwrap();
@@ -436,9 +442,15 @@ mod tests {
             ..Default::default()
         });
 
-        let id1 = queue.enqueue(LLMRequest::simple("First"), Priority::Normal).unwrap();
-        let id2 = queue.enqueue(LLMRequest::simple("Second"), Priority::Normal).unwrap();
-        let id3 = queue.enqueue(LLMRequest::simple("Third"), Priority::Normal).unwrap();
+        let id1 = queue
+            .enqueue(LLMRequest::simple("First"), Priority::Normal)
+            .unwrap();
+        let id2 = queue
+            .enqueue(LLMRequest::simple("Second"), Priority::Normal)
+            .unwrap();
+        let id3 = queue
+            .enqueue(LLMRequest::simple("Third"), Priority::Normal)
+            .unwrap();
 
         // Should maintain FIFO order within same priority
         assert_eq!(queue.dequeue().unwrap().id, id1);
@@ -450,9 +462,15 @@ mod tests {
     fn test_queue_stats() {
         let mut queue = PriorityQueue::default();
 
-        queue.enqueue(LLMRequest::simple("1"), Priority::High).unwrap();
-        queue.enqueue(LLMRequest::simple("2"), Priority::High).unwrap();
-        queue.enqueue(LLMRequest::simple("3"), Priority::Normal).unwrap();
+        queue
+            .enqueue(LLMRequest::simple("1"), Priority::High)
+            .unwrap();
+        queue
+            .enqueue(LLMRequest::simple("2"), Priority::High)
+            .unwrap();
+        queue
+            .enqueue(LLMRequest::simple("3"), Priority::Normal)
+            .unwrap();
 
         let stats = queue.stats();
         assert_eq!(stats.total, 3);
@@ -467,8 +485,12 @@ mod tests {
             ..Default::default()
         });
 
-        queue.enqueue(LLMRequest::simple("1"), Priority::Normal).unwrap();
-        queue.enqueue(LLMRequest::simple("2"), Priority::Normal).unwrap();
+        queue
+            .enqueue(LLMRequest::simple("1"), Priority::Normal)
+            .unwrap();
+        queue
+            .enqueue(LLMRequest::simple("2"), Priority::Normal)
+            .unwrap();
 
         let result = queue.enqueue(LLMRequest::simple("3"), Priority::Normal);
         assert!(result.is_err());
@@ -495,17 +517,17 @@ mod tests {
             .as_millis() as u64;
 
         // Add requests with different deadlines
-        queue.enqueue_with_deadline(
-            LLMRequest::simple("Later"),
-            Priority::High,
-            now + 10000,
-        ).unwrap();
+        queue
+            .enqueue_with_deadline(LLMRequest::simple("Later"), Priority::High, now + 10000)
+            .unwrap();
 
-        queue.enqueue_with_deadline(
-            LLMRequest::simple("Sooner"),
-            Priority::Normal, // Lower priority but closer deadline
-            now + 1000,
-        ).unwrap();
+        queue
+            .enqueue_with_deadline(
+                LLMRequest::simple("Sooner"),
+                Priority::Normal, // Lower priority but closer deadline
+                now + 1000,
+            )
+            .unwrap();
 
         // Closer deadline should come first despite lower priority
         let first = queue.dequeue().unwrap();
@@ -516,7 +538,10 @@ mod tests {
     async fn test_async_queue() {
         let queue = AsyncPriorityQueue::default();
 
-        queue.enqueue(LLMRequest::simple("Test"), Priority::Normal).await.unwrap();
+        queue
+            .enqueue(LLMRequest::simple("Test"), Priority::Normal)
+            .await
+            .unwrap();
         assert_eq!(queue.len().await, 1);
 
         let item = queue.dequeue().await;
@@ -524,4 +549,3 @@ mod tests {
         assert_eq!(queue.len().await, 0);
     }
 }
-

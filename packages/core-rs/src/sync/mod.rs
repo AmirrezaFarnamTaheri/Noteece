@@ -21,4 +21,4 @@ pub use error::SyncError;
 pub use mobile_sync::{DeviceInfo as MobileDeviceInfo, SyncProtocol};
 pub use models::*;
 pub use relay::{BlindRelayServer, RelayClient, RelayEnvelope, RelayError};
-pub use tofu::{TofuStore, DeviceTrust, TrustLevel};
+pub use tofu::{DeviceTrust, TofuStore, TrustLevel};

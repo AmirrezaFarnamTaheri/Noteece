@@ -33,7 +33,7 @@ fn test_gather_context() {
 
     let engine = CorrelationEngine::new();
     let context = engine
-        .gather_context(&conn, space_id, 7)
+        .gather_context(&conn, space_id)
         .expect("Failed to gather context");
 
     assert_eq!(context.tasks.len(), 2);
@@ -48,21 +48,18 @@ fn test_correlations_to_insights() {
         correlation_type: CorrelationType::HealthWorkload,
         strength: 0.85,
         entities: vec![],
-        pattern_description: "Test correlation".to_string(),
-        metadata: [
-            ("work_hours".to_string(), serde_json::json!(20)),
-            ("low_mood_days".to_string(), serde_json::json!(3)),
-        ]
-        .iter()
-        .cloned()
-        .collect(),
+        pattern: CorrelationPattern::HealthWorkloadNegative {
+            mood_avg: 3.0,
+            hours_logged: 20.0,
+        },
+        detected_at: chrono::Utc::now().timestamp(),
     };
 
-    let insights = engine.correlations_to_insights(vec![correlation]);
+    let insights = engine.to_insights(vec![correlation]);
     assert!(!insights.is_empty());
     assert_eq!(
-        insights[0].insight_type,
-        core_rs::foresight::InsightType::HighWorkload
+        insights[0].correlation_type,
+        CorrelationType::HealthWorkload
     );
 }
 
@@ -76,9 +73,10 @@ fn test_analyze_empty_context() {
         tasks: vec![],
         time_entries: vec![],
         health_data: vec![],
-        transactions: vec![],
-        start_time: now,
-        end_time: now,
+        projects: vec![],
+        calendar_events: vec![],
+        window_start: now,
+        window_end: now,
     };
 
     let correlations = engine.analyze(&empty_context);
@@ -107,7 +105,7 @@ fn test_time_range_filtering() {
     task::update_task(&conn, &recent_task).unwrap();
 
     let engine = CorrelationEngine::new();
-    let context = engine.gather_context(&conn, space_id, 35).unwrap();
+    let context = engine.gather_context(&conn, space_id).unwrap();
 
     assert_eq!(context.tasks.len(), 2);
 }

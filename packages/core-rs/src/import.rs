@@ -154,6 +154,10 @@ pub fn export_to_json(
     let mut export_data = gather_export_data(conn, space_id, dek)?;
 
     // Decrypt note contents before serializing to prevent exporting ciphertext
+    log::info!(
+        "[export] Decrypting {} notes for export",
+        export_data.notes.len()
+    );
     for note in &mut export_data.notes {
         // Attempt decryption; if it fails, clear content to avoid leaking unusable ciphertext
         match crate::crypto::decrypt_string(&note.content, dek) {
@@ -163,7 +167,7 @@ pub fn export_to_json(
             Err(e) => {
                 // Log the error and remove content to prevent exporting unusable ciphertext
                 log::warn!(
-                    "Failed to decrypt note {} during export: {}. Content will be omitted.",
+                    "[export] Failed to decrypt note {} during export: {}. Content will be omitted.",
                     note.id,
                     e
                 );

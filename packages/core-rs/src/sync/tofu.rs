@@ -11,7 +11,7 @@
 
 use rusqlite::{params, Connection, Result};
 use serde::{Deserialize, Serialize};
-use sha2::{Sha256, Digest};
+use sha2::{Digest, Sha256};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Trust level for a device
@@ -39,7 +39,8 @@ impl TrustLevel {
             TrustLevel::KeyChanged => "key_changed",
         }
     }
-    
+
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Self {
         match s {
             "tofu" => TrustLevel::TrustOnFirstUse,
@@ -49,7 +50,7 @@ impl TrustLevel {
             _ => TrustLevel::Unknown,
         }
     }
-    
+
     /// Check if this trust level allows sync
     pub fn allows_sync(&self) -> bool {
         matches!(self, TrustLevel::TrustOnFirstUse | TrustLevel::Verified)
@@ -96,12 +97,12 @@ impl TofuStore {
             )",
             [],
         )?;
-        
+
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_device_trust_level ON device_trust(trust_level)",
             [],
         )?;
-        
+
         log::info!("[tofu] Trust table initialized");
         Ok(())
     }
@@ -115,10 +116,10 @@ impl TofuStore {
     ) -> Result<(TrustLevel, Option<DeviceTrust>)> {
         let key_hash = Self::hash_public_key(public_key);
         let now = Self::now();
-        
+
         // Check existing trust record
         let existing = Self::get_device_trust(conn, device_id)?;
-        
+
         match existing {
             Some(mut record) => {
                 if record.trust_level == TrustLevel::Revoked {
@@ -126,26 +127,32 @@ impl TofuStore {
                     log::warn!("[tofu] Revoked device attempted connection: {}", device_id);
                     return Ok((TrustLevel::Revoked, Some(record)));
                 }
-                
+
                 if record.public_key_hash != key_hash {
                     // Key changed! This could be an attack
                     log::error!(
                         "[tofu] KEY CHANGE DETECTED for device {}: {} -> {}",
-                        device_id, record.public_key_hash, key_hash
+                        device_id,
+                        record.public_key_hash,
+                        key_hash
                     );
-                    
+
                     // Update record to reflect key change
                     record.trust_level = TrustLevel::KeyChanged;
                     Self::update_trust_level(conn, device_id, TrustLevel::KeyChanged)?;
-                    
+
                     return Ok((TrustLevel::KeyChanged, Some(record)));
                 }
-                
+
                 // Same key - update last seen
                 Self::update_last_seen(conn, device_id, now)?;
                 record.last_seen = now;
-                
-                log::info!("[tofu] Verified device: {} ({})", device_id, record.trust_level.as_str());
+
+                log::info!(
+                    "[tofu] Verified device: {} ({})",
+                    device_id,
+                    record.trust_level.as_str()
+                );
                 Ok((record.trust_level, Some(record)))
             }
             None => {
@@ -160,9 +167,9 @@ impl TofuStore {
                     sync_count: 0,
                     notes: None,
                 };
-                
+
                 Self::store_device_trust(conn, &record)?;
-                
+
                 log::info!("[tofu] New device trusted (TOFU): {}", device_id);
                 Ok((TrustLevel::TrustOnFirstUse, Some(record)))
             }
@@ -195,7 +202,7 @@ impl TofuStore {
             "SELECT device_id, device_name, public_key_hash, trust_level, first_seen, last_seen, sync_count, notes
              FROM device_trust WHERE device_id = ?1"
         )?;
-        
+
         let result = stmt.query_row([device_id], |row| {
             let trust_level_str: String = row.get(3)?;
             Ok(DeviceTrust {
@@ -209,7 +216,7 @@ impl TofuStore {
                 notes: row.get(7)?,
             })
         });
-        
+
         match result {
             Ok(record) => Ok(Some(record)),
             Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
@@ -223,7 +230,7 @@ impl TofuStore {
             "SELECT device_id, device_name, public_key_hash, trust_level, first_seen, last_seen, sync_count, notes
              FROM device_trust ORDER BY last_seen DESC"
         )?;
-        
+
         let rows = stmt.query_map([], |row| {
             let trust_level_str: String = row.get(3)?;
             Ok(DeviceTrust {
@@ -237,7 +244,7 @@ impl TofuStore {
                 notes: row.get(7)?,
             })
         })?;
-        
+
         let mut devices = Vec::new();
         for row in rows {
             devices.push(row?);
@@ -251,34 +258,38 @@ impl TofuStore {
             "UPDATE device_trust SET trust_level = ?1 WHERE device_id = ?2",
             params![level.as_str(), device_id],
         )?;
-        log::info!("[tofu] Trust level updated for {}: {}", device_id, level.as_str());
+        log::info!(
+            "[tofu] Trust level updated for {}: {}",
+            device_id,
+            level.as_str()
+        );
         Ok(())
     }
 
     /// Verify device explicitly (upgrades from TOFU to Verified)
     pub fn verify_explicitly(conn: &Connection, device_id: &str) -> Result<bool> {
         let existing = Self::get_device_trust(conn, device_id)?;
-        
+
         if let Some(record) = existing {
             if record.trust_level == TrustLevel::TrustOnFirstUse {
                 Self::update_trust_level(conn, device_id, TrustLevel::Verified)?;
                 return Ok(true);
             }
         }
-        
+
         Ok(false)
     }
 
     /// Revoke trust for a device
     pub fn revoke_trust(conn: &Connection, device_id: &str) -> Result<bool> {
         let existing = Self::get_device_trust(conn, device_id)?;
-        
+
         if existing.is_some() {
             Self::update_trust_level(conn, device_id, TrustLevel::Revoked)?;
             log::warn!("[tofu] Trust revoked for device: {}", device_id);
             return Ok(true);
         }
-        
+
         Ok(false)
     }
 
@@ -290,14 +301,19 @@ impl TofuStore {
     ) -> Result<()> {
         let key_hash = Self::hash_public_key(new_public_key);
         let now = Self::now();
-        
+
         conn.execute(
             "UPDATE device_trust 
              SET public_key_hash = ?1, trust_level = ?2, last_seen = ?3
              WHERE device_id = ?4",
-            params![key_hash, TrustLevel::TrustOnFirstUse.as_str(), now, device_id],
+            params![
+                key_hash,
+                TrustLevel::TrustOnFirstUse.as_str(),
+                now,
+                device_id
+            ],
         )?;
-        
+
         log::info!("[tofu] Device {} re-trusted with new key", device_id);
         Ok(())
     }
@@ -351,11 +367,10 @@ mod tests {
     fn test_first_use_trust() {
         let conn = setup_test_db();
         let public_key = b"test_public_key_12345";
-        
-        let (level, record) = TofuStore::verify_device(
-            &conn, "device_1", "Test Device", public_key
-        ).unwrap();
-        
+
+        let (level, record) =
+            TofuStore::verify_device(&conn, "device_1", "Test Device", public_key).unwrap();
+
         assert_eq!(level, TrustLevel::TrustOnFirstUse);
         assert!(record.is_some());
         assert_eq!(record.unwrap().device_name, "Test Device");
@@ -365,15 +380,14 @@ mod tests {
     fn test_same_key_verification() {
         let conn = setup_test_db();
         let public_key = b"test_public_key_12345";
-        
+
         // First connection
         TofuStore::verify_device(&conn, "device_1", "Test Device", public_key).unwrap();
-        
+
         // Second connection with same key
-        let (level, _) = TofuStore::verify_device(
-            &conn, "device_1", "Test Device", public_key
-        ).unwrap();
-        
+        let (level, _) =
+            TofuStore::verify_device(&conn, "device_1", "Test Device", public_key).unwrap();
+
         assert_eq!(level, TrustLevel::TrustOnFirstUse);
     }
 
@@ -382,15 +396,14 @@ mod tests {
         let conn = setup_test_db();
         let public_key_1 = b"original_public_key";
         let public_key_2 = b"different_public_key";
-        
+
         // First connection
         TofuStore::verify_device(&conn, "device_1", "Test Device", public_key_1).unwrap();
-        
+
         // Second connection with different key
-        let (level, _) = TofuStore::verify_device(
-            &conn, "device_1", "Test Device", public_key_2
-        ).unwrap();
-        
+        let (level, _) =
+            TofuStore::verify_device(&conn, "device_1", "Test Device", public_key_2).unwrap();
+
         assert_eq!(level, TrustLevel::KeyChanged);
     }
 
@@ -398,15 +411,14 @@ mod tests {
     fn test_revoke_trust() {
         let conn = setup_test_db();
         let public_key = b"test_public_key";
-        
+
         TofuStore::verify_device(&conn, "device_1", "Test Device", public_key).unwrap();
-        
+
         TofuStore::revoke_trust(&conn, "device_1").unwrap();
-        
-        let (level, _) = TofuStore::verify_device(
-            &conn, "device_1", "Test Device", public_key
-        ).unwrap();
-        
+
+        let (level, _) =
+            TofuStore::verify_device(&conn, "device_1", "Test Device", public_key).unwrap();
+
         assert_eq!(level, TrustLevel::Revoked);
     }
 
@@ -414,12 +426,14 @@ mod tests {
     fn test_explicit_verification() {
         let conn = setup_test_db();
         let public_key = b"test_public_key";
-        
+
         TofuStore::verify_device(&conn, "device_1", "Test Device", public_key).unwrap();
-        
+
         TofuStore::verify_explicitly(&conn, "device_1").unwrap();
-        
-        let record = TofuStore::get_device_trust(&conn, "device_1").unwrap().unwrap();
+
+        let record = TofuStore::get_device_trust(&conn, "device_1")
+            .unwrap()
+            .unwrap();
         assert_eq!(record.trust_level, TrustLevel::Verified);
     }
 
@@ -432,4 +446,3 @@ mod tests {
         assert!(!TrustLevel::KeyChanged.allows_sync());
     }
 }
-

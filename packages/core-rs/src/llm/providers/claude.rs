@@ -261,4 +261,3 @@ struct ClaudeUsage {
     input_tokens: usize,
     output_tokens: usize,
 }
-

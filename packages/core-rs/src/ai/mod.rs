@@ -11,7 +11,5 @@
 pub mod rag;
 
 pub use rag::{
-    DocumentChunk, RagConfig, RagError, RagPipeline, RagQuery, RagResponse, RagStats,
-    SearchResult,
+    DocumentChunk, RagConfig, RagError, RagPipeline, RagQuery, RagResponse, RagStats, SearchResult,
 };
-

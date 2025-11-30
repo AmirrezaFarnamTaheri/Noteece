@@ -116,7 +116,9 @@ pub struct JsonValidator {
 
 impl JsonValidator {
     pub fn new() -> Self {
-        Self { strict_schema: None }
+        Self {
+            strict_schema: None,
+        }
     }
 
     pub fn with_schema(schema: impl Into<String>) -> Self {
@@ -136,7 +138,7 @@ impl ResponseValidator for JsonValidator {
     fn validate(&self, response: &LLMResponse) -> ValidationResult {
         // Try to parse as JSON
         let content = response.content.trim();
-        
+
         // Extract JSON from markdown code blocks if present
         let json_content = if content.starts_with("```json") {
             content
@@ -365,6 +367,7 @@ impl CompositeValidator {
         }
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn add<V: ResponseValidator + 'static>(mut self, validator: V) -> Self {
         self.validators.push(Box::new(validator));
         self
@@ -464,7 +467,11 @@ mod tests {
     #[test]
     fn test_length_validator() {
         let short = LLMResponse::new("Hi", "model", 1);
-        let long = LLMResponse::new("This is a much longer response with many words", "model", 10);
+        let long = LLMResponse::new(
+            "This is a much longer response with many words",
+            "model",
+            10,
+        );
 
         let validator = LengthValidator::new().min_chars(10).max_chars(100);
 
@@ -495,4 +502,3 @@ mod tests {
         assert!(result.is_valid);
     }
 }
-

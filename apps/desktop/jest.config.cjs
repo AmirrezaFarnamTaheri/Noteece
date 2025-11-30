@@ -11,6 +11,17 @@ module.exports = {
         esModuleInterop: true,
         allowSyntheticDefaultImports: true,
       },
+      diagnostics: {
+        ignoreCodes: [1343]
+      },
+      astTransformers: {
+        before: [
+          {
+            path: 'ts-jest-mock-import-meta',
+            options: { metaObjectReplacement: { env: { DEV: true, MODE: 'test' } } }
+          }
+        ]
+      }
     }],
   },
   moduleNameMapper: {

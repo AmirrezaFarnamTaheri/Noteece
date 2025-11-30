@@ -30,7 +30,7 @@ import {
   IconLayoutGrid,
 } from '@tabler/icons-react';
 import { useNavigate, type NavigateFunction } from 'react-router-dom';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable, type DropResult } from 'react-beautiful-dnd';
 import { useQueryClient } from '@tanstack/react-query';
 import { useProjects } from '../hooks/useQueries';
 import { useStore } from '../store';
@@ -206,9 +206,7 @@ const ProjectHub: React.FC = () => {
                         withBorder
                         style={{
                           minWidth: 300,
-                          backgroundColor: snapshot.isDraggingOver
-                            ? theme.colors.dark[6]
-                            : theme.colors.dark[8],
+                          backgroundColor: snapshot.isDraggingOver ? theme.colors.dark[6] : theme.colors.dark[8],
                           borderColor: theme.colors.dark[6],
                           transition: 'background-color 0.2s',
                         }}
@@ -218,9 +216,13 @@ const ProjectHub: React.FC = () => {
                             <ThemeIcon color={column.color} variant="light" size="sm">
                               <IconFolder size={14} />
                             </ThemeIcon>
-                            <Text fw={700} size="sm">{column.title}</Text>
+                            <Text fw={700} size="sm">
+                              {column.title}
+                            </Text>
                           </Group>
-                          <Badge size="sm" variant="outline" color={column.color}>{columnProjects.length}</Badge>
+                          <Badge size="sm" variant="outline" color={column.color}>
+                            {columnProjects.length}
+                          </Badge>
                         </Group>
 
                         <Stack gap="sm">

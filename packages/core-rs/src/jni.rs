@@ -12,7 +12,8 @@ use jni::JNIEnv;
 // We use an Arc<Mutex> to allow thread-safe access.
 // We handle poisoning by restarting the processor if a panic occurred previously.
 lazy_static! {
-    static ref PROCESSOR: Arc<Mutex<StreamProcessor>> = Arc::new(Mutex::new(StreamProcessor::new()));
+    static ref PROCESSOR: Arc<Mutex<StreamProcessor>> =
+        Arc::new(Mutex::new(StreamProcessor::new()));
 }
 
 #[cfg(feature = "android")]
@@ -76,10 +77,7 @@ pub extern "system" fn Java_com_noteece_RustBridge_anchorLatest(
 
 #[cfg(feature = "android")]
 #[no_mangle]
-pub extern "system" fn Java_com_noteece_RustBridge_reset(
-    _env: JNIEnv,
-    _class: JClass,
-) {
+pub extern "system" fn Java_com_noteece_RustBridge_reset(_env: JNIEnv, _class: JClass) {
     let mut processor = match PROCESSOR.lock() {
         Ok(guard) => guard,
         Err(poisoned) => {
