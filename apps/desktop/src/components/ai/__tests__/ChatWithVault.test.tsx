@@ -189,12 +189,12 @@ describe('ChatWithVault', () => {
   it('clears input after sending', async () => {
     renderWithProviders(<ChatWithVault />);
 
-    const input = screen.getByPlaceholderText('Ask a question about your notes...') as HTMLInputElement;
+    const input = screen.getByPlaceholderText('Ask a question about your notes...');
     fireEvent.change(input, { target: { value: 'Test question' } });
     fireEvent.click(screen.getByRole('button'));
 
     await waitFor(() => {
-      expect(input.value).toBe('');
+      expect((input as HTMLInputElement).value).toBe('');
     });
   });
 

@@ -4,9 +4,9 @@
 //! The relay server never has access to plaintext - all data is end-to-end encrypted.
 //!
 //! Architecture:
-//! ```
-//! Device A ─► [Encrypted Blob] ─► Relay Server ─► [Encrypted Blob] ─► Device B
-//!                                      │
+//! ```text
+//! Device A -> [Encrypted Blob] -> Relay Server -> [Encrypted Blob] -> Device B
+//!                                      |
 //!                                 (No access to
 //!                                  plaintext)
 //! ```

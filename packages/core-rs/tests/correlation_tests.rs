@@ -23,7 +23,7 @@ fn setup_db() -> Connection {
             space_id TEXT NOT NULL,
             project_id TEXT,
             task_id TEXT,
-            duration_minutes INTEGER NOT NULL,
+            duration_seconds INTEGER NOT NULL,
             started_at INTEGER NOT NULL,
             description TEXT,
             created_at INTEGER NOT NULL
@@ -34,21 +34,22 @@ fn setup_db() -> Connection {
             title TEXT NOT NULL,
             status TEXT NOT NULL,
             priority INTEGER NOT NULL,
-            due_date INTEGER,
+            due_at INTEGER,
             project_id TEXT,
             progress INTEGER DEFAULT 0
         );
         CREATE TABLE IF NOT EXISTS project (
             id TEXT PRIMARY KEY,
             space_id TEXT NOT NULL,
-            name TEXT NOT NULL,
+            title TEXT NOT NULL,
             status TEXT NOT NULL,
-            priority INTEGER NOT NULL
+            priority INTEGER NOT NULL,
+            start_at INTEGER
         );
         CREATE TABLE IF NOT EXISTS calendar_event (
             id TEXT PRIMARY KEY,
             space_id TEXT NOT NULL,
-            summary TEXT NOT NULL,
+            title TEXT NOT NULL,
             start_time INTEGER NOT NULL,
             end_time INTEGER NOT NULL
         );
@@ -79,7 +80,7 @@ fn test_gather_context() {
 
 #[test]
 fn test_correlations_to_insights() {
-    let (_conn, _dir) = setup_db();
+    let _conn = setup_db();
     let engine = CorrelationEngine::new();
 
     let correlation = Correlation {
@@ -104,14 +105,15 @@ fn test_correlations_to_insights() {
 #[test]
 fn test_insight_generation() {
     let engine = CorrelationEngine::new();
-    let correlation = Correlation::new(
+    let _correlation = Correlation::new(
         CorrelationType::Custom("test".to_string()),
         0.8,
         vec!["entity1".to_string()],
         CorrelationPattern::Custom("Test correlation pattern".to_string()),
     );
+    let now = chrono::Utc::now().timestamp();
 
-    let empty_context = CorrelationContext {
+    let _empty_context = CorrelationContext {
         space_id: Ulid::new(),
         tasks: vec![],
         time_entries: vec![],
@@ -121,6 +123,16 @@ fn test_insight_generation() {
         window_start: now,
         window_end: now,
     };
+
+    // Simulate insight generation from correlation since context is not used directly for this test
+    let correlation = Correlation::new(
+        CorrelationType::Custom("test".to_string()),
+        0.8,
+        vec!["entity1".to_string()],
+        CorrelationPattern::Custom("Test correlation pattern".to_string()),
+    );
+
+    let insights = engine.to_insights(vec![correlation]);
 
     assert_eq!(insights.len(), 1);
     let insight = &insights[0];
@@ -175,8 +187,8 @@ fn test_full_flow() {
     // High workload (lots of time entries)
     for i in 0..10 {
         conn.execute(
-            "INSERT INTO time_entry (id, space_id, duration_minutes, started_at, created_at)
-             VALUES (?, ?, 120, ?, ?)",
+            "INSERT INTO time_entry (id, space_id, duration_seconds, started_at, created_at)
+             VALUES (?, ?, 7200, ?, ?)",
             rusqlite::params![
                 Ulid::new().to_string(),
                 space_id.to_string(),
