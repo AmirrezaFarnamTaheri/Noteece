@@ -1,17 +1,17 @@
-import React from "react";
-import { Text, Tooltip } from "@mantine/core";
+import React from 'react';
+import { Text, Tooltip } from '@mantine/core';
 
 export interface DateDisplayProps {
   /** Timestamp in milliseconds */
   timestamp: number;
   /** Display format: 'relative' or 'absolute' */
-  format?: "relative" | "absolute";
+  format?: 'relative' | 'absolute';
   /** Show tooltip with full date */
   withTooltip?: boolean;
   /** Text color */
   color?: string;
   /** Text size */
-  size?: "xs" | "sm" | "md" | "lg" | "xl";
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
 /**
@@ -27,12 +27,12 @@ function getRelativeTime(timestamp: number): string {
   const months = Math.floor(days / 30.44); // Average days in a month
   const years = Math.floor(days / 365.25); // Account for leap years
 
-  if (years > 0) return `${years} year${years > 1 ? "s" : ""} ago`;
-  if (months > 0) return `${months} month${months > 1 ? "s" : ""} ago`;
-  if (days > 0) return `${days} day${days > 1 ? "s" : ""} ago`;
-  if (hours > 0) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
-  if (minutes > 0) return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
-  return "just now";
+  if (years > 0) return `${years} year${years > 1 ? 's' : ''} ago`;
+  if (months > 0) return `${months} month${months > 1 ? 's' : ''} ago`;
+  if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+  if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+  return 'just now';
 }
 
 /**
@@ -41,11 +41,11 @@ function getRelativeTime(timestamp: number): string {
 function getAbsoluteDate(timestamp: number): string {
   const date = new Date(timestamp);
   return date.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
@@ -59,15 +59,12 @@ function getAbsoluteDate(timestamp: number): string {
  */
 export function DateDisplay({
   timestamp,
-  format = "relative",
+  format = 'relative',
   withTooltip = true,
-  color = "dimmed",
-  size = "sm",
+  color = 'dimmed',
+  size = 'sm',
 }: DateDisplayProps) {
-  const displayText =
-    format === "relative"
-      ? getRelativeTime(timestamp)
-      : getAbsoluteDate(timestamp);
+  const displayText = format === 'relative' ? getRelativeTime(timestamp) : getAbsoluteDate(timestamp);
   const tooltipText = getAbsoluteDate(timestamp);
 
   const textElement = (

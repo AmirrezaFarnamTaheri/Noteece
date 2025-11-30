@@ -13,7 +13,7 @@ We use **Zustand** for global state. It is simpler and less boilerplate-heavy th
 ```typescript
 // Example: Fetching Notes
 const { data: notes, isLoading } = useQuery({
-  queryKey: ["notes", spaceId],
+  queryKey: ['notes', spaceId],
   queryFn: () => api.getNotes(spaceId),
 });
 ```
@@ -33,7 +33,7 @@ We use a localized `api.ts` service layer to wrap `tauri.invoke`.
 ```typescript
 // api.ts
 export async function getProjects(spaceId: string): Promise<Project[]> {
-  return await invoke("get_projects_cmd", { spaceId });
+  return await invoke('get_projects_cmd', { spaceId });
 }
 ```
 

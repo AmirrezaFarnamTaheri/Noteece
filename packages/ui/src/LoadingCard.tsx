@@ -1,5 +1,5 @@
-import React from "react";
-import { Card, LoadingOverlay, Skeleton, Stack } from "@mantine/core";
+import React from 'react';
+import { Card, LoadingOverlay, Skeleton, Stack } from '@mantine/core';
 
 export interface LoadingCardProps {
   /** Show loading overlay (default: false) */
@@ -16,19 +16,10 @@ export interface LoadingCardProps {
  * @param lines - Number of skeleton lines to show
  * @param height - Card height
  */
-export function LoadingCard({
-  overlay = false,
-  lines = 3,
-  height,
-}: LoadingCardProps) {
+export function LoadingCard({ overlay = false, lines = 3, height }: LoadingCardProps) {
   if (overlay) {
     return (
-      <Card
-        p="lg"
-        radius="md"
-        withBorder
-        style={{ position: "relative", height }}
-      >
+      <Card p="lg" radius="md" withBorder style={{ position: 'relative', height }}>
         <LoadingOverlay visible={true} />
       </Card>
     );

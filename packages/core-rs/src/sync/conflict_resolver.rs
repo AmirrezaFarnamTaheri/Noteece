@@ -71,6 +71,7 @@ impl ConflictResolver {
     }
 
     /// Resolve conflict between two versions
+    #[allow(clippy::ptr_arg)]
     pub fn resolve(&self, local: &VersionedEntity, remote: &VersionedEntity) -> ConflictResolution {
         // Check if there's actually a conflict
         if local.vector_clock.happens_before(&remote.vector_clock) {
@@ -317,10 +318,12 @@ mod tests {
     use super::*;
 
     fn create_entity(id: &str, device_id: &str, timestamp: i64) -> VersionedEntity {
+        let mut vector_clock = VectorClock::new(device_id.to_string());
+        vector_clock.increment();
         VersionedEntity {
             id: id.to_string(),
             data: serde_json::json!({"value": "test"}),
-            vector_clock: VectorClock::new(device_id.to_string()),
+            vector_clock,
             timestamp,
             device_id: device_id.to_string(),
         }
@@ -328,7 +331,7 @@ mod tests {
 
     #[test]
     fn test_last_write_wins() {
-        let mut local = create_entity("entity1", "device1", 100);
+        let local = create_entity("entity1", "device1", 100);
         let remote = create_entity("entity1", "device2", 200);
 
         let resolver = ConflictResolver::new(ResolutionStrategy::LastWriteWins);

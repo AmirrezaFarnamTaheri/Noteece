@@ -454,7 +454,7 @@ mod tests {
         assert!(!tracker.would_exceed_budget(estimate));
 
         // Estimate for an expensive request
-        let large_estimate = tracker.estimate_cost("gpt-4", 100000, 50000);
+        let _large_estimate = tracker.estimate_cost("gpt-4", 100000, 50000);
         // This might exceed depending on the budget
     }
 

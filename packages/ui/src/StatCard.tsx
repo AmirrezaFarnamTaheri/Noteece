@@ -1,6 +1,6 @@
-import React from "react";
-import { Card, Text, Group, ThemeIcon, Stack } from "@mantine/core";
-import { IconArrowUp, IconArrowDown } from "@tabler/icons-react";
+import React from 'react';
+import { Card, Text, Group, ThemeIcon, Stack } from '@mantine/core';
+import { IconArrowUp, IconArrowDown } from '@tabler/icons-react';
 
 export interface StatCardProps {
   /** Statistic title */
@@ -26,14 +26,7 @@ export interface StatCardProps {
  * @param change - Percentage change (positive/negative)
  * @param description - Optional description text
  */
-export function StatCard({
-  title,
-  value,
-  icon,
-  iconColor = "blue",
-  change,
-  description,
-}: StatCardProps) {
+export function StatCard({ title, value, icon, iconColor = 'blue', change, description }: StatCardProps) {
   const hasPositiveChange = change !== undefined && change > 0;
   const hasNegativeChange = change !== undefined && change < 0;
 
@@ -51,17 +44,7 @@ export function StatCard({
             <Group gap="xs">
               {hasPositiveChange && <IconArrowUp size={16} color="green" />}
               {hasNegativeChange && <IconArrowDown size={16} color="red" />}
-              <Text
-                size="sm"
-                c={
-                  hasPositiveChange
-                    ? "green"
-                    : hasNegativeChange
-                      ? "red"
-                      : "dimmed"
-                }
-                fw={500}
-              >
+              <Text size="sm" c={hasPositiveChange ? 'green' : hasNegativeChange ? 'red' : 'dimmed'} fw={500}>
                 {Math.abs(change)}%
               </Text>
             </Group>

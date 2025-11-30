@@ -1,23 +1,6 @@
-import React from "react";
-import {
-  Card,
-  Stack,
-  Group,
-  Text,
-  Progress,
-  RingProgress,
-  Grid,
-  ThemeIcon,
-  Center,
-} from "@mantine/core";
-import {
-  IconTarget,
-  IconCheckbox,
-  IconNote,
-  IconBook,
-  IconTrendingUp,
-  IconTrendingDown,
-} from "@tabler/icons-react";
+import React from 'react';
+import { Card, Stack, Group, Text, Progress, RingProgress, Grid, ThemeIcon, Center } from '@mantine/core';
+import { IconTarget, IconCheckbox, IconNote, IconBook, IconTrendingUp, IconTrendingDown } from '@tabler/icons-react';
 
 export interface ProgressMetric {
   id: string;
@@ -27,7 +10,7 @@ export interface ProgressMetric {
   unit?: string;
   color?: string;
   icon?: React.ReactNode;
-  trend?: "up" | "down" | "neutral";
+  trend?: 'up' | 'down' | 'neutral';
   trendValue?: string;
 }
 
@@ -39,7 +22,7 @@ export interface ProgressDashboardProps {
 
 export function ProgressDashboard({
   metrics,
-  title = "Progress Dashboard",
+  title = 'Progress Dashboard',
   showOverallProgress = true,
 }: ProgressDashboardProps) {
   const calculateProgress = (metric: ProgressMetric): number => {
@@ -48,24 +31,15 @@ export function ProgressDashboard({
   };
 
   const overallProgress =
-    metrics.length > 0
-      ? metrics.reduce((sum, m) => sum + calculateProgress(m), 0) /
-        metrics.length
-      : 0;
+    metrics.length > 0 ? metrics.reduce((sum, m) => sum + calculateProgress(m), 0) / metrics.length : 0;
 
-  const completedMetrics = metrics.filter(
-    (m) => calculateProgress(m) >= 100,
-  ).length;
+  const completedMetrics = metrics.filter((m) => calculateProgress(m) >= 100).length;
 
   if (metrics.length === 0) {
     return (
       <Card shadow="sm" padding="lg" radius="md" withBorder>
         <Stack gap="md" align="center" py="xl">
-          <IconTarget
-            size={48}
-            stroke={1.5}
-            color="var(--mantine-color-gray-4)"
-          />
+          <IconTarget size={48} stroke={1.5} color="var(--mantine-color-gray-4)" />
           <Text c="dimmed">No progress metrics available</Text>
         </Stack>
       </Card>
@@ -90,7 +64,7 @@ export function ProgressDashboard({
             <RingProgress
               size={80}
               thickness={8}
-              sections={[{ value: overallProgress, color: "blue" }]}
+              sections={[{ value: overallProgress, color: 'blue' }]}
               label={
                 <Center>
                   <Text size="sm" fw={700}>
@@ -110,22 +84,13 @@ export function ProgressDashboard({
 
             return (
               <Grid.Col key={metric.id} span={{ base: 12, sm: 6 }}>
-                <Card
-                  padding="md"
-                  radius="md"
-                  withBorder
-                  style={{ height: "100%" }}
-                >
+                <Card padding="md" radius="md" withBorder style={{ height: '100%' }}>
                   <Stack gap="sm">
                     {/* Metric Header */}
                     <Group justify="space-between" align="flex-start">
                       <Group gap="xs">
                         {metric.icon && (
-                          <ThemeIcon
-                            variant="light"
-                            color={metric.color || "blue"}
-                            size="md"
-                          >
+                          <ThemeIcon variant="light" color={metric.color || 'blue'} size="md">
                             {metric.icon}
                           </ThemeIcon>
                         )}
@@ -134,25 +99,15 @@ export function ProgressDashboard({
                         </Text>
                       </Group>
 
-                      {metric.trend && metric.trend !== "neutral" && (
+                      {metric.trend && metric.trend !== 'neutral' && (
                         <Group gap={2}>
-                          {metric.trend === "up" ? (
-                            <IconTrendingUp
-                              size={14}
-                              color="var(--mantine-color-green-6)"
-                            />
+                          {metric.trend === 'up' ? (
+                            <IconTrendingUp size={14} color="var(--mantine-color-green-6)" />
                           ) : (
-                            <IconTrendingDown
-                              size={14}
-                              color="var(--mantine-color-red-6)"
-                            />
+                            <IconTrendingDown size={14} color="var(--mantine-color-red-6)" />
                           )}
                           {metric.trendValue && (
-                            <Text
-                              size="xs"
-                              c={metric.trend === "up" ? "green" : "red"}
-                              fw={600}
-                            >
+                            <Text size="xs" c={metric.trend === 'up' ? 'green' : 'red'} fw={600}>
                               {metric.trendValue}
                             </Text>
                           )}
@@ -176,11 +131,7 @@ export function ProgressDashboard({
                         )}
                       </Group>
 
-                      <Text
-                        size="sm"
-                        fw={600}
-                        c={isComplete ? "green" : undefined}
-                      >
+                      <Text size="sm" fw={600} c={isComplete ? 'green' : undefined}>
                         {Math.round(progress)}%
                       </Text>
                     </Group>
@@ -188,7 +139,7 @@ export function ProgressDashboard({
                     {/* Progress Bar */}
                     <Progress
                       value={progress}
-                      color={isComplete ? "green" : metric.color || "blue"}
+                      color={isComplete ? 'green' : metric.color || 'blue'}
                       size="md"
                       radius="xl"
                     />
@@ -204,9 +155,7 @@ export function ProgressDashboard({
 }
 
 // Compact list variant
-export function ProgressList({
-  metrics,
-}: Pick<ProgressDashboardProps, "metrics">) {
+export function ProgressList({ metrics }: Pick<ProgressDashboardProps, 'metrics'>) {
   const calculateProgress = (metric: ProgressMetric): number => {
     if (metric.target === 0) return 0;
     return Math.min((metric.current / metric.target) * 100, 100);
@@ -224,7 +173,7 @@ export function ProgressList({
                 {metric.icon && (
                   <div
                     style={{
-                      color: `var(--mantine-color-${metric.color || "blue"}-6)`,
+                      color: `var(--mantine-color-${metric.color || 'blue'}-6)`,
                     }}
                   >
                     {metric.icon}
@@ -238,12 +187,7 @@ export function ProgressList({
                 {metric.current} / {metric.target}
               </Text>
             </Group>
-            <Progress
-              value={progress}
-              color={metric.color || "blue"}
-              size="sm"
-              radius="xl"
-            />
+            <Progress value={progress} color={metric.color || 'blue'} size="sm" radius="xl" />
           </div>
         );
       })}
@@ -262,11 +206,7 @@ export function ProgressCard({ metric }: { metric: ProgressMetric }) {
         <Group justify="space-between" align="center">
           <Group gap="xs">
             {metric.icon && (
-              <ThemeIcon
-                variant="light"
-                color={metric.color || "blue"}
-                size="lg"
-              >
+              <ThemeIcon variant="light" color={metric.color || 'blue'} size="lg">
                 {metric.icon}
               </ThemeIcon>
             )}
@@ -275,34 +215,23 @@ export function ProgressCard({ metric }: { metric: ProgressMetric }) {
                 {metric.label}
               </Text>
               <Text size="xs" c="dimmed">
-                {metric.current} / {metric.target} {metric.unit || ""}
+                {metric.current} / {metric.target} {metric.unit || ''}
               </Text>
             </div>
           </Group>
 
           <div>
-            <Text
-              size="xl"
-              fw={700}
-              c={isComplete ? "green" : metric.color || "blue"}
-              ta="right"
-            >
+            <Text size="xl" fw={700} c={isComplete ? 'green' : metric.color || 'blue'} ta="right">
               {Math.round(progress)}%
             </Text>
             {metric.trend && metric.trendValue && (
               <Group gap={4} justify="flex-end">
-                {metric.trend === "up" ? (
-                  <IconTrendingUp
-                    size={12}
-                    color="var(--mantine-color-green-6)"
-                  />
-                ) : metric.trend === "down" ? (
-                  <IconTrendingDown
-                    size={12}
-                    color="var(--mantine-color-red-6)"
-                  />
+                {metric.trend === 'up' ? (
+                  <IconTrendingUp size={12} color="var(--mantine-color-green-6)" />
+                ) : metric.trend === 'down' ? (
+                  <IconTrendingDown size={12} color="var(--mantine-color-red-6)" />
                 ) : null}
-                <Text size="xs" c={metric.trend === "up" ? "green" : "red"}>
+                <Text size="xs" c={metric.trend === 'up' ? 'green' : 'red'}>
                   {metric.trendValue}
                 </Text>
               </Group>
@@ -310,25 +239,14 @@ export function ProgressCard({ metric }: { metric: ProgressMetric }) {
           </div>
         </Group>
 
-        <Progress
-          value={progress}
-          color={isComplete ? "green" : metric.color || "blue"}
-          size="lg"
-          radius="xl"
-        />
+        <Progress value={progress} color={isComplete ? 'green' : metric.color || 'blue'} size="lg" radius="xl" />
       </Stack>
     </Card>
   );
 }
 
 // Ring progress variant for circular display
-export function ProgressRing({
-  metrics,
-  size = 120,
-}: {
-  metrics: ProgressMetric[];
-  size?: number;
-}) {
+export function ProgressRing({ metrics, size = 120 }: { metrics: ProgressMetric[]; size?: number }) {
   const calculateProgress = (metric: ProgressMetric): number => {
     if (metric.target === 0) return 0;
     return Math.min((metric.current / metric.target) * 100, 100);
@@ -336,15 +254,12 @@ export function ProgressRing({
 
   const sections = metrics.map((metric) => ({
     value: calculateProgress(metric),
-    color: metric.color || "blue",
+    color: metric.color || 'blue',
     tooltip: `${metric.label}: ${Math.round(calculateProgress(metric))}%`,
   }));
 
   const totalProgress =
-    metrics.length > 0
-      ? metrics.reduce((sum, m) => sum + calculateProgress(m), 0) /
-        metrics.length
-      : 0;
+    metrics.length > 0 ? metrics.reduce((sum, m) => sum + calculateProgress(m), 0) / metrics.length : 0;
 
   return (
     <Stack gap="md" align="center">
@@ -366,7 +281,7 @@ export function ProgressRing({
         }
       />
 
-      <Stack gap="xs" style={{ width: "100%" }}>
+      <Stack gap="xs" style={{ width: '100%' }}>
         {metrics.map((metric, index) => (
           <Group key={metric.id} justify="space-between">
             <Group gap="xs">
@@ -374,8 +289,8 @@ export function ProgressRing({
                 style={{
                   width: 8,
                   height: 8,
-                  borderRadius: "50%",
-                  backgroundColor: `var(--mantine-color-${metric.color || "blue"}-6)`,
+                  borderRadius: '50%',
+                  backgroundColor: `var(--mantine-color-${metric.color || 'blue'}-6)`,
                 }}
               />
               <Text size="sm">{metric.label}</Text>

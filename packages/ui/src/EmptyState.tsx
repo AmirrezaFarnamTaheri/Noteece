@@ -1,6 +1,6 @@
-import React from "react";
-import { Stack, Text, Button, ThemeIcon } from "@mantine/core";
-import { IconMoodEmpty } from "@tabler/icons-react";
+import React from 'react';
+import { Stack, Text, Button, ThemeIcon } from '@mantine/core';
+import { IconMoodEmpty } from '@tabler/icons-react';
 
 export interface EmptyStateProps {
   /** Icon to display (default: IconMoodEmpty) */

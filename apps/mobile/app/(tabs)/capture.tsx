@@ -164,7 +164,6 @@ export default function CaptureScreen() {
           </View>
         )}
 
-
         {/* Quick Actions */}
         <View style={styles.quickActions}>
           <Text style={styles.quickActionsTitle}>Quick Actions</Text>

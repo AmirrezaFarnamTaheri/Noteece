@@ -19,13 +19,7 @@ export interface Note {
   is_trashed: boolean;
 }
 
-export type TaskStatus =
-  | "inbox"
-  | "next"
-  | "in_progress"
-  | "waiting"
-  | "done"
-  | "cancelled";
+export type TaskStatus = 'inbox' | 'next' | 'in_progress' | 'waiting' | 'done' | 'cancelled';
 
 export interface Task {
   id: ULID;
@@ -46,12 +40,7 @@ export interface Task {
   area?: string;
 }
 
-export type ProjectStatus =
-  | "proposed"
-  | "active"
-  | "blocked"
-  | "done"
-  | "archived";
+export type ProjectStatus = 'proposed' | 'active' | 'blocked' | 'done' | 'archived';
 
 export interface Project {
   id: ULID;
@@ -101,11 +90,11 @@ export interface ProjectUpdate {
   id: ULID;
   project_id: ULID;
   when_at: number; // Unix timestamp
-  health?: "green" | "amber" | "red";
+  health?: 'green' | 'amber' | 'red';
   summary: string;
 }
 
-export type SearchScope = "note" | "project" | "space" | "vault_all";
+export type SearchScope = 'note' | 'project' | 'space' | 'vault_all';
 
 export interface SavedSearch {
   id: ULID;
@@ -115,7 +104,7 @@ export interface SavedSearch {
   scope: SearchScope;
 }
 
-export type KnowledgeCardState = "new" | "learning" | "review" | "relearning";
+export type KnowledgeCardState = 'new' | 'learning' | 'review' | 'relearning';
 
 export interface KnowledgeCard {
   id: ULID;
@@ -141,13 +130,7 @@ export interface ReviewLog {
   lapses: number;
 }
 
-export type FormFieldType =
-  | "Text"
-  | "Textarea"
-  | "Number"
-  | "Checkbox"
-  | "Date"
-  | "Time";
+export type FormFieldType = 'Text' | 'Textarea' | 'Number' | 'Checkbox' | 'Date' | 'Time';
 
 export interface FormField {
   name: string;
@@ -215,7 +198,7 @@ export interface SyncStats {
 export interface DeviceInfo {
   device_id: string;
   device_name: string;
-  device_type: "Desktop" | "Mobile" | "Web";
+  device_type: 'Desktop' | 'Mobile' | 'Web';
   last_seen: number;
   sync_address: string;
   sync_port: number;
@@ -225,19 +208,19 @@ export interface DeviceInfo {
 export interface DiscoveredDevice {
   device_id: string;
   device_name: string;
-  device_type: "Desktop" | "Mobile" | "Tablet";
+  device_type: 'Desktop' | 'Mobile' | 'Tablet';
   ip_address: string;
   sync_port: number;
   os_version: string;
   last_seen: string; // DateTime serialized
 }
 
-export type ConflictType = "UpdateUpdate" | "DeleteUpdate" | "UpdateDelete";
+export type ConflictType = 'UpdateUpdate' | 'DeleteUpdate' | 'UpdateDelete';
 
 export enum ConflictResolution {
-  UseLocal = "UseLocal",
-  UseRemote = "UseRemote",
-  Merge = "Merge",
+  UseLocal = 'UseLocal',
+  UseRemote = 'UseRemote',
+  Merge = 'Merge',
 }
 
 export interface SyncConflict {
@@ -413,4 +396,4 @@ export interface SearchResult {
 }
 
 // Social Media Suite types
-export * from "./social";
+export * from './social';

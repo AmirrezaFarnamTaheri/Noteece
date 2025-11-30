@@ -8,114 +8,114 @@ This document provides a reference for Noteece's internal APIs.
 
 ```typescript
 // Create a new note
-invoke("create_note_cmd", { spaceId, title, content, tags });
+invoke('create_note_cmd', { spaceId, title, content, tags });
 
 // Get note by ID
-invoke("get_note_cmd", { noteId });
+invoke('get_note_cmd', { noteId });
 
 // Update note
-invoke("update_note_cmd", { noteId, title, content, tags });
+invoke('update_note_cmd', { noteId, title, content, tags });
 
 // Delete note
-invoke("delete_note_cmd", { noteId });
+invoke('delete_note_cmd', { noteId });
 
 // Search notes
-invoke("search_notes_cmd", { query, spaceId, limit });
+invoke('search_notes_cmd', { query, spaceId, limit });
 
 // Get note versions
-invoke("get_note_versions_cmd", { noteId });
+invoke('get_note_versions_cmd', { noteId });
 ```
 
 ### Tasks
 
 ```typescript
 // Create task
-invoke("create_task_cmd", { spaceId, title, description, priority, dueDate });
+invoke('create_task_cmd', { spaceId, title, description, priority, dueDate });
 
 // Update task
-invoke("update_task_cmd", { taskId, ...updates });
+invoke('update_task_cmd', { taskId, ...updates });
 
 // Complete task
-invoke("complete_task_cmd", { taskId });
+invoke('complete_task_cmd', { taskId });
 
 // Get tasks for space
-invoke("get_tasks_cmd", { spaceId, filter });
+invoke('get_tasks_cmd', { spaceId, filter });
 
 // Get due tasks
-invoke("get_due_tasks_cmd", { spaceId });
+invoke('get_due_tasks_cmd', { spaceId });
 ```
 
 ### Projects
 
 ```typescript
 // Create project
-invoke("create_project_cmd", { spaceId, name, description });
+invoke('create_project_cmd', { spaceId, name, description });
 
 // Update project
-invoke("update_project_cmd", { projectId, ...updates });
+invoke('update_project_cmd', { projectId, ...updates });
 
 // Get project
-invoke("get_project_cmd", { projectId });
+invoke('get_project_cmd', { projectId });
 
 // Get projects for space
-invoke("get_projects_cmd", { spaceId });
+invoke('get_projects_cmd', { spaceId });
 
 // Add task to project
-invoke("add_task_to_project_cmd", { projectId, taskId });
+invoke('add_task_to_project_cmd', { projectId, taskId });
 ```
 
 ### Sync
 
 ```typescript
 // Discover devices
-invoke("discover_devices_cmd");
+invoke('discover_devices_cmd');
 
 // Register device
-invoke("register_device_cmd", { deviceId, name, publicKey });
+invoke('register_device_cmd', { deviceId, name, publicKey });
 
 // Initiate pairing
-invoke("initiate_pairing_cmd", { deviceId });
+invoke('initiate_pairing_cmd', { deviceId });
 
 // Start sync
-invoke("start_p2p_sync_cmd", { deviceId });
+invoke('start_p2p_sync_cmd', { deviceId });
 
 // Get sync progress
-invoke("get_sync_progress_cmd", { deviceId });
+invoke('get_sync_progress_cmd', { deviceId });
 
 // Get sync conflicts
-invoke("get_sync_conflicts_cmd");
+invoke('get_sync_conflicts_cmd');
 
 // Resolve conflict
-invoke("resolve_sync_conflict_cmd", { conflict, resolution });
+invoke('resolve_sync_conflict_cmd', { conflict, resolution });
 ```
 
 ### AI / LLM
 
 ```typescript
 // Check Ollama connection
-invoke("check_ollama_connection_cmd", { url });
+invoke('check_ollama_connection_cmd', { url });
 
 // List models
-invoke("list_ollama_models_cmd");
+invoke('list_ollama_models_cmd');
 
 // Chat with Ollama
-invoke("chat_with_ollama_cmd", { model, messages, prompt });
+invoke('chat_with_ollama_cmd', { model, messages, prompt });
 
 // Test cloud provider
-invoke("test_cloud_provider_cmd", { provider, apiKey });
+invoke('test_cloud_provider_cmd', { provider, apiKey });
 
 // Get AI config
-invoke("get_ai_config_cmd");
+invoke('get_ai_config_cmd');
 
 // Save AI config
-invoke("save_ai_config_cmd", { config });
+invoke('save_ai_config_cmd', { config });
 ```
 
 ### Health
 
 ```typescript
 // Create health metric
-invoke("create_health_metric_cmd", {
+invoke('create_health_metric_cmd', {
   spaceId,
   metricType,
   value,
@@ -125,48 +125,48 @@ invoke("create_health_metric_cmd", {
 });
 
 // Get health metrics
-invoke("get_health_metrics_cmd", { spaceId, metricType, startDate, endDate });
+invoke('get_health_metrics_cmd', { spaceId, metricType, startDate, endDate });
 
 // Create goal
-invoke("create_goal_cmd", { spaceId, title, target, unit, category });
+invoke('create_goal_cmd', { spaceId, title, target, unit, category });
 
 // Update goal progress
-invoke("update_goal_progress_cmd", { goalId, current });
+invoke('update_goal_progress_cmd', { goalId, current });
 
 // Complete goal
-invoke("complete_goal_cmd", { goalId });
+invoke('complete_goal_cmd', { goalId });
 ```
 
 ### OCR
 
 ```typescript
 // Queue OCR job
-invoke("queue_ocr_cmd", { blobId });
+invoke('queue_ocr_cmd', { blobId });
 
 // Get OCR status
-invoke("get_ocr_status_cmd", { blobId });
+invoke('get_ocr_status_cmd', { blobId });
 
 // Search OCR text
-invoke("search_ocr_text_cmd", { query });
+invoke('search_ocr_text_cmd', { query });
 
 // Process OCR job
-invoke("process_ocr_job_cmd", { blobId, imagePath });
+invoke('process_ocr_job_cmd', { blobId, imagePath });
 ```
 
 ### Spaced Repetition
 
 ```typescript
 // Get due cards
-invoke("get_due_cards_cmd");
+invoke('get_due_cards_cmd');
 
 // Record review
-invoke("record_review_cmd", { cardId, quality });
+invoke('record_review_cmd', { cardId, quality });
 
 // Create card
-invoke("create_card_cmd", { deckId, front, back });
+invoke('create_card_cmd', { deckId, front, back });
 
 // Get decks
-invoke("get_decks_cmd", { spaceId });
+invoke('get_decks_cmd', { spaceId });
 ```
 
 ## React Hooks
@@ -182,16 +182,15 @@ const { notes, isLoading, error, create, update, delete } = useNotes(spaceId);
 ### useTasks
 
 ```typescript
-import { useTasks } from "@/hooks/useTasks";
+import { useTasks } from '@/hooks/useTasks';
 
-const { tasks, isLoading, createTask, completeTask, deleteTask } =
-  useTasks(spaceId);
+const { tasks, isLoading, createTask, completeTask, deleteTask } = useTasks(spaceId);
 ```
 
 ### useSync
 
 ```typescript
-import { useSync } from "@/hooks/useSync";
+import { useSync } from '@/hooks/useSync';
 
 const { devices, isDiscovering, discover, pair, sync } = useSync();
 ```
@@ -199,7 +198,7 @@ const { devices, isDiscovering, discover, pair, sync } = useSync();
 ### useTheme
 
 ```typescript
-import { useThemeStore } from "@/store/themeStore";
+import { useThemeStore } from '@/store/themeStore';
 
 const { mode, actualTheme, setMode, toggleTheme } = useThemeStore();
 ```
@@ -207,7 +206,7 @@ const { mode, actualTheme, setMode, toggleTheme } = useThemeStore();
 ### useI18n
 
 ```typescript
-import { useI18n } from "@/i18n";
+import { useI18n } from '@/i18n';
 
 const { locale, setLocale, t } = useI18n();
 ```
@@ -215,10 +214,9 @@ const { locale, setLocale, t } = useI18n();
 ### useControlPanel
 
 ```typescript
-import { useControlPanelStore } from "@/store/controlPanelStore";
+import { useControlPanelStore } from '@/store/controlPanelStore';
 
-const { widgets, features, toggleWidget, toggleFeature } =
-  useControlPanelStore();
+const { widgets, features, toggleWidget, toggleFeature } = useControlPanelStore();
 ```
 
 ## Rust Core API

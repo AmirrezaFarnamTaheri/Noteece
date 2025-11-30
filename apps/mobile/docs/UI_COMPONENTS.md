@@ -34,7 +34,7 @@ interface FadeInProps {
 **Example:**
 
 ```tsx
-import { FadeIn } from "@/components/animations";
+import { FadeIn } from '@/components/animations';
 
 <FadeIn duration={500} delay={200}>
   <Text>This text fades in smoothly</Text>
@@ -59,7 +59,7 @@ Directional slide-in animation from various edges.
 ```typescript
 interface SlideInProps {
   children: React.ReactNode;
-  direction?: "left" | "right" | "top" | "bottom"; // Default: 'bottom'
+  direction?: 'left' | 'right' | 'top' | 'bottom'; // Default: 'bottom'
   duration?: number; // Animation duration in ms (default: 300)
   delay?: number; // Delay before animation (default: 0)
   distance?: number; // Distance to slide in px (default: 50)
@@ -70,7 +70,7 @@ interface SlideInProps {
 **Example:**
 
 ```tsx
-import { SlideIn } from "@/components/animations";
+import { SlideIn } from '@/components/animations';
 
 <SlideIn direction="right" distance={100}>
   <View style={styles.card}>
@@ -108,7 +108,7 @@ interface ScaleInProps {
 **Example:**
 
 ```tsx
-import { ScaleIn } from "@/components/animations";
+import { ScaleIn } from '@/components/animations';
 
 <ScaleIn bounce initialScale={0.5}>
   <TouchableOpacity style={styles.button}>
@@ -146,7 +146,7 @@ interface PulseProps {
 **Example:**
 
 ```tsx
-import { Pulse } from "@/components/animations";
+import { Pulse } from '@/components/animations';
 
 <Pulse duration={1500} minScale={0.9} maxScale={1.1}>
   <View style={styles.badge}>
@@ -186,7 +186,7 @@ interface SkeletonBoxProps {
 **Example:**
 
 ```tsx
-import { SkeletonBox } from "@/components/skeletons";
+import { SkeletonBox } from '@/components/skeletons';
 
 <SkeletonBox width={200} height={40} borderRadius={8} />;
 ```
@@ -209,7 +209,7 @@ interface SkeletonCardProps {
 **Example:**
 
 ```tsx
-import { SkeletonCard } from "@/components/skeletons";
+import { SkeletonCard } from '@/components/skeletons';
 
 <SkeletonCard showImage lines={2} />;
 ```
@@ -240,7 +240,7 @@ interface SkeletonListProps {
 **Example:**
 
 ```tsx
-import { SkeletonList } from "@/components/skeletons";
+import { SkeletonList } from '@/components/skeletons';
 
 <SkeletonList count={10} showAvatar lines={3} />;
 ```
@@ -275,7 +275,7 @@ interface ErrorBoundaryProps {
 **Example:**
 
 ```tsx
-import { ErrorBoundary } from "@/components/errors";
+import { ErrorBoundary } from '@/components/errors';
 
 <ErrorBoundary
   onError={(error, info) => {
@@ -298,7 +298,7 @@ import { ErrorBoundary } from "@/components/errors";
 
 ```tsx
 // app/_layout.tsx
-import { ErrorBoundary } from "@/components/errors";
+import { ErrorBoundary } from '@/components/errors';
 
 export default function RootLayout() {
   return (
@@ -329,16 +329,11 @@ interface ErrorFallbackProps {
 **Example:**
 
 ```tsx
-import { ErrorFallback } from "@/components/errors";
+import { ErrorFallback } from '@/components/errors';
 
 {
   error ? (
-    <ErrorFallback
-      error={error}
-      message="Failed to load posts"
-      onRetry={refetch}
-      compact
-    />
+    <ErrorFallback error={error} message="Failed to load posts" onRetry={refetch} compact />
   ) : (
     <PostList posts={posts} />
   );
@@ -365,7 +360,7 @@ Central manager for all haptic feedback.
 **Available Methods:**
 
 ```typescript
-import { haptics } from "@/lib/haptics";
+import { haptics } from '@/lib/haptics';
 
 // Light - Subtle interactions
 await haptics.light();
@@ -428,7 +423,7 @@ await haptics.soft();
 **Example Implementation:**
 
 ```tsx
-import { haptics } from "@/lib/haptics";
+import { haptics } from '@/lib/haptics';
 
 const handleSave = async () => {
   try {
@@ -449,7 +444,7 @@ Haptics respect user preferences automatically:
 ```tsx
 // Settings toggle (automatically handled)
 const handleToggleHaptics = async (value: boolean) => {
-  await updateSetting("haptics", value);
+  await updateSetting('haptics', value);
   // Haptic manager updates automatically
 };
 ```
@@ -515,7 +510,7 @@ const handleToggleHaptics = async (value: boolean) => {
 ```tsx
 <ErrorBoundary
   onError={(error, info) => {
-    logError({ error, info, component: "SocialHub" });
+    logError({ error, info, component: 'SocialHub' });
   }}
 >
   <SocialHub />
@@ -555,7 +550,7 @@ const handleDelete = async () => {
 Combine components for rich interactions:
 
 ```tsx
-import { FadeIn, SlideIn, SkeletonCard, ErrorFallback } from "@/components";
+import { FadeIn, SlideIn, SkeletonCard, ErrorFallback } from '@/components';
 
 function PostCard({ postId }) {
   const { data, loading, error, refetch } = usePost(postId);
@@ -571,12 +566,7 @@ function PostCard({ postId }) {
   if (error) {
     return (
       <SlideIn direction="top">
-        <ErrorFallback
-          error={error}
-          message="Failed to load post"
-          onRetry={refetch}
-          compact
-        />
+        <ErrorFallback error={error} message="Failed to load post" onRetry={refetch} compact />
       </SlideIn>
     );
   }

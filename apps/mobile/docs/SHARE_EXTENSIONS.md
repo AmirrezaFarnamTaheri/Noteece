@@ -224,7 +224,7 @@ To complete the implementation:
 
    ```typescript
    // Future API
-   import { SharedStorage } from "./native-modules/SharedStorage";
+   import { SharedStorage } from './native-modules/SharedStorage';
    const items = await SharedStorage.getItems();
    ```
 

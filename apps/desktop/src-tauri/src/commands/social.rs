@@ -1,6 +1,7 @@
 use crate::state::DbConnection;
 use core_rs::social::{
-    SocialAccount, SocialCategory, SocialPost, TimelinePost, TimelineStats, WebViewSession, AnalyticsOverview
+    AnalyticsOverview, SocialAccount, SocialCategory, SocialPost, TimelinePost, TimelineStats,
+    WebViewSession,
 };
 use tauri::State;
 
@@ -12,19 +13,34 @@ pub fn add_social_account_cmd(
     username: String,
 ) -> Result<SocialAccount, String> {
     crate::with_db!(db, conn, {
-        core_rs::social::add_social_account(&conn, &space_id, &platform, &username, None, "unknown", &[]).map_err(|e| e.to_string())
+        core_rs::social::add_social_account(
+            &conn,
+            &space_id,
+            &platform,
+            &username,
+            None,
+            "unknown",
+            &[],
+        )
+        .map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
-pub fn get_social_accounts_cmd(db: State<DbConnection>, space_id: String) -> Result<Vec<SocialAccount>, String> {
+pub fn get_social_accounts_cmd(
+    db: State<DbConnection>,
+    space_id: String,
+) -> Result<Vec<SocialAccount>, String> {
     crate::with_db!(db, conn, {
         core_rs::social::get_social_accounts(&conn, &space_id).map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
-pub fn get_social_account_cmd(db: State<DbConnection>, account_id: String) -> Result<SocialAccount, String> {
+pub fn get_social_account_cmd(
+    db: State<DbConnection>,
+    account_id: String,
+) -> Result<SocialAccount, String> {
     crate::with_db!(db, conn, {
         core_rs::social::get_social_account(&conn, &account_id)
             .map_err(|e| e.to_string())?
@@ -40,7 +56,10 @@ pub fn update_social_account_cmd(
     cookies: Option<String>,
 ) -> Result<SocialAccount, String> {
     crate::with_db!(db, conn, {
-        let dek_guard = db.dek.lock().map_err(|_| "Failed to lock DEK".to_string())?;
+        let dek_guard = db
+            .dek
+            .lock()
+            .map_err(|_| "Failed to lock DEK".to_string())?;
         let dek = dek_guard.as_ref().map(|d| d.as_slice());
 
         let params = core_rs::social::UpdateSocialAccountParams {
@@ -62,22 +81,34 @@ pub fn update_social_account_cmd(
 }
 
 #[tauri::command]
-pub fn delete_social_account_cmd(db: State<DbConnection>, account_id: String) -> Result<(), String> {
+pub fn delete_social_account_cmd(
+    db: State<DbConnection>,
+    account_id: String,
+) -> Result<(), String> {
     crate::with_db!(db, conn, {
         core_rs::social::delete_social_account(&conn, &account_id).map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
-pub fn store_social_posts_cmd(db: State<DbConnection>, account_id: String, posts: Vec<SocialPost>) -> Result<(), String> {
+pub fn store_social_posts_cmd(
+    db: State<DbConnection>,
+    account_id: String,
+    posts: Vec<SocialPost>,
+) -> Result<(), String> {
     crate::with_db_mut!(db, conn, {
-        core_rs::social::store_social_posts(&mut conn, &account_id, posts).map_err(|e| e.to_string())?;
+        core_rs::social::store_social_posts(&mut conn, &account_id, posts)
+            .map_err(|e| e.to_string())?;
         Ok(())
     })
 }
 
 #[tauri::command]
-pub fn get_unified_timeline_cmd(db: State<DbConnection>, space_id: String, limit: u32) -> Result<Vec<TimelinePost>, String> {
+pub fn get_unified_timeline_cmd(
+    db: State<DbConnection>,
+    space_id: String,
+    limit: u32,
+) -> Result<Vec<TimelinePost>, String> {
     crate::with_db!(db, conn, {
         let filters = core_rs::social::TimelineFilters {
             limit: Some(limit as i64),
@@ -88,24 +119,38 @@ pub fn get_unified_timeline_cmd(db: State<DbConnection>, space_id: String, limit
 }
 
 #[tauri::command]
-pub fn create_category_cmd(db: State<DbConnection>, space_id: String, name: String, rules: String) -> Result<SocialCategory, String> {
+pub fn create_category_cmd(
+    db: State<DbConnection>,
+    space_id: String,
+    name: String,
+    rules: String,
+) -> Result<SocialCategory, String> {
     crate::with_db!(db, conn, {
         let filters: Option<core_rs::social::CategoryFilters> = serde_json::from_str(&rules).ok();
-        core_rs::social::create_category(&conn, &space_id, &name, None, None, filters).map_err(|e| e.to_string())
+        core_rs::social::create_category(&conn, &space_id, &name, None, None, filters)
+            .map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
-pub fn get_categories_cmd(db: State<DbConnection>, space_id: String) -> Result<Vec<SocialCategory>, String> {
+pub fn get_categories_cmd(
+    db: State<DbConnection>,
+    space_id: String,
+) -> Result<Vec<SocialCategory>, String> {
     crate::with_db!(db, conn, {
         core_rs::social::get_categories(&conn, &space_id).map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
-pub fn assign_category_cmd(db: State<DbConnection>, post_id: String, category_id: String) -> Result<(), String> {
+pub fn assign_category_cmd(
+    db: State<DbConnection>,
+    post_id: String,
+    category_id: String,
+) -> Result<(), String> {
     crate::with_db!(db, conn, {
-        core_rs::social::assign_category(&conn, &post_id, &category_id, "manual").map_err(|e| e.to_string())
+        core_rs::social::assign_category(&conn, &post_id, &category_id, "manual")
+            .map_err(|e| e.to_string())
     })
 }
 
@@ -117,24 +162,36 @@ pub fn delete_category_cmd(db: State<DbConnection>, category_id: String) -> Resu
 }
 
 #[tauri::command]
-pub fn get_timeline_stats_cmd(db: State<DbConnection>, space_id: String) -> Result<TimelineStats, String> {
+pub fn get_timeline_stats_cmd(
+    db: State<DbConnection>,
+    space_id: String,
+) -> Result<TimelineStats, String> {
     crate::with_db!(db, conn, {
         core_rs::social::get_timeline_stats(&conn, &space_id).map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
-pub fn get_analytics_overview_cmd(db: State<DbConnection>, space_id: String) -> Result<AnalyticsOverview, String> {
+pub fn get_analytics_overview_cmd(
+    db: State<DbConnection>,
+    space_id: String,
+) -> Result<AnalyticsOverview, String> {
     crate::with_db!(db, conn, {
         let now = chrono::Utc::now().timestamp();
-        core_rs::social::get_analytics_overview(&conn, &space_id, now - 30 * 24 * 60 * 60).map_err(|e| e.to_string())
+        core_rs::social::get_analytics_overview(&conn, &space_id, now - 30 * 24 * 60 * 60)
+            .map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
-pub fn search_social_posts_cmd(db: State<DbConnection>, query: String, space_id: String) -> Result<Vec<SocialPost>, String> {
+pub fn search_social_posts_cmd(
+    db: State<DbConnection>,
+    query: String,
+    space_id: String,
+) -> Result<Vec<SocialPost>, String> {
     crate::with_db!(db, conn, {
-        core_rs::social::search_social_posts(&conn, &query, &space_id, None).map_err(|e| e.to_string())
+        core_rs::social::search_social_posts(&conn, &query, &space_id, None)
+            .map_err(|e| e.to_string())
     })
 }
 
@@ -147,14 +204,21 @@ pub fn auto_categorize_posts_cmd(db: State<DbConnection>, space_id: String) -> R
 }
 
 #[tauri::command]
-pub fn create_webview_session_cmd(db: State<DbConnection>, account_id: String) -> Result<WebViewSession, String> {
+pub fn create_webview_session_cmd(
+    db: State<DbConnection>,
+    account_id: String,
+) -> Result<WebViewSession, String> {
     crate::with_db!(db, conn, {
-        core_rs::social::create_webview_session(&conn, &account_id, "Mozilla/5.0", &[]).map_err(|e| e.to_string())
+        core_rs::social::create_webview_session(&conn, &account_id, "Mozilla/5.0", &[])
+            .map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
-pub fn get_webview_session_cmd(db: State<DbConnection>, session_id: String) -> Result<WebViewSession, String> {
+pub fn get_webview_session_cmd(
+    db: State<DbConnection>,
+    session_id: String,
+) -> Result<WebViewSession, String> {
     crate::with_db!(db, conn, {
         core_rs::social::get_webview_session(&conn, &session_id)
             .map_err(|e| e.to_string())?
@@ -163,8 +227,13 @@ pub fn get_webview_session_cmd(db: State<DbConnection>, session_id: String) -> R
 }
 
 #[tauri::command]
-pub fn save_session_cookies_cmd(db: State<DbConnection>, session_id: String, cookies: String) -> Result<(), String> {
+pub fn save_session_cookies_cmd(
+    db: State<DbConnection>,
+    session_id: String,
+    cookies: String,
+) -> Result<(), String> {
     crate::with_db!(db, conn, {
-        core_rs::social::save_session_cookies(&conn, &session_id, &cookies, &[]).map_err(|e| e.to_string())
+        core_rs::social::save_session_cookies(&conn, &session_id, &cookies, &[])
+            .map_err(|e| e.to_string())
     })
 }

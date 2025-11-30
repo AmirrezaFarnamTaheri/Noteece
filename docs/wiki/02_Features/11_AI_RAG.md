@@ -85,17 +85,17 @@ Notes are automatically indexed when created or updated. Manual reindexing can b
 
 ```typescript
 // Index a single note
-await invoke("index_note_cmd", {
-  noteId: "note-123",
-  title: "Meeting Notes",
-  content: "...",
+await invoke('index_note_cmd', {
+  noteId: 'note-123',
+  title: 'Meeting Notes',
+  content: '...',
 });
 
 // Reindex all notes in a space
-await invoke("reindex_space_cmd", { spaceId: "work" });
+await invoke('reindex_space_cmd', { spaceId: 'work' });
 
 // Get indexing statistics
-const stats = await invoke("get_rag_stats_cmd");
+const stats = await invoke('get_rag_stats_cmd');
 // { total_notes: 150, total_chunks: 890, avg_chunks_per_note: 5.9 }
 ```
 
@@ -104,10 +104,10 @@ const stats = await invoke("get_rag_stats_cmd");
 Send queries through the chat interface or programmatically:
 
 ```typescript
-const response = await invoke("rag_query_cmd", {
+const response = await invoke('rag_query_cmd', {
   query: {
     question: "What were the key decisions from last week's meeting?",
-    space_id: "work", // Optional: limit to specific space
+    space_id: 'work', // Optional: limit to specific space
     max_context_chunks: 5, // Maximum chunks to retrieve
     min_relevance_score: 0.3, // Minimum score threshold
     include_metadata: true, // Include note metadata
@@ -169,8 +169,8 @@ Noteece supports local LLM inference for privacy-conscious users.
 Beyond Q&A, the RAG infrastructure powers semantic search:
 
 ```typescript
-const results = await invoke("semantic_search_cmd", {
-  query: "productivity techniques for remote work",
+const results = await invoke('semantic_search_cmd', {
+  query: 'productivity techniques for remote work',
   limit: 10,
   space_id: null, // Search all spaces
 });
@@ -189,8 +189,8 @@ const results = await invoke("semantic_search_cmd", {
 For cloud LLM providers, Noteece tracks usage:
 
 ```typescript
-const usage = await invoke("get_ai_usage_cmd", {
-  period: "month",
+const usage = await invoke('get_ai_usage_cmd', {
+  period: 'month',
 });
 
 // {

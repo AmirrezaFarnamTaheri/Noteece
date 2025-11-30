@@ -161,11 +161,11 @@ Unexpected deviations from established patterns.
 ### Get Temporal Correlations
 
 ```typescript
-const correlations = await invoke("get_temporal_correlations_cmd", {
-  spaceId: "work",
-  metric1: "productivity",
-  metric2: "sleep_hours",
-  timeRange: "month",
+const correlations = await invoke('get_temporal_correlations_cmd', {
+  spaceId: 'work',
+  metric1: 'productivity',
+  metric2: 'sleep_hours',
+  timeRange: 'month',
 });
 ```
 
@@ -180,7 +180,7 @@ interface TemporalPattern {
   start_time: number; // Unix timestamp
   end_time: number;
   data_points: CorrelationPoint[];
-  type: "positive" | "negative" | "cyclic" | "anomaly";
+  type: 'positive' | 'negative' | 'cyclic' | 'anomaly';
 }
 
 interface CorrelationPoint {
@@ -198,20 +198,19 @@ interface CorrelationPoint {
 The correlation engine can generate actionable insights:
 
 ```typescript
-const insights = await invoke("get_correlation_insights_cmd", {
-  spaceId: "work",
+const insights = await invoke('get_correlation_insights_cmd', {
+  spaceId: 'work',
   limit: 5,
 });
 
 // Example response:
 [
   {
-    type: "recommendation",
-    title: "Sleep Impact on Productivity",
-    description:
-      "Your productivity increases by 15% on days after 8+ hours of sleep.",
+    type: 'recommendation',
+    title: 'Sleep Impact on Productivity',
+    description: 'Your productivity increases by 15% on days after 8+ hours of sleep.',
     confidence: 0.82,
-    action: "Consider maintaining a consistent 8-hour sleep schedule.",
+    action: 'Consider maintaining a consistent 8-hour sleep schedule.',
   },
 ];
 ```

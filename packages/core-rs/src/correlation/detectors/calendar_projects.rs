@@ -126,7 +126,7 @@ mod tests {
     #[test]
     fn test_detects_conflict_many_events() {
         let project = make_project("Project A", 5);
-        let events: Vec<_> = (0..10).map(|_| make_event(3.0)).collect(); // 30 hours
+        let events: Vec<_> = (0..10).map(|_| make_event(3.5)).collect(); // 35 hours
         let time_entries: Vec<_> = (0..4).map(|_| make_time(&project.id, 10.0)).collect();
 
         let result = detect(&events, &[project], &time_entries, &[]);

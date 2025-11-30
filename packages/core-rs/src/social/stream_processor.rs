@@ -437,7 +437,8 @@ impl StreamProcessor {
     fn extract_twitter_post(&self, snapshot: &[&String]) -> Option<CapturedPost> {
         // Twitter pattern: @handle • time • content • metrics
         for i in (0..snapshot.len().saturating_sub(3)).rev() {
-            let window: Vec<&str> = snapshot[i..i.min(snapshot.len()) + 4]
+            let end = (i + 4).min(snapshot.len());
+            let window: Vec<&str> = snapshot[i..end]
                 .iter()
                 .map(|s| s.as_str())
                 .collect();
@@ -488,7 +489,8 @@ impl StreamProcessor {
     /// Extract an Instagram post
     fn extract_instagram_post(&self, snapshot: &[&String]) -> Option<CapturedPost> {
         for i in (0..snapshot.len().saturating_sub(3)).rev() {
-            let window: Vec<&str> = snapshot[i..i.min(snapshot.len()) + 5]
+            let end = (i + 5).min(snapshot.len());
+            let window: Vec<&str> = snapshot[i..end]
                 .iter()
                 .map(|s| s.as_str())
                 .collect();
@@ -539,7 +541,8 @@ impl StreamProcessor {
     /// Extract a LinkedIn post
     fn extract_linkedin_post(&self, snapshot: &[&String]) -> Option<CapturedPost> {
         for i in (0..snapshot.len().saturating_sub(3)).rev() {
-            let window: Vec<&str> = snapshot[i..i.min(snapshot.len()) + 6]
+            let end = (i + 6).min(snapshot.len());
+            let window: Vec<&str> = snapshot[i..end]
                 .iter()
                 .map(|s| s.as_str())
                 .collect();
@@ -591,7 +594,8 @@ impl StreamProcessor {
     /// Extract a Reddit post
     fn extract_reddit_post(&self, snapshot: &[&String]) -> Option<CapturedPost> {
         for i in (0..snapshot.len().saturating_sub(3)).rev() {
-            let window: Vec<&str> = snapshot[i..i.min(snapshot.len()) + 5]
+            let end = (i + 5).min(snapshot.len());
+            let window: Vec<&str> = snapshot[i..end]
                 .iter()
                 .map(|s| s.as_str())
                 .collect();
@@ -639,7 +643,8 @@ impl StreamProcessor {
     /// Extract a Telegram message
     fn extract_telegram_message(&self, snapshot: &[&String]) -> Option<CapturedPost> {
         for i in (0..snapshot.len().saturating_sub(2)).rev() {
-            let window: Vec<&str> = snapshot[i..i.min(snapshot.len()) + 4]
+            let end = (i + 4).min(snapshot.len());
+            let window: Vec<&str> = snapshot[i..end]
                 .iter()
                 .map(|s| s.as_str())
                 .collect();
@@ -692,7 +697,8 @@ impl StreamProcessor {
     /// Extract a Discord message
     fn extract_discord_message(&self, snapshot: &[&String]) -> Option<CapturedPost> {
         for i in (0..snapshot.len().saturating_sub(2)).rev() {
-            let window: Vec<&str> = snapshot[i..i.min(snapshot.len()) + 4]
+            let end = (i + 4).min(snapshot.len());
+            let window: Vec<&str> = snapshot[i..end]
                 .iter()
                 .map(|s| s.as_str())
                 .collect();
@@ -1051,13 +1057,13 @@ impl StreamProcessor {
     fn parse_metric_number(&self, s: &str) -> u64 {
         let s = s.to_uppercase();
         let multiplier = if s.ends_with('K') {
-            1_000
+            1_000.0
         } else if s.ends_with('M') {
-            1_000_000
+            1_000_000.0
         } else if s.ends_with('B') {
-            1_000_000_000
+            1_000_000_000.0
         } else {
-            1
+            1.0
         };
 
         let num_part: String = s.chars().filter(|c| c.is_ascii_digit()).collect();

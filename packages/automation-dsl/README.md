@@ -23,7 +23,7 @@ pnpm add @noteece/automation-dsl
 ## Quick Start
 
 ```typescript
-import { runAutomation, createMockNoteeceAPI } from "@noteece/automation-dsl";
+import { runAutomation, createMockNoteeceAPI } from '@noteece/automation-dsl';
 
 const script = `
 TRIGGER ON NoteCreated
@@ -180,19 +180,15 @@ The DSL provides specific error types:
 - `AutomationError`: Base error class
 
 ```typescript
-import {
-  runAutomation,
-  ParseError,
-  RuntimeError,
-} from "@noteece/automation-dsl";
+import { runAutomation, ParseError, RuntimeError } from '@noteece/automation-dsl';
 
 try {
   await runAutomation(script, api);
 } catch (error) {
   if (error instanceof ParseError) {
-    console.error("Syntax error:", error.message);
+    console.error('Syntax error:', error.message);
   } else if (error instanceof RuntimeError) {
-    console.error("Execution error:", error.message);
+    console.error('Execution error:', error.message);
   }
 }
 ```

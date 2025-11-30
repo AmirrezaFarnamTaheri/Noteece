@@ -14,7 +14,7 @@ import {
   ExpressionNode,
   NoteeceAPI,
   RuntimeError,
-} from "./types";
+} from './types';
 
 /**
  * Runtime executor for automation scripts
@@ -27,11 +27,11 @@ export class AutomationRuntimeImpl implements AutomationRuntime {
     this.context = {
       variables: new Map(),
       functions: new Map([
-        ["concat", (...args) => args.map(String).join("")],
-        ["upper", (str) => String(str).toUpperCase()],
-        ["lower", (str) => String(str).toLowerCase()],
-        ["now", () => new Date().toISOString()],
-        ["date", (str) => new Date(String(str)).toISOString()],
+        ['concat', (...args) => args.map(String).join('')],
+        ['upper', (str) => String(str).toUpperCase()],
+        ['lower', (str) => String(str).toLowerCase()],
+        ['now', () => new Date().toISOString()],
+        ['date', (str) => new Date(String(str)).toISOString()],
       ]),
       noteece: noteeceAPI,
     };
@@ -60,10 +60,10 @@ export class AutomationRuntimeImpl implements AutomationRuntime {
 
   async evaluateExpression(expr: ExpressionNode): Promise<AutomationValue> {
     switch (expr.type) {
-      case "Literal":
+      case 'Literal':
         return expr.value;
 
-      case "Identifier": {
+      case 'Identifier': {
         const value = this.context.variables.get(expr.name);
         if (value === undefined) {
           throw new RuntimeError(`Undefined variable: ${expr.name}`);
@@ -71,96 +71,83 @@ export class AutomationRuntimeImpl implements AutomationRuntime {
         return value;
       }
 
-      case "BinaryExpression": {
+      case 'BinaryExpression': {
         const left = await this.evaluateExpression(expr.left);
         const right = await this.evaluateExpression(expr.right);
         return this.evaluateBinaryExpression(expr.operator, left, right);
       }
 
-      case "FunctionCall": {
+      case 'FunctionCall': {
         const func = this.context.functions.get(expr.name);
         if (!func) {
           throw new RuntimeError(`Undefined function: ${expr.name}`);
         }
 
-        const args = await Promise.all(
-          expr.arguments.map((arg) => this.evaluateExpression(arg)),
-        );
+        const args = await Promise.all(expr.arguments.map((arg) => this.evaluateExpression(arg)));
 
         return await func(...args);
       }
 
       default:
-        throw new RuntimeError(
-          `Unknown expression type: ${(expr as { type: string }).type}`,
-        );
+        throw new RuntimeError(`Unknown expression type: ${(expr as { type: string }).type}`);
     }
   }
 
-  private evaluateBinaryExpression(
-    operator: string,
-    left: AutomationValue,
-    right: AutomationValue,
-  ): AutomationValue {
-    const isNumber = (v: unknown): v is number =>
-      typeof v === "number" && Number.isFinite(v);
+  private evaluateBinaryExpression(operator: string, left: AutomationValue, right: AutomationValue): AutomationValue {
+    const isNumber = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
     switch (operator) {
-      case "+":
-      case "-":
-      case "*":
-      case "/":
-      case "%": {
+      case '+':
+      case '-':
+      case '*':
+      case '/':
+      case '%': {
         if (!isNumber(left) || !isNumber(right)) {
-          throw new RuntimeError(
-            `Operator '${operator}' requires numeric operands`,
-          );
+          throw new RuntimeError(`Operator '${operator}' requires numeric operands`);
         }
-        if ((operator === "/" || operator === "%") && right === 0) {
-          throw new RuntimeError("Division by zero");
+        if ((operator === '/' || operator === '%') && right === 0) {
+          throw new RuntimeError('Division by zero');
         }
         switch (operator) {
-          case "+":
+          case '+':
             return left + right;
-          case "-":
+          case '-':
             return left - right;
-          case "*":
+          case '*':
             return left * right;
-          case "/":
+          case '/':
             return left / right;
-          case "%":
+          case '%':
             return left % right;
         }
         break;
       }
-      case "==":
+      case '==':
         return left === right;
-      case "!=":
+      case '!=':
         return left !== right;
-      case "<":
-      case ">":
-      case "<=":
-      case ">=": {
+      case '<':
+      case '>':
+      case '<=':
+      case '>=': {
         if (!isNumber(left) || !isNumber(right)) {
-          throw new RuntimeError(
-            `Operator '${operator}' requires numeric operands`,
-          );
+          throw new RuntimeError(`Operator '${operator}' requires numeric operands`);
         }
         switch (operator) {
-          case "<":
+          case '<':
             return left < right;
-          case ">":
+          case '>':
             return left > right;
-          case "<=":
+          case '<=':
             return left <= right;
-          case ">=":
+          case '>=':
             return left >= right;
         }
         break;
       }
-      case "&&":
+      case '&&':
         return Boolean(left) && Boolean(right);
-      case "||":
+      case '||':
         return Boolean(left) || Boolean(right);
       default:
         throw new RuntimeError(`Unknown operator: ${operator}`);
@@ -175,7 +162,7 @@ export class AutomationRuntimeImpl implements AutomationRuntime {
     }
 
     switch (action.action) {
-      case "CreateNote":
+      case 'CreateNote':
         await this.context.noteece.createNote(
           String(params.title),
           String(params.content),
@@ -183,54 +170,42 @@ export class AutomationRuntimeImpl implements AutomationRuntime {
         );
         break;
 
-      case "UpdateNote":
-        await this.context.noteece.updateNote(
-          String(params.id),
-          params.updates as Record<string, unknown>,
-        );
+      case 'UpdateNote':
+        await this.context.noteece.updateNote(String(params.id), params.updates as Record<string, unknown>);
         break;
 
-      case "DeleteNote":
+      case 'DeleteNote':
         await this.context.noteece.deleteNote(String(params.id));
         break;
 
-      case "CreateTask":
+      case 'CreateTask':
         await this.context.noteece.createTask(
           String(params.title),
           params.dueDate ? new Date(String(params.dueDate)) : undefined,
         );
         break;
 
-      case "CompleteTask":
+      case 'CompleteTask':
         await this.context.noteece.completeTask(String(params.id));
         break;
 
-      case "AddTag":
-        await this.context.noteece.addTag(
-          String(params.noteId),
-          String(params.tag),
-        );
+      case 'AddTag':
+        await this.context.noteece.addTag(String(params.noteId), String(params.tag));
         break;
 
-      case "RemoveTag":
-        await this.context.noteece.removeTag(
-          String(params.noteId),
-          String(params.tag),
-        );
+      case 'RemoveTag':
+        await this.context.noteece.removeTag(String(params.noteId), String(params.tag));
         break;
 
-      case "SendNotification":
-        await this.context.noteece.sendNotification(
-          String(params.title),
-          String(params.body),
-        );
+      case 'SendNotification':
+        await this.context.noteece.sendNotification(String(params.title), String(params.body));
         break;
 
-      case "Wait":
+      case 'Wait':
         await new Promise((resolve) => setTimeout(resolve, Number(params.ms)));
         break;
 
-      case "Log":
+      case 'Log':
         this.context.noteece.log(String(params.message));
         break;
 
@@ -302,7 +277,7 @@ export function createMockNoteeceAPI(): NoteeceAPI {
       console.log(`[Mock] Remove tag: ${tag} from ${noteId}`);
     },
     async getTags() {
-      console.log("[Mock] Get tags");
+      console.log('[Mock] Get tags');
       return [];
     },
     async sendNotification(title, body) {

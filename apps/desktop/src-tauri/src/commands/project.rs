@@ -11,28 +11,40 @@ pub fn get_project_cmd(db: State<DbConnection>, id: String) -> Result<Option<Pro
 }
 
 #[tauri::command]
-pub fn get_projects_in_space_cmd(db: State<DbConnection>, space_id: String) -> Result<Vec<Project>, String> {
+pub fn get_projects_in_space_cmd(
+    db: State<DbConnection>,
+    space_id: String,
+) -> Result<Vec<Project>, String> {
     crate::with_db!(db, conn, {
         core_rs::project::get_projects_in_space(&conn, &space_id).map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
-pub fn get_project_milestones_cmd(db: State<DbConnection>, project_id: String) -> Result<Vec<ProjectMilestone>, String> {
+pub fn get_project_milestones_cmd(
+    db: State<DbConnection>,
+    project_id: String,
+) -> Result<Vec<ProjectMilestone>, String> {
     crate::with_db!(db, conn, {
         core_rs::project::get_project_milestones(&conn, &project_id).map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
-pub fn get_project_risks_cmd(db: State<DbConnection>, project_id: String) -> Result<Vec<ProjectRisk>, String> {
+pub fn get_project_risks_cmd(
+    db: State<DbConnection>,
+    project_id: String,
+) -> Result<Vec<ProjectRisk>, String> {
     crate::with_db!(db, conn, {
         core_rs::project::get_project_risks(&conn, &project_id).map_err(|e| e.to_string())
     })
 }
 
 #[tauri::command]
-pub fn get_project_updates_cmd(db: State<DbConnection>, project_id: String) -> Result<Vec<ProjectUpdate>, String> {
+pub fn get_project_updates_cmd(
+    db: State<DbConnection>,
+    project_id: String,
+) -> Result<Vec<ProjectUpdate>, String> {
     crate::with_db!(db, conn, {
         core_rs::project::get_project_updates(&conn, &project_id).map_err(|e| e.to_string())
     })
@@ -47,8 +59,16 @@ pub fn create_project_risk_cmd(
     impact: String,
 ) -> Result<ProjectRisk, String> {
     crate::with_db!(db, conn, {
-        core_rs::project::create_project_risk(&conn, &project_id, &description, &likelihood, &impact, "", None)
-            .map_err(|e| e.to_string())
+        core_rs::project::create_project_risk(
+            &conn,
+            &project_id,
+            &description,
+            &likelihood,
+            &impact,
+            "",
+            None,
+        )
+        .map_err(|e| e.to_string())
     })
 }
 

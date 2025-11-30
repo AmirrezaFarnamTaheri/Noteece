@@ -732,14 +732,14 @@ WorkManager.getInstance(context).enqueue(syncRequest)
 
 ```typescript
 // React Native Push Notification
-import PushNotification from "react-native-push-notification";
+import PushNotification from 'react-native-push-notification';
 
 PushNotification.localNotification({
-  channelId: "noteece-sync",
-  title: "Sync Complete",
-  message: "42 new posts from 3 platforms",
+  channelId: 'noteece-sync',
+  title: 'Sync Complete',
+  message: '42 new posts from 3 platforms',
   playSound: true,
-  soundName: "default",
+  soundName: 'default',
 });
 ```
 
@@ -941,7 +941,7 @@ const pinnedCert = `
 -----END CERTIFICATE-----
 `;
 
-axios.get("https://192.168.1.100:8080/api/v1/sync/status", {
+axios.get('https://192.168.1.100:8080/api/v1/sync/status', {
   httpsAgent: new https.Agent({
     ca: pinnedCert,
     rejectUnauthorized: true,

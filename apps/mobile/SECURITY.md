@@ -21,11 +21,11 @@ This document details the security architecture, threat model, and security fixe
 ```typescript
 // Database version tracking
 const CURRENT_DB_VERSION = 2;
-const DB_VERSION_KEY = "database_version";
+const DB_VERSION_KEY = 'database_version';
 
 // Safe column addition with existence check
-if (!columnNames.includes("space_id")) {
-  await db.execAsync("ALTER TABLE calendar_event ADD COLUMN space_id TEXT");
+if (!columnNames.includes('space_id')) {
+  await db.execAsync('ALTER TABLE calendar_event ADD COLUMN space_id TEXT');
 }
 ```
 
@@ -50,15 +50,15 @@ if (!columnNames.includes("space_id")) {
 ```typescript
 // Allowed domains for music streaming
 const ALLOWED_MUSIC_DOMAINS = [
-  "incompetech.com",
-  "bensound.com",
-  "freemusicarchive.org",
+  'incompetech.com',
+  'bensound.com',
+  'freemusicarchive.org',
   // ...
 ];
 
 // Validate before playing
 if (!isValidMusicUrl(track.url)) {
-  Alert.alert("Security Error", "Track from untrusted source blocked");
+  Alert.alert('Security Error', 'Track from untrusted source blocked');
   return;
 }
 ```
