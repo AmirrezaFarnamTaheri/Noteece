@@ -98,9 +98,13 @@ pub fn unlock_vault_cmd(db: State<DbConnection>, path: &str, password: &str) -> 
         is_active: true,
     };
 
-    *p2p_sync_guard = Some(Arc::new(
-        P2pSync::new(device_info).map_err(|e| e.to_string())?,
-    ));
+    let p2p = P2pSync::new(device_info).map_err(|e| e.to_string())?;
+    // Advertise this device on the local network via MDNS
+    if let Err(e) = p2p.discovery.register(&device_id, "Noteece Desktop", AppConfig::sync_port()) {
+        log::error!("[p2p] Discovery registration failed: {}", e);
+    }
+
+    *p2p_sync_guard = Some(Arc::new(p2p));
 
     Ok(())
 }

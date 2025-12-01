@@ -37,9 +37,15 @@ pub extern "C" fn rust_discover_devices() -> *mut c_char {
 }
 
 fn discover_devices_impl() -> Result<Vec<DiscoveredDevice>, String> {
-    // This would use mDNS discovery in a full implementation
-    // For now, return empty list
-    Ok(vec![])
+    match crate::sync::discovery::DiscoveryService::new() {
+        Ok(service) => service
+            .discover(std::time::Duration::from_secs(3))
+            .map_err(|e| e.to_string()),
+        Err(e) => {
+            log::error!("[FFI] Failed to init discovery: {}", e);
+            Ok(vec![])
+        }
+    }
 }
 
 /// Register a device for sync
@@ -51,7 +57,7 @@ pub unsafe extern "C" fn rust_register_device(device_json: *const c_char) {
     if device_json.is_null() {
         return;
     }
-    
+
     let c_str = CStr::from_ptr(device_json);
     if let Ok(json_str) = c_str.to_str() {
         if let Err(e) = register_device_impl(json_str) {
@@ -61,12 +67,12 @@ pub unsafe extern "C" fn rust_register_device(device_json: *const c_char) {
 }
 
 fn register_device_impl(json_str: &str) -> Result<(), String> {
-    let _device: DiscoveredDevice = serde_json::from_str(json_str)
+    let device: DiscoveredDevice = serde_json::from_str(json_str)
         .map_err(|e| format!("Invalid device JSON: {}", e))?;
-    
+
     // Device registration is handled by the sync_agent module
     // This is a thin FFI wrapper - actual storage happens in register_device
-    log::info!("[FFI] Device registered: {}", device.device_id);
+    log::info!("[FFI] Device registered: {}", device.id);
     Ok(())
 }
 
@@ -173,8 +179,10 @@ pub unsafe extern "C" fn rust_start_sync(device_id: *const c_char) {
 
 fn start_sync_impl(device_id: &str) -> Result<(), String> {
     log::info!("[FFI] Starting sync with device {}", device_id);
-    // Sync is triggered asynchronously via the sync_agent module
-    // The actual sync logic runs on a background thread with progress callbacks
+    // Forward to sync agent or global P2pSync
+    // Since FFI doesn't easily access the Tauri state, we check if a global agent is available
+    // or log an error.
+    log::warn!("[FFI] rust_start_sync called but global agent access not implemented in FFI.");
     Ok(())
 }
 
@@ -228,12 +236,12 @@ fn get_sync_progress_impl(device_id: &str) -> Result<SyncProgress, String> {
     // Default progress state - updated by sync engine during active sync
     Ok(SyncProgress {
         device_id: device_id.to_string(),
-        phase: "idle".to_string(),
+        phase: "not_implemented".to_string(),
         progress: 0.0,
         entities_pushed: 0,
         entities_pulled: 0,
         conflicts: 0,
-        error_message: None,
+        error_message: Some("Sync progress tracking not yet bridged to FFI".to_string()),
     })
 }
 
