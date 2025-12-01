@@ -10,7 +10,7 @@
  */
 
 import { NativeModules, Platform } from 'react-native';
-import { SyncClient, SyncManifest, SyncDelta, ChangeEntry } from './sync-client';
+import { SyncClient } from './sync-client';
 
 // JSI Module interface
 interface NoteeceCoreModule {
@@ -33,7 +33,7 @@ const NoteeceCoreJSI: NoteeceCoreModule | null = (() => {
         console.log('[SyncBridge] JSI module available');
         return module as NoteeceCoreModule;
       }
-    } catch (e) {
+    } catch {
       console.log('[SyncBridge] JSI module not available, using TypeScript fallback');
     }
   }
@@ -49,6 +49,11 @@ export interface DiscoveredDevice {
   address: string;
   port: number;
   protocol?: string;
+  // Stub properties for compatibility with UI components
+  device_id?: string;
+  device_name?: string;
+  device_type?: string;
+  ip_address?: string;
 }
 
 /**
@@ -248,7 +253,7 @@ export class UnifiedSyncBridge {
           conflicts: parsed.conflicts || 0,
           errorMessage: parsed.error_message,
         };
-      } catch (e) {
+      } catch {
         return this.defaultProgress(deviceId);
       }
     }

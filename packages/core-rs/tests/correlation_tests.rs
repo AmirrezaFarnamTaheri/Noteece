@@ -1,7 +1,6 @@
 use core_rs::correlation::types::*;
 use core_rs::correlation::*;
 use rusqlite::Connection;
-use tempfile::tempdir;
 use ulid::Ulid;
 
 fn setup_db() -> Connection {
@@ -67,9 +66,6 @@ fn test_gather_context() {
     let context = engine
         .gather_context(&conn, space_id)
         .expect("Failed to gather context");
-
-    // Context gathering should succeed even with empty DB
-    let context = engine.gather_context(&conn, space_id).unwrap();
 
     assert!(context.health_data.is_empty());
     assert!(context.time_entries.is_empty());
@@ -151,12 +147,7 @@ fn test_full_flow() {
     conn.execute(
         "INSERT INTO health_metric (id, space_id, metric_type, value, recorded_at, created_at)
          VALUES (?, ?, 'mood', 3.0, ?, ?)",
-        rusqlite::params![
-            Ulid::new().to_string(),
-            space_id.to_string(),
-            now,
-            now
-        ],
+        rusqlite::params![Ulid::new().to_string(), space_id.to_string(), now, now],
     )
     .unwrap();
 
@@ -200,7 +191,6 @@ fn test_full_flow() {
     }
 
     let engine = CorrelationEngine::new();
-    let context = engine.gather_context(&conn, space_id).unwrap();
 
     // 1. Gather
     let context = engine.gather_context(&conn, space_id).unwrap();

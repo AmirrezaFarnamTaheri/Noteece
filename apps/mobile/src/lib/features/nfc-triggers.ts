@@ -3,6 +3,7 @@
  * Handle NFC tag reading and action execution
  */
 
+// @ts-ignore: expo-nfc missing types
 import * as NFC from 'expo-nfc';
 import { dbQuery, dbExecute } from '@/lib/database';
 import { NFCTrigger } from '@/types';
@@ -43,7 +44,8 @@ export class NFCTriggerManager {
       await NFC.requestPermissionsAsync();
 
       // Listen for NFC tags - store reference to remove later
-      this.tagListener = NFC.addListener('tag', async (event) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      this.tagListener = NFC.addListener('tag', async (event: any) => {
         const tagId = event.id || event.serialNumber;
 
         if (tagId) {

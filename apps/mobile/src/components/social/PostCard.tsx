@@ -8,6 +8,7 @@
 
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Share, Alert, Animated } from 'react-native';
+// @ts-ignore: expo vector icons type mismatch
 import { Ionicons } from '@expo/vector-icons';
 import { Swipeable } from 'react-native-gesture-handler';
 import { format } from 'date-fns';

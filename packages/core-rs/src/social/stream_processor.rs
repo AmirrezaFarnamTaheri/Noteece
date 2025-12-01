@@ -441,10 +441,7 @@ impl StreamProcessor {
         // Twitter pattern: @handle • time • content • metrics
         for i in (0..snapshot.len().saturating_sub(3)).rev() {
             let end = (i + 4).min(snapshot.len());
-            let window: Vec<&str> = snapshot[i..end]
-                .iter()
-                .map(|s| s.as_str())
-                .collect();
+            let window: Vec<&str> = snapshot[i..end].iter().map(|s| s.as_str()).collect();
 
             let combined = window.join("\n");
 
@@ -493,10 +490,7 @@ impl StreamProcessor {
     fn extract_instagram_post(&self, snapshot: &[&String]) -> Option<CapturedPost> {
         for i in (0..snapshot.len().saturating_sub(3)).rev() {
             let end = (i + 5).min(snapshot.len());
-            let window: Vec<&str> = snapshot[i..end]
-                .iter()
-                .map(|s| s.as_str())
-                .collect();
+            let window: Vec<&str> = snapshot[i..end].iter().map(|s| s.as_str()).collect();
 
             let combined = window.join("\n");
 
@@ -545,10 +539,7 @@ impl StreamProcessor {
     fn extract_linkedin_post(&self, snapshot: &[&String]) -> Option<CapturedPost> {
         for i in (0..snapshot.len().saturating_sub(3)).rev() {
             let end = (i + 6).min(snapshot.len());
-            let window: Vec<&str> = snapshot[i..end]
-                .iter()
-                .map(|s| s.as_str())
-                .collect();
+            let window: Vec<&str> = snapshot[i..end].iter().map(|s| s.as_str()).collect();
 
             let combined = window.join("\n");
 
@@ -598,10 +589,7 @@ impl StreamProcessor {
     fn extract_reddit_post(&self, snapshot: &[&String]) -> Option<CapturedPost> {
         for i in (0..snapshot.len().saturating_sub(3)).rev() {
             let end = (i + 5).min(snapshot.len());
-            let window: Vec<&str> = snapshot[i..end]
-                .iter()
-                .map(|s| s.as_str())
-                .collect();
+            let window: Vec<&str> = snapshot[i..end].iter().map(|s| s.as_str()).collect();
 
             let combined = window.join("\n");
 
@@ -647,10 +635,7 @@ impl StreamProcessor {
     fn extract_telegram_message(&self, snapshot: &[&String]) -> Option<CapturedPost> {
         for i in (0..snapshot.len().saturating_sub(2)).rev() {
             let end = (i + 4).min(snapshot.len());
-            let window: Vec<&str> = snapshot[i..end]
-                .iter()
-                .map(|s| s.as_str())
-                .collect();
+            let window: Vec<&str> = snapshot[i..end].iter().map(|s| s.as_str()).collect();
 
             let combined = window.join("\n");
 
@@ -701,10 +686,7 @@ impl StreamProcessor {
     fn extract_discord_message(&self, snapshot: &[&String]) -> Option<CapturedPost> {
         for i in (0..snapshot.len().saturating_sub(2)).rev() {
             let end = (i + 4).min(snapshot.len());
-            let window: Vec<&str> = snapshot[i..end]
-                .iter()
-                .map(|s| s.as_str())
-                .collect();
+            let window: Vec<&str> = snapshot[i..end].iter().map(|s| s.as_str()).collect();
 
             let combined = window.join("\n");
 
@@ -997,7 +979,9 @@ impl StreamProcessor {
 
                 // Platform specific patch: if detected platform is Twitter but no handle found via generic regex, try Twitter regex again
                 if handle.is_none() && platform == DetectedPlatform::Twitter {
-                     handle = TWITTER_HANDLE.find(&combined).map(|m| m.as_str().to_string());
+                    handle = TWITTER_HANDLE
+                        .find(&combined)
+                        .map(|m| m.as_str().to_string());
                 }
 
                 let content = if line3.len() > line2.len() {
@@ -1074,7 +1058,10 @@ impl StreamProcessor {
             1.0
         };
 
-        let num_part: String = s.chars().filter(|c| c.is_ascii_digit() || *c == '.').collect();
+        let num_part: String = s
+            .chars()
+            .filter(|c| c.is_ascii_digit() || *c == '.')
+            .collect();
         (num_part.parse::<f64>().unwrap_or(0.0) * multiplier) as u64
     }
 }

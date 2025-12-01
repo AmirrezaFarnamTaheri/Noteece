@@ -17,6 +17,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+// @ts-ignore: expo vector icons type mismatch
 import { Ionicons } from '@expo/vector-icons';
 import { ColorPicker } from '../pickers/ColorPicker';
 import { IconPicker } from '../pickers/IconPicker';

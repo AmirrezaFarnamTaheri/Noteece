@@ -208,7 +208,7 @@ export function ChatWithVault({ spaceId, onSourceClick }: ChatWithVaultProps) {
                   Ask anything about your notes and documents.
                 </Text>
                 <Text c="dimmed" size="xs" mt="xs">
-                  Try: "What are my main project goals?" or "Summarize my recent meeting notes"
+                  Try: &quot;What are my main project goals?&quot; or &quot;Summarize my recent meeting notes&quot;
                 </Text>
               </Box>
             ) : (

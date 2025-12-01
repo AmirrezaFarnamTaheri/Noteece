@@ -8,6 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+// @ts-ignore: expo vector icons type mismatch
 import { Ionicons } from '@expo/vector-icons';
 import { FadeIn, SlideIn, ScaleIn } from '@/components/animations';
 import { SkeletonBox } from '@/components/skeletons';

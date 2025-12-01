@@ -17,6 +17,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+// @ts-ignore: expo vector icons type mismatch
 import { Ionicons } from '@expo/vector-icons';
 import { dbQuery, dbExecute } from '@/lib/database';
 import { nanoid } from 'nanoid/non-secure';

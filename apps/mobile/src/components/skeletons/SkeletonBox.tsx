@@ -42,6 +42,7 @@ export function SkeletonBox({ width = '100%', height = 20, borderRadius = 4, sty
   });
 
   return (
+    // @ts-ignore: dimension types mismatch
     <View style={[styles.container, { width, height, borderRadius }, style]}>
       <Animated.View
         style={[

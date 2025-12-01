@@ -132,7 +132,12 @@ class HapticManager {
   async rigid() {
     if (!this.enabled) return;
     try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
+      // Use Heavy as fallback if Rigid is not available in type definition
+      const style =
+        'Rigid' in Haptics.ImpactFeedbackStyle
+          ? (Haptics.ImpactFeedbackStyle as any).Rigid
+          : Haptics.ImpactFeedbackStyle.Heavy;
+      await Haptics.impactAsync(style);
     } catch {
       // Silently fail
     }
@@ -145,7 +150,12 @@ class HapticManager {
   async soft() {
     if (!this.enabled) return;
     try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+      // Use Light as fallback if Soft is not available in type definition
+      const style =
+        'Soft' in Haptics.ImpactFeedbackStyle
+          ? (Haptics.ImpactFeedbackStyle as any).Soft
+          : Haptics.ImpactFeedbackStyle.Light;
+      await Haptics.impactAsync(style);
     } catch {
       // Silently fail
     }

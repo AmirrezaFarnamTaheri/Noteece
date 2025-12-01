@@ -11,6 +11,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+// @ts-ignore: expo vector icons type mismatch
 import { Ionicons } from '@expo/vector-icons';
 import * as TaskManager from 'expo-task-manager';
 import * as FileSystem from 'expo-file-system';

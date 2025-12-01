@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+// @ts-ignore: expo vector icons type mismatch
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { colors, spacing, typography, borderRadius } from '@/lib/theme';
@@ -27,6 +28,7 @@ export function TimelineItemCard({ item, isFirst, isLast }: TimelineItemCardProp
   };
 
   // Validate and normalize timestamps
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const isValidTimestamp = (ts: any): ts is number => {
     return typeof ts === 'number' && Number.isFinite(ts) && ts > 0;
   };

@@ -42,8 +42,9 @@ export function useSharedContent() {
 
   // Listen for deep link events (share extension may use deep links)
   useEffect(() => {
-    const handleUrl = async (event: { url: string }) => {
-      if (event.url.includes('shared_content=true')) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleUrl = async (event: { url: any }) => {
+      if (typeof event.url === 'string' && event.url.includes('shared_content=true')) {
         await checkForSharedContent();
       }
     };

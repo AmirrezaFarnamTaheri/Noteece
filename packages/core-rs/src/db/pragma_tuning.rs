@@ -390,7 +390,10 @@ mod tests {
 
         // If it fails, print error but don't panic the test if it's environment-related
         if let Err(e) = &config {
-            println!("Skipping test_get_current due to environment limitations: {:?}", e);
+            println!(
+                "Skipping test_get_current due to environment limitations: {:?}",
+                e
+            );
             return;
         }
 

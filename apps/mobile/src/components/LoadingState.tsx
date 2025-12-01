@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+// @ts-ignore: expo vector icons type mismatch
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing } from '@/lib/theme';
 

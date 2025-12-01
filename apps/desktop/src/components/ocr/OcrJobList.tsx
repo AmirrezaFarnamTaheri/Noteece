@@ -22,10 +22,6 @@ export const OcrJobList: React.FC<OcrJobListProps> = ({ jobs, onView, onRetry, o
     );
   }
 
-  const formatDate = (timestamp: number): string => {
-    return new Date(timestamp * 1000).toLocaleString();
-  };
-
   const rows = jobs.map((job) => (
     <Table.Tr key={job.id}>
       <Table.Td>
@@ -94,4 +90,8 @@ export const OcrJobList: React.FC<OcrJobListProps> = ({ jobs, onView, onRetry, o
       </Table>
     </ScrollArea>
   );
+};
+
+const formatDate = (timestamp: number): string => {
+  return new Date(timestamp * 1000).toLocaleString();
 };

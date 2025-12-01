@@ -88,7 +88,7 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
           endTime: eventRow.end_time,
           title: eventRow.title,
           subtitle: eventRow.location,
-          color: eventRow.color || colors.calendar,
+          color: eventRow.color || colors.primary,
           data: {
             id: eventRow.id,
             title: eventRow.title,
@@ -97,7 +97,7 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
             startTime: eventRow.start_time,
             endTime: eventRow.end_time,
             source: eventRow.source || 'internal',
-            color: eventRow.color || colors.calendar,
+            color: eventRow.color || colors.primary,
           } as CalendarEvent,
         });
       });
@@ -110,7 +110,7 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
           time: taskRow.due_at || todayStart,
           title: taskRow.title,
           subtitle: taskRow.description,
-          color: colors.task,
+          color: colors.primary,
           data: {
             id: taskRow.id,
             spaceId: taskRow.space_id,
