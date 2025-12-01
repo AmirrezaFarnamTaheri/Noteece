@@ -29,6 +29,14 @@ _Location: `apps/desktop/src-tauri/src/main.rs:30-49`_
 
 _Location: `packages/core-rs/src/crypto.rs`_
 
+#### Authentication Validation
+
+- **Password Strength**: Minimum 8 characters
+- **Hashing**: Argon2id for password storage
+- **Session**: Cryptographically secure 32-byte tokens (256-bit entropy)
+
+_Location: `packages/core-rs/src/auth.rs`_
+
 #### Sync Agent Encryption
 
 - **Re-encryption**: All incoming sync deltas are validated and re-encrypted with the local DEK before storage
@@ -703,7 +711,7 @@ To ensure the security improvements documented above are robust and maintainable
 
 1. **getCurrentUserId Helper** (2 tests):
    - system_user placeholder usage
-   - Authentication TODO validation
+   - Authentication validation
 
 2. **Permission Revocation** (3 tests):
    - Empty custom permissions array handling

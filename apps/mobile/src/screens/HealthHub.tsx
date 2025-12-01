@@ -15,6 +15,7 @@ import { SkeletonBox } from '@/components/skeletons';
 import { haptics } from '@/lib/haptics';
 import { dbQuery, dbExecute } from '@/lib/database';
 import { nanoid } from 'nanoid/non-secure';
+import { useCurrentSpace } from '../store/app-context';
 import type { HealthStats } from '../types/health';
 
 const { width } = Dimensions.get('window');
@@ -80,14 +81,8 @@ async function loadHealthDataFromDB(): Promise<HealthStats | null> {
   }
 }
 
-async function seedHealthData() {
+async function seedHealthData(spaceId: string) {
   const now = Date.now();
-  // Ensure we use the active space from a store if available,
-  // but for seeding purposes "default" is acceptable if no user context is passed.
-  // Ideally this should be: const spaceId = useStore.getState().activeSpaceId || "default";
-  // But since we are outside a component, we'll use "default" for the initial seed
-  // which can be migrated later.
-  const spaceId = 'default';
 
   // Generate last 7 days of data
   for (let i = 0; i < 7; i++) {
@@ -139,10 +134,11 @@ export function HealthHub() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedView, setSelectedView] = useState<'today' | 'week' | 'month'>('today');
+  const spaceId = useCurrentSpace();
 
   useEffect(() => {
     loadHealthData();
-  }, []);
+  }, [spaceId]);
 
   const loadHealthData = async () => {
     try {
@@ -154,7 +150,7 @@ export function HealthHub() {
         setStats(dbStats);
       } else {
         // If no data, seed some initial data so the UI isn't empty
-        await seedHealthData();
+        await seedHealthData(spaceId);
         const seededStats = await loadHealthDataFromDB();
         setStats(seededStats);
       }
