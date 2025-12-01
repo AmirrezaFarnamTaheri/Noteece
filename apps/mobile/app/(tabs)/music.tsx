@@ -505,7 +505,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   trackCardActive: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.backgroundElevated,
     borderColor: colors.primary,
   },
   trackInfo: {

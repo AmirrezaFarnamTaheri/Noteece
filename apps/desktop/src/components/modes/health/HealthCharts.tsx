@@ -17,7 +17,7 @@ import {
   Area,
 } from 'recharts';
 import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react';
-import { HealthMetric, METRIC_TYPES } from './HealthMetricsPanel';
+import { HealthMetric, METRIC_TYPES } from '../../health/types';
 
 interface HealthChartsProps {
   metrics: HealthMetric[];
@@ -37,14 +37,25 @@ export const HealthCharts: React.FC<HealthChartsProps> = ({
   // Filter and prepare chart data
   const chartData = useMemo(() => {
     const now = Date.now();
-    const rangeMs = {
-      '7d': 7 * 24 * 60 * 60 * 1000,
-      '30d': 30 * 24 * 60 * 60 * 1000,
-      '90d': 90 * 24 * 60 * 60 * 1000,
-      '365d': 365 * 24 * 60 * 60 * 1000,
-    }[timeRange];
+    let durationMs = 30 * 24 * 60 * 60 * 1000;
 
-    const cutoff = now - rangeMs;
+    // Use switch instead of object lookup to avoid injection sink
+    switch (timeRange) {
+      case '7d':
+        durationMs = 7 * 24 * 60 * 60 * 1000;
+        break;
+      case '30d':
+        durationMs = 30 * 24 * 60 * 60 * 1000;
+        break;
+      case '90d':
+        durationMs = 90 * 24 * 60 * 60 * 1000;
+        break;
+      case '365d':
+        durationMs = 365 * 24 * 60 * 60 * 1000;
+        break;
+    }
+
+    const cutoff = now - durationMs;
 
     return metrics
       .filter((m) => m.metric_type === selectedType && m.recorded_at * 1000 >= cutoff)

@@ -4,7 +4,7 @@ import { SyncClient, SyncStatus } from '../lib/sync/sync-client';
 import { DiscoveredDevice } from '../lib/sync/sync-bridge';
 
 const SyncManager: React.FC = () => {
-  const [syncClient] = useState(() => new SyncClient());
+  const [syncClient] = useState(() => new SyncClient('mobile-device-id'));
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
     status: 'idle',
     message: 'Ready to sync',
@@ -24,7 +24,7 @@ const SyncManager: React.FC = () => {
     try {
       setIsScanning(true);
       const devices = await syncClient.discoverDevices();
-      setDiscoveredDevices(devices.map(d => ({...d, protocol: 'typescript'})));
+      setDiscoveredDevices(devices.map((d) => ({ ...d, protocol: 'typescript' })));
     } catch (error) {
       Alert.alert('Discovery Error', error instanceof Error ? error.message : 'Unknown error');
     } finally {
@@ -41,7 +41,12 @@ const SyncManager: React.FC = () => {
   const initiateSync = async (deviceId: string) => {
     try {
       setSelectedDevice(deviceId);
-      await syncClient.initiateSync(deviceId, ['posts', 'accounts']);
+      const device = discoveredDevices.find((d) => d.device_id === deviceId);
+      if (device) {
+        await syncClient.initiateSync(deviceId, device.ip_address, device.port);
+      } else {
+        throw new Error('Device not found');
+      }
     } catch (error) {
       Alert.alert('Sync Error', error instanceof Error ? error.message : 'Sync failed');
     }

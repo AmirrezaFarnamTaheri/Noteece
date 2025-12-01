@@ -68,15 +68,29 @@ const formatDate = (timestamp: number): string => {
 };
 
 const getMetricColor = (type: string): string => {
-  const colors: Record<string, string> = {
-    weight: 'blue',
-    blood_pressure: 'red',
-    heart_rate: 'pink',
-    steps: 'green',
-    sleep_hours: 'violet',
-    water_intake: 'cyan',
-    exercise_minutes: 'orange',
-    calories: 'yellow',
-  };
-  return colors[type] || 'gray';
+  // Use switch to avoid object injection sink
+  switch (type) {
+    case 'weight':
+      return 'blue';
+    case 'blood_pressure':
+    case 'blood_pressure_sys':
+    case 'blood_pressure_dia':
+      return 'red';
+    case 'heart_rate':
+      return 'pink';
+    case 'steps':
+      return 'green';
+    case 'sleep_hours':
+    case 'sleep':
+      return 'violet';
+    case 'water_intake':
+    case 'water':
+      return 'cyan';
+    case 'exercise_minutes':
+      return 'orange';
+    case 'calories':
+      return 'yellow';
+    default:
+      return 'gray';
+  }
 };

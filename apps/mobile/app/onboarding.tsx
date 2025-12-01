@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconContainer: {
-    marginBottom: spacing['2xl'],
+    marginBottom: spacing['3xl'],
   },
   iconGradient: {
     width: 160,

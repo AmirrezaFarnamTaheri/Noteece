@@ -81,8 +81,8 @@ export default function TodayScreen() {
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
-          <QuickActionButton icon="add-outline" label="Add Task" onPress={() => {}} color={colors.task} />
-          <QuickActionButton icon="create-outline" label="New Note" onPress={() => {}} color={colors.note} />
+          <QuickActionButton icon="add-outline" label="Add Task" onPress={() => {}} color={colors.primary} />
+          <QuickActionButton icon="create-outline" label="New Note" onPress={() => {}} color={colors.accent} />
           <QuickActionButton icon="play-outline" label="Start Timer" onPress={() => {}} color={colors.success} />
         </View>
       </ScrollView>
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     ...shadows.sm,
   },
   headerTitle: {
-    fontSize: typography.fontSize.lg,
+    fontSize: typography.fontSize['3xl'],
     fontFamily: typography.fontFamily.semibold,
     color: colors.text,
   },
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
   },
   greeting: {
-    fontSize: typography.fontSize.xxxl,
+    fontSize: typography.fontSize['3xl'],
     fontFamily: typography.fontFamily.bold,
     color: colors.text,
     marginBottom: spacing.xs,
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.xxl,
+    paddingVertical: spacing.xl,
   },
   emptyTitle: {
     fontSize: typography.fontSize.lg,

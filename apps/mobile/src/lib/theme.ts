@@ -8,6 +8,7 @@ export const colors = {
   background: '#050506',
   backgroundSecondary: '#101113',
   backgroundTertiary: '#1A1B1E',
+  backgroundElevated: '#1A1B1E',
 
   // Text Colors
   text: '#F3F0FF', // High contrast white/violet
@@ -47,6 +48,8 @@ export const spacing = {
   md: 16,
   lg: 24,
   xl: 32,
+  '2xl': 24,
+  '3xl': 30,
 };
 
 export const borderRadius = {

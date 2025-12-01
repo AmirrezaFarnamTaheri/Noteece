@@ -152,10 +152,11 @@ export class SyncClient {
           const handshakeHandler = (e: WebSocketMessageEvent) => {
             try {
               // @ts-ignore: Event type check workaround
-              const messageData = e.data || (e as any).message;
+              const messageData = (e.data || (e as any).message || '') as string;
+              if (typeof messageData !== 'string') return;
               const data = JSON.parse(messageData);
               if (data.type === 'handshake_response') {
-                ws.removeEventListener('message', handshakeHandler);
+                ws.removeEventListener('message', handshakeHandler as any);
 
                 if (!data.publicKey) {
                   reject(new Error('Peer did not provide public key'));
@@ -175,7 +176,7 @@ export class SyncClient {
                 this.peerAuthenticated = true;
                 resolve(ws);
               } else if (data.type === 'error') {
-                ws.removeEventListener('message', handshakeHandler);
+                ws.removeEventListener('message', handshakeHandler as any);
                 reject(new Error(`Handshake error: ${data.message}`));
               }
             } catch (err) {
@@ -183,7 +184,7 @@ export class SyncClient {
             }
           };
 
-          ws.addEventListener('message', handshakeHandler);
+          ws.addEventListener('message', handshakeHandler as any);
         } catch (e) {
           reject(e);
         }
@@ -213,15 +214,17 @@ export class SyncClient {
 
       const handler = (e: WebSocketMessageEvent) => {
         // @ts-ignore: Event type check workaround
-        const messageData = e.data || (e as any).message;
-        const data = JSON.parse(messageData);
-        if (data.type === 'manifest_response' && data.requestId === requestId) {
-          ws.removeEventListener('message', handler);
-          resolve(data.manifest);
+        const messageData = (e.data || (e as any).message || '') as string;
+        if (typeof messageData === 'string') {
+          const data = JSON.parse(messageData);
+          if (data.type === 'manifest_response' && data.requestId === requestId) {
+            ws.removeEventListener('message', handler as any);
+            resolve(data.manifest);
+          }
         }
       };
 
-      ws.addEventListener('message', handler);
+      ws.addEventListener('message', handler as any);
 
       ws.send(
         JSON.stringify({
@@ -233,7 +236,7 @@ export class SyncClient {
 
       // Timeout fallback
       setTimeout(() => {
-        ws.removeEventListener('message', handler);
+        ws.removeEventListener('message', handler as any);
         reject(new Error('Timeout waiting for manifest'));
       }, 10000);
     });
@@ -258,18 +261,20 @@ export class SyncClient {
       const requestId = nanoid();
       const handler = (e: WebSocketMessageEvent) => {
         // @ts-ignore: Event type check workaround
-        const messageData = e.data || (e as any).message;
-        const data = JSON.parse(messageData);
-        if (data.type === 'delta_response' && data.requestId === requestId) {
-          ws.removeEventListener('message', handler);
-          // Convert hex/base64 payload back to Uint8Array if needed
-          // Assuming server sends base64
-          // const payload = Uint8Array.from(atob(data.delta.payload), c => c.charCodeAt(0));
-          // For simplicity in this mock-up logic:
-          resolve(data.delta);
+        const messageData = (e.data || (e as any).message || '') as string;
+        if (typeof messageData === 'string') {
+          const data = JSON.parse(messageData);
+          if (data.type === 'delta_response' && data.requestId === requestId) {
+            ws.removeEventListener('message', handler as any);
+            // Convert hex/base64 payload back to Uint8Array if needed
+            // Assuming server sends base64
+            // const payload = Uint8Array.from(atob(data.delta.payload), c => c.charCodeAt(0));
+            // For simplicity in this mock-up logic:
+            resolve(data.delta);
+          }
         }
       };
-      ws.addEventListener('message', handler);
+      ws.addEventListener('message', handler as any);
 
       ws.send(
         JSON.stringify({

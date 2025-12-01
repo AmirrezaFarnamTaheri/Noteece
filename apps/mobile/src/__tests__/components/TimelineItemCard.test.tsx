@@ -11,7 +11,7 @@ describe('TimelineItemCard', () => {
     time: Date.now() + 3600000, // 1 hour from now
     title: 'Review PR #123',
     subtitle: 'High priority task',
-    color: colors.task,
+    color: colors.primary,
     data: {},
   };
 

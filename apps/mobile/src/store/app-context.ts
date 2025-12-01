@@ -260,5 +260,6 @@ export function useSettings() {
  * Hook to update a specific setting
  */
 export function useUpdateSetting() {
-  return useAppContext((state) => state.updateSettings);
+  const updateSettings = useAppContext((state) => state.updateSettings);
+  return (key: keyof AppSettings, value: any) => updateSettings({ [key]: value });
 }

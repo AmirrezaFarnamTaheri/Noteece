@@ -70,15 +70,21 @@ export default function CaptureScreen() {
     }
   };
 
-  const captureOptions = [
+  const captureOptions: {
+    type: CaptureType;
+    icon: string;
+    label: string;
+    description: string;
+    disabled?: boolean;
+  }[] = [
     {
-      type: 'note' as CaptureType,
+      type: 'note',
       icon: 'document-text-outline',
       label: 'Note',
       description: 'Capture thoughts and ideas',
     },
     {
-      type: 'task' as CaptureType,
+      type: 'task',
       icon: 'checkmark-circle-outline',
       label: 'Task',
       description: 'Add a quick task',

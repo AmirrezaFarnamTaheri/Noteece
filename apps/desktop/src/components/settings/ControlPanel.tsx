@@ -88,19 +88,23 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ feature, onToggle }) => (
 export const ControlPanel: React.FC = () => {
   const { widgets, features, toggleWidget, toggleFeature, resetWidgets, resetFeatures } = useControlPanelStore();
 
-  // Group widgets by category
-  const widgetsByCategory = widgets.reduce<Record<string, WidgetConfig[]>>((acc, widget) => {
-    if (!acc[widget.category]) acc[widget.category] = [];
-    acc[widget.category].push(widget);
-    return acc;
-  }, {});
+  // Group widgets by category using simple loop instead of reduce
+  const widgetsByCategory: Record<string, WidgetConfig[]> = {};
+  for (const widget of widgets) {
+    if (!widgetsByCategory[widget.category]) {
+      widgetsByCategory[widget.category] = [];
+    }
+    widgetsByCategory[widget.category].push(widget);
+  }
 
   // Group features by category
-  const featuresByCategory = features.reduce<Record<string, FeatureConfig[]>>((acc, feature) => {
-    if (!acc[feature.category]) acc[feature.category] = [];
-    acc[feature.category].push(feature);
-    return acc;
-  }, {});
+  const featuresByCategory: Record<string, FeatureConfig[]> = {};
+  for (const feature of features) {
+    if (!featuresByCategory[feature.category]) {
+      featuresByCategory[feature.category] = [];
+    }
+    featuresByCategory[feature.category].push(feature);
+  }
 
   const enabledWidgets = widgets.filter((w) => w.enabled).length;
   const enabledFeatures = features.filter((f) => f.enabled).length;
