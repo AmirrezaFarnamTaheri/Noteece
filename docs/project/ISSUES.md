@@ -113,6 +113,18 @@ This document tracks persistent, hard-to-debug issues in the codebase. Each issu
 - **Description:** Linting errors and potential logic issues in `database.ts`.
 - **Resolution:** Cleaned up code and fixed logic in migration scripts.
 
+### 5.5. Backend Panic Safety (v1.1.1)
+
+- **Status:** **Resolved**
+- **Description:** Extensive use of `unwrap()` in critical backend modules (`relay.rs`, `priority.rs`, `mobile_ffi.rs`) posed a risk of runtime panics.
+- **Resolution:** Systematically replaced unsafe unwraps with `Result` propagation or safe defaults (e.g., `unwrap_or` for timestamps). Implemented proper error handling for Mutex poisoning.
+
+### 5.6. Frontend Injection Vulnerabilities (v1.1.1)
+
+- **Status:** **Resolved**
+- **Description:** `eslint-plugin-security` flagged multiple "Generic Object Injection Sink" warnings in Desktop components.
+- **Resolution:** Audited all occurrences. Validated keys before access or suppressed warnings where type safety was guaranteed by TypeScript.
+
 ---
 
 ## 6. Reporting New Issues

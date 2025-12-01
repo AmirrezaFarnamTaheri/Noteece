@@ -99,6 +99,10 @@ function applyTheme(theme: ActualTheme): void {
 /**
  * Initialize theme and listen for system changes
  */
+const handleChange = () => {
+  useThemeStore.getState().syncWithSystem();
+};
+
 export function initializeTheme(): () => void {
   const store = useThemeStore.getState();
 
@@ -108,10 +112,6 @@ export function initializeTheme(): () => void {
   // Listen for system theme changes
   if (typeof window !== 'undefined' && window.matchMedia) {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-    const handleChange = () => {
-      useThemeStore.getState().syncWithSystem();
-    };
 
     // Modern browsers
     if (mediaQuery.addEventListener) {

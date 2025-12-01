@@ -8,7 +8,7 @@
  * - Engagement trends
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -40,12 +40,7 @@ export function SocialAnalytics() {
   // Get current space from context
   const spaceId = useCurrentSpace();
 
-  useEffect(() => {
-    loadAnalytics();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const loadAnalytics = async () => {
+  const loadAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -64,7 +59,11 @@ export function SocialAnalytics() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [spaceId]);
+
+  useEffect(() => {
+    loadAnalytics();
+  }, [loadAnalytics]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

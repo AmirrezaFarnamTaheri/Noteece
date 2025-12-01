@@ -144,24 +144,19 @@ impl P2pSync {
                         use tokio_tungstenite::tungstenite::Message;
                         let mut proto_guard = protocol.lock().await;
                         while let Some(Ok(msg)) = reader.next().await {
-                            match msg {
-                                Message::Text(text) => {
-                                    // Deserialize delta from text, process it with SyncProtocol
-                                    if let Ok(delta) = serde_json::from_str::<SyncDelta>(&text) {
-                                        if let Ok(response_delta) =
-                                            proto_guard.handle_delta(delta).await
+                            if let Message::Text(text) = msg {
+                                // Deserialize delta from text, process it with SyncProtocol
+                                if let Ok(delta) = serde_json::from_str::<SyncDelta>(&text) {
+                                    if let Ok(response_delta) =
+                                        proto_guard.handle_delta(delta).await
+                                    {
+                                        if let Ok(response_text) =
+                                            serde_json::to_string(&response_delta)
                                         {
-                                            if let Ok(response_text) =
-                                                serde_json::to_string(&response_delta)
-                                            {
-                                                let _ =
-                                                    writer.send(Message::Text(response_text)).await;
-                                            }
+                                            let _ = writer.send(Message::Text(response_text)).await;
                                         }
                                     }
                                 }
-                                // Handle other message types (Binary, Close, etc.)
-                                _ => {}
                             }
                         }
                     }

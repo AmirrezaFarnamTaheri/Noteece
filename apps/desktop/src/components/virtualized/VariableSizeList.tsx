@@ -90,6 +90,7 @@ export function VariableSizeList<T>({
       if (cached !== undefined) {
         return cached;
       }
+      // eslint-disable-next-line security/detect-object-injection
       const item = items[index];
       return item ? estimateItemHeight(item, index) : 60;
     },
@@ -126,6 +127,7 @@ export function VariableSizeList<T>({
   // Item key function
   const itemKey = useCallback(
     (index: number, data: ItemData<T>) => {
+      // eslint-disable-next-line security/detect-object-injection
       const item = data.items[index];
       return item ? getItemKey(item, index) : `empty-${index}`;
     },

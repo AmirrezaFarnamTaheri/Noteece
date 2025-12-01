@@ -1,13 +1,43 @@
 import React from 'react';
 import { Button, Text, Group, Stack, Title, ThemeIcon, Badge, Paper } from '@mantine/core';
 import { IconBrandInstagram, IconBrandTwitter, IconBrandLinkedin, IconPlus, IconUsers } from '@tabler/icons-react';
+import { WidgetSkeleton } from '../ui/skeletons/WidgetSkeleton';
+
+const getColor = (platform: string) => {
+  switch (platform) {
+    case 'twitter': {
+      return 'cyan';
+    }
+    case 'instagram': {
+      return 'pink';
+    }
+    case 'linkedin': {
+      return 'blue';
+    }
+    default: {
+      return 'gray';
+    }
+  }
+};
 
 export const SocialWidget = () => {
+  // Mock loading state
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Mock data for now, would be connected to `socialConfigService` status later
   const accounts = [
     { id: 1, platform: 'twitter', handle: '@noteece_app', followers: '1.2k', status: 'connected' },
     { id: 2, platform: 'linkedin', handle: 'Noteece Inc.', followers: '850', status: 'connected' },
   ];
+
+  if (isLoading) {
+    return <WidgetSkeleton />;
+  }
 
   const getIcon = (platform: string) => {
     switch (platform) {
@@ -22,23 +52,6 @@ export const SocialWidget = () => {
       }
       default: {
         return <IconUsers size={14} />;
-      }
-    }
-  };
-
-  const getColor = (platform: string) => {
-    switch (platform) {
-      case 'twitter': {
-        return 'cyan';
-      }
-      case 'instagram': {
-        return 'pink';
-      }
-      case 'linkedin': {
-        return 'blue';
-      }
-      default: {
-        return 'gray';
       }
     }
   };
