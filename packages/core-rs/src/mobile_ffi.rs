@@ -27,9 +27,12 @@ pub unsafe extern "C" fn rust_init(db_path: *const c_char) {
 
     let c_str = CStr::from_ptr(db_path);
     if let Ok(path) = c_str.to_str() {
-        let mut db_path_guard = DB_PATH.lock().unwrap();
-        *db_path_guard = Some(path.to_string());
-        log::info!("[FFI] Initialized with DB path: {}", path);
+        if let Ok(mut db_path_guard) = DB_PATH.lock() {
+            *db_path_guard = Some(path.to_string());
+            log::info!("[FFI] Initialized with DB path: {}", path);
+        } else {
+            log::error!("[FFI] Failed to lock DB path mutex during initialization");
+        }
     }
 }
 
@@ -118,7 +121,7 @@ fn register_device_impl(json_str: &str) -> Result<(), String> {
 }
 
 fn obtain_db_connection() -> Result<rusqlite::Connection, String> {
-    let db_path_guard = DB_PATH.lock().unwrap();
+    let db_path_guard = DB_PATH.lock().map_err(|_| "Failed to lock DB path mutex".to_string())?;
 
     let path = if let Some(p) = &*db_path_guard {
         p.clone()

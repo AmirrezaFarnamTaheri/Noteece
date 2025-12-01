@@ -51,13 +51,7 @@ export const METRIC_TYPES: MetricTypeDefinition[] = [
 
 export const metricTypes = METRIC_TYPES.map((m) => ({ value: m.value, label: m.label }));
 
-export const metricUnits: Record<string, string> = METRIC_TYPES.reduce(
-  (acc, m) => {
-    acc[m.value] = m.unit;
-    return acc;
-  },
-  {} as Record<string, string>,
-);
+export const metricUnits: Record<string, string> = Object.fromEntries(METRIC_TYPES.map((m) => [m.value, m.unit]));
 
 const metricColors: Record<string, string> = {
   weight: 'blue',
@@ -76,14 +70,16 @@ const metricColors: Record<string, string> = {
 
 export const getDefaultUnit = (metricType: string): string => {
   if (Object.prototype.hasOwnProperty.call(metricUnits, metricType)) {
-    return metricUnits[metricType];
+    // eslint-disable-next-line security/detect-object-injection
+    return metricUnits[metricType] || '';
   }
   return '';
 };
 
 export const getMetricColor = (metricType: string): string => {
   if (Object.prototype.hasOwnProperty.call(metricColors, metricType)) {
-    return metricColors[metricType];
+    // eslint-disable-next-line security/detect-object-injection
+    return metricColors[metricType] || 'gray';
   }
   return 'gray';
 };

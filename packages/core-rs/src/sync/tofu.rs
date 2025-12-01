@@ -347,7 +347,7 @@ impl TofuStore {
     fn now() -> i64 {
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap()
+            .unwrap_or(std::time::Duration::from_secs(0))
             .as_secs() as i64
     }
 }

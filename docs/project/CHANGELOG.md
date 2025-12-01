@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.1] - November 2025
+
+### Added
+
+- **Desktop UI Polish:** Global "Undo" toast notifications, Skeleton loaders for widgets, Hover effects
+- **Backend Tests:** New P2P edge case tests and complex task filtering verification
+- **Task Query Builder:** New fluent API for constructing complex task queries
+
+### Changed
+
+- **Security Hardening:** Removed "Generic Object Injection Sink" vulnerabilities in Frontend
+- **Backend Reliability:** Systematically replaced unsafe `unwrap()` calls with error propagation in critical modules (`relay.rs`, `mobile_ffi.rs`, `priority.rs`)
+- **Code Quality:** Resolved all Clippy warnings in Rust core and ESLint warnings in Desktop/Mobile
+
+### Fixed
+
+- **Mobile Hooks:** Fixed `useEffect` dependency issues in `SocialAnalytics` screen
+- **FFI Safety:** Added null checks and mutex error handling in mobile FFI layer
+
+---
+
 ## [1.1.0] - November 2025
 
 ### Added

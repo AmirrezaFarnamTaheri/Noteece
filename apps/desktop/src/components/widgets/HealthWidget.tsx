@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Text, RingProgress, Group, Paper, Stack, ThemeIcon, Center, Loader, Button } from '@mantine/core';
+import { Text, RingProgress, Group, Paper, Stack, ThemeIcon, Center, Button } from '@mantine/core';
 import { IconHeartbeat, IconFlame, IconDroplet, IconZzz, IconPlus } from '@tabler/icons-react';
 import { invoke } from '@tauri-apps/api/tauri';
 import { useStore } from '../../store';
 import { HealthMetric } from '../health/types';
+import { WidgetSkeleton } from '../ui/skeletons/WidgetSkeleton';
 
 // Helper to get icon
 const getIcon = (type: string) => {
@@ -101,12 +102,9 @@ export const HealthWidget = () => {
     }
   };
 
-  if (loading)
-    return (
-      <Center h={180}>
-        <Loader size="sm" color="red" />
-      </Center>
-    );
+  if (loading) {
+    return <WidgetSkeleton />;
+  }
 
   const hasMetrics = metrics.length > 0;
 

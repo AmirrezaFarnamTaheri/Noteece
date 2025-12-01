@@ -46,6 +46,7 @@ import { getOrCreateDailyNote } from '@/services/api';
 import classes from './MainLayout.module.css';
 import { useStore } from '../store';
 import { logger } from '@/utils/logger';
+import { UndoToast } from './ui/UndoToast';
 
 const navLinkGroups = [
   {
@@ -287,6 +288,7 @@ const MainLayout: React.FC = () => {
 
       <AppShell.Main>
         <CommandPalette opened={commandPaletteOpened} onClose={() => setCommandPaletteOpened(false)} />
+        <UndoToast />
         <Outlet />
         {zenMode && (
           <Affix position={{ bottom: 24, right: 24 }}>

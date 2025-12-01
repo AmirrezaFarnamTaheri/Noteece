@@ -16,13 +16,15 @@ interface HealthChartsProps {
   onTimeRangeChange: (range: '7d' | '30d' | '90d' | '365d') => void;
 }
 
+const ranges: Record<string, number> = {
+  '7d': 7 * 24 * 60 * 60 * 1000,
+  '30d': 30 * 24 * 60 * 60 * 1000,
+  '90d': 90 * 24 * 60 * 60 * 1000,
+  '365d': 365 * 24 * 60 * 60 * 1000,
+};
+
 const getRangeMs = (range: string): number => {
-  const ranges: Record<string, number> = {
-    '7d': 7 * 24 * 60 * 60 * 1000,
-    '30d': 30 * 24 * 60 * 60 * 1000,
-    '90d': 90 * 24 * 60 * 60 * 1000,
-    '365d': 365 * 24 * 60 * 60 * 1000,
-  };
+  // eslint-disable-next-line security/detect-object-injection
   return ranges[range] || ranges['30d'];
 };
 

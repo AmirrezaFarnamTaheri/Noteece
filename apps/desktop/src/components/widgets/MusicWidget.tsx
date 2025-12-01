@@ -8,6 +8,7 @@ import {
   IconDeviceSpeaker,
 } from '@tabler/icons-react';
 import classes from './MusicWidget.module.css';
+import { WidgetSkeleton } from '../ui/skeletons/WidgetSkeleton';
 
 // Create CSS module for glassmorphism effects
 const styles = `
@@ -50,6 +51,17 @@ const styles = `
 `;
 
 export const MusicWidget: React.FC = () => {
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <WidgetSkeleton />;
+  }
+
   return (
     <>
       <style>{styles}</style>
