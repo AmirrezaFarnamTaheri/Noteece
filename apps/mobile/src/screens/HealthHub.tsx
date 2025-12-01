@@ -5,7 +5,7 @@
  * Features: daily stats, goals, activities, trends.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 // @ts-ignore: expo vector icons type mismatch
@@ -38,9 +38,11 @@ async function loadHealthDataFromDB(): Promise<HealthStats | null> {
 
     const todayMetrics = metrics.filter((m) => m.recorded_at >= todayStart);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getMetricSum = (list: any[], type: string) =>
       list.filter((m) => m.metric_type === type).reduce((acc, curr) => acc + curr.value, 0);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getMetricLatest = (list: any[], type: string) => {
       const found = list.find((m) => m.metric_type === type);
       return found ? found.value : 0;
@@ -136,11 +138,7 @@ export function HealthHub() {
   const [selectedView, setSelectedView] = useState<'today' | 'week' | 'month'>('today');
   const spaceId = useCurrentSpace();
 
-  useEffect(() => {
-    loadHealthData();
-  }, [spaceId]);
-
-  const loadHealthData = async () => {
+  const loadHealthData = useCallback(async () => {
     try {
       setLoading(true);
       // Load health data from database or native HealthKit integration
@@ -159,7 +157,11 @@ export function HealthHub() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [spaceId]);
+
+  useEffect(() => {
+    void loadHealthData();
+  }, [loadHealthData]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -207,6 +209,7 @@ export function HealthHub() {
     </ScaleIn>
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderGoalProgress = (goal: any) => {
     const percentage = Math.min(goal.percentage, 100);
     const isAchieved = goal.isAchieved;

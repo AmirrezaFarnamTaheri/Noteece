@@ -22,22 +22,7 @@ import { DateInput } from '@mantine/dates';
 import { IconPlus, IconTarget, IconCheck } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { logger } from '@/utils/logger';
-import { METRIC_TYPES } from './HealthMetricsPanel';
-
-export interface HealthGoal {
-  id: string;
-  space_id: string;
-  title: string;
-  description?: string;
-  target: number;
-  current: number;
-  unit: string;
-  category: string;
-  start_date: number;
-  target_date?: number;
-  is_completed: boolean;
-  created_at: number;
-}
+import { METRIC_TYPES, HealthGoal } from '../../health/types';
 
 interface HealthGoalsPanelProps {
   spaceId: string;

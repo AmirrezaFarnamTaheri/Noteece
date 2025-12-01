@@ -7,6 +7,8 @@ use zstd;
 pub enum VersioningError {
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
+    #[error("Invalid filename encountered")]
+    InvalidFilename,
 }
 
 use ulid::Ulid;
@@ -29,12 +31,23 @@ pub fn create_snapshot(
 pub fn get_snapshots(vault_path: &str, note_id: &str) -> Result<Vec<String>, VersioningError> {
     log::info!("[versioning] Getting snapshots for note: {}", note_id);
     let snapshot_dir = Path::new(vault_path).join("history").join(note_id);
+    // If directory doesn't exist, return empty list instead of error
+    if !snapshot_dir.exists() {
+        return Ok(Vec::new());
+    }
+
     let mut snapshots = Vec::new();
     for entry in fs::read_dir(snapshot_dir)? {
         let entry = entry?;
         let path = entry.path();
         if path.is_file() {
-            snapshots.push(path.file_name().unwrap().to_str().unwrap().to_string());
+            let filename = path
+                .file_name()
+                .ok_or(VersioningError::InvalidFilename)?
+                .to_str()
+                .ok_or(VersioningError::InvalidFilename)?
+                .to_string();
+            snapshots.push(filename);
         }
     }
     Ok(snapshots)

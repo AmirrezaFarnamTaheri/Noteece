@@ -5,7 +5,7 @@
  * Features: library browsing, playlists, now playing, search.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -31,6 +31,7 @@ async function loadTracksFromDatabase(): Promise<Track[]> {
     // Map snake_case DB columns to camelCase Track type if necessary,
     // but assuming direct mapping for now or that Track type matches DB.
     // Actually Track type likely uses camelCase.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return tracks.map((t: any) => ({
       id: t.id,
       title: t.title,
@@ -58,6 +59,7 @@ async function loadPlaylistsFromDatabase(): Promise<Playlist[]> {
     const playlists = await dbQuery('SELECT * FROM playlist ORDER BY name ASC');
     // Need to get track counts and duration for each playlist
     const enhancedPlaylists = await Promise.all(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       playlists.map(async (p: any) => {
         // Join with track table to get total duration
         const stats = await dbQuery(
@@ -136,11 +138,7 @@ export function MusicHub() {
   const [isPlaying, setIsPlaying] = useState(false);
   const spaceId = useCurrentSpace();
 
-  useEffect(() => {
-    loadMusic();
-  }, [spaceId]);
-
-  const loadMusic = async () => {
+  const loadMusic = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -161,7 +159,11 @@ export function MusicHub() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [spaceId]);
+
+  useEffect(() => {
+    void loadMusic();
+  }, [loadMusic]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

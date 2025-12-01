@@ -29,28 +29,61 @@ export interface HealthGoal {
   updated_at: number;
 }
 
-export const metricTypes = [
-  { value: 'weight', label: 'Weight' },
-  { value: 'blood_pressure', label: 'Blood Pressure' },
-  { value: 'heart_rate', label: 'Heart Rate' },
-  { value: 'steps', label: 'Steps' },
-  { value: 'sleep_hours', label: 'Sleep Hours' },
-  { value: 'water_intake', label: 'Water Intake' },
-  { value: 'exercise_minutes', label: 'Exercise Minutes' },
-  { value: 'calories', label: 'Calories' },
+export interface MetricTypeDefinition {
+  value: string;
+  label: string;
+  unit: string;
+}
+
+export const METRIC_TYPES: MetricTypeDefinition[] = [
+  { value: 'weight', label: 'Weight', unit: 'kg' },
+  { value: 'blood_pressure_sys', label: 'Blood Pressure (Sys)', unit: 'mmHg' },
+  { value: 'blood_pressure_dia', label: 'Blood Pressure (Dia)', unit: 'mmHg' },
+  { value: 'heart_rate', label: 'Heart Rate', unit: 'bpm' },
+  { value: 'steps', label: 'Steps', unit: 'steps' },
+  { value: 'sleep', label: 'Sleep Hours', unit: 'hours' },
+  { value: 'water', label: 'Water Intake', unit: 'ml' },
+  { value: 'exercise_minutes', label: 'Exercise', unit: 'min' },
+  { value: 'calories', label: 'Calories', unit: 'kcal' },
+  { value: 'mood', label: 'Mood', unit: 'score' },
+  { value: 'energy', label: 'Energy', unit: 'score' },
 ];
 
-export const metricUnits: Record<string, string> = {
-  weight: 'kg',
-  blood_pressure: 'mmHg',
-  heart_rate: 'bpm',
-  steps: 'steps',
-  sleep_hours: 'hours',
-  water_intake: 'ml',
-  exercise_minutes: 'min',
-  calories: 'kcal',
+export const metricTypes = METRIC_TYPES.map((m) => ({ value: m.value, label: m.label }));
+
+export const metricUnits: Record<string, string> = METRIC_TYPES.reduce(
+  (acc, m) => {
+    acc[m.value] = m.unit;
+    return acc;
+  },
+  {} as Record<string, string>,
+);
+
+const metricColors: Record<string, string> = {
+  weight: 'blue',
+  blood_pressure: 'red',
+  blood_pressure_sys: 'red',
+  blood_pressure_dia: 'red',
+  heart_rate: 'pink',
+  steps: 'green',
+  sleep: 'violet',
+  water: 'cyan',
+  exercise_minutes: 'orange',
+  calories: 'yellow',
+  mood: 'grape',
+  energy: 'lime',
 };
 
 export const getDefaultUnit = (metricType: string): string => {
-  return metricUnits[metricType] || '';
+  if (Object.prototype.hasOwnProperty.call(metricUnits, metricType)) {
+    return metricUnits[metricType];
+  }
+  return '';
+};
+
+export const getMetricColor = (metricType: string): string => {
+  if (Object.prototype.hasOwnProperty.call(metricColors, metricType)) {
+    return metricColors[metricType];
+  }
+  return 'gray';
 };

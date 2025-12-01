@@ -1,6 +1,6 @@
 # Known Issues
 
-_Last Updated: 2025-11-25 (v1.0.0)_
+_Last Updated: 2025-11-25 (v1.1.0)_
 
 This document tracks persistent, hard-to-debug issues in the codebase. Each issue includes status, description, impact, and workaround information.
 
@@ -16,12 +16,6 @@ This document tracks persistent, hard-to-debug issues in the codebase. Each issu
 - **Root Cause:** The FTS5 extension requires specific compilation flags that conflict with SQLCipher's OpenSSL vendoring.
 - **Resolution:** A hybrid search engine was implemented in `search.rs`. The application now checks for the existence of the FTS5 table at runtime. If FTS5 is unavailable, it automatically falls back to standard `LIKE` queries against decrypted content.
 - **Impact:** Search functionality is always available; FTS5's advanced features (stemming, ranking) may be unavailable in some builds.
-
-### 1.2. Task Sync Timestamp Limitation
-
-- **Status:** **Resolved** (v0.9.0)
-- **Description:** The `task` and `project` tables in V1 schema lacked an `updated_at` column, limiting conflict detection.
-- **Resolution:** Migration V15 added `updated_at` column to both tables. The sync agent now uses this for robust conflict detection.
 
 ---
 
@@ -41,12 +35,6 @@ This document tracks persistent, hard-to-debug issues in the codebase. Each issu
   - Use Docker/Podman container with 22.04 base
   - Use GitHub Actions CI (builds on ubuntu-22.04)
 - **Tracking:** Awaiting Tauri v2 stable which supports WebKit 4.1
-
-### 2.2. React Router Future Flag Warnings
-
-- **Status:** **Resolved** (v1.0.0)
-- **Description:** Console warnings about React Router v7 future flags (`v7_startTransition`, `v7_relativeSplatPath`).
-- **Resolution:** App.tsx now uses `createMemoryRouter` with future flags enabled.
 
 ---
 
@@ -101,41 +89,29 @@ This document tracks persistent, hard-to-debug issues in the codebase. Each issu
 
 ## 5. Resolved Issues Archive
 
-### 5.1. Sync Schema Mismatch (v0.9.0)
+### 5.1. Mobile React Hooks (v1.1.0)
 
 - **Status:** **Resolved**
-- **Description:** `sync_agent.rs` used plural table names (`notes`, `tasks`) while schema used singular.
-- **Resolution:** Fixed table names; added `sync_logic_tests.rs` for verification.
+- **Description:** `useEffect` hooks in `HealthHub` and `MusicHub` had missing dependencies or potential race conditions.
+- **Resolution:** Added `useCallback` for data loading and correctly specified dependency arrays.
 
-### 5.2. Transaction Safety in Cascading Deletes (v0.9.0)
-
-- **Status:** **Resolved**
-- **Description:** Potential orphaned records when deleting projects.
-- **Resolution:** `delete_project` now executes in transaction with proper cascade.
-
-### 5.3. Sync Conflict Space Context (v0.9.0)
+### 5.2. Desktop UI/UX Polish (v1.1.0)
 
 - **Status:** **Resolved**
-- **Description:** `SyncConflict` struct lacked `space_id`, causing NOT NULL violations.
-- **Resolution:** Added `space_id` to `SyncConflict` and `SyncDelta`.
+- **Description:** Dashboard widgets were placeholders or lacked robust empty states.
+- **Resolution:** Implemented full UI for Music, Health, and Social widgets with glassmorphism and proper data handling.
 
-### 5.4. Project Monolith Refactor (v0.9.0)
-
-- **Status:** **Resolved**
-- **Description:** `project.rs` was too large and mixed concerns.
-- **Resolution:** Refactored into `project/mod.rs`, `models.rs`, and `db.rs`.
-
-### 5.5. Sync History Panic (v0.9.0)
+### 5.3. Backend Safety (v1.1.0)
 
 - **Status:** **Resolved**
-- **Description:** Panic with "Invalid column type Null" on empty sync history.
-- **Resolution:** Wrapped `MAX(sync_time)` result in `Option<i64>`.
+- **Description:** Unsafe `unwrap()` calls in `srs.rs` and `versioning.rs` could cause panics.
+- **Resolution:** Replaced with proper `Result` propagation and error handling.
 
-### 5.6. Personal Modes Implementation (v0.8.0)
+### 5.4. Mobile Database Migration (v1.1.0)
 
 - **Status:** **Resolved**
-- **Description:** Health, Finance, Travel modes were placeholders.
-- **Resolution:** Implemented `personal_modes.rs` and frontend components.
+- **Description:** Linting errors and potential logic issues in `database.ts`.
+- **Resolution:** Cleaned up code and fixed logic in migration scripts.
 
 ---
 
@@ -168,24 +144,3 @@ When reporting a new issue, please include:
 ---
 
 _For security vulnerabilities, please see [SECURITY.md](SECURITY.md) for responsible disclosure._
-
-## Resolved Issues (Audit)
-- [x] P2P Sync: Implemented vector clock propagation and WebSocket handshake.
-- [x] Discovery: Desktop now advertises itself via MDNS.
-- [x] Mobile FFI: Fixed compilation bug and implemented discovery stub.
-- [x] Sync Progress: Fixed progress calculation logic.
-- [x] Task Board: Added optimistic UI updates for better performance.
-
-## Resolved Issues (Audit)
-- [x] P2P Sync: Implemented vector clock propagation and WebSocket handshake.
-- [x] Discovery: Desktop now advertises itself via MDNS.
-- [x] Mobile FFI: Fixed compilation bug and implemented discovery stub.
-- [x] Sync Progress: Fixed progress calculation logic.
-- [x] Task Board: Added optimistic UI updates for better performance.
-
-## Resolved Issues (Audit)
-- [x] P2P Sync: Implemented vector clock propagation and WebSocket handshake.
-- [x] Discovery: Desktop now advertises itself via MDNS.
-- [x] Mobile FFI: Fixed compilation bug and implemented discovery stub.
-- [x] Sync Progress: Fixed progress calculation logic.
-- [x] Task Board: Added optimistic UI updates for better performance.

@@ -9,7 +9,6 @@ import {
   IconPuzzle,
   IconRefresh,
   IconBrain,
-  IconCloud,
   IconDevices,
   IconUsers,
   IconRocket,
@@ -89,21 +88,28 @@ export const ControlPanel: React.FC = () => {
   const { widgets, features, toggleWidget, toggleFeature, resetWidgets, resetFeatures } = useControlPanelStore();
 
   // Group widgets by category
-  const widgetsByCategory = widgets.reduce<Record<string, WidgetConfig[]>>((acc, widget) => {
-    if (!acc[widget.category]) acc[widget.category] = [];
-    acc[widget.category].push(widget);
-    return acc;
-  }, {});
+  const widgetsByCategory: Record<string, WidgetConfig[]> = {};
+  for (const widget of widgets) {
+    if (!widgetsByCategory[widget.category]) widgetsByCategory[widget.category] = [];
+    widgetsByCategory[widget.category].push(widget);
+  }
 
   // Group features by category
-  const featuresByCategory = features.reduce<Record<string, FeatureConfig[]>>((acc, feature) => {
-    if (!acc[feature.category]) acc[feature.category] = [];
-    acc[feature.category].push(feature);
-    return acc;
-  }, {});
+  const featuresByCategory: Record<string, FeatureConfig[]> = {};
+  for (const feature of features) {
+    if (!featuresByCategory[feature.category]) featuresByCategory[feature.category] = [];
+    featuresByCategory[feature.category].push(feature);
+  }
 
   const enabledWidgets = widgets.filter((w) => w.enabled).length;
   const enabledFeatures = features.filter((f) => f.enabled).length;
+
+  const getCategoryIcon = (category: string) => {
+    if (Object.prototype.hasOwnProperty.call(categoryIcons, category)) {
+      return categoryIcons[category];
+    }
+    return <IconPuzzle size={16} />;
+  };
 
   return (
     <Stack gap="lg">
@@ -135,7 +141,7 @@ export const ControlPanel: React.FC = () => {
             <Accordion variant="separated">
               {Object.entries(widgetsByCategory).map(([category, categoryWidgets]) => (
                 <Accordion.Item key={category} value={category}>
-                  <Accordion.Control icon={categoryIcons[category]}>
+                  <Accordion.Control icon={getCategoryIcon(category)}>
                     <Group gap="xs">
                       <Text tt="capitalize">{category}</Text>
                       <Badge size="xs" variant="light">
@@ -167,7 +173,7 @@ export const ControlPanel: React.FC = () => {
             <Accordion variant="separated">
               {Object.entries(featuresByCategory).map(([category, categoryFeatures]) => (
                 <Accordion.Item key={category} value={category}>
-                  <Accordion.Control icon={categoryIcons[category]}>
+                  <Accordion.Control icon={getCategoryIcon(category)}>
                     <Group gap="xs">
                       <Text tt="capitalize">{category}</Text>
                       <Badge size="xs" variant="light">

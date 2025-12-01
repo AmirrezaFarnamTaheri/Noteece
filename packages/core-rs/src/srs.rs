@@ -114,11 +114,16 @@ pub fn get_knowledge_card(conn: &Connection, id: Ulid) -> Result<Option<Knowledg
                         Box::new(e),
                     )
                 })?;
+
+            let id_str: String = row.get(0)?;
+            let note_id_str: String = row.get(1)?;
+            let state_str: String = row.get(3)?;
+
             Ok(KnowledgeCard {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).unwrap(),
-                note_id: Ulid::from_string(&row.get::<_, String>(1)?).unwrap(),
+                id: Ulid::from_string(&id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
+                note_id: Ulid::from_string(&note_id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(1, rusqlite::types::Type::Text, Box::new(e)))?,
                 deck_id: row.get(2)?,
-                state: CardState::from_str(&row.get::<_, String>(3)?).unwrap(),
+                state: CardState::from_str(&state_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(3, rusqlite::types::Type::Text, Box::new(e)))?,
                 due_at: row.get(4)?,
                 stability: row.get(5)?,
                 difficulty: row.get(6)?,
@@ -227,11 +232,16 @@ pub fn get_due_cards(conn: &Connection) -> Result<Vec<KnowledgeCard>, DbError> {
                         Box::new(e),
                     )
                 })?;
+
+            let id_str: String = row.get(0)?;
+            let note_id_str: String = row.get(1)?;
+            let state_str: String = row.get(3)?;
+
             Ok(KnowledgeCard {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).unwrap(),
-                note_id: Ulid::from_string(&row.get::<_, String>(1)?).unwrap(),
+                id: Ulid::from_string(&id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
+                note_id: Ulid::from_string(&note_id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(1, rusqlite::types::Type::Text, Box::new(e)))?,
                 deck_id: row.get(2)?,
-                state: CardState::from_str(&row.get::<_, String>(3)?).unwrap(),
+                state: CardState::from_str(&state_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(3, rusqlite::types::Type::Text, Box::new(e)))?,
                 due_at: row.get(4)?,
                 stability: row.get(5)?,
                 difficulty: row.get(6)?,
@@ -248,12 +258,16 @@ pub fn get_review_logs(conn: &Connection, card_id: Ulid) -> Result<Vec<ReviewLog
     let mut stmt = conn.prepare("SELECT id, card_id, review_at, rating, state, due_at, stability, difficulty, lapses FROM review_log WHERE card_id = ?1")?;
     let logs = stmt
         .query_map([card_id.to_string()], |row| {
+            let id_str: String = row.get(0)?;
+            let card_id_str: String = row.get(1)?;
+            let state_str: String = row.get(4)?;
+
             Ok(ReviewLog {
-                id: Ulid::from_string(&row.get::<_, String>(0)?).unwrap(),
-                card_id: Ulid::from_string(&row.get::<_, String>(1)?).unwrap(),
+                id: Ulid::from_string(&id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
+                card_id: Ulid::from_string(&card_id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(1, rusqlite::types::Type::Text, Box::new(e)))?,
                 review_at: row.get(2)?,
                 rating: row.get(3)?,
-                state: CardState::from_str(&row.get::<_, String>(4)?).unwrap(),
+                state: CardState::from_str(&state_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(4, rusqlite::types::Type::Text, Box::new(e)))?,
                 due_at: row.get(5)?,
                 stability: row.get(6)?,
                 difficulty: row.get(7)?,
