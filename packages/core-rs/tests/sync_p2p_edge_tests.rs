@@ -4,7 +4,7 @@ use core_rs::sync::mobile_sync::{DeviceInfo, DeviceType};
 #[tokio::test]
 async fn test_p2p_network_error_propagation() {
     use chrono::{TimeZone, Utc};
-    let device_info = DeviceInfo {
+    let _device_info = DeviceInfo {
         device_id: "test_device".to_string(),
         device_name: "Test Device".to_string(),
         device_type: DeviceType::Desktop,

@@ -62,7 +62,7 @@ pub fn run_startup_maintenance(
 pub fn prune_old_posts(conn: &mut Connection, retention_days: u64) -> Result<usize> {
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .expect("Time went backwards")
         .as_secs() as i64;
 
     let retention_seconds = (retention_days * 24 * 60 * 60) as i64;
@@ -122,7 +122,7 @@ pub fn prune_old_posts(conn: &mut Connection, retention_days: u64) -> Result<usi
 pub fn cleanup_old_archives(conn: &mut Connection, archive_retention_days: u64) -> Result<usize> {
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .expect("Time went backwards")
         .as_secs() as i64;
 
     let archive_cutoff = now - (archive_retention_days * 24 * 60 * 60) as i64;

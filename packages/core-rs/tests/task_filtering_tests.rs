@@ -1,4 +1,4 @@
-use core_rs::task::{Task, TaskQueryBuilder};
+use core_rs::task::TaskQueryBuilder;
 use rusqlite::Connection;
 
 fn setup_db() -> Connection {
@@ -9,7 +9,7 @@ fn setup_db() -> Connection {
 
 #[test]
 fn test_complex_task_filtering() {
-    let conn = setup_db();
+    let _conn = setup_db();
 
     // Seed tasks
     // 1. High priority, due today
