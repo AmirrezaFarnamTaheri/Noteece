@@ -67,7 +67,7 @@ pub unsafe extern "C" fn rust_register_device(device_json: *const c_char) {
 }
 
 fn register_device_impl(json_str: &str) -> Result<(), String> {
-    let device: DiscoveredDevice = serde_json::from_str(json_str)
+    let _device: DiscoveredDevice = serde_json::from_str(json_str)
         .map_err(|e| format!("Invalid device JSON: {}", e))?;
 
     // TODO: Obtain a database connection here. The method for this depends on app architecture.
@@ -75,8 +75,7 @@ fn register_device_impl(json_str: &str) -> Result<(), String> {
 
     // crate::sync_agent::register_device(&conn, &device.id, &device.name, &device.public_key)?;
 
-    log::info!("[FFI] Device registered: {}", device.id);
-    Ok(())
+    Err("Device registration not yet implemented".to_string())
 }
 
 /// Initiate key exchange with a device
