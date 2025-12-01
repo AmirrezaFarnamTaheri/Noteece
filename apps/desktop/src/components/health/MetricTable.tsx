@@ -1,6 +1,6 @@
 import React from 'react';
 import { Table, Text, ScrollArea, Badge } from '@mantine/core';
-import { HealthMetric } from './types';
+import { HealthMetric, getMetricColor } from './types';
 
 interface MetricTableProps {
   metrics: HealthMetric[];
@@ -65,18 +65,4 @@ export const MetricTable: React.FC<MetricTableProps> = ({ metrics, limit = 10 })
 
 const formatDate = (timestamp: number): string => {
   return new Date(timestamp * 1000).toLocaleString();
-};
-
-const getMetricColor = (type: string): string => {
-  const colors: Record<string, string> = {
-    weight: 'blue',
-    blood_pressure: 'red',
-    heart_rate: 'pink',
-    steps: 'green',
-    sleep_hours: 'violet',
-    water_intake: 'cyan',
-    exercise_minutes: 'orange',
-    calories: 'yellow',
-  };
-  return colors[type] || 'gray';
 };

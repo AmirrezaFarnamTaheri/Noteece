@@ -313,7 +313,9 @@ async function runMigrations(currentVersion: number): Promise<void> {
     let oldTags: { id: string; space_id: string; tags: string }[] = [];
     try {
       // We need to check if table exists first (it should)
-      const noteTableExists = await db.getAllAsync<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table' AND name='note'");
+      const noteTableExists = await db.getAllAsync<{ name: string }>(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='note'",
+      );
       if (noteTableExists.length > 0) {
         const tableInfo = await db.getAllAsync<{ name: string }>('PRAGMA table_info(note)');
         if (tableInfo.some((c) => c.name === 'tags')) {
@@ -450,36 +452,41 @@ async function runMigrations(currentVersion: number): Promise<void> {
         const tagMap = new Map<string, string>(); // spaceId:tagName -> tagId
 
         for (const item of oldTags) {
-            const spaceId = item.space_id || 'default';
-            // Simple comma split, assuming no complex CSV escaping was used
-            const tagNames = item.tags.split(',').map(t => t.trim()).filter(Boolean);
+          const spaceId = item.space_id || 'default';
+          // Simple comma split, assuming no complex CSV escaping was used
+          const tagNames = item.tags
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean);
 
-            for (const tagName of tagNames) {
-                const key = `${spaceId}:${tagName}`;
-                let tagId = tagMap.get(key);
+          for (const tagName of tagNames) {
+            const key = `${spaceId}:${tagName}`;
+            let tagId = tagMap.get(key);
 
-                if (!tagId) {
-                    // Check if tag exists in DB (could have been created by another note's migration loop)
-                    const existing = await db.getAllAsync<{id: string}>('SELECT id FROM tag WHERE space_id = ? AND name = ?', [spaceId, tagName]);
-                    if (existing && existing.length > 0) {
-                         tagId = existing[0].id;
-                    } else {
-                         // Generate a new ID. Since we don't have nanoid here easily without import issues in some envs,
-                         // we use a simple random string generator or UUID if available.
-                         // We can use a simple JS random string for this one-off migration.
-                         tagId = `tag_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-                         await db.runAsync('INSERT INTO tag (id, space_id, name) VALUES (?, ?, ?)', [tagId, spaceId, tagName]);
-                    }
-                    tagMap.set(key, tagId);
-                }
-
-                // Link note to tag
-                await db.runAsync('INSERT OR IGNORE INTO note_tags (note_id, tag_id) VALUES (?, ?)', [item.id, tagId]);
+            if (!tagId) {
+              // Check if tag exists in DB (could have been created by another note's migration loop)
+              const existing = await db.getAllAsync<{ id: string }>(
+                'SELECT id FROM tag WHERE space_id = ? AND name = ?',
+                [spaceId, tagName],
+              );
+              if (existing && existing.length > 0) {
+                tagId = existing[0].id;
+              } else {
+                // Generate a new ID. Since we don't have nanoid here easily without import issues in some envs,
+                // we use a simple random string generator or UUID if available.
+                // We can use a simple JS random string for this one-off migration.
+                tagId = `tag_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+                await db.runAsync('INSERT INTO tag (id, space_id, name) VALUES (?, ?, ?)', [tagId, spaceId, tagName]);
+              }
+              tagMap.set(key, tagId);
             }
+
+            // Link note to tag
+            await db.runAsync('INSERT OR IGNORE INTO note_tags (note_id, tag_id) VALUES (?, ?)', [item.id, tagId]);
+          }
         }
         console.log('Tags migration completed');
       }
-
     } catch (error) {
       console.error('Migration v4 -> v5 failed:', error);
       throw error;
@@ -692,12 +699,14 @@ export const getDatabase = (): SQLite.SQLiteDatabase => {
 };
 
 // Helper functions for common queries
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const dbQuery = async <T = any>(sql: string, params: any[] = []): Promise<T[]> => {
   const database = getDatabase();
   const result = await database.getAllAsync<T>(sql, params);
   return result;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const dbExecute = async (sql: string, params: any[] = []): Promise<void> => {
   const database = getDatabase();
   await database.runAsync(sql, params);

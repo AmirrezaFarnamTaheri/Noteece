@@ -8,16 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Granular logging infrastructure throughout the `core-rs` crate (sync, auth, project, note, import, backup).
-- Frontend logging wrapper in `apps/desktop` for tracing API calls.
-- `ts-jest-mock-import-meta` to support `import.meta` in Jest tests.
+- **UI/UX Overhaul:** Significantly enhanced the Desktop Dashboard with polished widgets for Music, Health, and Social.
+- **Music Widget:** Implemented a new glassmorphism design with visualizers and "disconnected" state handling.
+- **Health Widget:** Added robust visualization for health metrics with empty state handling and proper unit formatting.
+- **Mobile Polish:** Enhanced `HealthHub` and `MusicHub` screens with better error handling, loading states, and data seeding for demo purposes.
+- **Safety:** Replaced unsafe `unwrap()` calls in `srs.rs` and `versioning.rs` with proper error propagation.
+- **Linting:** Resolved over 100 ESLint warnings in the Desktop and Mobile applications, improving code quality and type safety.
 
 ### Fixed
-- Desktop Jest configuration to correctly handle ESM and `import.meta`.
-- Fixed React Native VirtualizedList component testing issues.
-- Resolved numerous Rust clippy warnings (unused variables, deprecated functions, etc.).
-- Fixed database queries in `correlation` module to match schema (removed non-existent columns).
-- Addressed `react-beautiful-dnd` type import issues in Desktop.
+- **Mobile Database:** Fixed formatting and potential migration issues in `apps/mobile/src/lib/database.ts`.
+- **React Hooks:** Resolved missing dependency warnings in `useEffect` hooks across the mobile app.
+- **Object Injection:** Mitigated potential security risks by using safe object access patterns in frontend components.
+- **Rust Clippy:** Fixed remaining Rust clippy warnings in `core-rs`.
 
 ## [1.1.0] - 2024-05-20
 

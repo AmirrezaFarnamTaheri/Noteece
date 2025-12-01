@@ -3,21 +3,10 @@
  */
 
 import React, { useMemo } from 'react';
-import { Card, Title, Text, Group, Select, Stack, Badge } from '@mantine/core';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-} from 'recharts';
+import { Card, Title, Text, Group, Select, Stack } from '@mantine/core';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react';
-import { HealthMetric, METRIC_TYPES } from './HealthMetricsPanel';
+import { HealthMetric, METRIC_TYPES } from '../../health/types';
 
 interface HealthChartsProps {
   metrics: HealthMetric[];
@@ -26,6 +15,16 @@ interface HealthChartsProps {
   timeRange: '7d' | '30d' | '90d' | '365d';
   onTimeRangeChange: (range: '7d' | '30d' | '90d' | '365d') => void;
 }
+
+const getRangeMs = (range: string): number => {
+  const ranges: Record<string, number> = {
+    '7d': 7 * 24 * 60 * 60 * 1000,
+    '30d': 30 * 24 * 60 * 60 * 1000,
+    '90d': 90 * 24 * 60 * 60 * 1000,
+    '365d': 365 * 24 * 60 * 60 * 1000,
+  };
+  return ranges[range] || ranges['30d'];
+};
 
 export const HealthCharts: React.FC<HealthChartsProps> = ({
   metrics,
@@ -37,12 +36,7 @@ export const HealthCharts: React.FC<HealthChartsProps> = ({
   // Filter and prepare chart data
   const chartData = useMemo(() => {
     const now = Date.now();
-    const rangeMs = {
-      '7d': 7 * 24 * 60 * 60 * 1000,
-      '30d': 30 * 24 * 60 * 60 * 1000,
-      '90d': 90 * 24 * 60 * 60 * 1000,
-      '365d': 365 * 24 * 60 * 60 * 1000,
-    }[timeRange];
+    const rangeMs = getRangeMs(timeRange);
 
     const cutoff = now - rangeMs;
 
@@ -63,6 +57,10 @@ export const HealthCharts: React.FC<HealthChartsProps> = ({
     const first = chartData[0].value;
     const lastItem = chartData.at(-1);
     const last = lastItem?.value ?? first;
+
+    // Avoid division by zero
+    if (first === 0) return { direction: 'neutral', percentage: 0 };
+
     const percentage = ((last - first) / first) * 100;
 
     return {

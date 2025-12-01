@@ -22,30 +22,7 @@ import { DateTimePicker } from '@mantine/dates';
 import { IconPlus, IconActivity } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { logger } from '@/utils/logger';
-
-export interface HealthMetric {
-  id: string;
-  space_id: string;
-  metric_type: string;
-  value: number;
-  unit: string;
-  notes?: string;
-  recorded_at: number;
-  created_at: number;
-}
-
-export const METRIC_TYPES = [
-  { value: 'weight', label: 'Weight', unit: 'kg' },
-  { value: 'steps', label: 'Steps', unit: 'steps' },
-  { value: 'sleep', label: 'Sleep', unit: 'hours' },
-  { value: 'water', label: 'Water Intake', unit: 'ml' },
-  { value: 'calories', label: 'Calories', unit: 'kcal' },
-  { value: 'heart_rate', label: 'Heart Rate', unit: 'bpm' },
-  { value: 'blood_pressure_sys', label: 'Blood Pressure (Systolic)', unit: 'mmHg' },
-  { value: 'blood_pressure_dia', label: 'Blood Pressure (Diastolic)', unit: 'mmHg' },
-  { value: 'mood', label: 'Mood', unit: 'score' },
-  { value: 'energy', label: 'Energy Level', unit: 'score' },
-];
+import { METRIC_TYPES, HealthMetric } from '../../health/types';
 
 interface HealthMetricsPanelProps {
   spaceId: string;
