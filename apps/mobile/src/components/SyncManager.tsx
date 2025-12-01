@@ -24,7 +24,7 @@ const SyncManager: React.FC = () => {
     try {
       setIsScanning(true);
       const devices = await syncClient.discoverDevices();
-      setDiscoveredDevices(devices.map(d => ({...d, protocol: 'typescript'})));
+      setDiscoveredDevices(devices.map((d) => ({ ...d, protocol: 'typescript' })));
     } catch (error) {
       Alert.alert('Discovery Error', error instanceof Error ? error.message : 'Unknown error');
     } finally {
