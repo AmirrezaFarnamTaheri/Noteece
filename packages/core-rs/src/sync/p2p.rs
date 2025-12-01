@@ -79,26 +79,52 @@ impl P2pSync {
                             Some(Ok(msg)) if msg.is_text() => {
                                 let text = msg.to_text().unwrap_or_default();
                                 match serde_json::from_str::<serde_json::Value>(text) {
-                                    Ok(req) if req.get("type") == Some(&serde_json::Value::String("handshake".to_string())) => {
+                                    Ok(req)
+                                        if req.get("type")
+                                            == Some(&serde_json::Value::String(
+                                                "handshake".to_string(),
+                                            )) =>
+                                    {
                                         let response = serde_json::json!({
                                             "type": "handshake_response",
                                             "publicKey": *server_pubkey
                                         });
-                                        if let Err(e) = writer.send(tokio_tungstenite::tungstenite::Message::Text(response.to_string())).await {
-                                            log::error!("[p2p] Failed to send handshake_response: {}", e);
+                                        if let Err(e) = writer
+                                            .send(tokio_tungstenite::tungstenite::Message::Text(
+                                                response.to_string(),
+                                            ))
+                                            .await
+                                        {
+                                            log::error!(
+                                                "[p2p] Failed to send handshake_response: {}",
+                                                e
+                                            );
                                             return;
                                         }
                                     }
                                     _ => {
-                                        log::warn!("[p2p] Invalid or unexpected first message from {}", peer_addr);
-                                        let _ = writer.send(tokio_tungstenite::tungstenite::Message::Close(None)).await;
+                                        log::warn!(
+                                            "[p2p] Invalid or unexpected first message from {}",
+                                            peer_addr
+                                        );
+                                        let _ = writer
+                                            .send(tokio_tungstenite::tungstenite::Message::Close(
+                                                None,
+                                            ))
+                                            .await;
                                         return;
                                     }
                                 }
                             }
                             Some(Ok(other)) => {
-                                log::warn!("[p2p] Non-text first frame from {}: {:?}", peer_addr, other);
-                                let _ = writer.send(tokio_tungstenite::tungstenite::Message::Close(None)).await;
+                                log::warn!(
+                                    "[p2p] Non-text first frame from {}: {:?}",
+                                    peer_addr,
+                                    other
+                                );
+                                let _ = writer
+                                    .send(tokio_tungstenite::tungstenite::Message::Close(None))
+                                    .await;
                                 return;
                             }
                             Some(Err(e)) => {
@@ -106,7 +132,10 @@ impl P2pSync {
                                 return;
                             }
                             None => {
-                                log::warn!("[p2p] Connection closed before handshake from {}", peer_addr);
+                                log::warn!(
+                                    "[p2p] Connection closed before handshake from {}",
+                                    peer_addr
+                                );
                                 return;
                             }
                         }
@@ -119,9 +148,14 @@ impl P2pSync {
                                 Message::Text(text) => {
                                     // Deserialize delta from text, process it with SyncProtocol
                                     if let Ok(delta) = serde_json::from_str::<SyncDelta>(&text) {
-                                        if let Ok(response_delta) = proto_guard.handle_delta(delta).await {
-                                            if let Ok(response_text) = serde_json::to_string(&response_delta) {
-                                                let _ = writer.send(Message::Text(response_text)).await;
+                                        if let Ok(response_delta) =
+                                            proto_guard.handle_delta(delta).await
+                                        {
+                                            if let Ok(response_text) =
+                                                serde_json::to_string(&response_delta)
+                                            {
+                                                let _ =
+                                                    writer.send(Message::Text(response_text)).await;
                                             }
                                         }
                                     }

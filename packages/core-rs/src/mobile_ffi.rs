@@ -4,10 +4,34 @@
 
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
+use std::sync::Mutex;
 use serde_json;
+use lazy_static::lazy_static;
 
 use crate::sync::discovery::DiscoveredDevice;
-use crate::sync_agent::{SyncAgent, SyncConflict, ConflictResolution, SyncProgress};
+use crate::sync_agent::{SyncAgent, SyncConflict, ConflictResolution, SyncProgress, DeviceInfo, DeviceType};
+
+lazy_static! {
+    static ref DB_PATH: Mutex<Option<String>> = Mutex::new(None);
+}
+
+/// Initialize the FFI layer with the database path
+///
+/// # Safety
+/// db_path must be a valid null-terminated C string
+#[no_mangle]
+pub unsafe extern "C" fn rust_init(db_path: *const c_char) {
+    if db_path.is_null() {
+        return;
+    }
+
+    let c_str = CStr::from_ptr(db_path);
+    if let Ok(path) = c_str.to_str() {
+        let mut db_path_guard = DB_PATH.lock().unwrap();
+        *db_path_guard = Some(path.to_string());
+        log::info!("[FFI] Initialized with DB path: {}", path);
+    }
+}
 
 /// Free a string allocated by Rust
 ///
@@ -67,15 +91,50 @@ pub unsafe extern "C" fn rust_register_device(device_json: *const c_char) {
 }
 
 fn register_device_impl(json_str: &str) -> Result<(), String> {
-    let _device: DiscoveredDevice = serde_json::from_str(json_str)
+    let device: DiscoveredDevice = serde_json::from_str(json_str)
         .map_err(|e| format!("Invalid device JSON: {}", e))?;
 
-    // TODO: Obtain a database connection here. The method for this depends on app architecture.
-    // let conn = obtain_db_connection()?;
+    let conn = obtain_db_connection()?;
 
-    // crate::sync_agent::register_device(&conn, &device.id, &device.name, &device.public_key)?;
+    let device_info = DeviceInfo {
+        device_id: device.id.clone(),
+        device_name: device.name.clone(),
+        device_type: DeviceType::Desktop, // Defaulting to Desktop as usually we discover other desktops
+        last_seen: chrono::Utc::now().timestamp(),
+        sync_address: device.address.clone(),
+        sync_port: device.port,
+        protocol_version: "1.0.0".to_string(),
+    };
 
-    Err("Device registration not yet implemented".to_string())
+    // Create a temporary agent to use the register logic
+    // We don't need real local device info for registering a remote device
+    let agent = SyncAgent::new("ffi_agent".to_string(), "FFI Agent".to_string(), 0);
+
+    agent.register_device(&conn, &device_info)
+        .map_err(|e| format!("Failed to register device: {}", e))?;
+
+    log::info!("[FFI] Device {} registered successfully", device.name);
+    Ok(())
+}
+
+fn obtain_db_connection() -> Result<rusqlite::Connection, String> {
+    let db_path_guard = DB_PATH.lock().unwrap();
+
+    let path = if let Some(p) = &*db_path_guard {
+        p.clone()
+    } else {
+        #[cfg(target_os = "android")]
+        let default_path = "/data/data/com.noteece.app/files/noteece.db".to_string();
+
+        #[cfg(not(target_os = "android"))]
+        let default_path = "noteece.db".to_string();
+
+        log::warn!("[FFI] DB path not initialized, using default: {}", default_path);
+        default_path
+    };
+
+    rusqlite::Connection::open(&path)
+        .map_err(|e| format!("Failed to open DB at {}: {}", path, e))
 }
 
 /// Initiate key exchange with a device
@@ -300,8 +359,8 @@ pub unsafe extern "C" fn rust_resolve_conflict(
 
 fn resolve_conflict_impl(conflict_id: &str, resolution: &str) -> Result<(), String> {
     let _resolution = match resolution {
-        "keep_local" => ConflictResolution::KeepLocal,
-        "keep_remote" => ConflictResolution::KeepRemote,
+        "keep_local" => ConflictResolution::UseLocal,
+        "keep_remote" => ConflictResolution::UseRemote,
         "merge" => ConflictResolution::Merge,
         _ => return Err(format!("Invalid resolution: {}", resolution)),
     };
@@ -350,4 +409,3 @@ mod tests {
         unsafe { rust_free_string(result); }
     }
 }
-
