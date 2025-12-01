@@ -4,12 +4,13 @@
 use super::discovery::{DiscoveredDevice, DiscoveryService};
 use super::mobile_sync::{DeltaOperation, DeviceInfo, SyncCategory, SyncDelta, SyncProtocol};
 use crate::sync_agent::{SyncDelta as DbSyncDelta, SyncOperation as DbSyncOperation};
+use futures::{SinkExt, StreamExt};
 use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
-use tokio::io::AsyncReadExt;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
+use tokio_tungstenite::accept_async;
 
 #[derive(Error, Debug)]
 pub enum P2pError {
@@ -24,7 +25,7 @@ pub enum P2pError {
 }
 
 pub struct P2pSync {
-    discovery: Arc<DiscoveryService>,
+    pub discovery: Arc<DiscoveryService>,
     protocol: Arc<Mutex<SyncProtocol>>,
 }
 
@@ -45,32 +46,58 @@ impl P2pSync {
             .map_err(|e| P2pError::Network(e.to_string()))?;
         log::info!("[p2p] Sync server listening on port {}", port);
 
+        // Get server public key for handshake
+        let server_pubkey_b64 = {
+            let proto = self.protocol.lock().await;
+            base64::encode(&proto.device_info.public_key)
+        };
+        let server_pubkey_b64 = Arc::new(server_pubkey_b64);
+
         loop {
-            let (mut socket, _) = listener
+            let (stream, _) = listener
                 .accept()
                 .await
                 .map_err(|e| P2pError::Network(e.to_string()))?;
 
-            let peer_addr = socket
+            let peer_addr = stream
                 .peer_addr()
                 .map(|a| a.to_string())
-                .unwrap_or_else(|_| "unknown".to_string());
+                .unwrap_or_default();
             log::info!("[p2p] New connection from {}", peer_addr);
 
-            // In a real implementation, we would hand off the socket to the protocol handler
-            // to perform the handshake and exchange data.
+            let server_pubkey = server_pubkey_b64.clone();
+
             tokio::spawn(async move {
-                let mut buf = [0; 1024];
-                loop {
-                    let n = match socket.read(&mut buf).await {
-                        Ok(0) => return,
-                        Ok(n) => n,
-                        Err(e) => {
-                            log::error!("[p2p] failed to read from socket; err = {:?}", e);
-                            return;
+                // Upgrade to WebSocket
+                if let Ok(ws_stream) = accept_async(stream).await {
+                    let (mut writer, mut reader) = ws_stream.split();
+                    // Wait for handshake message from client
+                    if let Some(Ok(msg)) = reader.next().await {
+                        if msg.is_text() {
+                            if let Ok(req) =
+                                serde_json::from_str::<serde_json::Value>(&msg.to_text().unwrap())
+                            {
+                                if req.get("type")
+                                    == Some(&serde_json::Value::String("handshake".to_string()))
+                                {
+                                    // Send handshake_response with this device's public key
+                                    let response = serde_json::json!({
+                                        "type": "handshake_response",
+                                        "publicKey": *server_pubkey
+                                    });
+                                    let _ = writer
+                                        .send(tokio_tungstenite::tungstenite::Message::Text(
+                                            response.to_string(),
+                                        ))
+                                        .await;
+                                }
+                            }
                         }
-                    };
-                    log::info!("[p2p] received {} bytes", n);
+                    }
+                    // After handshake, invoke SyncProtocol to handle sync exchange
+                    // TODO: Implement full delta sync exchange via self.protocol here.
+                } else {
+                    log::error!("[p2p] WebSocket upgrade failed for {}", peer_addr);
                 }
             });
         }
@@ -124,9 +151,7 @@ impl P2pSync {
 
 // Conversion helpers between Database SyncDelta and Protocol SyncDelta
 pub fn db_delta_to_protocol_delta(db_delta: DbSyncDelta) -> SyncDelta {
-    // TODO: Implement proper vector clock sequence numbers to ensure causal ordering.
-    // Currently using timestamp-based ordering as a fallback, which is vulnerable to clock skew.
-    // See ISSUES.md regarding "P2P Sync Vector Clocks".
+    // Use vector clock sequence number for causal ordering if available, otherwise fallback to 0.
     if let Some(vc) = db_delta.vector_clock.get("local") {
         log::trace!("[p2p] Using local vector clock sequence: {}", vc);
     } else {
@@ -135,6 +160,9 @@ pub fn db_delta_to_protocol_delta(db_delta: DbSyncDelta) -> SyncDelta {
             db_delta.entity_id
         );
     }
+    let seq = db_delta.vector_clock.get("local").cloned().unwrap_or(0);
+    let mut vc = db_delta.vector_clock.clone();
+    vc.insert("local".to_string(), seq);
 
     SyncDelta {
         operation: match db_delta.operation {
@@ -148,15 +176,17 @@ pub fn db_delta_to_protocol_delta(db_delta: DbSyncDelta) -> SyncDelta {
         timestamp: chrono::DateTime::from_timestamp(db_delta.timestamp, 0)
             .unwrap_or(chrono::Utc::now()),
         data_hash: None,
-        sequence: 0, // Placeholder: Protocol sequence negotiation required for full consistency
+        sequence: seq as u64, // Use vector clock sequence for consistency
+        vector_clock: vc,
     }
 }
 
 pub fn protocol_delta_to_db_delta(proto_delta: SyncDelta) -> DbSyncDelta {
-    // TODO: Integrate vector clock logic from CRDT module.
-    // This requires tracking the state vector of the remote device.
-    log::warn!("[p2p] Receiving delta without vector clock integration. Conflict resolution may be suboptimal.");
-
+    // Integrate vector clock from remote delta to improve conflict resolution.
+    let mut vc_map = std::collections::HashMap::new();
+    for (dev, counter) in proto_delta.vector_clock.iter() {
+        vc_map.insert(dev.clone(), *counter);
+    }
     DbSyncDelta {
         entity_type: proto_delta.entity_type,
         entity_id: proto_delta.entity_id,
@@ -167,7 +197,7 @@ pub fn protocol_delta_to_db_delta(proto_delta: SyncDelta) -> DbSyncDelta {
         },
         data: proto_delta.encrypted_data,
         timestamp: proto_delta.timestamp.timestamp(),
-        vector_clock: std::collections::HashMap::new(), // Needs vector clock logic integration
+        vector_clock: vc_map,
         space_id: None, // Protocol needs to carry space_id if we want to populate this correctly
     }
 }

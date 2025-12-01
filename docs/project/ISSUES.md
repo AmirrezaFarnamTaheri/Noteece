@@ -168,3 +168,24 @@ When reporting a new issue, please include:
 ---
 
 _For security vulnerabilities, please see [SECURITY.md](SECURITY.md) for responsible disclosure._
+
+## Resolved Issues (Audit)
+- [x] P2P Sync: Implemented vector clock propagation and WebSocket handshake.
+- [x] Discovery: Desktop now advertises itself via MDNS.
+- [x] Mobile FFI: Fixed compilation bug and implemented discovery stub.
+- [x] Sync Progress: Fixed progress calculation logic.
+- [x] Task Board: Added optimistic UI updates for better performance.
+
+## Resolved Issues (Audit)
+- [x] P2P Sync: Implemented vector clock propagation and WebSocket handshake.
+- [x] Discovery: Desktop now advertises itself via MDNS.
+- [x] Mobile FFI: Fixed compilation bug and implemented discovery stub.
+- [x] Sync Progress: Fixed progress calculation logic.
+- [x] Task Board: Added optimistic UI updates for better performance.
+
+## Resolved Issues (Audit)
+- [x] P2P Sync: Implemented vector clock propagation and WebSocket handshake.
+- [x] Discovery: Desktop now advertises itself via MDNS.
+- [x] Mobile FFI: Fixed compilation bug and implemented discovery stub.
+- [x] Sync Progress: Fixed progress calculation logic.
+- [x] Task Board: Added optimistic UI updates for better performance.

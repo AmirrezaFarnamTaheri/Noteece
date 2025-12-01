@@ -176,6 +176,9 @@ pub struct SyncDelta {
 
     /// Sequence number for ordering
     pub sequence: u64,
+
+    /// Vector clock for causal ordering
+    pub vector_clock: HashMap<String, i64>,
 }
 
 /// Operation type in sync delta
@@ -278,7 +281,7 @@ pub struct PairingResponse {
 /// Sync protocol handler
 pub struct SyncProtocol {
     /// This device's info
-    device_info: Arc<DeviceInfo>,
+    pub device_info: Arc<DeviceInfo>,
 
     /// Paired devices
     paired_devices: Vec<DeviceInfo>,
@@ -724,6 +727,7 @@ mod tests {
                 timestamp: Utc::now(),
                 data_hash: None,
                 sequence: 1,
+                vector_clock: HashMap::new(),
             },
             SyncDelta {
                 operation: DeltaOperation::Update,
@@ -733,6 +737,7 @@ mod tests {
                 timestamp: Utc::now(),
                 data_hash: None,
                 sequence: 2,
+                vector_clock: HashMap::new(),
             },
             SyncDelta {
                 operation: DeltaOperation::Delete,
@@ -742,6 +747,7 @@ mod tests {
                 timestamp: Utc::now(),
                 data_hash: None,
                 sequence: 3,
+                vector_clock: HashMap::new(),
             },
         ];
 
