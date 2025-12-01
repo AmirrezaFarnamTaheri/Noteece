@@ -14,11 +14,6 @@ interface UserTableProps {
  * User Table Component - Displays list of users with actions
  */
 export const UserTable: React.FC<UserTableProps> = ({ users, onEdit, onToggleStatus, onRemove }) => {
-  const formatDate = (timestamp: number | null) => {
-    if (!timestamp) return 'Never';
-    return new Date(timestamp * 1000).toLocaleDateString();
-  };
-
   if (users.length === 0) {
     return (
       <Text c="dimmed" ta="center" py="xl">
@@ -99,4 +94,9 @@ export const UserTable: React.FC<UserTableProps> = ({ users, onEdit, onToggleSta
       <Table.Tbody>{rows}</Table.Tbody>
     </Table>
   );
+};
+
+const formatDate = (timestamp: number | null) => {
+  if (!timestamp) return 'Never';
+  return new Date(timestamp * 1000).toLocaleDateString();
 };

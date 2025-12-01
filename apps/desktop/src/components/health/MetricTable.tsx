@@ -21,24 +21,6 @@ export const MetricTable: React.FC<MetricTableProps> = ({ metrics, limit = 10 })
     );
   }
 
-  const formatDate = (timestamp: number): string => {
-    return new Date(timestamp * 1000).toLocaleString();
-  };
-
-  const getMetricColor = (type: string): string => {
-    const colors: Record<string, string> = {
-      weight: 'blue',
-      blood_pressure: 'red',
-      heart_rate: 'pink',
-      steps: 'green',
-      sleep_hours: 'violet',
-      water_intake: 'cyan',
-      exercise_minutes: 'orange',
-      calories: 'yellow',
-    };
-    return colors[type] || 'gray';
-  };
-
   const rows = displayMetrics.map((metric) => (
     <Table.Tr key={metric.id}>
       <Table.Td>
@@ -79,4 +61,22 @@ export const MetricTable: React.FC<MetricTableProps> = ({ metrics, limit = 10 })
       </Table>
     </ScrollArea>
   );
+};
+
+const formatDate = (timestamp: number): string => {
+  return new Date(timestamp * 1000).toLocaleString();
+};
+
+const getMetricColor = (type: string): string => {
+  const colors: Record<string, string> = {
+    weight: 'blue',
+    blood_pressure: 'red',
+    heart_rate: 'pink',
+    steps: 'green',
+    sleep_hours: 'violet',
+    water_intake: 'cyan',
+    exercise_minutes: 'orange',
+    calories: 'yellow',
+  };
+  return colors[type] || 'gray';
 };

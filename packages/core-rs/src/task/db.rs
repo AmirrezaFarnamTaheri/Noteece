@@ -138,7 +138,9 @@ fn handle_recurrence(conn: &Connection, task: &Task) -> Result<(), DbError> {
                     Ok(rrule_set) => {
                         // RRuleSet implements IntoIterator
                         // We want the first occurrence *after* current_due
-                        let next = rrule_set.into_iter().find(|dt| dt.timestamp() > current_due);
+                        let next = rrule_set
+                            .into_iter()
+                            .find(|dt| dt.timestamp() > current_due);
                         next.map(|dt| dt.timestamp())
                     }
                     Err(e) => {

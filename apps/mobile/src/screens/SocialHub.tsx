@@ -19,6 +19,7 @@ import {
   TextInput,
   Modal,
 } from 'react-native';
+// @ts-ignore: expo vector icons type mismatch
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PostCard } from '../components/social/PostCard';

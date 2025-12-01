@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, ScrollView } from 'react-native';
 import { NativeModules } from 'react-native';
+// @ts-ignore: expo vector icons type mismatch
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const { AppLauncher } = NativeModules;

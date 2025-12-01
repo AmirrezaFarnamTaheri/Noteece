@@ -36,6 +36,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ opened, onClose, u
         customPermissions,
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, roles]);
 
   if (!user) return null;

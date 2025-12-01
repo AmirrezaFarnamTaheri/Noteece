@@ -16,6 +16,7 @@ jest.mock('react-window', () => ({
       itemData,
       height,
     }: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       children: React.ComponentType<any>;
       itemCount: number;
       itemData: unknown;
@@ -118,6 +119,7 @@ describe('VirtualizedList', () => {
   });
 
   it('applies custom className', () => {
+    // eslint-disable-next-line tailwindcss/no-custom-classname
     renderWithProviders(<VirtualizedList {...defaultProps} className="custom-list-class" />);
 
     expect(screen.getByTestId('virtualized-list')).toBeInTheDocument();

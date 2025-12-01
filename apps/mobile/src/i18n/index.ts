@@ -28,7 +28,9 @@ const languageDetector = {
       }
 
       // Fall back to device language
-      const deviceLanguage = Localization.locale.split('-')[0]; // Get 'en' from 'en-US'
+      // @ts-ignore: expo-localization type mismatch
+      const locales = Localization.getLocales();
+      const deviceLanguage = locales?.[0]?.languageCode || 'en';
       callback(deviceLanguage);
     } catch (error) {
       console.error('Error detecting language:', error);

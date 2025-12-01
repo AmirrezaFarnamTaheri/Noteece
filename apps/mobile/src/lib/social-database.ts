@@ -478,7 +478,8 @@ function safeParsePlatformArray(val: any): Platform[] {
   if (!val) return [];
   try {
     const parsed = typeof val === 'string' ? JSON.parse(val) : val;
-    return Array.isArray(parsed) ? parsed.filter((p) => typeof p === 'string') : [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return Array.isArray(parsed) ? parsed.filter((p: any): p is Platform => typeof p === 'string') : [];
   } catch {
     return [];
   }

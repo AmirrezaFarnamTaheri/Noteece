@@ -12,7 +12,8 @@ describe('useTodayTimeline', () => {
   });
 
   it('fetches and combines data correctly', async () => {
-    const mockInsights = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mockInsights: any[] = [];
     const mockTasks = [{ id: 't1', title: 'Task 1', completed: false, due_at: Date.now() }];
     const mockEvents = [{ id: 'e1', title: 'Event 1', start_time: Date.now() }];
 

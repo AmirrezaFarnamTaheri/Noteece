@@ -234,7 +234,7 @@ export const AISettings: React.FC = () => {
         </Group>
 
         <Alert icon={<IconAlertCircle size={16} />} color="yellow" mb="md">
-          Cloud AI sends prompts to external servers. Check each provider's privacy policy.
+          Cloud AI sends prompts to external servers. Check each provider&apos;s privacy policy.
         </Alert>
 
         <Stack gap="sm">

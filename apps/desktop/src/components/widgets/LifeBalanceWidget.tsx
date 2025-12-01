@@ -149,14 +149,6 @@ export function LifeBalanceWidget({ spaceId, timeRange = 'week', showTargets = t
     return Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 100);
   }, [data, chartData]);
 
-  // Get balance status
-  const getBalanceStatus = (score: number) => {
-    if (score >= 80) return { label: 'Excellent', color: 'green' };
-    if (score >= 60) return { label: 'Good', color: 'blue' };
-    if (score >= 40) return { label: 'Needs Attention', color: 'yellow' };
-    return { label: 'Imbalanced', color: 'red' };
-  };
-
   const status = getBalanceStatus(balanceScore);
 
   if (isLoading) {
@@ -239,3 +231,11 @@ export function LifeBalanceWidget({ spaceId, timeRange = 'week', showTargets = t
 }
 
 export default LifeBalanceWidget;
+
+// Get balance status
+const getBalanceStatus = (score: number) => {
+  if (score >= 80) return { label: 'Excellent', color: 'green' };
+  if (score >= 60) return { label: 'Good', color: 'blue' };
+  if (score >= 40) return { label: 'Needs Attention', color: 'yellow' };
+  return { label: 'Imbalanced', color: 'red' };
+};

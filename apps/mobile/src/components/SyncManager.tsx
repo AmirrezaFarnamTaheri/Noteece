@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Alert } from 'react-native';
-import { SyncClient, DiscoveredDevice, SyncStatus } from '../lib/sync/sync-client';
+import { SyncClient, SyncStatus } from '../lib/sync/sync-client';
+import { DiscoveredDevice } from '../lib/sync/sync-bridge';
 
 const SyncManager: React.FC = () => {
   const [syncClient] = useState(() => new SyncClient());
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
     status: 'idle',
     message: 'Ready to sync',
+    active: false,
     progress: 0,
   });
   const [discoveredDevices, setDiscoveredDevices] = useState<DiscoveredDevice[]>([]);
@@ -14,14 +16,15 @@ const SyncManager: React.FC = () => {
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
 
   const updateStatus = useCallback(() => {
-    setSyncStatus(syncClient.getSyncStatus());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setSyncStatus(syncClient.getSyncStatus() as any);
   }, [syncClient]);
 
   const discoverDevices = useCallback(async () => {
     try {
       setIsScanning(true);
       const devices = await syncClient.discoverDevices();
-      setDiscoveredDevices(devices);
+      setDiscoveredDevices(devices.map(d => ({...d, protocol: 'typescript'})));
     } catch (error) {
       Alert.alert('Discovery Error', error instanceof Error ? error.message : 'Unknown error');
     } finally {

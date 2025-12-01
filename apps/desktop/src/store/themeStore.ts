@@ -110,7 +110,7 @@ export function initializeTheme(): () => void {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
     const handleChange = () => {
-      store.syncWithSystem();
+      useThemeStore.getState().syncWithSystem();
     };
 
     // Modern browsers
