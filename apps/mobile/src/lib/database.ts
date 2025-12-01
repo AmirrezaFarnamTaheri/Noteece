@@ -308,6 +308,30 @@ async function runMigrations(currentVersion: number): Promise<void> {
   // Migration from v4 to v5: Consolidate with core-rs schema
   if (currentVersion < 5) {
     console.log('Running migration v4 -> v5: Consolidate with core-rs schema');
+
+    // Check for tags column in old note table before it gets dropped/altered
+    let oldTags: { id: string; space_id: string; tags: string }[] = [];
+    try {
+      // We need to check if table exists first (it should)
+      const noteTableExists = await db.getAllAsync<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table' AND name='note'");
+      if (noteTableExists.length > 0) {
+        const tableInfo = await db.getAllAsync<{ name: string }>('PRAGMA table_info(note)');
+        if (tableInfo.some((c) => c.name === 'tags')) {
+          // Check if space_id exists
+          const hasSpaceId = tableInfo.some((c) => c.name === 'space_id');
+          // We default to 'default' if space_id is missing, as we backfill space 'default' later anyway if needed
+          const query = hasSpaceId
+            ? 'SELECT id, space_id, tags FROM note WHERE tags IS NOT NULL AND tags != ""'
+            : 'SELECT id, "default" as space_id, tags FROM note WHERE tags IS NOT NULL AND tags != ""';
+
+          oldTags = await db.getAllAsync(query);
+          console.log(`[Migration] Found ${oldTags.length} notes with tags to migrate`);
+        }
+      }
+    } catch (e) {
+      console.warn('[Migration] Failed to read old tags for migration', e);
+    }
+
     try {
       await db.execAsync(`
         -- Create Space table
@@ -411,17 +435,51 @@ async function runMigrations(currentVersion: number): Promise<void> {
         -- Note: SQLite doesn't have a built-in split function, so we do a best-effort migration
         -- assuming tags were stored as simple strings or we rely on the app to re-sync tags later.
         -- For this migration, we will assume 'tags' column in old note table was just a string.
-        -- A proper tag migration would require application-level logic or complex recursive CTEs.
-        -- Given this is a "cleanup" migration, preserving the note content is priority.
-        -- We log a warning or todo here: Tags migration skipped due to complexity in pure SQL.
-        -- Users should re-sync from desktop to restore tags fully.
+        -- We have captured the tags in memory above and will re-insert them after schema update.
 
         DROP TABLE note;
         ALTER TABLE note_new RENAME TO note;
 
         CREATE INDEX idx_note_mod ON note(modified_at DESC);
       `);
-      console.log('Migration v4 -> v5 completed successfully');
+      console.log('Migration v4 -> v5 schema update completed');
+
+      // Now migrate the tags we captured
+      if (oldTags.length > 0) {
+        console.log('Migrating tags into new schema...');
+        const tagMap = new Map<string, string>(); // spaceId:tagName -> tagId
+
+        for (const item of oldTags) {
+            const spaceId = item.space_id || 'default';
+            // Simple comma split, assuming no complex CSV escaping was used
+            const tagNames = item.tags.split(',').map(t => t.trim()).filter(Boolean);
+
+            for (const tagName of tagNames) {
+                const key = `${spaceId}:${tagName}`;
+                let tagId = tagMap.get(key);
+
+                if (!tagId) {
+                    // Check if tag exists in DB (could have been created by another note's migration loop)
+                    const existing = await db.getAllAsync<{id: string}>('SELECT id FROM tag WHERE space_id = ? AND name = ?', [spaceId, tagName]);
+                    if (existing && existing.length > 0) {
+                         tagId = existing[0].id;
+                    } else {
+                         // Generate a new ID. Since we don't have nanoid here easily without import issues in some envs,
+                         // we use a simple random string generator or UUID if available.
+                         // We can use a simple JS random string for this one-off migration.
+                         tagId = `tag_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+                         await db.runAsync('INSERT INTO tag (id, space_id, name) VALUES (?, ?, ?)', [tagId, spaceId, tagName]);
+                    }
+                    tagMap.set(key, tagId);
+                }
+
+                // Link note to tag
+                await db.runAsync('INSERT OR IGNORE INTO note_tags (note_id, tag_id) VALUES (?, ?)', [item.id, tagId]);
+            }
+        }
+        console.log('Tags migration completed');
+      }
+
     } catch (error) {
       console.error('Migration v4 -> v5 failed:', error);
       throw error;

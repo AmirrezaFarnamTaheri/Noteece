@@ -21,6 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { dbQuery, dbExecute } from '@/lib/database';
 import { nanoid } from 'nanoid/non-secure';
+import { useCurrentSpace } from '../store/app-context';
 import type { Track, Playlist } from '../types/music';
 
 // Database helper functions for loading music data
@@ -90,9 +91,8 @@ async function loadPlaylistsFromDatabase(): Promise<Playlist[]> {
   }
 }
 
-async function seedMusicData() {
+async function seedMusicData(spaceId: string) {
   const now = Date.now();
-  const spaceId = 'default'; // Placeholder
 
   const tracks = [
     {
@@ -134,10 +134,11 @@ export function MusicHub() {
   const [loading, setLoading] = useState(true);
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const spaceId = useCurrentSpace();
 
   useEffect(() => {
     loadMusic();
-  }, []);
+  }, [spaceId]);
 
   const loadMusic = async () => {
     try {
@@ -146,7 +147,7 @@ export function MusicHub() {
       // Check if we need to seed data (if empty)
       const currentTracks = await loadTracksFromDatabase();
       if (currentTracks.length === 0) {
-        await seedMusicData();
+        await seedMusicData(spaceId);
       }
 
       // Load tracks and playlists from local database
