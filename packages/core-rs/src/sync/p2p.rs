@@ -113,14 +113,18 @@ impl P2pSync {
 
                         // After handshake, handle the full sync data exchange
                         use tokio_tungstenite::tungstenite::Message;
-                        let _proto_guard = protocol.lock().await;
+                        let mut proto_guard = protocol.lock().await;
                         while let Some(Ok(msg)) = reader.next().await {
                             match msg {
-                                Message::Text(_text) => {
+                                Message::Text(text) => {
                                     // Deserialize delta from text, process it with SyncProtocol
-                                    // let delta: SyncDelta = serde_json::from_str(&text)?;
-                                    // let response_delta = proto_guard.handle_delta(delta).await?;
-                                    // writer.send(Message::Text(serde_json::to_string(&response_delta)?)).await?;
+                                    if let Ok(delta) = serde_json::from_str::<SyncDelta>(&text) {
+                                        if let Ok(response_delta) = proto_guard.handle_delta(delta).await {
+                                            if let Ok(response_text) = serde_json::to_string(&response_delta) {
+                                                let _ = writer.send(Message::Text(response_text)).await;
+                                            }
+                                        }
+                                    }
                                 }
                                 // Handle other message types (Binary, Close, etc.)
                                 _ => {}

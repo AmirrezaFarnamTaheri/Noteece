@@ -578,6 +578,15 @@ impl SyncProtocol {
             .any(|d| d.device_id == device_id && d.is_active)
     }
 
+    /// Handle an incoming sync delta
+    pub async fn handle_delta(&mut self, delta: SyncDelta) -> Result<SyncDelta, SyncProtocolError> {
+        log::debug!("[mobile_sync] Received delta: {:?}", delta);
+        // For now, we just acknowledge by returning the same delta.
+        // In a real implementation, this would apply the delta to the local database
+        // and potentially return a confirmation or conflict resolution.
+        Ok(delta)
+    }
+
     /// Constant-time comparison to prevent timing attacks
     /// Returns true only if both slices have equal length AND equal contents
     fn constant_time_compare(a: &[u8], b: &[u8]) -> bool {
