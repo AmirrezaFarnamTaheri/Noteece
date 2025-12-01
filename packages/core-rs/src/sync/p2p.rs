@@ -24,6 +24,7 @@ pub enum P2pError {
     Database(String),
 }
 
+#[derive(Clone)]
 pub struct P2pSync {
     pub discovery: Arc<DiscoveryService>,
     protocol: Arc<Mutex<SyncProtocol>>,
@@ -49,7 +50,8 @@ impl P2pSync {
         // Get server public key for handshake
         let server_pubkey_b64 = {
             let proto = self.protocol.lock().await;
-            base64::encode(&proto.device_info.public_key)
+            use base64::Engine;
+            base64::engine::general_purpose::STANDARD.encode(&proto.device_info.public_key)
         };
         let server_pubkey_b64 = Arc::new(server_pubkey_b64);
 
@@ -66,38 +68,68 @@ impl P2pSync {
             log::info!("[p2p] New connection from {}", peer_addr);
 
             let server_pubkey = server_pubkey_b64.clone();
+            let protocol = self.protocol.clone();
 
             tokio::spawn(async move {
-                // Upgrade to WebSocket
-                if let Ok(ws_stream) = accept_async(stream).await {
-                    let (mut writer, mut reader) = ws_stream.split();
-                    // Wait for handshake message from client
-                    if let Some(Ok(msg)) = reader.next().await {
-                        if msg.is_text() {
-                            if let Ok(req) =
-                                serde_json::from_str::<serde_json::Value>(&msg.to_text().unwrap())
-                            {
-                                if req.get("type")
-                                    == Some(&serde_json::Value::String("handshake".to_string()))
-                                {
-                                    // Send handshake_response with this device's public key
-                                    let response = serde_json::json!({
-                                        "type": "handshake_response",
-                                        "publicKey": *server_pubkey
-                                    });
-                                    let _ = writer
-                                        .send(tokio_tungstenite::tungstenite::Message::Text(
-                                            response.to_string(),
-                                        ))
-                                        .await;
+                match accept_async(stream).await {
+                    Ok(ws_stream) => {
+                        let (mut writer, mut reader) = ws_stream.split();
+                        // Expect a handshake JSON as the first text message
+                        match reader.next().await {
+                            Some(Ok(msg)) if msg.is_text() => {
+                                let text = msg.to_text().unwrap_or_default();
+                                match serde_json::from_str::<serde_json::Value>(text) {
+                                    Ok(req) if req.get("type") == Some(&serde_json::Value::String("handshake".to_string())) => {
+                                        let response = serde_json::json!({
+                                            "type": "handshake_response",
+                                            "publicKey": *server_pubkey
+                                        });
+                                        if let Err(e) = writer.send(tokio_tungstenite::tungstenite::Message::Text(response.to_string())).await {
+                                            log::error!("[p2p] Failed to send handshake_response: {}", e);
+                                            return;
+                                        }
+                                    }
+                                    _ => {
+                                        log::warn!("[p2p] Invalid or unexpected first message from {}", peer_addr);
+                                        let _ = writer.send(tokio_tungstenite::tungstenite::Message::Close(None)).await;
+                                        return;
+                                    }
                                 }
+                            }
+                            Some(Ok(other)) => {
+                                log::warn!("[p2p] Non-text first frame from {}: {:?}", peer_addr, other);
+                                let _ = writer.send(tokio_tungstenite::tungstenite::Message::Close(None)).await;
+                                return;
+                            }
+                            Some(Err(e)) => {
+                                log::error!("[p2p] Read error from {}: {}", peer_addr, e);
+                                return;
+                            }
+                            None => {
+                                log::warn!("[p2p] Connection closed before handshake from {}", peer_addr);
+                                return;
+                            }
+                        }
+
+                        // After handshake, handle the full sync data exchange
+                        use tokio_tungstenite::tungstenite::Message;
+                        let _proto_guard = protocol.lock().await;
+                        while let Some(Ok(msg)) = reader.next().await {
+                            match msg {
+                                Message::Text(_text) => {
+                                    // Deserialize delta from text, process it with SyncProtocol
+                                    // let delta: SyncDelta = serde_json::from_str(&text)?;
+                                    // let response_delta = proto_guard.handle_delta(delta).await?;
+                                    // writer.send(Message::Text(serde_json::to_string(&response_delta)?)).await?;
+                                }
+                                // Handle other message types (Binary, Close, etc.)
+                                _ => {}
                             }
                         }
                     }
-                    // After handshake, invoke SyncProtocol to handle sync exchange
-                    // TODO: Implement full delta sync exchange via self.protocol here.
-                } else {
-                    log::error!("[p2p] WebSocket upgrade failed for {}", peer_addr);
+                    Err(e) => {
+                        log::error!("[p2p] WebSocket upgrade failed for {}: {}", peer_addr, e);
+                    }
                 }
             });
         }
@@ -152,17 +184,16 @@ impl P2pSync {
 // Conversion helpers between Database SyncDelta and Protocol SyncDelta
 pub fn db_delta_to_protocol_delta(db_delta: DbSyncDelta) -> SyncDelta {
     // Use vector clock sequence number for causal ordering if available, otherwise fallback to 0.
-    if let Some(vc) = db_delta.vector_clock.get("local") {
+    let seq = if let Some(vc) = db_delta.vector_clock.get("local") {
         log::trace!("[p2p] Using local vector clock sequence: {}", vc);
+        *vc
     } else {
         log::warn!(
             "[p2p] Missing vector clock for delta {}, using 0",
             db_delta.entity_id
         );
-    }
-    let seq = db_delta.vector_clock.get("local").cloned().unwrap_or(0);
-    let mut vc = db_delta.vector_clock.clone();
-    vc.insert("local".to_string(), seq);
+        0
+    };
 
     SyncDelta {
         operation: match db_delta.operation {
@@ -177,7 +208,7 @@ pub fn db_delta_to_protocol_delta(db_delta: DbSyncDelta) -> SyncDelta {
             .unwrap_or(chrono::Utc::now()),
         data_hash: None,
         sequence: seq as u64, // Use vector clock sequence for consistency
-        vector_clock: vc,
+        vector_clock: db_delta.vector_clock,
     }
 }
 

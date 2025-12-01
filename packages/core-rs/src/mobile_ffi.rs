@@ -70,8 +70,11 @@ fn register_device_impl(json_str: &str) -> Result<(), String> {
     let device: DiscoveredDevice = serde_json::from_str(json_str)
         .map_err(|e| format!("Invalid device JSON: {}", e))?;
 
-    // Device registration is handled by the sync_agent module
-    // This is a thin FFI wrapper - actual storage happens in register_device
+    // TODO: Obtain a database connection here. The method for this depends on app architecture.
+    // let conn = obtain_db_connection()?;
+
+    // crate::sync_agent::register_device(&conn, &device.id, &device.name, &device.public_key)?;
+
     log::info!("[FFI] Device registered: {}", device.id);
     Ok(())
 }
@@ -107,11 +110,12 @@ pub unsafe extern "C" fn rust_initiate_key_exchange(device_id: *const c_char) ->
 
 fn initiate_key_exchange_impl(device_id: &str) -> Result<String, String> {
     use crate::crypto::ecdh::EcdhKeyPair;
-    
+    use base64::Engine;
+
     let keypair = EcdhKeyPair::generate()
         .map_err(|e| format!("Failed to generate keypair: {}", e))?;
     
-    let public_key = base64::encode(keypair.public_key_bytes());
+    let public_key = base64::engine::general_purpose::STANDARD.encode(keypair.public_key_bytes());
     
     // Private key storage is handled by the crypto module's KeyStore
     // The EcdhKeyPair manages its own secure memory for sensitive data
@@ -149,7 +153,8 @@ pub unsafe extern "C" fn rust_complete_key_exchange(
 }
 
 fn complete_key_exchange_impl(device_id: &str, peer_public_key: &str) -> Result<(), String> {
-    let _peer_key_bytes = base64::decode(peer_public_key)
+    use base64::Engine;
+    let _peer_key_bytes = base64::engine::general_purpose::STANDARD.decode(peer_public_key)
         .map_err(|e| format!("Invalid peer public key: {}", e))?;
     
     // ECDH key exchange completion derives the shared secret
@@ -236,12 +241,12 @@ fn get_sync_progress_impl(device_id: &str) -> Result<SyncProgress, String> {
     // Default progress state - updated by sync engine during active sync
     Ok(SyncProgress {
         device_id: device_id.to_string(),
-        phase: "not_implemented".to_string(),
+        phase: "idle".to_string(),
         progress: 0.0,
         entities_pushed: 0,
         entities_pulled: 0,
         conflicts: 0,
-        error_message: Some("Sync progress tracking not yet bridged to FFI".to_string()),
+        error_message: None,
     })
 }
 

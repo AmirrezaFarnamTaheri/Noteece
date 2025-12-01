@@ -104,6 +104,17 @@ pub fn unlock_vault_cmd(db: State<DbConnection>, path: &str, password: &str) -> 
         log::error!("[p2p] Discovery registration failed: {}", e);
     }
 
+        // Start the P2P sync server to accept incoming connections
+        let port = AppConfig::sync_port();
+        tauri::async_runtime::spawn({
+            let p2p_clone = p2p.clone();
+            async move {
+                if let Err(e) = p2p_clone.start_server(port).await {
+                    log::error!("[p2p] Failed to start server on {}: {}", port, e);
+                }
+            }
+        });
+
     *p2p_sync_guard = Some(Arc::new(p2p));
 
     Ok(())
