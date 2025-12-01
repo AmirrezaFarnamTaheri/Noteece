@@ -35,6 +35,16 @@ jest.mock('expo-sharing', () => ({
   shareAsync: jest.fn(),
 }));
 
+jest.mock('expo-file-system', () => ({
+  documentDirectory: '/tmp/',
+  writeAsStringAsync: jest.fn(),
+  deleteAsync: jest.fn(),
+  EncodingType: {
+    UTF8: 'utf8',
+    Base64: 'base64',
+  },
+}));
+
 jest.mock('expo-task-manager', () => ({
   defineTask: jest.fn(),
   isTaskRegisteredAsync: jest.fn(),

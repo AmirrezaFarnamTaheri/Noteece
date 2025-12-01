@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Text, RingProgress, Group, Paper, Stack, ThemeIcon, Center, Button } from '@mantine/core';
 import { IconHeartbeat, IconFlame, IconDroplet, IconZzz, IconPlus } from '@tabler/icons-react';
 import { invoke } from '@tauri-apps/api/tauri';
+import { Logger } from '../../utils/logger';
 import { useStore } from '../../store';
 import { HealthMetric } from '../health/types';
 import { WidgetSkeleton } from '../ui/skeletons/WidgetSkeleton';
@@ -96,7 +97,7 @@ export const HealthWidget = () => {
       }
       setMetrics(Object.values(unique));
     } catch (error) {
-      console.error('Failed to load health metrics:', error);
+      Logger.error('Failed to load health metrics:', error as Error);
     } finally {
       setLoading(false);
     }

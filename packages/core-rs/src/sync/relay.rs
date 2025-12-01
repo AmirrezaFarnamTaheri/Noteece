@@ -496,8 +496,8 @@ mod tests {
         let server = BlindRelayServer::new();
 
         // Register devices
-        server.register_device("device_a", "hash_a").unwrap();
-        server.register_device("device_b", "hash_b").unwrap();
+        server.register_device("device_a", "hash_a").expect("Register device_a failed");
+        server.register_device("device_b", "hash_b").expect("Register device_b failed");
 
         // Submit message
         let envelope = RelayEnvelope::new(
@@ -509,7 +509,7 @@ mod tests {
             "test",
         );
 
-        let msg_id = server.submit_message(envelope).unwrap();
+        let msg_id = server.submit_message(envelope).expect("Submit message failed");
         assert!(!msg_id.is_empty());
 
         // Check pending
@@ -527,8 +527,8 @@ mod tests {
     #[test]
     fn test_message_size_limit() {
         let server = BlindRelayServer::new();
-        server.register_device("device_a", "hash_a").unwrap();
-        server.register_device("device_b", "hash_b").unwrap();
+        server.register_device("device_a", "hash_a").expect("Register device_a failed");
+        server.register_device("device_b", "hash_b").expect("Register device_b failed");
 
         // Create oversized message
         let large_payload = vec![0u8; MAX_MESSAGE_SIZE + 1];
@@ -548,7 +548,7 @@ mod tests {
     #[test]
     fn test_stats() {
         let server = BlindRelayServer::new();
-        server.register_device("device_a", "hash_a").unwrap();
+        server.register_device("device_a", "hash_a").expect("Register device_a failed");
 
         let stats = server.stats();
         assert_eq!(stats.registered_devices, 1);

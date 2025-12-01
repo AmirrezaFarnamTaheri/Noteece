@@ -1113,9 +1113,9 @@ mod tests {
         let candidate = processor.get_latest_candidate();
         assert!(candidate.is_some());
 
-        let post = candidate.unwrap();
+        let post = candidate.expect("Candidate should be present");
         assert_eq!(post.platform, "reddit");
-        assert!(post.author_handle.as_ref().unwrap().starts_with("u/"));
+        assert!(post.author_handle.as_ref().expect("Author handle should be present").starts_with("u/"));
     }
 
     #[test]

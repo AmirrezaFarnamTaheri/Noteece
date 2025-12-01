@@ -31,6 +31,10 @@ pub fn search_notes(conn: &Connection, query: &str, scope: &str) -> Result<Vec<N
             [],
             |_| Ok(true),
         )
+        .map_err(|e| {
+            log::warn!("[search] Failed to check for FTS table: {}", e);
+            e
+        })
         .unwrap_or(false);
 
     let mut sql = String::from(
