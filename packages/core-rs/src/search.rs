@@ -545,48 +545,32 @@ fn extract_snippet(content: &str, query: &str) -> Option<String> {
         return Some(content.chars().take(150).collect());
     }
 
-    let lower_content = content.to_lowercase();
-    let lower_query = query.to_lowercase();
+    let q_lower = query.to_lowercase();
+    let content_chars: Vec<char> = content.chars().collect();
+    let content_len = content_chars.len();
 
-    if let Some(pos) = lower_content.find(&lower_query) {
-        // Map byte offset in lower_content back to a char boundary in original content
-        // by walking char indices in tandem.
-        let mut orig_start_byte = 0usize;
-        let mut orig_end_byte = content.len();
-
-        // Compute desired window in terms of chars on lower_content
-        let start_char = lower_content[..pos].chars().count().saturating_sub(50);
-        let match_chars = lower_query.chars().count();
-        let end_char = (lower_content[..].chars().count()).min(start_char + 50 + match_chars + 100);
-
-        // Translate char positions to byte positions on original content
-        for (char_idx, (byte_idx, _)) in content.char_indices().enumerate() {
-            if char_idx == start_char {
-                orig_start_byte = byte_idx;
-            }
-            if char_idx == end_char {
-                orig_end_byte = byte_idx;
-                break;
-            }
-        }
-        // If end_char reached end, ensure valid end byte
-        if orig_end_byte < orig_start_byte {
-            orig_end_byte = content.len();
-        }
-
-        let snippet = &content[orig_start_byte..orig_end_byte];
-
-        let prefix = if orig_start_byte > 0 { "..." } else { "" };
-        let suffix = if orig_end_byte < content.len() {
-            "..."
-        } else {
-            ""
-        };
-
-        Some(format!("{}{}{}", prefix, snippet, suffix))
-    } else {
-        Some(content.chars().take(150).collect())
+    // Find case-insensitive match by scanning char windows
+    let mut match_start = None;
+    let q_len = q_lower.chars().count();
+    if q_len == 0 {
+        return Some(content.chars().take(150).collect());
     }
+    for i in 0..=content_len.saturating_sub(q_len) {
+        let window: String = content_chars[i..i + q_len].iter().collect();
+        if window.to_lowercase() == q_lower {
+            match_start = Some(i);
+            break;
+        }
+    }
+
+    let start_idx = match_start.unwrap_or(0);
+    let start = start_idx.saturating_sub(50);
+    let end = (start_idx + q_len + 100).min(content_len);
+
+    let snippet: String = content_chars[start..end].iter().collect();
+    let prefix = if start > 0 { "..." } else { "" };
+    let suffix = if end < content_len { "..." } else { "" };
+    Some(format!("{}{}{}", prefix, snippet, suffix))
 }
 
 /// Calculate relevance score

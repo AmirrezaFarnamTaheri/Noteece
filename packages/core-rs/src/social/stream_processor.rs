@@ -4,203 +4,12 @@
 //! from the Android Accessibility Service. It uses regex heuristics to reconstruct
 //! structured social media posts from raw UI text.
 
-use lazy_static::lazy_static;
+use super::processing::extractors::{detect_platform, extract_engagement};
+use super::processing::patterns::*;
+use super::processing::types::{CapturedPost, DetectedPlatform, EngagementMetrics};
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use ulid::Ulid;
-
-lazy_static! {
-    // Handle patterns for various platforms
-    static ref TWITTER_HANDLE: Regex = Regex::new(r"@[\w_]{1,15}").expect("Failed to compile regex");
-    static ref REDDIT_HANDLE: Regex = Regex::new(r"u/[\w_]{3,20}").expect("Failed to compile regex");
-    static ref INSTAGRAM_HANDLE: Regex = Regex::new(r"@[\w_.]{1,30}").expect("Failed to compile regex");
-    static ref LINKEDIN_NAME: Regex = Regex::new(r"^[A-Z][a-z]+ [A-Z][a-z]+").expect("Failed to compile regex");
-    static ref TELEGRAM_HANDLE: Regex = Regex::new(r"@[\w]{5,32}").expect("Failed to compile regex");
-    static ref DISCORD_HANDLE: Regex = Regex::new(r"[\w]+#\d{4}|@[\w]+").expect("Failed to compile regex");
-
-    // Relative timestamps: 2h, 12m, 3d, 1w, "2 hours ago", "Yesterday"
-    static ref TIME_REGEX: Regex = Regex::new(r"(?i)(\d+[mhdw]|\d+ (?:minute|hour|day|week)s? ago|just now|yesterday|today at \d+:\d+)").expect("Failed to compile regex");
-
-    // Engagement metrics: "1.2K Likes", "500 Comments", "3.5M views"
-    static ref METRICS_REGEX: Regex = Regex::new(r"(?i)(\d+(?:[.,]\d+)?[KMB]?)\s*(Comments?|Retweets?|Likes?|Views?|Upvotes?|Shares?|Reposts?|Replies?|Reactions?|Claps?|Subscribers?|Followers?)").expect("Failed to compile regex");
-
-    // URL patterns
-    static ref URL_REGEX: Regex = Regex::new(r"https?://\S+").expect("Failed to compile regex");
-
-    // Hashtag patterns
-    static ref HASHTAG_REGEX: Regex = Regex::new(r"#[\w]+").expect("Failed to compile regex");
-
-    // Platform-specific identifiers
-    static ref TWITTER_INDICATORS: Regex = Regex::new(r"(?i)(Retweet|Quote Tweet|Tweet|Reply|View Tweet)").expect("Failed to compile regex");
-    static ref INSTAGRAM_INDICATORS: Regex = Regex::new(r"(?i)(likes this|commented|Reel|Story|View all \d+ comments)").expect("Failed to compile regex");
-    static ref LINKEDIN_INDICATORS: Regex = Regex::new(r"(?i)(connections?|LinkedIn|• \d+(st|nd|rd|th)|Promoted|reactions?)").expect("Failed to compile regex");
-    static ref REDDIT_INDICATORS: Regex = Regex::new(r"(?i)(r/[\w]+|points?|Posted by|karma|awards?)").expect("Failed to compile regex");
-    static ref TELEGRAM_INDICATORS: Regex = Regex::new(r"(?i)(forwarded from|view in chat|pinned message|edited|channel|group)").expect("Failed to compile regex");
-    static ref DISCORD_INDICATORS: Regex = Regex::new(r"(?i)(server|channel|#[\w-]+|replied to|edited|pinned)").expect("Failed to compile regex");
-    static ref TINDER_INDICATORS: Regex = Regex::new(r"(?i)(super like|it's a match|liked you|new match|distance|miles away|km away)").expect("Failed to compile regex");
-    static ref BUMBLE_INDICATORS: Regex = Regex::new(r"(?i)(bumble|extend|beeline|first move|expires in)").expect("Failed to compile regex");
-    static ref HINGE_INDICATORS: Regex = Regex::new(r"(?i)(hinge|liked your|comment on|standout|most compatible)").expect("Failed to compile regex");
-    static ref BROWSER_INDICATORS: Regex = Regex::new(r"(?i)(read more|article|published|author|min read|share|bookmark)").expect("Failed to compile regex");
-    static ref YOUTUBE_INDICATORS: Regex = Regex::new(r"(?i)(subscribers?|views|watch later|subscribe|uploaded|premiere)").expect("Failed to compile regex");
-    static ref TIKTOK_INDICATORS: Regex = Regex::new(r"(?i)(for you|following|fyp|sounds?|duet|stitch)").expect("Failed to compile regex");
-    static ref WHATSAPP_INDICATORS: Regex = Regex::new(r"(?i)(online|last seen|typing|delivered|read|voice message)").expect("Failed to compile regex");
-    static ref MEDIUM_INDICATORS: Regex = Regex::new(r"(?i)(min read|claps?|member only|follow|publication)").expect("Failed to compile regex");
-}
-
-/// Detected platform from heuristics
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum DetectedPlatform {
-    // Social Media
-    Twitter,
-    Instagram,
-    LinkedIn,
-    Reddit,
-    Facebook,
-
-    // Messaging
-    Telegram,
-    Discord,
-    WhatsApp,
-    Signal,
-    Slack,
-    Snapchat,
-
-    // Dating
-    Tinder,
-    Bumble,
-    Hinge,
-    OkCupid,
-    Match,
-
-    // Browsers & Reading
-    Browser,
-    Medium,
-    HackerNews,
-
-    // Video & Content
-    YouTube,
-    TikTok,
-    Twitch,
-    Pinterest,
-    Tumblr,
-    Spotify,
-
-    Unknown,
-}
-
-impl std::fmt::Display for DetectedPlatform {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            DetectedPlatform::Twitter => write!(f, "twitter"),
-            DetectedPlatform::Instagram => write!(f, "instagram"),
-            DetectedPlatform::LinkedIn => write!(f, "linkedin"),
-            DetectedPlatform::Reddit => write!(f, "reddit"),
-            DetectedPlatform::Facebook => write!(f, "facebook"),
-            DetectedPlatform::Telegram => write!(f, "telegram"),
-            DetectedPlatform::Discord => write!(f, "discord"),
-            DetectedPlatform::WhatsApp => write!(f, "whatsapp"),
-            DetectedPlatform::Signal => write!(f, "signal"),
-            DetectedPlatform::Slack => write!(f, "slack"),
-            DetectedPlatform::Snapchat => write!(f, "snapchat"),
-            DetectedPlatform::Tinder => write!(f, "tinder"),
-            DetectedPlatform::Bumble => write!(f, "bumble"),
-            DetectedPlatform::Hinge => write!(f, "hinge"),
-            DetectedPlatform::OkCupid => write!(f, "okcupid"),
-            DetectedPlatform::Match => write!(f, "match"),
-            DetectedPlatform::Browser => write!(f, "browser"),
-            DetectedPlatform::Medium => write!(f, "medium"),
-            DetectedPlatform::HackerNews => write!(f, "hackernews"),
-            DetectedPlatform::YouTube => write!(f, "youtube"),
-            DetectedPlatform::TikTok => write!(f, "tiktok"),
-            DetectedPlatform::Twitch => write!(f, "twitch"),
-            DetectedPlatform::Pinterest => write!(f, "pinterest"),
-            DetectedPlatform::Tumblr => write!(f, "tumblr"),
-            DetectedPlatform::Spotify => write!(f, "spotify"),
-            DetectedPlatform::Unknown => write!(f, "unknown"),
-        }
-    }
-}
-
-impl DetectedPlatform {
-    /// Check if this platform is a messaging app
-    pub fn is_messaging(&self) -> bool {
-        matches!(
-            self,
-            DetectedPlatform::Telegram
-                | DetectedPlatform::Discord
-                | DetectedPlatform::WhatsApp
-                | DetectedPlatform::Signal
-                | DetectedPlatform::Slack
-                | DetectedPlatform::Snapchat
-        )
-    }
-
-    /// Check if this platform is a dating app
-    pub fn is_dating(&self) -> bool {
-        matches!(
-            self,
-            DetectedPlatform::Tinder
-                | DetectedPlatform::Bumble
-                | DetectedPlatform::Hinge
-                | DetectedPlatform::OkCupid
-                | DetectedPlatform::Match
-        )
-    }
-
-    /// Check if this platform is social media
-    pub fn is_social(&self) -> bool {
-        matches!(
-            self,
-            DetectedPlatform::Twitter
-                | DetectedPlatform::Instagram
-                | DetectedPlatform::LinkedIn
-                | DetectedPlatform::Reddit
-                | DetectedPlatform::Facebook
-                | DetectedPlatform::TikTok
-                | DetectedPlatform::Pinterest
-                | DetectedPlatform::Tumblr
-        )
-    }
-}
-
-/// Engagement metrics extracted from post
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct EngagementMetrics {
-    pub likes: Option<u64>,
-    pub comments: Option<u64>,
-    pub shares: Option<u64>,
-    pub views: Option<u64>,
-}
-
-/// A captured post from the screen buffer
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CapturedPost {
-    /// Unique identifier for this capture
-    pub id: String,
-    /// Detected platform
-    pub platform: String,
-    /// Author handle (e.g., @username)
-    pub author_handle: Option<String>,
-    /// Display name if detected separately
-    pub author_display_name: Option<String>,
-    /// Main content text
-    pub content_text: String,
-    /// Timestamp when captured
-    pub captured_at: i64,
-    /// Confidence score (0.0 - 1.0)
-    pub confidence_score: f32,
-    /// Extracted engagement metrics
-    pub engagement: EngagementMetrics,
-    /// Detected hashtags
-    pub hashtags: Vec<String>,
-    /// Detected URLs
-    pub urls: Vec<String>,
-    /// Raw context blob (for debugging/training)
-    pub raw_context_blob: Option<String>,
-    /// Original timestamp from post (if detected)
-    pub original_timestamp: Option<String>,
-}
 
 /// Stream Processor - maintains sliding window buffer and performs heuristic analysis
 pub struct StreamProcessor {
@@ -320,7 +129,7 @@ impl StreamProcessor {
         let snapshot: Vec<&String> = self.buffer.iter().collect();
 
         // Try to detect platform first
-        let platform = self.detect_platform(&snapshot);
+        let platform = detect_platform(&snapshot, self.active_platform_hint);
 
         // Use platform-specific extraction or generic
         match platform {
@@ -345,97 +154,6 @@ impl StreamProcessor {
         }
     }
 
-    /// Detect platform from buffer content using heuristic scoring
-    fn detect_platform(&self, snapshot: &[&String]) -> DetectedPlatform {
-        // Use hint if available (set by launcher)
-        if let Some(hint) = self.active_platform_hint {
-            return hint;
-        }
-
-        let full_text = snapshot
-            .iter()
-            .map(|s| s.as_str())
-            .collect::<Vec<_>>()
-            .join(" ");
-
-        // Score each platform based on indicator matches
-        let scores: Vec<(DetectedPlatform, usize)> = vec![
-            (
-                DetectedPlatform::Twitter,
-                TWITTER_INDICATORS.find_iter(&full_text).count()
-                    + TWITTER_HANDLE.find_iter(&full_text).count(),
-            ),
-            (
-                DetectedPlatform::Instagram,
-                INSTAGRAM_INDICATORS.find_iter(&full_text).count(),
-            ),
-            (
-                DetectedPlatform::LinkedIn,
-                LINKEDIN_INDICATORS.find_iter(&full_text).count(),
-            ),
-            (
-                DetectedPlatform::Reddit,
-                REDDIT_INDICATORS.find_iter(&full_text).count()
-                    + REDDIT_HANDLE.find_iter(&full_text).count(),
-            ),
-            (
-                DetectedPlatform::Telegram,
-                TELEGRAM_INDICATORS.find_iter(&full_text).count()
-                    + TELEGRAM_HANDLE.find_iter(&full_text).count(),
-            ),
-            (
-                DetectedPlatform::Discord,
-                DISCORD_INDICATORS.find_iter(&full_text).count()
-                    + DISCORD_HANDLE.find_iter(&full_text).count(),
-            ),
-            (
-                DetectedPlatform::Tinder,
-                TINDER_INDICATORS.find_iter(&full_text).count(),
-            ),
-            (
-                DetectedPlatform::Bumble,
-                BUMBLE_INDICATORS.find_iter(&full_text).count(),
-            ),
-            (
-                DetectedPlatform::Hinge,
-                HINGE_INDICATORS.find_iter(&full_text).count(),
-            ),
-            (
-                DetectedPlatform::YouTube,
-                YOUTUBE_INDICATORS.find_iter(&full_text).count(),
-            ),
-            (
-                DetectedPlatform::TikTok,
-                TIKTOK_INDICATORS.find_iter(&full_text).count(),
-            ),
-            (
-                DetectedPlatform::WhatsApp,
-                WHATSAPP_INDICATORS.find_iter(&full_text).count(),
-            ),
-            (
-                DetectedPlatform::Medium,
-                MEDIUM_INDICATORS.find_iter(&full_text).count(),
-            ),
-            (
-                DetectedPlatform::Browser,
-                BROWSER_INDICATORS.find_iter(&full_text).count(),
-            ),
-        ];
-
-        // Find platform with highest score
-        let (best_platform, best_score) = scores
-            .into_iter()
-            .max_by_key(|(_, score)| *score)
-            .unwrap_or((DetectedPlatform::Unknown, 0));
-
-        // Require minimum confidence
-        if best_score < 2 {
-            return DetectedPlatform::Unknown;
-        }
-
-        best_platform
-    }
-
     /// Extract a Twitter post
     fn extract_twitter_post(&self, snapshot: &[&String]) -> Option<CapturedPost> {
         // Twitter pattern: @handle • time • content • metrics
@@ -457,7 +175,7 @@ impl StreamProcessor {
                         .map(|s| s.to_string())
                         .unwrap_or_else(|| window[window.len().saturating_sub(1)].to_string());
 
-                    let engagement = self.extract_engagement(&combined);
+                    let engagement = extract_engagement(&combined);
                     let timestamp = TIME_REGEX.find(&combined).map(|m| m.as_str().to_string());
 
                     return Some(CapturedPost {
@@ -515,7 +233,7 @@ impl StreamProcessor {
                         content_text: content,
                         captured_at: chrono::Utc::now().timestamp(),
                         confidence_score: 0.85,
-                        engagement: self.extract_engagement(&combined),
+                        engagement: extract_engagement(&combined),
                         hashtags: HASHTAG_REGEX
                             .find_iter(&combined)
                             .map(|m| m.as_str().to_string())
@@ -565,7 +283,7 @@ impl StreamProcessor {
                         content_text: content,
                         captured_at: chrono::Utc::now().timestamp(),
                         confidence_score: 0.80,
-                        engagement: self.extract_engagement(&combined),
+                        engagement: extract_engagement(&combined),
                         hashtags: HASHTAG_REGEX
                             .find_iter(&combined)
                             .map(|m| m.as_str().to_string())
@@ -614,7 +332,7 @@ impl StreamProcessor {
                         content_text: content,
                         captured_at: chrono::Utc::now().timestamp(),
                         confidence_score: 0.85,
-                        engagement: self.extract_engagement(&combined),
+                        engagement: extract_engagement(&combined),
                         hashtags: vec![],
                         urls: URL_REGEX
                             .find_iter(&combined)
@@ -741,7 +459,7 @@ impl StreamProcessor {
             .join("\n");
 
         // Look for name + age pattern common in dating apps
-        let name_age_pattern = regex::Regex::new(r"([A-Z][a-z]+),?\s*(\d{2})").ok()?;
+        let name_age_pattern = Regex::new(r"([A-Z][a-z]+),?\s*(\d{2})").ok()?;
 
         // Find profile bio (usually the longest text)
         let bio = snapshot
@@ -789,7 +507,7 @@ impl StreamProcessor {
             .map(|s| s.to_string())?;
 
         // Look for author pattern
-        let author_pattern = regex::Regex::new(r"(?i)by\s+([A-Z][a-z]+ [A-Z][a-z]+)").ok()?;
+        let author_pattern = Regex::new(r"(?i)by\s+([A-Z][a-z]+ [A-Z][a-z]+)").ok()?;
         let author = author_pattern.captures(&combined).map(|c| c[1].to_string());
 
         // Get body text
@@ -813,7 +531,7 @@ impl StreamProcessor {
             content_text: format!("{}\n\n{}", title, body),
             captured_at: chrono::Utc::now().timestamp(),
             confidence_score: 0.70,
-            engagement: self.extract_engagement(&combined),
+            engagement: extract_engagement(&combined),
             hashtags: vec![],
             urls: URL_REGEX
                 .find_iter(&combined)
@@ -852,7 +570,7 @@ impl StreamProcessor {
             content_text: title,
             captured_at: chrono::Utc::now().timestamp(),
             confidence_score: 0.80,
-            engagement: self.extract_engagement(&combined),
+            engagement: extract_engagement(&combined),
             hashtags: HASHTAG_REGEX
                 .find_iter(&combined)
                 .map(|m| m.as_str().to_string())
@@ -894,7 +612,7 @@ impl StreamProcessor {
             content_text: caption,
             captured_at: chrono::Utc::now().timestamp(),
             confidence_score: 0.75,
-            engagement: self.extract_engagement(&combined),
+            engagement: extract_engagement(&combined),
             hashtags: HASHTAG_REGEX
                 .find_iter(&combined)
                 .map(|m| m.as_str().to_string())
@@ -998,7 +716,7 @@ impl StreamProcessor {
                     content_text: content.to_string(),
                     captured_at: chrono::Utc::now().timestamp(),
                     confidence_score: 0.60, // Lower confidence for generic extraction
-                    engagement: self.extract_engagement(&combined),
+                    engagement: extract_engagement(&combined),
                     hashtags: HASHTAG_REGEX
                         .find_iter(&combined)
                         .map(|m| m.as_str().to_string())
@@ -1013,56 +731,6 @@ impl StreamProcessor {
             }
         }
         None
-    }
-
-    /// Extract engagement metrics from text
-    fn extract_engagement(&self, text: &str) -> EngagementMetrics {
-        let mut metrics = EngagementMetrics::default();
-
-        for cap in METRICS_REGEX.captures_iter(text) {
-            if let (Some(num_match), Some(type_match)) = (cap.get(1), cap.get(2)) {
-                let num_str = num_match.as_str().replace([',', '.'], "");
-                let type_str = type_match.as_str().to_lowercase();
-
-                // Parse number with K/M/B suffix
-                let value = self.parse_metric_number(&num_str);
-
-                if type_str.starts_with("like") {
-                    metrics.likes = Some(value);
-                } else if type_str.starts_with("comment") || type_str.starts_with("repl") {
-                    metrics.comments = Some(value);
-                } else if type_str.starts_with("share")
-                    || type_str.starts_with("retweet")
-                    || type_str.starts_with("repost")
-                {
-                    metrics.shares = Some(value);
-                } else if type_str.starts_with("view") {
-                    metrics.views = Some(value);
-                }
-            }
-        }
-
-        metrics
-    }
-
-    /// Parse metric numbers with K/M/B suffixes
-    fn parse_metric_number(&self, s: &str) -> u64 {
-        let s = s.to_uppercase();
-        let multiplier = if s.ends_with('K') {
-            1_000.0
-        } else if s.ends_with('M') {
-            1_000_000.0
-        } else if s.ends_with('B') {
-            1_000_000_000.0
-        } else {
-            1.0
-        };
-
-        let num_part: String = s
-            .chars()
-            .filter(|c| c.is_ascii_digit() || *c == '.')
-            .collect();
-        (num_part.parse::<f64>().unwrap_or(0.0) * multiplier) as u64
     }
 }
 
@@ -1149,13 +817,5 @@ mod tests {
         assert_eq!(processor.get_capture_count(), 0);
         assert_eq!(processor.get_buffer_size(), 0);
         assert!(processor.get_latest_candidate().is_none());
-    }
-
-    #[test]
-    fn test_metric_parsing() {
-        let processor = StreamProcessor::new();
-        assert_eq!(processor.parse_metric_number("1K"), 1000);
-        assert_eq!(processor.parse_metric_number("2.5M"), 2_500_000);
-        assert_eq!(processor.parse_metric_number("100"), 100);
     }
 }

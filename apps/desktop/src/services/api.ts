@@ -53,9 +53,12 @@ async function invokeCmd<T>(cmd: string, args?: Record<string, unknown>): Promis
   try {
     // Basic validation to prevent null/undefined keys which might cause panic in Rust if unhandled
     if (args) {
-      for (const key of Object.keys(args)) {
+      for (const [key, value] of Object.entries(args)) {
         if (!key || key.trim() === '') {
           throw new Error(`Invalid argument key for command ${cmd}`);
+        }
+        if (value === undefined) {
+          throw new Error(`Argument '${key}' is undefined for command ${cmd}`);
         }
       }
     }
@@ -67,7 +70,10 @@ async function invokeCmd<T>(cmd: string, args?: Record<string, unknown>): Promis
     return result;
   } catch (error) {
     const duration = Date.now() - startTime;
-    logger.error(`[API] ${cmd} failed after ${duration}ms`, error instanceof Error ? error : { error });
+    logger.error(
+      `[API] ${cmd} failed after ${duration}ms`,
+      error instanceof Error ? error : { error }
+    );
     throw error;
   }
 }
