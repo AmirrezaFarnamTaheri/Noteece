@@ -50,8 +50,9 @@ pub fn search_notes(conn: &Connection, query: &str, scope: &str) -> Result<Vec<N
 
     if !fts_query.is_empty() {
         if has_fts {
-            sql.push_str(" JOIN fts_note f ON n.id = f.note_id");
-            where_clauses.push("f.fts_note MATCH ?2".to_string());
+            // Join without alias to avoid potential ambiguity or binding issues
+            sql.push_str(" JOIN fts_note ON n.rowid = fts_note.rowid");
+            where_clauses.push("fts_note MATCH ?2".to_string());
             params.push(Box::new(fts_query.clone()));
         } else {
             where_clauses.push("(n.title LIKE ?2 OR n.content_md LIKE ?2)".to_string());
@@ -239,7 +240,7 @@ fn search_notes_advanced(
 
     // Join FTS if available and querying text
     if has_fts && !query.query.is_empty() {
-        sql.push_str(" JOIN fts_note f ON n.id = f.note_id");
+        sql.push_str(" JOIN fts_note f ON n.rowid = f.rowid");
     }
 
     // Space filter
@@ -251,7 +252,7 @@ fn search_notes_advanced(
     // Text search
     if !query.query.is_empty() {
         if has_fts {
-            where_clauses.push("f.fts_note MATCH ?".to_string());
+            where_clauses.push("f MATCH ?".to_string());
             params.push(Box::new(query.query.clone()));
         } else {
             // Fallback to LIKE on title and content
@@ -299,8 +300,14 @@ fn search_notes_advanced(
         let content: String = row.get(4)?;
 
         // Calculate snippet and relevance
-        let snippet = extract_snippet(&content, &query.query);
-        let relevance = calculate_relevance(&title, Some(&content), &query.query);
+        let (snippet, relevance) = if query.query.is_empty() {
+            (None, 1.0)
+        } else {
+            (
+                extract_snippet(&content, &query.query),
+                calculate_relevance(&title, Some(&content), &query.query),
+            )
+        };
 
         results.push(SearchResult {
             entity_type: EntityType::Note,
@@ -339,7 +346,7 @@ fn search_tasks_advanced(
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
 
     if has_fts && !query.query.is_empty() {
-        sql.push_str(" JOIN fts_task f ON t.id = f.task_id");
+        sql.push_str(" JOIN fts_task f ON t.rowid = f.rowid");
     }
 
     // Space filter
@@ -351,7 +358,7 @@ fn search_tasks_advanced(
     // Text search
     if !query.query.is_empty() {
         if has_fts {
-            where_clauses.push("f.fts_task MATCH ?".to_string());
+            where_clauses.push("f MATCH ?".to_string());
             params.push(Box::new(query.query.clone()));
         } else {
             where_clauses.push("(t.title LIKE ? OR t.description LIKE ?)".to_string());
@@ -404,11 +411,16 @@ fn search_tasks_advanced(
         let updated_at: i64 = 0; // No updated_at in task schema v1?
         let deadline: Option<i64> = row.get::<_, Option<i64>>(7)?;
 
-        let snippet = description
-            .as_ref()
-            .and_then(|d| extract_snippet(d, &query.query));
-
-        let relevance = calculate_relevance(&title, description.as_deref(), &query.query);
+        let (snippet, relevance) = if query.query.is_empty() {
+            (None, 1.0)
+        } else {
+            (
+                description
+                    .as_ref()
+                    .and_then(|d| extract_snippet(d, &query.query)),
+                calculate_relevance(&title, description.as_deref(), &query.query),
+            )
+        };
 
         results.push(SearchResult {
             entity_type: EntityType::Task,
@@ -452,7 +464,7 @@ fn search_projects_advanced(
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
 
     if has_fts && !query.query.is_empty() {
-        sql.push_str(" JOIN fts_project f ON p.id = f.project_id");
+        sql.push_str(" JOIN fts_project f ON p.rowid = f.rowid");
     }
 
     // Space filter
@@ -464,7 +476,7 @@ fn search_projects_advanced(
     // Text search
     if !query.query.is_empty() {
         if has_fts {
-            where_clauses.push("f.fts_project MATCH ?".to_string());
+            where_clauses.push("f MATCH ?".to_string());
             params.push(Box::new(query.query.clone()));
         } else {
             where_clauses.push("(p.title LIKE ? OR p.goal_outcome LIKE ?)".to_string());
@@ -498,11 +510,16 @@ fn search_projects_advanced(
         let start_at: i64 = row.get::<_, Option<i64>>(4)?.unwrap_or(0);
         // No updated_at in project schema v1
 
-        let snippet = goal_outcome
-            .as_ref()
-            .and_then(|d| extract_snippet(d, &query.query));
-
-        let relevance = calculate_relevance(&name, goal_outcome.as_deref(), &query.query);
+        let (snippet, relevance) = if query.query.is_empty() {
+            (None, 1.0)
+        } else {
+            (
+                goal_outcome
+                    .as_ref()
+                    .and_then(|d| extract_snippet(d, &query.query)),
+                calculate_relevance(&name, goal_outcome.as_deref(), &query.query),
+            )
+        };
 
         results.push(SearchResult {
             entity_type: EntityType::Project,
@@ -532,11 +549,42 @@ fn extract_snippet(content: &str, query: &str) -> Option<String> {
     let lower_query = query.to_lowercase();
 
     if let Some(pos) = lower_content.find(&lower_query) {
-        let start = pos.saturating_sub(50);
-        let end = (pos + query.len() + 100).min(content.len());
+        // Map byte offset in lower_content back to a char boundary in original content
+        // by walking char indices in tandem.
+        let mut orig_start_byte = 0usize;
+        let mut orig_end_byte = content.len();
 
-        let snippet = &content[start..end];
-        Some(format!("...{}...", snippet))
+        // Compute desired window in terms of chars on lower_content
+        let start_char = lower_content[..pos].chars().count().saturating_sub(50);
+        let match_chars = lower_query.chars().count();
+        let end_char = (lower_content[..].chars().count())
+            .min(start_char + 50 + match_chars + 100);
+
+        // Translate char positions to byte positions on original content
+        for (char_idx, (byte_idx, _)) in content.char_indices().enumerate() {
+            if char_idx == start_char {
+                orig_start_byte = byte_idx;
+            }
+            if char_idx == end_char {
+                orig_end_byte = byte_idx;
+                break;
+            }
+        }
+        // If end_char reached end, ensure valid end byte
+        if orig_end_byte < orig_start_byte {
+            orig_end_byte = content.len();
+        }
+
+        let snippet = &content[orig_start_byte..orig_end_byte];
+
+        let prefix = if orig_start_byte > 0 { "..." } else { "" };
+        let suffix = if orig_end_byte < content.len() {
+            "..."
+        } else {
+            ""
+        };
+
+        Some(format!("{}{}{}", prefix, snippet, suffix))
     } else {
         Some(content.chars().take(150).collect())
     }

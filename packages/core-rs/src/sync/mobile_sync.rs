@@ -615,6 +615,11 @@ pub struct SyncBatchProcessor {
 impl SyncBatchProcessor {
     /// Create new batch processor
     pub fn new(batch_size: usize, max_batch_bytes: u64) -> Self {
+        log::debug!(
+            "[mobile_sync] Created batch processor (size: {}, max_bytes: {})",
+            batch_size,
+            max_batch_bytes
+        );
         SyncBatchProcessor {
             batch_size,
             max_batch_bytes,
@@ -623,6 +628,7 @@ impl SyncBatchProcessor {
 
     /// Split deltas into batches for transmission
     pub fn create_batches(&self, deltas: Vec<SyncDelta>) -> Vec<Vec<SyncDelta>> {
+        log::info!("[mobile_sync] Creating batches for {} deltas", deltas.len());
         let mut batches = Vec::new();
         let mut current_batch = Vec::new();
         let mut current_size = 0u64;
@@ -663,7 +669,9 @@ mod tests {
             device_id: uuid::Uuid::new_v4().to_string(),
             device_name: name.to_string(),
             device_type: DeviceType::Mobile,
-            ip_address: "192.168.1.100".parse::<IpAddr>().expect("Failed to parse IP"),
+            ip_address: "192.168.1.100"
+                .parse::<IpAddr>()
+                .expect("Failed to parse IP"),
             sync_port: 8766,
             public_key: vec![],
             os_version: "iOS 17.0".to_string(),

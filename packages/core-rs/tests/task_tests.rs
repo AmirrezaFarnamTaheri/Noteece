@@ -1,12 +1,22 @@
 use core_rs::db::migrate;
 use core_rs::task::{create_task, delete_task, get_task, update_task};
 use rusqlite::Connection;
+use tempfile::tempdir;
 use ulid::Ulid;
 
-fn setup_db() -> Connection {
-    let mut conn = Connection::open_in_memory().unwrap();
+fn setup_db() -> (Connection, tempfile::TempDir) {
+    let dir = tempdir().unwrap();
+    let db_path = dir.path().join("test.db");
+    let mut conn = Connection::open(&db_path).unwrap();
+
+    // Avoid WAL mode in tests if it causes corruption with tempfile cleanup on some platforms/versions
+    // conn.query_row("PRAGMA journal_mode=WAL;", [], |_| Ok(())).ok();
+
+    // Foreign keys MUST be on
+    conn.execute("PRAGMA foreign_keys = ON;", []).unwrap();
+
     migrate(&mut conn).unwrap();
-    conn
+    (conn, dir)
 }
 
 fn create_space(conn: &Connection) -> Ulid {
@@ -21,7 +31,7 @@ fn create_space(conn: &Connection) -> Ulid {
 
 #[test]
 fn test_task_crud() {
-    let conn = setup_db();
+    let (conn, _dir) = setup_db();
     let space_id = create_space(&conn);
     let mut task = create_task(&conn, space_id, "test task", None).unwrap();
     assert_eq!(task.title, "test task");

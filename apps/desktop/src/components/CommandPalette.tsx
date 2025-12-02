@@ -35,6 +35,10 @@ const CommandPalette: React.FC<{ opened: boolean; onClose: () => void }> = ({ op
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (filteredCommands.length === 0) {
+      return;
+    }
+
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       setSelectedIndex((prev) => (prev + 1) % filteredCommands.length);
@@ -57,9 +61,14 @@ const CommandPalette: React.FC<{ opened: boolean; onClose: () => void }> = ({ op
       size="lg"
       padding={0}
       radius="lg"
+      overlayProps={{
+        opacity: 0.55,
+        blur: 3,
+      }}
       styles={{
         content: {
-          backgroundColor: 'var(--mantine-color-dark-8)',
+          backgroundColor: 'rgba(26, 27, 30, 0.95)',
+          backdropFilter: 'blur(10px)',
           border: '1px solid var(--mantine-color-dark-4)',
           boxShadow: '0 24px 48px rgba(0,0,0,0.5)',
           overflow: 'hidden',

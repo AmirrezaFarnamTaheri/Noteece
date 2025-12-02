@@ -745,6 +745,22 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
             );
             CREATE INDEX IF NOT EXISTS idx_insight_space ON insight(space_id, dismissed);
 
+            -- Optimization for Sync Log (Table created in init_sync_tables, but we should ensure it exists here too for robustness or just the index)
+            -- Ideally, migrations should handle ALL tables. Sync tables were historically separate.
+            -- Adding the index implies the table exists. If tests fail, it means init_sync_tables wasn't called in the test setup.
+            -- We will add the table creation here to be safe and Complete.
+
+            CREATE TABLE IF NOT EXISTS entity_sync_log (
+                id TEXT PRIMARY KEY,
+                entity_type TEXT NOT NULL,
+                entity_id TEXT NOT NULL,
+                synced_at INTEGER NOT NULL,
+                device_id TEXT NOT NULL,
+                operation TEXT NOT NULL,
+                created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+            );
+            CREATE INDEX IF NOT EXISTS idx_entity_sync_log_entity ON entity_sync_log(entity_id);
+
             INSERT INTO schema_version (version) VALUES (16);
             ",
         )?;

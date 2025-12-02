@@ -47,10 +47,19 @@ import {
   Session,
 } from '@noteece/types';
 
-// Generic wrapper for invoke to handle logging
+// Generic wrapper for invoke to handle logging and secure parameter validation
 async function invokeCmd<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
   const startTime = Date.now();
   try {
+    // Basic validation to prevent null/undefined keys which might cause panic in Rust if unhandled
+    if (args) {
+      for (const key of Object.keys(args)) {
+        if (!key || key.trim() === '') {
+          throw new Error(`Invalid argument key for command ${cmd}`);
+        }
+      }
+    }
+
     logger.debug(`[API] Invoking ${cmd}`, args);
     const result = await invoke<T>(cmd, args);
     const duration = Date.now() - startTime;

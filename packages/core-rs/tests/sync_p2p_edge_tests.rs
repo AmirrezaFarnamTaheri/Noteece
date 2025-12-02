@@ -1,5 +1,5 @@
-use core_rs::sync::p2p::P2pError;
 use core_rs::sync::mobile_sync::{DeviceInfo, DeviceType};
+use core_rs::sync::p2p::P2pError;
 
 #[tokio::test]
 async fn test_p2p_network_error_propagation() {
