@@ -158,9 +158,9 @@ mod tests {
         let salt = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
         let wrapped_dek = vec![100, 101, 102, 103];
 
-        store_vault_backup(&conn, &salt, &wrapped_dek).unwrap();
+        store_vault_backup(&conn, &salt, &wrapped_dek).expect("Store failed");
 
-        let backup = get_vault_backup(&conn).unwrap().unwrap();
+        let backup = get_vault_backup(&conn).expect("Get backup failed").unwrap();
         assert_eq!(backup.salt, salt);
         assert_eq!(backup.wrapped_dek, wrapped_dek);
         assert_eq!(backup.version, 1);
@@ -173,14 +173,14 @@ mod tests {
         let salt = vec![1, 2, 3, 4];
         let wrapped_dek = vec![5, 6, 7, 8];
 
-        store_vault_backup(&conn, &salt, &wrapped_dek).unwrap();
+        store_vault_backup(&conn, &salt, &wrapped_dek).expect("Store failed");
 
         // Correct verification
-        assert!(verify_vault_backup(&conn, &salt, &wrapped_dek).unwrap());
+        assert!(verify_vault_backup(&conn, &salt, &wrapped_dek).expect("Verify failed"));
 
         // Wrong salt
         let wrong_salt = vec![9, 10, 11, 12];
-        assert!(!verify_vault_backup(&conn, &wrong_salt, &wrapped_dek).unwrap());
+        assert!(!verify_vault_backup(&conn, &wrong_salt, &wrapped_dek).expect("Verify failed"));
     }
 
     #[test]
@@ -188,15 +188,18 @@ mod tests {
         let conn = setup_test_db();
 
         // No backup yet
-        assert!(recover_from_backup(&conn).unwrap().is_none());
+        assert!(recover_from_backup(&conn)
+            .expect("Recover failed")
+            .is_none());
 
         // Store backup
         let salt = vec![1, 2, 3, 4];
         let wrapped_dek = vec![5, 6, 7, 8];
-        store_vault_backup(&conn, &salt, &wrapped_dek).unwrap();
+        store_vault_backup(&conn, &salt, &wrapped_dek).expect("Store failed");
 
         // Recover
-        let (recovered_salt, recovered_dek) = recover_from_backup(&conn).unwrap().unwrap();
+        let (recovered_salt, recovered_dek) =
+            recover_from_backup(&conn).expect("Recover failed").unwrap();
         assert_eq!(recovered_salt, salt);
         assert_eq!(recovered_dek, wrapped_dek);
     }

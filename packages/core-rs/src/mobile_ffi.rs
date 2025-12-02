@@ -4,10 +4,37 @@
 
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
+use std::sync::Mutex;
 use serde_json;
+use lazy_static::lazy_static;
 
 use crate::sync::discovery::DiscoveredDevice;
-use crate::sync_agent::{SyncAgent, SyncConflict, ConflictResolution, SyncProgress};
+use crate::sync_agent::{SyncAgent, SyncConflict, ConflictResolution, SyncProgress, DeviceInfo, DeviceType};
+
+lazy_static! {
+    static ref DB_PATH: Mutex<Option<String>> = Mutex::new(None);
+}
+
+/// Initialize the FFI layer with the database path
+///
+/// # Safety
+/// db_path must be a valid null-terminated C string
+#[no_mangle]
+pub unsafe extern "C" fn rust_init(db_path: *const c_char) {
+    if db_path.is_null() {
+        return;
+    }
+
+    let c_str = CStr::from_ptr(db_path);
+    if let Ok(path) = c_str.to_str() {
+        if let Ok(mut db_path_guard) = DB_PATH.lock() {
+            *db_path_guard = Some(path.to_string());
+            log::info!("[FFI] Initialized with DB path: {}", path);
+        } else {
+            log::error!("[FFI] Failed to lock DB path mutex during initialization");
+        }
+    }
+}
 
 /// Free a string allocated by Rust
 ///
@@ -37,9 +64,15 @@ pub extern "C" fn rust_discover_devices() -> *mut c_char {
 }
 
 fn discover_devices_impl() -> Result<Vec<DiscoveredDevice>, String> {
-    // This would use mDNS discovery in a full implementation
-    // For now, return empty list
-    Ok(vec![])
+    match crate::sync::discovery::DiscoveryService::new() {
+        Ok(service) => service
+            .discover(std::time::Duration::from_secs(3))
+            .map_err(|e| e.to_string()),
+        Err(e) => {
+            log::error!("[FFI] Failed to init discovery: {}", e);
+            Ok(vec![])
+        }
+    }
 }
 
 /// Register a device for sync
@@ -51,7 +84,7 @@ pub unsafe extern "C" fn rust_register_device(device_json: *const c_char) {
     if device_json.is_null() {
         return;
     }
-    
+
     let c_str = CStr::from_ptr(device_json);
     if let Ok(json_str) = c_str.to_str() {
         if let Err(e) = register_device_impl(json_str) {
@@ -61,13 +94,50 @@ pub unsafe extern "C" fn rust_register_device(device_json: *const c_char) {
 }
 
 fn register_device_impl(json_str: &str) -> Result<(), String> {
-    let _device: DiscoveredDevice = serde_json::from_str(json_str)
+    let device: DiscoveredDevice = serde_json::from_str(json_str)
         .map_err(|e| format!("Invalid device JSON: {}", e))?;
-    
-    // Device registration is handled by the sync_agent module
-    // This is a thin FFI wrapper - actual storage happens in register_device
-    log::info!("[FFI] Device registered: {}", device.device_id);
+
+    let conn = obtain_db_connection()?;
+
+    let device_info = DeviceInfo {
+        device_id: device.id.clone(),
+        device_name: device.name.clone(),
+        device_type: DeviceType::Desktop, // Defaulting to Desktop as usually we discover other desktops
+        last_seen: chrono::Utc::now().timestamp(),
+        sync_address: device.address.clone(),
+        sync_port: device.port,
+        protocol_version: "1.0.0".to_string(),
+    };
+
+    // Create a temporary agent to use the register logic
+    // We don't need real local device info for registering a remote device
+    let agent = SyncAgent::new("ffi_agent".to_string(), "FFI Agent".to_string(), 0);
+
+    agent.register_device(&conn, &device_info)
+        .map_err(|e| format!("Failed to register device: {}", e))?;
+
+    log::info!("[FFI] Device {} registered successfully", device.name);
     Ok(())
+}
+
+fn obtain_db_connection() -> Result<rusqlite::Connection, String> {
+    let db_path_guard = DB_PATH.lock().map_err(|_| "Failed to lock DB path mutex".to_string())?;
+
+    let path = if let Some(p) = &*db_path_guard {
+        p.clone()
+    } else {
+        #[cfg(target_os = "android")]
+        let default_path = "/data/data/com.noteece.app/files/noteece.db".to_string();
+
+        #[cfg(not(target_os = "android"))]
+        let default_path = "noteece.db".to_string();
+
+        log::warn!("[FFI] DB path not initialized, using default: {}", default_path);
+        default_path
+    };
+
+    rusqlite::Connection::open(&path)
+        .map_err(|e| format!("Failed to open DB at {}: {}", path, e))
 }
 
 /// Initiate key exchange with a device
@@ -101,11 +171,12 @@ pub unsafe extern "C" fn rust_initiate_key_exchange(device_id: *const c_char) ->
 
 fn initiate_key_exchange_impl(device_id: &str) -> Result<String, String> {
     use crate::crypto::ecdh::EcdhKeyPair;
-    
+    use base64::Engine;
+
     let keypair = EcdhKeyPair::generate()
         .map_err(|e| format!("Failed to generate keypair: {}", e))?;
     
-    let public_key = base64::encode(keypair.public_key_bytes());
+    let public_key = base64::engine::general_purpose::STANDARD.encode(keypair.public_key_bytes());
     
     // Private key storage is handled by the crypto module's KeyStore
     // The EcdhKeyPair manages its own secure memory for sensitive data
@@ -143,7 +214,8 @@ pub unsafe extern "C" fn rust_complete_key_exchange(
 }
 
 fn complete_key_exchange_impl(device_id: &str, peer_public_key: &str) -> Result<(), String> {
-    let _peer_key_bytes = base64::decode(peer_public_key)
+    use base64::Engine;
+    let _peer_key_bytes = base64::engine::general_purpose::STANDARD.decode(peer_public_key)
         .map_err(|e| format!("Invalid peer public key: {}", e))?;
     
     // ECDH key exchange completion derives the shared secret
@@ -173,8 +245,10 @@ pub unsafe extern "C" fn rust_start_sync(device_id: *const c_char) {
 
 fn start_sync_impl(device_id: &str) -> Result<(), String> {
     log::info!("[FFI] Starting sync with device {}", device_id);
-    // Sync is triggered asynchronously via the sync_agent module
-    // The actual sync logic runs on a background thread with progress callbacks
+    // Forward to sync agent or global P2pSync
+    // Since FFI doesn't easily access the Tauri state, we check if a global agent is available
+    // or log an error.
+    log::warn!("[FFI] rust_start_sync called but global agent access not implemented in FFI.");
     Ok(())
 }
 
@@ -288,8 +362,8 @@ pub unsafe extern "C" fn rust_resolve_conflict(
 
 fn resolve_conflict_impl(conflict_id: &str, resolution: &str) -> Result<(), String> {
     let _resolution = match resolution {
-        "keep_local" => ConflictResolution::KeepLocal,
-        "keep_remote" => ConflictResolution::KeepRemote,
+        "keep_local" => ConflictResolution::UseLocal,
+        "keep_remote" => ConflictResolution::UseRemote,
         "merge" => ConflictResolution::Merge,
         _ => return Err(format!("Invalid resolution: {}", resolution)),
     };
@@ -338,4 +412,3 @@ mod tests {
         unsafe { rust_free_string(result); }
     }
 }
-

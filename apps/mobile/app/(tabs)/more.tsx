@@ -22,7 +22,6 @@ export default function MoreScreen() {
   const colors = useThemeColors();
   const [backgroundSyncEnabled, setBackgroundSyncEnabled] = useState(false);
   const [nfcEnabled, setNfcEnabled] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [syncing, setSyncing] = useState(false);
 
   const handleLockVault = () => {
@@ -549,14 +548,15 @@ export default function MoreScreen() {
           icon: 'location-outline',
           label: 'Location Reminders',
           subtitle: 'Geofence-based task reminders',
-          onPress: () =>
+          onPress: () => {
             Alert.alert(
               'Location Reminders',
               'Location-based reminders allow you to get notified when you arrive at or leave specific locations.\n\n' +
                 'This feature uses geofencing to trigger task reminders based on your location. ' +
                 'Currently configured in task creation screen.',
               [{ text: 'Got it' }],
-            ),
+            );
+          },
           showChevron: true,
         },
       ],
@@ -598,14 +598,18 @@ export default function MoreScreen() {
         {
           icon: 'document-text-outline',
           label: 'Documentation',
-          onPress: () => Alert.alert('Documentation', 'View the full documentation at noteece.com'),
+          onPress: () => {
+            Alert.alert('Documentation', 'View the full documentation at noteece.com');
+          },
           showChevron: true,
         },
         {
           icon: 'heart-outline',
           label: 'Open Source',
           subtitle: 'Built with ❤️ as open source',
-          onPress: () => Alert.alert('Open Source', 'Noteece is open source on GitHub'),
+          onPress: () => {
+            Alert.alert('Open Source', 'Noteece is open source on GitHub');
+          },
           showChevron: true,
         },
       ],

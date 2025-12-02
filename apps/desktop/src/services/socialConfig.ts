@@ -119,6 +119,7 @@ class SocialConfigService {
    * Get configuration for a specific platform
    */
   getPlatform(platformId: string): PlatformConfig | undefined {
+    // eslint-disable-next-line security/detect-object-injection
     return this.config.platforms[platformId];
   }
 
@@ -129,6 +130,7 @@ class SocialConfigService {
     const enabled: Record<string, PlatformConfig> = {};
     for (const [id, config] of Object.entries(this.config.platforms)) {
       if (config.enabled) {
+        // eslint-disable-next-line security/detect-object-injection
         enabled[id] = config;
       }
     }
@@ -285,6 +287,8 @@ class SocialConfigService {
   // Initial capture
   setTimeout(processCapture, 1000);
 
+  // Logger replaced with internal console for WebView context
+  // eslint-disable-next-line no-console
   console.log('[Noteece] Social capture initialized for', PLATFORM_ID);
 })();
 `;

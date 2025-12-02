@@ -12,6 +12,7 @@ pub mod inference;
 pub mod intelligence;
 pub mod maintenance;
 pub mod post;
+pub mod processing;
 pub mod selector_verification;
 pub mod stream_processor;
 pub mod sync;

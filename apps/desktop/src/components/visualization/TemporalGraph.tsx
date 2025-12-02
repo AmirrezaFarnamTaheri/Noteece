@@ -8,7 +8,6 @@
  * Copyright (c) 2024-2025 Amirreza 'Farnam' Taheri <taherifarnam@gmail.com>
  */
 
-import React, { useMemo, useState, useCallback } from 'react';
 import {
   Paper,
   Title,
@@ -160,7 +159,8 @@ export function TemporalGraph({
   }, []);
 
   // Custom tooltip
-  const CustomTooltip = ({ active, payload }: any) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
     if (!active || !payload || payload.length === 0) return null;
 
     const point = payload[0].payload as CorrelationPoint;

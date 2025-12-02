@@ -9,7 +9,6 @@ import {
   IconPuzzle,
   IconRefresh,
   IconBrain,
-  IconCloud,
   IconDevices,
   IconUsers,
   IconRocket,
@@ -34,7 +33,19 @@ interface WidgetCardProps {
 }
 
 const WidgetCard: React.FC<WidgetCardProps> = ({ widget, onToggle }) => (
-  <Card withBorder p="sm">
+  <Card
+    withBorder
+    p="sm"
+    style={{ transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.transform = 'translateY(-2px)';
+      e.currentTarget.style.boxShadow = 'var(--mantine-shadow-md)';
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = 'translateY(0)';
+      e.currentTarget.style.boxShadow = 'none';
+    }}
+  >
     <Group justify="space-between" wrap="nowrap">
       <div style={{ flex: 1 }}>
         <Group gap="xs" mb={4}>
@@ -49,7 +60,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, onToggle }) => (
           {widget.description}
         </Text>
       </div>
-      <Switch checked={widget.enabled} onChange={onToggle} size="md" />
+      <Switch checked={widget.enabled} onChange={onToggle} size="md" style={{ cursor: 'pointer' }} />
     </Group>
   </Card>
 );
@@ -60,7 +71,19 @@ interface FeatureCardProps {
 }
 
 const FeatureCard: React.FC<FeatureCardProps> = ({ feature, onToggle }) => (
-  <Card withBorder p="sm">
+  <Card
+    withBorder
+    p="sm"
+    style={{ transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.transform = 'translateY(-2px)';
+      e.currentTarget.style.boxShadow = 'var(--mantine-shadow-md)';
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = 'translateY(0)';
+      e.currentTarget.style.boxShadow = 'none';
+    }}
+  >
     <Group justify="space-between" wrap="nowrap">
       <div style={{ flex: 1 }}>
         <Group gap="xs" mb={4}>
@@ -77,7 +100,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ feature, onToggle }) => (
           {feature.description}
         </Text>
       </div>
-      <Switch checked={feature.enabled} onChange={onToggle} size="md" />
+      <Switch checked={feature.enabled} onChange={onToggle} size="md" style={{ cursor: 'pointer' }} />
     </Group>
   </Card>
 );
@@ -88,26 +111,30 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ feature, onToggle }) => (
 export const ControlPanel: React.FC = () => {
   const { widgets, features, toggleWidget, toggleFeature, resetWidgets, resetFeatures } = useControlPanelStore();
 
-  // Group widgets by category using simple loop instead of reduce
+  // Group widgets by category
   const widgetsByCategory: Record<string, WidgetConfig[]> = {};
   for (const widget of widgets) {
-    if (!widgetsByCategory[widget.category]) {
-      widgetsByCategory[widget.category] = [];
-    }
+    if (!widgetsByCategory[widget.category]) widgetsByCategory[widget.category] = [];
     widgetsByCategory[widget.category].push(widget);
   }
 
   // Group features by category
   const featuresByCategory: Record<string, FeatureConfig[]> = {};
   for (const feature of features) {
-    if (!featuresByCategory[feature.category]) {
-      featuresByCategory[feature.category] = [];
-    }
+    if (!featuresByCategory[feature.category]) featuresByCategory[feature.category] = [];
     featuresByCategory[feature.category].push(feature);
   }
 
   const enabledWidgets = widgets.filter((w) => w.enabled).length;
   const enabledFeatures = features.filter((f) => f.enabled).length;
+
+  const getCategoryIcon = (category: string) => {
+    if (Object.prototype.hasOwnProperty.call(categoryIcons, category)) {
+      // eslint-disable-next-line security/detect-object-injection
+      return categoryIcons[category];
+    }
+    return <IconPuzzle size={16} />;
+  };
 
   return (
     <Stack gap="lg">
@@ -139,7 +166,7 @@ export const ControlPanel: React.FC = () => {
             <Accordion variant="separated">
               {Object.entries(widgetsByCategory).map(([category, categoryWidgets]) => (
                 <Accordion.Item key={category} value={category}>
-                  <Accordion.Control icon={categoryIcons[category]}>
+                  <Accordion.Control icon={getCategoryIcon(category)}>
                     <Group gap="xs">
                       <Text tt="capitalize">{category}</Text>
                       <Badge size="xs" variant="light">
@@ -171,7 +198,7 @@ export const ControlPanel: React.FC = () => {
             <Accordion variant="separated">
               {Object.entries(featuresByCategory).map(([category, categoryFeatures]) => (
                 <Accordion.Item key={category} value={category}>
-                  <Accordion.Control icon={categoryIcons[category]}>
+                  <Accordion.Control icon={getCategoryIcon(category)}>
                     <Group gap="xs">
                       <Text tt="capitalize">{category}</Text>
                       <Badge size="xs" variant="light">

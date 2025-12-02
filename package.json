@@ -13,15 +13,18 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "test:coverage": "turbo test:coverage"
+    "test:coverage": "turbo test:coverage",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "prettier": "^3.2.5",
     "eslint": "^8.57.0",
-    "typescript": "^5.4.5",
-    "turbo": "^1.13.3",
+    "eslint-import-resolver-typescript": "^3.6.1",
     "eslint-plugin-import": "^2.29.1",
-    "eslint-import-resolver-typescript": "^3.6.1"
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.2.5",
+    "turbo": "^1.13.3",
+    "typescript": "^5.4.5"
   },
   "packageManager": "pnpm@8.15.6",
   "pnpm": {
@@ -30,5 +33,16 @@
       "react": "18.2.0",
       "react-dom": "18.2.0"
     }
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,md}": [
+      "prettier --write"
+    ],
+    "apps/desktop/**/*.{ts,tsx}": [
+      "eslint --fix"
+    ],
+    "packages/core-rs/**/*.rs": [
+      "cargo fmt"
+    ]
   }
 }

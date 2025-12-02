@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/tauri';
+import { logger } from '../utils/logger';
 
 /**
  * A service for managing the user's unique identity.
@@ -22,7 +23,7 @@ class IdentityService {
       this.userId = userId;
       return userId;
     } catch (error) {
-      console.error('Failed to get or create user ID:', error);
+      logger.error('Failed to get or create user ID:', error as Error);
       // Fallback to a temporary, non-persistent ID in case of an error.
       // This is a safety net and should not be relied upon.
       return `temp_user_${Date.now()}`;

@@ -102,10 +102,11 @@ describe('DueTodayWidget', () => {
 
   it('shows "All clear" message when no tasks due', () => {
     // Override useTasks mock for this test
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, unicorn/prefer-module
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, unicorn/prefer-module, @typescript-eslint/no-unsafe-assignment
     const { useTasks } = require('../../../hooks/useQueries');
 
     // safe mock override
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
     (useTasks as jest.Mock).mockReturnValue({ data: [], isLoading: false });
 
     renderWithProviders(<DueTodayWidget />);

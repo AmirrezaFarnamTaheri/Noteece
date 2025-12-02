@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Paper, Title, Grid, Stack, Text, Group, ThemeIcon, RingProgress, Center } from '@mantine/core';
 import { IconHeartRateMonitor, IconMusic, IconSocial, IconListCheck, IconActivity } from '@tabler/icons-react';
 import { useAsync } from '../../hooks/useAsync';
-import { invoke } from '@tauri-apps/api/tauri';
+import { getDashboardStats } from '../../services/api';
 import { useStore } from '../../store';
 
 interface DashboardStats {
@@ -32,6 +32,7 @@ export const UniversalDashboardWidget: React.FC = () => {
   const {
     data: stats,
     execute,
+
     loading,
   } = useAsync<DashboardStats>(
     async () => {
@@ -44,7 +45,7 @@ export const UniversalDashboardWidget: React.FC = () => {
         };
       }
       try {
-        return await invoke('get_dashboard_stats_cmd', { spaceId: activeSpaceId });
+        return await getDashboardStats(activeSpaceId);
       } catch (error) {
         console.warn('Failed to fetch stats, using mock', error);
         return {

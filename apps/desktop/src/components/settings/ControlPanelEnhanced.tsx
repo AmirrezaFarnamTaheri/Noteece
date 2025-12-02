@@ -17,10 +17,7 @@ import {
   SimpleGrid,
   TextInput,
   Tooltip,
-  ActionIcon,
-  SegmentedControl,
   Paper,
-  Progress,
   ThemeIcon,
 } from '@mantine/core';
 import {
@@ -32,15 +29,9 @@ import {
   IconUsers,
   IconRocket,
   IconSearch,
-  IconCheck,
-  IconX,
   IconSparkles,
   IconSettings,
-  IconTarget,
   IconHeart,
-  IconCloud,
-  IconBolt,
-  IconShield,
   IconEye,
   IconEyeOff,
 } from '@tabler/icons-react';
@@ -168,19 +159,21 @@ export const ControlPanelEnhanced: React.FC = () => {
 
   // Group by category
   const widgetsByCategory = useMemo(() => {
-    return filteredWidgets.reduce<Record<string, WidgetConfig[]>>((acc, widget) => {
-      if (!acc[widget.category]) acc[widget.category] = [];
-      acc[widget.category].push(widget);
-      return acc;
-    }, {});
+    const grouped: Record<string, WidgetConfig[]> = {};
+    for (const widget of filteredWidgets) {
+      if (!grouped[widget.category]) grouped[widget.category] = [];
+      grouped[widget.category].push(widget);
+    }
+    return grouped;
   }, [filteredWidgets]);
 
   const featuresByCategory = useMemo(() => {
-    return filteredFeatures.reduce<Record<string, FeatureConfig[]>>((acc, feature) => {
-      if (!acc[feature.category]) acc[feature.category] = [];
-      acc[feature.category].push(feature);
-      return acc;
-    }, {});
+    const grouped: Record<string, FeatureConfig[]> = {};
+    for (const feature of filteredFeatures) {
+      if (!grouped[feature.category]) grouped[feature.category] = [];
+      grouped[feature.category].push(feature);
+    }
+    return grouped;
   }, [filteredFeatures]);
 
   // Stats
@@ -230,6 +223,22 @@ export const ControlPanelEnhanced: React.FC = () => {
         if (f.enabled) toggleFeature(f.id);
       }
     }
+  };
+
+  const getCategoryIcon = (category: string) => {
+    if (Object.prototype.hasOwnProperty.call(categoryIcons, category)) {
+      // eslint-disable-next-line security/detect-object-injection
+      return categoryIcons[category];
+    }
+    return <IconPuzzle size={16} />;
+  };
+
+  const getCategoryColor = (category: string) => {
+    if (Object.prototype.hasOwnProperty.call(categoryColors, category)) {
+      // eslint-disable-next-line security/detect-object-injection
+      return categoryColors[category];
+    }
+    return 'gray';
   };
 
   return (
@@ -351,13 +360,13 @@ export const ControlPanelEnhanced: React.FC = () => {
                   <Accordion.Item key={category} value={category}>
                     <Accordion.Control>
                       <Group gap="xs">
-                        <ThemeIcon size="sm" variant="light" color={categoryColors[category]}>
-                          {categoryIcons[category]}
+                        <ThemeIcon size="sm" variant="light" color={getCategoryColor(category)}>
+                          {getCategoryIcon(category)}
                         </ThemeIcon>
                         <Text tt="capitalize" fw={500}>
                           {category}
                         </Text>
-                        <Badge size="xs" variant="light" color={categoryColors[category]}>
+                        <Badge size="xs" variant="light" color={getCategoryColor(category)}>
                           {categoryWidgets.filter((w) => w.enabled).length}/{categoryWidgets.length}
                         </Badge>
                       </Group>
@@ -430,13 +439,13 @@ export const ControlPanelEnhanced: React.FC = () => {
                   <Accordion.Item key={category} value={category}>
                     <Accordion.Control>
                       <Group gap="xs">
-                        <ThemeIcon size="sm" variant="light" color={categoryColors[category]}>
-                          {categoryIcons[category]}
+                        <ThemeIcon size="sm" variant="light" color={getCategoryColor(category)}>
+                          {getCategoryIcon(category)}
                         </ThemeIcon>
                         <Text tt="capitalize" fw={500}>
                           {category}
                         </Text>
-                        <Badge size="xs" variant="light" color={categoryColors[category]}>
+                        <Badge size="xs" variant="light" color={getCategoryColor(category)}>
                           {categoryFeatures.filter((f) => f.enabled).length}/{categoryFeatures.length}
                         </Badge>
                       </Group>

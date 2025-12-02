@@ -34,6 +34,7 @@ pub mod music;
 pub mod note;
 pub mod ocr;
 pub mod personal_modes;
+pub mod plugin;
 pub mod project;
 pub mod search;
 pub mod social;
@@ -76,6 +77,8 @@ pub fn init() {
 #[cxx::bridge]
 mod ffi {
     // Shared structs would be defined here
+    #[derive(Default)]
+    #[allow(dead_code)]
     struct JsiSyncStatus {
         connected: bool,
         last_sync: u64,

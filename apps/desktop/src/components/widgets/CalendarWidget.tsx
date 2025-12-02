@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
 import { Card, Text, Group, Stack, Badge, ScrollArea } from '@mantine/core';
 import { Calendar } from '@mantine/dates';
+import { useState } from 'react';
 import { IconCalendar, IconClock } from '@tabler/icons-react';
 import { useTasks, useNotes } from '../../hooks/useQueries';
 import { LoadingCard } from '@noteece/ui';

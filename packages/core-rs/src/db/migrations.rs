@@ -745,6 +745,18 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
             );
             CREATE INDEX IF NOT EXISTS idx_insight_space ON insight(space_id, dismissed);
 
+            CREATE TABLE IF NOT EXISTS entity_sync_log (
+                id TEXT PRIMARY KEY,
+                entity_type TEXT NOT NULL,
+                entity_id TEXT NOT NULL,
+                synced_at INTEGER NOT NULL,
+                device_id TEXT NOT NULL,
+                operation TEXT NOT NULL,
+                created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+            );
+            CREATE INDEX IF NOT EXISTS idx_entity_sync_log_entity ON entity_sync_log(entity_id);
+            CREATE INDEX IF NOT EXISTS idx_entity_sync_log_entity_time ON entity_sync_log(entity_id, synced_at);
+
             INSERT INTO schema_version (version) VALUES (16);
             ",
         )?;
@@ -784,6 +796,98 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
             CREATE INDEX IF NOT EXISTS idx_social_archive_timestamp ON social_post_archive(timestamp);
 
             INSERT INTO schema_version (version) VALUES (18);
+            ",
+        )?;
+    }
+
+    if current_version < 19 {
+        log::info!("[db] Migrating to version 19 - Optimization Indexes");
+        tx.execute_batch(
+            "
+            CREATE INDEX IF NOT EXISTS idx_saved_search_scope ON saved_search(scope);
+            CREATE INDEX IF NOT EXISTS idx_task_priority ON task(priority);
+            CREATE INDEX IF NOT EXISTS idx_project_status ON project(status);
+            INSERT INTO schema_version (version) VALUES (19);
+            ",
+        )?;
+    }
+
+    if current_version < 20 {
+        log::info!("[db] Migrating to version 20 - FTS for Tasks and Projects (Optimized)");
+        tx.execute_batch(
+            "
+            -- FTS for Tasks (contentless with rowid mapping)
+            CREATE VIRTUAL TABLE IF NOT EXISTS fts_task USING fts5(
+                title,
+                description,
+                content='task',
+                content_rowid='rowid',
+                tokenize='porter unicode61 remove_diacritics 2'
+            );
+
+            -- Rebuild from base table
+            INSERT INTO fts_task(rowid, title, description)
+            SELECT rowid, title, COALESCE(description, '') FROM task;
+
+            CREATE TRIGGER task_ai AFTER INSERT ON task BEGIN
+                INSERT INTO fts_task(rowid, title, description)
+                VALUES (new.rowid, new.title, COALESCE(new.description, ''));
+            END;
+
+            CREATE TRIGGER task_ad AFTER DELETE ON task BEGIN
+                DELETE FROM fts_task WHERE rowid = old.rowid;
+            END;
+
+            CREATE TRIGGER task_au AFTER UPDATE OF title, description ON task BEGIN
+                DELETE FROM fts_task WHERE rowid = old.rowid;
+                INSERT INTO fts_task(rowid, title, description)
+                VALUES (new.rowid, new.title, COALESCE(new.description, ''));
+            END;
+
+            -- FTS for Projects (contentless with rowid mapping)
+            CREATE VIRTUAL TABLE IF NOT EXISTS fts_project USING fts5(
+                title,
+                goal_outcome,
+                content='project',
+                content_rowid='rowid',
+                tokenize='porter unicode61 remove_diacritics 2'
+            );
+
+            -- Rebuild from base table
+            INSERT INTO fts_project(rowid, title, goal_outcome)
+            SELECT rowid, title, COALESCE(goal_outcome, '') FROM project;
+
+            CREATE TRIGGER project_ai AFTER INSERT ON project BEGIN
+                INSERT INTO fts_project(rowid, title, goal_outcome)
+                VALUES (new.rowid, new.title, COALESCE(new.goal_outcome, ''));
+            END;
+
+            CREATE TRIGGER project_ad AFTER DELETE ON project BEGIN
+                DELETE FROM fts_project WHERE rowid = old.rowid;
+            END;
+
+            CREATE TRIGGER project_au AFTER UPDATE OF title, goal_outcome ON project BEGIN
+                DELETE FROM fts_project WHERE rowid = old.rowid;
+                INSERT INTO fts_project(rowid, title, goal_outcome)
+                VALUES (new.rowid, new.title, COALESCE(new.goal_outcome, ''));
+            END;
+
+            INSERT INTO schema_version (version) VALUES (20);
+            ",
+        )?;
+    }
+
+    if current_version < 21 {
+        log::info!("[db] Migrating to version 21 - Performance Optimization");
+        tx.execute_batch(
+            "
+            -- Index to optimize sync delta generation (filtering notes by space and modification time)
+            CREATE INDEX IF NOT EXISTS idx_note_space_mod ON note(space_id, modified_at);
+
+            -- Index for faster note retrieval by trashed status in a space
+            CREATE INDEX IF NOT EXISTS idx_note_space_trashed ON note(space_id, is_trashed);
+
+            INSERT INTO schema_version (version) VALUES (21);
             ",
         )?;
     }

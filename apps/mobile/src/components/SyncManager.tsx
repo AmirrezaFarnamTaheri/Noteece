@@ -4,7 +4,7 @@ import { SyncClient, SyncStatus } from '../lib/sync/sync-client';
 import { DiscoveredDevice } from '../lib/sync/sync-bridge';
 
 const SyncManager: React.FC = () => {
-  const [syncClient] = useState(() => new SyncClient('mobile-device-id'));
+  const [syncClient] = useState(() => new SyncClient());
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
     status: 'idle',
     message: 'Ready to sync',
@@ -41,12 +41,7 @@ const SyncManager: React.FC = () => {
   const initiateSync = async (deviceId: string) => {
     try {
       setSelectedDevice(deviceId);
-      const device = discoveredDevices.find((d) => d.device_id === deviceId);
-      if (device) {
-        await syncClient.initiateSync(deviceId, device.ip_address, device.port);
-      } else {
-        throw new Error('Device not found');
-      }
+      await syncClient.initiateSync(deviceId, ['posts', 'accounts']);
     } catch (error) {
       Alert.alert('Sync Error', error instanceof Error ? error.message : 'Sync failed');
     }

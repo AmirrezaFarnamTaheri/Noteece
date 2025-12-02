@@ -42,6 +42,9 @@ export type ConflictResolution = 'keep_local' | 'keep_remote' | 'merge';
 
 // JSI Interface
 interface SyncJSI {
+  // Initialization
+  init(dbPath: string): Promise<void>;
+
   // Device Discovery
   discoverDevices(): Promise<SyncDevice[]>;
   registerDevice(device: SyncDevice): Promise<void>;
@@ -106,9 +109,21 @@ class SyncBridge implements SyncJSI {
 
     if (this.useJSI) {
       console.log('[SyncBridge] Using JSI for sync operations');
+      // Initialization is handled by caller to provide the correct DB path
     } else {
       console.log('[SyncBridge] Falling back to Native Module');
     }
+  }
+
+  /**
+   * Initialize the sync engine with database path
+   */
+  async init(dbPath: string): Promise<void> {
+    if (this.jsi) {
+      return this.jsi.init(dbPath);
+    }
+    // Native module likely initializes itself or via other means
+    return Promise.resolve();
   }
 
   /**

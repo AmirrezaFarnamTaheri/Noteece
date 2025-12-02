@@ -458,10 +458,10 @@ impl SyncAgent {
 
         match conflict.entity_type.as_str() {
             "task" => {
-                let local: serde_json::Value =
-                    serde_json::from_slice(local_bytes).unwrap_or(serde_json::json!({}));
-                let remote: serde_json::Value =
-                    serde_json::from_slice(remote_bytes).unwrap_or(serde_json::json!({}));
+                let local: serde_json::Value = serde_json::from_slice(local_bytes)
+                    .map_err(|e| SyncError::InvalidData(format!("Corrupt local task JSON: {}", e)))?;
+                let remote: serde_json::Value = serde_json::from_slice(remote_bytes)
+                    .map_err(|e| SyncError::InvalidData(format!("Corrupt remote task JSON: {}", e)))?;
 
                 // Merge strategy for Task:
                 let mut merged = local.clone();
@@ -572,6 +572,12 @@ impl SyncAgent {
         conn: &Connection,
         space_id: Ulid,
     ) -> Result<HashMap<String, String>, SyncError> {
+        // Optimization: Check for notes modified since last sync if possible,
+        // but for a full manifest we usually need the full state.
+        // For now, we stick to scanning all notes but ensuring we use a covered index scan if available.
+        // (Index note_mod exists on modified_at, but we need space_id filtering too).
+        // A better index would be CREATE INDEX idx_note_space_mod ON note(space_id, modified_at);
+
         let mut hashes = HashMap::new();
         let mut stmt = conn.prepare("SELECT id, modified_at FROM note WHERE space_id = ?1")?;
         let note_rows = stmt.query_map([space_id.to_string()], |row| {

@@ -4,12 +4,11 @@
  * Advanced FTS-powered search across all social media posts
  */
 
-import { Stack, TextInput, Card, Text, Group, Badge, Center, Loader, ActionIcon, Pill } from '@mantine/core';
-import { IconSearch, IconFilter, IconX } from '@tabler/icons-react';
+import { Stack, TextInput, Card, Text, Group, Center, Loader, ActionIcon, Pill } from '@mantine/core';
+import { IconSearch, IconX } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
 import { useState, useEffect } from 'react';
-import { SUPPORTED_PLATFORMS } from '@noteece/types';
 import { TimelinePost } from './TimelinePost';
 
 interface SearchResult {

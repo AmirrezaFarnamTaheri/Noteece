@@ -79,7 +79,7 @@ impl RelayEnvelope {
     ) -> Self {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap()
+            .unwrap_or(std::time::Duration::from_secs(0))
             .as_secs();
 
         Self {
@@ -99,9 +99,9 @@ impl RelayEnvelope {
     pub fn is_expired(&self) -> bool {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap()
+            .unwrap_or(std::time::Duration::from_secs(0))
             .as_secs();
-        now - self.timestamp > MAX_MESSAGE_AGE_SECS
+        now.saturating_sub(self.timestamp) > MAX_MESSAGE_AGE_SECS
     }
 
     /// Validate envelope size
@@ -150,7 +150,10 @@ impl BlindRelayServer {
         device_id: &str,
         public_key_hash: &str,
     ) -> Result<(), RelayError> {
-        let mut devices = self.devices.lock().unwrap();
+        let mut devices = self
+            .devices
+            .lock()
+            .map_err(|_| RelayError::EncryptionError("Mutex poisoned".to_string()))?;
         devices.insert(device_id.to_string(), public_key_hash.to_string());
         log::info!("[relay] Registered device: {}", device_id);
         Ok(())
@@ -158,12 +161,14 @@ impl BlindRelayServer {
 
     /// Unregister a device
     pub fn unregister_device(&self, device_id: &str) {
-        let mut devices = self.devices.lock().unwrap();
-        devices.remove(device_id);
+        if let Ok(mut devices) = self.devices.lock() {
+            devices.remove(device_id);
+        }
 
         // Also clear pending messages
-        let mut pending = self.pending.lock().unwrap();
-        pending.remove(device_id);
+        if let Ok(mut pending) = self.pending.lock() {
+            pending.remove(device_id);
+        }
 
         log::info!("[relay] Unregistered device: {}", device_id);
     }
@@ -179,7 +184,10 @@ impl BlindRelayServer {
 
         // Check recipient exists
         {
-            let devices = self.devices.lock().unwrap();
+            let devices = self
+                .devices
+                .lock()
+                .map_err(|_| RelayError::EncryptionError("Mutex poisoned".to_string()))?;
             if !devices.contains_key(&envelope.to_device) {
                 // Still accept - device might register later
                 log::debug!(
@@ -193,11 +201,14 @@ impl BlindRelayServer {
         let msg_id = envelope.id.clone();
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap()
+            .unwrap_or(std::time::Duration::from_secs(0))
             .as_secs();
 
         {
-            let mut pending = self.pending.lock().unwrap();
+            let mut pending = self
+                .pending
+                .lock()
+                .map_err(|_| RelayError::EncryptionError("Mutex poisoned".to_string()))?;
             let queue = pending.entry(envelope.to_device.clone()).or_default();
 
             // Check limits
@@ -222,7 +233,10 @@ impl BlindRelayServer {
 
     /// Fetch pending messages for a device
     pub fn fetch_messages(&self, device_id: &str, limit: usize) -> Vec<RelayEnvelope> {
-        let mut pending = self.pending.lock().unwrap();
+        let mut pending = match self.pending.lock() {
+            Ok(g) => g,
+            Err(_) => return Vec::new(),
+        };
 
         if let Some(queue) = pending.get_mut(device_id) {
             // Remove expired messages
@@ -245,13 +259,19 @@ impl BlindRelayServer {
 
     /// Get pending message count for a device
     pub fn pending_count(&self, device_id: &str) -> usize {
-        let pending = self.pending.lock().unwrap();
+        let pending = match self.pending.lock() {
+            Ok(g) => g,
+            Err(_) => return 0,
+        };
         pending.get(device_id).map(|q| q.len()).unwrap_or(0)
     }
 
     /// Cleanup expired messages
     pub fn cleanup_expired(&self) -> usize {
-        let mut pending = self.pending.lock().unwrap();
+        let mut pending = match self.pending.lock() {
+            Ok(g) => g,
+            Err(_) => return 0,
+        };
         let mut cleaned = 0;
 
         for queue in pending.values_mut() {
@@ -269,8 +289,27 @@ impl BlindRelayServer {
 
     /// Get server statistics
     pub fn stats(&self) -> RelayStats {
-        let pending = self.pending.lock().unwrap();
-        let devices = self.devices.lock().unwrap();
+        let pending = match self.pending.lock() {
+            Ok(g) => g,
+            Err(_) => {
+                return RelayStats {
+                    registered_devices: 0,
+                    total_pending_messages: 0,
+                    active_queues: 0,
+                }
+            }
+        };
+
+        let devices = match self.devices.lock() {
+            Ok(g) => g,
+            Err(_) => {
+                return RelayStats {
+                    registered_devices: 0,
+                    total_pending_messages: 0,
+                    active_queues: 0,
+                }
+            }
+        };
 
         let total_pending: usize = pending.values().map(|q| q.len()).sum();
 
@@ -470,8 +509,12 @@ mod tests {
         let server = BlindRelayServer::new();
 
         // Register devices
-        server.register_device("device_a", "hash_a").unwrap();
-        server.register_device("device_b", "hash_b").unwrap();
+        server
+            .register_device("device_a", "hash_a")
+            .expect("Register device_a failed");
+        server
+            .register_device("device_b", "hash_b")
+            .expect("Register device_b failed");
 
         // Submit message
         let envelope = RelayEnvelope::new(
@@ -483,7 +526,9 @@ mod tests {
             "test",
         );
 
-        let msg_id = server.submit_message(envelope).unwrap();
+        let msg_id = server
+            .submit_message(envelope)
+            .expect("Submit message failed");
         assert!(!msg_id.is_empty());
 
         // Check pending
@@ -501,8 +546,12 @@ mod tests {
     #[test]
     fn test_message_size_limit() {
         let server = BlindRelayServer::new();
-        server.register_device("device_a", "hash_a").unwrap();
-        server.register_device("device_b", "hash_b").unwrap();
+        server
+            .register_device("device_a", "hash_a")
+            .expect("Register device_a failed");
+        server
+            .register_device("device_b", "hash_b")
+            .expect("Register device_b failed");
 
         // Create oversized message
         let large_payload = vec![0u8; MAX_MESSAGE_SIZE + 1];
@@ -522,7 +571,9 @@ mod tests {
     #[test]
     fn test_stats() {
         let server = BlindRelayServer::new();
-        server.register_device("device_a", "hash_a").unwrap();
+        server
+            .register_device("device_a", "hash_a")
+            .expect("Register device_a failed");
 
         let stats = server.stats();
         assert_eq!(stats.registered_devices, 1);

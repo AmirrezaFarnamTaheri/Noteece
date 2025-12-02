@@ -5,7 +5,7 @@
  * Features: daily stats, goals, activities, trends.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 // @ts-ignore: expo vector icons type mismatch
@@ -15,6 +15,7 @@ import { SkeletonBox } from '@/components/skeletons';
 import { haptics } from '@/lib/haptics';
 import { dbQuery, dbExecute } from '@/lib/database';
 import { nanoid } from 'nanoid/non-secure';
+import { useCurrentSpace } from '../store/app-context';
 import type { HealthStats } from '../types/health';
 
 const { width } = Dimensions.get('window');
@@ -37,9 +38,11 @@ async function loadHealthDataFromDB(): Promise<HealthStats | null> {
 
     const todayMetrics = metrics.filter((m) => m.recorded_at >= todayStart);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getMetricSum = (list: any[], type: string) =>
       list.filter((m) => m.metric_type === type).reduce((acc, curr) => acc + curr.value, 0);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getMetricLatest = (list: any[], type: string) => {
       const found = list.find((m) => m.metric_type === type);
       return found ? found.value : 0;
@@ -80,14 +83,8 @@ async function loadHealthDataFromDB(): Promise<HealthStats | null> {
   }
 }
 
-async function seedHealthData() {
+async function seedHealthData(spaceId: string) {
   const now = Date.now();
-  // Ensure we use the active space from a store if available,
-  // but for seeding purposes "default" is acceptable if no user context is passed.
-  // Ideally this should be: const spaceId = useStore.getState().activeSpaceId || "default";
-  // But since we are outside a component, we'll use "default" for the initial seed
-  // which can be migrated later.
-  const spaceId = 'default';
 
   // Generate last 7 days of data
   for (let i = 0; i < 7; i++) {
@@ -139,12 +136,9 @@ export function HealthHub() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedView, setSelectedView] = useState<'today' | 'week' | 'month'>('today');
+  const spaceId = useCurrentSpace();
 
-  useEffect(() => {
-    loadHealthData();
-  }, []);
-
-  const loadHealthData = async () => {
+  const loadHealthData = useCallback(async () => {
     try {
       setLoading(true);
       // Load health data from database or native HealthKit integration
@@ -154,7 +148,7 @@ export function HealthHub() {
         setStats(dbStats);
       } else {
         // If no data, seed some initial data so the UI isn't empty
-        await seedHealthData();
+        await seedHealthData(spaceId);
         const seededStats = await loadHealthDataFromDB();
         setStats(seededStats);
       }
@@ -163,7 +157,11 @@ export function HealthHub() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [spaceId]);
+
+  useEffect(() => {
+    void loadHealthData();
+  }, [loadHealthData]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -211,6 +209,7 @@ export function HealthHub() {
     </ScaleIn>
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderGoalProgress = (goal: any) => {
     const percentage = Math.min(goal.percentage, 100);
     const isAchieved = goal.isAchieved;

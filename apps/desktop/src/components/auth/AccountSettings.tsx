@@ -95,7 +95,6 @@ const AccountSettings: React.FC<AccountSettingsProperties> = ({ onLogout }) => {
     }
   };
 
-  // eslint-disable-next-line unicorn/consistent-function-scoping
   const formatDate = (timestamp: number | undefined | null) => {
     if (timestamp == null) return 'Never';
     if (!Number.isFinite(timestamp)) return 'Invalid date';

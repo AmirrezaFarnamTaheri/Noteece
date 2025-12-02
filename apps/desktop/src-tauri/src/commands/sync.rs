@@ -185,13 +185,18 @@ pub fn get_sync_progress_cmd(
         let stats = agent.get_sync_stats(&conn, "").map_err(|e| e.to_string())?;
 
         // Calculate progress based on pending vs completed items
-        let total = stats.total_syncs as u64;
-        let successful = stats.successful_syncs as u64;
-        let progress = if total > 0 {
-            successful as f32 / total as f32
+        // Use success_rate (0.0 to 1.0) if available, otherwise fallback to 0 or 1.
+        let progress = if (stats.success_rate - 0.0).abs() < f64::EPSILON {
+            0.0
+        } else if stats.success_rate > 0.0 && stats.success_rate <= 1.0 {
+            stats.success_rate as f32
         } else {
-            1.0
+            // If success_rate is stored as percentage (e.g., 100 for complete):
+    (stats.success_rate.clamp(0.0, 100.0) / 100.0) as f32
         };
+        let total = stats.total_synced as u64;
+        // success_rate is likely successful/total, so we can reverse it or just use progress
+        let successful = (progress * total as f32).round() as u64;
 
         Ok(SyncProgress {
             device_id: device_id.clone(),

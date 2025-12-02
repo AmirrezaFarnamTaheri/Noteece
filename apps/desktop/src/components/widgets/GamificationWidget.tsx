@@ -39,17 +39,6 @@ interface GamificationData {
   total_achievements: number;
 }
 
-interface Achievement {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  unlocked: boolean;
-  unlocked_at?: number;
-  progress?: number;
-  max_progress?: number;
-}
-
 interface GamificationWidgetProps {
   userId?: string;
   compact?: boolean;

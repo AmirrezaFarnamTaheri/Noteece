@@ -62,7 +62,7 @@ pub fn run_startup_maintenance(
 pub fn prune_old_posts(conn: &mut Connection, retention_days: u64) -> Result<usize> {
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .expect("Time went backwards")
         .as_secs() as i64;
 
     let retention_seconds = (retention_days * 24 * 60 * 60) as i64;
@@ -122,7 +122,7 @@ pub fn prune_old_posts(conn: &mut Connection, retention_days: u64) -> Result<usi
 pub fn cleanup_old_archives(conn: &mut Connection, archive_retention_days: u64) -> Result<usize> {
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .expect("Time went backwards")
         .as_secs() as i64;
 
     let archive_cutoff = now - (archive_retention_days * 24 * 60 * 60) as i64;
@@ -192,7 +192,7 @@ mod tests {
     use rusqlite::Connection;
 
     fn setup_test_db() -> Connection {
-        let conn = Connection::open_in_memory().unwrap();
+        let conn = Connection::open_in_memory().expect("Failed to open memory DB");
 
         conn.execute(
             "CREATE TABLE social_post (
@@ -206,7 +206,7 @@ mod tests {
             )",
             [],
         )
-        .unwrap();
+        .expect("Failed to create social_post table");
 
         conn.execute(
             "CREATE TABLE social_post_archive (
@@ -220,7 +220,7 @@ mod tests {
             )",
             [],
         )
-        .unwrap();
+        .expect("Failed to create social_post_archive table");
 
         conn
     }
@@ -231,7 +231,7 @@ mod tests {
 
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap()
+            .expect("Time went backwards")
             .as_secs() as i64;
 
         // Insert old post (10 days ago)
@@ -239,17 +239,17 @@ mod tests {
             "INSERT INTO social_post (id, account_id, platform, author, content, timestamp, raw_json) 
              VALUES (?, ?, ?, ?, ?, ?, ?)",
             params!["old_post", "acc1", "twitter", "user1", "old content", now - 864000, "{}"],
-        ).unwrap();
+        ).expect("Failed to insert old post");
 
         // Insert recent post
         conn.execute(
             "INSERT INTO social_post (id, account_id, platform, author, content, timestamp, raw_json) 
              VALUES (?, ?, ?, ?, ?, ?, ?)",
             params!["new_post", "acc1", "twitter", "user1", "new content", now - 3600, "{}"],
-        ).unwrap();
+        ).expect("Failed to insert new post");
 
         // Run pruning with 7 day retention
-        let pruned = prune_old_posts(&mut conn, 7).unwrap();
+        let pruned = prune_old_posts(&mut conn, 7).expect("Prune failed");
 
         assert_eq!(pruned, 1);
 
@@ -260,7 +260,7 @@ mod tests {
                 [],
                 |row| row.get(0),
             )
-            .unwrap();
+            .expect("Query failed");
         assert_eq!(archived, 1);
 
         // Verify new post is still in hot storage
@@ -270,7 +270,7 @@ mod tests {
                 [],
                 |row| row.get(0),
             )
-            .unwrap();
+            .expect("Query failed");
         assert_eq!(hot, 1);
     }
 
@@ -278,7 +278,7 @@ mod tests {
     fn test_startup_maintenance() {
         let mut conn = setup_test_db();
 
-        let result = run_startup_maintenance(&mut conn, 7).unwrap();
+        let result = run_startup_maintenance(&mut conn, 7).expect("Maintenance failed");
 
         assert_eq!(result.posts_archived, 0);
         assert_eq!(result.posts_deleted, 0);

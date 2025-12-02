@@ -81,8 +81,8 @@ export default function TodayScreen() {
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
-          <QuickActionButton icon="add-outline" label="Add Task" onPress={() => {}} color={colors.primary} />
-          <QuickActionButton icon="create-outline" label="New Note" onPress={() => {}} color={colors.accent} />
+          <QuickActionButton icon="add-outline" label="Add Task" onPress={() => {}} color={colors.task} />
+          <QuickActionButton icon="create-outline" label="New Note" onPress={() => {}} color={colors.note} />
           <QuickActionButton icon="play-outline" label="Start Timer" onPress={() => {}} color={colors.success} />
         </View>
       </ScrollView>
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     ...shadows.sm,
   },
   headerTitle: {
-    fontSize: typography.fontSize['3xl'],
+    fontSize: typography.fontSize.lg,
     fontFamily: typography.fontFamily.semibold,
     color: colors.text,
   },
@@ -139,8 +139,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   greetingContainer: {
-    padding: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.xl,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.lg,
   },
   greeting: {
     fontSize: typography.fontSize['3xl'],
@@ -177,7 +178,7 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.xl,
+    paddingVertical: spacing.xxl,
   },
   emptyTitle: {
     fontSize: typography.fontSize.lg,

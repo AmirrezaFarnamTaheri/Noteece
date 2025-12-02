@@ -3,19 +3,8 @@
  */
 
 import React, { useMemo } from 'react';
-import { Card, Title, Text, Group, Select, Stack, Badge } from '@mantine/core';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-} from 'recharts';
+import { Card, Title, Text, Group, Select, Stack } from '@mantine/core';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react';
 import { HealthMetric, METRIC_TYPES } from '../../health/types';
 
@@ -27,6 +16,18 @@ interface HealthChartsProps {
   onTimeRangeChange: (range: '7d' | '30d' | '90d' | '365d') => void;
 }
 
+const ranges: Record<string, number> = {
+  '7d': 7 * 24 * 60 * 60 * 1000,
+  '30d': 30 * 24 * 60 * 60 * 1000,
+  '90d': 90 * 24 * 60 * 60 * 1000,
+  '365d': 365 * 24 * 60 * 60 * 1000,
+};
+
+const getRangeMs = (range: string): number => {
+  // eslint-disable-next-line security/detect-object-injection
+  return ranges[range] || ranges['30d'];
+};
+
 export const HealthCharts: React.FC<HealthChartsProps> = ({
   metrics,
   selectedType,
@@ -37,25 +38,9 @@ export const HealthCharts: React.FC<HealthChartsProps> = ({
   // Filter and prepare chart data
   const chartData = useMemo(() => {
     const now = Date.now();
-    let durationMs = 30 * 24 * 60 * 60 * 1000;
+    const rangeMs = getRangeMs(timeRange);
 
-    // Use switch instead of object lookup to avoid injection sink
-    switch (timeRange) {
-      case '7d':
-        durationMs = 7 * 24 * 60 * 60 * 1000;
-        break;
-      case '30d':
-        durationMs = 30 * 24 * 60 * 60 * 1000;
-        break;
-      case '90d':
-        durationMs = 90 * 24 * 60 * 60 * 1000;
-        break;
-      case '365d':
-        durationMs = 365 * 24 * 60 * 60 * 1000;
-        break;
-    }
-
-    const cutoff = now - durationMs;
+    const cutoff = now - rangeMs;
 
     return metrics
       .filter((m) => m.metric_type === selectedType && m.recorded_at * 1000 >= cutoff)
@@ -74,6 +59,10 @@ export const HealthCharts: React.FC<HealthChartsProps> = ({
     const first = chartData[0].value;
     const lastItem = chartData.at(-1);
     const last = lastItem?.value ?? first;
+
+    // Avoid division by zero
+    if (first === 0) return { direction: 'neutral', percentage: 0 };
+
     const percentage = ((last - first) / first) * 100;
 
     return {

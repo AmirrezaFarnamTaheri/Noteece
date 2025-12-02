@@ -5,7 +5,7 @@
  * Features: library browsing, playlists, now playing, search.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { dbQuery, dbExecute } from '@/lib/database';
 import { nanoid } from 'nanoid/non-secure';
+import { useCurrentSpace } from '../store/app-context';
 import type { Track, Playlist } from '../types/music';
 
 // Database helper functions for loading music data
@@ -30,6 +31,7 @@ async function loadTracksFromDatabase(): Promise<Track[]> {
     // Map snake_case DB columns to camelCase Track type if necessary,
     // but assuming direct mapping for now or that Track type matches DB.
     // Actually Track type likely uses camelCase.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return tracks.map((t: any) => ({
       id: t.id,
       title: t.title,
@@ -57,6 +59,7 @@ async function loadPlaylistsFromDatabase(): Promise<Playlist[]> {
     const playlists = await dbQuery('SELECT * FROM playlist ORDER BY name ASC');
     // Need to get track counts and duration for each playlist
     const enhancedPlaylists = await Promise.all(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       playlists.map(async (p: any) => {
         // Join with track table to get total duration
         const stats = await dbQuery(
@@ -90,9 +93,8 @@ async function loadPlaylistsFromDatabase(): Promise<Playlist[]> {
   }
 }
 
-async function seedMusicData() {
+async function seedMusicData(spaceId: string) {
   const now = Date.now();
-  const spaceId = 'default'; // Placeholder
 
   const tracks = [
     {
@@ -134,19 +136,16 @@ export function MusicHub() {
   const [loading, setLoading] = useState(true);
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const spaceId = useCurrentSpace();
 
-  useEffect(() => {
-    loadMusic();
-  }, []);
-
-  const loadMusic = async () => {
+  const loadMusic = useCallback(async () => {
     try {
       setLoading(true);
 
       // Check if we need to seed data (if empty)
       const currentTracks = await loadTracksFromDatabase();
       if (currentTracks.length === 0) {
-        await seedMusicData();
+        await seedMusicData(spaceId);
       }
 
       // Load tracks and playlists from local database
@@ -160,7 +159,11 @@ export function MusicHub() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [spaceId]);
+
+  useEffect(() => {
+    void loadMusic();
+  }, [loadMusic]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

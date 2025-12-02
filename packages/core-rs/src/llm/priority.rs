@@ -84,7 +84,7 @@ impl PrioritizedRequest {
     pub fn new(request: LLMRequest, priority: Priority, sequence: u64) -> Self {
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
+            .unwrap_or_else(|_| std::time::Duration::from_millis(0))
             .as_millis() as u64;
 
         Self {
@@ -108,7 +108,7 @@ impl PrioritizedRequest {
     pub fn age_ms(&self) -> u64 {
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
+            .unwrap_or_else(|_| std::time::Duration::from_millis(0))
             .as_millis() as u64;
         now.saturating_sub(self.queued_at)
     }
@@ -118,7 +118,7 @@ impl PrioritizedRequest {
         if let Some(deadline) = self.deadline {
             let now = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
+                .unwrap_or_else(|_| std::time::Duration::from_millis(0))
                 .as_millis() as u64;
             now > deadline
         } else {
@@ -131,7 +131,7 @@ impl PrioritizedRequest {
         self.deadline.map(|d| {
             let now = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
+                .unwrap_or_else(|_| std::time::Duration::from_millis(0))
                 .as_millis() as u64;
             d as i64 - now as i64
         })

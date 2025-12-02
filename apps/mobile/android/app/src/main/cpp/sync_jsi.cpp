@@ -17,6 +17,9 @@ using namespace facebook;
 
 // Rust FFI declarations
 extern "C" {
+    // Initialization
+    void rust_init(const char* db_path);
+
     // Device discovery
     char* rust_discover_devices();
     void rust_register_device(const char* device_json);
@@ -55,6 +58,22 @@ jsi::String rustToJSIString(jsi::Runtime& runtime, char* rustStr) {
 void installSyncJSI(jsi::Runtime& runtime, std::shared_ptr<react::CallInvoker> jsCallInvoker) {
     auto syncModule = jsi::Object(runtime);
     
+    // init(dbPath)
+    auto init = jsi::Function::createFromHostFunction(
+        runtime,
+        jsi::PropNameID::forAscii(runtime, "init"),
+        1,
+        [](jsi::Runtime& runtime, const jsi::Value& thisVal, const jsi::Value* args, size_t count) -> jsi::Value {
+            if (count < 1 || !args[0].isString()) {
+                throw jsi::JSError(runtime, "init requires a dbPath string");
+            }
+            std::string dbPath = args[0].asString(runtime).utf8(runtime);
+            rust_init(dbPath.c_str());
+            return jsi::Value::undefined();
+        }
+    );
+    syncModule.setProperty(runtime, "init", std::move(init));
+
     // discoverDevices()
     auto discoverDevices = jsi::Function::createFromHostFunction(
         runtime,
@@ -212,4 +231,3 @@ void installSyncJSI(jsi::Runtime& runtime, std::shared_ptr<react::CallInvoker> j
     // Install on global object
     runtime.global().setProperty(runtime, "__SyncJSI", std::move(syncModule));
 }
-

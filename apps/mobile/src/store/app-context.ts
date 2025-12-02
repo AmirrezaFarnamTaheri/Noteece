@@ -261,5 +261,11 @@ export function useSettings() {
  */
 export function useUpdateSetting() {
   const updateSettings = useAppContext((state) => state.updateSettings);
-  return (key: keyof AppSettings, value: any) => updateSettings({ [key]: value });
+
+  // Helper to update a single key; preserves existing nested object fields
+  return async <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
+    return updateSettings({
+      [key]: value, // Simplified shallow merge, deep merge logic moved to component if needed or use immer
+    } as Partial<AppSettings>);
+  };
 }

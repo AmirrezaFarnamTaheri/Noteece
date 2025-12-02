@@ -48,7 +48,6 @@ const createTestQueryClient = () =>
     },
   });
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const renderWithProviders = (ui: React.ReactElement) => {
   const queryClient = createTestQueryClient();
   return render(
@@ -242,7 +241,8 @@ describe('ChatWithVault', () => {
     fireEvent.change(input, { target: { value: 'Test query' } });
     fireEvent.click(screen.getByRole('button'));
 
-    expect(screen.getByText('Searching your vault...')).toBeInTheDocument();
+    // Use findByText for the loading state to allow for slight delays
+    expect(await screen.findByText('Searching your vault...')).toBeInTheDocument();
   });
 
   it('passes spaceId to query', async () => {

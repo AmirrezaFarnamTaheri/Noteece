@@ -84,13 +84,7 @@ export const useThemeStore = create<ThemeState>()(
  */
 function applyTheme(theme: ActualTheme): void {
   if (typeof document !== 'undefined' && document.documentElement) {
-    // Use dataset primarily, setAttribute as fallback for test environments
-    if (document.documentElement.dataset) {
-      document.documentElement.dataset.mantineColorScheme = theme;
-    } else {
-      // eslint-disable-next-line unicorn/prefer-dom-node-dataset -- fallback for test environments
-      document.documentElement.setAttribute('data-mantine-color-scheme', theme);
-    }
+    document.documentElement.dataset.mantineColorScheme = theme;
     document.documentElement.classList.remove('light', 'dark');
     document.documentElement.classList.add(theme);
   }
@@ -99,6 +93,10 @@ function applyTheme(theme: ActualTheme): void {
 /**
  * Initialize theme and listen for system changes
  */
+const handleChange = () => {
+  useThemeStore.getState().syncWithSystem();
+};
+
 export function initializeTheme(): () => void {
   const store = useThemeStore.getState();
 
@@ -108,10 +106,6 @@ export function initializeTheme(): () => void {
   // Listen for system theme changes
   if (typeof window !== 'undefined' && window.matchMedia) {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-    const handleChange = () => {
-      useThemeStore.getState().syncWithSystem();
-    };
 
     // Modern browsers
     if (mediaQuery.addEventListener) {
