@@ -557,8 +557,7 @@ fn extract_snippet(content: &str, query: &str) -> Option<String> {
         // Compute desired window in terms of chars on lower_content
         let start_char = lower_content[..pos].chars().count().saturating_sub(50);
         let match_chars = lower_query.chars().count();
-        let end_char = (lower_content[..].chars().count())
-            .min(start_char + 50 + match_chars + 100);
+        let end_char = (lower_content[..].chars().count()).min(start_char + 50 + match_chars + 100);
 
         // Translate char positions to byte positions on original content
         for (char_idx, (byte_idx, _)) in content.char_indices().enumerate() {
