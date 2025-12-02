@@ -458,10 +458,14 @@ impl SyncAgent {
 
         match conflict.entity_type.as_str() {
             "task" => {
-                let local: serde_json::Value = serde_json::from_slice(local_bytes)
-                    .map_err(|e| SyncError::InvalidData(format!("Corrupt local task JSON: {}", e)))?;
-                let remote: serde_json::Value = serde_json::from_slice(remote_bytes)
-                    .map_err(|e| SyncError::InvalidData(format!("Corrupt remote task JSON: {}", e)))?;
+                let local: serde_json::Value =
+                    serde_json::from_slice(local_bytes).map_err(|e| {
+                        SyncError::InvalidData(format!("Corrupt local task JSON: {}", e))
+                    })?;
+                let remote: serde_json::Value =
+                    serde_json::from_slice(remote_bytes).map_err(|e| {
+                        SyncError::InvalidData(format!("Corrupt remote task JSON: {}", e))
+                    })?;
 
                 // Merge strategy for Task:
                 let mut merged = local.clone();

@@ -46,29 +46,39 @@ const EnhancedSearch: React.FC = () => {
   }, [activeSpaceId]);
 
   const handleSearch = async () => {
-    if (activeSpaceId) {
-      const requestId = Date.now();
-      latestRequestRef.current = requestId;
-      setLoading(true);
-      try {
-        let searchQuery = query;
-        if (selectedTags.length > 0) {
-          searchQuery += selectedTags.map((tag) => ` tag:${tag}`).join('');
-        }
-        if (status) {
-          searchQuery += ` status:${status}`;
-        }
+    if (!activeSpaceId) return;
 
-        const fetched: Note[] = await invoke('search_notes_cmd', { query: searchQuery, scope: activeSpaceId });
-        if (latestRequestRef.current === requestId) {
-          setResults(fetched);
-        }
-      } catch (error) {
-        logger.error('Failed to search notes:', error as Error);
-      } finally {
-        if (latestRequestRef.current === requestId) {
-          setLoading(false);
-        }
+    const base = query.trim();
+    const hasTagFilter = selectedTags.length > 0;
+    const hasStatusFilter = Boolean(status && status.trim().length > 0);
+
+    if (!base && !hasTagFilter && !hasStatusFilter) {
+      // Nothing to search; avoid unnecessary invoke
+      setResults([]);
+      return;
+    }
+
+    const requestId = Date.now();
+    latestRequestRef.current = requestId;
+    setLoading(true);
+    try {
+      let searchQuery = base;
+      if (hasTagFilter) {
+        searchQuery += selectedTags.map((tag) => ` tag:${tag}`).join('');
+      }
+      if (hasStatusFilter) {
+        searchQuery += ` status:${status}`;
+      }
+
+      const fetched: Note[] = await invoke('search_notes_cmd', { query: searchQuery, scope: activeSpaceId });
+      if (latestRequestRef.current === requestId) {
+        setResults(fetched);
+      }
+    } catch (error) {
+      logger.error('Failed to search notes:', error as Error);
+    } finally {
+      if (latestRequestRef.current === requestId) {
+        setLoading(false);
       }
     }
   };

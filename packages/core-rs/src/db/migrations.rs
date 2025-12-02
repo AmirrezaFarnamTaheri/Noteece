@@ -760,6 +760,7 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
                 created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
             );
             CREATE INDEX IF NOT EXISTS idx_entity_sync_log_entity ON entity_sync_log(entity_id);
+            CREATE INDEX IF NOT EXISTS idx_entity_sync_log_entity_time ON entity_sync_log(entity_id, synced_at);
 
             INSERT INTO schema_version (version) VALUES (16);
             ",

@@ -23,6 +23,20 @@ const SAFE_COLORS = new Set([
 ] as const);
 
 type SafeColor = 'gray' | 'blue' | 'yellow' | 'green' | 'red' | 'orange' | 'cyan' | 'teal' | 'pink' | 'purple';
+
+const colorTokenMap: Record<SafeColor, { bgActive: string; bgIdle: string; borderActive: string; borderIdle: string }> = {
+  gray:   { bgActive: 'var(--mantine-color-gray-9)',   bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-gray-6)',   borderIdle: 'var(--mantine-color-dark-4)' },
+  blue:   { bgActive: 'var(--mantine-color-blue-9)',   bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-blue-6)',   borderIdle: 'var(--mantine-color-dark-4)' },
+  yellow: { bgActive: 'var(--mantine-color-yellow-9)', bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-yellow-6)', borderIdle: 'var(--mantine-color-dark-4)' },
+  green:  { bgActive: 'var(--mantine-color-green-9)',  bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-green-6)',  borderIdle: 'var(--mantine-color-dark-4)' },
+  red:    { bgActive: 'var(--mantine-color-red-9)',    bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-red-6)',    borderIdle: 'var(--mantine-color-dark-4)' },
+  orange: { bgActive: 'var(--mantine-color-orange-9)', bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-orange-6)', borderIdle: 'var(--mantine-color-dark-4)' },
+  cyan:   { bgActive: 'var(--mantine-color-cyan-9)',   bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-cyan-6)',   borderIdle: 'var(--mantine-color-dark-4)' },
+  teal:   { bgActive: 'var(--mantine-color-teal-9)',   bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-teal-6)',   borderIdle: 'var(--mantine-color-dark-4)' },
+  pink:   { bgActive: 'var(--mantine-color-pink-9)',   bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-pink-6)',   borderIdle: 'var(--mantine-color-dark-4)' },
+  purple: { bgActive: 'var(--mantine-color-purple-9)', bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-purple-6)', borderIdle: 'var(--mantine-color-dark-4)' },
+};
+
 type ColumnKey = 'inbox' | 'todo' | 'in_progress' | 'done';
 type ColumnDef = { readonly title: string; readonly color: SafeColor; readonly icon: string };
 
@@ -124,6 +138,7 @@ const TaskBoard: React.FC = () => {
               : 'gray';
             // Validate icon to prevent XSS
             const safeIcon = typeof column.icon === 'string' ? column.icon : '📦';
+            const tokens = colorTokenMap[safeColor] ?? colorTokenMap.gray;
             return (
               <Droppable droppableId={columnId} key={columnId}>
                 {(provided, snapshot) => (
@@ -137,12 +152,8 @@ const TaskBoard: React.FC = () => {
                     style={{
                       flex: '0 0 320px',
                       minHeight: 500,
-                      backgroundColor: snapshot.isDraggingOver
-                        ? `var(--mantine-color-${safeColor}-9)`
-                        : 'var(--mantine-color-dark-8)',
-                      borderColor: snapshot.isDraggingOver
-                         ? `var(--mantine-color-${safeColor}-6)`
-                         : 'var(--mantine-color-dark-4)',
+                      backgroundColor: snapshot.isDraggingOver ? tokens.bgActive : tokens.bgIdle,
+                      borderColor: snapshot.isDraggingOver ? tokens.borderActive : tokens.borderIdle,
                       transition: 'background-color 0.2s, border-color 0.2s',
                     }}
                   >
