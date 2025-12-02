@@ -338,7 +338,7 @@ export function SocialHub() {
       />
 
       {/* Shared Content Banner */}
-      {hasSharedContent && (
+      {hasSharedContent && sharedItems.length > 0 && (
         <SharedContentBanner
           sharedItems={sharedItems}
           onDismiss={handleDismissSharedContent}

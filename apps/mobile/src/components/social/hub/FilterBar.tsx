@@ -16,7 +16,7 @@ interface FilterBarProps {
   onClearFilters: () => void;
 }
 
-const availablePlatforms: Platform[] = ['twitter', 'instagram', 'linkedin', 'youtube', 'reddit', 'tiktok'];
+const availablePlatforms = Object.keys(PLATFORM_CONFIGS) as Platform[];
 
 export const FilterBar: React.FC<FilterBarProps> = ({
   showFilters,

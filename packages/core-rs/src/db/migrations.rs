@@ -877,6 +877,21 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
         )?;
     }
 
+    if current_version < 21 {
+        log::info!("[db] Migrating to version 21 - Performance Optimization");
+        tx.execute_batch(
+            "
+            -- Index to optimize sync delta generation (filtering notes by space and modification time)
+            CREATE INDEX IF NOT EXISTS idx_note_space_mod ON note(space_id, modified_at);
+
+            -- Index for faster note retrieval by trashed status in a space
+            CREATE INDEX IF NOT EXISTS idx_note_space_trashed ON note(space_id, is_trashed);
+
+            INSERT INTO schema_version (version) VALUES (21);
+            ",
+        )?;
+    }
+
     // Run Personal Modes Initialization (Idempotent)
     crate::personal_modes::init_personal_modes_tables(&tx)?;
 

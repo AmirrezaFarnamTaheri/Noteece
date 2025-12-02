@@ -116,7 +116,7 @@ const darkColors: ThemeColors = {
   backgroundTertiary: obsidianColors.backgroundTertiary,
   backgroundElevated: obsidianColors.backgroundElevated,
   surface: obsidianColors.surface,
-  surfaceVariant: '#2A2A2A',
+  surfaceVariant: obsidianColors.surfaceVariant,
   surfaceElevated: obsidianColors.surfaceElevated,
 
   // Text colors
@@ -128,12 +128,12 @@ const darkColors: ThemeColors = {
 
   // Primary colors
   primary: obsidianColors.primary,
-  primaryContainer: '#1C3A5E',
-  onPrimary: '#FFFFFF',
+  primaryContainer: obsidianColors.primaryContainer,
+  onPrimary: obsidianColors.onPrimary,
 
   // Accent colors
   accent: obsidianColors.accent,
-  accentContainer: '#4A2828',
+  accentContainer: obsidianColors.accentContainer,
 
   // Entity colors
   task: obsidianColors.task,
@@ -143,15 +143,15 @@ const darkColors: ThemeColors = {
   error: obsidianColors.error,
   warning: obsidianColors.warning,
   success: obsidianColors.success,
-  info: '#64D2FF',
+  info: obsidianColors.info,
 
   // Border and divider
   border: obsidianColors.border,
-  divider: '#2A2A2A',
+  divider: obsidianColors.divider,
 
   // Special
   overlay: obsidianColors.overlay,
-  shadow: 'rgba(0, 0, 0, 0.3)',
+  shadow: obsidianColors.shadow,
 };
 
 interface ThemeContextType {
