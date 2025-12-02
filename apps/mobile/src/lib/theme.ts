@@ -8,19 +8,23 @@ export const colors = {
   background: '#050506',
   backgroundSecondary: '#101113',
   backgroundTertiary: '#1A1B1E',
+  backgroundElevated: '#25262B',
 
   // Text Colors
-  text: '#F3F0FF', // High contrast white/violet
-  textSecondary: '#C1C2C5',
-  textDimmed: '#909296',
-  textPrimary: '#F3F0FF', // Alias for text
-  textTertiary: '#909296', // Alias for textDimmed
+  text: '#C1C2C5', // Mantine Dark 0
+  textSecondary: '#909296', // Mantine Dark 2
+  textDimmed: '#5C5F66', // Mantine Dark 3
+  textPrimary: '#C1C2C5',
+  textTertiary: '#373A40',
 
   // Primary Brand Colors (Violet)
-  primary: '#845EF7',
-  primaryLight: '#B197FC',
-  primaryDark: '#5F3DC4',
+  primary: '#845EF7', // Violet 5
+  primaryLight: '#B197FC', // Violet 3
+  primaryDark: '#5F3DC4', // Violet 9
   primaryFade: 'rgba(132, 94, 247, 0.15)',
+  primaryContainer: '#25262B', // Dark 6 (Elevated)
+  onPrimary: '#FFFFFF',
+
   // Complete Violet Palette for Consistency
   violet: [
     '#f3f0ff',
@@ -49,6 +53,11 @@ export const colors = {
 
   // Surfaces
   surface: '#101113',
+  surfaceElevated: '#25262B',
+
+  // Entity Colors
+  task: '#20C997', // Teal
+  note: '#845EF7', // Violet
 
   // Overlays
   overlay: 'rgba(0, 0, 0, 0.7)',
@@ -60,6 +69,8 @@ export const spacing = {
   md: 16,
   lg: 24,
   xl: 32,
+  '2xl': 40,
+  '3xl': 48,
 };
 
 export const borderRadius = {

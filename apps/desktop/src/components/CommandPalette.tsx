@@ -35,25 +35,26 @@ const CommandPalette: React.FC<{ opened: boolean; onClose: () => void }> = ({ op
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      if (filteredCommands.length > 0) {
-        setSelectedIndex((prev) => (prev + 1) % filteredCommands.length);
-      }
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      if (filteredCommands.length > 0) {
-        setSelectedIndex((prev) => (prev - 1 + filteredCommands.length) % filteredCommands.length);
-      }
-    } else if (event.key === 'Enter') {
-      event.preventDefault();
-      if (filteredCommands.length > 0 && filteredCommands[selectedIndex]) {
-        handleSelect(filteredCommands[selectedIndex].to);
-      } else {
-        // No results: close or ignore safely
+    if (filteredCommands.length === 0) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
         onClose();
         setQuery('');
         setSelectedIndex(0);
+      }
+      return;
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setSelectedIndex((prev) => (prev + 1) % filteredCommands.length);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setSelectedIndex((prev) => (prev - 1 + filteredCommands.length) % filteredCommands.length);
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      if (filteredCommands[selectedIndex]) {
+        handleSelect(filteredCommands[selectedIndex].to);
       }
     }
   };

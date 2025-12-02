@@ -9,6 +9,14 @@ import { nanoid } from 'nanoid';
 
 type CaptureType = 'note' | 'task' | 'voice' | 'photo';
 
+interface CaptureOption {
+  type: CaptureType;
+  icon: string;
+  label: string;
+  description: string;
+  disabled?: boolean;
+}
+
 export default function CaptureScreen() {
   const [captureType, setCaptureType] = useState<CaptureType>('note');
   const [title, setTitle] = useState('');
@@ -70,15 +78,15 @@ export default function CaptureScreen() {
     }
   };
 
-  const captureOptions = [
+  const captureOptions: CaptureOption[] = [
     {
-      type: 'note' as CaptureType,
+      type: 'note',
       icon: 'document-text-outline',
       label: 'Note',
       description: 'Capture thoughts and ideas',
     },
     {
-      type: 'task' as CaptureType,
+      type: 'task',
       icon: 'checkmark-circle-outline',
       label: 'Task',
       description: 'Add a quick task',

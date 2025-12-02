@@ -50,9 +50,9 @@ pub fn search_notes(conn: &Connection, query: &str, scope: &str) -> Result<Vec<N
 
     if !fts_query.is_empty() {
         if has_fts {
-            // Join without alias to avoid potential ambiguity or binding issues
-            sql.push_str(" JOIN fts_note ON n.rowid = fts_note.rowid");
-            where_clauses.push("fts_note MATCH ?2".to_string());
+            // Join FTS table on rowid; f.rowid corresponds to base table rowid
+            sql.push_str(" JOIN fts_note f ON n.rowid = f.rowid");
+            where_clauses.push("f MATCH ?2".to_string());
             params.push(Box::new(fts_query.clone()));
         } else {
             where_clauses.push("(n.title LIKE ?2 OR n.content_md LIKE ?2)".to_string());
@@ -346,6 +346,7 @@ fn search_tasks_advanced(
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
 
     if has_fts && !query.query.is_empty() {
+        // Join via rowid mapping
         sql.push_str(" JOIN fts_task f ON t.rowid = f.rowid");
     }
 
@@ -464,6 +465,7 @@ fn search_projects_advanced(
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
 
     if has_fts && !query.query.is_empty() {
+        // Use rowid mapping between base table and FTS table
         sql.push_str(" JOIN fts_project f ON p.rowid = f.rowid");
     }
 
@@ -563,7 +565,12 @@ fn extract_snippet(content: &str, query: &str) -> Option<String> {
         }
     }
 
-    let start_idx = match_start.unwrap_or(0);
+    // If no match was found, we want to return the beginning of the content (fallback)
+    if match_start.is_none() {
+        return Some(content.chars().take(150).collect());
+    }
+
+    let start_idx = match_start.unwrap();
     let start = start_idx.saturating_sub(50);
     let end = (start_idx + q_len + 100).min(content_len);
 
