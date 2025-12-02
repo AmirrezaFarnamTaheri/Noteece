@@ -65,7 +65,11 @@ pub fn get_task(conn: &Connection, id: Ulid) -> Result<Option<Task>, DbError> {
     let task: Option<Task> = stmt
         .query_row([id.to_string()], |row| Task::try_from(row))
         .optional()?;
-    log::info!("[task] Found task: {:?}", task);
+    if let Some(t) = &task {
+        log::debug!("[task] Found task: {} ({})", t.title, t.id);
+    } else {
+        log::debug!("[task] Task not found: {}", id);
+    }
     Ok(task)
 }
 

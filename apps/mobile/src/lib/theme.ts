@@ -21,6 +21,19 @@ export const colors = {
   primaryLight: '#B197FC',
   primaryDark: '#5F3DC4',
   primaryFade: 'rgba(132, 94, 247, 0.15)',
+  // Complete Violet Palette for Consistency
+  violet: [
+    '#f3f0ff',
+    '#e5dbff',
+    '#d0bfff',
+    '#b197fc',
+    '#9775fa',
+    '#845ef7',
+    '#7950f2',
+    '#7048e8',
+    '#6741d9',
+    '#5f3dc4',
+  ],
 
   // Secondary Accent (Teal)
   accent: '#20C997',
