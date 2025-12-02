@@ -84,13 +84,8 @@ export const useThemeStore = create<ThemeState>()(
  */
 function applyTheme(theme: ActualTheme): void {
   if (typeof document !== 'undefined' && document.documentElement) {
-    // Use dataset primarily, setAttribute as fallback for test environments
-    if (document.documentElement.dataset) {
-      document.documentElement.dataset.mantineColorScheme = theme;
-    } else {
-      // eslint-disable-next-line unicorn/prefer-dom-node-dataset -- fallback for test environments
-      document.documentElement.setAttribute('data-mantine-color-scheme', theme);
-    }
+    // eslint-disable-next-line unicorn/prefer-dom-node-dataset
+    document.documentElement.setAttribute('data-mantine-color-scheme', theme);
     document.documentElement.classList.remove('light', 'dark');
     document.documentElement.classList.add(theme);
   }

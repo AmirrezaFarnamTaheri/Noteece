@@ -188,7 +188,9 @@ mod tests {
         let conn = setup_test_db();
 
         // No backup yet
-        assert!(recover_from_backup(&conn).expect("Recover failed").is_none());
+        assert!(recover_from_backup(&conn)
+            .expect("Recover failed")
+            .is_none());
 
         // Store backup
         let salt = vec![1, 2, 3, 4];
@@ -196,7 +198,8 @@ mod tests {
         store_vault_backup(&conn, &salt, &wrapped_dek).expect("Store failed");
 
         // Recover
-        let (recovered_salt, recovered_dek) = recover_from_backup(&conn).expect("Recover failed").unwrap();
+        let (recovered_salt, recovered_dek) =
+            recover_from_backup(&conn).expect("Recover failed").unwrap();
         assert_eq!(recovered_salt, salt);
         assert_eq!(recovered_dek, wrapped_dek);
     }

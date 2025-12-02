@@ -76,6 +76,8 @@ pub fn init() {
 #[cxx::bridge]
 mod ffi {
     // Shared structs would be defined here
+    #[derive(Default)]
+    #[allow(dead_code)]
     struct JsiSyncStatus {
         connected: bool,
         last_sync: u64,
