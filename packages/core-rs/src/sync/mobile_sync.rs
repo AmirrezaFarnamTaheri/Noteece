@@ -663,7 +663,7 @@ mod tests {
             device_id: uuid::Uuid::new_v4().to_string(),
             device_name: name.to_string(),
             device_type: DeviceType::Mobile,
-            ip_address: "192.168.1.100".parse::<IpAddr>().unwrap(),
+            ip_address: "192.168.1.100".parse::<IpAddr>().expect("Failed to parse IP"),
             sync_port: 8766,
             public_key: vec![],
             os_version: "iOS 17.0".to_string(),
@@ -695,7 +695,7 @@ mod tests {
 
         // This would normally be async
         let result = tokio::runtime::Runtime::new()
-            .unwrap()
+            .expect("Failed to create runtime")
             .block_on(protocol.pair_device(pairing_request, "123456"));
 
         assert!(result.is_ok());
@@ -716,7 +716,7 @@ mod tests {
 
         // This would normally be async
         let result = tokio::runtime::Runtime::new()
-            .unwrap()
+            .expect("Failed to create runtime")
             .block_on(protocol.pair_device(pairing_request, "123456")); // Different code
 
         assert!(result.is_err());

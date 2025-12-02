@@ -219,13 +219,28 @@ fn search_notes_advanced(
     conn: &Connection,
     query: &SearchQuery,
 ) -> Result<Vec<SearchResult>, DbError> {
-    // Exclude encrypted_content from SELECT for security and performance
+    // Check for FTS table availability
+    let has_fts: bool = conn
+        .query_row(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='fts_note'",
+            [],
+            |_| Ok(true),
+        )
+        .unwrap_or(false);
+
+    // Include content_md for snippets
     let mut sql = String::from(
-        "SELECT n.id, n.title, n.created_at, n.modified_at
+        "SELECT n.id, n.title, n.created_at, n.modified_at, n.content_md
          FROM note n",
     );
+
     let mut where_clauses = Vec::new();
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
+
+    // Join FTS if available and querying text
+    if has_fts && !query.query.is_empty() {
+        sql.push_str(" JOIN fts_note f ON n.id = f.note_id");
+    }
 
     // Space filter
     if let Some(space_id) = &query.filters.space_id {
@@ -233,10 +248,18 @@ fn search_notes_advanced(
         params.push(Box::new(space_id.to_string()));
     }
 
-    // Text search - only search in title since encrypted_content is not searchable with LIKE
+    // Text search
     if !query.query.is_empty() {
-        where_clauses.push("n.title LIKE ?".to_string());
-        params.push(Box::new(format!("%{}%", query.query)));
+        if has_fts {
+            where_clauses.push("f.fts_note MATCH ?".to_string());
+            params.push(Box::new(query.query.clone()));
+        } else {
+            // Fallback to LIKE on title and content
+            where_clauses.push("(n.title LIKE ? OR n.content_md LIKE ?)".to_string());
+            let pattern = format!("%{}%", query.query);
+            params.push(Box::new(pattern.clone()));
+            params.push(Box::new(pattern));
+        }
     }
 
     // Date filters
@@ -250,8 +273,12 @@ fn search_notes_advanced(
     }
 
     // Archived filter
-    if let Some(_archived) = query.filters.archived {
-        log::warn!("[search] Archived filter requested but not implemented for notes");
+    if let Some(archived) = query.filters.archived {
+        where_clauses.push("n.is_trashed = ?".to_string());
+        params.push(Box::new(if archived { 1 } else { 0 }));
+    } else {
+        // Default: exclude trashed
+        where_clauses.push("n.is_trashed = 0".to_string());
     }
 
     if !where_clauses.is_empty() {
@@ -269,15 +296,17 @@ fn search_notes_advanced(
         let title: String = row.get(1)?;
         let created_at: i64 = row.get(2)?;
         let updated_at: i64 = row.get(3)?;
+        let content: String = row.get(4)?;
 
-        // Relevance based on title only to avoid using ciphertext
-        let relevance = calculate_relevance(&title, None, &query.query);
+        // Calculate snippet and relevance
+        let snippet = extract_snippet(&content, &query.query);
+        let relevance = calculate_relevance(&title, Some(&content), &query.query);
 
         results.push(SearchResult {
             entity_type: EntityType::Note,
             entity_id: id.clone(),
             title,
-            snippet: None,
+            snippet,
             relevance_score: relevance,
             created_at,
             updated_at,
@@ -293,12 +322,25 @@ fn search_tasks_advanced(
     conn: &Connection,
     query: &SearchQuery,
 ) -> Result<Vec<SearchResult>, DbError> {
+    // Check for FTS table
+    let has_fts: bool = conn
+        .query_row(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='fts_task'",
+            [],
+            |_| Ok(true),
+        )
+        .unwrap_or(false);
+
     let mut sql = String::from(
         "SELECT t.id, t.title, t.description, t.status, t.priority, t.start_at, t.completed_at, t.due_at
          FROM task t",
     );
     let mut where_clauses = Vec::new();
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
+
+    if has_fts && !query.query.is_empty() {
+        sql.push_str(" JOIN fts_task f ON t.id = f.task_id");
+    }
 
     // Space filter
     if let Some(space_id) = &query.filters.space_id {
@@ -308,10 +350,15 @@ fn search_tasks_advanced(
 
     // Text search
     if !query.query.is_empty() {
-        where_clauses.push("(t.title LIKE ? OR t.description LIKE ?)".to_string());
-        let pattern = format!("%{}%", query.query);
-        params.push(Box::new(pattern.clone()));
-        params.push(Box::new(pattern));
+        if has_fts {
+            where_clauses.push("f.fts_task MATCH ?".to_string());
+            params.push(Box::new(query.query.clone()));
+        } else {
+            where_clauses.push("(t.title LIKE ? OR t.description LIKE ?)".to_string());
+            let pattern = format!("%{}%", query.query);
+            params.push(Box::new(pattern.clone()));
+            params.push(Box::new(pattern));
+        }
     }
 
     // Status filter
@@ -388,12 +435,25 @@ fn search_projects_advanced(
     conn: &Connection,
     query: &SearchQuery,
 ) -> Result<Vec<SearchResult>, DbError> {
+    // Check for FTS table
+    let has_fts: bool = conn
+        .query_row(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='fts_project'",
+            [],
+            |_| Ok(true),
+        )
+        .unwrap_or(false);
+
     let mut sql = String::from(
         "SELECT p.id, p.title, p.goal_outcome, p.status, p.start_at, p.target_end_at
          FROM project p",
     );
     let mut where_clauses = Vec::new();
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
+
+    if has_fts && !query.query.is_empty() {
+        sql.push_str(" JOIN fts_project f ON p.id = f.project_id");
+    }
 
     // Space filter
     if let Some(space_id) = &query.filters.space_id {
@@ -403,11 +463,15 @@ fn search_projects_advanced(
 
     // Text search
     if !query.query.is_empty() {
-        // Note: project description column doesn't exist in schema v1 (only title, goal_outcome)
-        where_clauses.push("(p.title LIKE ? OR p.goal_outcome LIKE ?)".to_string());
-        let pattern = format!("%{}%", query.query);
-        params.push(Box::new(pattern.clone()));
-        params.push(Box::new(pattern));
+        if has_fts {
+            where_clauses.push("f.fts_project MATCH ?".to_string());
+            params.push(Box::new(query.query.clone()));
+        } else {
+            where_clauses.push("(p.title LIKE ? OR p.goal_outcome LIKE ?)".to_string());
+            let pattern = format!("%{}%", query.query);
+            params.push(Box::new(pattern.clone()));
+            params.push(Box::new(pattern));
+        }
     }
 
     // Status filter

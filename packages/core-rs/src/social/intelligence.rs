@@ -602,7 +602,7 @@ mod tests {
         let long_content = "a".repeat(200);
         let summary = generate_summary(&long_content);
         assert!(summary.is_some());
-        assert!(summary.unwrap().ends_with("..."));
+        assert!(summary.expect("Summary should be present").ends_with("..."));
 
         // Content exactly 100 chars
         let content_100 = "a".repeat(100);
@@ -631,7 +631,7 @@ mod tests {
         let long_sentence = format!("{}.", "a".repeat(200));
         let summary = generate_summary(&long_sentence);
         assert!(summary.is_some());
-        let result = summary.unwrap();
+        let result = summary.expect("Summary should be present");
         assert!(result.len() <= 103); // 100 chars + "..."
         assert!(result.ends_with("..."));
     }
