@@ -413,14 +413,14 @@ mod tests {
         };
 
         // Tags should contain all unique values: work, important, urgent
-        let tags = winning_version.data["tags"].as_array().unwrap();
+        let tags = winning_version.data["tags"].as_array().expect("Tags should be an array");
         assert_eq!(tags.len(), 3);
         assert!(tags.contains(&serde_json::json!("work")));
         assert!(tags.contains(&serde_json::json!("important")));
         assert!(tags.contains(&serde_json::json!("urgent")));
 
         // Subtasks should contain both tasks
-        let subtasks = winning_version.data["subtasks"].as_array().unwrap();
+        let subtasks = winning_version.data["subtasks"].as_array().expect("Subtasks should be an array");
         assert_eq!(subtasks.len(), 2);
     }
 

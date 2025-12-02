@@ -358,8 +358,8 @@ mod tests {
     use rusqlite::Connection;
 
     fn setup_test_db() -> Connection {
-        let conn = Connection::open_in_memory().unwrap();
-        TofuStore::init_table(&conn).unwrap();
+        let conn = Connection::open_in_memory().expect("Failed to open DB");
+        TofuStore::init_table(&conn).expect("Failed to init table");
         conn
     }
 
@@ -369,11 +369,11 @@ mod tests {
         let public_key = b"test_public_key_12345";
 
         let (level, record) =
-            TofuStore::verify_device(&conn, "device_1", "Test Device", public_key).unwrap();
+            TofuStore::verify_device(&conn, "device_1", "Test Device", public_key).expect("Verify failed");
 
         assert_eq!(level, TrustLevel::TrustOnFirstUse);
         assert!(record.is_some());
-        assert_eq!(record.unwrap().device_name, "Test Device");
+        assert_eq!(record.expect("Record should be present").device_name, "Test Device");
     }
 
     #[test]
@@ -382,11 +382,11 @@ mod tests {
         let public_key = b"test_public_key_12345";
 
         // First connection
-        TofuStore::verify_device(&conn, "device_1", "Test Device", public_key).unwrap();
+        TofuStore::verify_device(&conn, "device_1", "Test Device", public_key).expect("Verify failed");
 
         // Second connection with same key
         let (level, _) =
-            TofuStore::verify_device(&conn, "device_1", "Test Device", public_key).unwrap();
+            TofuStore::verify_device(&conn, "device_1", "Test Device", public_key).expect("Verify failed");
 
         assert_eq!(level, TrustLevel::TrustOnFirstUse);
     }
@@ -398,11 +398,11 @@ mod tests {
         let public_key_2 = b"different_public_key";
 
         // First connection
-        TofuStore::verify_device(&conn, "device_1", "Test Device", public_key_1).unwrap();
+        TofuStore::verify_device(&conn, "device_1", "Test Device", public_key_1).expect("Verify failed");
 
         // Second connection with different key
         let (level, _) =
-            TofuStore::verify_device(&conn, "device_1", "Test Device", public_key_2).unwrap();
+            TofuStore::verify_device(&conn, "device_1", "Test Device", public_key_2).expect("Verify failed");
 
         assert_eq!(level, TrustLevel::KeyChanged);
     }
@@ -412,12 +412,12 @@ mod tests {
         let conn = setup_test_db();
         let public_key = b"test_public_key";
 
-        TofuStore::verify_device(&conn, "device_1", "Test Device", public_key).unwrap();
+        TofuStore::verify_device(&conn, "device_1", "Test Device", public_key).expect("Verify failed");
 
-        TofuStore::revoke_trust(&conn, "device_1").unwrap();
+        TofuStore::revoke_trust(&conn, "device_1").expect("Revoke failed");
 
         let (level, _) =
-            TofuStore::verify_device(&conn, "device_1", "Test Device", public_key).unwrap();
+            TofuStore::verify_device(&conn, "device_1", "Test Device", public_key).expect("Verify failed");
 
         assert_eq!(level, TrustLevel::Revoked);
     }
@@ -427,13 +427,13 @@ mod tests {
         let conn = setup_test_db();
         let public_key = b"test_public_key";
 
-        TofuStore::verify_device(&conn, "device_1", "Test Device", public_key).unwrap();
+        TofuStore::verify_device(&conn, "device_1", "Test Device", public_key).expect("Verify failed");
 
-        TofuStore::verify_explicitly(&conn, "device_1").unwrap();
+        TofuStore::verify_explicitly(&conn, "device_1").expect("Explicit verify failed");
 
         let record = TofuStore::get_device_trust(&conn, "device_1")
-            .unwrap()
-            .unwrap();
+            .expect("Get failed")
+            .expect("Record should exist");
         assert_eq!(record.trust_level, TrustLevel::Verified);
     }
 

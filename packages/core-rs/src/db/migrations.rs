@@ -788,6 +788,75 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
         )?;
     }
 
+    if current_version < 19 {
+        log::info!("[db] Migrating to version 19 - Optimization Indexes");
+        tx.execute_batch(
+            "
+            CREATE INDEX IF NOT EXISTS idx_saved_search_scope ON saved_search(scope);
+            CREATE INDEX IF NOT EXISTS idx_task_priority ON task(priority);
+            CREATE INDEX IF NOT EXISTS idx_project_status ON project(status);
+            INSERT INTO schema_version (version) VALUES (19);
+            ",
+        )?;
+    }
+
+    if current_version < 20 {
+        log::info!("[db] Migrating to version 20 - FTS for Tasks and Projects");
+        tx.execute_batch(
+            "
+            -- FTS for Tasks
+            CREATE VIRTUAL TABLE IF NOT EXISTS fts_task USING fts5(
+                title, description, task_id UNINDEXED,
+                tokenize='porter unicode61 remove_diacritics 2'
+            );
+
+            INSERT INTO fts_task(rowid, title, description, task_id)
+            SELECT rowid, title, COALESCE(description, ''), id FROM task;
+
+            CREATE TRIGGER task_ai AFTER INSERT ON task BEGIN
+                INSERT INTO fts_task(rowid, title, description, task_id)
+                VALUES (new.rowid, new.title, COALESCE(new.description, ''), new.id);
+            END;
+
+            CREATE TRIGGER task_ad AFTER DELETE ON task BEGIN
+                DELETE FROM fts_task WHERE rowid = old.rowid;
+            END;
+
+            CREATE TRIGGER task_au AFTER UPDATE ON task BEGIN
+                DELETE FROM fts_task WHERE rowid = old.rowid;
+                INSERT INTO fts_task(rowid, title, description, task_id)
+                VALUES (new.rowid, new.title, COALESCE(new.description, ''), new.id);
+            END;
+
+            -- FTS for Projects
+            CREATE VIRTUAL TABLE IF NOT EXISTS fts_project USING fts5(
+                title, goal_outcome, project_id UNINDEXED,
+                tokenize='porter unicode61 remove_diacritics 2'
+            );
+
+            INSERT INTO fts_project(rowid, title, goal_outcome, project_id)
+            SELECT rowid, title, COALESCE(goal_outcome, ''), id FROM project;
+
+            CREATE TRIGGER project_ai AFTER INSERT ON project BEGIN
+                INSERT INTO fts_project(rowid, title, goal_outcome, project_id)
+                VALUES (new.rowid, new.title, COALESCE(new.goal_outcome, ''), new.id);
+            END;
+
+            CREATE TRIGGER project_ad AFTER DELETE ON project BEGIN
+                DELETE FROM fts_project WHERE rowid = old.rowid;
+            END;
+
+            CREATE TRIGGER project_au AFTER UPDATE ON project BEGIN
+                DELETE FROM fts_project WHERE rowid = old.rowid;
+                INSERT INTO fts_project(rowid, title, goal_outcome, project_id)
+                VALUES (new.rowid, new.title, COALESCE(new.goal_outcome, ''), new.id);
+            END;
+
+            INSERT INTO schema_version (version) VALUES (20);
+            ",
+        )?;
+    }
+
     // Run Personal Modes Initialization (Idempotent)
     crate::personal_modes::init_personal_modes_tables(&tx)?;
 
