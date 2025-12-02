@@ -29,6 +29,7 @@ const EnhancedSearch: React.FC = () => {
   const { activeSpaceId } = useStore();
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(false);
+  const latestRequestRef = React.useRef(0);
 
   useEffect(() => {
     const fetchTags = async () => {
@@ -46,6 +47,8 @@ const EnhancedSearch: React.FC = () => {
 
   const handleSearch = async () => {
     if (activeSpaceId) {
+      const requestId = Date.now();
+      latestRequestRef.current = requestId;
       setLoading(true);
       try {
         let searchQuery = query;
@@ -56,12 +59,16 @@ const EnhancedSearch: React.FC = () => {
           searchQuery += ` status:${status}`;
         }
 
-        const results: Note[] = await invoke('search_notes_cmd', { query: searchQuery, scope: activeSpaceId });
-        setResults(results);
+        const fetched: Note[] = await invoke('search_notes_cmd', { query: searchQuery, scope: activeSpaceId });
+        if (latestRequestRef.current === requestId) {
+          setResults(fetched);
+        }
       } catch (error) {
         logger.error('Failed to search notes:', error as Error);
       } finally {
-        setLoading(false);
+        if (latestRequestRef.current === requestId) {
+          setLoading(false);
+        }
       }
     }
   };

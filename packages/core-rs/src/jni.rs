@@ -19,10 +19,12 @@ lazy_static! {
 #[cfg(feature = "android")]
 #[no_mangle]
 pub extern "system" fn Java_com_noteece_RustBridge_ingest(
-    mut env: JNIEnv,
+    env: JNIEnv,
     _class: JClass,
     text: JString,
 ) {
+    #[allow(unused_mut)]
+    let mut env = env;
     let input: String = match env.get_string(&text) {
         Ok(s) => s.into(),
         Err(e) => {
@@ -48,9 +50,11 @@ pub extern "system" fn Java_com_noteece_RustBridge_ingest(
 #[cfg(feature = "android")]
 #[no_mangle]
 pub extern "system" fn Java_com_noteece_RustBridge_anchorLatest(
-    mut env: JNIEnv,
+    env: JNIEnv,
     _class: JClass,
 ) -> jstring {
+    #[allow(unused_mut)]
+    let mut env = env;
     let processor = match PROCESSOR.lock() {
         Ok(guard) => guard,
         Err(poisoned) => {

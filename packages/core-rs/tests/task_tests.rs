@@ -1,12 +1,21 @@
 use core_rs::db::migrate;
 use core_rs::task::{create_task, delete_task, get_task, update_task};
 use rusqlite::Connection;
+use tempfile::tempdir;
 use ulid::Ulid;
 
-fn setup_db() -> Connection {
-    let mut conn = Connection::open_in_memory().unwrap();
+fn setup_db() -> (Connection, tempfile::TempDir) {
+    let dir = tempdir().unwrap();
+    let db_path = dir.path().join("test.db");
+    let mut conn = Connection::open(&db_path).unwrap();
+    // Use query_row for PRAGMA statements that return a result to avoid ExecuteReturnedResults error
+    // if using execute(). Or handle Err.
+    // In recent rusqlite, execute() returns rows updated count, but PRAGMAs might behave oddly.
+    // Using execute_batch is safer for pragmas usually, or query_row if it returns a value.
+    conn.execute_batch("PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;")
+        .unwrap();
     migrate(&mut conn).unwrap();
-    conn
+    (conn, dir)
 }
 
 fn create_space(conn: &Connection) -> Ulid {
@@ -21,7 +30,7 @@ fn create_space(conn: &Connection) -> Ulid {
 
 #[test]
 fn test_task_crud() {
-    let conn = setup_db();
+    let (conn, _dir) = setup_db();
     let space_id = create_space(&conn);
     let mut task = create_task(&conn, space_id, "test task", None).unwrap();
     assert_eq!(task.title, "test task");

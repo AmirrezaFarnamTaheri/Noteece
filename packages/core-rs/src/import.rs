@@ -259,12 +259,14 @@ pub fn export_to_zip(
     write!(zip, "{}", projects_json)?;
 
     // Export metadata
+    log::info!("[export] Metadata generation started");
     let metadata = ExportMetadata {
         version: "1.0.0".to_string(),
         exported_at: chrono::Utc::now().timestamp(),
         space_id: space_id.to_string(),
         item_count: 0, // Would count all items
     };
+    log::info!("[export] Metadata generation completed");
     let metadata_json = serde_json::to_string_pretty(&metadata)
         .map_err(|e| ImportError::Io(std::io::Error::other(e)))?;
     zip.start_file("metadata.json", options)?;

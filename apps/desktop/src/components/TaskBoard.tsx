@@ -115,7 +115,7 @@ const TaskBoard: React.FC = () => {
 
       {/* Board */}
       <DragDropContext onDragEnd={onDragEnd}>
-        <Group align="flex-start" gap="md" style={{ overflowX: 'auto' }}>
+        <div style={{ display: 'flex', gap: 'var(--mantine-spacing-md)', overflowX: 'auto', paddingBottom: 'var(--mantine-spacing-md)' }}>
           {Object.entries(columns).map(([columnId, column]) => {
             const columnTasks = tasks.filter((task) => task.status === columnId);
             // Validate color against whitelist to prevent CSS injection
@@ -128,19 +128,22 @@ const TaskBoard: React.FC = () => {
               <Droppable droppableId={columnId} key={columnId}>
                 {(provided, snapshot) => (
                   <Paper
-                    shadow="sm"
+                    shadow={snapshot.isDraggingOver ? 'md' : 'sm'}
                     p="md"
                     radius="md"
                     withBorder
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                     style={{
-                      width: 300,
+                      flex: '0 0 320px',
                       minHeight: 500,
                       backgroundColor: snapshot.isDraggingOver
-                        ? `var(--mantine-color-${safeColor}-0)`
-                        : 'var(--mantine-color-gray-0)',
-                      transition: 'background-color 0.2s',
+                        ? `var(--mantine-color-${safeColor}-9)`
+                        : 'var(--mantine-color-dark-8)',
+                      borderColor: snapshot.isDraggingOver
+                         ? `var(--mantine-color-${safeColor}-6)`
+                         : 'var(--mantine-color-dark-4)',
+                      transition: 'background-color 0.2s, border-color 0.2s',
                     }}
                   >
                     <Stack gap="md">
@@ -165,7 +168,7 @@ const TaskBoard: React.FC = () => {
                           <Draggable key={task.id} draggableId={task.id} index={index}>
                             {(provided, snapshot) => (
                               <Paper
-                                shadow="xs"
+                                shadow={snapshot.isDragging ? 'xl' : 'xs'}
                                 p="sm"
                                 radius="md"
                                 withBorder
@@ -174,13 +177,15 @@ const TaskBoard: React.FC = () => {
                                 style={{
                                   ...provided.draggableProps.style,
                                   backgroundColor: snapshot.isDragging
-                                    ? 'var(--mantine-color-white)'
-                                    : 'var(--mantine-color-white)',
+                                    ? 'var(--mantine-color-dark-6)'
+                                    : 'var(--mantine-color-dark-7)',
+                                  backdropFilter: snapshot.isDragging ? 'blur(10px)' : 'none',
                                   border: snapshot.isDragging
-                                    ? `2px solid var(--mantine-color-${safeColor}-6)`
-                                    : '1px solid var(--mantine-color-gray-3)',
+                                    ? `1px solid var(--mantine-color-${safeColor}-5)`
+                                    : '1px solid var(--mantine-color-dark-4)',
                                   cursor: 'grab',
-                                  transition: 'border 0.2s',
+                                  transition: 'border 0.2s, box-shadow 0.2s, background-color 0.2s',
+                                  transform: snapshot.isDragging ? `${provided.draggableProps.style?.transform} scale(1.02)` : provided.draggableProps.style?.transform,
                                 }}
                               >
                                 <Group gap="xs" wrap="nowrap">
@@ -243,7 +248,7 @@ const TaskBoard: React.FC = () => {
               </Droppable>
             );
           })}
-        </Group>
+        </div>
       </DragDropContext>
     </Stack>
   );

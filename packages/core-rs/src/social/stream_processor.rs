@@ -1115,7 +1115,11 @@ mod tests {
 
         let post = candidate.expect("Candidate should be present");
         assert_eq!(post.platform, "reddit");
-        assert!(post.author_handle.as_ref().expect("Author handle should be present").starts_with("u/"));
+        assert!(post
+            .author_handle
+            .as_ref()
+            .expect("Author handle should be present")
+            .starts_with("u/"));
     }
 
     #[test]
