@@ -52,7 +52,7 @@ pub fn search_notes(conn: &Connection, query: &str, scope: &str) -> Result<Vec<N
         if has_fts {
             // Join FTS table on rowid; f.rowid corresponds to base table rowid
             sql.push_str(" JOIN fts_note f ON n.rowid = f.rowid");
-            where_clauses.push("fts_note MATCH ?2".to_string());
+            where_clauses.push("f MATCH ?2".to_string());
             params.push(Box::new(fts_query.clone()));
         } else {
             where_clauses.push("(n.title LIKE ?2 OR n.content_md LIKE ?2)".to_string());

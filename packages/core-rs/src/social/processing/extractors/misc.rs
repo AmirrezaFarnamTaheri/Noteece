@@ -4,6 +4,17 @@ use super::extract_engagement;
 use regex::Regex;
 use ulid::Ulid;
 
+lazy_static::lazy_static! {
+    static ref TWITTER_HANDLE: Regex = Regex::new(r"(?i)@(?P<handle>[a-z0-9_]{1,15})\b").unwrap();
+    static ref INSTAGRAM_HANDLE: Regex = Regex::new(r"(?i)@(?P<handle>[a-z0-9_.]+)").unwrap();
+    static ref REDDIT_HANDLE: Regex = Regex::new(r"(?i)u/(?P<handle>[a-z0-9_-]+)").unwrap();
+    static ref TIKTOK_HANDLE: Regex = Regex::new(r"(?i)@(?P<handle>[a-z0-9_.]+)").unwrap();
+    static ref YOUTUBE_HANDLE: Regex = Regex::new(r"(?i)@(?P<handle>[a-z0-9_-]+)").unwrap();
+    static ref LINKEDIN_HANDLE: Regex = Regex::new(r"(?i)in/(?P<handle>[a-z0-9-]+)").unwrap();
+    static ref TELEGRAM_HANDLE: Regex = Regex::new(r"(?i)@(?P<handle>[a-z0-9_]{5,32})\b").unwrap();
+    static ref DISCORD_HANDLE: Regex = Regex::new(r"(?i)(?P<handle>.+#\d{4})").unwrap();
+}
+
 pub fn extract_dating_profile(
     snapshot: &[&String],
     platform: DetectedPlatform,
@@ -120,6 +131,7 @@ pub fn extract_generic_post(
                 .find(&combined)
                 .or_else(|| REDDIT_HANDLE.find(&combined))
                 .or_else(|| TELEGRAM_HANDLE.find(&combined))
+                .or_else(|| DISCORD_HANDLE.find(&combined))
                 .map(|m| m.as_str().to_string());
 
             // Platform specific patch: if detected platform is Twitter but no handle found via generic regex, try Twitter regex again

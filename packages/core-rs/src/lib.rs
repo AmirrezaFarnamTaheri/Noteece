@@ -34,6 +34,7 @@ pub mod music;
 pub mod note;
 pub mod ocr;
 pub mod personal_modes;
+pub mod plugin;
 pub mod project;
 pub mod search;
 pub mod social;

@@ -3,10 +3,18 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 // @ts-ignore: expo vector icons type mismatch
 import { Ionicons } from '@expo/vector-icons';
 
+export interface SharedItem {
+  id: string;
+  type: 'url' | 'image' | 'text';
+  url?: string;
+  text?: string;
+  timestamp: number;
+}
+
 interface SharedContentBannerProps {
-  sharedItems: any[];
+  sharedItems: SharedItem[];
   onDismiss: () => void;
-  onItemPress: (item: any) => void;
+  onItemPress: (item: SharedItem) => void;
 }
 
 export const SharedContentBanner: React.FC<SharedContentBannerProps> = ({
@@ -28,9 +36,9 @@ export const SharedContentBanner: React.FC<SharedContentBannerProps> = ({
         </TouchableOpacity>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sharedItemsScroll}>
-        {sharedItems.map((item, index) => (
+        {sharedItems.map((item) => (
           <TouchableOpacity
-            key={`${item.timestamp}-${index}`}
+            key={item.id}
             style={styles.sharedItemCard}
             onPress={() => onItemPress(item)}
           >

@@ -60,7 +60,11 @@ export const SaveFilterModal: React.FC<SaveFilterModalProps> = ({
             <TouchableOpacity style={styles.modalButtonSecondary} onPress={onClose}>
               <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.modalButtonPrimary} onPress={onSave}>
+            <TouchableOpacity
+              style={[styles.modalButtonPrimary, filterName.trim().length === 0 && { opacity: 0.5 }]}
+              disabled={filterName.trim().length === 0}
+              onPress={onSave}
+            >
               <Text style={styles.modalButtonTextPrimary}>Save</Text>
             </TouchableOpacity>
           </View>
