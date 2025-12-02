@@ -5,7 +5,7 @@
  * Falls back to native module if JSI is not available.
  */
 
-import { NativeModules, Platform } from 'react-native';
+import { NativeModules } from 'react-native';
 
 // JSI Module Types
 export interface SyncDevice {

@@ -139,11 +139,12 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   greetingContainer: {
-    padding: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.xl,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.lg,
   },
   greeting: {
-    fontSize: typography.fontSize.xxxl,
+    fontSize: typography.fontSize['3xl'],
     fontFamily: typography.fontFamily.bold,
     color: colors.text,
     marginBottom: spacing.xs,

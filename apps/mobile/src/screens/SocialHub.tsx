@@ -13,19 +13,18 @@ import {
   FlatList,
   RefreshControl,
   TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
   Alert,
-  TextInput,
-  Modal,
 } from 'react-native';
-// @ts-ignore: expo vector icons type mismatch
-import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PostCard } from '../components/social/PostCard';
 import { PostCardSkeleton } from '../components/social/PostCardSkeleton';
 import { CategoryPicker } from '../components/social/CategoryPicker';
 import { ErrorFallback } from '../components/errors';
+import { FilterBar } from '../components/social/hub/FilterBar';
+import { SavedFilters, type SavedFilter } from '../components/social/hub/SavedFilters';
+import { SharedContentBanner } from '../components/social/hub/SharedContentBanner';
+import { SaveFilterModal } from '../components/social/hub/SaveFilterModal';
 import { useSharedContent } from '../hooks/useSharedContent';
 import { useCurrentSpace } from '../store/app-context';
 import {
@@ -36,15 +35,6 @@ import {
   createCategory,
 } from '../lib/social-database';
 import type { TimelinePost, SocialCategory, TimelineFilters, Platform } from '../types/social';
-import { PLATFORM_CONFIGS } from '../types/social';
-
-interface SavedFilter {
-  id: string;
-  name: string;
-  platforms: Platform[];
-  categories: string[];
-  icon: string;
-}
 
 export function SocialHub() {
   const [posts, setPosts] = useState<TimelinePost[]>([]);
@@ -302,8 +292,6 @@ export function SocialHub() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPlatforms, selectedCategories, searchQuery]);
 
-  const availablePlatforms: Platform[] = ['twitter', 'instagram', 'linkedin', 'youtube', 'reddit', 'tiktok'];
-
   if (error && posts.length === 0) {
     return <ErrorFallback error={error} message="Failed to load social feed" onRetry={loadData} />;
   }
@@ -328,144 +316,34 @@ export function SocialHub() {
       </View>
 
       {/* Saved Filters Row */}
-      {savedFilters.length > 0 && (
-        <View style={styles.savedFiltersRow}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.savedFiltersScroll}
-          >
-            {savedFilters.map((filter) => (
-              <TouchableOpacity
-                key={filter.id}
-                style={styles.savedFilterChip}
-                onPress={() => applySavedFilter(filter)}
-                onLongPress={() =>
-                  Alert.alert('Delete Filter', `Delete "${filter.name}"?`, [
-                    { text: 'Cancel', style: 'cancel' },
-                    {
-                      text: 'Delete',
-                      style: 'destructive',
-                      onPress: () => deleteSavedFilter(filter.id),
-                    },
-                  ])
-                }
-              >
-                <Text style={styles.savedFilterIcon}>{filter.icon}</Text>
-                <Text style={styles.savedFilterText}>{filter.name}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      )}
+      <SavedFilters
+        savedFilters={savedFilters}
+        onApplyFilter={applySavedFilter}
+        onDeleteFilter={deleteSavedFilter}
+      />
 
       {/* Filter Bar */}
-      {showFilters && (
-        <View style={styles.filterBar}>
-          {/* Platform Filters */}
-          <Text style={styles.filterLabel}>Platforms:</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
-            {availablePlatforms.map((platform) => {
-              const config = PLATFORM_CONFIGS[platform];
-              const isSelected = selectedPlatforms.includes(platform);
-              return (
-                <TouchableOpacity
-                  key={platform}
-                  style={[
-                    styles.filterChip,
-                    isSelected && {
-                      backgroundColor: config.color,
-                      borderColor: config.color,
-                    },
-                  ]}
-                  onPress={() => togglePlatformFilter(platform)}
-                >
-                  <Text style={styles.filterChipIcon}>{config.icon}</Text>
-                  <Text style={[styles.filterChipText, isSelected && styles.filterChipTextActive]}>{config.name}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-
-          {/* Category Filters */}
-          <Text style={styles.filterLabel}>Categories:</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
-            {categories.map((category) => {
-              const isSelected = selectedCategories.includes(category.id);
-              return (
-                <TouchableOpacity
-                  key={category.id}
-                  style={[
-                    styles.filterChip,
-                    isSelected && {
-                      backgroundColor: category.color || '#007AFF',
-                      borderColor: category.color || '#007AFF',
-                    },
-                  ]}
-                  onPress={() => toggleCategoryFilter(category.id)}
-                >
-                  {category.icon && <Text style={styles.filterChipIcon}>{category.icon}</Text>}
-                  <Text style={[styles.filterChipText, isSelected && styles.filterChipTextActive]}>
-                    {category.name}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-
-          {/* Filter Actions */}
-          {(selectedPlatforms.length > 0 || selectedCategories.length > 0) && (
-            <View style={styles.filterActions}>
-              <TouchableOpacity style={styles.saveFilterButton} onPress={() => setShowSaveFilterModal(true)}>
-                <Ionicons name="bookmark-outline" size={16} color="#007AFF" />
-                <Text style={styles.saveFilterText}>Save Filter</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.clearFiltersButton}
-                onPress={() => {
-                  setSelectedPlatforms([]);
-                  setSelectedCategories([]);
-                }}
-              >
-                <Text style={styles.clearFiltersText}>Clear All</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-      )}
+      <FilterBar
+        showFilters={showFilters}
+        selectedPlatforms={selectedPlatforms}
+        selectedCategories={selectedCategories}
+        categories={categories}
+        onTogglePlatform={togglePlatformFilter}
+        onToggleCategory={toggleCategoryFilter}
+        onSaveFilter={() => setShowSaveFilterModal(true)}
+        onClearFilters={() => {
+          setSelectedPlatforms([]);
+          setSelectedCategories([]);
+        }}
+      />
 
       {/* Shared Content Banner */}
-      {hasSharedContent && sharedItems.length > 0 && (
-        <View style={styles.sharedContentBanner}>
-          <View style={styles.sharedContentHeader}>
-            <Ionicons name="share-outline" size={20} color="#007AFF" />
-            <Text style={styles.sharedContentTitle}>
-              {sharedItems.length} shared {sharedItems.length === 1 ? 'item' : 'items'}
-            </Text>
-            <TouchableOpacity onPress={handleDismissSharedContent} style={styles.dismissButton}>
-              <Ionicons name="close-circle" size={20} color="#666" />
-            </TouchableOpacity>
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sharedItemsScroll}>
-            {sharedItems.map((item, index) => (
-              <TouchableOpacity
-                key={`${item.timestamp}-${index}`}
-                style={styles.sharedItemCard}
-                onPress={() => handleSharedItemPress(item)}
-              >
-                <Ionicons
-                  name={item.type === 'url' ? 'link' : item.type === 'image' ? 'image' : 'text'}
-                  size={24}
-                  color="#007AFF"
-                />
-                <Text style={styles.sharedItemType}>{item.type}</Text>
-                <Text style={styles.sharedItemPreview} numberOfLines={2}>
-                  {item.url || item.text || ''}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+      {hasSharedContent && (
+        <SharedContentBanner
+          sharedItems={sharedItems}
+          onDismiss={handleDismissSharedContent}
+          onItemPress={handleSharedItemPress}
+        />
       )}
 
       {/* Timeline */}
@@ -530,53 +408,15 @@ export function SocialHub() {
       />
 
       {/* Save Filter Modal */}
-      <Modal
+      <SaveFilterModal
         visible={showSaveFilterModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowSaveFilterModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Save Filter Preset</Text>
-              <TouchableOpacity onPress={() => setShowSaveFilterModal(false)}>
-                <Ionicons name="close" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
-
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Filter name (e.g., Work Updates)"
-              value={newFilterName}
-              onChangeText={setNewFilterName}
-              autoFocus
-            />
-
-            <Text style={styles.modalLabel}>Choose an icon:</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.iconPicker}>
-              {['📌', '⭐', '🔥', '💼', '📰', '🎯', '💡', '🎨'].map((icon) => (
-                <TouchableOpacity
-                  key={icon}
-                  style={[styles.iconOption, selectedFilterIcon === icon && styles.iconOptionSelected]}
-                  onPress={() => setSelectedFilterIcon(icon)}
-                >
-                  <Text style={styles.iconOptionText}>{icon}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalButtonSecondary} onPress={() => setShowSaveFilterModal(false)}>
-                <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalButtonPrimary} onPress={saveCurrentFilter}>
-                <Text style={styles.modalButtonTextPrimary}>Save</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setShowSaveFilterModal(false)}
+        onSave={saveCurrentFilter}
+        filterName={newFilterName}
+        setFilterName={setNewFilterName}
+        selectedIcon={selectedFilterIcon}
+        setSelectedIcon={setSelectedFilterIcon}
+      />
     </View>
   );
 }
@@ -623,55 +463,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  filterBar: {
-    backgroundColor: '#FFF',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  filterLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 8,
-  },
-  filterScroll: {
-    marginBottom: 16,
-  },
-  filterChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#DDD',
-    backgroundColor: '#FFF',
-    marginRight: 8,
-    gap: 6,
-  },
-  filterChipIcon: {
-    fontSize: 16,
-  },
-  filterChipText: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
-  },
-  filterChipTextActive: {
-    color: '#FFF',
-  },
-  clearFiltersButton: {
-    paddingVertical: 10,
-    alignItems: 'center',
-    backgroundColor: '#F0F0F0',
-    borderRadius: 8,
-  },
-  clearFiltersText: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
-  },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -694,185 +485,5 @@ const styles = StyleSheet.create({
   footerLoader: {
     paddingVertical: 20,
     alignItems: 'center',
-  },
-  sharedContentBanner: {
-    backgroundColor: '#E3F2FD',
-    borderBottomWidth: 1,
-    borderBottomColor: '#90CAF9',
-    paddingVertical: 12,
-  },
-  sharedContentHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 8,
-    gap: 8,
-  },
-  sharedContentTitle: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1976D2',
-  },
-  dismissButton: {
-    padding: 4,
-  },
-  sharedItemsScroll: {
-    paddingHorizontal: 16,
-  },
-  sharedItemCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 8,
-    padding: 12,
-    marginRight: 12,
-    width: 140,
-    borderWidth: 1,
-    borderColor: '#90CAF9',
-    alignItems: 'center',
-  },
-  sharedItemType: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#007AFF',
-    marginTop: 4,
-    textTransform: 'uppercase',
-  },
-  sharedItemPreview: {
-    fontSize: 11,
-    color: '#666',
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  savedFiltersRow: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEE',
-  },
-  savedFiltersScroll: {
-    paddingRight: 16,
-  },
-  savedFilterChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: '#F0F0F0',
-    borderRadius: 20,
-    marginRight: 10,
-    gap: 6,
-  },
-  savedFilterIcon: {
-    fontSize: 16,
-  },
-  savedFilterText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-  },
-  filterActions: {
-    flexDirection: 'row',
-    marginTop: 12,
-    gap: 10,
-  },
-  saveFilterButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    backgroundColor: '#E3F2FD',
-    borderRadius: 8,
-    gap: 6,
-  },
-  saveFilterText: {
-    fontSize: 14,
-    color: '#007AFF',
-    fontWeight: '600',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: '#FFF',
-    borderRadius: 16,
-    padding: 24,
-    width: '85%',
-    maxWidth: 400,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#333',
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: '#DDD',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 20,
-  },
-  modalLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 12,
-  },
-  iconPicker: {
-    marginBottom: 24,
-  },
-  iconOption: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  iconOptionSelected: {
-    backgroundColor: '#007AFF',
-  },
-  iconOptionText: {
-    fontSize: 24,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  modalButtonSecondary: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: '#F0F0F0',
-    alignItems: 'center',
-  },
-  modalButtonTextSecondary: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
-  },
-  modalButtonPrimary: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: '#007AFF',
-    alignItems: 'center',
-  },
-  modalButtonTextPrimary: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFF',
   },
 });

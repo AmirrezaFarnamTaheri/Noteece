@@ -8,6 +8,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { colors as obsidianColors } from '@/lib/theme';
 
 export type ThemeMode = 'light' | 'dark' | 'auto';
 export type ActiveTheme = 'light' | 'dark';
@@ -15,13 +16,19 @@ export type ActiveTheme = 'light' | 'dark';
 export interface ThemeColors {
   // Base colors
   background: string;
+  backgroundSecondary: string;
+  backgroundTertiary: string;
+  backgroundElevated: string;
   surface: string;
   surfaceVariant: string;
+  surfaceElevated: string;
 
   // Text colors
   text: string;
   textSecondary: string;
   textTertiary: string;
+  textDimmed: string;
+  textPrimary: string;
 
   // Primary colors
   primary: string;
@@ -31,6 +38,10 @@ export interface ThemeColors {
   // Accent colors
   accent: string;
   accentContainer: string;
+
+  // Entity colors
+  task: string;
+  note: string;
 
   // Status colors
   error: string;
@@ -56,13 +67,19 @@ export interface Theme {
 const lightColors: ThemeColors = {
   // Base colors
   background: '#FFFFFF',
+  backgroundSecondary: '#F8F9FA',
+  backgroundTertiary: '#F1F3F5',
+  backgroundElevated: '#FFFFFF',
   surface: '#F5F5F5',
   surfaceVariant: '#E8E8E8',
+  surfaceElevated: '#FFFFFF',
 
   // Text colors
   text: '#1A1A1A',
   textSecondary: '#666666',
   textTertiary: '#999999',
+  textDimmed: '#CCCCCC',
+  textPrimary: '#1A1A1A',
 
   // Primary colors
   primary: '#007AFF',
@@ -72,6 +89,10 @@ const lightColors: ThemeColors = {
   // Accent colors
   accent: '#FF6B6B',
   accentContainer: '#FFEBEE',
+
+  // Entity colors
+  task: '#20C997',
+  note: '#845EF7',
 
   // Status colors
   error: '#FF3B30',
@@ -90,36 +111,46 @@ const lightColors: ThemeColors = {
 
 const darkColors: ThemeColors = {
   // Base colors
-  background: '#121212',
-  surface: '#1E1E1E',
+  background: obsidianColors.background,
+  backgroundSecondary: obsidianColors.backgroundSecondary,
+  backgroundTertiary: obsidianColors.backgroundTertiary,
+  backgroundElevated: obsidianColors.backgroundElevated,
+  surface: obsidianColors.surface,
   surfaceVariant: '#2A2A2A',
+  surfaceElevated: obsidianColors.surfaceElevated,
 
   // Text colors
-  text: '#FFFFFF',
-  textSecondary: '#AAAAAA',
-  textTertiary: '#888888',
+  text: obsidianColors.text,
+  textSecondary: obsidianColors.textSecondary,
+  textTertiary: obsidianColors.textTertiary,
+  textDimmed: obsidianColors.textDimmed,
+  textPrimary: obsidianColors.textPrimary,
 
   // Primary colors
-  primary: '#0A84FF',
+  primary: obsidianColors.primary,
   primaryContainer: '#1C3A5E',
   onPrimary: '#FFFFFF',
 
   // Accent colors
-  accent: '#FF6B6B',
+  accent: obsidianColors.accent,
   accentContainer: '#4A2828',
 
+  // Entity colors
+  task: obsidianColors.task,
+  note: obsidianColors.note,
+
   // Status colors
-  error: '#FF453A',
-  warning: '#FF9F0A',
-  success: '#32D74B',
+  error: obsidianColors.error,
+  warning: obsidianColors.warning,
+  success: obsidianColors.success,
   info: '#64D2FF',
 
   // Border and divider
-  border: '#3A3A3A',
+  border: obsidianColors.border,
   divider: '#2A2A2A',
 
   // Special
-  overlay: 'rgba(0, 0, 0, 0.7)',
+  overlay: obsidianColors.overlay,
   shadow: 'rgba(0, 0, 0, 0.3)',
 };
 

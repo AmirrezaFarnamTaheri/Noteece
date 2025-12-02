@@ -8,6 +8,7 @@ export const colors = {
   background: '#050506',
   backgroundSecondary: '#101113',
   backgroundTertiary: '#1A1B1E',
+  backgroundElevated: '#25262B',
 
   // Text Colors
   text: '#F3F0FF', // High contrast white/violet
@@ -49,6 +50,11 @@ export const colors = {
 
   // Surfaces
   surface: '#101113',
+  surfaceElevated: '#25262B',
+
+  // Entity Colors
+  task: '#20C997', // Teal
+  note: '#845EF7', // Violet
 
   // Overlays
   overlay: 'rgba(0, 0, 0, 0.7)',
@@ -60,6 +66,10 @@ export const spacing = {
   md: 16,
   lg: 24,
   xl: 32,
+  '2xl': 40,
+  '3xl': 48,
+  xxl: 40,
+  xxxl: 48,
 };
 
 export const borderRadius = {

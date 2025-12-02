@@ -260,5 +260,10 @@ export function useSettings() {
  * Hook to update a specific setting
  */
 export function useUpdateSetting() {
-  return useAppContext((state) => state.updateSettings);
+  const updateSettings = useAppContext((state) => state.updateSettings);
+
+  // Helper to update a single key, handling nested objects like 'theme'
+  return async <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
+    return updateSettings({ [key]: value });
+  };
 }
