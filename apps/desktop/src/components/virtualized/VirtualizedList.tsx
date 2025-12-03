@@ -49,7 +49,7 @@ interface ItemData<T> {
 // Using explicit typing to handle generic variance issues with React.memo
 function Row<T>({ index, style, data }: ListChildComponentProps<ItemData<T>>) {
   const { items, renderItem } = data;
-  // eslint-disable-next-line security/detect-object-injection -- index is a number from react-window
+
   const item = items[index];
 
   if (!item) {
@@ -106,7 +106,7 @@ export function VirtualizedList<T>({
 
   // Item key function for react-window
   const itemKey = useCallback((index: number, data: ItemData<T>) => {
-    // eslint-disable-next-line security/detect-object-injection
+
     const item = data.items[index];
     return item ? data.getItemKey(item, index) : `empty-${index}`;
   }, []);

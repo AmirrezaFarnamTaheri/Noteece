@@ -84,7 +84,7 @@ export const useThemeStore = create<ThemeState>()(
  */
 function applyTheme(theme: ActualTheme): void {
   if (typeof document !== 'undefined' && document.documentElement) {
-    // eslint-disable-next-line unicorn/prefer-dom-node-dataset
+
     document.documentElement.setAttribute('data-mantine-color-scheme', theme);
     document.documentElement.classList.remove('light', 'dark');
     document.documentElement.classList.add(theme);

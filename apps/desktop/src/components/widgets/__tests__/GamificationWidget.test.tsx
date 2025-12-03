@@ -11,7 +11,7 @@ import { GamificationWidget } from '../GamificationWidget';
 // Mock Tauri invoke
 const mockInvoke = jest.fn();
 jest.mock('@tauri-apps/api/tauri', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
   invoke: (cmd: string, ...args: unknown[]) => mockInvoke(cmd, ...args),
 }));
 
@@ -155,7 +155,7 @@ describe('GamificationWidget', () => {
   });
 
   it('handles loading state', () => {
-    // eslint-disable-next-line promise/avoid-new
+
     mockInvoke.mockImplementation(() => new Promise(() => {})); // Never resolves
 
     renderWithProviders(<GamificationWidget />);

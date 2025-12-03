@@ -459,7 +459,7 @@ describe('Performance Benchmarks', () => {
         .fill(null)
         .map(
           (_, index) =>
-            // eslint-disable-next-line promise/avoid-new
+
             new Promise((resolve) => {
               setTimeout(() => {
                 resolve({ id: `backup_${index}`, status: 'complete' });
@@ -483,7 +483,7 @@ describe('Performance Benchmarks', () => {
         .fill(null)
         .map(
           (_, index) =>
-            // eslint-disable-next-line promise/avoid-new
+
             new Promise((resolve) => {
               setTimeout(() => {
                 resolve({ platform: `platform_${index}`, posts: 50 });

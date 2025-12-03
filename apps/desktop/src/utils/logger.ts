@@ -71,7 +71,7 @@ class Logger {
     };
 
     // Console output by severity
-    // eslint-disable-next-line security/detect-object-injection -- level is a LogLevel enum value
+
     const levelStr = LogLevel[level];
     const args: unknown[] = [`[${levelStr}] ${message}`];
     if (error) args.push(error);
@@ -154,7 +154,7 @@ logger.setContext({
 logger.addListener((entry: LogEntry) => {
   if (entry.level < LogLevel.ERROR) return;
 
-  // eslint-disable-next-line unicorn/consistent-function-scoping
+
   const safeStringify = (obj: unknown): string => {
     const seen = new WeakSet();
     try {

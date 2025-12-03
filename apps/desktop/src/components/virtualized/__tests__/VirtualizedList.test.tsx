@@ -119,7 +119,7 @@ describe('VirtualizedList', () => {
   });
 
   it('applies custom className', () => {
-    // eslint-disable-next-line tailwindcss/no-custom-classname
+
     renderWithProviders(<VirtualizedList {...defaultProps} className="custom-list-class" />);
 
     expect(screen.getByTestId('virtualized-list')).toBeInTheDocument();
