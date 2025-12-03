@@ -16,9 +16,7 @@ interface FilterBarProps {
   onClearFilters: () => void;
 }
 
-const availablePlatforms = (Object.keys(PLATFORM_CONFIGS) as string[]).filter(
-  (k): k is Platform => k in PLATFORM_CONFIGS
-);
+const availablePlatforms = Object.keys(PLATFORM_CONFIGS) as Platform[];
 
 export const FilterBar: React.FC<FilterBarProps> = ({
   showFilters,

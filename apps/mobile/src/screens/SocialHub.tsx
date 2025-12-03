@@ -34,7 +34,7 @@ import {
   removeCategory,
   createCategory,
 } from '../lib/social-database';
-import type { TimelinePost, SocialCategory, TimelineFilters, Platform, SharedItem } from '../types/social';
+import type { TimelinePost, SocialCategory, TimelineFilters, Platform } from '../types/social';
 
 export function SocialHub() {
   const [posts, setPosts] = useState<TimelinePost[]>([]);

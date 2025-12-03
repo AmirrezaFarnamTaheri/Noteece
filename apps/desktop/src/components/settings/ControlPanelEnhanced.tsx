@@ -227,7 +227,7 @@ export const ControlPanelEnhanced: React.FC = () => {
 
   const getCategoryIcon = (category: string) => {
     if (Object.prototype.hasOwnProperty.call(categoryIcons, category)) {
-
+      // eslint-disable-next-line security/detect-object-injection
       return categoryIcons[category];
     }
     return <IconPuzzle size={16} />;
@@ -235,7 +235,7 @@ export const ControlPanelEnhanced: React.FC = () => {
 
   const getCategoryColor = (category: string) => {
     if (Object.prototype.hasOwnProperty.call(categoryColors, category)) {
-
+      // eslint-disable-next-line security/detect-object-injection
       return categoryColors[category];
     }
     return 'gray';

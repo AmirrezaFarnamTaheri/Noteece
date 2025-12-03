@@ -70,7 +70,7 @@ const metricColors: Record<string, string> = {
 
 export const getDefaultUnit = (metricType: string): string => {
   if (Object.prototype.hasOwnProperty.call(metricUnits, metricType)) {
-
+    // eslint-disable-next-line security/detect-object-injection
     return metricUnits[metricType] || '';
   }
   return '';
@@ -78,7 +78,7 @@ export const getDefaultUnit = (metricType: string): string => {
 
 export const getMetricColor = (metricType: string): string => {
   if (Object.prototype.hasOwnProperty.call(metricColors, metricType)) {
-
+    // eslint-disable-next-line security/detect-object-injection
     return metricColors[metricType] || 'gray';
   }
   return 'gray';

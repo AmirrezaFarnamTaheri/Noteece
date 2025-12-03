@@ -24,7 +24,7 @@ const ranges: Record<string, number> = {
 };
 
 const getRangeMs = (range: string): number => {
-
+  // eslint-disable-next-line security/detect-object-injection
   return ranges[range] || ranges['30d'];
 };
 

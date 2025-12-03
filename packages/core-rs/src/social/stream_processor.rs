@@ -151,8 +151,8 @@ impl StreamProcessor {
         // Try to detect platform first
         let platform = detect_platform(&snapshot, self.active_platform_hint);
 
-        // Build extraction rules at runtime (stack-allocated)
-        let rules: [PlatformRule; 8] = [
+        // Define extraction rules
+        const RULES: &[PlatformRule] = &[
             PlatformRule {
                 platform: DetectedPlatform::Twitter,
                 extractor: extract_twitter_post,
@@ -188,7 +188,7 @@ impl StreamProcessor {
         ];
 
         // Define aware rules (require platform arg)
-        let aware_rules: [PlatformAwareRule; 8] = [
+        const AWARE_RULES: &[PlatformAwareRule] = &[
             PlatformAwareRule {
                 platform: DetectedPlatform::Tinder,
                 extractor: extract_dating_profile,
@@ -224,11 +224,11 @@ impl StreamProcessor {
         ];
 
         // Match platform to rule
-        if let Some(rule) = rules.iter().find(|r| r.platform == platform) {
+        if let Some(rule) = RULES.iter().find(|r| r.platform == platform) {
             return (rule.extractor)(&snapshot);
         }
 
-        if let Some(rule) = aware_rules.iter().find(|r| r.platform == platform) {
+        if let Some(rule) = AWARE_RULES.iter().find(|r| r.platform == platform) {
             return (rule.extractor)(&snapshot, platform);
         }
 

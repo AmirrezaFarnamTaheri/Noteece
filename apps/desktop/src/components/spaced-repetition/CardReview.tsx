@@ -48,13 +48,13 @@ export const CardReview: React.FC<CardReviewProps> = ({ card, onRate, isLoading 
             {(['again', 'hard', 'good', 'easy'] as ReviewRating[]).map((rating) => (
               <Button
                 key={rating}
-
+                // eslint-disable-next-line security/detect-object-injection
                 color={ratingColors[rating]}
                 onClick={() => handleRate(rating)}
                 loading={isLoading}
                 size="lg"
               >
-                { }
+                {/* eslint-disable-next-line security/detect-object-injection */}
                 {ratingLabels[rating]}
               </Button>
             ))}

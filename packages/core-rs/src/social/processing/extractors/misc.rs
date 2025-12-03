@@ -12,8 +12,7 @@ lazy_static::lazy_static! {
     static ref YOUTUBE_HANDLE: Regex = Regex::new(r"(?i)@(?P<handle>[a-z0-9_-]+)").unwrap();
     static ref LINKEDIN_HANDLE: Regex = Regex::new(r"(?i)in/(?P<handle>[a-z0-9-]+)").unwrap();
     static ref TELEGRAM_HANDLE: Regex = Regex::new(r"(?i)@(?P<handle>[a-z0-9_]{5,32})\b").unwrap();
-    // Discord: 2-32 valid chars before '#', discriminator exactly 4 digits
-    static ref DISCORD_HANDLE: Regex = Regex::new(r"(?i)(?P<handle>[a-z0-9_.\-]{2,32}#[0-9]{4})\b").unwrap();
+    static ref DISCORD_HANDLE: Regex = Regex::new(r"(?i)(?P<handle>.+#\d{4})").unwrap();
 }
 
 pub fn extract_dating_profile(

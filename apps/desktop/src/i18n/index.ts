@@ -911,9 +911,9 @@ export const useI18n = create<I18nState>()(
 
       t: (key: TranslationKey): string => {
         const { locale } = get();
-
+        // eslint-disable-next-line security/detect-object-injection
         const messages = translations[locale] as TranslationMessages;
-
+        // eslint-disable-next-line security/detect-object-injection
         return messages[key] || translations.en[key] || key;
       },
 

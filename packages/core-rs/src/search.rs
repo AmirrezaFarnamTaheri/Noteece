@@ -548,7 +548,7 @@ fn extract_snippet(content: &str, query: &str) -> Option<String> {
         return Some(content.chars().take(150).collect());
     }
 
-    let q_lower = trimmed_query.to_lowercase();
+    let q_lower = query.to_lowercase();
     let content_chars: Vec<char> = content.chars().collect();
     let content_len = content_chars.len();
 
@@ -573,15 +573,7 @@ fn extract_snippet(content: &str, query: &str) -> Option<String> {
 
     let start_idx = match_start.unwrap();
     let start = start_idx.saturating_sub(50);
-
-    // Clamp end index to avoid overflow and bounds issues
-    let mut end = start_idx.saturating_add(q_len).saturating_add(100);
-    if end > content_len {
-        end = content_len;
-    }
-    if end < start {
-        end = start;
-    }
+    let end = (start_idx + q_len + 100).min(content_len);
 
     let snippet: String = content_chars[start..end].iter().collect();
     let prefix = if start > 0 { "..." } else { "" };

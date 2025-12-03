@@ -106,7 +106,7 @@ export function VirtualizedList<T>({
 
   // Item key function for react-window
   const itemKey = useCallback((index: number, data: ItemData<T>) => {
-
+    // eslint-disable-next-line security/detect-object-injection
     const item = data.items[index];
     return item ? data.getItemKey(item, index) : `empty-${index}`;
   }, []);
