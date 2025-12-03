@@ -102,7 +102,7 @@ describe('DueTodayWidget', () => {
 
   it('shows "All clear" message when no tasks due', () => {
     // Override useTasks mock for this test
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, unicorn/prefer-module, @typescript-eslint/no-unsafe-assignment
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, unicorn/prefer-module
     const { useTasks } = require('../../../hooks/useQueries');
 
     // safe mock override
