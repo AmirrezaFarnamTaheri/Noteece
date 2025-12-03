@@ -543,7 +543,8 @@ fn search_projects_advanced(
 
 /// Extract snippet around query match
 fn extract_snippet(content: &str, query: &str) -> Option<String> {
-    if query.is_empty() {
+    let trimmed_query = query.trim();
+    if trimmed_query.is_empty() {
         return Some(content.chars().take(150).collect());
     }
 

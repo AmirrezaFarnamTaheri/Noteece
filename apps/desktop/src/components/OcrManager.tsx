@@ -82,7 +82,7 @@ export function OcrManager() {
   };
 
   // Queue OCR for an image
-  // eslint-disable-next-line unicorn/consistent-function-scoping
+
   const handleQueueOcr = async (blobId: string) => {
     try {
       await invoke('queue_ocr_cmd', { blobId });
@@ -203,7 +203,7 @@ export function OcrManager() {
     const validStatuses = ['queued', 'processing', 'completed', 'failed'];
     const isValidStatus = validStatuses.includes(normalizedStatus);
 
-    // eslint-disable-next-line security/detect-object-injection -- normalizedStatus is validated against validStatuses before access
+
     const color = isValidStatus ? colors[normalizedStatus] : 'gray';
     const label = isValidStatus ? normalizedStatus : 'unknown';
 

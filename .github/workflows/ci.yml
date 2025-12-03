@@ -103,34 +103,38 @@ jobs:
   mobile_tests:
     name: "Mobile Tests"
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/mobile
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: apps/mobile/package-lock.json
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: pnpm install --frozen-lockfile
 
       - name: Run linting
-        run: npm run lint
+        working-directory: apps/mobile
+        run: pnpm lint
         continue-on-error: true
 
       - name: Run type checking
-        run: npm run type-check
+        working-directory: apps/mobile
+        run: pnpm type-check
         continue-on-error: true
 
       - name: Run tests
-        run: npm test -- --passWithNoTests --forceExit
+        working-directory: apps/mobile
+        run: pnpm test -- --passWithNoTests --forceExit
         continue-on-error: true
 
       - name: Upload coverage

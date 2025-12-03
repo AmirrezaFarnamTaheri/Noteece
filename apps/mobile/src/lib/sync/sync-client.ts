@@ -212,8 +212,9 @@ export class SyncClient {
       const requestId = nanoid();
 
       const handler = (e: WebSocketMessageEvent) => {
-        // @ts-ignore: Event type check workaround
-        const messageData = e.data || (e as any).message;
+        const messageData = 'data' in e ? e.data : (e as any).message;
+        if (typeof messageData !== 'string') return;
+
         const data = JSON.parse(messageData);
         if (data.type === 'manifest_response' && data.requestId === requestId) {
           ws.removeEventListener('message', handler);

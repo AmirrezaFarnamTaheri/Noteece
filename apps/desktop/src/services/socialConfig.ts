@@ -5,7 +5,6 @@
  * WebView components for social media content capture.
  */
 
-import { invoke } from '@tauri-apps/api/tauri';
 import { readTextFile } from '@tauri-apps/api/fs';
 import { resolveResource } from '@tauri-apps/api/path';
 import { logger } from '@/utils/logger';
