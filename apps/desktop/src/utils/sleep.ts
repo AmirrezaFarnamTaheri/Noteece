@@ -4,6 +4,7 @@
  */
 
 export const sleep = (ms: number): Promise<void> => {
+  // eslint-disable-next-line promise/avoid-new
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });

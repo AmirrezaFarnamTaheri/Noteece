@@ -8,6 +8,7 @@
  * Copyright (c) 2024-2025 Amirreza 'Farnam' Taheri <taherifarnam@gmail.com>
  */
 
+import React, { useMemo, useState, useCallback } from 'react';
 import {
   Paper,
   Title,

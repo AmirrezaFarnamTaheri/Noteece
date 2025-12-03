@@ -1,5 +1,5 @@
+import React, { useState } from 'react';
 import { Card, Text, Group, Stack, ActionIcon, Badge, ScrollArea, Tooltip } from '@mantine/core';
-import { useState } from 'react';
 import { IconBookmark, IconStar, IconStarFilled, IconNotes, IconChecklist, IconFolders } from '@tabler/icons-react';
 import { useNotes, useTasks, useProjects } from '../../hooks/useQueries';
 import { useNavigate } from 'react-router-dom';

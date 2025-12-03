@@ -70,7 +70,10 @@ async function invokeCmd<T>(cmd: string, args?: Record<string, unknown>): Promis
     return result;
   } catch (error) {
     const duration = Date.now() - startTime;
-    logger.error(`[API] ${cmd} failed after ${duration}ms`, error instanceof Error ? error : { error });
+    logger.error(
+      `[API] ${cmd} failed after ${duration}ms`,
+      error instanceof Error ? error : { error }
+    );
     throw error;
   }
 }

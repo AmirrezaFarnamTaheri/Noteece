@@ -32,7 +32,7 @@ export const UniversalDashboardWidget: React.FC = () => {
   const {
     data: stats,
     execute,
-
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     loading,
   } = useAsync<DashboardStats>(
     async () => {

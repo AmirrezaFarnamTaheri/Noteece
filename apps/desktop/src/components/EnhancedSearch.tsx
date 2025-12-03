@@ -149,7 +149,7 @@ const EnhancedSearch: React.FC = () => {
               padding="md"
               radius="md"
               withBorder
-              className="hover:bg-dark-6 cursor-pointer transition-colors"
+              className="hover:bg-dark-6 transition-colors cursor-pointer"
             >
               <Group wrap="nowrap" align="flex-start">
                 <ThemeIcon variant="light" color="blue" radius="md" size="lg">

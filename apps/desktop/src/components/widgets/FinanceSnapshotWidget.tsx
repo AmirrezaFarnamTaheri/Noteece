@@ -31,6 +31,15 @@ import {
   IconPigMoney,
 } from '@tabler/icons-react';
 
+interface Transaction {
+  id: string;
+  amount: number;
+  category: string;
+  description?: string;
+  date: number;
+  type: 'income' | 'expense';
+}
+
 interface FinanceStats {
   total_income: number;
   total_expenses: number;
@@ -43,6 +52,18 @@ interface FinanceStats {
 interface FinanceSnapshotWidgetProps {
   spaceId?: string;
 }
+
+const CATEGORY_COLORS: Record<string, string> = {
+  food: 'orange',
+  transport: 'blue',
+  entertainment: 'pink',
+  utilities: 'gray',
+  shopping: 'violet',
+  health: 'red',
+  education: 'cyan',
+  subscriptions: 'teal',
+  other: 'dark',
+};
 
 export function FinanceSnapshotWidget({ spaceId }: FinanceSnapshotWidgetProps) {
   const [timeRange, setTimeRange] = useState<'week' | 'month'>('month');

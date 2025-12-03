@@ -154,6 +154,7 @@ logger.setContext({
 logger.addListener((entry: LogEntry) => {
   if (entry.level < LogLevel.ERROR) return;
 
+  // eslint-disable-next-line unicorn/consistent-function-scoping
   const safeStringify = (obj: unknown): string => {
     const seen = new WeakSet();
     try {

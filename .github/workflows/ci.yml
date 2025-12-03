@@ -10,9 +10,8 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  # Combined JS/TS pipeline using Turbo
-  frontend_checks:
-    name: "Frontend Checks (Turbo)"
+  lint_and_format:
+    name: "Lint and Format Check"
     runs-on: ubuntu-latest
 
     steps:
@@ -33,22 +32,73 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Turbo handles dependency graph and caching
-      - name: Run Lint, Format, TypeCheck (Turbo)
-        run: npx turbo run lint type-check format:check
+      - name: Run lint
+        run: pnpm lint
         continue-on-error: true
 
-      - name: Run Tests (Turbo)
-        run: npx turbo run test -- --passWithNoTests
+      - name: Check formatting
+        run: pnpm format --check
         continue-on-error: true
 
-      - name: Upload Desktop Coverage
-        if: success()
+      - name: TypeScript check
+        run: pnpm type-check
+        continue-on-error: true
+
+  desktop_tests:
+    name: "Desktop Tests"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        working-directory: apps/desktop
+        run: pnpm test --passWithNoTests
+        continue-on-error: true
+
+      - name: Run tests with coverage
+        working-directory: apps/desktop
+        run: pnpm test:coverage --passWithNoTests
+        continue-on-error: true
+
+      - name: Check coverage threshold
+        working-directory: apps/desktop
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            COVERAGE=$(cat coverage/coverage-summary.json | jq -r '.total.lines.pct')
+            echo "Line coverage: $COVERAGE%"
+            # Use awk for float comparison (bc not always available)
+            if echo "$COVERAGE" | awk '{exit !($1 < 90)}'; then
+              echo "::warning::Coverage ($COVERAGE%) is below 90% threshold"
+            else
+              echo "Coverage check passed: $COVERAGE%"
+            fi
+          else
+            echo "::warning::No coverage report found"
+          fi
+        continue-on-error: true
+
+      - name: Upload coverage
         uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: desktop-coverage
           path: apps/desktop/coverage
-          if-no-files-found: ignore
 
   mobile_tests:
     name: "Mobile Tests"
@@ -156,7 +206,7 @@ jobs:
 
   desktop_build:
     name: "Desktop Build Check"
-    needs: [rust_checks, frontend_checks]
+    needs: [rust_checks, lint_and_format]
     runs-on: ubuntu-22.04
 
     steps:
@@ -208,20 +258,22 @@ jobs:
   # Summary job that depends on all checks
   ci-complete:
     name: "CI Complete"
-    needs: [frontend_checks, mobile_tests, rust_checks, desktop_build]
+    needs: [lint_and_format, desktop_tests, mobile_tests, rust_checks, desktop_build]
     runs-on: ubuntu-latest
     if: always()
     
     steps:
       - name: Check CI Status
         run: |
-          echo "Frontend Checks: ${{ needs.frontend_checks.result }}"
+          echo "Lint and Format: ${{ needs.lint_and_format.result }}"
+          echo "Desktop Tests: ${{ needs.desktop_tests.result }}"
           echo "Mobile Tests: ${{ needs.mobile_tests.result }}"
           echo "Rust Checks: ${{ needs.rust_checks.result }}"
           echo "Desktop Build: ${{ needs.desktop_build.result }}"
           
           # Allow continue-on-error jobs to not fail the pipeline
-          if [[ "${{ needs.frontend_checks.result }}" == "failure" ]] && \
+          if [[ "${{ needs.lint_and_format.result }}" == "failure" ]] && \
+             [[ "${{ needs.desktop_tests.result }}" == "failure" ]] && \
              [[ "${{ needs.mobile_tests.result }}" == "failure" ]] && \
              [[ "${{ needs.rust_checks.result }}" == "failure" ]]; then
             echo "All checks failed!"

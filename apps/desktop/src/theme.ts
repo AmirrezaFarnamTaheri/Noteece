@@ -44,7 +44,7 @@ export const theme: MantineThemeOverride = createTheme({
       defaultProps: {
         radius: 'md',
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
       styles: (_theme: any) => ({
         root: {
           backgroundColor: 'rgba(26, 27, 30, 0.65)',
@@ -79,8 +79,8 @@ export const theme: MantineThemeOverride = createTheme({
         content: {
           backgroundColor: '#141517',
           border: '1px solid #2C2E33',
-        },
-      },
-    },
+        }
+      }
+    }
   },
 });

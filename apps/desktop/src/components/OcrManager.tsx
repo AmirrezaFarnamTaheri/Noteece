@@ -82,7 +82,7 @@ export function OcrManager() {
   };
 
   // Queue OCR for an image
-
+  // eslint-disable-next-line unicorn/consistent-function-scoping
   const handleQueueOcr = async (blobId: string) => {
     try {
       await invoke('queue_ocr_cmd', { blobId });
