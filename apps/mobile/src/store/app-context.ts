@@ -260,30 +260,31 @@ export function useSettings() {
  * Hook to update a specific setting
  */
 export function useUpdateSetting() {
-  const updateSettings = useAppContext((state) => state.updateSettings);
+  const { updateSettings, settings } = useAppContext((state) => ({
+    updateSettings: state.updateSettings,
+    settings: state.settings,
+  }));
 
   // Helper to update a single key; preserves existing nested object fields
   return async <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
-    return updateSettings((prev: AppSettings) => {
-      const next: Partial<AppSettings> = {} as Partial<AppSettings>;
-      const prevVal = prev[key];
-      // Shallow-merge when both previous and new values are objects
-      // (arrays and primitives are replaced)
-      if (
-        prevVal &&
-        typeof prevVal === 'object' &&
-        !Array.isArray(prevVal) &&
-        value &&
-        typeof value === 'object' &&
-        !Array.isArray(value)
-      ) {
-        // @ts-expect-error - dynamic index with keyof
-        next[key] = { ...(prevVal as object), ...(value as object) } as AppSettings[K];
-      } else {
-        // @ts-expect-error - dynamic index with keyof
-        next[key] = value;
-      }
-      return next as AppSettings;
-    });
+    const prevVal = settings[key];
+    let newPartialSettings: Partial<AppSettings>;
+
+    // Shallow-merge when both previous and new values are non-array objects
+    if (
+      prevVal &&
+      typeof prevVal === 'object' &&
+      !Array.isArray(prevVal) &&
+      value &&
+      typeof value === 'object' &&
+      !Array.isArray(value)
+    ) {
+      newPartialSettings = { [key]: { ...prevVal, ...value } };
+    } else {
+      newPartialSettings = { [key]: value };
+    }
+
+    // @ts-expect-error - TS cannot fully resolve the dynamic key type here, but the logic is sound.
+    return updateSettings(newPartialSettings);
   };
 }

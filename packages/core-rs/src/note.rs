@@ -85,9 +85,12 @@ pub fn create_note(
         rusqlite::params![&note.id.0.to_string(), &note.space_id, &note.title, &note.content_md, &note.created_at, &note.modified_at, note.is_trashed],
     )?;
 
+    let rowid = conn.last_insert_rowid();
+
     conn.execute(
-        "INSERT INTO fts_note (note_id, title, content_md) VALUES (?1, ?2, ?3)",
+        "INSERT INTO fts_note (rowid, note_id, title, content_md) VALUES (?1, ?2, ?3, ?4)",
         rusqlite::params![
+            rowid,
             &note.id.0.to_string(),
             &note.title.to_lowercase(),
             &note.content_md
