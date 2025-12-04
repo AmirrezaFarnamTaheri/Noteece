@@ -16,12 +16,13 @@ export interface Task {
 
 export interface Note {
   id: string;
-  spaceId: string;
+  space_id: string;
   title: string;
-  content: string;
-  tags: string[];
-  createdAt: number;
-  updatedAt: number;
+  content_md: string;
+  tags?: string[];
+  created_at: number;
+  modified_at: number;
+  is_trashed: boolean;
 }
 
 export interface CalendarEvent {

@@ -21,6 +21,7 @@ interface NoteeceCoreModule {
   nativeDiscoverDevices(): string;
   nativeInitiateKeyExchange(deviceId: string): string;
   nativeGetSyncProgress(deviceId: string): string;
+  nativeGetAllNotes?(): string; // Optional new method
 }
 
 // Check if JSI module is available
@@ -357,6 +358,38 @@ export class UnifiedSyncBridge {
    */
   isUsingJSI(): boolean {
     return this.useJSI;
+  }
+
+  /**
+   * Get all notes (exposed for NotesScreen)
+   */
+  async getAllNotes(): Promise<import('../../types').Note[]> {
+    await this.ensureInitialized();
+
+    // Prefer JSI if method is available (optimization)
+    if (this.useJSI && NoteeceCoreJSI && typeof NoteeceCoreJSI.nativeGetAllNotes === 'function') {
+      try {
+        const result = NoteeceCoreJSI.nativeGetAllNotes();
+        return JSON.parse(result);
+      } catch (e) {
+        console.warn('[SyncBridge] JSI getAllNotes failed, falling back:', e);
+      }
+    }
+
+    // Fallback: Use direct database access from TypeScript side
+    // This requires importing the database instance which we can do dynamically
+    try {
+      // Dynamic import to avoid circular dependencies
+      const { getDatabase } = await import('../database');
+      const db = getDatabase();
+      const notes = await db.getAllAsync<import('../../types').Note>(
+        'SELECT * FROM note WHERE is_trashed = 0 ORDER BY modified_at DESC',
+      );
+      return notes;
+    } catch (e) {
+      console.error('[SyncBridge] getAllNotes failed:', e);
+      return [];
+    }
   }
 
   /**

@@ -316,11 +316,7 @@ export function SocialHub() {
       </View>
 
       {/* Saved Filters Row */}
-      <SavedFilters
-        savedFilters={savedFilters}
-        onApplyFilter={applySavedFilter}
-        onDeleteFilter={deleteSavedFilter}
-      />
+      <SavedFilters savedFilters={savedFilters} onApplyFilter={applySavedFilter} onDeleteFilter={deleteSavedFilter} />
 
       {/* Filter Bar */}
       <FilterBar

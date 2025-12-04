@@ -77,6 +77,7 @@ fn main() {
             get_or_create_daily_note_cmd,
             get_all_spaces_cmd,
             get_all_tags_in_space_cmd,
+            get_tags_with_counts_cmd,
             get_upcoming_tasks_cmd,
             get_recent_notes_cmd,
             start_time_entry_cmd,

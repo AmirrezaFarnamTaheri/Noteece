@@ -16,20 +16,12 @@ interface SavedFiltersProps {
   onDeleteFilter: (filterId: string) => void;
 }
 
-export const SavedFilters: React.FC<SavedFiltersProps> = ({
-  savedFilters,
-  onApplyFilter,
-  onDeleteFilter,
-}) => {
+export const SavedFilters: React.FC<SavedFiltersProps> = ({ savedFilters, onApplyFilter, onDeleteFilter }) => {
   if (savedFilters.length === 0) return null;
 
   return (
     <View style={styles.savedFiltersRow}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.savedFiltersScroll}
-      >
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.savedFiltersScroll}>
         {savedFilters.map((filter) => (
           <TouchableOpacity
             key={filter.id}

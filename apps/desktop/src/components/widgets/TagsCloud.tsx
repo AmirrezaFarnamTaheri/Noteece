@@ -7,8 +7,9 @@ import { useActiveSpace } from '../../hooks/useActiveSpace';
 import classes from '../Dashboard.module.css';
 import { logger } from '@/utils/logger';
 
-interface TagWithCount extends Tag {
-  noteCount: number;
+interface TagWithCount {
+    tag: Tag;
+    note_count: number;
 }
 
 const getFontSize = (count: number, max: number) => {
@@ -28,21 +29,11 @@ export const TagsCloud: React.FC = () => {
     const fetchTags = async () => {
       if (!activeSpaceId) return;
       try {
-        const tagsData: Tag[] = await invoke('get_all_tags_in_space_cmd', {
+        const tagsData: TagWithCount[] = await invoke('get_tags_with_counts_cmd', {
           spaceId: activeSpaceId,
         });
 
-        // For now, we'll just display tags without counts
-        // In a real implementation, you'd fetch note counts per tag
-        const tagsWithCounts: TagWithCount[] = tagsData.map((tag) => ({
-          ...tag,
-          noteCount: Math.floor(Math.random() * 20) + 1, // Placeholder
-        }));
-
-        // Sort by count
-        tagsWithCounts.sort((a, b) => b.noteCount - a.noteCount);
-
-        setTags(tagsWithCounts.slice(0, 15)); // Top 15 tags
+        setTags(tagsData.slice(0, 15)); // Top 15 tags
       } catch (error) {
         logger.error('Error fetching tags:', error as Error);
       }
@@ -50,7 +41,7 @@ export const TagsCloud: React.FC = () => {
     void fetchTags();
   }, [activeSpaceId]);
 
-  const maxCount = Math.max(...tags.map((t) => t.noteCount), 1);
+  const maxCount = Math.max(...tags.map((t) => t.note_count), 1);
 
   return (
     <Paper style={{ border: '1px solid #e0e0e0' }} p="md" radius="md" shadow="xs">
@@ -68,9 +59,9 @@ export const TagsCloud: React.FC = () => {
         <Group gap="xs" style={{ flexWrap: 'wrap' }}>
           {tags.map((tag) => (
             <Badge
-              key={tag.id}
-              size={getFontSize(tag.noteCount, maxCount)}
-              color={tag.color || 'gray'}
+              key={tag.tag.id}
+              size={getFontSize(tag.note_count, maxCount)}
+              color={tag.tag.color || 'gray'}
               variant="light"
               style={{
                 cursor: 'pointer',
@@ -83,7 +74,7 @@ export const TagsCloud: React.FC = () => {
                 e.currentTarget.style.transform = 'scale(1)';
               }}
             >
-              {tag.name} ({tag.noteCount})
+              {tag.tag.name} ({tag.note_count})
             </Badge>
           ))}
         </Group>
