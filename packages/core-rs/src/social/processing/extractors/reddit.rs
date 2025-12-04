@@ -38,9 +38,7 @@ pub fn extract_reddit_post(snapshot: &[&String]) -> Option<CapturedPost> {
                         .map(|m| m.as_str().to_string())
                         .collect(),
                     raw_context_blob: Some(combined.clone()),
-                    original_timestamp: TIME_REGEX
-                        .find(&combined)
-                        .map(|m| m.as_str().to_string()),
+                    original_timestamp: TIME_REGEX.find(&combined).map(|m| m.as_str().to_string()),
                 });
             }
         }
