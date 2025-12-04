@@ -6,7 +6,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MantineProvider } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { LifeBalanceWidget } from '../LifeBalanceWidget';
+import LifeBalanceWidget from '../LifeBalanceWidget';
 
 // Mock Tauri invoke
 jest.mock('@tauri-apps/api/tauri', () => ({

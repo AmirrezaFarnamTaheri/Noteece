@@ -5,7 +5,7 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MantineProvider } from '@mantine/core';
-import { SocialWidget } from '../SocialWidget';
+import SocialWidget from '../SocialWidget';
 
 // Mock WidgetSkeleton
 jest.mock('../../ui/skeletons/WidgetSkeleton', () => ({
@@ -31,7 +31,7 @@ describe('SocialWidget', () => {
     jest.runAllTimers();
 
     await waitFor(() => {
-      expect(screen.getByText('SOCIAL')).toBeInTheDocument();
+      expect(screen.getByText('Social')).toBeInTheDocument();
     });
 
     expect(screen.getByText('@noteece_app')).toBeInTheDocument();

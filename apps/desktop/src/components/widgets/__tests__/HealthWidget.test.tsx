@@ -5,7 +5,7 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MantineProvider } from '@mantine/core';
-import { HealthWidget } from '../HealthWidget';
+import HealthWidget from '../HealthWidget';
 import { invoke } from '@tauri-apps/api/tauri';
 
 // Mock invoke
