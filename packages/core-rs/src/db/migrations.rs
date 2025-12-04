@@ -816,12 +816,10 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
         log::info!("[db] Migrating to version 20 - FTS for Tasks and Projects (Optimized)");
         tx.execute_batch(
             "
-            -- FTS for Tasks (contentless with rowid mapping)
+            -- FTS for Tasks (Standard FTS table to avoid external content corruption issues)
             CREATE VIRTUAL TABLE IF NOT EXISTS fts_task USING fts5(
                 title,
                 description,
-                content='task',
-                content_rowid='rowid',
                 tokenize='porter unicode61 remove_diacritics 2'
             );
 
@@ -844,12 +842,10 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
                 VALUES (new.rowid, new.title, COALESCE(new.description, ''));
             END;
 
-            -- FTS for Projects (contentless with rowid mapping)
+            -- FTS for Projects (Standard FTS table)
             CREATE VIRTUAL TABLE IF NOT EXISTS fts_project USING fts5(
                 title,
                 goal_outcome,
-                content='project',
-                content_rowid='rowid',
                 tokenize='porter unicode61 remove_diacritics 2'
             );
 

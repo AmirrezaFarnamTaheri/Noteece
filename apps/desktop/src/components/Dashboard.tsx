@@ -33,7 +33,7 @@ import { FocusTimer } from './widgets/FocusTimer';
 import { GoalsTrackerWidget } from './widgets/GoalsTrackerWidget';
 import HabitsTracker from './widgets/HabitsTracker';
 import InsightsWidget from './widgets/InsightsWidget';
-import { MusicWidget } from './widgets/MusicWidget';
+import MusicWidget from './widgets/MusicWidget';
 import NotesHeatmap from './widgets/NotesHeatmap';
 import { QuickCapture } from './widgets/QuickCapture';
 import { RecentProjects } from './widgets/RecentProjects';

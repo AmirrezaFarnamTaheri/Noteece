@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Group, Text, RingProgress, Stack, Badge } from '@mantine/core';
+import { Card, Group, Text, RingProgress, Stack } from '@mantine/core';
 import { IconTrophy, IconFlame, IconBrain } from '@tabler/icons-react';
 
 export interface ReviewStatsData {

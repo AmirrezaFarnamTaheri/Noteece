@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { invoke } from '@tauri-apps/api/tauri';
 import {
   Container,
   Title,
@@ -8,47 +7,52 @@ import {
   Button,
   Group,
   Stack,
-  Select,
-  NumberInput,
   TextInput,
+  NumberInput,
+  Select,
   Grid,
   Modal,
   Badge,
-  Table,
   Center,
   Loader,
-  Progress,
+  Table,
 } from '@mantine/core';
-import { DatePicker } from '@mantine/dates';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { IconPlus, IconTrendingUp, IconWallet, IconReceipt } from '@tabler/icons-react';
+import { DatePickerInput } from '@mantine/dates';
+import {
+  IconPlus,
+  IconTrendingUp,
+  IconWallet,
+  IconReceipt,
+} from '@tabler/icons-react';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
+import { invoke } from '@tauri-apps/api/tauri';
 import { logger } from '@/utils/logger';
 
 interface Transaction {
   id: string;
   space_id: string;
-  transaction_type: string;
   amount: number;
   currency: string;
   category: string;
   account: string;
   description?: string;
   date: number;
-  recurring: boolean;
+  transaction_type: 'income' | 'expense' | 'transfer';
   created_at: number;
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658'];
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28DFF', '#FF6B6B'];
 
 const categories = [
-  'Food & Dining',
-  'Transportation',
-  'Shopping',
+  'Food',
+  'Transport',
+  'Housing',
+  'Utilities',
+  'Health',
   'Entertainment',
-  'Bills & Utilities',
-  'Healthcare',
+  'Shopping',
+  'Education',
   'Income',
-  'Savings',
   'Other',
 ];
 
@@ -59,12 +63,12 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
 
   // Form state
   const [formType, setFormType] = useState<'income' | 'expense'>('expense');
-  const [formAmount, setFormAmount] = useState<number>(0);
+  const [formAmount, setFormAmount] = useState<number | string>(0);
+  const [formCategory, setFormCategory] = useState<string>('Food');
   const [formCurrency, setFormCurrency] = useState('USD');
-  const [formCategory, setFormCategory] = useState(categories[0]);
   const [formAccount, setFormAccount] = useState('Cash');
   const [formDescription, setFormDescription] = useState('');
-  const [formDate, setFormDate] = useState<Date>(new Date());
+  const [formDate, setFormDate] = useState<Date | null>(new Date());
 
   useEffect(() => {
     void loadData();
@@ -74,10 +78,7 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const data = await invoke<Transaction[]>('get_transactions_cmd', {
-        spaceId,
-        limit: 100,
-      });
+      const data = await invoke<Transaction[]>('get_transactions_cmd', { spaceId, limit: 100 });
       setTransactions(data);
     } catch (error) {
       logger.error('Failed to load transactions:', error as Error);
@@ -88,13 +89,13 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
 
   const addTransaction = async () => {
     try {
-      // Validate amount
-      const amountNumber = Number(formAmount);
-      if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
-        alert('Please enter a valid amount greater than 0.');
+      const amountNumber = typeof formAmount === 'string' ? Number.parseFloat(formAmount) : formAmount;
+      if (!amountNumber || amountNumber <= 0) {
+        alert('Please enter a valid amount.');
         return;
       }
-      // Convert to integer cents (minor units) to avoid float precision errors
+
+      // Convert to cents to avoid floating point precision errors
       const amountInCents = Math.round(amountNumber * 100);
 
       // Validate and normalize string fields to prevent empty or invalid data
@@ -367,6 +368,22 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
             value={formAccount}
             onChange={(e) => setFormAccount(e.currentTarget.value)}
             placeholder="Cash, Bank, Credit Card"
+            required
+          />
+
+          <TextInput
+            label="Currency"
+            value={formCurrency}
+            onChange={(e) => setFormCurrency(e.currentTarget.value)}
+            placeholder="USD"
+            required
+          />
+
+          <DatePickerInput
+            label="Date"
+            value={formDate}
+            onChange={setFormDate}
+            placeholder="Select date"
             required
           />
 

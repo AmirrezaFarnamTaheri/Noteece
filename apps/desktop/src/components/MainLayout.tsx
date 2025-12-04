@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   AppShell,
@@ -43,7 +43,6 @@ import { useHotkeys } from '@mantine/hooks';
 import CommandPalette from './CommandPalette';
 import { ThemeToggle } from './ThemeToggle';
 import { getOrCreateDailyNote } from '@/services/api';
-import classes from './MainLayout.module.css';
 import { useStore } from '../store';
 import { logger } from '@/utils/logger';
 import { UndoToast } from './ui/UndoToast';
@@ -86,7 +85,7 @@ const navLinkGroups = [
 ];
 
 const MainLayout: React.FC = () => {
-  const [commandPaletteOpened, setCommandPaletteOpened] = React.useState(false);
+  const [commandPaletteOpened, setCommandPaletteOpened] = useState(false);
   const navigate = useNavigate();
   useHotkeys([['mod+K', () => setCommandPaletteOpened((o) => !o)]]);
   const { activeSpaceId, zenMode, toggleZenMode } = useStore();

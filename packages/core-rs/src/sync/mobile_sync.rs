@@ -106,7 +106,7 @@ mod tests {
 
     #[test]
     fn test_sync_state_transitions() {
-        let mut protocol = SyncProtocol::new(create_test_device("Desktop"));
+        let protocol = SyncProtocol::new(create_test_device("Desktop"));
 
         assert_eq!(protocol.get_sync_state(), SyncState::Idle);
 

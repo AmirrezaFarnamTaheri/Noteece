@@ -1,6 +1,5 @@
 use core_rs::db::migrate;
 use core_rs::note::{create_note, get_note, restore_note, trash_note, update_note_content, DbUlid};
-use core_rs::search::search_notes;
 use rusqlite::Connection;
 use std::thread;
 use std::time::Duration;

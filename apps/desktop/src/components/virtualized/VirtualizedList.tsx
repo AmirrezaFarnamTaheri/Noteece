@@ -5,7 +5,7 @@
  * Reduces rendering complexity from O(N) to O(K) where K = visible rows.
  */
 
-import React, { CSSProperties, useCallback, useMemo } from 'react';
+import React, { CSSProperties, useCallback, useMemo, memo } from 'react';
 import { FixedSizeList, areEqual } from 'react-window';
 import type { ListChildComponentProps } from 'react-window';
 import { Box, Center, Text, Loader } from '@mantine/core';
@@ -61,7 +61,7 @@ function Row<T>({ index, style, data }: ListChildComponentProps<ItemData<T>>) {
 
 // Cast to any to work around TypeScript variance issues with generics
 
-const MemoizedRow = React.memo(Row, areEqual);
+const MemoizedRow = memo(Row, areEqual);
 
 export function VirtualizedList<T>({
   items,
@@ -106,7 +106,7 @@ export function VirtualizedList<T>({
 
   // Item key function for react-window
   const itemKey = useCallback((index: number, data: ItemData<T>) => {
-    // eslint-disable-next-line security/detect-object-injection
+
     const item = data.items[index];
     return item ? data.getItemKey(item, index) : `empty-${index}`;
   }, []);

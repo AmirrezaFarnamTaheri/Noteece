@@ -82,7 +82,7 @@ describe('HabitsTracker Widget', () => {
     renderWithProviders(<HabitsTracker />);
     fireEvent.click(screen.getByRole('button', { name: /add/i }));
 
-    const modal = await screen.findByRole('dialog');
+    await screen.findByRole('dialog');
     const input = screen.getByPlaceholderText('e.g., Read 30 mins');
     const submitBtn = screen.getByRole('button', { name: 'Add Habit' });
 
@@ -126,7 +126,6 @@ describe('HabitsTracker Widget', () => {
       expect(screen.getByText('Morning Jog')).toBeInTheDocument();
     });
 
-    const deleteButtons = screen.getAllByRole('button');
     // Filter for the trash icon button (heuristic as it might not have text)
     // In Mantine ActionIcon, it usually has a nested svg.
     // We can rely on the fact that we added an onClick handler.

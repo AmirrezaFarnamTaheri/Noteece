@@ -29,7 +29,6 @@ import {
   IconUser,
   IconFileText,
   IconSparkles,
-  IconInfoCircle,
 } from '@tabler/icons-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
@@ -103,7 +102,7 @@ export function ChatWithVault({ spaceId, onSourceClick }: ChatWithVaultProps) {
         },
       });
     },
-    onSuccess: (response, question) => {
+    onSuccess: (response, _question) => {
       const sources: Source[] = response.sources.map((s) => ({
         note_id: s.chunk.note_id,
         title: s.chunk.metadata.title || 'Untitled',
@@ -330,7 +329,7 @@ function MessageBubble({ message, onSourceClick }: { message: ChatMessage; onSou
                   <Badge
                     size="xs"
                     variant="dot"
-                    color={message.confidence > 0.7 ? 'green' : message.confidence > 0.4 ? 'yellow' : 'red'}
+                    color={message.confidence > 0.7 ? 'green' : (message.confidence > 0.4 ? 'yellow' : 'red')}
                   >
                     {(message.confidence * 100).toFixed(0)}% confidence
                   </Badge>

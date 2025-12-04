@@ -1,28 +1,13 @@
 module.exports = {
-  root: true,
-  extends: [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:import/recommended",
-    "plugin:import/typescript",
-    "prettier",
-  ],
-  parser: "@typescript-eslint/parser",
-  plugins: ["@typescript-eslint"],
+  extends: ["../../eslintrc.js", "plugin:react-hooks/recommended", "plugin:security/recommended", "plugin:unicorn/recommended"],
+  plugins: ["react-hooks", "security", "unicorn"],
   rules: {
-    "@typescript-eslint/no-unused-vars": "error",
-    "import/no-unresolved": "error",
-  },
-  settings: {
-    "import/resolver": {
-      typescript: {
-        alwaysTryTypes: true,
-        project: "apps/desktop/tsconfig.json",
-      },
-    },
-  },
-  ignorePatterns: ["vite.config.ts"],
-  env: {
-    node: true,
+    "react-hooks/exhaustive-deps": "warn",
+    "security/detect-object-injection": "off",
+    "unicorn/prevent-abbreviations": "off",
+    "unicorn/filename-case": "off",
+    "unicorn/no-null": "off",
+    "unicorn/prefer-module": "off",
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
   },
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   TextInput,
   Button,
@@ -29,7 +29,7 @@ const EnhancedSearch: React.FC = () => {
   const { activeSpaceId } = useStore();
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(false);
-  const latestRequestRef = React.useRef(0);
+  const latestRequestRef = useRef(0);
 
   useEffect(() => {
     const fetchTags = async () => {

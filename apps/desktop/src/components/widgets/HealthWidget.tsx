@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Text, RingProgress, Group, Paper, Stack, ThemeIcon, Center, Button } from '@mantine/core';
+import { Text, RingProgress, Group, Paper, Stack, ThemeIcon, Center } from '@mantine/core';
 import { IconHeartbeat, IconFlame, IconDroplet, IconZzz, IconPlus } from '@tabler/icons-react';
 import { invoke } from '@tauri-apps/api/tauri';
 import { logger } from '../../utils/logger';
@@ -65,7 +65,7 @@ const getTarget = (type: string) => {
   }
 };
 
-export const HealthWidget = () => {
+const HealthWidget = () => {
   const { activeSpaceId } = useStore();
   const [metrics, setMetrics] = useState<HealthMetric[]>([]);
   const [loading, setLoading] = useState(true);
@@ -178,3 +178,5 @@ export const HealthWidget = () => {
     </Paper>
   );
 };
+
+export default HealthWidget;

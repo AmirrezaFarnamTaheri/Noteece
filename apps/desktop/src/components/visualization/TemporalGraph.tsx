@@ -8,7 +8,7 @@
  * Copyright (c) 2024-2025 Amirreza 'Farnam' Taheri <taherifarnam@gmail.com>
  */
 
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Paper,
   Title,
@@ -24,7 +24,6 @@ import {
   Box,
   Slider,
   ThemeIcon,
-  Button,
 } from '@mantine/core';
 import {
   LineChart,
@@ -42,7 +41,7 @@ import {
 } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
-import { IconChartDots3, IconZoomIn, IconZoomOut, IconRefresh, IconFilter, IconInfoCircle } from '@tabler/icons-react';
+import { IconChartDots3, IconZoomIn, IconZoomOut, IconRefresh, IconInfoCircle } from '@tabler/icons-react';
 
 interface CorrelationPoint {
   timestamp: number;
@@ -71,21 +70,7 @@ interface TemporalGraphProps {
   onPatternClick?: (pattern: TemporalPattern) => void;
 }
 
-const CORRELATION_COLORS = {
-  strong_positive: 'var(--mantine-color-green-6)',
-  weak_positive: 'var(--mantine-color-teal-5)',
-  neutral: 'var(--mantine-color-gray-5)',
-  weak_negative: 'var(--mantine-color-orange-5)',
-  strong_negative: 'var(--mantine-color-red-6)',
-};
-
-function getCorrelationColor(value: number): string {
-  if (value > 0.7) return CORRELATION_COLORS.strong_positive;
-  if (value > 0.3) return CORRELATION_COLORS.weak_positive;
-  if (value > -0.3) return CORRELATION_COLORS.neutral;
-  if (value > -0.7) return CORRELATION_COLORS.weak_negative;
-  return CORRELATION_COLORS.strong_negative;
-}
+// Removed unused CORRELATION_COLORS
 
 function getCorrelationLabel(value: number): string {
   if (value > 0.7) return 'Strong Positive';
@@ -94,6 +79,14 @@ function getCorrelationLabel(value: number): string {
   if (value > -0.7) return 'Weak Negative';
   return 'Strong Negative';
 }
+
+const getCorrelationColor = (correlation: number) => {
+  if (correlation > 0.7) return 'green';
+  if (correlation > 0.3) return 'teal';
+  if (correlation > -0.3) return 'gray';
+  if (correlation > -0.7) return 'orange';
+  return 'red';
+};
 
 export function TemporalGraph({
   spaceId,
@@ -151,13 +144,13 @@ export function TemporalGraph({
   }, [filteredData]);
 
   // Handle zoom
-  const handleZoomIn = useCallback(() => {
+  const handleZoomIn = () => {
     setZoomLevel((prev) => Math.min(prev + 0.25, 3));
-  }, []);
+  };
 
-  const handleZoomOut = useCallback(() => {
+  const handleZoomOut = () => {
     setZoomLevel((prev) => Math.max(prev - 0.25, 0.5));
-  }, []);
+  };
 
   // Custom tooltip
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -179,7 +172,7 @@ export function TemporalGraph({
               {metric2}: {point.metric2.toFixed(1)}
             </Badge>
           </Group>
-          <Badge size="sm" color={point.correlation > 0.3 ? 'green' : point.correlation < -0.3 ? 'red' : 'gray'}>
+          <Badge size="sm" color={getCorrelationColor(point.correlation)}>
             Correlation: {(point.correlation * 100).toFixed(0)}%
           </Badge>
           {point.label && (
@@ -267,7 +260,11 @@ export function TemporalGraph({
           <Badge
             size="lg"
             variant="light"
-            color={avgCorrelation > 0.3 ? 'green' : avgCorrelation < -0.3 ? 'red' : 'gray'}
+            color={(() => {
+              if (avgCorrelation > 0.3) return 'green';
+              if (avgCorrelation < -0.3) return 'red';
+              return 'gray';
+            })()}
           >
             Avg Correlation: {(avgCorrelation * 100).toFixed(0)}% ({getCorrelationLabel(avgCorrelation)})
           </Badge>
@@ -400,15 +397,22 @@ export function TemporalGraph({
                 <Badge
                   key={pattern.id}
                   variant="light"
-                  color={
-                    pattern.type === 'positive'
-                      ? 'green'
-                      : pattern.type === 'negative'
-                        ? 'red'
-                        : pattern.type === 'cyclic'
-                          ? 'blue'
-                          : 'orange'
-                  }
+                  color={(() => {
+                    switch (pattern.type) {
+                      case 'positive': {
+                        return 'green';
+                      }
+                      case 'negative': {
+                        return 'red';
+                      }
+                      case 'cyclic': {
+                        return 'blue';
+                      }
+                      default: {
+                        return 'orange';
+                      }
+                    }
+                  })()}
                   style={{ cursor: onPatternClick ? 'pointer' : 'default' }}
                   onClick={() => onPatternClick?.(pattern)}
                 >

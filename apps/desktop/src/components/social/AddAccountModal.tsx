@@ -17,6 +17,23 @@ interface AddAccountModalProperties {
   spaceId: string;
 }
 
+const getPlaceholder = (authMethod: string | undefined) => {
+  switch (authMethod) {
+    case 'oauth': {
+      return 'OAuth token';
+    }
+    case 'password': {
+      return 'Password';
+    }
+    case 'token': {
+      return 'API token';
+    }
+    default: {
+      return 'Session cookies (JSON)';
+    }
+  }
+};
+
 export function AddAccountModal({ opened, onClose, spaceId }: AddAccountModalProperties) {
   const queryClient = useQueryClient();
 
@@ -90,15 +107,7 @@ export function AddAccountModal({ opened, onClose, spaceId }: AddAccountModalPro
 
           <TextInput
             label="Credentials"
-            placeholder={
-              selectedPlatform?.authMethod === 'oauth'
-                ? 'OAuth token'
-                : selectedPlatform?.authMethod === 'password'
-                  ? 'Password'
-                  : selectedPlatform?.authMethod === 'token'
-                    ? 'API token'
-                    : 'Session cookies (JSON)'
-            }
+            placeholder={getPlaceholder(selectedPlatform?.authMethod)}
             type="password"
             required
             {...form.getInputProps('credentials')}

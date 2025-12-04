@@ -38,6 +38,14 @@ const calculateActualTheme = (mode: ThemeMode): ActualTheme => {
   return mode;
 };
 
+const hydrateTheme = (state: ThemeState | undefined) => {
+  if (state) {
+    const actualTheme = calculateActualTheme(state.mode);
+    state.actualTheme = actualTheme;
+    applyTheme(actualTheme);
+  }
+};
+
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
@@ -52,7 +60,7 @@ export const useThemeStore = create<ThemeState>()(
 
       toggleTheme: () => {
         const { mode } = get();
-        const newMode: ThemeMode = mode === 'light' ? 'dark' : mode === 'dark' ? 'system' : 'light';
+        const newMode: ThemeMode = mode === 'light' ? 'dark' : (mode === 'dark' ? 'system' : 'light');
         get().setMode(newMode);
       },
 
@@ -68,13 +76,7 @@ export const useThemeStore = create<ThemeState>()(
     {
       name: 'noteece-theme',
       partialize: (state) => ({ mode: state.mode }),
-      onRehydrateStorage: () => (state) => {
-        if (state) {
-          const actualTheme = calculateActualTheme(state.mode);
-          state.actualTheme = actualTheme;
-          applyTheme(actualTheme);
-        }
-      },
+      onRehydrateStorage: () => hydrateTheme,
     },
   ),
 );

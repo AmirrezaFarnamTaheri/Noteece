@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Timeline, TimelineHeaders, SidebarHeader, DateHeader } from 'react-calendar-timeline';
 // Note: CSS import removed as react-calendar-timeline@0.30.0-beta.4 doesn't include pre-built CSS
 // Custom styling should be added via Mantine or inline styles if needed
@@ -15,9 +15,9 @@ interface TimelineContext {
 
 const ProjectTimeline: React.FC = () => {
   const { tasks, projectId } = useOutletContext<TimelineContext>();
-  const [milestones, setMilestones] = React.useState<ProjectMilestone[]>([]);
+  const [milestones, setMilestones] = useState<ProjectMilestone[]>([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchMilestones = async () => {
       if (projectId) {
         try {
