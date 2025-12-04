@@ -6,6 +6,17 @@ interface AccountSettingsProperties {
   onLogout: () => void;
 }
 
+const formatDate = (timestamp: number | undefined | null) => {
+  if (timestamp == null) return 'Never';
+  if (!Number.isFinite(timestamp)) return 'Invalid date';
+  const seconds = Math.max(0, timestamp);
+  try {
+    return new Date(seconds * 1000).toLocaleString();
+  } catch {
+    return 'Invalid date';
+  }
+};
+
 const AccountSettings: React.FC<AccountSettingsProperties> = ({ onLogout }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
@@ -92,18 +103,6 @@ const AccountSettings: React.FC<AccountSettingsProperties> = ({ onLogout }) => {
       setMessageType('error');
     } finally {
       setLoading(false);
-    }
-  };
-
-
-  const formatDate = (timestamp: number | undefined | null) => {
-    if (timestamp == null) return 'Never';
-    if (!Number.isFinite(timestamp)) return 'Invalid date';
-    const seconds = Math.max(0, timestamp);
-    try {
-      return new Date(seconds * 1000).toLocaleString();
-    } catch {
-      return 'Invalid date';
     }
   };
 

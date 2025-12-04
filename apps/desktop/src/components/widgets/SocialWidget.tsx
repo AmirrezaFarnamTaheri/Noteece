@@ -1,5 +1,5 @@
-import React from 'react';
-import { Button, Text, Group, Stack, Title, ThemeIcon, Badge, Paper } from '@mantine/core';
+import React, { useState, useEffect } from 'react';
+import { Button, Text, Group, Stack, ThemeIcon, Badge, Paper } from '@mantine/core';
 import { IconBrandInstagram, IconBrandTwitter, IconBrandLinkedin, IconPlus, IconUsers } from '@tabler/icons-react';
 import { WidgetSkeleton } from '../ui/skeletons/WidgetSkeleton';
 
@@ -20,11 +20,11 @@ const getColor = (platform: string) => {
   }
 };
 
-export const SocialWidget = () => {
+const SocialWidget = () => {
   // Mock loading state
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1000);
     return () => clearTimeout(timer);
   }, []);
@@ -102,3 +102,5 @@ export const SocialWidget = () => {
     </Paper>
   );
 };
+
+export default SocialWidget;

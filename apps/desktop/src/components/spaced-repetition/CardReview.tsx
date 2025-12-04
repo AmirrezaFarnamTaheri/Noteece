@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Text, Button, Group, Stack, Badge } from '@mantine/core';
-import { IconEye, IconEyeOff } from '@tabler/icons-react';
+import { IconEye } from '@tabler/icons-react';
 import { KnowledgeCard, ReviewRating, ratingColors, ratingLabels } from './types';
 
 interface CardReviewProps {
@@ -48,13 +48,13 @@ export const CardReview: React.FC<CardReviewProps> = ({ card, onRate, isLoading 
             {(['again', 'hard', 'good', 'easy'] as ReviewRating[]).map((rating) => (
               <Button
                 key={rating}
-                // eslint-disable-next-line security/detect-object-injection
+
                 color={ratingColors[rating]}
                 onClick={() => handleRate(rating)}
                 loading={isLoading}
                 size="lg"
               >
-                {/* eslint-disable-next-line security/detect-object-injection */}
+                { }
                 {ratingLabels[rating]}
               </Button>
             ))}

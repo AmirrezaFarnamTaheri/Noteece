@@ -4,8 +4,8 @@
  * Displays sync status and statistics for social media accounts
  */
 
-import { Card, Group, Text, Badge, Stack, Button, Progress, Title } from '@mantine/core';
-import { IconRefresh, IconClock, IconCheck, IconAlertCircle } from '@tabler/icons-react';
+import { Card, Group, Text, Badge, Stack, Progress, Title } from '@mantine/core';
+import { IconClock, IconCheck, IconAlertCircle } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
 
@@ -46,24 +46,6 @@ export function SyncStatusPanel({ spaceId }: SyncStatusPanelProperties) {
     },
     refetchInterval: 30_000,
   });
-
-
-  const formatLastSync = (timestamp: number | null) => {
-    if (!timestamp) return 'Never';
-
-    const date = new Date(timestamp * 1000);
-    const now = Date.now();
-    const diff = now - date.getTime();
-
-    const minutes = Math.floor(diff / 60_000);
-    const hours = Math.floor(diff / 3_600_000);
-    const days = Math.floor(diff / 86_400_000);
-
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
-  };
 
   const getSyncProgress = () => {
     if (!stats) return 0;

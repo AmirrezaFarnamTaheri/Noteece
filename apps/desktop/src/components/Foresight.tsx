@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import {
   Container,
@@ -71,7 +71,7 @@ const Foresight: React.FC = () => {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedInsights, setExpandedInsights] = useState<Set<string>>(new Set());
-  const executingReference = React.useRef(false);
+  const executingReference = useRef(false);
 
   useEffect(() => {
     void loadInsights();

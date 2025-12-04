@@ -154,23 +154,6 @@ const BackupRestore: React.FC<BackupRestoreProperties> = ({ onBackupComplete, on
   };
 
 
-  const formatDateLocal = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleString();
-    } catch {
-      return dateString;
-    }
-  };
-
-
-  const formatBytesLocal = (bytes: number) => {
-    if (!Number.isFinite(bytes) || bytes <= 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const index = Math.min(sizes.length - 1, Math.floor(Math.log(bytes) / Math.log(k)));
-
-    return Math.round((bytes / Math.pow(k, index)) * 100) / 100 + ' ' + sizes[index];
-  };
 
   return (
     <div className={styles.container}>

@@ -1,13 +1,13 @@
 /**
  * LifeBalanceWidget Component
  *
- * Radar chart visualization comparing time spent across different life areas.
- * Uses data from time_entry and space tables.
+ * Displays a radar chart of time/energy distribution across life areas.
+ * Helps users maintain balance between work, health, social, etc.
  */
 
 import React, { useMemo } from 'react';
 import { Paper, Title, Text, Stack, Group, Badge, Center, Loader } from '@mantine/core';
-import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip } from 'recharts';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
 import { IconChartRadar } from '@tabler/icons-react';
@@ -85,7 +85,7 @@ export function LifeBalanceWidget({ spaceId, timeRange = 'week', showTargets = t
       rest: 0,
     };
 
-    const multiplier = timeRange === 'week' ? 1 : timeRange === 'month' ? 4 : 13;
+    const multiplier = timeRange === 'week' ? 1 : (timeRange === 'month' ? 4 : 13);
 
     return [
       {
@@ -186,7 +186,7 @@ export function LifeBalanceWidget({ spaceId, timeRange = 'week', showTargets = t
 
         <Text size="sm" c="dimmed">
           Time distribution across life areas (
-          {timeRange === 'week' ? 'this week' : timeRange === 'month' ? 'this month' : 'this quarter'})
+          {timeRange === 'week' ? 'this week' : (timeRange === 'month' ? 'this month' : 'this quarter')})
         </Text>
 
         <ResponsiveContainer width="100%" height={280}>

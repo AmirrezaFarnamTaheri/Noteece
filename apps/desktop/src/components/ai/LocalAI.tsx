@@ -25,7 +25,6 @@ import {
   IconBrain,
   IconSend,
   IconRefresh,
-  IconSettings,
   IconCheck,
   IconX,
   IconCopy,

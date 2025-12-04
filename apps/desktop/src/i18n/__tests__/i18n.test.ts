@@ -1,4 +1,4 @@
-import { SUPPORTED_LOCALES, LocaleInfo } from '../index';
+import { SUPPORTED_LOCALES } from '../index';
 
 describe('i18n configuration', () => {
   it('should have a default locale', () => {
@@ -6,12 +6,12 @@ describe('i18n configuration', () => {
   });
 
   it('should have valid locale structures', () => {
-    SUPPORTED_LOCALES.forEach((locale: LocaleInfo) => {
+    for (const locale of SUPPORTED_LOCALES) {
       expect(locale.code).toBeDefined();
       expect(locale.label).toBeDefined(); // verifying new field
       expect(locale.direction).toBeDefined();
       expect(['ltr', 'rtl']).toContain(locale.direction);
-    });
+    }
   });
 
   it('should include English as a supported locale', () => {

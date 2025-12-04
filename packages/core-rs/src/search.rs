@@ -50,9 +50,9 @@ pub fn search_notes(conn: &Connection, query: &str, scope: &str) -> Result<Vec<N
 
     if !fts_query.is_empty() {
         if has_fts {
-            // Join FTS table on rowid; f.rowid corresponds to base table rowid
-            sql.push_str(" JOIN fts_note f ON n.rowid = f.rowid");
-            where_clauses.push("f MATCH ?2".to_string());
+            // Join FTS table on rowid; fts_note.rowid corresponds to base table rowid
+            sql.push_str(" JOIN fts_note ON n.rowid = fts_note.rowid");
+            where_clauses.push("fts_note MATCH ?2".to_string());
             params.push(Box::new(fts_query.clone()));
         } else {
             where_clauses.push("(n.title LIKE ?2 OR n.content_md LIKE ?2)".to_string());
@@ -240,7 +240,7 @@ fn search_notes_advanced(
 
     // Join FTS if available and querying text
     if has_fts && !query.query.is_empty() {
-        sql.push_str(" JOIN fts_note f ON n.rowid = f.rowid");
+        sql.push_str(" JOIN fts_note ON n.rowid = fts_note.rowid");
     }
 
     // Space filter
@@ -252,7 +252,7 @@ fn search_notes_advanced(
     // Text search
     if !query.query.is_empty() {
         if has_fts {
-            where_clauses.push("f MATCH ?".to_string());
+            where_clauses.push("fts_note MATCH ?".to_string());
             params.push(Box::new(query.query.clone()));
         } else {
             // Fallback to LIKE on title and content
@@ -347,7 +347,7 @@ fn search_tasks_advanced(
 
     if has_fts && !query.query.is_empty() {
         // Join via rowid mapping
-        sql.push_str(" JOIN fts_task f ON t.rowid = f.rowid");
+        sql.push_str(" JOIN fts_task ON t.rowid = fts_task.rowid");
     }
 
     // Space filter
@@ -359,7 +359,7 @@ fn search_tasks_advanced(
     // Text search
     if !query.query.is_empty() {
         if has_fts {
-            where_clauses.push("f MATCH ?".to_string());
+            where_clauses.push("fts_task MATCH ?".to_string());
             params.push(Box::new(query.query.clone()));
         } else {
             where_clauses.push("(t.title LIKE ? OR t.description LIKE ?)".to_string());
@@ -466,7 +466,7 @@ fn search_projects_advanced(
 
     if has_fts && !query.query.is_empty() {
         // Use rowid mapping between base table and FTS table
-        sql.push_str(" JOIN fts_project f ON p.rowid = f.rowid");
+        sql.push_str(" JOIN fts_project ON p.rowid = fts_project.rowid");
     }
 
     // Space filter
@@ -478,7 +478,7 @@ fn search_projects_advanced(
     // Text search
     if !query.query.is_empty() {
         if has_fts {
-            where_clauses.push("f MATCH ?".to_string());
+            where_clauses.push("fts_project MATCH ?".to_string());
             params.push(Box::new(query.query.clone()));
         } else {
             where_clauses.push("(p.title LIKE ? OR p.goal_outcome LIKE ?)".to_string());

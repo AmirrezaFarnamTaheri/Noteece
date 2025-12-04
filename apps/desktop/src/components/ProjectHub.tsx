@@ -63,7 +63,7 @@ const ProjectHub: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { activeSpaceId } = useStore();
-  const { data: projects = [], isLoading } = useProjects(activeSpaceId || '', !!activeSpaceId);
+  const { data: projects = [] } = useProjects(activeSpaceId || '', !!activeSpaceId);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'kanban'>('grid');
   const [search, setSearch] = useState('');
 
@@ -228,7 +228,7 @@ const ProjectHub: React.FC = () => {
                         <Stack gap="sm">
                           {columnProjects.map((project, index) => (
                             <Draggable key={project.id} draggableId={project.id} index={index}>
-                              {(provided, snapshot) => (
+                              {(provided, _snapshot) => (
                                 <div
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}

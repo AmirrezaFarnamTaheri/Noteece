@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Button, Group, Paper, Text, Transition, rem } from '@mantine/core';
 import { IconArrowBackUp } from '@tabler/icons-react';
 import { useUndoToast } from '@/store/undoStore';

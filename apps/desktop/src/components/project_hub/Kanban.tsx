@@ -3,7 +3,6 @@ import { useOutletContext } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import type { DropResult } from 'react-beautiful-dnd';
 import {
-  Card,
   Text,
   Badge,
   Group,
@@ -18,7 +17,7 @@ import {
   Box,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconPlayerPlay, IconPlayerStop, IconPlus, IconDots } from '@tabler/icons-react';
+import { IconPlayerPlay, IconPlayerStop, IconPlus } from '@tabler/icons-react';
 import { Task, TimeEntry } from '@noteece/types';
 import { invoke } from '@tauri-apps/api/tauri';
 import { useStore } from '../../store';
@@ -111,7 +110,6 @@ const Kanban: React.FC = () => {
       return;
     }
 
-    const sourceColumn = source.droppableId;
     const destinationColumn = destination.droppableId;
 
     const updatedTasks = [...tasks];
@@ -247,9 +245,9 @@ const Kanban: React.FC = () => {
                                         color={
                                           (task.priority as unknown as string) === 'high'
                                             ? 'red'
-                                            : (task.priority as unknown as string) === 'medium'
+                                            : ((task.priority as unknown as string) === 'medium'
                                               ? 'yellow'
-                                              : 'blue'
+                                              : 'blue')
                                         }
                                         variant="light"
                                         size="xs"

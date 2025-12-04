@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, TextInput, Group, Paper, Title, Stack, Text, Badge, ActionIcon, Tooltip } from '@mantine/core';
+import { Button, TextInput, Group, Paper, Title, Stack, Text, Badge, Tooltip } from '@mantine/core';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import type { DropResult } from 'react-beautiful-dnd';
 import { invoke } from '@tauri-apps/api/tauri';

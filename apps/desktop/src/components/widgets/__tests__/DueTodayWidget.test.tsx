@@ -100,13 +100,11 @@ describe('DueTodayWidget', () => {
     });
   });
 
-  it('shows "All clear" message when no tasks due', () => {
-    // Override useTasks mock for this test
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { useTasks } = require('../../../hooks/useQueries');
+  it('shows "All clear" message when no tasks due', async () => {
+    // We need to import useTasks to mock its return value
+    const { useTasks } = await import('../../../hooks/useQueries');
 
     // safe mock override
-
     (useTasks as jest.Mock).mockReturnValue({ data: [], isLoading: false });
 
     renderWithProviders(<DueTodayWidget />);

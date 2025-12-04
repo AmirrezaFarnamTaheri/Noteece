@@ -5,7 +5,7 @@
  */
 
 import { Stack, Group, Card, Text, Title, Select, SimpleGrid, Badge, Progress, Center, Loader } from '@mantine/core';
-import { IconTrendingUp, IconUsers, IconHeart, IconMessageCircle, IconEye } from '@tabler/icons-react';
+import { IconTrendingUp, IconHeart, IconMessageCircle, IconEye } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
 import { useState } from 'react';
@@ -67,6 +67,12 @@ const TIME_RANGES = [
   { value: '365', label: 'Last year' },
 ];
 
+const formatNumber = (number_: number) => {
+  if (number_ >= 1_000_000) return `${(number_ / 1_000_000).toFixed(1)}M`;
+  if (number_ >= 1000) return `${(number_ / 1000).toFixed(1)}K`;
+  return number_.toString();
+};
+
 export function SocialAnalytics({ spaceId }: SocialAnalyticsProperties) {
   const [timeRange, setTimeRange] = useState('30');
 
@@ -96,13 +102,6 @@ export function SocialAnalytics({ spaceId }: SocialAnalyticsProperties) {
       </Center>
     );
   }
-
-
-  const formatNumber = (number_: number) => {
-    if (number_ >= 1_000_000) return `${(number_ / 1_000_000).toFixed(1)}M`;
-    if (number_ >= 1000) return `${(number_ / 1000).toFixed(1)}K`;
-    return number_.toString();
-  };
 
   return (
     <Stack gap="xl">

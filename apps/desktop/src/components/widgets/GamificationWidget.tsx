@@ -39,7 +39,7 @@ interface GamificationData {
   total_achievements: number;
 }
 
-interface Achievement {
+interface _Achievement {
   id: string;
   name: string;
   description: string;

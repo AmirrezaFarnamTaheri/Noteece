@@ -1,124 +1,94 @@
-import React from 'react';
-import { Paper, Title, Text, Group, Button, Stack, ThemeIcon, Progress, Badge } from '@mantine/core';
+import React, { useState, useEffect } from 'react';
+import { Card, Text, Group, ActionIcon, Progress, Stack, Center } from '@mantine/core';
 import {
-  IconMusic,
   IconPlayerPlay,
-  IconPlayerSkipForward,
+  IconPlayerPause,
   IconPlayerSkipBack,
-  IconDeviceSpeaker,
+  IconPlayerSkipForward,
+  IconMusic,
 } from '@tabler/icons-react';
 import classes from './MusicWidget.module.css';
-import { WidgetSkeleton } from '../ui/skeletons/WidgetSkeleton';
 
-// Create CSS module for glassmorphism effects
-const styles = `
-.glassCard {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  overflow: hidden;
-  position: relative;
-}
+const MusicWidget: React.FC = () => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(30);
 
-.albumArt {
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(45deg, #7950f2, #15aabf);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.visualizer {
-  display: flex;
-  align-items: flex-end;
-  gap: 3px;
-  height: 20px;
-  margin-left: auto;
-}
-
-.bar {
-  width: 3px;
-  background-color: var(--mantine-color-violet-5);
-  animation: bounce 1s infinite ease-in-out;
-}
-
-@keyframes bounce {
-  0%, 100% { height: 4px; opacity: 0.5; }
-  50% { height: 16px; opacity: 1; }
-}
-`;
-
-export const MusicWidget: React.FC = () => {
-  const [isLoading, setIsLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    return <WidgetSkeleton />;
-  }
+  // Simulate progress
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        setProgress((prev) => (prev >= 100 ? 0 : prev + 0.5));
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying]);
 
   return (
-    <>
-      <style>{styles}</style>
-      <Paper shadow="sm" p="md" radius="md" className="glassCard">
-        <Group justify="space-between" mb="xs">
-          <Group gap="xs">
-            <ThemeIcon variant="light" color="violet" size="sm" radius="md">
-              <IconDeviceSpeaker size={14} />
-            </ThemeIcon>
-            <Text size="xs" fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: 0.5 }}>
-              Now Playing
-            </Text>
+    <Card radius="lg" className={classes.glassCard} padding="lg">
+      <Stack gap="md">
+        <Group align="flex-start" justify="space-between">
+          <Group gap="md">
+            <div className={classes.albumArt}>
+              <Center h="100%">
+                <IconMusic size={32} color="rgba(255,255,255,0.5)" />
+              </Center>
+            </div>
+            <div>
+              <Text fw={700} c="white" size="lg" lineClamp={1}>
+                Deep Focus Playlist
+              </Text>
+              <Text size="xs" c="dimmed" fw={500}>
+                Ambient Sounds • 45m left
+              </Text>
+            </div>
           </Group>
-          <Badge size="xs" variant="dot" color="gray">
-            Disconnected
-          </Badge>
+          {isPlaying && (
+            <div className={classes.visualizer}>
+              {Array.from({length: 5}).map((_, i) => (
+                <div key={i} className={classes.bar} style={{ animationDelay: `${i * 0.1}s` }} />
+              ))}
+            </div>
+          )}
         </Group>
 
-        <Group align="center" mb="md" wrap="nowrap">
-          <div className="albumArt">
-            <IconMusic size={24} color="white" style={{ opacity: 0.8 }} />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <Text fw={600} truncate>
-              Focus Flow
+        <Stack gap="xs">
+          <Progress value={progress} size="sm" radius="xl" color="white" className={classes.progressBar} />
+          <Group justify="space-between" mt={4}>
+            <Text size="xs" c="dimmed">
+              12:34
             </Text>
-            <Text size="xs" c="dimmed" truncate>
-              Connect service to play
+            <Text size="xs" c="dimmed">
+              45:00
             </Text>
-          </div>
-        </Group>
-
-        <Stack gap={8}>
-          <Progress value={0} size="xs" radius="xl" color="violet" />
-
-          <Group justify="center" gap="lg" mt={4}>
-            <IconPlayerSkipBack size={20} style={{ opacity: 0.5, cursor: 'not-allowed' }} />
-            <ThemeIcon
-              size={40}
-              radius="xl"
-              color="violet"
-              variant="light"
-              style={{ opacity: 0.5, cursor: 'not-allowed' }}
-            >
-              <IconPlayerPlay size={20} />
-            </ThemeIcon>
-            <IconPlayerSkipForward size={20} style={{ opacity: 0.5, cursor: 'not-allowed' }} />
           </Group>
         </Stack>
 
-        {/* Overlay for demo/connect action */}
-        {/* <Overlay color="#000" backgroundOpacity={0.3} blur={2} center>
-          <Button variant="white" color="dark" size="xs" leftSection={<IconBrandSpotify size={14} />}>
-            Connect Spotify
-          </Button>
-        </Overlay> */}
-      </Paper>
-    </>
+        <Group justify="center" gap="xl">
+          <ActionIcon variant="transparent" color="gray" size="lg">
+            <IconPlayerSkipBack size={24} />
+          </ActionIcon>
+          <ActionIcon
+            variant="filled"
+            color="white"
+            size={48}
+            radius="xl"
+            onClick={() => setIsPlaying(!isPlaying)}
+            className={classes.playButton}
+          >
+            {isPlaying ? (
+              <IconPlayerPause size={24} color="black" fill="black" />
+            ) : (
+              <IconPlayerPlay size={24} color="black" fill="black" style={{ marginLeft: 2 }} />
+            )}
+          </ActionIcon>
+          <ActionIcon variant="transparent" color="gray" size="lg">
+            <IconPlayerSkipForward size={24} />
+          </ActionIcon>
+        </Group>
+      </Stack>
+    </Card>
   );
 };
+
+export default MusicWidget;

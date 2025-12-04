@@ -20,7 +20,6 @@ import {
   IconCloudOff,
   IconCloudUpload,
   IconAlertCircle,
-  IconRefresh,
   IconSettings,
   IconDevices,
   IconHistory,
@@ -296,7 +295,7 @@ const SyncStatus: React.FC = () => {
                 onPair={() => {
                   /* Open pair modal */
                 }}
-                onUnpair={(deviceId) => {
+                onUnpair={(_deviceId) => {
                   /* Unpair device */
                 }}
               />

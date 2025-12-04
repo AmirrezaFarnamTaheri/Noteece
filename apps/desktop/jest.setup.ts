@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { createElement } from 'react';
 import '@testing-library/jest-dom';
 
 // Polyfill for window.matchMedia
@@ -24,24 +24,22 @@ if (typeof window.matchMedia !== 'function') {
 jest.mock('recharts', () => {
   const actualRecharts = jest.requireActual('recharts');
 
-  const ResponsiveContainer = ({
-    width = 800,
-    height = 400,
-    children,
-  }: {
-    width?: number | string;
-    height?: number | string;
-    children: React.ReactNode | ((props: { width: number; height: number }) => React.ReactNode);
-  }) => {
-    const numericWidth = typeof width === 'number' ? width : 800;
-    const numericHeight = typeof height === 'number' ? height : 400;
-    const content =
-      typeof children === 'function' ? children({ width: numericWidth, height: numericHeight }) : children;
-    return React.createElement('div', { style: { width: numericWidth, height: numericHeight } }, content);
-  };
-
   return {
     ...actualRecharts,
-    ResponsiveContainer,
+    ResponsiveContainer: ({
+      width = 800,
+      height = 400,
+      children,
+    }: {
+      width?: number | string;
+      height?: number | string;
+      children: React.ReactNode | ((props: { width: number; height: number }) => React.ReactNode);
+    }) => {
+      const numericWidth = typeof width === 'number' ? width : 800;
+      const numericHeight = typeof height === 'number' ? height : 400;
+      const content =
+        typeof children === 'function' ? children({ width: numericWidth, height: numericHeight }) : children;
+      return createElement('div', { style: { width: numericWidth, height: numericHeight } }, content);
+    },
   };
 });

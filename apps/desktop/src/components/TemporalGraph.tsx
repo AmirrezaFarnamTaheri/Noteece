@@ -140,13 +140,16 @@ const TemporalGraph: React.FC<{ spaceId: string }> = ({ spaceId }) => {
     }
   };
 
-  const handleSliderChange = (value: number) => {
-    if (!evolution) return;
-    setCurrentIndex(value);
+  const handleSliderChange = useCallback(
+    (value: number) => {
+      if (!evolution) return;
+      setCurrentIndex(value);
 
-    setCurrentSnapshot(evolution.snapshots[value]);
-    setPlaying(false);
-  };
+      setCurrentSnapshot(evolution.snapshots[value]);
+      setPlaying(false);
+    },
+    [evolution],
+  );
 
   if (loading) {
     return (

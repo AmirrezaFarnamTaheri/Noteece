@@ -81,7 +81,7 @@ export function AccountCard({ account }: AccountCardProperties) {
         accountId: account.id,
       });
     },
-    onSuccess: (windowLabel) => {
+    onSuccess: () => {
       notifications.show({
         title: 'WebView Opened',
         message: `${platform?.name || 'Social media'} window opened. Login and browse to extract content.`,

@@ -4,12 +4,11 @@
  * Advanced FTS-powered search across all social media posts
  */
 
-import { Stack, TextInput, Card, Text, Group, Badge, Center, Loader, ActionIcon, Pill } from '@mantine/core';
-import { IconSearch, IconFilter, IconX } from '@tabler/icons-react';
+import { Stack, TextInput, Card, Text, Group, Center, Loader, ActionIcon, Pill } from '@mantine/core';
+import { IconSearch, IconX } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
 import { useState, useEffect } from 'react';
-import { SUPPORTED_PLATFORMS } from '@noteece/types';
 import { TimelinePost } from './TimelinePost';
 
 interface SearchResult {
@@ -80,7 +79,7 @@ export function SocialSearch({ spaceId }: SocialSearchProperties) {
               <ActionIcon variant="subtle" onClick={handleClear}>
                 <IconX size={16} />
               </ActionIcon>
-            ) : null
+            ) : undefined
           }
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.currentTarget.value)}
@@ -97,7 +96,7 @@ export function SocialSearch({ spaceId }: SocialSearchProperties) {
             <Center py="xl">
               <Loader size="lg" />
             </Center>
-          ) : results && results.length > 0 ? (
+          ) : (results && results.length > 0 ? (
             <>
               <Group>
                 <Text size="sm" fw={500}>
@@ -127,19 +126,22 @@ export function SocialSearch({ spaceId }: SocialSearchProperties) {
                 ))}
               </Stack>
             </>
-          ) : results && results.length === 0 ? (
-            <Center py="xl">
-              <Stack align="center">
-                <Text size="xl">🔍</Text>
-                <Text size="lg" fw={500}>
-                  No results found
-                </Text>
-                <Text size="sm" c="dimmed">
-                  Try different keywords or check your spelling
-                </Text>
-              </Stack>
-            </Center>
-          ) : null}
+          ) : (
+            results &&
+            results.length === 0 && (
+              <Center py="xl">
+                <Stack align="center">
+                  <Text size="xl">🔍</Text>
+                  <Text size="lg" fw={500}>
+                    No results found
+                  </Text>
+                  <Text size="sm" c="dimmed">
+                    Try different keywords or check your spelling
+                  </Text>
+                </Stack>
+              </Center>
+            )
+          ))}
         </>
       )}
 

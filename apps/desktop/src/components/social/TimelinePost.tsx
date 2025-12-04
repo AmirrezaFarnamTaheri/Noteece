@@ -4,7 +4,7 @@
  * Displays a single post in the unified timeline
  */
 
-import { Card, Group, Text, Badge, Stack, Image, AspectRatio, ActionIcon } from '@mantine/core';
+import { Card, Group, Text, Badge, Stack, Image, AspectRatio } from '@mantine/core';
 import { IconHeart, IconMessageCircle, IconShare, IconEye } from '@tabler/icons-react';
 import { SUPPORTED_PLATFORMS } from '@noteece/types';
 
@@ -34,29 +34,6 @@ export function TimelinePost({ post }: TimelinePostProperties) {
   const platform = SUPPORTED_PLATFORMS[post.platform as keyof typeof SUPPORTED_PLATFORMS];
 
 
-  const formatTimestamp = (timestamp: number) => {
-    const date = new Date(timestamp * 1000);
-    const now = Date.now();
-    const diff = now - date.getTime();
-
-    const minutes = Math.floor(diff / 60_000);
-    const hours = Math.floor(diff / 3_600_000);
-    const days = Math.floor(diff / 86_400_000);
-
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days < 7) return `${days}d ago`;
-    return date.toLocaleDateString();
-  };
-
-
-  const formatNumber = (number_?: number) => {
-    if (!number_) return '0';
-    if (number_ >= 1_000_000) return `${(number_ / 1_000_000).toFixed(1)}M`;
-    if (number_ >= 1000) return `${(number_ / 1000).toFixed(1)}K`;
-    return number_.toString();
-  };
 
   return (
     <Card shadow="sm" padding="lg" radius="md" withBorder>
@@ -95,13 +72,13 @@ export function TimelinePost({ post }: TimelinePostProperties) {
                   <AspectRatio ratio={16 / 9}>
                     <Image src={media.url} alt={media.alt || 'Post media'} fit="cover" radius="md" />
                   </AspectRatio>
-                ) : media.type === 'video' ? (
+                ) : (media.type === 'video' ? (
                   <AspectRatio ratio={16 / 9}>
                     <video src={media.url} controls style={{ width: '100%', borderRadius: '8px' }}>
                       <track kind="captions" srcLang="en" label="English" />
                     </video>
                   </AspectRatio>
-                ) : null}
+                ) : null)}
               </div>
             ))}
             {post.media.length > 4 && (

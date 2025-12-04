@@ -11,7 +11,7 @@ describe('Performance Benchmarks', () => {
       const startTime = performance.now();
 
       // Simulate login flow
-      const loginData = {
+      const _loginData = {
         username: 'testuser',
         password: 'Password123!',
       };
@@ -29,7 +29,7 @@ describe('Performance Benchmarks', () => {
       const startTime = performance.now();
 
       // Simulate password hashing (Argon2id with 65536 iterations)
-      const passwordChangeData = {
+      const _passwordChangeData = {
         old_password: 'OldPassword123!',
         new_password: 'NewPassword456!',
         iterations: 65_536,
@@ -130,7 +130,7 @@ describe('Performance Benchmarks', () => {
 
       // Simulate file deletion
       const backupId = 'backup_123';
-      const filePath = `/backups/${backupId}`;
+      const _filePath = `/backups/${backupId}`;
 
       // Simulated deletion
       await sleep(500);
@@ -228,10 +228,10 @@ describe('Performance Benchmarks', () => {
       ];
 
       // Simulate syncing each account
-      let totalTime = 0;
-      for (const account of accounts) {
+      let _totalTime = 0;
+      for (const _account of accounts) {
         // Average 2-3 seconds per platform
-        totalTime += 2500;
+        _totalTime += 2500;
       }
 
       // Actual parallel time would be much less

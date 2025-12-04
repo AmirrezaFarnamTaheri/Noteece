@@ -126,7 +126,7 @@ describe('SyncStatus Component', () => {
 
     await waitFor(
       () => {
-        const settingsButton = screen.queryByText(/settings/i);
+        const _settingsButton = screen.queryByText(/settings/i);
         // Settings button may or may not be present depending on state
         expect(document.body).toBeInTheDocument();
       },
