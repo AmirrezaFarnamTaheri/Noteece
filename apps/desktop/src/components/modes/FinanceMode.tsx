@@ -21,10 +21,8 @@ import { DatePickerInput } from '@mantine/dates';
 import {
   IconPlus,
   IconTrendingUp,
-  IconTrendingDown,
   IconWallet,
   IconReceipt,
-  IconChartPie,
 } from '@tabler/icons-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import { invoke } from '@tauri-apps/api/tauri';

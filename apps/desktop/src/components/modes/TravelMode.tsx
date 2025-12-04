@@ -48,7 +48,7 @@ const TravelMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
 
   const [formName, setFormName] = useState('');
   const [formDestination, setFormDestination] = useState('');
-  const [formStartDate, setFormStartDate] = useState<Date>(new Date());
+  const [formStartDate, _setFormStartDate] = useState<Date>(new Date());
   const [formEndDate, setFormEndDate] = useState<Date>(new Date());
 
   useEffect(() => {
