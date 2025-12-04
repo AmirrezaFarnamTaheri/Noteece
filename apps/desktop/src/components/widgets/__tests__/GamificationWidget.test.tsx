@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MantineProvider } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GamificationWidget } from '../GamificationWidget';
@@ -11,6 +11,7 @@ import { GamificationWidget } from '../GamificationWidget';
 // Mock Tauri invoke
 const mockInvoke = jest.fn();
 jest.mock('@tauri-apps/api/tauri', () => ({
+
   invoke: (cmd: string, ...args: unknown[]) => mockInvoke(cmd, ...args),
 }));
 
@@ -154,6 +155,7 @@ describe('GamificationWidget', () => {
   });
 
   it('handles loading state', () => {
+
     mockInvoke.mockImplementation(() => new Promise(() => {})); // Never resolves
 
     renderWithProviders(<GamificationWidget />);

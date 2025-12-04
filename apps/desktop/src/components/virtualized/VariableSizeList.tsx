@@ -5,7 +5,7 @@
  * Uses react-window's VariableSizeList for optimal performance.
  */
 
-import React, { CSSProperties, useCallback, useMemo, useRef } from 'react';
+import React, { CSSProperties, useCallback, useMemo, useRef, memo, useEffect } from 'react';
 import { VariableSizeList as ReactWindowVariableSizeList, areEqual } from 'react-window';
 import type { ListChildComponentProps } from 'react-window';
 import { Box, Center, Text, Loader } from '@mantine/core';
@@ -50,7 +50,7 @@ interface ItemData<T> {
 // Using explicit typing to handle generic variance issues with React.memo
 function Row<T>({ index, style, data }: ListChildComponentProps<ItemData<T>>) {
   const { items, renderItem } = data;
-  // eslint-disable-next-line security/detect-object-injection -- index is a number from react-window
+
   const item = items[index];
 
   if (!item) {
@@ -61,8 +61,8 @@ function Row<T>({ index, style, data }: ListChildComponentProps<ItemData<T>>) {
 }
 
 // Cast to work around TypeScript variance issues with generics
-
-const MemoizedRow = React.memo(Row, areEqual);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const MemoizedRow = memo(Row as any, areEqual);
 
 export function VariableSizeList<T>({
   items,
@@ -90,7 +90,7 @@ export function VariableSizeList<T>({
       if (cached !== undefined) {
         return cached;
       }
-      // eslint-disable-next-line security/detect-object-injection
+
       const item = items[index];
       return item ? estimateItemHeight(item, index) : 60;
     },
@@ -127,7 +127,7 @@ export function VariableSizeList<T>({
   // Item key function
   const itemKey = useCallback(
     (index: number, data: ItemData<T>) => {
-      // eslint-disable-next-line security/detect-object-injection
+
       const item = data.items[index];
       return item ? getItemKey(item, index) : `empty-${index}`;
     },
@@ -135,7 +135,7 @@ export function VariableSizeList<T>({
   );
 
   // Reset cache when items change significantly
-  React.useEffect(() => {
+  useEffect(() => {
     itemHeights.current.clear();
     listRef.current?.resetAfterIndex(0);
   }, [items.length]);

@@ -35,10 +35,26 @@ interface Post {
   type?: string;
 }
 
-interface TimelineResponse {
-  posts: Post[];
-  has_more: boolean;
-  total_count: number;
+// Helper function to get start time based on time range (in milliseconds)
+function getStartTime(timeRange: string): number | null {
+  const now = Date.now(); // Already in milliseconds
+  switch (timeRange) {
+    case 'today': {
+      return now - 86_400_000;
+    } // 24 hours
+    case 'week': {
+      return now - 604_800_000;
+    } // 7 days
+    case 'month': {
+      return now - 2_592_000_000;
+    } // 30 days
+    case 'year': {
+      return now - 31_536_000_000;
+    } // 365 days
+    default: {
+      return null;
+    }
+  }
 }
 
 export function SocialTimeline({ spaceId }: SocialTimelineProperties) {
@@ -109,29 +125,6 @@ export function SocialTimeline({ spaceId }: SocialTimelineProperties) {
       }
     };
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  // Helper function to get start time based on time range (in milliseconds)
-  // eslint-disable-next-line unicorn/consistent-function-scoping
-  function getStartTime(timeRange: string): number | null {
-    const now = Date.now(); // Already in milliseconds
-    switch (timeRange) {
-      case 'today': {
-        return now - 86_400_000;
-      } // 24 hours
-      case 'week': {
-        return now - 604_800_000;
-      } // 7 days
-      case 'month': {
-        return now - 2_592_000_000;
-      } // 30 days
-      case 'year': {
-        return now - 31_536_000_000;
-      } // 365 days
-      default: {
-        return null;
-      }
-    }
-  }
 
   // Sort posts based on sort filter
   const sortPosts = (posts: Post[]): Post[] => {

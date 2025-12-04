@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Button,
@@ -8,19 +8,14 @@ import {
   Text,
   Title,
   Badge,
-  Progress,
   TextInput,
   Alert,
-  LoadingOverlay,
   Table,
-  ActionIcon,
-  Tooltip,
   Modal,
-  FileButton,
 } from '@mantine/core';
 import { invoke } from '@tauri-apps/api/tauri';
 import { open } from '@tauri-apps/api/dialog';
-import { IconUpload, IconSearch, IconCheck, IconX, IconClock, IconFile } from '@tabler/icons-react';
+import { IconUpload, IconSearch, IconFile } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 
 interface OcrResult {
@@ -81,25 +76,6 @@ export function OcrManager() {
     }
   };
 
-  // Queue OCR for an image
-  // eslint-disable-next-line unicorn/consistent-function-scoping
-  const handleQueueOcr = async (blobId: string) => {
-    try {
-      await invoke('queue_ocr_cmd', { blobId });
-      notifications.show({
-        title: 'OCR queued',
-        message: 'Image has been queued for OCR processing',
-        color: 'green',
-      });
-    } catch (error) {
-      notifications.show({
-        title: 'Queue failed',
-        message: String(error),
-        color: 'red',
-      });
-    }
-  };
-
   // Open file dialog to select image
   const handleBrowseFile = async () => {
     try {
@@ -126,9 +102,8 @@ export function OcrManager() {
     }
   };
 
-  // Process OCR for an uploaded image
-  const handleProcessOcr = async () => {
-    if (!manualFilePath.trim()) {
+  const handleQueueOcr = async (filePath: string) => {
+    if (!filePath) {
       notifications.show({
         title: 'File Path Required',
         message: 'Please enter a valid file path or use Browse button to select a file',
@@ -139,12 +114,10 @@ export function OcrManager() {
 
     setIsUploading(true);
     try {
-      const filePath = manualFilePath.trim();
-
       // Generate a unique blob ID
       const blobId = `blob_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
-      const result = await invoke<string>('process_ocr_cmd', {
+      await invoke<string>('process_ocr_cmd', {
         blobId,
         imagePath: filePath,
         language: language || undefined,
@@ -203,22 +176,11 @@ export function OcrManager() {
     const validStatuses = ['queued', 'processing', 'completed', 'failed'];
     const isValidStatus = validStatuses.includes(normalizedStatus);
 
-    // eslint-disable-next-line security/detect-object-injection -- normalizedStatus is validated against validStatuses before access
+
     const color = isValidStatus ? colors[normalizedStatus] : 'gray';
     const label = isValidStatus ? normalizedStatus : 'unknown';
 
     return <Badge color={color}>{label}</Badge>;
-  };
-
-  // Get status icon
-  const getStatusIcon = (status: string) => {
-    const icons = {
-      queued: <IconClock size={16} />,
-      processing: <IconClock size={16} />,
-      completed: <IconCheck size={16} />,
-      failed: <IconX size={16} />,
-    };
-    return icons[status as keyof typeof icons] || <IconFile size={16} />;
   };
 
   return (
@@ -395,7 +357,7 @@ export function OcrManager() {
               <Button variant="default" onClick={() => setUploadModalOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleProcessOcr} loading={isUploading} leftSection={<IconUpload size={16} />}>
+              <Button onClick={() => handleQueueOcr(manualFilePath.trim())} loading={isUploading} leftSection={<IconUpload size={16} />}>
                 Process Image
               </Button>
             </Group>

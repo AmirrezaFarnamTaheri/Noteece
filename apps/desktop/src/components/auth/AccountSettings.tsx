@@ -6,6 +6,17 @@ interface AccountSettingsProperties {
   onLogout: () => void;
 }
 
+const formatDate = (timestamp: number | undefined | null) => {
+  if (timestamp == null) return 'Never';
+  if (!Number.isFinite(timestamp)) return 'Invalid date';
+  const seconds = Math.max(0, timestamp);
+  try {
+    return new Date(seconds * 1000).toLocaleString();
+  } catch {
+    return 'Invalid date';
+  }
+};
+
 const AccountSettings: React.FC<AccountSettingsProperties> = ({ onLogout }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
@@ -95,18 +106,6 @@ const AccountSettings: React.FC<AccountSettingsProperties> = ({ onLogout }) => {
     }
   };
 
-  // eslint-disable-next-line unicorn/consistent-function-scoping
-  const formatDate = (timestamp: number | undefined | null) => {
-    if (timestamp == null) return 'Never';
-    if (!Number.isFinite(timestamp)) return 'Invalid date';
-    const seconds = Math.max(0, timestamp);
-    try {
-      return new Date(seconds * 1000).toLocaleString();
-    } catch {
-      return 'Invalid date';
-    }
-  };
-
   if (!user) {
     return (
       <div className={styles.container}>
@@ -125,7 +124,7 @@ const AccountSettings: React.FC<AccountSettingsProperties> = ({ onLogout }) => {
           <p>Manage your Noteece account</p>
         </div>
 
-        {/* eslint-disable-next-line security/detect-object-injection -- messageType is a controlled string 'success' | 'error' */}
+        { }
         {message && <div className={`${styles.message} ${styles[messageType]}`}>{message}</div>}
 
         <section className={styles.section}>

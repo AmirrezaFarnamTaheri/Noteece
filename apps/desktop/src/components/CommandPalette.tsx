@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, TextInput, Paper, Group, Text, ThemeIcon, Stack, ScrollArea, rem } from '@mantine/core';
+import { Modal, TextInput, Paper, Group, Text, ThemeIcon, Stack, ScrollArea } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 import {
   IconHome2,
@@ -35,17 +35,38 @@ const CommandPalette: React.FC<{ opened: boolean; onClose: () => void }> = ({ op
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'ArrowDown') {
+    if (filteredCommands.length === 0) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        onClose();
+        setQuery('');
+        setSelectedIndex(0);
+      }
+      return;
+    }
+
+    switch (event.key) {
+    case 'ArrowDown': {
       event.preventDefault();
       setSelectedIndex((prev) => (prev + 1) % filteredCommands.length);
-    } else if (event.key === 'ArrowUp') {
+
+    break;
+    }
+    case 'ArrowUp': {
       event.preventDefault();
       setSelectedIndex((prev) => (prev - 1 + filteredCommands.length) % filteredCommands.length);
-    } else if (event.key === 'Enter') {
+
+    break;
+    }
+    case 'Enter': {
       event.preventDefault();
-      if (filteredCommands.length > 0) {
+      if (filteredCommands[selectedIndex]) {
         handleSelect(filteredCommands[selectedIndex].to);
       }
+
+    break;
+    }
+    // No default
     }
   };
 
@@ -57,9 +78,14 @@ const CommandPalette: React.FC<{ opened: boolean; onClose: () => void }> = ({ op
       size="lg"
       padding={0}
       radius="lg"
+      overlayProps={{
+        opacity: 0.55,
+        blur: 3,
+      }}
       styles={{
         content: {
-          backgroundColor: 'var(--mantine-color-dark-8)',
+          backgroundColor: 'rgba(26, 27, 30, 0.95)',
+          backdropFilter: 'blur(10px)',
           border: '1px solid var(--mantine-color-dark-4)',
           boxShadow: '0 24px 48px rgba(0,0,0,0.5)',
           overflow: 'hidden',

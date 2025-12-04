@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, TextInput, Group, Paper, Title, Stack, Text, Badge, ActionIcon, Tooltip } from '@mantine/core';
+import { Button, TextInput, Group, Paper, Title, Stack, Text, Badge, Tooltip } from '@mantine/core';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import type { DropResult } from 'react-beautiful-dnd';
 import { invoke } from '@tauri-apps/api/tauri';
@@ -23,6 +23,20 @@ const SAFE_COLORS = new Set([
 ] as const);
 
 type SafeColor = 'gray' | 'blue' | 'yellow' | 'green' | 'red' | 'orange' | 'cyan' | 'teal' | 'pink' | 'purple';
+
+const colorTokenMap: Record<SafeColor, { bgActive: string; bgIdle: string; borderActive: string; borderIdle: string }> = {
+  gray:   { bgActive: 'var(--mantine-color-gray-9)',   bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-gray-6)',   borderIdle: 'var(--mantine-color-dark-4)' },
+  blue:   { bgActive: 'var(--mantine-color-blue-9)',   bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-blue-6)',   borderIdle: 'var(--mantine-color-dark-4)' },
+  yellow: { bgActive: 'var(--mantine-color-yellow-9)', bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-yellow-6)', borderIdle: 'var(--mantine-color-dark-4)' },
+  green:  { bgActive: 'var(--mantine-color-green-9)',  bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-green-6)',  borderIdle: 'var(--mantine-color-dark-4)' },
+  red:    { bgActive: 'var(--mantine-color-red-9)',    bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-red-6)',    borderIdle: 'var(--mantine-color-dark-4)' },
+  orange: { bgActive: 'var(--mantine-color-orange-9)', bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-orange-6)', borderIdle: 'var(--mantine-color-dark-4)' },
+  cyan:   { bgActive: 'var(--mantine-color-cyan-9)',   bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-cyan-6)',   borderIdle: 'var(--mantine-color-dark-4)' },
+  teal:   { bgActive: 'var(--mantine-color-teal-9)',   bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-teal-6)',   borderIdle: 'var(--mantine-color-dark-4)' },
+  pink:   { bgActive: 'var(--mantine-color-pink-9)',   bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-pink-6)',   borderIdle: 'var(--mantine-color-dark-4)' },
+  purple: { bgActive: 'var(--mantine-color-purple-9)', bgIdle: 'var(--mantine-color-dark-8)', borderActive: 'var(--mantine-color-purple-6)', borderIdle: 'var(--mantine-color-dark-4)' },
+};
+
 type ColumnKey = 'inbox' | 'todo' | 'in_progress' | 'done';
 type ColumnDef = { readonly title: string; readonly color: SafeColor; readonly icon: string };
 
@@ -115,7 +129,7 @@ const TaskBoard: React.FC = () => {
 
       {/* Board */}
       <DragDropContext onDragEnd={onDragEnd}>
-        <Group align="flex-start" gap="md" style={{ overflowX: 'auto' }}>
+        <div style={{ display: 'flex', gap: 'var(--mantine-spacing-md)', overflowX: 'auto', paddingBottom: 'var(--mantine-spacing-md)' }}>
           {Object.entries(columns).map(([columnId, column]) => {
             const columnTasks = tasks.filter((task) => task.status === columnId);
             // Validate color against whitelist to prevent CSS injection
@@ -124,23 +138,23 @@ const TaskBoard: React.FC = () => {
               : 'gray';
             // Validate icon to prevent XSS
             const safeIcon = typeof column.icon === 'string' ? column.icon : '📦';
+            const tokens = colorTokenMap[safeColor] ?? colorTokenMap.gray;
             return (
               <Droppable droppableId={columnId} key={columnId}>
                 {(provided, snapshot) => (
                   <Paper
-                    shadow="sm"
+                    shadow={snapshot.isDraggingOver ? 'md' : 'sm'}
                     p="md"
                     radius="md"
                     withBorder
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                     style={{
-                      width: 300,
+                      flex: '0 0 320px',
                       minHeight: 500,
-                      backgroundColor: snapshot.isDraggingOver
-                        ? `var(--mantine-color-${safeColor}-0)`
-                        : 'var(--mantine-color-gray-0)',
-                      transition: 'background-color 0.2s',
+                      backgroundColor: snapshot.isDraggingOver ? tokens.bgActive : tokens.bgIdle,
+                      borderColor: snapshot.isDraggingOver ? tokens.borderActive : tokens.borderIdle,
+                      transition: 'background-color 0.2s, border-color 0.2s',
                     }}
                   >
                     <Stack gap="md">
@@ -165,7 +179,7 @@ const TaskBoard: React.FC = () => {
                           <Draggable key={task.id} draggableId={task.id} index={index}>
                             {(provided, snapshot) => (
                               <Paper
-                                shadow="xs"
+                                shadow={snapshot.isDragging ? 'xl' : 'xs'}
                                 p="sm"
                                 radius="md"
                                 withBorder
@@ -174,13 +188,15 @@ const TaskBoard: React.FC = () => {
                                 style={{
                                   ...provided.draggableProps.style,
                                   backgroundColor: snapshot.isDragging
-                                    ? 'var(--mantine-color-white)'
-                                    : 'var(--mantine-color-white)',
+                                    ? 'var(--mantine-color-dark-6)'
+                                    : 'var(--mantine-color-dark-7)',
+                                  backdropFilter: snapshot.isDragging ? 'blur(10px)' : 'none',
                                   border: snapshot.isDragging
-                                    ? `2px solid var(--mantine-color-${safeColor}-6)`
-                                    : '1px solid var(--mantine-color-gray-3)',
+                                    ? `1px solid var(--mantine-color-${safeColor}-5)`
+                                    : '1px solid var(--mantine-color-dark-4)',
                                   cursor: 'grab',
-                                  transition: 'border 0.2s',
+                                  transition: 'border 0.2s, box-shadow 0.2s, background-color 0.2s',
+                                  transform: snapshot.isDragging ? `${provided.draggableProps.style?.transform} scale(1.02)` : provided.draggableProps.style?.transform,
                                 }}
                               >
                                 <Group gap="xs" wrap="nowrap">
@@ -243,7 +259,7 @@ const TaskBoard: React.FC = () => {
               </Droppable>
             );
           })}
-        </Group>
+        </div>
       </DragDropContext>
     </Stack>
   );

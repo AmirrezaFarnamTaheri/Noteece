@@ -14,7 +14,6 @@ import {
   TextInput,
   PasswordInput,
   Button,
-  Divider,
   Badge,
   Alert,
   NumberInput,

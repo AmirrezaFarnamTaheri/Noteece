@@ -1,34 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.9);
-  background-color: #050506; /* Matches theme.colors.dark[9] - Deepest Background */
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --mantine-color-body: #050506;
 }
 
 body {
   margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  background-color: #050506; /* Deepest black */
-  overflow: hidden; /* Prevent body scroll, let AppShell handle it */
+  padding: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: #050506; /* Deepest Obsidian */
+  color: var(--mantine-color-dark-0);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Modern Scrollbar - Thin & Minimal & Darker */
+/* Custom Scrollbar - Minimalist */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -36,47 +29,49 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2C2E33; /* Dark[4] */
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  transition: background 0.2s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #5C5F66; /* Dark[3] */
+  background: rgba(255, 255, 255, 0.2);
 }
 
-/* Smooth Transitions for global elements */
-button, a, input, textarea, select {
-  transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.1s;
-}
-
-/* Glassmorphism Utilities - Updated for deeper look */
+/* Glassmorphism Utilities */
 .glass {
-    background: rgba(20, 21, 23, 0.7); /* Dark[7] with opacity */
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  background: rgba(26, 27, 30, 0.6) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-/* Utility for hiding scrollbar but allowing scroll */
-.no-scrollbar::-webkit-scrollbar {
-    display: none;
-}
-.no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+.glass-panel {
+  background: rgba(20, 21, 23, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.03) !important;
 }
 
-/* Selection Color */
-::selection {
-    background: rgba(132, 94, 247, 0.4); /* Violet */
-    color: white;
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Typography Base Overrides */
-h1, h2, h3, h4, h5, h6 {
-    color: #F3F0FF; /* Violet[0] - bright white/violet */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
 }
 
-p {
-    color: #C1C2C5; /* Dark[0] */
+/* Editor Specific */
+.editor-content {
+  font-family: 'Inter', sans-serif;
+  line-height: 1.6;
+}
+
+.editor-content code {
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(255,255,255,0.1);
+  padding: 2px 4px;
+  border-radius: 4px;
 }

@@ -1,5 +1,5 @@
 import { MantineProvider } from '@mantine/core';
-import { createMemoryRouter, RouterProvider, Outlet } from 'react-router-dom';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -72,8 +72,6 @@ function ActiveSpaceRoute({ Component }: { Component: React.ComponentType<{ spac
 }
 
 function App() {
-  const { activeSpaceId } = useStore();
-
   // Create router with future flags to eliminate warnings
   const router = useMemo(
     () =>

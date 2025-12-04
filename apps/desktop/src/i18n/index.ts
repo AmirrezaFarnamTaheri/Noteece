@@ -1,38 +1,136 @@
-/**
- * Internationalization (i18n) System for Desktop App
- *
- * Supports 7 languages: en, es, fr, de, ja, zh, fa
- */
+// apps/desktop/src/i18n/index.ts
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type Locale = 'en' | 'es' | 'fr' | 'de' | 'ja' | 'zh' | 'fa';
+export type Locale = 'en' | 'ja' | 'zh' | 'fa' | 'es' | 'fr' | 'de';
 
 export interface LocaleInfo {
   code: Locale;
-  name: string;
-  nativeName: string;
+  label: string;
   direction: 'ltr' | 'rtl';
 }
 
 export const SUPPORTED_LOCALES: LocaleInfo[] = [
-  { code: 'en', name: 'English', nativeName: 'English', direction: 'ltr' },
-  { code: 'es', name: 'Spanish', nativeName: 'Español', direction: 'ltr' },
-  { code: 'fr', name: 'French', nativeName: 'Français', direction: 'ltr' },
-  { code: 'de', name: 'German', nativeName: 'Deutsch', direction: 'ltr' },
-  { code: 'ja', name: 'Japanese', nativeName: '日本語', direction: 'ltr' },
-  { code: 'zh', name: 'Chinese', nativeName: '中文', direction: 'ltr' },
-  { code: 'fa', name: 'Persian', nativeName: 'فارسی', direction: 'rtl' },
+  { code: 'en', label: 'English', direction: 'ltr' },
+  { code: 'ja', label: '日本語', direction: 'ltr' },
+  { code: 'zh', label: '中文', direction: 'ltr' },
+  { code: 'fa', label: 'فارسی', direction: 'rtl' },
+  { code: 'es', label: 'Español', direction: 'ltr' },
+  { code: 'fr', label: 'Français', direction: 'ltr' },
+  { code: 'de', label: 'Deutsch', direction: 'ltr' },
 ];
 
-// Translation keys type
-export type TranslationKey = keyof typeof translations.en;
+export type TranslationKey =
+  | 'common.save'
+  | 'common.cancel'
+  | 'common.delete'
+  | 'common.edit'
+  | 'common.create'
+  | 'common.search'
+  | 'common.settings'
+  | 'common.loading'
+  | 'common.error'
+  | 'common.success'
+  | 'common.confirm'
+  | 'common.close'
+  | 'common.back'
+  | 'common.next'
+  | 'common.previous'
+  | 'common.all'
+  | 'common.none'
+  | 'common.yes'
+  | 'common.no'
+  | 'nav.dashboard'
+  | 'nav.notes'
+  | 'nav.tasks'
+  | 'nav.projects'
+  | 'nav.calendar'
+  | 'nav.habits'
+  | 'nav.goals'
+  | 'nav.health'
+  | 'nav.social'
+  | 'nav.settings'
+  | 'nav.sync'
+  | 'dashboard.title'
+  | 'dashboard.welcome'
+  | 'dashboard.widgets'
+  | 'dashboard.customize'
+  | 'dashboard.focusMode'
+  | 'dashboard.quickCapture'
+  | 'notes.title'
+  | 'notes.new'
+  | 'notes.untitled'
+  | 'notes.lastEdited'
+  | 'notes.tags'
+  | 'notes.backlinks'
+  | 'notes.noNotes'
+  | 'tasks.title'
+  | 'tasks.new'
+  | 'tasks.completed'
+  | 'tasks.pending'
+  | 'tasks.overdue'
+  | 'tasks.dueToday'
+  | 'tasks.priority'
+  | 'tasks.high'
+  | 'tasks.medium'
+  | 'tasks.low'
+  | 'projects.title'
+  | 'projects.new'
+  | 'projects.active'
+  | 'projects.archived'
+  | 'projects.overview'
+  | 'projects.timeline'
+  | 'projects.kanban'
+  | 'projects.risks'
+  | 'settings.title'
+  | 'settings.general'
+  | 'settings.appearance'
+  | 'settings.language'
+  | 'settings.theme'
+  | 'settings.darkMode'
+  | 'settings.lightMode'
+  | 'settings.systemTheme'
+  | 'settings.sync'
+  | 'settings.backup'
+  | 'settings.security'
+  | 'settings.about'
+  | 'settings.widgets'
+  | 'settings.features'
+  | 'sync.title'
+  | 'sync.devices'
+  | 'sync.history'
+  | 'sync.conflicts'
+  | 'sync.lastSync'
+  | 'sync.syncing'
+  | 'sync.syncNow'
+  | 'sync.noDevices'
+  | 'ai.title'
+  | 'ai.chat'
+  | 'ai.summarize'
+  | 'ai.generate'
+  | 'ai.analyze'
+  | 'ai.localModel'
+  | 'ai.cloudModel'
+  | 'ai.processing'
+  | 'widgets.quickStats'
+  | 'widgets.recentNotes'
+  | 'widgets.upcomingTasks'
+  | 'widgets.habits'
+  | 'widgets.goals'
+  | 'widgets.calendar'
+  | 'widgets.focusTimer'
+  | 'widgets.mood'
+  | 'widgets.health'
+  | 'widgets.social'
+  | 'error.generic'
+  | 'error.network'
+  | 'error.notFound'
+  | 'error.unauthorized'
+  | 'error.validation';
 
-// All translations
 export const translations = {
   en: {
-    // Common
     'common.save': 'Save',
     'common.cancel': 'Cancel',
     'common.delete': 'Delete',
@@ -52,8 +150,6 @@ export const translations = {
     'common.none': 'None',
     'common.yes': 'Yes',
     'common.no': 'No',
-
-    // Navigation
     'nav.dashboard': 'Dashboard',
     'nav.notes': 'Notes',
     'nav.tasks': 'Tasks',
@@ -65,25 +161,19 @@ export const translations = {
     'nav.social': 'Social',
     'nav.settings': 'Settings',
     'nav.sync': 'Sync',
-
-    // Dashboard
     'dashboard.title': 'Dashboard',
-    'dashboard.welcome': 'Welcome back',
+    'dashboard.welcome': 'Welcome Back',
     'dashboard.widgets': 'Widgets',
-    'dashboard.customize': 'Customize Dashboard',
+    'dashboard.customize': 'Customize',
     'dashboard.focusMode': 'Focus Mode',
     'dashboard.quickCapture': 'Quick Capture',
-
-    // Notes
     'notes.title': 'Notes',
     'notes.new': 'New Note',
     'notes.untitled': 'Untitled',
-    'notes.lastEdited': 'Last edited',
+    'notes.lastEdited': 'Last Edited',
     'notes.tags': 'Tags',
     'notes.backlinks': 'Backlinks',
-    'notes.noNotes': 'No notes yet',
-
-    // Tasks
+    'notes.noNotes': 'No notes found',
     'tasks.title': 'Tasks',
     'tasks.new': 'New Task',
     'tasks.completed': 'Completed',
@@ -94,8 +184,6 @@ export const translations = {
     'tasks.high': 'High',
     'tasks.medium': 'Medium',
     'tasks.low': 'Low',
-
-    // Projects
     'projects.title': 'Projects',
     'projects.new': 'New Project',
     'projects.active': 'Active',
@@ -104,8 +192,6 @@ export const translations = {
     'projects.timeline': 'Timeline',
     'projects.kanban': 'Kanban',
     'projects.risks': 'Risks',
-
-    // Settings
     'settings.title': 'Settings',
     'settings.general': 'General',
     'settings.appearance': 'Appearance',
@@ -120,8 +206,6 @@ export const translations = {
     'settings.about': 'About',
     'settings.widgets': 'Widgets',
     'settings.features': 'Features',
-
-    // Sync
     'sync.title': 'Sync',
     'sync.devices': 'Devices',
     'sync.history': 'History',
@@ -129,9 +213,7 @@ export const translations = {
     'sync.lastSync': 'Last Sync',
     'sync.syncing': 'Syncing...',
     'sync.syncNow': 'Sync Now',
-    'sync.noDevices': 'No devices paired',
-
-    // AI
+    'sync.noDevices': 'No Devices',
     'ai.title': 'AI Assistant',
     'ai.chat': 'Chat',
     'ai.summarize': 'Summarize',
@@ -140,8 +222,6 @@ export const translations = {
     'ai.localModel': 'Local Model',
     'ai.cloudModel': 'Cloud Model',
     'ai.processing': 'Processing...',
-
-    // Widgets
     'widgets.quickStats': 'Quick Stats',
     'widgets.recentNotes': 'Recent Notes',
     'widgets.upcomingTasks': 'Upcoming Tasks',
@@ -149,340 +229,14 @@ export const translations = {
     'widgets.goals': 'Goals',
     'widgets.calendar': 'Calendar',
     'widgets.focusTimer': 'Focus Timer',
-    'widgets.mood': 'Mood Tracker',
+    'widgets.mood': 'Mood',
     'widgets.health': 'Health',
-    'widgets.social': 'Social Feed',
-
-    // Errors
-    'error.generic': 'Something went wrong',
+    'widgets.social': 'Social',
+    'error.generic': 'An error occurred',
     'error.network': 'Network error',
     'error.notFound': 'Not found',
     'error.unauthorized': 'Unauthorized',
     'error.validation': 'Validation error',
-  },
-  es: {
-    'common.save': 'Guardar',
-    'common.cancel': 'Cancelar',
-    'common.delete': 'Eliminar',
-    'common.edit': 'Editar',
-    'common.create': 'Crear',
-    'common.search': 'Buscar',
-    'common.settings': 'Configuración',
-    'common.loading': 'Cargando...',
-    'common.error': 'Error',
-    'common.success': 'Éxito',
-    'common.confirm': 'Confirmar',
-    'common.close': 'Cerrar',
-    'common.back': 'Atrás',
-    'common.next': 'Siguiente',
-    'common.previous': 'Anterior',
-    'common.all': 'Todo',
-    'common.none': 'Ninguno',
-    'common.yes': 'Sí',
-    'common.no': 'No',
-    'nav.dashboard': 'Panel',
-    'nav.notes': 'Notas',
-    'nav.tasks': 'Tareas',
-    'nav.projects': 'Proyectos',
-    'nav.calendar': 'Calendario',
-    'nav.habits': 'Hábitos',
-    'nav.goals': 'Metas',
-    'nav.health': 'Salud',
-    'nav.social': 'Social',
-    'nav.settings': 'Configuración',
-    'nav.sync': 'Sincronizar',
-    'dashboard.title': 'Panel',
-    'dashboard.welcome': 'Bienvenido',
-    'dashboard.widgets': 'Widgets',
-    'dashboard.customize': 'Personalizar Panel',
-    'dashboard.focusMode': 'Modo Enfoque',
-    'dashboard.quickCapture': 'Captura Rápida',
-    'notes.title': 'Notas',
-    'notes.new': 'Nueva Nota',
-    'notes.untitled': 'Sin título',
-    'notes.lastEdited': 'Última edición',
-    'notes.tags': 'Etiquetas',
-    'notes.backlinks': 'Enlaces',
-    'notes.noNotes': 'Sin notas',
-    'tasks.title': 'Tareas',
-    'tasks.new': 'Nueva Tarea',
-    'tasks.completed': 'Completadas',
-    'tasks.pending': 'Pendientes',
-    'tasks.overdue': 'Vencidas',
-    'tasks.dueToday': 'Para Hoy',
-    'tasks.priority': 'Prioridad',
-    'tasks.high': 'Alta',
-    'tasks.medium': 'Media',
-    'tasks.low': 'Baja',
-    'projects.title': 'Proyectos',
-    'projects.new': 'Nuevo Proyecto',
-    'projects.active': 'Activos',
-    'projects.archived': 'Archivados',
-    'projects.overview': 'Resumen',
-    'projects.timeline': 'Cronograma',
-    'projects.kanban': 'Kanban',
-    'projects.risks': 'Riesgos',
-    'settings.title': 'Configuración',
-    'settings.general': 'General',
-    'settings.appearance': 'Apariencia',
-    'settings.language': 'Idioma',
-    'settings.theme': 'Tema',
-    'settings.darkMode': 'Modo Oscuro',
-    'settings.lightMode': 'Modo Claro',
-    'settings.systemTheme': 'Sistema',
-    'settings.sync': 'Sincronizar',
-    'settings.backup': 'Respaldo',
-    'settings.security': 'Seguridad',
-    'settings.about': 'Acerca de',
-    'settings.widgets': 'Widgets',
-    'settings.features': 'Funciones',
-    'sync.title': 'Sincronizar',
-    'sync.devices': 'Dispositivos',
-    'sync.history': 'Historial',
-    'sync.conflicts': 'Conflictos',
-    'sync.lastSync': 'Última Sincronización',
-    'sync.syncing': 'Sincronizando...',
-    'sync.syncNow': 'Sincronizar Ahora',
-    'sync.noDevices': 'Sin dispositivos',
-    'ai.title': 'Asistente IA',
-    'ai.chat': 'Chat',
-    'ai.summarize': 'Resumir',
-    'ai.generate': 'Generar',
-    'ai.analyze': 'Analizar',
-    'ai.localModel': 'Modelo Local',
-    'ai.cloudModel': 'Modelo en la Nube',
-    'ai.processing': 'Procesando...',
-    'widgets.quickStats': 'Estadísticas',
-    'widgets.recentNotes': 'Notas Recientes',
-    'widgets.upcomingTasks': 'Próximas Tareas',
-    'widgets.habits': 'Hábitos',
-    'widgets.goals': 'Metas',
-    'widgets.calendar': 'Calendario',
-    'widgets.focusTimer': 'Temporizador',
-    'widgets.mood': 'Estado de Ánimo',
-    'widgets.health': 'Salud',
-    'widgets.social': 'Social',
-    'error.generic': 'Algo salió mal',
-    'error.network': 'Error de red',
-    'error.notFound': 'No encontrado',
-    'error.unauthorized': 'No autorizado',
-    'error.validation': 'Error de validación',
-  },
-  fr: {
-    'common.save': 'Enregistrer',
-    'common.cancel': 'Annuler',
-    'common.delete': 'Supprimer',
-    'common.edit': 'Modifier',
-    'common.create': 'Créer',
-    'common.search': 'Rechercher',
-    'common.settings': 'Paramètres',
-    'common.loading': 'Chargement...',
-    'common.error': 'Erreur',
-    'common.success': 'Succès',
-    'common.confirm': 'Confirmer',
-    'common.close': 'Fermer',
-    'common.back': 'Retour',
-    'common.next': 'Suivant',
-    'common.previous': 'Précédent',
-    'common.all': 'Tout',
-    'common.none': 'Aucun',
-    'common.yes': 'Oui',
-    'common.no': 'Non',
-    'nav.dashboard': 'Tableau de bord',
-    'nav.notes': 'Notes',
-    'nav.tasks': 'Tâches',
-    'nav.projects': 'Projets',
-    'nav.calendar': 'Calendrier',
-    'nav.habits': 'Habitudes',
-    'nav.goals': 'Objectifs',
-    'nav.health': 'Santé',
-    'nav.social': 'Social',
-    'nav.settings': 'Paramètres',
-    'nav.sync': 'Synchronisation',
-    'dashboard.title': 'Tableau de bord',
-    'dashboard.welcome': 'Bienvenue',
-    'dashboard.widgets': 'Widgets',
-    'dashboard.customize': 'Personnaliser',
-    'dashboard.focusMode': 'Mode Focus',
-    'dashboard.quickCapture': 'Capture Rapide',
-    'notes.title': 'Notes',
-    'notes.new': 'Nouvelle Note',
-    'notes.untitled': 'Sans titre',
-    'notes.lastEdited': 'Dernière modification',
-    'notes.tags': 'Tags',
-    'notes.backlinks': 'Liens retour',
-    'notes.noNotes': 'Aucune note',
-    'tasks.title': 'Tâches',
-    'tasks.new': 'Nouvelle Tâche',
-    'tasks.completed': 'Terminées',
-    'tasks.pending': 'En attente',
-    'tasks.overdue': 'En retard',
-    'tasks.dueToday': "Pour aujourd'hui",
-    'tasks.priority': 'Priorité',
-    'tasks.high': 'Haute',
-    'tasks.medium': 'Moyenne',
-    'tasks.low': 'Basse',
-    'projects.title': 'Projets',
-    'projects.new': 'Nouveau Projet',
-    'projects.active': 'Actifs',
-    'projects.archived': 'Archivés',
-    'projects.overview': 'Aperçu',
-    'projects.timeline': 'Chronologie',
-    'projects.kanban': 'Kanban',
-    'projects.risks': 'Risques',
-    'settings.title': 'Paramètres',
-    'settings.general': 'Général',
-    'settings.appearance': 'Apparence',
-    'settings.language': 'Langue',
-    'settings.theme': 'Thème',
-    'settings.darkMode': 'Mode Sombre',
-    'settings.lightMode': 'Mode Clair',
-    'settings.systemTheme': 'Système',
-    'settings.sync': 'Synchronisation',
-    'settings.backup': 'Sauvegarde',
-    'settings.security': 'Sécurité',
-    'settings.about': 'À propos',
-    'settings.widgets': 'Widgets',
-    'settings.features': 'Fonctionnalités',
-    'sync.title': 'Synchronisation',
-    'sync.devices': 'Appareils',
-    'sync.history': 'Historique',
-    'sync.conflicts': 'Conflits',
-    'sync.lastSync': 'Dernière sync',
-    'sync.syncing': 'Synchronisation...',
-    'sync.syncNow': 'Synchroniser',
-    'sync.noDevices': 'Aucun appareil',
-    'ai.title': 'Assistant IA',
-    'ai.chat': 'Chat',
-    'ai.summarize': 'Résumer',
-    'ai.generate': 'Générer',
-    'ai.analyze': 'Analyser',
-    'ai.localModel': 'Modèle Local',
-    'ai.cloudModel': 'Modèle Cloud',
-    'ai.processing': 'Traitement...',
-    'widgets.quickStats': 'Statistiques',
-    'widgets.recentNotes': 'Notes Récentes',
-    'widgets.upcomingTasks': 'Tâches à Venir',
-    'widgets.habits': 'Habitudes',
-    'widgets.goals': 'Objectifs',
-    'widgets.calendar': 'Calendrier',
-    'widgets.focusTimer': 'Minuterie',
-    'widgets.mood': 'Humeur',
-    'widgets.health': 'Santé',
-    'widgets.social': 'Social',
-    'error.generic': 'Une erreur est survenue',
-    'error.network': 'Erreur réseau',
-    'error.notFound': 'Non trouvé',
-    'error.unauthorized': 'Non autorisé',
-    'error.validation': 'Erreur de validation',
-  },
-  de: {
-    'common.save': 'Speichern',
-    'common.cancel': 'Abbrechen',
-    'common.delete': 'Löschen',
-    'common.edit': 'Bearbeiten',
-    'common.create': 'Erstellen',
-    'common.search': 'Suchen',
-    'common.settings': 'Einstellungen',
-    'common.loading': 'Laden...',
-    'common.error': 'Fehler',
-    'common.success': 'Erfolg',
-    'common.confirm': 'Bestätigen',
-    'common.close': 'Schließen',
-    'common.back': 'Zurück',
-    'common.next': 'Weiter',
-    'common.previous': 'Zurück',
-    'common.all': 'Alle',
-    'common.none': 'Keine',
-    'common.yes': 'Ja',
-    'common.no': 'Nein',
-    'nav.dashboard': 'Dashboard',
-    'nav.notes': 'Notizen',
-    'nav.tasks': 'Aufgaben',
-    'nav.projects': 'Projekte',
-    'nav.calendar': 'Kalender',
-    'nav.habits': 'Gewohnheiten',
-    'nav.goals': 'Ziele',
-    'nav.health': 'Gesundheit',
-    'nav.social': 'Sozial',
-    'nav.settings': 'Einstellungen',
-    'nav.sync': 'Sync',
-    'dashboard.title': 'Dashboard',
-    'dashboard.welcome': 'Willkommen',
-    'dashboard.widgets': 'Widgets',
-    'dashboard.customize': 'Anpassen',
-    'dashboard.focusMode': 'Fokus-Modus',
-    'dashboard.quickCapture': 'Schnellerfassung',
-    'notes.title': 'Notizen',
-    'notes.new': 'Neue Notiz',
-    'notes.untitled': 'Ohne Titel',
-    'notes.lastEdited': 'Zuletzt bearbeitet',
-    'notes.tags': 'Tags',
-    'notes.backlinks': 'Rückverweise',
-    'notes.noNotes': 'Keine Notizen',
-    'tasks.title': 'Aufgaben',
-    'tasks.new': 'Neue Aufgabe',
-    'tasks.completed': 'Erledigt',
-    'tasks.pending': 'Ausstehend',
-    'tasks.overdue': 'Überfällig',
-    'tasks.dueToday': 'Heute fällig',
-    'tasks.priority': 'Priorität',
-    'tasks.high': 'Hoch',
-    'tasks.medium': 'Mittel',
-    'tasks.low': 'Niedrig',
-    'projects.title': 'Projekte',
-    'projects.new': 'Neues Projekt',
-    'projects.active': 'Aktiv',
-    'projects.archived': 'Archiviert',
-    'projects.overview': 'Übersicht',
-    'projects.timeline': 'Zeitplan',
-    'projects.kanban': 'Kanban',
-    'projects.risks': 'Risiken',
-    'settings.title': 'Einstellungen',
-    'settings.general': 'Allgemein',
-    'settings.appearance': 'Erscheinung',
-    'settings.language': 'Sprache',
-    'settings.theme': 'Thema',
-    'settings.darkMode': 'Dunkelmodus',
-    'settings.lightMode': 'Hellmodus',
-    'settings.systemTheme': 'System',
-    'settings.sync': 'Synchronisation',
-    'settings.backup': 'Sicherung',
-    'settings.security': 'Sicherheit',
-    'settings.about': 'Über',
-    'settings.widgets': 'Widgets',
-    'settings.features': 'Funktionen',
-    'sync.title': 'Synchronisation',
-    'sync.devices': 'Geräte',
-    'sync.history': 'Verlauf',
-    'sync.conflicts': 'Konflikte',
-    'sync.lastSync': 'Letzte Sync',
-    'sync.syncing': 'Synchronisieren...',
-    'sync.syncNow': 'Jetzt synchronisieren',
-    'sync.noDevices': 'Keine Geräte',
-    'ai.title': 'KI-Assistent',
-    'ai.chat': 'Chat',
-    'ai.summarize': 'Zusammenfassen',
-    'ai.generate': 'Generieren',
-    'ai.analyze': 'Analysieren',
-    'ai.localModel': 'Lokales Modell',
-    'ai.cloudModel': 'Cloud-Modell',
-    'ai.processing': 'Verarbeitung...',
-    'widgets.quickStats': 'Statistiken',
-    'widgets.recentNotes': 'Letzte Notizen',
-    'widgets.upcomingTasks': 'Nächste Aufgaben',
-    'widgets.habits': 'Gewohnheiten',
-    'widgets.goals': 'Ziele',
-    'widgets.calendar': 'Kalender',
-    'widgets.focusTimer': 'Timer',
-    'widgets.mood': 'Stimmung',
-    'widgets.health': 'Gesundheit',
-    'widgets.social': 'Sozial',
-    'error.generic': 'Ein Fehler ist aufgetreten',
-    'error.network': 'Netzwerkfehler',
-    'error.notFound': 'Nicht gefunden',
-    'error.unauthorized': 'Nicht autorisiert',
-    'error.validation': 'Validierungsfehler',
   },
   ja: {
     'common.save': '保存',
@@ -516,10 +270,10 @@ export const translations = {
     'nav.settings': '設定',
     'nav.sync': '同期',
     'dashboard.title': 'ダッシュボード',
-    'dashboard.welcome': 'おかえりなさい',
+    'dashboard.welcome': 'お帰りなさい',
     'dashboard.widgets': 'ウィジェット',
     'dashboard.customize': 'カスタマイズ',
-    'dashboard.focusMode': '集中モード',
+    'dashboard.focusMode': 'フォーカスモード',
     'dashboard.quickCapture': 'クイックキャプチャ',
     'notes.title': 'ノート',
     'notes.new': '新規ノート',
@@ -527,7 +281,7 @@ export const translations = {
     'notes.lastEdited': '最終編集',
     'notes.tags': 'タグ',
     'notes.backlinks': 'バックリンク',
-    'notes.noNotes': 'ノートがありません',
+    'notes.noNotes': 'ノートが見つかりません',
     'tasks.title': 'タスク',
     'tasks.new': '新規タスク',
     'tasks.completed': '完了',
@@ -808,6 +562,330 @@ export const translations = {
     'error.unauthorized': 'غیرمجاز',
     'error.validation': 'خطای اعتبارسنجی',
   },
+  es: {
+    'common.save': 'Guardar',
+    'common.cancel': 'Cancelar',
+    'common.delete': 'Eliminar',
+    'common.edit': 'Editar',
+    'common.create': 'Crear',
+    'common.search': 'Buscar',
+    'common.settings': 'Configuración',
+    'common.loading': 'Cargando...',
+    'common.error': 'Error',
+    'common.success': 'Éxito',
+    'common.confirm': 'Confirmar',
+    'common.close': 'Cerrar',
+    'common.back': 'Volver',
+    'common.next': 'Siguiente',
+    'common.previous': 'Anterior',
+    'common.all': 'Todo',
+    'common.none': 'Ninguno',
+    'common.yes': 'Sí',
+    'common.no': 'No',
+    'nav.dashboard': 'Panel',
+    'nav.notes': 'Notas',
+    'nav.tasks': 'Tareas',
+    'nav.projects': 'Proyectos',
+    'nav.calendar': 'Calendario',
+    'nav.habits': 'Hábitos',
+    'nav.goals': 'Objetivos',
+    'nav.health': 'Salud',
+    'nav.social': 'Social',
+    'nav.settings': 'Configuración',
+    'nav.sync': 'Sincronización',
+    'dashboard.title': 'Panel de Control',
+    'dashboard.welcome': 'Bienvenido de nuevo',
+    'dashboard.widgets': 'Widgets',
+    'dashboard.customize': 'Personalizar',
+    'dashboard.focusMode': 'Modo Enfoque',
+    'dashboard.quickCapture': 'Captura Rápida',
+    'notes.title': 'Notas',
+    'notes.new': 'Nueva Nota',
+    'notes.untitled': 'Sin Título',
+    'notes.lastEdited': 'Editado',
+    'notes.tags': 'Etiquetas',
+    'notes.backlinks': 'Retroenlaces',
+    'notes.noNotes': 'No hay notas',
+    'tasks.title': 'Tareas',
+    'tasks.new': 'Nueva Tarea',
+    'tasks.completed': 'Completado',
+    'tasks.pending': 'Pendiente',
+    'tasks.overdue': 'Vencido',
+    'tasks.dueToday': 'Vence Hoy',
+    'tasks.priority': 'Prioridad',
+    'tasks.high': 'Alta',
+    'tasks.medium': 'Media',
+    'tasks.low': 'Baja',
+    'projects.title': 'Proyectos',
+    'projects.new': 'Nuevo Proyecto',
+    'projects.active': 'Activo',
+    'projects.archived': 'Archivado',
+    'projects.overview': 'Resumen',
+    'projects.timeline': 'Cronograma',
+    'projects.kanban': 'Kanban',
+    'projects.risks': 'Riesgos',
+    'settings.title': 'Configuración',
+    'settings.general': 'General',
+    'settings.appearance': 'Apariencia',
+    'settings.language': 'Idioma',
+    'settings.theme': 'Tema',
+    'settings.darkMode': 'Modo Oscuro',
+    'settings.lightMode': 'Modo Claro',
+    'settings.systemTheme': 'Sistema',
+    'settings.sync': 'Sincronización',
+    'settings.backup': 'Copia de Seguridad',
+    'settings.security': 'Seguridad',
+    'settings.about': 'Acerca de',
+    'settings.widgets': 'Widgets',
+    'settings.features': 'Funciones',
+    'sync.title': 'Sincronización',
+    'sync.devices': 'Dispositivos',
+    'sync.history': 'Historial',
+    'sync.conflicts': 'Conflictos',
+    'sync.lastSync': 'Última Sincronización',
+    'sync.syncing': 'Sincronizando...',
+    'sync.syncNow': 'Sincronizar Ahora',
+    'sync.noDevices': 'Sin Dispositivos',
+    'ai.title': 'Asistente IA',
+    'ai.chat': 'Chat',
+    'ai.summarize': 'Resumir',
+    'ai.generate': 'Generar',
+    'ai.analyze': 'Analizar',
+    'ai.localModel': 'Modelo Local',
+    'ai.cloudModel': 'Modelo Nube',
+    'ai.processing': 'Procesando...',
+    'widgets.quickStats': 'Estadísticas Rápidas',
+    'widgets.recentNotes': 'Notas Recientes',
+    'widgets.upcomingTasks': 'Tareas Próximas',
+    'widgets.habits': 'Hábitos',
+    'widgets.goals': 'Objetivos',
+    'widgets.calendar': 'Calendario',
+    'widgets.focusTimer': 'Temporizador',
+    'widgets.mood': 'Estado de Ánimo',
+    'widgets.health': 'Salud',
+    'widgets.social': 'Social',
+    'error.generic': 'Ocurrió un error',
+    'error.network': 'Error de red',
+    'error.notFound': 'No encontrado',
+    'error.unauthorized': 'No autorizado',
+    'error.validation': 'Error de validación',
+  },
+  fr: {
+    'common.save': 'Enregistrer',
+    'common.cancel': 'Annuler',
+    'common.delete': 'Supprimer',
+    'common.edit': 'Modifier',
+    'common.create': 'Créer',
+    'common.search': 'Rechercher',
+    'common.settings': 'Paramètres',
+    'common.loading': 'Chargement...',
+    'common.error': 'Erreur',
+    'common.success': 'Succès',
+    'common.confirm': 'Confirmer',
+    'common.close': 'Fermer',
+    'common.back': 'Retour',
+    'common.next': 'Suivant',
+    'common.previous': 'Précédent',
+    'common.all': 'Tout',
+    'common.none': 'Aucun',
+    'common.yes': 'Oui',
+    'common.no': 'Non',
+    'nav.dashboard': 'Tableau de bord',
+    'nav.notes': 'Notes',
+    'nav.tasks': 'Tâches',
+    'nav.projects': 'Projets',
+    'nav.calendar': 'Calendrier',
+    'nav.habits': 'Habitudes',
+    'nav.goals': 'Objectifs',
+    'nav.health': 'Santé',
+    'nav.social': 'Social',
+    'nav.settings': 'Paramètres',
+    'nav.sync': 'Sync',
+    'dashboard.title': 'Tableau de bord',
+    'dashboard.welcome': 'Bon retour',
+    'dashboard.widgets': 'Widgets',
+    'dashboard.customize': 'Personnaliser',
+    'dashboard.focusMode': 'Mode Focus',
+    'dashboard.quickCapture': 'Capture Rapide',
+    'notes.title': 'Notes',
+    'notes.new': 'Nouvelle Note',
+    'notes.untitled': 'Sans Titre',
+    'notes.lastEdited': 'Dernière modif.',
+    'notes.tags': 'Tags',
+    'notes.backlinks': 'Rétroliens',
+    'notes.noNotes': 'Aucune note trouvée',
+    'tasks.title': 'Tâches',
+    'tasks.new': 'Nouvelle Tâche',
+    'tasks.completed': 'Terminé',
+    'tasks.pending': 'En attente',
+    'tasks.overdue': 'En retard',
+    'tasks.dueToday': 'Pour aujourd\'hui',
+    'tasks.priority': 'Priorité',
+    'tasks.high': 'Haute',
+    'tasks.medium': 'Moyenne',
+    'tasks.low': 'Basse',
+    'projects.title': 'Projets',
+    'projects.new': 'Nouveau Projet',
+    'projects.active': 'Actif',
+    'projects.archived': 'Archivé',
+    'projects.overview': 'Aperçu',
+    'projects.timeline': 'Chronologie',
+    'projects.kanban': 'Kanban',
+    'projects.risks': 'Risques',
+    'settings.title': 'Paramètres',
+    'settings.general': 'Général',
+    'settings.appearance': 'Apparence',
+    'settings.language': 'Langue',
+    'settings.theme': 'Thème',
+    'settings.darkMode': 'Mode Sombre',
+    'settings.lightMode': 'Mode Clair',
+    'settings.systemTheme': 'Système',
+    'settings.sync': 'Synchronisation',
+    'settings.backup': 'Sauvegarde',
+    'settings.security': 'Sécurité',
+    'settings.about': 'À propos',
+    'settings.widgets': 'Widgets',
+    'settings.features': 'Fonctionnalités',
+    'sync.title': 'Synchronisation',
+    'sync.devices': 'Appareils',
+    'sync.history': 'Historique',
+    'sync.conflicts': 'Conflits',
+    'sync.lastSync': 'Dernière Sync',
+    'sync.syncing': 'Synchronisation...',
+    'sync.syncNow': 'Synchroniser',
+    'sync.noDevices': 'Aucun appareil',
+    'ai.title': 'Assistant IA',
+    'ai.chat': 'Chat',
+    'ai.summarize': 'Résumer',
+    'ai.generate': 'Générer',
+    'ai.analyze': 'Analyser',
+    'ai.localModel': 'Modèle Local',
+    'ai.cloudModel': 'Modèle Cloud',
+    'ai.processing': 'Traitement...',
+    'widgets.quickStats': 'Stats Rapides',
+    'widgets.recentNotes': 'Notes Récentes',
+    'widgets.upcomingTasks': 'Tâches à venir',
+    'widgets.habits': 'Habitudes',
+    'widgets.goals': 'Objectifs',
+    'widgets.calendar': 'Calendrier',
+    'widgets.focusTimer': 'Minuteur',
+    'widgets.mood': 'Humeur',
+    'widgets.health': 'Santé',
+    'widgets.social': 'Social',
+    'error.generic': 'Une erreur est survenue',
+    'error.network': 'Erreur réseau',
+    'error.notFound': 'Introuvable',
+    'error.unauthorized': 'Non autorisé',
+    'error.validation': 'Erreur de validation',
+  },
+  de: {
+    'common.save': 'Speichern',
+    'common.cancel': 'Abbrechen',
+    'common.delete': 'Löschen',
+    'common.edit': 'Bearbeiten',
+    'common.create': 'Erstellen',
+    'common.search': 'Suchen',
+    'common.settings': 'Einstellungen',
+    'common.loading': 'Laden...',
+    'common.error': 'Fehler',
+    'common.success': 'Erfolg',
+    'common.confirm': 'Bestätigen',
+    'common.close': 'Schließen',
+    'common.back': 'Zurück',
+    'common.next': 'Weiter',
+    'common.previous': 'Zurück',
+    'common.all': 'Alle',
+    'common.none': 'Keine',
+    'common.yes': 'Ja',
+    'common.no': 'Nein',
+    'nav.dashboard': 'Dashboard',
+    'nav.notes': 'Notizen',
+    'nav.tasks': 'Aufgaben',
+    'nav.projects': 'Projekte',
+    'nav.calendar': 'Kalender',
+    'nav.habits': 'Gewohnheiten',
+    'nav.goals': 'Ziele',
+    'nav.health': 'Gesundheit',
+    'nav.social': 'Sozial',
+    'nav.settings': 'Einstellungen',
+    'nav.sync': 'Sync',
+    'dashboard.title': 'Dashboard',
+    'dashboard.welcome': 'Willkommen zurück',
+    'dashboard.widgets': 'Widgets',
+    'dashboard.customize': 'Anpassen',
+    'dashboard.focusMode': 'Fokus-Modus',
+    'dashboard.quickCapture': 'Schnellerfassung',
+    'notes.title': 'Notizen',
+    'notes.new': 'Neue Notiz',
+    'notes.untitled': 'Unbenannt',
+    'notes.lastEdited': 'Zuletzt bearbeitet',
+    'notes.tags': 'Tags',
+    'notes.backlinks': 'Backlinks',
+    'notes.noNotes': 'Keine Notizen gefunden',
+    'tasks.title': 'Aufgaben',
+    'tasks.new': 'Neue Aufgabe',
+    'tasks.completed': 'Erledigt',
+    'tasks.pending': 'Ausstehend',
+    'tasks.overdue': 'Überfällig',
+    'tasks.dueToday': 'Heute fällig',
+    'tasks.priority': 'Priorität',
+    'tasks.high': 'Hoch',
+    'tasks.medium': 'Mittel',
+    'tasks.low': 'Niedrig',
+    'projects.title': 'Projekte',
+    'projects.new': 'Neues Projekt',
+    'projects.active': 'Aktiv',
+    'projects.archived': 'Archiviert',
+    'projects.overview': 'Übersicht',
+    'projects.timeline': 'Zeitplan',
+    'projects.kanban': 'Kanban',
+    'projects.risks': 'Risiken',
+    'settings.title': 'Einstellungen',
+    'settings.general': 'Allgemein',
+    'settings.appearance': 'Erscheinungsbild',
+    'settings.language': 'Sprache',
+    'settings.theme': 'Thema',
+    'settings.darkMode': 'Dunkelmodus',
+    'settings.lightMode': 'Hellmodus',
+    'settings.systemTheme': 'System',
+    'settings.sync': 'Synchronisierung',
+    'settings.backup': 'Backup',
+    'settings.security': 'Sicherheit',
+    'settings.about': 'Über',
+    'settings.widgets': 'Widgets',
+    'settings.features': 'Funktionen',
+    'sync.title': 'Synchronisierung',
+    'sync.devices': 'Geräte',
+    'sync.history': 'Verlauf',
+    'sync.conflicts': 'Konflikte',
+    'sync.lastSync': 'Letzte Sync',
+    'sync.syncing': 'Synchronisiere...',
+    'sync.syncNow': 'Jetzt synchronisieren',
+    'sync.noDevices': 'Keine Geräte',
+    'ai.title': 'KI-Assistent',
+    'ai.chat': 'Chat',
+    'ai.summarize': 'Zusammenfassen',
+    'ai.generate': 'Generieren',
+    'ai.analyze': 'Analysieren',
+    'ai.localModel': 'Lokales Modell',
+    'ai.cloudModel': 'Cloud-Modell',
+    'ai.processing': 'Verarbeite...',
+    'widgets.quickStats': 'Schnellstatistiken',
+    'widgets.recentNotes': 'Kürzliche Notizen',
+    'widgets.upcomingTasks': 'Anstehende Aufgaben',
+    'widgets.habits': 'Gewohnheiten',
+    'widgets.goals': 'Ziele',
+    'widgets.calendar': 'Kalender',
+    'widgets.focusTimer': 'Fokus-Timer',
+    'widgets.mood': 'Stimmung',
+    'widgets.health': 'Gesundheit',
+    'widgets.social': 'Sozial',
+    'error.generic': 'Ein Fehler ist aufgetreten',
+    'error.network': 'Netzwerkfehler',
+    'error.notFound': 'Nicht gefunden',
+    'error.unauthorized': 'Nicht autorisiert',
+    'error.validation': 'Validierungsfehler',
+  },
 } as const;
 
 type TranslationMessages = typeof translations.en;
@@ -833,9 +911,9 @@ export const useI18n = create<I18nState>()(
 
       t: (key: TranslationKey): string => {
         const { locale } = get();
-        // eslint-disable-next-line security/detect-object-injection
+
         const messages = translations[locale] as TranslationMessages;
-        // eslint-disable-next-line security/detect-object-injection
+
         return messages[key] || translations.en[key] || key;
       },
 

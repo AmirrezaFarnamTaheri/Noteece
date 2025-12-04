@@ -30,6 +30,7 @@ if (!rootElement) {
   throw new Error('Root element not found. Please ensure index.html contains a div with id="root"');
 }
 
+// eslint-disable-next-line import/no-named-as-default-member
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <ErrorBoundary>

@@ -71,7 +71,7 @@ class Logger {
     };
 
     // Console output by severity
-    // eslint-disable-next-line security/detect-object-injection -- level is a LogLevel enum value
+
     const levelStr = LogLevel[level];
     const args: unknown[] = [`[${levelStr}] ${message}`];
     if (error) args.push(error);
@@ -150,28 +150,28 @@ logger.setContext({
   env: import.meta !== undefined && import.meta.env ? import.meta.env.MODE : 'test',
 });
 
+// Helper: safe stringify moved to outer scope
+const safeStringify = (obj: unknown): string => {
+  const seen = new WeakSet();
+  try {
+    return JSON.stringify(obj, function (_key, value: unknown) {
+      if (typeof value === 'object' && value !== null) {
+        if (seen.has(value)) return '[Circular]';
+        seen.add(value);
+      }
+      if (typeof value === 'string' && value.length > 1000) {
+        return value.slice(0, 1000) + '…';
+      }
+      return value as string | number | boolean | null | object;
+    });
+  } catch {
+    return '[Unserializable]';
+  }
+};
+
 // Persist critical logs to storage
 logger.addListener((entry: LogEntry) => {
   if (entry.level < LogLevel.ERROR) return;
-
-  // eslint-disable-next-line unicorn/consistent-function-scoping
-  const safeStringify = (obj: unknown): string => {
-    const seen = new WeakSet();
-    try {
-      return JSON.stringify(obj, function (_key, value: unknown) {
-        if (typeof value === 'object' && value !== null) {
-          if (seen.has(value)) return '[Circular]';
-          seen.add(value);
-        }
-        if (typeof value === 'string' && value.length > 1000) {
-          return value.slice(0, 1000) + '…';
-        }
-        return value as string | number | boolean | null | object;
-      });
-    } catch {
-      return '[Unserializable]';
-    }
-  };
 
   try {
     // Check if localStorage is available
@@ -188,13 +188,13 @@ logger.addListener((entry: LogEntry) => {
       timestamp: entry.timestamp,
       context: entry.context ? safeStringify(entry.context) : undefined,
       error: entry.error
-        ? entry.error instanceof Error
+        ? (entry.error instanceof Error
           ? {
               message: entry.error.message,
               stack: entry.error.stack?.slice(0, 5000),
               name: entry.error.name,
             }
-          : safeStringify(entry.error)
+          : safeStringify(entry.error))
         : undefined,
     };
 

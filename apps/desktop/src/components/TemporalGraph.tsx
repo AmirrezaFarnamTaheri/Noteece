@@ -140,13 +140,16 @@ const TemporalGraph: React.FC<{ spaceId: string }> = ({ spaceId }) => {
     }
   };
 
-  const handleSliderChange = (value: number) => {
-    if (!evolution) return;
-    setCurrentIndex(value);
-    // eslint-disable-next-line security/detect-object-injection -- value is a numeric slider value clamped to snapshots array length
-    setCurrentSnapshot(evolution.snapshots[value]);
-    setPlaying(false);
-  };
+  const handleSliderChange = useCallback(
+    (value: number) => {
+      if (!evolution) return;
+      setCurrentIndex(value);
+
+      setCurrentSnapshot(evolution.snapshots[value]);
+      setPlaying(false);
+    },
+    [evolution],
+  );
 
   if (loading) {
     return (

@@ -4,7 +4,7 @@
  * Main interface for the Social Media Suite
  */
 
-import { Container, Tabs, Title, Text, Stack, Card, Group, Badge, Center, Loader } from '@mantine/core';
+import { Container, Tabs, Title, Text, Stack, Card, Group, Badge } from '@mantine/core';
 import { IconUsers, IconTimeline, IconTags, IconChartBar, IconRefresh, IconSearch } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { SocialAccountList } from './SocialAccountList';

@@ -38,6 +38,14 @@ const calculateActualTheme = (mode: ThemeMode): ActualTheme => {
   return mode;
 };
 
+const hydrateTheme = (state: ThemeState | undefined) => {
+  if (state) {
+    const actualTheme = calculateActualTheme(state.mode);
+    state.actualTheme = actualTheme;
+    applyTheme(actualTheme);
+  }
+};
+
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
@@ -52,7 +60,7 @@ export const useThemeStore = create<ThemeState>()(
 
       toggleTheme: () => {
         const { mode } = get();
-        const newMode: ThemeMode = mode === 'light' ? 'dark' : mode === 'dark' ? 'system' : 'light';
+        const newMode: ThemeMode = mode === 'light' ? 'dark' : (mode === 'dark' ? 'system' : 'light');
         get().setMode(newMode);
       },
 
@@ -68,13 +76,7 @@ export const useThemeStore = create<ThemeState>()(
     {
       name: 'noteece-theme',
       partialize: (state) => ({ mode: state.mode }),
-      onRehydrateStorage: () => (state) => {
-        if (state) {
-          const actualTheme = calculateActualTheme(state.mode);
-          state.actualTheme = actualTheme;
-          applyTheme(actualTheme);
-        }
-      },
+      onRehydrateStorage: () => hydrateTheme,
     },
   ),
 );
@@ -84,13 +86,8 @@ export const useThemeStore = create<ThemeState>()(
  */
 function applyTheme(theme: ActualTheme): void {
   if (typeof document !== 'undefined' && document.documentElement) {
-    // Use dataset primarily, setAttribute as fallback for test environments
-    if (document.documentElement.dataset) {
-      document.documentElement.dataset.mantineColorScheme = theme;
-    } else {
-      // eslint-disable-next-line unicorn/prefer-dom-node-dataset -- fallback for test environments
-      document.documentElement.setAttribute('data-mantine-color-scheme', theme);
-    }
+    // eslint-disable-next-line unicorn/prefer-dom-node-dataset
+    document.documentElement.setAttribute('data-mantine-color-scheme', theme);
     document.documentElement.classList.remove('light', 'dark');
     document.documentElement.classList.add(theme);
   }

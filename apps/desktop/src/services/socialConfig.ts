@@ -5,7 +5,6 @@
  * WebView components for social media content capture.
  */
 
-import { invoke } from '@tauri-apps/api/tauri';
 import { readTextFile } from '@tauri-apps/api/fs';
 import { resolveResource } from '@tauri-apps/api/path';
 import { logger } from '@/utils/logger';
@@ -119,7 +118,7 @@ class SocialConfigService {
    * Get configuration for a specific platform
    */
   getPlatform(platformId: string): PlatformConfig | undefined {
-    // eslint-disable-next-line security/detect-object-injection
+
     return this.config.platforms[platformId];
   }
 
@@ -130,7 +129,7 @@ class SocialConfigService {
     const enabled: Record<string, PlatformConfig> = {};
     for (const [id, config] of Object.entries(this.config.platforms)) {
       if (config.enabled) {
-        // eslint-disable-next-line security/detect-object-injection
+
         enabled[id] = config;
       }
     }

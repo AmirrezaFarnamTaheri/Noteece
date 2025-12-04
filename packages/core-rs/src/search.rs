@@ -50,8 +50,9 @@ pub fn search_notes(conn: &Connection, query: &str, scope: &str) -> Result<Vec<N
 
     if !fts_query.is_empty() {
         if has_fts {
-            sql.push_str(" JOIN fts_note f ON n.id = f.note_id");
-            where_clauses.push("f.fts_note MATCH ?2".to_string());
+            // Join FTS table on rowid; fts_note.rowid corresponds to base table rowid
+            sql.push_str(" JOIN fts_note ON n.rowid = fts_note.rowid");
+            where_clauses.push("fts_note MATCH ?2".to_string());
             params.push(Box::new(fts_query.clone()));
         } else {
             where_clauses.push("(n.title LIKE ?2 OR n.content_md LIKE ?2)".to_string());
@@ -239,7 +240,7 @@ fn search_notes_advanced(
 
     // Join FTS if available and querying text
     if has_fts && !query.query.is_empty() {
-        sql.push_str(" JOIN fts_note f ON n.id = f.note_id");
+        sql.push_str(" JOIN fts_note ON n.rowid = fts_note.rowid");
     }
 
     // Space filter
@@ -251,7 +252,7 @@ fn search_notes_advanced(
     // Text search
     if !query.query.is_empty() {
         if has_fts {
-            where_clauses.push("f.fts_note MATCH ?".to_string());
+            where_clauses.push("fts_note MATCH ?".to_string());
             params.push(Box::new(query.query.clone()));
         } else {
             // Fallback to LIKE on title and content
@@ -299,8 +300,14 @@ fn search_notes_advanced(
         let content: String = row.get(4)?;
 
         // Calculate snippet and relevance
-        let snippet = extract_snippet(&content, &query.query);
-        let relevance = calculate_relevance(&title, Some(&content), &query.query);
+        let (snippet, relevance) = if query.query.is_empty() {
+            (None, 1.0)
+        } else {
+            (
+                extract_snippet(&content, &query.query),
+                calculate_relevance(&title, Some(&content), &query.query),
+            )
+        };
 
         results.push(SearchResult {
             entity_type: EntityType::Note,
@@ -339,7 +346,8 @@ fn search_tasks_advanced(
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
 
     if has_fts && !query.query.is_empty() {
-        sql.push_str(" JOIN fts_task f ON t.id = f.task_id");
+        // Join via rowid mapping
+        sql.push_str(" JOIN fts_task ON t.rowid = fts_task.rowid");
     }
 
     // Space filter
@@ -351,7 +359,7 @@ fn search_tasks_advanced(
     // Text search
     if !query.query.is_empty() {
         if has_fts {
-            where_clauses.push("f.fts_task MATCH ?".to_string());
+            where_clauses.push("fts_task MATCH ?".to_string());
             params.push(Box::new(query.query.clone()));
         } else {
             where_clauses.push("(t.title LIKE ? OR t.description LIKE ?)".to_string());
@@ -404,11 +412,16 @@ fn search_tasks_advanced(
         let updated_at: i64 = 0; // No updated_at in task schema v1?
         let deadline: Option<i64> = row.get::<_, Option<i64>>(7)?;
 
-        let snippet = description
-            .as_ref()
-            .and_then(|d| extract_snippet(d, &query.query));
-
-        let relevance = calculate_relevance(&title, description.as_deref(), &query.query);
+        let (snippet, relevance) = if query.query.is_empty() {
+            (None, 1.0)
+        } else {
+            (
+                description
+                    .as_ref()
+                    .and_then(|d| extract_snippet(d, &query.query)),
+                calculate_relevance(&title, description.as_deref(), &query.query),
+            )
+        };
 
         results.push(SearchResult {
             entity_type: EntityType::Task,
@@ -452,7 +465,8 @@ fn search_projects_advanced(
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
 
     if has_fts && !query.query.is_empty() {
-        sql.push_str(" JOIN fts_project f ON p.id = f.project_id");
+        // Use rowid mapping between base table and FTS table
+        sql.push_str(" JOIN fts_project ON p.rowid = fts_project.rowid");
     }
 
     // Space filter
@@ -464,7 +478,7 @@ fn search_projects_advanced(
     // Text search
     if !query.query.is_empty() {
         if has_fts {
-            where_clauses.push("f.fts_project MATCH ?".to_string());
+            where_clauses.push("fts_project MATCH ?".to_string());
             params.push(Box::new(query.query.clone()));
         } else {
             where_clauses.push("(p.title LIKE ? OR p.goal_outcome LIKE ?)".to_string());
@@ -498,11 +512,16 @@ fn search_projects_advanced(
         let start_at: i64 = row.get::<_, Option<i64>>(4)?.unwrap_or(0);
         // No updated_at in project schema v1
 
-        let snippet = goal_outcome
-            .as_ref()
-            .and_then(|d| extract_snippet(d, &query.query));
-
-        let relevance = calculate_relevance(&name, goal_outcome.as_deref(), &query.query);
+        let (snippet, relevance) = if query.query.is_empty() {
+            (None, 1.0)
+        } else {
+            (
+                goal_outcome
+                    .as_ref()
+                    .and_then(|d| extract_snippet(d, &query.query)),
+                calculate_relevance(&name, goal_outcome.as_deref(), &query.query),
+            )
+        };
 
         results.push(SearchResult {
             entity_type: EntityType::Project,
@@ -524,22 +543,42 @@ fn search_projects_advanced(
 
 /// Extract snippet around query match
 fn extract_snippet(content: &str, query: &str) -> Option<String> {
-    if query.is_empty() {
+    let trimmed_query = query.trim();
+    if trimmed_query.is_empty() {
         return Some(content.chars().take(150).collect());
     }
 
-    let lower_content = content.to_lowercase();
-    let lower_query = query.to_lowercase();
+    let q_lower = query.to_lowercase();
+    let content_chars: Vec<char> = content.chars().collect();
+    let content_len = content_chars.len();
 
-    if let Some(pos) = lower_content.find(&lower_query) {
-        let start = pos.saturating_sub(50);
-        let end = (pos + query.len() + 100).min(content.len());
-
-        let snippet = &content[start..end];
-        Some(format!("...{}...", snippet))
-    } else {
-        Some(content.chars().take(150).collect())
+    // Find case-insensitive match by scanning char windows
+    let mut match_start = None;
+    let q_len = q_lower.chars().count();
+    if q_len == 0 {
+        return Some(content.chars().take(150).collect());
     }
+    for i in 0..=content_len.saturating_sub(q_len) {
+        let window: String = content_chars[i..i + q_len].iter().collect();
+        if window.to_lowercase() == q_lower {
+            match_start = Some(i);
+            break;
+        }
+    }
+
+    // If no match was found, we want to return the beginning of the content (fallback)
+    if match_start.is_none() {
+        return Some(content.chars().take(150).collect());
+    }
+
+    let start_idx = match_start.unwrap();
+    let start = start_idx.saturating_sub(50);
+    let end = (start_idx + q_len + 100).min(content_len);
+
+    let snippet: String = content_chars[start..end].iter().collect();
+    let prefix = if start > 0 { "..." } else { "" };
+    let suffix = if end < content_len { "..." } else { "" };
+    Some(format!("{}{}{}", prefix, snippet, suffix))
 }
 
 /// Calculate relevance score

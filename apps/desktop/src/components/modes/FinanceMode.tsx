@@ -17,9 +17,7 @@ import {
   Table,
   Center,
   Loader,
-  Progress,
 } from '@mantine/core';
-import { DatePicker } from '@mantine/dates';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { IconPlus, IconTrendingUp, IconWallet, IconReceipt } from '@tabler/icons-react';
 import { logger } from '@/utils/logger';
@@ -60,11 +58,9 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
   // Form state
   const [formType, setFormType] = useState<'income' | 'expense'>('expense');
   const [formAmount, setFormAmount] = useState<number>(0);
-  const [formCurrency, setFormCurrency] = useState('USD');
   const [formCategory, setFormCategory] = useState(categories[0]);
   const [formAccount, setFormAccount] = useState('Cash');
   const [formDescription, setFormDescription] = useState('');
-  const [formDate, setFormDate] = useState<Date>(new Date());
 
   useEffect(() => {
     void loadData();
@@ -98,17 +94,8 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       const amountInCents = Math.round(amountNumber * 100);
 
       // Validate and normalize string fields to prevent empty or invalid data
-      const currency = String(formCurrency || '')
-        .trim()
-        .toUpperCase();
       const category = String(formCategory || '').trim();
       const account = String(formAccount || '').trim();
-
-      // Validate currency format (must be 3-letter ISO code)
-      if (!/^[A-Z]{3}$/.test(currency)) {
-        alert('Please enter a valid 3-letter currency code (e.g., USD, EUR, GBP).');
-        return;
-      }
 
       // Validate category is not empty
       if (!category) {
@@ -122,18 +109,13 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
         return;
       }
 
-      // Validate date
-      if (!formDate || Number.isNaN(formDate.getTime())) {
-        alert('Please select a valid date.');
-        return;
-      }
-      const unixDate = Math.floor(formDate.getTime() / 1000);
+      // Use current timestamp for date
+      const unixDate = Math.floor(Date.now() / 1000);
 
       await invoke('create_transaction_cmd', {
         spaceId,
         transactionType: formType,
         amount: amountInCents,
-        currency,
         category,
         account,
         date: unixDate,

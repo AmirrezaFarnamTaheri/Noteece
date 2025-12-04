@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import {
   Container,
@@ -10,16 +10,12 @@ import {
   Stack,
   TextInput,
   PasswordInput,
-  Select,
-  Switch,
-  NumberInput,
   Badge,
   Modal,
   Alert,
   Loader,
   Center,
   ActionIcon,
-  Table,
 } from '@mantine/core';
 import { IconPlus, IconRefresh, IconTrash, IconCheck, IconAlertCircle, IconClock } from '@tabler/icons-react';
 import { logger } from '@/utils/logger';
@@ -49,19 +45,14 @@ interface SyncResult {
   success: boolean;
 }
 
+const safeNumber = (val: number | undefined): number => (typeof val === 'number' && !Number.isNaN(val) ? val : 0);
+
 const CalDAVSettings: React.FC = () => {
   const [accounts, setAccounts] = useState<CalDavAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpened, setModalOpened] = useState(false);
   const [syncing, setSyncing] = useState<string | null>(null);
-  const syncingMapReference = React.useRef<Set<string>>(new Set());
-
-  // Safe number parser to prevent NaN in UI
-  // eslint-disable-next-line unicorn/consistent-function-scoping
-  const safeNumber = (v: unknown): number => {
-    const n = typeof v === 'number' ? v : Number(v);
-    return Number.isFinite(n) && n >= 0 ? n : 0;
-  };
+  const syncingMapReference = useRef<Set<string>>(new Set());
 
   // Form state
   const [formUrl, setFormUrl] = useState('');

@@ -1,4 +1,3 @@
-
 /// Builder for complex task queries
 #[derive(Default)]
 pub struct TaskQueryBuilder {

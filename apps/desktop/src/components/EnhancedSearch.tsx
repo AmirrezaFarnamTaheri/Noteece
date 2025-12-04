@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   TextInput,
   Button,
@@ -29,6 +29,7 @@ const EnhancedSearch: React.FC = () => {
   const { activeSpaceId } = useStore();
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(false);
+  const latestRequestRef = useRef(0);
 
   useEffect(() => {
     const fetchTags = async () => {
@@ -45,22 +46,38 @@ const EnhancedSearch: React.FC = () => {
   }, [activeSpaceId]);
 
   const handleSearch = async () => {
-    if (activeSpaceId) {
-      setLoading(true);
-      try {
-        let searchQuery = query;
-        if (selectedTags.length > 0) {
-          searchQuery += selectedTags.map((tag) => ` tag:${tag}`).join('');
-        }
-        if (status) {
-          searchQuery += ` status:${status}`;
-        }
+    if (!activeSpaceId) return;
 
-        const results: Note[] = await invoke('search_notes_cmd', { query: searchQuery, scope: activeSpaceId });
-        setResults(results);
-      } catch (error) {
-        logger.error('Failed to search notes:', error as Error);
-      } finally {
+    const base = query.trim();
+    const hasTagFilter = selectedTags.length > 0;
+    const hasStatusFilter = Boolean(status && status.trim().length > 0);
+
+    if (!base && !hasTagFilter && !hasStatusFilter) {
+      // Nothing to search; avoid unnecessary invoke
+      setResults([]);
+      return;
+    }
+
+    const requestId = Date.now();
+    latestRequestRef.current = requestId;
+    setLoading(true);
+    try {
+      let searchQuery = base;
+      if (hasTagFilter) {
+        searchQuery += selectedTags.map((tag) => ` tag:${tag}`).join('');
+      }
+      if (hasStatusFilter) {
+        searchQuery += ` status:${status}`;
+      }
+
+      const fetched: Note[] = await invoke('search_notes_cmd', { query: searchQuery, scope: activeSpaceId });
+      if (latestRequestRef.current === requestId) {
+        setResults(fetched);
+      }
+    } catch (error) {
+      logger.error('Failed to search notes:', error as Error);
+    } finally {
+      if (latestRequestRef.current === requestId) {
         setLoading(false);
       }
     }

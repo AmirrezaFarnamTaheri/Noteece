@@ -120,10 +120,28 @@ pub fn get_knowledge_card(conn: &Connection, id: Ulid) -> Result<Option<Knowledg
             let state_str: String = row.get(3)?;
 
             Ok(KnowledgeCard {
-                id: Ulid::from_string(&id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
-                note_id: Ulid::from_string(&note_id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(1, rusqlite::types::Type::Text, Box::new(e)))?,
+                id: Ulid::from_string(&id_str).map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        0,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
+                note_id: Ulid::from_string(&note_id_str).map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        1,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
                 deck_id: row.get(2)?,
-                state: CardState::from_str(&state_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(3, rusqlite::types::Type::Text, Box::new(e)))?,
+                state: CardState::from_str(&state_str).map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        3,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
                 due_at: row.get(4)?,
                 stability: row.get(5)?,
                 difficulty: row.get(6)?,
@@ -238,10 +256,28 @@ pub fn get_due_cards(conn: &Connection) -> Result<Vec<KnowledgeCard>, DbError> {
             let state_str: String = row.get(3)?;
 
             Ok(KnowledgeCard {
-                id: Ulid::from_string(&id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
-                note_id: Ulid::from_string(&note_id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(1, rusqlite::types::Type::Text, Box::new(e)))?,
+                id: Ulid::from_string(&id_str).map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        0,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
+                note_id: Ulid::from_string(&note_id_str).map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        1,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
                 deck_id: row.get(2)?,
-                state: CardState::from_str(&state_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(3, rusqlite::types::Type::Text, Box::new(e)))?,
+                state: CardState::from_str(&state_str).map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        3,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
                 due_at: row.get(4)?,
                 stability: row.get(5)?,
                 difficulty: row.get(6)?,
@@ -263,11 +299,29 @@ pub fn get_review_logs(conn: &Connection, card_id: Ulid) -> Result<Vec<ReviewLog
             let state_str: String = row.get(4)?;
 
             Ok(ReviewLog {
-                id: Ulid::from_string(&id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
-                card_id: Ulid::from_string(&card_id_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(1, rusqlite::types::Type::Text, Box::new(e)))?,
+                id: Ulid::from_string(&id_str).map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        0,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
+                card_id: Ulid::from_string(&card_id_str).map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        1,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
                 review_at: row.get(2)?,
                 rating: row.get(3)?,
-                state: CardState::from_str(&state_str).map_err(|e| rusqlite::Error::FromSqlConversionFailure(4, rusqlite::types::Type::Text, Box::new(e)))?,
+                state: CardState::from_str(&state_str).map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        4,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })?,
                 due_at: row.get(5)?,
                 stability: row.get(6)?,
                 difficulty: row.get(7)?,

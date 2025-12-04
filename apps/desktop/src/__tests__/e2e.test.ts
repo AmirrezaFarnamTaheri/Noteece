@@ -4,8 +4,12 @@
  */
 
 import { authService } from '../services/auth';
+import type { Browser } from 'playwright';
 
 describe('E2E: Critical User Workflows', () => {
+  const _authService = authService; // Prevent unused import warning
+  let _browser: Browser;
+
   describe('Authentication Flow', () => {
     test('complete user registration and login flow', async () => {
       // Step 1: Register new user
@@ -42,7 +46,7 @@ describe('E2E: Critical User Workflows', () => {
       // Step 2: Navigate to different pages
       const pages = ['/dashboard', '/settings', '/social-feed'];
 
-      for (const page of pages) {
+      for (const _page of pages) {
         // Session should still be valid
         expect(session.token).toBeTruthy();
         expect(Date.now()).toBeLessThan(session.expires_at);
@@ -404,10 +408,10 @@ describe('E2E: Critical User Workflows', () => {
 
     test('user handles network errors gracefully', async () => {
       // Step 1: Action requires network
-      const networkAction = 'sync_social_accounts';
+      const _networkAction = 'sync_social_accounts';
 
       // Step 2: Network unavailable
-      const networkError = {
+      const _networkError = {
         type: 'network_error',
         message: 'Unable to connect to network',
       };

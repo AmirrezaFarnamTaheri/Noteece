@@ -27,6 +27,7 @@ fn test_migrations() -> Result<(), DbError> {
         vec![
             "audit_log",
             "calendar_event",
+            "entity_sync_log",
             "form_template",
             "fts_note",
             "fts_note_config",
