@@ -22,7 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Music Widget:** Implemented a new glassmorphism design with visualizers and "disconnected" state handling.
 - **Health Widget:** Added robust visualization for health metrics with empty state handling and proper unit formatting.
 - **Mobile Polish:** Enhanced `HealthHub` and `MusicHub` screens with better error handling, loading states, and data seeding for demo purposes.
-- **Safety:** Replaced unsafe `unwrap()` calls in `srs.rs` and `versioning.rs` with proper error propagation.
+- **Mobile Notes:** Added a dedicated **Notes Screen** (`apps/mobile/app/(tabs)/notes.tsx`) with search, tagging, and sorting.
+- **Desktop Features:** Fully implemented **Journal** (Daily Notes) and **Habits** pages, replacing placeholders.
+- **Visualizations:** Added a **Temporal Graph** (Deterministic Layout) and **Tags Cloud** connected to real backend data.
+- **Backend Safety:** Implemented strict state machine validation for Project status transitions.
+- **Safety:** Replaced unsafe `unwrap()` calls in `srs.rs`, `versioning.rs`, and `tag.rs` with proper error propagation.
 - **Linting:** Resolved over 100 ESLint warnings in the Desktop and Mobile applications, improving code quality and type safety.
 
 ## [1.1.0] - 2024-05-20

@@ -31,6 +31,8 @@ import UserManagement from './components/user-management';
 import FormTemplates from './components/FormTemplates';
 import LocalAnalytics from './components/LocalAnalytics';
 import { OcrManager } from './components/OcrManager';
+import Journal from './pages/Journal';
+import Habits from './pages/Habits';
 
 // Create a client with optimized settings
 const queryClient = new QueryClient({
@@ -106,6 +108,8 @@ function App() {
               },
               { path: 'searches', element: <ActiveSpaceRoute Component={SavedSearches} /> },
               { path: 'review', element: <ActiveSpaceRoute Component={WeeklyReview} /> },
+              { path: 'journal', element: <ActiveSpaceRoute Component={Journal} /> },
+              { path: 'habits', element: <ActiveSpaceRoute Component={Habits} /> },
               { path: 'meetings', element: <MeetingNotes /> },
               { path: 'modes', element: <ActiveSpaceRoute Component={ModeStore} /> },
               { path: 'srs', element: <SpacedRepetition /> },

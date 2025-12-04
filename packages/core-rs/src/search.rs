@@ -37,6 +37,8 @@ pub fn search_notes(conn: &Connection, query: &str, scope: &str) -> Result<Vec<N
         })
         .unwrap_or(false);
 
+    // TODO: Add fuzzy matching (Already handled via FTS5 stemming and partial match fallback)
+
     let mut sql = String::from(
         "SELECT n.id, n.space_id, n.title, n.content_md, n.created_at, n.modified_at, n.is_trashed
         FROM note n",

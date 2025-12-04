@@ -17,11 +17,7 @@ interface SharedContentBannerProps {
   onItemPress: (item: SharedItem) => void;
 }
 
-export const SharedContentBanner: React.FC<SharedContentBannerProps> = ({
-  sharedItems,
-  onDismiss,
-  onItemPress,
-}) => {
+export const SharedContentBanner: React.FC<SharedContentBannerProps> = ({ sharedItems, onDismiss, onItemPress }) => {
   if (sharedItems.length === 0) return null;
 
   return (
@@ -37,11 +33,7 @@ export const SharedContentBanner: React.FC<SharedContentBannerProps> = ({
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sharedItemsScroll}>
         {sharedItems.map((item) => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.sharedItemCard}
-            onPress={() => onItemPress(item)}
-          >
+          <TouchableOpacity key={item.id} style={styles.sharedItemCard} onPress={() => onItemPress(item)}>
             <Ionicons
               name={item.type === 'url' ? 'link' : item.type === 'image' ? 'image' : 'text'}
               size={24}

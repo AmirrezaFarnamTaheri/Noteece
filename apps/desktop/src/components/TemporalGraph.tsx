@@ -255,28 +255,75 @@ const TemporalGraph: React.FC<{ spaceId: string }> = ({ spaceId }) => {
           </Grid.Col>
         </Grid>
 
-        {/* Graph Visualization Placeholder */}
+        {/* Graph Visualization */}
         <Card shadow="sm" padding="lg" radius="md" withBorder>
-          <Center h={400} style={{ background: '#f5f5f5', borderRadius: 8 }}>
-            <Stack align="center" gap="md">
-              <Text size="lg" fw={500}>
-                Interactive Graph Visualization
-              </Text>
-              <Text size="sm" c="dimmed" ta="center">
-                Graph visualization would appear here using a library like D3.js,
-                <br />
-                react-force-graph, or cytoscape.js
-              </Text>
-              <Group>
-                <Button variant="light" leftSection={<IconZoomIn size={16} />}>
-                  Zoom In
-                </Button>
-                <Button variant="light" leftSection={<IconZoomOut size={16} />}>
-                  Zoom Out
-                </Button>
-              </Group>
-            </Stack>
-          </Center>
+          <div style={{ height: 400, width: '100%', position: 'relative' }}>
+             {/* Note: In a full production build, we would use 'react-force-graph-2d'.
+                 Since we cannot easily add heavy dependencies without risking build stability in this environment,
+                 we will render a simplified SVG visualization of the nodes and edges.
+             */}
+             <svg width="100%" height="100%" style={{ background: '#f8f9fa', borderRadius: 8 }}>
+                {(() => {
+                    // Helper functions for deterministic positioning
+                    const getX = (id: string) => (Math.abs([...id].reduce((a,c) => a+c.codePointAt(0)!,0)) % 800) + 50;
+                    const getY = (id: string) => (Math.abs([...id].reverse().join('').reduce((a,c) => a+c.codePointAt(0)!,0)) % 300) + 50;
+
+                    return (
+                    <>
+                        {currentSnapshot.edges.map(edge => {
+                            const source = currentSnapshot.nodes.find(n => n.id === edge.source_id);
+                            const target = currentSnapshot.nodes.find(n => n.id === edge.target_id);
+                            if (!source || !target) return null;
+
+                            return (
+                                <line
+                                    key={edge.id}
+                                    x1={getX(source.id)}
+                                    y1={getY(source.id)}
+                                    x2={getX(target.id)}
+                                    y2={getY(target.id)}
+                                    stroke="#ccc"
+                                    strokeWidth={edge.weight || 1}
+                                />
+                            );
+                        })}
+                        {currentSnapshot.nodes.map(node => {
+                            return (
+                                <g key={node.id}>
+                                    <circle
+                                        cx={getX(node.id)}
+                                        cy={getY(node.id)}
+                                        r={5 + (node.word_count ? Math.log(node.word_count) : 2)}
+                                        fill="#4dabf7"
+                                        opacity={0.8}
+                                    />
+                                    <text
+                                        x={getX(node.id) + 10}
+                                        y={getY(node.id) + 5}
+                                        fontSize="10"
+                                        fill="#333"
+                                    >
+                                        {node.title.slice(0, 15)}
+                                    </text>
+                                </g>
+                            )
+                        })}
+                    </>
+                    );
+                })()}
+             </svg>
+
+             <div style={{ position: 'absolute', bottom: 10, right: 10 }}>
+                <Group>
+                    <Button variant="light" size="xs" leftSection={<IconZoomIn size={12} />}>
+                    Zoom In
+                    </Button>
+                    <Button variant="light" size="xs" leftSection={<IconZoomOut size={12} />}>
+                    Zoom Out
+                    </Button>
+                </Group>
+             </div>
+          </div>
         </Card>
 
         {/* Playback Controls */}

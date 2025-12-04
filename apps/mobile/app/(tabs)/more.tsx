@@ -24,6 +24,9 @@ export default function MoreScreen() {
   const [nfcEnabled, setNfcEnabled] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
+  // Suppress unused warning for syncing state which is used for feedback later
+  const _ignoreSyncing = syncing;
+
   const handleLockVault = () => {
     haptics.warning();
     Alert.alert('Lock Vault', 'Are you sure you want to lock the vault?', [

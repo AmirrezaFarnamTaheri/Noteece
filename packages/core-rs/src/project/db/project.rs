@@ -84,6 +84,16 @@ pub fn create_project(
 
 pub fn update_project(conn: &Connection, project: &Project) -> Result<(), ProjectError> {
     log::info!("[project] Updating project with id: {}", project.id);
+
+    // Validate status transition
+    let current_status: String = conn.query_row(
+        "SELECT status FROM project WHERE id = ?1",
+        [project.id.as_str()],
+        |row| row.get(0),
+    )?;
+
+    validate_status_transition(&current_status, &project.status)?;
+
     let now = chrono::Utc::now().timestamp();
     match conn.execute(
         "UPDATE project SET title = ?1, goal_outcome = ?2, status = ?3, confidence = ?4, start_at = ?5, target_end_at = ?6, updated_at = ?7 WHERE id = ?8",
@@ -106,6 +116,30 @@ pub fn update_project(conn: &Connection, project: &Project) -> Result<(), Projec
              log::error!("[project] Error updating project: {}", e);
              Err(e.into())
         }
+    }
+}
+
+fn validate_status_transition(current: &str, new: &str) -> Result<(), ProjectError> {
+    if current == new {
+        return Ok(());
+    }
+
+    let valid = match current {
+        "proposed" => matches!(new, "active" | "cancelled" | "on_hold"),
+        "active" => matches!(new, "completed" | "on_hold" | "cancelled"),
+        "on_hold" => matches!(new, "active" | "cancelled" | "completed"),
+        "completed" => matches!(new, "active" | "on_hold"), // Re-opening
+        "cancelled" => matches!(new, "proposed" | "active"), // Reactivating
+        _ => true, // Allow transition from unknown states to recover
+    };
+
+    if valid {
+        Ok(())
+    } else {
+        Err(ProjectError::InvalidData(format!(
+            "Invalid status transition from '{}' to '{}'",
+            current, new
+        )))
     }
 }
 
