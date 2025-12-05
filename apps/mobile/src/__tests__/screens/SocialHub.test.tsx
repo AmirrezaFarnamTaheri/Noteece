@@ -39,6 +39,7 @@ describe('SocialHub Screen', () => {
   });
 
   it('renders correctly with empty state', async () => {
+    // @ts-ignore
     const { getByText } = render(<SocialHub navigation={mockNavigation} />);
     await waitFor(() => {
       expect(getByText('Social Hub')).toBeTruthy();
@@ -59,6 +60,7 @@ describe('SocialHub Screen', () => {
     ];
     (SocialDatabase.getTimelinePosts as jest.Mock).mockResolvedValue(mockPosts);
 
+    // @ts-ignore
     const { findByText, getByText } = render(<SocialHub navigation={mockNavigation} />);
 
     // Wait for the initial render and data fetch using findByText

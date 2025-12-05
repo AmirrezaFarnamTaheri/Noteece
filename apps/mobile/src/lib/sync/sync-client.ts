@@ -149,10 +149,10 @@ export class SyncClient {
           );
 
           // Wait for handshake response with peer's public key
-          const handshakeHandler = (e: WebSocketMessageEvent) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const handshakeHandler = (e: any) => {
             try {
-              // @ts-ignore: Event type check workaround
-              const messageData = e.data || (e as any).message;
+              const messageData = e.data || e.message;
               const data = JSON.parse(messageData);
               if (data.type === 'handshake_response') {
                 ws.removeEventListener('message', handshakeHandler);
@@ -189,7 +189,8 @@ export class SyncClient {
         }
       };
 
-      ws.onerror = (e) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ws.onerror = (e: any) => {
         reject(new Error(`WebSocket connection failed: ${e.message}`));
       };
     });
@@ -211,8 +212,9 @@ export class SyncClient {
     return new Promise((resolve, reject) => {
       const requestId = nanoid();
 
-      const handler = (e: WebSocketMessageEvent) => {
-        const messageData = 'data' in e ? e.data : (e as any).message;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const handler = (e: any) => {
+        const messageData = 'data' in e ? e.data : e.message;
         if (typeof messageData !== 'string') return;
 
         const data = JSON.parse(messageData);
@@ -257,9 +259,9 @@ export class SyncClient {
   private async requestDelta(ws: WebSocket, change: ChangeEntry): Promise<SyncDelta> {
     return new Promise((resolve, reject) => {
       const requestId = nanoid();
-      const handler = (e: WebSocketMessageEvent) => {
-        // @ts-ignore: Event type check workaround
-        const messageData = e.data || (e as any).message;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const handler = (e: any) => {
+        const messageData = e.data || e.message;
         const data = JSON.parse(messageData);
         if (data.type === 'delta_response' && data.requestId === requestId) {
           ws.removeEventListener('message', handler);

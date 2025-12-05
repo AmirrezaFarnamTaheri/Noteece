@@ -265,8 +265,8 @@ const TemporalGraph: React.FC<{ spaceId: string }> = ({ spaceId }) => {
              <svg width="100%" height="100%" style={{ background: '#f8f9fa', borderRadius: 8 }}>
                 {(() => {
                     // Helper functions for deterministic positioning
-                    const getX = (id: string) => (Math.abs([...id].reduce((a,c) => a+c.codePointAt(0)!,0)) % 800) + 50;
-                    const getY = (id: string) => (Math.abs([...id].reverse().join('').reduce((a,c) => a+c.codePointAt(0)!,0)) % 300) + 50;
+                    const getX = (id: string) => (Math.abs([...id].reduce((a,c) => a + (c.codePointAt(0) || 0), 0)) % 800) + 50;
+                    const getY = (id: string) => (Math.abs([...id].reverse().reduce((a,c) => a + (c.codePointAt(0) || 0), 0)) % 300) + 50;
 
                     return (
                     <>

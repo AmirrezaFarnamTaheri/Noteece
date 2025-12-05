@@ -7,6 +7,7 @@
 import { Card, Group, Text, Badge, Stack, Image, AspectRatio } from '@mantine/core';
 import { IconHeart, IconMessageCircle, IconShare, IconEye } from '@tabler/icons-react';
 import { SUPPORTED_PLATFORMS } from '@noteece/types';
+import { formatNumber, formatTimestamp } from '@/utils/format';
 
 interface TimelinePostProperties {
   post: {

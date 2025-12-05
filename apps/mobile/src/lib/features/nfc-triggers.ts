@@ -110,7 +110,7 @@ export class NFCTriggerManager {
       throw new Error('Invalid tag ID: must be a non-empty string');
     }
 
-    if (tagId.length > 256) {
+    if (String(tagId).length > 256) {
       throw new Error('Invalid tag ID: exceeds maximum length of 256 characters');
     }
 
@@ -281,10 +281,11 @@ export class NFCTriggerManager {
       }
       value = params.value;
     } else if (typeof params.value === 'string') {
-      value = params.value.substring(0, 100).trim();
-      if (value.length === 0) {
+      const stringValue = params.value.substring(0, 100).trim();
+      if (stringValue.length === 0) {
         throw new Error('value cannot be empty');
       }
+      value = stringValue;
     } else {
       throw new Error('value must be a number or string');
     }

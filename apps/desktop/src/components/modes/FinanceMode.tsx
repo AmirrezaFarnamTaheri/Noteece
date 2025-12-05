@@ -382,7 +382,8 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
           <DatePickerInput
             label="Date"
             value={formDate}
-            onChange={setFormDate}
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+            onChange={setFormDate as any}
             placeholder="Select date"
             required
           />

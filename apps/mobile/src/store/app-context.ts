@@ -284,7 +284,7 @@ export function useUpdateSetting() {
       newPartialSettings = { [key]: value };
     }
 
-    // @ts-expect-error - TS cannot fully resolve the dynamic key type here, but the logic is sound.
+    // @ts-ignore: TS cannot fully resolve the dynamic key type here, but the logic is sound.
     return updateSettings(newPartialSettings);
   };
 }

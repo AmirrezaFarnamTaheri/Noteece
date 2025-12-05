@@ -54,10 +54,12 @@ const Journal: React.FC = () => {
         <Group align="flex-start" gap="lg">
             <Paper p="md" withBorder>
                 <Calendar
-                    value={date}
-                    onChange={setDate}
+                    date={date || new Date()}
+                    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+                    onDateChange={setDate as any}
                     renderDay={(day) => {
-                        return <div>{day.getDate()}</div>;
+                        const d = typeof day === 'string' ? new Date(day) : day;
+                        return <div>{d.getDate()}</div>;
                     }}
                 />
             </Paper>

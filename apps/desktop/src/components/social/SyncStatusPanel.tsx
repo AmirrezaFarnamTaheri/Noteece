@@ -8,6 +8,7 @@ import { Card, Group, Text, Badge, Stack, Progress, Title } from '@mantine/core'
 import { IconClock, IconCheck, IconAlertCircle } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
+import { formatLastSync } from '@/utils/format';
 
 interface SyncStats {
   total_accounts: number;
@@ -111,7 +112,7 @@ export function SyncStatusPanel({ spaceId }: SyncStatusPanelProperties) {
                 Last Sync
               </Text>
               <Text size="xl" fw={700} c="grape">
-                {formatLastSync(stats?.last_sync_time || null)}
+                {formatLastSync(stats?.last_sync_time || 0)}
               </Text>
             </Card>
           </Group>
@@ -144,7 +145,7 @@ export function SyncStatusPanel({ spaceId }: SyncStatusPanelProperties) {
                     </div>
                   </Group>
                   <Text size="xs" c="dimmed">
-                    Last: {formatLastSync(task.last_sync)}
+                    Last: {formatLastSync(task.last_sync || 0)}
                   </Text>
                 </Group>
               </Card>

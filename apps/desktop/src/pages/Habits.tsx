@@ -97,7 +97,8 @@ const Habits: React.FC = () => {
                          <Badge variant="dot" color={habit.frequency === 'daily' ? 'green' : 'blue'}>
                              {habit.frequency}
                          </Badge>
-                         <Text size="sm" c="dimmed">Streak: {habit.streak_days || 0} days</Text>
+                         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                         <Text size="sm" c="dimmed">Streak: {(habit as any).streak_days || 0} days</Text>
                     </Group>
 
                     <Button

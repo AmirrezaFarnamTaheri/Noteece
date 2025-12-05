@@ -1,17 +1,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Alert } from 'react-native';
+import Constants from 'expo-constants';
 import { SyncClient, SyncStatus } from '../lib/sync/sync-client';
 import { DiscoveredDevice } from '../lib/sync/sync-bridge';
 
+// Extend DiscoveredDevice locally to include UI-specific fields if needed, or just cast
+interface UI_DiscoveredDevice extends DiscoveredDevice {
+  last_seen?: number;
+}
+
 const SyncManager: React.FC = () => {
-  const [syncClient] = useState(() => new SyncClient());
+  const [syncClient] = useState(() => new SyncClient(Constants.installationId || 'unknown-device'));
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
     status: 'idle',
     message: 'Ready to sync',
     active: false,
     progress: 0,
   });
-  const [discoveredDevices, setDiscoveredDevices] = useState<DiscoveredDevice[]>([]);
+  const [discoveredDevices, setDiscoveredDevices] = useState<UI_DiscoveredDevice[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
 
@@ -24,7 +30,20 @@ const SyncManager: React.FC = () => {
     try {
       setIsScanning(true);
       const devices = await syncClient.discoverDevices();
-      setDiscoveredDevices(devices.map((d) => ({ ...d, protocol: 'typescript' })));
+      setDiscoveredDevices(
+        devices.map((d) => ({
+          id: d.id,
+          name: d.name,
+          address: d.address,
+          port: d.port,
+          device_id: d.id,
+          device_name: d.name,
+          device_type: 'Desktop',
+          ip_address: d.address,
+          protocol: 'typescript',
+          last_seen: Date.now(),
+        })),
+      );
     } catch (error) {
       Alert.alert('Discovery Error', error instanceof Error ? error.message : 'Unknown error');
     } finally {
@@ -41,7 +60,18 @@ const SyncManager: React.FC = () => {
   const initiateSync = async (deviceId: string) => {
     try {
       setSelectedDevice(deviceId);
-      await syncClient.initiateSync(deviceId, ['posts', 'accounts']);
+      // 'initiateSync' in SyncClient takes (targetDeviceId, targetAddress, targetPort)
+      // We need to look up the device details first
+      const device = discoveredDevices.find((d) => d.device_id === deviceId);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ip = (device as any)?.ip_address || (device as any)?.address;
+
+      if (!device || !ip) {
+        throw new Error('Device not found or invalid address');
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      await syncClient.initiateSync(deviceId, String(ip), device.port);
     } catch (error) {
       Alert.alert('Sync Error', error instanceof Error ? error.message : 'Sync failed');
     }
@@ -58,7 +88,7 @@ const SyncManager: React.FC = () => {
       <View style={styles.statusCard}>
         <View style={styles.statusHeader}>
           <Text style={styles.statusTitle}>Sync Status</Text>
-          <Text style={[styles.statusBadge, styles[`badge_${syncStatus.status}`]]}>
+          <Text style={[styles.statusBadge, styles[`badge_${syncStatus.status}` as keyof typeof styles]]}>
             {syncStatus.status.toUpperCase()}
           </Text>
         </View>
@@ -105,15 +135,19 @@ const SyncManager: React.FC = () => {
 
           {discoveredDevices.map((device) => (
             <TouchableOpacity
-              key={device.device_id}
-              style={[styles.deviceItem, selectedDevice === device.device_id && styles.deviceItemSelected]}
-              onPress={() => initiateSync(device.device_id)}
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              key={device.device_id!}
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              style={[styles.deviceItem, selectedDevice === device.device_id! && styles.deviceItemSelected]}
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              onPress={() => initiateSync(device.device_id!)}
               disabled={syncStatus.status !== 'idle'}
             >
               <View style={styles.deviceInfo}>
                 <Text style={styles.deviceName}>{device.device_name}</Text>
                 <Text style={styles.deviceSubtext}>
-                  {device.device_type} • {device.ip_address}:{device.port}
+                  {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                  {device.device_type} • {String(device.ip_address || device.address || 'Unknown')}:{String(device.port)}
                 </Text>
               </View>
               <View style={styles.deviceStatus}>

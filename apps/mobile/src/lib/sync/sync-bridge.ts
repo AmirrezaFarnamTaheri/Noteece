@@ -379,13 +379,14 @@ export class UnifiedSyncBridge {
     // Fallback: Use direct database access from TypeScript side
     // This requires importing the database instance which we can do dynamically
     try {
-      // Dynamic import to avoid circular dependencies
-      const { getDatabase } = await import('../database');
+      // Use require for compatibility with Hermes/Metro if dynamic import fails or is unsupported by config
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { getDatabase } = require('../database');
       const db = getDatabase();
-      const notes = await db.getAllAsync<import('../../types').Note>(
+      const notes = await db.getAllAsync(
         'SELECT * FROM note WHERE is_trashed = 0 ORDER BY modified_at DESC',
       );
-      return notes;
+      return notes as import('../../types').Note[];
     } catch (e) {
       console.error('[SyncBridge] getAllNotes failed:', e);
       return [];
