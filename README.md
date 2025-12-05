@@ -8,12 +8,12 @@
 
 ## 📚 Documentation
 
-Detailed documentation is available in the **[Wiki](docs/wiki/00_Home.md)**.
+The complete documentation is available in the **[Wiki](WIKI.md)**.
 
-- **[Architecture](docs/wiki/01_Architecture/01_Overview.md)**: System design, database, and sync protocol.
-- **[Features](docs/wiki/02_Features/01_Notes_and_Knowledge.md)**: Guides for Notes, Projects, Habits, and more.
-- **[Development](docs/wiki/03_Development/01_Setup.md)**: Setup, testing, and contribution guides.
-- **[User Guide](docs/wiki/04_User_Guide/01_Getting_Started.md)**: Getting started and workflows.
+- **[Getting Started](docs/wiki/04_User_Guide/01_Getting_Started.md)**: First steps for new users
+- **[Architecture](docs/wiki/01_Architecture/01_Overview.md)**: System design and security model
+- **[Features](docs/wiki/02_Features/01_Notes_and_Knowledge.md)**: Detailed feature guides
+- **[Development](docs/wiki/03_Development/01_Setup.md)**: Contributor guide and setup
 
 ## 🚀 Quick Start
 
@@ -87,7 +87,7 @@ noteece/
 
 ## 🤝 Contributing
 
-We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md).
+We welcome contributions! Please read our [Contributing Guide](docs/development/CONTRIBUTING.md) and [Code of Conduct](docs/legal/CODE_OF_CONDUCT.md).
 
 ## 👤 Author
 

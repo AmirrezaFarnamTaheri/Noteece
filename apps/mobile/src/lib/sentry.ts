@@ -44,7 +44,7 @@ export function initSentry() {
 
     // Integrations
     integrations: [
-      new Sentry.ReactNativeTracing({
+      Sentry.reactNativeTracingIntegration({
         // Routing instrumentation for React Navigation
         // @ts-ignore: Sentry version mismatch in types
         routingInstrumentation: Sentry.reactNavigationIntegration(),

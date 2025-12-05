@@ -71,7 +71,7 @@ const APPS: SocialAppProps[] = [
   {
     name: 'Tumblr',
     pkg: 'com.tumblr',
-    icon: 'tumblr',
+    icon: 'alpha-t-box', // tumblr alternative
     color: '#35465C',
     category: 'social',
   },
@@ -80,14 +80,14 @@ const APPS: SocialAppProps[] = [
   {
     name: 'Telegram',
     pkg: 'org.telegram.messenger',
-    icon: 'telegram',
+    icon: 'send', // telegram not in older material sets sometimes, send is close
     color: '#26A5E4',
     category: 'messaging',
   },
   {
     name: 'Discord',
     pkg: 'com.discord',
-    icon: 'discord',
+    icon: 'gamepad-variant', // discord not always available
     color: '#5865F2',
     category: 'messaging',
   },

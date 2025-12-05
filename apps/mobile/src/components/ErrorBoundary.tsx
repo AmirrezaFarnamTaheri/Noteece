@@ -73,8 +73,8 @@ export class ErrorBoundary extends Component<Props, State> {
           typeof s === 'string' && s.length > MAX_LEN ? s.slice(0, MAX_LEN) + '…[TRUNCATED]' : s;
 
         // Safer scrubbing with tighter patterns
-        const scrub = (text?: string): string | undefined => {
-          if (!text) return text;
+        const scrub = (text?: string | null): string | undefined => {
+          if (!text) return undefined;
           let scrubbed = text;
 
           // Basic secrets

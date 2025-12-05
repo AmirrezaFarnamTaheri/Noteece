@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   headerTitle: {
-    fontSize: typography.fontSize['2xl'],
+    fontSize: typography.fontSize['xl'],
     fontFamily: typography.fontFamily.bold,
     color: colors.text,
   },
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   filterChip: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
+    borderRadius: borderRadius.round,
     backgroundColor: colors.backgroundElevated,
     borderWidth: 1,
     borderColor: colors.border,
@@ -215,6 +215,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: colors.textTertiary,
-    fontSize: typography.fontSize.md,
+    fontSize: typography.fontSize.base,
   },
 });

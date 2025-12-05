@@ -43,6 +43,7 @@ export const colors = {
   accent: '#20C997',
   accentLight: '#63E6BE',
   accentDark: '#099268',
+  accentContainer: 'rgba(32, 201, 151, 0.15)', // Added missing property
 
   // Semantic Colors
   border: '#2C2E33',
@@ -50,10 +51,12 @@ export const colors = {
   error: '#FA5252',
   success: '#20C997',
   warning: '#FCC419',
+  info: '#339AF0', // Added missing property
 
   // Surfaces
   surface: '#101113',
   surfaceElevated: '#25262B',
+  surfaceVariant: '#1A1B1E', // Added missing property
 
   // Entity Colors
   task: '#20C997', // Teal
@@ -61,6 +64,8 @@ export const colors = {
 
   // Overlays
   overlay: 'rgba(0, 0, 0, 0.7)',
+  shadow: 'rgba(0, 0, 0, 0.5)', // Added missing property
+  divider: '#2C2E33', // Added missing property
 };
 
 export const spacing = {
@@ -71,6 +76,7 @@ export const spacing = {
   xl: 32,
   '2xl': 40,
   '3xl': 48,
+  xxl: 64, // Added missing property based on usage
 };
 
 export const borderRadius = {
@@ -79,6 +85,7 @@ export const borderRadius = {
   lg: 16,
   xl: 24,
   round: 9999,
+  full: 9999, // Added alias for round
 };
 
 export const typography = {
@@ -97,6 +104,7 @@ export const typography = {
     xl: 20,
     '2xl': 24,
     '3xl': 30,
+    // Add missing sizes if needed
   },
   lineHeight: {
     tight: 1.25,
