@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **Safety:** Replaced unsafe `unwrap()` calls in critical backend paths (`search.rs`, `collaboration.rs`, `blob.rs`, `selector_verification.rs`) with safe `expect()` or error handling.
+- **Desktop UI:** Replaced placeholder UI in Habits page with a functional creation modal.
+- **Desktop API:** Fixed `any` return type in `getDashboardStats` for better type safety.
+- **Mobile Linting:** Resolved remaining ESLint warnings in `more.tsx` and `sync-bridge.ts`.
 - **Sync Protocol:** Fixed a build failure in `mobile_sync.rs` by correctly using the public `pair_device` API in tests.
 - **Search:** Resolved a critical runtime panic in FTS search by fixing a table alias mismatch (`fts_note` vs `f`).
 - **Social Processing:** Added missing logic to extract Discord handles in `misc.rs`.

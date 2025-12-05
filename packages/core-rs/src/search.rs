@@ -573,7 +573,7 @@ fn extract_snippet(content: &str, query: &str) -> Option<String> {
         return Some(content.chars().take(150).collect());
     }
 
-    let start_idx = match_start.unwrap();
+    let start_idx = match_start.expect("Guaranteed to be Some by previous check");
     let start = start_idx.saturating_sub(50);
     let end = (start_idx + q_len + 100).min(content_len);
 

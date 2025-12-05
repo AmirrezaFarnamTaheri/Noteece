@@ -5,14 +5,14 @@ use regex::Regex;
 use ulid::Ulid;
 
 lazy_static::lazy_static! {
-    static ref TWITTER_HANDLE: Regex = Regex::new(r"(?i)@(?P<handle>[a-z0-9_]{1,15})\b").unwrap();
-    static ref INSTAGRAM_HANDLE: Regex = Regex::new(r"(?i)@(?P<handle>[a-z0-9_.]+)").unwrap();
-    static ref REDDIT_HANDLE: Regex = Regex::new(r"(?i)u/(?P<handle>[a-z0-9_-]+)").unwrap();
-    static ref TIKTOK_HANDLE: Regex = Regex::new(r"(?i)@(?P<handle>[a-z0-9_.]+)").unwrap();
-    static ref YOUTUBE_HANDLE: Regex = Regex::new(r"(?i)@(?P<handle>[a-z0-9_-]+)").unwrap();
-    static ref LINKEDIN_HANDLE: Regex = Regex::new(r"(?i)in/(?P<handle>[a-z0-9-]+)").unwrap();
-    static ref TELEGRAM_HANDLE: Regex = Regex::new(r"(?i)@(?P<handle>[a-z0-9_]{5,32})\b").unwrap();
-    static ref DISCORD_HANDLE: Regex = Regex::new(r"(?i)(?P<handle>.+#\d{4})").unwrap();
+    static ref TWITTER_HANDLE: Regex = Regex::new(r"(?i)@(?P<handle>[a-z0-9_]{1,15})\b").expect("Invalid Twitter regex");
+    static ref INSTAGRAM_HANDLE: Regex = Regex::new(r"(?i)@(?P<handle>[a-z0-9_.]+)").expect("Invalid Instagram regex");
+    static ref REDDIT_HANDLE: Regex = Regex::new(r"(?i)u/(?P<handle>[a-z0-9_-]+)").expect("Invalid Reddit regex");
+    static ref TIKTOK_HANDLE: Regex = Regex::new(r"(?i)@(?P<handle>[a-z0-9_.]+)").expect("Invalid TikTok regex");
+    static ref YOUTUBE_HANDLE: Regex = Regex::new(r"(?i)@(?P<handle>[a-z0-9_-]+)").expect("Invalid YouTube regex");
+    static ref LINKEDIN_HANDLE: Regex = Regex::new(r"(?i)in/(?P<handle>[a-z0-9-]+)").expect("Invalid LinkedIn regex");
+    static ref TELEGRAM_HANDLE: Regex = Regex::new(r"(?i)@(?P<handle>[a-z0-9_]{5,32})\b").expect("Invalid Telegram regex");
+    static ref DISCORD_HANDLE: Regex = Regex::new(r"(?i)(?P<handle>.+#\d{4})").expect("Invalid Discord regex");
 }
 
 pub fn extract_dating_profile(

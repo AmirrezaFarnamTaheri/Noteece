@@ -23,7 +23,7 @@ pub enum BlobError {
 fn derive_blob_key(mk: &[u8], blob_hash: &[u8]) -> [u8; 32] {
     let hk = Hkdf::<Sha256>::new(Some(blob_hash), mk);
     let mut okm = [0u8; 32];
-    hk.expand(&[], &mut okm).unwrap();
+    hk.expand(&[], &mut okm).expect("HKDF expand failed");
     okm
 }
 

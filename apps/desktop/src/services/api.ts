@@ -60,8 +60,16 @@ async function invokeCmd<T>(cmd: string, args?: Record<string, unknown>): Promis
 
 // Dashboard & Analytics
 export const getAnalyticsData = (): Promise<AnalyticsData> => invokeCmd('get_analytics_data_cmd', {});
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const getDashboardStats = (spaceId: string): Promise<any> => invokeCmd('get_dashboard_stats_cmd', { spaceId }); // DashboardStats type needed
+
+export interface DashboardStats {
+  notes_count: number;
+  tasks_count: number;
+  projects_count: number;
+  habits_completion_rate: number;
+}
+
+export const getDashboardStats = (spaceId: string): Promise<DashboardStats> =>
+  invokeCmd('get_dashboard_stats_cmd', { spaceId });
 
 // Forms
 export const getFormTemplatesForSpace = (spaceId: string): Promise<FormTemplate[]> =>

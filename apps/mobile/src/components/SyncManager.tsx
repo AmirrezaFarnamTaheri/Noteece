@@ -147,7 +147,8 @@ const SyncManager: React.FC = () => {
                 <Text style={styles.deviceName}>{device.device_name}</Text>
                 <Text style={styles.deviceSubtext}>
                   {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                  {device.device_type} • {String(device.ip_address || device.address || 'Unknown')}:{String(device.port)}
+                  {device.device_type} • {String(device.ip_address || device.address || 'Unknown')}:
+                  {String(device.port)}
                 </Text>
               </View>
               <View style={styles.deviceStatus}>

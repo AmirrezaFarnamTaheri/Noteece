@@ -396,7 +396,7 @@ pub fn invite_user(
 
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
+        .expect("Time went backwards")
         .as_secs() as i64;
     let expires_at = now + (7 * 24 * 60 * 60);
 
@@ -558,7 +558,7 @@ pub fn add_user_to_space(
 ) -> Result<(), CollaborationError> {
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
+        .expect("Time went backwards")
         .as_secs() as i64;
 
     conn.execute(
