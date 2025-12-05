@@ -202,7 +202,7 @@ mod tests {
     #[test]
     fn test_parse_plain_json() {
         let json = r#"{"twitter": {"post": ".tweet"}}"#;
-        let signed = SignedSelectors::parse(json).unwrap();
+        let signed = SignedSelectors::parse(json).expect("Valid JSON");
         assert!(signed.signature.is_none());
         assert!(!signed.hash.is_empty());
     }
