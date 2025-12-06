@@ -18,7 +18,9 @@
     "dev:tauri": "tauri dev",
     "build:tauri": "tauri build",
     "test": "jest --preset ts-jest",
-    "test:coverage": "jest --preset ts-jest --coverage"
+    "test:ci": "jest --preset ts-jest --passWithNoTests",
+    "test:coverage": "jest --preset ts-jest --coverage",
+    "test:coverage:ci": "jest --preset ts-jest --coverage --passWithNoTests"
   },
   "dependencies": {
     "@lexical/clipboard": "^0.38.2",
