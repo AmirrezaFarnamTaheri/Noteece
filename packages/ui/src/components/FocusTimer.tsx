@@ -9,7 +9,7 @@ export interface FocusTimerProps {
   onReset?: () => void;
 }
 
-type TimerMode = 'focus' | 'short-break' | 'long-break';
+export type TimerMode = 'focus' | 'short-break' | 'long-break';
 
 const TIMER_PRESETS: Record<TimerMode, number> = {
   focus: 25 * 60, // 25 minutes
