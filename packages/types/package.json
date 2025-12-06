@@ -9,6 +9,9 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
   "devDependencies": {
     "@types/jest": "^30.0.0"
   }

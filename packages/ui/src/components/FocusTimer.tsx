@@ -182,7 +182,7 @@ export function MinimalFocusTimer({ onComplete }: Pick<FocusTimerProps, 'onCompl
   const [isRunning, setIsRunning] = useState(false);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
 
     if (isRunning && timeLeft > 0) {
       interval = setInterval(() => {
