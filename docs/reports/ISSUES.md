@@ -36,7 +36,7 @@ This document tracks known issues, limitations, and areas identified for future 
 
 ### 2. Widgets
 
-- **Music Widget**: Currently a placeholder. Spotify integration is planned.
+- **Music Widget**: Functional visualizer UI implemented. Spotify integration is planned for future release.
 - **Temporal Graph**: Requires real correlation data to function; mock data generation has been removed to avoid misleading users.
 
 ## Security
