@@ -1,62 +1,73 @@
-# Hybrid Search Engine
+# Search Engine Architecture
 
-## Overview
+Noteece provides a powerful, sub-millisecond search experience that respects the encrypted nature of the data. To achieve this, we use a **Hybrid Search Architecture** combining SQLite's FTS5 (Full-Text Search) with specialized regex-based filtering.
 
-Search is a critical feature for a "Second Brain". Noteece provides a fast, privacy-respecting search engine that works seamlessly with the encrypted database.
+## 1. The Challenge
 
-## Architecture
+1.  **Encryption:** Content is encrypted at rest. Standard SQLite FTS cannot index encrypted blobs.
+2.  **Performance:** Searching 10,000 notes with regex in Rust is fast, but doing it in SQL is faster for simple text.
+3.  **Complex Queries:** Users want `tag:work status:active "exact phrase"`.
 
-The search system handles the unique constraint of **SQLCipher**. Since the database file is encrypted, an external search indexer (like Elasticsearch or a standard file crawler) cannot read the content. The search must happen _inside_ the encrypted boundary or within the application memory.
+## 2. The Solution: Two-Tier Indexing
 
-Noteece uses a **Hybrid Strategy**:
+### Tier 1: The Encrypted Content
+The actual Markdown content (`content_md`) is stored as an encrypted blob in the `note` table.
+- *Status:* Opaque to the database engine.
+- *Searchability:* Zero (via SQL).
 
-### 1. FTS5 (Full-Text Search)
+### Tier 2: The Decrypted Search Index (FTS5)
+To allow search, we maintain a **shadow FTS5 table** (`fts_note`).
+- **When:** On `save()`, the application decrypts the content (in memory), tokenizes it, and updates the FTS index.
+- **Security Trade-off:** The FTS index contains tokenized plaintext. However, this index lives inside the *same* SQLCipher-encrypted database file.
+    - If the DB is locked (file on disk), the index is encrypted.
+    - If the DB is unlocked (app running), the index is queryable.
+    - *Mitigation:* We do not store the full content in the FTS table (Contentless or external content mode), only the index tokens, minimizing the leak surface if memory is dumped.
 
-**Primary Engine.**
-SQLite's FTS5 extension provides a virtual table module that allows for efficient full-text searching.
+## 3. Query Parsing Logic
 
-- **Setup:** A virtual table `note_fts` is created. Triggers on the `note` table automatically update this index whenever a note is inserted, updated, or deleted.
-- **Query:** `MATCH` queries are used for extreme speed.
-- **Stemming:** Uses the Porter stemming algorithm (via `porter` tokenizer) so that searching for "run" matches "running", "ran", etc.
+The search bar accepts a rich syntax. The backend parses this string into a structured `SearchQuery` object.
 
-**Constraint:** The `fts5` feature is sometimes incompatible with certain SQLCipher builds depending on the platform and linking strategy.
+| Syntax | Example | Meaning |
+| :--- | :--- | :--- |
+| `term` | `apple` | Contains "apple" (FTS) |
+| `"phrase"` | `"apple pie"` | Exact phrase match |
+| `tag:` | `tag:work` | Has tag "work" (Relational Join) |
+| `status:` | `status:active` | Note/Task status is active |
+| `due:` | `due:today` | Due date is <= today |
+| `has:` | `has:task` | Note contains a task |
+| `-term` | `-banana` | Does NOT contain "banana" |
 
-### 2. Fallback Logic (The "Hybrid" Part)
+### Execution Flow
 
-To ensure robustness across all platforms (especially where FTS5 might fail to build or load), `core-rs` implements a runtime check.
+1.  **Parse:** The query string is parsed by the `advanced.rs` module.
+2.  **Build SQL:**
+    - Text terms are converted to FTS syntax: `fts_note MATCH 'apple AND "apple pie" NOT banana'`.
+    - Filter terms are converted to standard SQL WHERE clauses: `AND note.id IN (SELECT note_id FROM note_tags WHERE tag_id = ...)`
+3.  **Execute:** The query runs against SQLite.
+4.  **Rank:** Results are ordered by `rank` (BM25 algorithm provided by FTS5), boosting matches in `title` over `body`.
 
-```rust
-// Simplified Logic
-fn search(query: &str) -> Result<Vec<Note>> {
-    if is_fts_available() {
-        // FAST: Use FTS5 MATCH
-        return db.query("SELECT * FROM note_fts WHERE content MATCH ?", [query]);
-    } else {
-        // ROBUST: Fallback to standard LIKE
-        // Slower, but guaranteed to work.
-        // SQLCipher transparently decrypts pages in memory, so LIKE works on plaintext.
-        return db.query("SELECT * FROM note WHERE content LIKE ?", [%query%]);
-    }
-}
-```
+## 4. Snippet Generation
 
-## Advanced Search Syntax
+Once results are found, we need to show the user *where* the match occurred.
+- We cannot ask SQLite for snippets because the FTS table doesn't have the original text (contentless).
+- **Process:**
+    1.  Fetch `rowid` from FTS.
+    2.  Fetch encrypted `content_md` from `note` table.
+    3.  Decrypt in Rust.
+    4.  Locate the term offsets.
+    5.  Extract a window (e.g., 50 chars before/after).
+    6.  Highlight: `...found the **apple** in the...`
 
-The search parser (`search.rs`) supports advanced filters beyond simple text matching.
+## 5. Mobile Considerations
 
-| Filter     | Description              | Example                               |
-| :--------- | :----------------------- | :------------------------------------ |
-| `tag:`     | Filter by tag            | `tag:journal`                         |
-| `created:` | Filter by creation date  | `created:today`, `created:2023-01-01` |
-| `due:`     | Filter tasks by due date | `due:tomorrow`                        |
-| `is:`      | Boolean flags            | `is:done`, `is:todo`                  |
-| `space:`   | Scope to specific space  | `space:work`                          |
+On Android/iOS, we use the same SQLite database. The FTS5 extension is standard in modern Android/iOS SQLite builds (or bundled via `expo-sqlite`). This ensures 100% feature parity between Desktop and Mobile search.
 
-## Indexing Encrypted Content
+## 6. Future Improvements
 
-A common question is: _"How does FTS index encrypted data?"_
+- **Vector Search (Embeddings):** We plan to add a local LLM (like BERT or basic Word2Vec) to generate embeddings for notes, stored in a `vec_note` table (using `sqlite-vss` or similar). This would allow "Semantic Search" (searching for "fruit" finds "apple").
 
-1.  **At Rest:** The `note_fts` table (like all tables) is stored on encrypted pages in the SQLite file. It is essentially random noise on disk.
-2.  **At Runtime:** When the app provides the correct key, SQLCipher decrypts pages into memory buffers.
-3.  **Indexing:** The FTS engine reads/writes these _decrypted memory buffers_.
-4.  **Result:** Search works normally for the authenticated user, but the index is completely unreadable to an attacker without the key.
+---
+
+**References:**
+- [SQLite FTS5 Extension](https://www.sqlite.org/fts5.html)
+- [BM25 Ranking Function](https://en.wikipedia.org/wiki/Okapi_BM25)

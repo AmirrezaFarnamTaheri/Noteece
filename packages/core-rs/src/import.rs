@@ -224,7 +224,7 @@ pub fn export_to_zip(
         let decrypted = match crate::crypto::decrypt_string(&enc_content, dek) {
             Ok(s) => s,
             Err(e) => {
-                // Write placeholder with error to avoid silent corruption
+                // Write error metadata to file content to avoid silent corruption
                 writeln!(zip, "---")?;
                 writeln!(zip, "id: {}", id)?;
                 writeln!(zip, "title: {}", title)?;
@@ -315,7 +315,7 @@ pub fn export_to_markdown(
         let decrypted = match crate::crypto::decrypt_string(&enc_content, dek) {
             Ok(s) => s,
             Err(e) => {
-                // Write placeholder with error to avoid silent corruption
+                // Write error metadata to file content to avoid silent corruption
                 writeln!(file, "---")?;
                 writeln!(file, "id: {}", id)?;
                 writeln!(file, "title: {}", title)?;

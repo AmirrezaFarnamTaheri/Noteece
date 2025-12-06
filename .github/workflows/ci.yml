@@ -34,15 +34,12 @@ jobs:
 
       - name: Run lint
         run: pnpm lint
-        continue-on-error: true
 
       - name: Check formatting
         run: pnpm format --check
-        continue-on-error: true
 
       - name: TypeScript check
         run: pnpm type-check
-        continue-on-error: true
 
   desktop_tests:
     name: "Desktop Tests"
@@ -69,12 +66,10 @@ jobs:
       - name: Run tests
         working-directory: apps/desktop
         run: pnpm test --passWithNoTests
-        continue-on-error: true
 
       - name: Run tests with coverage
         working-directory: apps/desktop
         run: pnpm test:coverage --passWithNoTests
-        continue-on-error: true
 
       - name: Check coverage threshold
         working-directory: apps/desktop
@@ -91,7 +86,6 @@ jobs:
           else
             echo "::warning::No coverage report found"
           fi
-        continue-on-error: true
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
@@ -125,17 +119,14 @@ jobs:
       - name: Run linting
         working-directory: apps/mobile
         run: pnpm lint
-        continue-on-error: true
 
       - name: Run type checking
         working-directory: apps/mobile
         run: pnpm type-check
-        continue-on-error: true
 
       - name: Run tests
         working-directory: apps/mobile
         run: pnpm test -- --passWithNoTests --forceExit
-        continue-on-error: true
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
@@ -189,12 +180,10 @@ jobs:
 
       - name: Clippy
         if: matrix.os == 'ubuntu-22.04'
-        run: cd packages/core-rs && cargo clippy --lib --all-features -- -W clippy::all
-        continue-on-error: true
+        run: cd packages/core-rs && cargo clippy --lib --all-features -- -D warnings
 
       - name: Test
         run: cd packages/core-rs && cargo test --verbose
-        continue-on-error: true
 
       - name: Generate test coverage (Ubuntu)
         if: matrix.os == 'ubuntu-22.04'
@@ -253,7 +242,6 @@ jobs:
 
       - name: Check Tauri Build
         run: cd apps/desktop && cargo build --manifest-path src-tauri/Cargo.toml
-        continue-on-error: true
 
   # Summary job that depends on all checks
   ci-complete:
@@ -271,12 +259,12 @@ jobs:
           echo "Rust Checks: ${{ needs.rust_checks.result }}"
           echo "Desktop Build: ${{ needs.desktop_build.result }}"
           
-          # Allow continue-on-error jobs to not fail the pipeline
-          if [[ "${{ needs.lint_and_format.result }}" == "failure" ]] && \
-             [[ "${{ needs.desktop_tests.result }}" == "failure" ]] && \
-             [[ "${{ needs.mobile_tests.result }}" == "failure" ]] && \
-             [[ "${{ needs.rust_checks.result }}" == "failure" ]]; then
-            echo "All checks failed!"
+          if [[ "${{ needs.lint_and_format.result }}" != "success" ]] || \
+             [[ "${{ needs.desktop_tests.result }}" != "success" ]] || \
+             [[ "${{ needs.mobile_tests.result }}" != "success" ]] || \
+             [[ "${{ needs.rust_checks.result }}" != "success" ]] || \
+             [[ "${{ needs.desktop_build.result }}" != "success" ]]; then
+            echo "One or more checks failed!"
             exit 1
           fi
           
