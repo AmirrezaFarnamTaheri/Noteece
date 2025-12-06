@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "es2022",
     "module": "commonjs",
+    "jsx": "react-jsx",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -12,6 +13,6 @@
       "@noteece/types": ["packages/types/src/index.ts"]
     }
   },
-  "include": ["**/*.ts"],
+  "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
 }

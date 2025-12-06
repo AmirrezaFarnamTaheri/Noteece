@@ -18,7 +18,7 @@ import {
   IconX,
   IconAlertCircle,
   IconInfoCircle,
-  IconCheckCircle,
+  IconCircleCheck,
   IconAlertTriangle,
 } from '@tabler/icons-react';
 
@@ -46,7 +46,7 @@ export interface NotificationCenterProps {
 const getNotificationIcon = (type: Notification['type']) => {
   switch (type) {
     case 'success':
-      return <IconCheckCircle size={18} color="var(--mantine-color-green-6)" />;
+      return <IconCircleCheck size={18} color="var(--mantine-color-green-6)" />;
     case 'warning':
       return <IconAlertTriangle size={18} color="var(--mantine-color-yellow-6)" />;
     case 'error':
