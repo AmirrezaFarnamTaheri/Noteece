@@ -13,6 +13,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "ESLINT_USE_FLAT_CONFIG=false eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 500",
+    "type-check": "tsc --noEmit",
     "preview": "vite preview",
     "dev:tauri": "tauri dev",
     "build:tauri": "tauri build",
