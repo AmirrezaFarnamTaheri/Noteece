@@ -1,76 +1,85 @@
-# Vector Clocks & Conflict Resolution
+# Vector Clocks in Noteece
 
-## The Challenge of Distributed Sync
+A **Vector Clock** is a fundamental mechanism used in distributed systems to capture the causal relationship between events. In Noteece, it is the engine that drives our synchronization efficiency and correctness.
 
-In a local-first system like Noteece, multiple devices (nodes) can modify the same data independently while offline. When they reconnect, they need a way to converge on a consistent state without a central authority to dictate the "truth".
+## 1. The Problem: "What did I miss?"
 
-## Vector Clocks
+Imagine Device A and Device B.
+- Device A makes 5 changes.
+- Device B makes 3 changes.
+- They sync.
 
-Noteece uses **Vector Clocks** to track the causal history of data. A vector clock is an array of logical clocks, one for each node in the system.
+How does Device B know *which* of Device A's 5 changes it has already seen?
+- **Naive approach:** Send everything. (Inefficient bandwidth).
+- **Timestamp approach:** "Send me everything after T=100". (Fragile. What if clocks drift? What if A was offline during T=100..110?)
+- **Vector Clock approach:** "I have seen up to update #4 from You."
 
-### Structure
+## 2. The Data Structure
 
-Each space has a `SyncState` table that stores the local vector clock for that space.
+A Vector Clock is essentially a map of `DeviceID -> Counter`.
 
-```rust
-// Logical representation
-struct VectorClock {
-    clocks: HashMap<DeviceId, u64>
+```json
+{
+  "Device_Alpha": 105,
+  "Device_Beta": 42,
+  "Device_Gamma": 12
 }
 ```
 
-- **`DeviceId`**: A unique ULID generated when the app is installed.
-- **`u64`**: A monotonically increasing counter representing the "version" or "time" of that device.
+This state means:
+"I have applied all operations from Alpha up to sequence 105, from Beta up to 42, and Gamma up to 12."
 
-### Workflow
+## 3. How It Works
 
-1.  **Local Update:**
-    When Device A updates a note:
-    - It increments its own counter in the vector clock: `VC_A[A] += 1`.
-    - It records this new `timestamp` (counter value) on the entity itself or in an audit log.
+### Step 1: Tracking Local Changes
+Every time a device (say, `Device_Alpha`) writes to the database (Create, Update, Delete):
+1.  It increments its own counter in the `vault_meta` or `sync_state`.
+2.  `Device_Alpha: 105` -> `Device_Alpha: 106`.
+3.  The modified row is stamped with this new "Lamport Timestamp" (Origin ID + Counter).
 
-2.  **Sync Handshake:**
-    When Device A syncs with Device B:
-    - They exchange their current Vector Clocks.
-    - They compare them to determine which device is "ahead" or if they are concurrent.
+### Step 2: The Handshake
+When `Device_Alpha` connects to `Device_Beta`:
+1.  **Alpha sends:** `VC_A = { Alpha: 106, Beta: 40 }`
+2.  **Beta sends:** `VC_B = { Alpha: 100, Beta: 45 }`
 
-3.  **Comparison Logic:**
-    - **`A > B` (A dominates B):** If every counter in A is >= every counter in B.
-      - _Result:_ B is outdated. A sends updates to B.
-    - **`A < B` (B dominates A):** If every counter in B is >= every counter in A.
-      - _Result:_ A is outdated. B sends updates to A.
-    - **`A || B` (Concurrent):** If A has updates B hasn't seen, AND B has updates A hasn't seen.
-      - _Result:_ **Conflict!**
+### Step 3: Calculating the Delta (The Diff)
+`Device_Alpha` looks at `VC_B` (Beta's clock).
+- Beta has seen Alpha up to **100**.
+- Alpha is at **106**.
+- **Conclusion:** Alpha needs to send changes `101, 102, 103, 104, 105, 106` to Beta.
 
-## Conflict Resolution
+`Device_Alpha` looks at `VC_B` regarding Beta's own updates.
+- Beta is at **45**.
+- Alpha has seen Beta up to **40** (from `VC_A`).
+- **Conclusion:** Alpha asks Beta for changes `41, 42, 43, 44, 45`.
 
-When concurrent changes are detected (`A || B`), Noteece cannot automatically decide which version is "correct" because both are valid user intents.
+### Step 4: Updating the Clock
+After `Device_Beta` successfully receives and applies the 6 changes from Alpha:
+- It updates its local record of Alpha's clock to **106**.
+- Now `VC_B` becomes `{ Alpha: 106, Beta: 45 }`.
+- They are consistent regarding Alpha's state.
 
-### The `SyncConflict` Table
+## 4. Conflict Detection
 
-Instead of overwriting or discarding data, the system creates a `SyncConflict` record.
+Vector Clocks also help detect **concurrent** edits.
 
-```sql
-CREATE TABLE sync_conflict (
-    id TEXT PRIMARY KEY,
-    entity_id TEXT NOT NULL,
-    entity_type TEXT NOT NULL,
-    local_data TEXT NOT NULL, -- JSON serialization of local version
-    remote_data TEXT NOT NULL, -- JSON serialization of incoming version
-    resolved INTEGER DEFAULT 0
-);
-```
+If we receive an update for Note X from Device C with timestamp `{ Alpha: 100, Gamma: 5 }`, but our local Note X was last modified by Device D with timestamp `{ Alpha: 100, Delta: 8 }`:
+- The vectors are incomparable (neither strictly dominates the other).
+- This implies **concurrency**.
+- We trigger the Conflict Resolution strategy (LWW or Manual Merge).
 
-### User Interface
+## 5. Implementation Details
 
-1.  The user sees a "Sync Conflict" notification.
-2.  Clicking it opens the **Resolution UI**.
-3.  The UI displays a diff (side-by-side or unified) of the Local vs. Remote content.
-4.  **Options:**
-    - **Keep Local:** Discards remote changes.
-    - **Keep Remote:** Overwrites local with remote.
-    - **Merge:** Opens a text editor with both contents (for Notes) or allows field-level selection (for structured data).
+- **Storage:** We store the Vector Clock in a dedicated `sync_vector_clock` table.
+- **Granularity:** We maintain one Vector Clock per *Space* (Vault).
+- **Pruning:** Unlike some systems, we do not prune entries for old devices immediately, to ensure we can always sync correctly with a device that returns after a year.
 
-### Automated Resolution (LWW)
+## 6. Why not just Lamport Clocks?
 
-For non-critical data (like `last_synced_at` timestamps or cached metadata), Noteece may employ **Last-Writer-Wins (LWW)** based on wall-clock time (`Utc::now()`) to resolve conflicts silently. However, for user data (Notes, Tasks), manual resolution is always preferred to prevent data loss.
+A standard Lamport Clock is just a single integer. It tells you "A happened before B" but it can't distinguish "A and B were concurrent" vs "A and B just happen to have the same counter value". Vector Clocks provide that causality guarantee.
+
+---
+
+**References:**
+- [Vector Clocks on Wikipedia](https://en.wikipedia.org/wiki/Vector_clock)
+- [Why Vector Clocks are Hard](https://queue.acm.org/detail.cfm?id=2917756)

@@ -1,52 +1,33 @@
 # Security Model
 
-## Threat Model
+ Noteece operates on a **Zero-Trust, Zero-Knowledge** security model.
 
-Noteece assumes the following threats:
+ ## 1. Encryption at Rest
 
-- **Device Theft:** An attacker gains physical access to your laptop or phone.
-- **Network Snooping:** An attacker intercepts traffic on your local WiFi.
-- **Cloud Compromise:** Since there is no cloud, this class of threat is eliminated by design.
+ - **Database:** The SQLite database is encrypted using SQLCipher (AES-256-CBC).
+ - **Key Derivation:** The user's master password is hashed using Argon2id to derive the Key Encryption Key (KEK).
+ - **Data Encryption Key (DEK):** A random 32-byte key is generated at vault creation. This DEK is encrypted by the KEK and stored in the database header.
+ - **Content:** Sensitive content (note bodies) is further encrypted using XChaCha20Poly1305 before being written to disk, ensuring that even if the DB page cache leaks, content remains secure.
 
-## Defense Mechanisms
+ ## 2. Encryption in Transit
 
-### 1. Data at Rest (Encryption)
+ - **Transport Layer:** All P2P traffic is wrapped in a custom encrypted envelope using XChaCha20Poly1305, independent of TLS.
+ - **Forward Secrecy:** Session keys are ephemeral.
 
-- **Engine:** SQLCipher (Community Edition).
-- **Algorithm:** AES-256-CBC (Page level).
-- **Key Management:**
-  - **User Password:** The root of trust.
-  - **KEK (Key Encryption Key):** Derived from password via `Argon2id` (memory-hard).
-  - **DEK (Data Encryption Key):** Random 32-byte key.
-  - **Process:** `Password -> Argon2id -> KEK -> Decrypt(Encrypted_DEK) -> DEK -> Unlock Database`.
+ ## 3. Authentication
 
-### 2. Data in Transit (Sync)
+ - **Local:** Password required to unlock the vault (decrypt the DEK).
+ - **P2P:** Devices authenticate using a shared pairing secret established during the initial QR code handshake.
 
-- **Protocol:** Custom binary protocol over TCP.
-- **Encryption:**
-  - **Key Exchange:** X25519 (ECDH) to establish shared secret.
-  - **Transport:** ChaCha20Poly1305 (Authenticated Encryption).
-- **Authentication:**
-  - Device Identity Keys (Ed25519) are verified during the handshake to prevent Man-in-the-Middle (MITM) attacks.
+ ## 4. Threat Model
 
-### 3. Application Security
+ - **Device Theft:** Attacker has physical access. Data is safe as long as the vault is locked (powered down or app closed).
+ - **Network Eavesdropping:** Attacker is on the same WiFi. Data is safe due to E2EE transport.
+ - **Malicious Server:** Noteece has no central server.
 
-- **Tauri Isolation:**
-  - The frontend is a webview but has **NO** direct Node.js access.
-  - Interaction with the system is strictly limited to the exposed Rust Commands (`commands.rs`).
-  - **CSP (Content Security Policy):** Strict rules prevent loading external scripts or styles (except for specific, trusted sources if necessary).
+ ## 5. Android Prime (Sideload) Security
 
-- **Input Validation:**
-  - All SQL queries use parameterized statements (`?1`, `?2`) to prevent SQL Injection.
-  - Filenames for exports/imports are sanitized to prevent directory traversal attacks.
-
-## Audit Logs
-
-A tamper-evident audit log (`audit_log` table) records critical security events:
-
-- Login attempts (success/failure).
-- Password changes.
-- Device pairing events.
-- Export operations.
-
-This log allows users to verify if unauthorized access has occurred.
+ The "Prime" flavor uses Android Accessibility APIs.
+ - **Permission:** Requires explicit user grant of Accessibility Service.
+ - **Data Handling:** Screen context is processed entirely on-device; no data is sent to the cloud.
+ - **Scope:** Only targeted apps (white-listed) are processed.

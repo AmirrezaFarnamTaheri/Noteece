@@ -1,277 +1,66 @@
-# Noteece Prime: Sovereign Interception Architecture
+# Prime Interception (Android Sideload)
 
-This document describes the architecture of Noteece Prime, the advanced mobile experience that operates as a meta-layer over Android.
+**Prime Interception** is the flagship feature of the Noteece Android "Prime" flavor (Sideload only). It allows Noteece to act as an intelligent layer *over* other applications, capturing context and linking it to your knowledge base without relying on official "Share" menus.
 
-## Overview
+## 1. The Architecture
 
-Noteece Prime implements "Sovereign Interception" - a passive data capture system that reads content from other apps without modifying them, storing everything locally in your encrypted vault.
+The system consists of three distinct layers interacting across process boundaries.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Android OS                                │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-│  │   Twitter   │  │  Instagram  │  │   Other Apps...     │  │
-│  └──────┬──────┘  └──────┬──────┘  └──────────┬──────────┘  │
-│         │                │                     │             │
-│         └────────────────┼─────────────────────┘             │
-│                          │                                   │
-│  ┌───────────────────────▼───────────────────────────────┐  │
-│  │            Noteece Prime (Tri-Layer)                   │  │
-│  │  ┌─────────────────────────────────────────────────┐  │  │
-│  │  │  Layer 1: The Hub (Social Dock Launcher)        │  │  │
-│  │  └─────────────────────────────────────────────────┘  │  │
-│  │  ┌─────────────────────────────────────────────────┐  │  │
-│  │  │  Layer 2: The Eyes (Accessibility Service)      │  │  │
-│  │  └─────────────────────────────────────────────────┘  │  │
-│  │  ┌─────────────────────────────────────────────────┐  │  │
-│  │  │  Layer 3: The Wrapper (Overlay HUD)             │  │  │
-│  │  └─────────────────────────────────────────────────┘  │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                          │                                   │
-│  ┌───────────────────────▼───────────────────────────────┐  │
-│  │               Rust Core (Heuristic Engine)             │  │
-│  │                    + Encrypted Vault                   │  │
-│  └───────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-```
+### Layer A: The Overlay Service (Java/Kotlin)
+*Component:* `OverlayService.kt`
+*Type:* Android Accessibility Service + System Alert Window.
+*Role:*
+- **Draws UI:** Renders the floating "N" button (the Anchor) on top of other apps.
+- **Reads Screen:** Uses `AccessibilityEvent` to traverse the View Hierarchy of the active app.
+- **Extracts Text:** Identifies `TextView`, `EditText`, and `ContentDescription` nodes to gather raw text.
+- **Extracts Metadata:** Grabs Package Name (e.g., `com.twitter.android`), Activity Name, and Screen Bounds.
 
-## Tri-Layer Architecture
+### Layer B: The JSI Bridge (C++)
+*Component:* `NoteeceCore.cpp`
+*Role:*
+- Acts as the high-performance glue between the Java layer and the React Native JavaScript runtime.
+- Methods like `nativeProcessStream(text, metadata)` allow passing large strings without the serialization overhead of the old RN Bridge.
 
-### Layer 1: The Hub (Social Dock)
+### Layer C: The Stream Processor (Rust)
+*Component:* `stream_processor.rs`
+*Role:*
+- **Ingestion:** Receives the raw text stream from the Overlay.
+- **Deduplication:** Uses a Bloom Filter (and simple history buffer) to ignore text we just processed (e.g., while scrolling).
+- **Pattern Matching:** Regex engines (`social/processing/extractors/`) look for known patterns (e.g., "Tweet by @user", "YouTube Video Title").
+- **Insight Generation:** If a pattern matches, it structures the data into a `SocialPost` or `ContextItem`.
 
-The entry point for passive capture sessions.
+## 2. The Workflow: "Anchoring"
 
-**Component**: `SocialDock.tsx`
+1.  **User Action:** User sees a tweet they want to remember. They tap the floating Noteece button.
+2.  **Snapshot:** The `OverlayService` freezes the current accessibility tree.
+3.  **Heuristics:** It calculates the bounds of the content on screen.
+4.  **Capture:** It sends the text + coordinates to the Rust core.
+5.  **Creation:** Noteece creates a new Note (or opens a Quick Note modal).
+6.  **Linking:** The Note includes a "Backlink" to the app content.
+    - *Format:* `noteece://anchor?pkg=com.twitter.android&data=...`
+    - *Future:* Deep linking to re-open that specific tweet.
 
-**Function**:
+## 3. Privacy & Security
 
-- Displays a grid of supported social applications
-- Triggers a `START_SESSION` intent before launching apps
-- Categories: Social Media, Messaging, Dating, Browsers, Media
+This feature requires the dangerous `BIND_ACCESSIBILITY_SERVICE` permission.
 
-**Supported Platforms** (30+):
+- **Whitelisting:** Prime only activates for specific apps defined in `socialConfig.ts` (e.g., Twitter, LinkedIn, Chrome). It stays dormant in banking apps or settings.
+- **Local Processing:** All text extraction happens in Rust memory. No data is sent to a cloud server.
+- **Transparency:** A persistent notification is required by Android when the service is running.
+- **Isolation:** The captured data is encrypted immediately upon saving to the database.
 
-| Category     | Platforms                                                                 |
-| ------------ | ------------------------------------------------------------------------- |
-| Social Media | Twitter, Instagram, LinkedIn, Reddit, Facebook, TikTok, Pinterest, Tumblr |
-| Messaging    | Telegram, Discord, WhatsApp, Signal, Slack, Snapchat                      |
-| Dating       | Tinder, Bumble, Hinge, OkCupid, Match                                     |
-| Browsers     | Chrome, Firefox, Brave, Edge, DuckDuckGo                                  |
-| Media        | YouTube, Twitch, Spotify, Medium, NYTimes, Hacker News                    |
+## 4. Technical Challenges
 
-### Layer 2: The Eyes (Accessibility Service)
+- **DOM Thrashing:** Accessibility events fire thousands of times per second during scrolling. We use debouncing and the Bloom filter to prevent CPU spikes.
+- **Obfuscation:** Apps like Facebook use `View` classes with obfuscated names (`x.y.z.View`). We rely on text heuristics ("Like", "Comment", "Share" proximity) rather than class names.
+- **Battery:** Constant screen reading drains battery. The service aggressively pauses itself when the screen is off or Noteece is backgrounded.
 
-Passive screen content reader.
+## 5. Why Sideload?
 
-**Component**: `NoteeceAccessibilityService.kt`
-
-**Function**:
-
-- Reads the UI tree from the screen buffer
-- Bypasses SSL pinning by reading decrypted text at the view layer
-- Streams raw text to Rust Core via JNI bridge
-- Debounces scroll events (150ms) for efficiency
-
-**Key Code**:
-
-```kotlin
-override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-    if (!isRecording || event == null) return
-
-    // Runtime package whitelist check
-    if (!allowedPackages.contains(event.packageName.toString())) {
-        return
-    }
-
-    // Event filtering
-    if (event.eventType != TYPE_WINDOW_CONTENT_CHANGED &&
-        event.eventType != TYPE_VIEW_SCROLLED) {
-        return
-    }
-
-    // Debounce and capture
-    val now = System.currentTimeMillis()
-    if (now - lastScrollTime < DEBOUNCE_MS) return
-    lastScrollTime = now
-
-    scanScreen()
-}
-```
-
-**Privacy Controls**:
-
-- Strict package whitelist (runtime + XML config)
-- Screen state awareness (pauses on screen off)
-- No network access from service
-- All processing happens locally
-
-### Layer 3: The Wrapper (Overlay HUD)
-
-User interface for capture control.
-
-**Component**: `OverlayService.kt`
-
-**Function**:
-
-- Draws a floating "Green Dot" indicator
-- Indicates active capture session
-- Provides "Anchor" action to save current screen
-
-**Anchor Action**:
-When tapped, the current screen buffer (analyzed by heuristics) is committed to the encrypted vault as a saved Note.
-
-## Heuristic Engine
-
-The Rust-based pattern recognition system.
-
-**Component**: `packages/core-rs/src/social/stream_processor.rs`
-
-**Function**:
-
-- Processes raw text streams from the accessibility service
-- Applies regex patterns to identify structured content
-- Reconstructs posts, messages, and profiles from fragments
-- Deduplicates using Bloom filter
-
-### Pattern Recognition
-
-```rust
-lazy_static! {
-    // Twitter/Instagram handles
-    static ref HANDLE_REGEX: Regex = Regex::new(r"(@[\w_]+|u/[\w_]+)").unwrap();
-
-    // Relative timestamps
-    static ref TIME_REGEX: Regex = Regex::new(r"(\d+[mhdw])").unwrap();
-
-    // Engagement metrics
-    static ref METRICS_REGEX: Regex = Regex::new(
-        r"(\d+(?:\.\d+)?[KMB]?)\s+(Comments|Retweets|Likes|Views)"
-    ).unwrap();
-
-    // URLs in browser content
-    static ref URL_REGEX: Regex = Regex::new(r"(https?://[^\s]+)").unwrap();
-
-    // Dating app profiles
-    static ref DATING_PROFILE_REGEX: Regex = Regex::new(
-        r"(^|\n)([\w\s]+, \d{1,2}(?:, \w+)?)\n"
-    ).unwrap();
-}
-```
-
-### Detection Methods
-
-1. **Social Posts**: Handle + timestamp + body text
-2. **Browser Content**: URL presence
-3. **Dating Profiles**: Name, age pattern
-4. **Messages**: Time + sender + content pattern
-
-### Output Structure
-
-```rust
-pub struct CapturedPost {
-    pub id: String,
-    pub platform: String,
-    pub author_handle: Option<String>,
-    pub content_text: String,
-    pub captured_at: i64,
-    pub confidence_score: f32,
-    pub raw_context_blob: Option<String>,
-}
-```
-
-## Data Flow
-
-```
-┌─────────────┐     ┌─────────────────┐     ┌───────────────┐
-│   Screen    │────▶│  Accessibility  │────▶│  JNI Bridge   │
-│   Buffer    │     │    Service      │     │   (Zero-Copy) │
-└─────────────┘     └─────────────────┘     └───────┬───────┘
-                                                    │
-                    ┌───────────────────────────────▼───────┐
-                    │         Stream Processor              │
-                    │  ┌─────────────────────────────────┐  │
-                    │  │  Sliding Window Buffer (20 lines)│  │
-                    │  └─────────────────────────────────┘  │
-                    │  ┌─────────────────────────────────┐  │
-                    │  │  Pattern Matching (Regex)        │  │
-                    │  └─────────────────────────────────┘  │
-                    │  ┌─────────────────────────────────┐  │
-                    │  │  Bloom Filter (Deduplication)    │  │
-                    │  └─────────────────────────────────┘  │
-                    └───────────────────────────────────────┘
-                                        │
-                    ┌───────────────────▼───────────────────┐
-                    │       SQLCipher Encrypted Vault       │
-                    │  ┌─────────────────────────────────┐  │
-                    │  │  social_post table               │  │
-                    │  │  + FTS5 full-text index          │  │
-                    │  └─────────────────────────────────┘  │
-                    └───────────────────────────────────────┘
-```
-
-## Build Flavors
-
-### Store Build
-
-- Standard P2P companion app
-- Google Play compliant
-- No accessibility service
-- No overlay permissions
-
-### Sideload (Prime) Build
-
-- Full "Cyborg-Life OS" experience
-- Accessibility service enabled
-- Overlay HUD enabled
-- APK distributed via GitHub Releases
-
-## Security Model
-
-1. **No Network from Service**: Accessibility service has no internet permission
-2. **Local-Only Processing**: All heuristics run on-device
-3. **Encrypted Storage**: SQLCipher with user-derived key
-4. **Package Whitelist**: Only specified apps are monitored
-5. **User Consent**: Explicit accessibility service permission
-6. **Transparency**: Open source, auditable code
-
-## Privacy Protections
-
-### Redaction
-
-```typescript
-captureSettings: {
-    redactEmails: true,
-    redactPhoneNumbers: true,
-    excludePrivateMessages: true
-}
-```
-
-### Selective Capture
-
-Users can:
-
-- Enable/disable specific platforms
-- Choose capture categories
-- Review before saving
-- Delete captured content
-
-## Performance
-
-| Metric            | Value    |
-| ----------------- | -------- |
-| Debounce interval | 150ms    |
-| Buffer size       | 20 lines |
-| Pattern matching  | <5ms     |
-| JNI overhead      | <1ms     |
-| Memory footprint  | ~15MB    |
-
-## Limitations
-
-1. **Android Only**: iOS restrictions prevent similar implementation
-2. **Sideload Required**: Play Store prohibits accessibility abuse
-3. **Some Apps Protected**: Banking apps often block accessibility
-4. **Screen Reading Only**: Cannot interact with other apps
+Google Play policies (and Apple App Store rules) strictly forbid apps from using Accessibility Services for anything other than assisting users with disabilities. "Productivity" is not a valid use case for them. Therefore, this feature cannot exist in the Store version.
 
 ---
 
-_See also: [Social Suite Feature Guide](../02_Features/04_Social_Suite.md)_
+**References:**
+- [Android AccessibilityService API](https://developer.android.com/reference/android/accessibilityservice/AccessibilityService)
+- [React Native JSI](https://reactnative.dev/docs/the-new-architecture/landing-page)
