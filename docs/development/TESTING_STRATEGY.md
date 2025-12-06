@@ -101,7 +101,6 @@ ocr_tests.rs                        - Comprehensive OCR tests (24 tests)
 backup_tests.rs        - Backup/restore functionality
 backlink_tests.rs      - Bidirectional linking
 blob_tests.rs          - Binary storage
-caldav_tests.rs        - CalDAV sync (placeholder - needs expansion)
 calendar_tests.rs      - Calendar operations
 collaboration_tests.rs - Basic collaboration
 correlation_tests.rs   - Note correlations

@@ -380,7 +380,7 @@ export class UnifiedSyncBridge {
     // This requires importing the database instance which we can do dynamically
     try {
       // Dynamic import to avoid circular dependency
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
       const databaseModule = require('../database');
       const db = databaseModule.getDatabase();
       const notes = await db.getAllAsync('SELECT * FROM note WHERE is_trashed = 0 ORDER BY modified_at DESC');
