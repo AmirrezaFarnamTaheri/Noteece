@@ -65,11 +65,11 @@ jobs:
 
       - name: Run tests
         working-directory: apps/desktop
-        run: pnpm test -- --passWithNoTests
+        run: pnpm test --passWithNoTests
 
       - name: Run tests with coverage
         working-directory: apps/desktop
-        run: pnpm test:coverage -- --passWithNoTests
+        run: pnpm test:coverage --passWithNoTests
 
       - name: Check coverage threshold
         working-directory: apps/desktop
@@ -126,7 +126,7 @@ jobs:
 
       - name: Run tests
         working-directory: apps/mobile
-        run: pnpm test -- --passWithNoTests --forceExit
+        run: pnpm test --passWithNoTests --forceExit
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
