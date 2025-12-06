@@ -127,7 +127,6 @@ export function VariableSizeList<T>({
   // Item key function
   const itemKey = useCallback(
     (index: number, data: ItemData<T>) => {
-
       const item = data.items[index];
       return item ? getItemKey(item, index) : `empty-${index}`;
     },

@@ -154,14 +154,11 @@ const BackupRestore: React.FC<BackupRestoreProperties> = ({ onBackupComplete, on
     }
   };
 
-
-
   return (
     <div className={styles.container}>
       <h2>Backup & Restore</h2>
 
       {message && (
-
         <div className={`${styles.message} ${styles[messageType]}`}>
           <p>{message}</p>
         </div>

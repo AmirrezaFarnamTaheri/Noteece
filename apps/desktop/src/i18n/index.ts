@@ -719,7 +719,7 @@ export const translations = {
     'tasks.completed': 'Terminé',
     'tasks.pending': 'En attente',
     'tasks.overdue': 'En retard',
-    'tasks.dueToday': 'Pour aujourd\'hui',
+    'tasks.dueToday': "Pour aujourd'hui",
     'tasks.priority': 'Priorité',
     'tasks.high': 'Haute',
     'tasks.medium': 'Moyenne',

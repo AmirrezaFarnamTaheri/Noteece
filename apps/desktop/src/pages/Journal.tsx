@@ -28,7 +28,7 @@ const Journal: React.FC = () => {
 
           const note: Note = await invoke('get_or_create_daily_note_cmd', {
             spaceId: activeSpaceId,
-            date: dateStr
+            date: dateStr,
           });
           setDailyNote(note);
         } catch (error) {
@@ -47,43 +47,43 @@ const Journal: React.FC = () => {
 
   return (
     <Container size="xl" py="md">
-        <Group justify="space-between" mb="lg">
-            <Title order={2}>Journal</Title>
-        </Group>
+      <Group justify="space-between" mb="lg">
+        <Title order={2}>Journal</Title>
+      </Group>
 
-        <Group align="flex-start" gap="lg">
-            <Paper p="md" withBorder>
-                <Calendar
-                    date={date || new Date()}
-                    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-                    onDateChange={setDate as any}
-                    renderDay={(day) => {
-                        const d = typeof day === 'string' ? new Date(day) : day;
-                        return <div>{d.getDate()}</div>;
-                    }}
-                />
+      <Group align="flex-start" gap="lg">
+        <Paper p="md" withBorder>
+          <Calendar
+            date={date || new Date()}
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+            onDateChange={setDate as any}
+            renderDay={(day) => {
+              const d = typeof day === 'string' ? new Date(day) : day;
+              return <div>{d.getDate()}</div>;
+            }}
+          />
+        </Paper>
+
+        <Stack style={{ flex: 1 }}>
+          {dailyNote ? (
+            <Paper p="lg" withBorder>
+              <Group justify="space-between" mb="md">
+                <Title order={3}>{dailyNote.title}</Title>
+                <Button leftSection={<IconFilePlus size={16} />} onClick={handleOpenNote}>
+                  Open in Editor
+                </Button>
+              </Group>
+              <Text lineClamp={5} c="dimmed">
+                {dailyNote.content_md || 'No content yet...'}
+              </Text>
             </Paper>
-
-            <Stack style={{ flex: 1 }}>
-                {dailyNote ? (
-                    <Paper p="lg" withBorder>
-                         <Group justify="space-between" mb="md">
-                            <Title order={3}>{dailyNote.title}</Title>
-                            <Button leftSection={<IconFilePlus size={16}/>} onClick={handleOpenNote}>
-                                Open in Editor
-                            </Button>
-                         </Group>
-                         <Text lineClamp={5} c="dimmed">
-                             {dailyNote.content_md || "No content yet..."}
-                         </Text>
-                    </Paper>
-                ) : (
-                    <Paper p="lg" withBorder>
-                        <Text c="dimmed">Select a date to view or create a daily entry.</Text>
-                    </Paper>
-                )}
-            </Stack>
-        </Group>
+          ) : (
+            <Paper p="lg" withBorder>
+              <Text c="dimmed">Select a date to view or create a daily entry.</Text>
+            </Paper>
+          )}
+        </Stack>
+      </Group>
     </Container>
   );
 };

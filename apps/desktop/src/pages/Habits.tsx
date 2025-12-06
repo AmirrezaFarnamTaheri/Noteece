@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Title, Paper, Group, Button, Text, SimpleGrid, ActionIcon, Badge, Modal, TextInput, Select } from '@mantine/core';
+import {
+  Container,
+  Title,
+  Paper,
+  Group,
+  Button,
+  Text,
+  SimpleGrid,
+  ActionIcon,
+  Badge,
+  Modal,
+  TextInput,
+  Select,
+} from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { IconPlus, IconTrash, IconCheck } from '@tabler/icons-react';
@@ -110,7 +123,9 @@ const Habits: React.FC = () => {
             {...form.getInputProps('frequency')}
           />
           <Group justify="flex-end">
-            <Button variant="default" onClick={close}>Cancel</Button>
+            <Button variant="default" onClick={close}>
+              Cancel
+            </Button>
             <Button type="submit">Create</Button>
           </Group>
         </form>

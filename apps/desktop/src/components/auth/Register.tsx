@@ -163,7 +163,6 @@ const Register: React.FC<RegisterProperties> = ({ onSuccess, onSwitchToLogin }) 
               </button>
             </div>
             {password && (
-
               <div className={`${styles.strengthMeter} ${styles[passwordStrength]}`}>
                 <div className={styles.strengthLabel}>
                   Strength: <strong>{passwordStrength.toUpperCase()}</strong>

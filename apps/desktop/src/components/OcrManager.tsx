@@ -1,18 +1,5 @@
 import { useState } from 'react';
-import {
-  Box,
-  Button,
-  Card,
-  Group,
-  Stack,
-  Text,
-  Title,
-  Badge,
-  TextInput,
-  Alert,
-  Table,
-  Modal,
-} from '@mantine/core';
+import { Box, Button, Card, Group, Stack, Text, Title, Badge, TextInput, Alert, Table, Modal } from '@mantine/core';
 import { invoke } from '@tauri-apps/api/tauri';
 import { open } from '@tauri-apps/api/dialog';
 import { IconUpload, IconSearch, IconFile } from '@tabler/icons-react';
@@ -175,7 +162,6 @@ export function OcrManager() {
     // Validate status is a known value
     const validStatuses = ['queued', 'processing', 'completed', 'failed'];
     const isValidStatus = validStatuses.includes(normalizedStatus);
-
 
     const color = isValidStatus ? colors[normalizedStatus] : 'gray';
     const label = isValidStatus ? normalizedStatus : 'unknown';
@@ -357,7 +343,11 @@ export function OcrManager() {
               <Button variant="default" onClick={() => setUploadModalOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={() => handleQueueOcr(manualFilePath.trim())} loading={isUploading} leftSection={<IconUpload size={16} />}>
+              <Button
+                onClick={() => handleQueueOcr(manualFilePath.trim())}
+                loading={isUploading}
+                leftSection={<IconUpload size={16} />}
+              >
                 Process Image
               </Button>
             </Group>

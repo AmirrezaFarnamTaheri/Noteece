@@ -124,7 +124,7 @@ const AccountSettings: React.FC<AccountSettingsProperties> = ({ onLogout }) => {
           <p>Manage your Noteece account</p>
         </div>
 
-        { }
+        {}
         {message && <div className={`${styles.message} ${styles[messageType]}`}>{message}</div>}
 
         <section className={styles.section}>

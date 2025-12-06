@@ -119,7 +119,6 @@ describe('VirtualizedList', () => {
   });
 
   it('applies custom className', () => {
-
     renderWithProviders(<VirtualizedList {...defaultProps} className="custom-list-class" />);
 
     expect(screen.getByTestId('virtualized-list')).toBeInTheDocument();

@@ -34,8 +34,6 @@ interface TimelinePostProperties {
 export function TimelinePost({ post }: TimelinePostProperties) {
   const platform = SUPPORTED_PLATFORMS[post.platform as keyof typeof SUPPORTED_PLATFORMS];
 
-
-
   return (
     <Card shadow="sm" padding="lg" radius="md" withBorder>
       {/* Header */}

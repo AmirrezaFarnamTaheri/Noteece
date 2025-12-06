@@ -24,7 +24,6 @@ const ranges: Record<string, number> = {
 };
 
 const getRangeMs = (range: string): number => {
-
   return ranges[range] || ranges['30d'];
 };
 

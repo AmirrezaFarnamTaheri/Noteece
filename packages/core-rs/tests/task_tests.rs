@@ -11,8 +11,7 @@ fn setup_db() -> (Connection, tempfile::TempDir) {
     let mut conn = Connection::open_in_memory().unwrap();
 
     // In-memory databases don't need WAL mode optimization, but we enable foreign keys.
-    conn.execute_batch("PRAGMA foreign_keys = ON;")
-        .unwrap();
+    conn.execute_batch("PRAGMA foreign_keys = ON;").unwrap();
 
     migrate(&mut conn).unwrap();
     (conn, dir)
@@ -35,13 +34,17 @@ fn test_task_crud() {
     let mut task = create_task(&conn, space_id, "test task", None).expect("failed to create task");
     assert_eq!(task.title, "test task");
 
-    let retrieved_task = get_task(&conn, task.id).expect("failed to get task").unwrap();
+    let retrieved_task = get_task(&conn, task.id)
+        .expect("failed to get task")
+        .unwrap();
     assert_eq!(retrieved_task.id, task.id);
 
     task.title = "updated test task".to_string();
     task.status = "done".to_string();
     update_task(&conn, &task).expect("failed to update task");
-    let updated_task = get_task(&conn, task.id).expect("failed to get updated task").unwrap();
+    let updated_task = get_task(&conn, task.id)
+        .expect("failed to get updated task")
+        .unwrap();
     assert_eq!(updated_task.title, "updated test task");
     assert_eq!(updated_task.status, "done");
 

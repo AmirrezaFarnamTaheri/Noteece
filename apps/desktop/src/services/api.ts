@@ -25,6 +25,7 @@ import {
   BackupMetadata,
   User,
   Session,
+  DashboardStats,
 } from '@noteece/types';
 
 // Generic wrapper for invoke to handle logging and secure parameter validation
@@ -50,23 +51,13 @@ async function invokeCmd<T>(cmd: string, args?: Record<string, unknown>): Promis
     return result;
   } catch (error) {
     const duration = Date.now() - startTime;
-    logger.error(
-      `[API] ${cmd} failed after ${duration}ms`,
-      error instanceof Error ? error : { error }
-    );
+    logger.error(`[API] ${cmd} failed after ${duration}ms`, error instanceof Error ? error : { error });
     throw error;
   }
 }
 
 // Dashboard & Analytics
 export const getAnalyticsData = (): Promise<AnalyticsData> => invokeCmd('get_analytics_data_cmd', {});
-
-export interface DashboardStats {
-  notes_count: number;
-  tasks_count: number;
-  projects_count: number;
-  habits_completion_rate: number;
-}
 
 export const getDashboardStats = (spaceId: string): Promise<DashboardStats> =>
   invokeCmd('get_dashboard_stats_cmd', { spaceId });

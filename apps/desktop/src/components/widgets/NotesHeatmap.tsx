@@ -47,7 +47,6 @@ export default function NotesHeatmap() {
       const key = toLocalDateKey(created);
 
       if (activityMap[key] !== undefined) {
-
         activityMap[key]++;
       }
     }
@@ -67,10 +66,8 @@ export default function NotesHeatmap() {
     ).padStart(2, '0')}`;
 
     for (let index = activityData.length - 1; index >= 0; index--) {
-
       if (activityData[index].count > 0) {
         streak++;
-
       } else if (activityData[index].date !== todayLocalKey) {
         break;
       }
