@@ -22,14 +22,7 @@ import {
   Tooltip,
   Divider,
 } from '@mantine/core';
-import {
-  IconSend,
-  IconMessageCircle,
-  IconRobot,
-  IconUser,
-  IconFileText,
-  IconSparkles,
-} from '@tabler/icons-react';
+import { IconSend, IconMessageCircle, IconRobot, IconUser, IconFileText, IconSparkles } from '@tabler/icons-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
 

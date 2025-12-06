@@ -24,7 +24,8 @@ const CommandPalette: React.FC<{ opened: boolean; onClose: () => void }> = ({ op
   const navigate = useNavigate();
 
   const filteredCommands = commands.filter(
-    (c) => c.label.toLowerCase().includes(query.toLowerCase()) || c.description.toLowerCase().includes(query.toLowerCase()),
+    (c) =>
+      c.label.toLowerCase().includes(query.toLowerCase()) || c.description.toLowerCase().includes(query.toLowerCase()),
   );
 
   const handleSelect = (to: string) => {
@@ -46,27 +47,27 @@ const CommandPalette: React.FC<{ opened: boolean; onClose: () => void }> = ({ op
     }
 
     switch (event.key) {
-    case 'ArrowDown': {
-      event.preventDefault();
-      setSelectedIndex((prev) => (prev + 1) % filteredCommands.length);
+      case 'ArrowDown': {
+        event.preventDefault();
+        setSelectedIndex((prev) => (prev + 1) % filteredCommands.length);
 
-    break;
-    }
-    case 'ArrowUp': {
-      event.preventDefault();
-      setSelectedIndex((prev) => (prev - 1 + filteredCommands.length) % filteredCommands.length);
-
-    break;
-    }
-    case 'Enter': {
-      event.preventDefault();
-      if (filteredCommands[selectedIndex]) {
-        handleSelect(filteredCommands[selectedIndex].to);
+        break;
       }
+      case 'ArrowUp': {
+        event.preventDefault();
+        setSelectedIndex((prev) => (prev - 1 + filteredCommands.length) % filteredCommands.length);
 
-    break;
-    }
-    // No default
+        break;
+      }
+      case 'Enter': {
+        event.preventDefault();
+        if (filteredCommands[selectedIndex]) {
+          handleSelect(filteredCommands[selectedIndex].to);
+        }
+
+        break;
+      }
+      // No default
     }
   };
 

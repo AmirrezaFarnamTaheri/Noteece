@@ -119,7 +119,6 @@ const SpacedRepetition: React.FC = () => {
       setIsFlipped(false);
 
       setCurrentCardIndex((previous) => {
-
         if (cards[previous]?.id === reviewedId) {
           const next = previous + 1;
           if (next < cards.length) return next;
@@ -191,7 +190,6 @@ const SpacedRepetition: React.FC = () => {
         </Center>
       );
     }
-
 
     const currentCard = cards[currentCardIndex];
 

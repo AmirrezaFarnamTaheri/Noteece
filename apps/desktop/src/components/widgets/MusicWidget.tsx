@@ -45,7 +45,7 @@ const MusicWidget: React.FC = () => {
           </Group>
           {isPlaying && (
             <div className={classes.visualizer}>
-              {Array.from({length: 5}).map((_, i) => (
+              {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className={classes.bar} style={{ animationDelay: `${i * 0.1}s` }} />
               ))}
             </div>

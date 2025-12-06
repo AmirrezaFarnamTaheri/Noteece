@@ -59,8 +59,8 @@ impl SyncBatchProcessor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
     use chrono::Utc;
+    use std::collections::HashMap;
 
     #[test]
     fn test_batch_processor() {

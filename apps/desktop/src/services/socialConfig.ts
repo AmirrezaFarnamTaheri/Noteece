@@ -118,7 +118,6 @@ class SocialConfigService {
    * Get configuration for a specific platform
    */
   getPlatform(platformId: string): PlatformConfig | undefined {
-
     return this.config.platforms[platformId];
   }
 
@@ -129,7 +128,6 @@ class SocialConfigService {
     const enabled: Record<string, PlatformConfig> = {};
     for (const [id, config] of Object.entries(this.config.platforms)) {
       if (config.enabled) {
-
         enabled[id] = config;
       }
     }

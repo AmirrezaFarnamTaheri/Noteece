@@ -8,8 +8,8 @@ import classes from '../Dashboard.module.css';
 import { logger } from '@/utils/logger';
 
 interface TagWithCount {
-    tag: Tag;
-    note_count: number;
+  tag: Tag;
+  note_count: number;
 }
 
 const getFontSize = (count: number, max: number) => {

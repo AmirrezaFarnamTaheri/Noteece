@@ -37,7 +37,9 @@
   background: var(--card-bg);
   border: 1px solid var(--mantine-color-default-border);
   text-align: center;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .statCard:hover {
@@ -255,4 +257,3 @@
   font-size: 11px;
   color: var(--mantine-color-dimmed);
 }
-

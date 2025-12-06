@@ -130,7 +130,6 @@ export const ControlPanel: React.FC = () => {
 
   const getCategoryIcon = (category: string) => {
     if (Object.prototype.hasOwnProperty.call(categoryIcons, category)) {
-
       return categoryIcons[category];
     }
     return <IconPuzzle size={16} />;

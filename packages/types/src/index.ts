@@ -397,3 +397,4 @@ export interface SearchResult {
 
 // Social Media Suite types
 export * from './social';
+export * from './dashboard';

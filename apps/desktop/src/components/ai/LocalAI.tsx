@@ -21,15 +21,7 @@ import {
   Tooltip,
   Divider,
 } from '@mantine/core';
-import {
-  IconBrain,
-  IconSend,
-  IconRefresh,
-  IconCheck,
-  IconX,
-  IconCopy,
-  IconTrash,
-} from '@tabler/icons-react';
+import { IconBrain, IconSend, IconRefresh, IconCheck, IconX, IconCopy, IconTrash } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { logger } from '@/utils/logger';
 import { useI18n } from '@/i18n';

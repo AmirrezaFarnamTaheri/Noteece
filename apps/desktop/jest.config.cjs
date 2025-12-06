@@ -5,24 +5,27 @@ module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['./jest.setup.ts'],
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', {
-      tsconfig: {
-        jsx: 'react-jsx',
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true,
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          jsx: 'react-jsx',
+          esModuleInterop: true,
+          allowSyntheticDefaultImports: true,
+        },
+        diagnostics: {
+          ignoreCodes: [1343],
+        },
+        astTransformers: {
+          before: [
+            {
+              path: 'ts-jest-mock-import-meta',
+              options: { metaObjectReplacement: { env: { DEV: true, MODE: 'test' } } },
+            },
+          ],
+        },
       },
-      diagnostics: {
-        ignoreCodes: [1343]
-      },
-      astTransformers: {
-        before: [
-          {
-            path: 'ts-jest-mock-import-meta',
-            options: { metaObjectReplacement: { env: { DEV: true, MODE: 'test' } } }
-          }
-        ]
-      }
-    }],
+    ],
   },
   moduleNameMapper: {
     // Map CSS modules to a proxy so Jest can import them

@@ -110,7 +110,6 @@ const Foresight: React.FC = () => {
     executingReference.current = true;
     try {
       const requireParameter = (key: string) => {
-
         const v = action.parameters?.[key];
         if (v === undefined || v === null || v === '') {
           throw new Error(`Missing required parameter: ${key}`);

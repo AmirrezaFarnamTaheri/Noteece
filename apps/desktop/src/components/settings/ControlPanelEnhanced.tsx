@@ -227,7 +227,6 @@ export const ControlPanelEnhanced: React.FC = () => {
 
   const getCategoryIcon = (category: string) => {
     if (Object.prototype.hasOwnProperty.call(categoryIcons, category)) {
-
       return categoryIcons[category];
     }
     return <IconPuzzle size={16} />;
@@ -235,7 +234,6 @@ export const ControlPanelEnhanced: React.FC = () => {
 
   const getCategoryColor = (category: string) => {
     if (Object.prototype.hasOwnProperty.call(categoryColors, category)) {
-
       return categoryColors[category];
     }
     return 'gray';

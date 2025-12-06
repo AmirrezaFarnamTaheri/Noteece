@@ -79,8 +79,8 @@ export const theme: MantineThemeOverride = createTheme({
         content: {
           backgroundColor: '#141517',
           border: '1px solid #2C2E33',
-        }
-      }
-    }
+        },
+      },
+    },
   },
 });
