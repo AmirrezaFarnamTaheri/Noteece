@@ -13,6 +13,33 @@ use state::DbConnection;
 use std::sync::Mutex;
 use tauri::Manager;
 
+// Macro to safely access the database connection
+#[macro_export]
+macro_rules! with_db {
+    ($db:expr, $conn:ident, $block:block) => {{
+        let pool_guard = $db
+            .pool
+            .lock()
+            .map_err(|_| "Failed to lock database pool".to_string())?;
+        let pool = pool_guard
+            .as_ref()
+            .ok_or_else(|| "Database not initialized. Please unlock the vault.".to_string())?;
+        #[allow(unused_mut)]
+        let mut $conn = pool
+            .get()
+            .map_err(|e| format!("Failed to get connection from pool: {}", e))?;
+        $block
+    }};
+}
+
+// Macro to safely access the database connection (mutable)
+#[macro_export]
+macro_rules! with_db_mut {
+    ($db:expr, $conn:ident, $block:block) => {{
+        $crate::with_db!($db, $conn, $block)
+    }};
+}
+
 fn main() {
     AppConfig::init();
 
@@ -21,6 +48,7 @@ fn main() {
             pool: Mutex::new(None),
             dek: Mutex::new(None),
             p2p_sync: Mutex::new(None),
+            vault_path: Mutex::new(None),
         })
         .on_window_event(|event| {
             if let tauri::WindowEvent::CloseRequested { .. } = event.event() {

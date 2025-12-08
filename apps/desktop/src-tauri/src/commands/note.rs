@@ -86,7 +86,7 @@ pub fn search_notes_cmd(
     crate::with_db!(db, conn, {
         let scope_str = scope.as_deref().unwrap_or("");
         let search_query = SearchQuery {
-            query: query,
+            query,
             entity_types: vec![EntityType::Note],
             filters: SearchFilters {
                 space_id: if !scope_str.is_empty() {

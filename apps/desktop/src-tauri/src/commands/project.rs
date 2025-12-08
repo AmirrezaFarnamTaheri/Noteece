@@ -1,7 +1,6 @@
 use crate::state::DbConnection;
 use core_rs::project::*;
 use tauri::State;
-use ulid::Ulid;
 
 #[tauri::command]
 pub fn get_project_cmd(db: State<DbConnection>, id: String) -> Result<Option<Project>, String> {
