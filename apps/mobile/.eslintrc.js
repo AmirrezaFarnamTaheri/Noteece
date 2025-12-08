@@ -6,7 +6,7 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': 'warn',
     '@typescript-eslint/no-empty-object-type': 'off',
     '@typescript-eslint/no-wrapper-object-types': 'off',
-    'no-console': 'off',
+    'no-console': ['warn', { allow: ['warn', 'error'] }],
     'no-undef': 'off',
     'import/no-unresolved': [
       'error',
