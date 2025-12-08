@@ -22,7 +22,7 @@ impl ManageConnection for EncryptedConnectionManager {
         let conn = Connection::open(&self.path)?;
 
         // 1) Apply Key (DEK)
-        let key_hex = hex::encode(&self.dek);
+        let key_hex = hex::encode(self.dek);
         let keying_sql = format!(
             r#"
             PRAGMA kdf_iter = 256000;

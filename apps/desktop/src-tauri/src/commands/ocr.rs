@@ -3,10 +3,8 @@
 //! Provides Tauri commands for queueing, processing, and searching OCR results.
 //! OCR is performed using Tesseract when available, with results stored in the database.
 
-use crate::config::AppConfig;
 use crate::state::DbConnection;
 use std::fs;
-use std::path::PathBuf;
 use tauri::State;
 
 /// Queue a blob for OCR processing
@@ -50,8 +48,15 @@ pub fn process_ocr_job_cmd(
     language: Option<String>,
 ) -> Result<String, String> {
     // Get vault path and DEK
-    let vault_path =
-        AppConfig::vault_path().ok_or_else(|| "Vault path not configured".to_string())?;
+    let vault_path = {
+        let guard = db
+            .vault_path
+            .lock()
+            .map_err(|_| "Failed to lock vault path".to_string())?;
+        guard
+            .clone()
+            .ok_or_else(|| "Vault path not available".to_string())?
+    };
 
     let dek = {
         let dek_guard = db
@@ -64,7 +69,8 @@ pub fn process_ocr_job_cmd(
     };
 
     // Retrieve the blob from encrypted storage
-    let blob_data = core_rs::blob::retrieve_blob(&vault_path, &dek, &blob_id)
+    let vault_path_str = vault_path.to_string_lossy();
+    let blob_data = core_rs::blob::retrieve_blob(&vault_path_str, dek.as_slice(), &blob_id)
         .map_err(|e| format!("Failed to retrieve blob: {}", e))?;
 
     // Create a temporary file for OCR processing
@@ -146,11 +152,18 @@ pub async fn process_ocr_queue_cmd(
         for row in rows {
             ids.push(row.map_err(|e| e.to_string())?);
         }
-        Ok(ids)
+        Ok::<Vec<String>, String>(ids)
     })?;
 
-    let vault_path =
-        AppConfig::vault_path().ok_or_else(|| "Vault path not configured".to_string())?;
+    let vault_path = {
+        let guard = db
+            .vault_path
+            .lock()
+            .map_err(|_| "Failed to lock vault path".to_string())?;
+        guard
+            .clone()
+            .ok_or_else(|| "Vault path not available".to_string())?
+    };
 
     let dek = {
         let dek_guard = db
@@ -163,10 +176,11 @@ pub async fn process_ocr_queue_cmd(
     };
 
     let mut processed = 0u32;
+    let vault_path_str = vault_path.to_string_lossy();
 
     for blob_id in pending_jobs {
         // Retrieve blob
-        let blob_data = match core_rs::blob::retrieve_blob(&vault_path, &dek, &blob_id) {
+        let blob_data = match core_rs::blob::retrieve_blob(&vault_path_str, dek.as_slice(), &blob_id) {
             Ok(data) => data,
             Err(e) => {
                 log::warn!("[ocr] Failed to retrieve blob {}: {}", blob_id, e);
@@ -185,9 +199,15 @@ pub async fn process_ocr_queue_cmd(
         }
 
         // Process
-        let result = crate::with_db!(db, conn, {
-            core_rs::ocr::process_ocr_job(&conn, &blob_id, &temp_file_path, language.as_deref())
-        });
+        // We need a separate connection for each iteration to not hold the lock
+        let result = {
+             let temp_file_path_clone = temp_file_path.clone();
+             let blob_id_clone = blob_id.clone();
+             let language_clone = language.clone();
+             crate::with_db!(db, conn, {
+                core_rs::ocr::process_ocr_job(&conn, &blob_id_clone, &temp_file_path_clone, language_clone.as_deref())
+            })
+        };
 
         // Cleanup
         let _ = fs::remove_file(&temp_file_path);

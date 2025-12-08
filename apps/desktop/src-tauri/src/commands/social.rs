@@ -1,4 +1,5 @@
 use crate::state::DbConnection;
+use core_rs::social::account::UpdateSocialAccountParams;
 use core_rs::social::{
     AnalyticsOverview, SocialAccount, SocialCategory, SocialPost, TimelinePost, TimelineStats,
     WebViewSession,
@@ -62,7 +63,7 @@ pub fn update_social_account_cmd(
             .map_err(|_| "Failed to lock DEK".to_string())?;
         let dek = dek_guard.as_ref().map(|d| d.as_slice());
 
-        let params = core_rs::social::UpdateSocialAccountParams {
+        let params = UpdateSocialAccountParams {
             account_id: &account_id,
             enabled: None,
             sync_frequency_minutes: None,

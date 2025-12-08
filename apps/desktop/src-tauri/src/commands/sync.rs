@@ -32,6 +32,9 @@ pub fn register_device_cmd(
             protocol_version: "1.0.0".to_string(),
         };
 
+        // Suppress unused warning
+        let _ = public_key;
+
         let user_id = core_rs::db::get_or_create_user_id(&conn).map_err(|e| e.to_string())?;
         let agent = SyncAgent::new(user_id, "Desktop".to_string(), AppConfig::sync_port());
         agent
@@ -373,7 +376,7 @@ pub fn get_sync_history_for_space_cmd(
             core_rs::db::get_sync_port(&conn).unwrap_or_else(|_| AppConfig::sync_port());
         let agent = SyncAgent::new(device_id, "Desktop".to_string(), sync_port);
         agent
-            .get_sync_history(&conn, &space_id, limit)
+            .get_sync_history(&conn, &space_id, limit.into())
             .map_err(|e| e.to_string())
     })
 }

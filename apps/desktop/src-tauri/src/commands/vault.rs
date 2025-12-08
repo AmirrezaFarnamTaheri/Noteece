@@ -4,7 +4,7 @@ use crate::state::{DbConnection, SecureDek};
 use core_rs::sync::p2p::P2pSync;
 use core_rs::vault::{create_vault, unlock_vault};
 use r2d2::Pool;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tauri::State;
 
@@ -23,16 +23,22 @@ pub fn create_vault_cmd(db: State<DbConnection>, path: &str, password: &str) -> 
         .p2p_sync
         .lock()
         .map_err(|_| "Failed to lock P2P sync".to_string())?;
+    let mut vault_path_guard = db
+        .vault_path
+        .lock()
+        .map_err(|_| "Failed to lock vault path".to_string())?;
 
     *pool_guard = None;
     *dek_guard = None;
     *p2p_sync_guard = None;
+    *vault_path_guard = None;
 
     // Create vault (returns conn and dek)
     let vault = create_vault(path, password).map_err(|e| e.to_string())?;
 
     // Store DEK
     *dek_guard = Some(SecureDek::new(vault.dek.to_vec()));
+    *vault_path_guard = Some(PathBuf::from(path));
 
     // Create Pool
     let manager = EncryptedConnectionManager::new(Path::new(path).join("vault.sqlite3"), vault.dek);
@@ -60,14 +66,20 @@ pub fn unlock_vault_cmd(db: State<DbConnection>, path: &str, password: &str) -> 
         .p2p_sync
         .lock()
         .map_err(|_| "Failed to lock P2P sync".to_string())?;
+    let mut vault_path_guard = db
+        .vault_path
+        .lock()
+        .map_err(|_| "Failed to lock vault path".to_string())?;
 
     *pool_guard = None;
     *dek_guard = None;
     *p2p_sync_guard = None;
+    *vault_path_guard = None;
 
     let vault = unlock_vault(path, password).map_err(|e| e.to_string())?;
 
     *dek_guard = Some(SecureDek::new(vault.dek.to_vec()));
+    *vault_path_guard = Some(PathBuf::from(path));
 
     let manager = EncryptedConnectionManager::new(Path::new(path).join("vault.sqlite3"), vault.dek);
     let pool = Pool::builder()
@@ -85,7 +97,7 @@ pub fn unlock_vault_cmd(db: State<DbConnection>, path: &str, password: &str) -> 
 
     let device_id = core_rs::db::get_or_create_user_id(&conn).unwrap_or_default();
     let device_info = core_rs::sync::mobile_sync::DeviceInfo {
-        device_id,
+        device_id: device_id.clone(),
         device_name: "Desktop".to_string(),
         device_type: core_rs::sync::mobile_sync::DeviceType::Desktop,
         ip_address: "127.0.1.1"
