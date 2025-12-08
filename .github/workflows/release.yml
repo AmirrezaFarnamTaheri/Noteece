@@ -163,6 +163,8 @@ jobs:
     defaults:
       run:
         working-directory: apps/mobile
+    env:
+      IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
 
     steps:
       - name: Checkout code
@@ -402,9 +404,10 @@ jobs:
 
       # For signed IPA builds (requires Apple Developer certificates)
       - name: Build iOS IPA (Signed)
-        if: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' }}
+        if: ${{ env.IOS_CERTIFICATE_BASE64 != '' }}
         env:
-          IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          # IOS_CERTIFICATE_BASE64 is already in job env, but redundant definition here is fine or can be removed.
+          # We keep other secrets here.
           IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
           IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
         run: |
@@ -436,7 +439,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload iOS IPA
-        if: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' }}
+        if: ${{ env.IOS_CERTIFICATE_BASE64 != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: ios-ipa
