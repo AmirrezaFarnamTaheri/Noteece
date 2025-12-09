@@ -70,7 +70,7 @@ export const WeeklyProgress: React.FC = () => {
           </Group>
           <Progress
             value={completionRate}
-            color={completionRate > 70 ? 'green' : completionRate > 40 ? 'yellow' : 'red'}
+            color={completionRate > 70 ? 'green' : (completionRate > 40 ? 'yellow' : 'red')}
             size="lg"
             radius="xl"
           />
