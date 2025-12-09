@@ -121,6 +121,10 @@ async function exportPosts(spaceId: string): Promise<any[]> {
           // Remove common sensitive field patterns
           access_token: undefined,
           accessToken: undefined,
+          refresh_token: undefined,
+          refreshToken: undefined,
+          client_secret: undefined,
+          clientSecret: undefined,
           token: undefined,
           credentials: undefined,
           auth: undefined,

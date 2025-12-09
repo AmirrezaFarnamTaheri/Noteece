@@ -9,7 +9,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
 use tokio::net::TcpListener;
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, Semaphore};
 use tokio_tungstenite::accept_async;
 
 #[derive(Error, Debug)]
@@ -55,7 +55,19 @@ impl P2pSync {
         };
         let server_pubkey_b64 = Arc::new(server_pubkey_b64);
 
+        // Limit concurrent connections to 10
+        let connection_limit = Arc::new(Semaphore::new(10));
+
         loop {
+            // Acquire permit before accepting/processing to backpressure
+            let permit = match connection_limit.clone().acquire_owned().await {
+                Ok(p) => p,
+                Err(e) => {
+                    log::error!("[p2p] Semaphore closed: {}", e);
+                    return Ok(());
+                }
+            };
+
             let (stream, _) = listener
                 .accept()
                 .await
@@ -71,6 +83,9 @@ impl P2pSync {
             let protocol = self.protocol.clone();
 
             tokio::spawn(async move {
+                // Permit is held until this task is dropped
+                let _permit = permit;
+
                 match accept_async(stream).await {
                     Ok(ws_stream) => {
                         let (mut writer, mut reader) = ws_stream.split();
