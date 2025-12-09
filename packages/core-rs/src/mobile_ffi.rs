@@ -367,11 +367,20 @@ pub unsafe extern "C" fn rust_get_sync_progress(device_id: *const c_char) -> *mu
 }
 
 fn get_sync_progress_impl(device_id: &str) -> Result<SyncProgress, String> {
-    // Return real progress if possible, else placeholder
+    let (phase, progress) = if let Ok(guard) = GLOBAL_P2P.lock() {
+        if let Some(p2p) = &*guard {
+            RUNTIME.block_on(p2p.get_sync_status(device_id))
+        } else {
+            ("idle".to_string(), 0.0)
+        }
+    } else {
+        ("idle".to_string(), 0.0)
+    };
+
     Ok(SyncProgress {
         device_id: device_id.to_string(),
-        phase: "syncing".to_string(), // TODO: Get actual phase
-        progress: 0.5, // TODO: Get actual progress
+        phase,
+        progress,
         entities_pushed: 0,
         entities_pulled: 0,
         conflicts: 0,
@@ -440,13 +449,7 @@ fn resolve_conflict_impl(conflict_id: &str, resolution: &str) -> Result<(), Stri
     let conn = obtain_db_connection()?;
     let agent = SyncAgent::new("ffi_agent".to_string(), "FFI Agent".to_string(), 0);
 
-    // We need to fetch the conflict object first to pass it to resolve_conflict?
-    // SyncAgent::resolve_conflict takes &SyncConflict.
-    // We only have conflict_id.
-    // SyncAgent doesn't have `get_conflict_by_id`.
-    // I should implement fetching it manually or add helper.
-    // For now, I'll fetch it manually.
-
+    // Fetch conflict first
     let mut stmt = conn.prepare("SELECT entity_type, entity_id, local_version, remote_version, conflict_type, space_id FROM sync_conflict WHERE id = ?1").map_err(|e| e.to_string())?;
 
     let conflict = stmt.query_row([conflict_id], |row| {
@@ -464,10 +467,6 @@ fn resolve_conflict_impl(conflict_id: &str, resolution: &str) -> Result<(), Stri
         })
     }).map_err(|e| format!("Conflict not found: {}", e))?;
 
-    // DEK is needed for merge. Using empty for now as mobile FFI doesn't handle DEK yet?
-    // Or we need `rust_init` to take DEK?
-    // Or `GLOBAL_DEK`?
-    // Assuming unencrypted or key managed internally for now to avoid breaking changes.
     let dek = [0u8; 32];
 
     agent.resolve_conflict(&conn, &conflict, resolution_enum, &dek)

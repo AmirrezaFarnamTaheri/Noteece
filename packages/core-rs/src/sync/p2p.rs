@@ -2,7 +2,7 @@
 // This module integrates the discovery and mobile_sync modules to provide a complete P2P sync solution.
 
 use super::discovery::{DiscoveredDevice, DiscoveryService};
-use super::mobile_sync::{DeltaOperation, DeviceInfo, SyncCategory, SyncDelta, SyncProtocol};
+use super::mobile_sync::{DeltaOperation, DeviceInfo, SyncCategory, SyncDelta, SyncProtocol, SyncState};
 use crate::sync_agent::{SyncDelta as DbSyncDelta, SyncOperation as DbSyncOperation};
 use futures::{SinkExt, StreamExt};
 use std::sync::Arc;
@@ -226,6 +226,23 @@ impl P2pSync {
 
         log::info!("[p2p] Ready to accept pairing from {}", device_id);
         Ok(())
+    }
+
+    /// Get current sync status for FFI/UI
+    pub async fn get_sync_status(&self, _device_id: &str) -> (String, f64) {
+        let protocol = self.protocol.lock().await;
+        let state = protocol.get_sync_state();
+        let phase = format!("{:?}", state).to_lowercase();
+        // Simple mapping of state to progress
+        let progress = match state {
+            SyncState::Idle => 0.0,
+            SyncState::Connecting => 0.1,
+            SyncState::Connected => 0.2,
+            SyncState::Syncing => 0.5,
+            SyncState::SyncComplete => 1.0,
+            _ => 0.0,
+        };
+        (phase, progress)
     }
 }
 
