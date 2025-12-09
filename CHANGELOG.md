@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **Mobile Schema:** Aligned `Task` status (`todo` -> `next`) and priority (string -> int) with the core database schema to prevent data corruption.
+- **Desktop Schema:** Updated Task Board columns to map `To Do` to `next` status, matching the database.
+- **Mobile Search:** Added missing Full-Text Search (FTS) triggers in mobile database migration (v6) to keep search index in sync with notes.
+- **Mobile Sync:** Fixed FFI `register_device` to correctly set `DeviceType` and ensured `rust_start_sync` checks for initialized agent.
+- **P2P Security:** Added connection limit (Semaphore) to prevent DoS, and improved handshake to extract client keys for mutual auth.
+- **Mobile Migrations:** Wrapped database migrations in transactions to prevent race conditions and partial failures.
+- **Privacy:** Enhanced backup scrubbing to remove `refresh_token`, `client_secret` and other sensitive fields.
+- **Discovery:** Added `device_type` support to `DiscoveredDevice` in P2P discovery protocol.
+- **Desktop:** Fixed Journal timezone issue using local date format.
 - **Safety:** Replaced unsafe `unwrap()` calls in critical backend paths (`search.rs`, `collaboration.rs`, `blob.rs`, `selector_verification.rs`) with safe `expect()` or error handling.
 - **Desktop UI:** Replaced placeholder UI in Habits page with a functional creation modal.
 - **Desktop API:** Fixed `any` return type in `getDashboardStats` for better type safety.

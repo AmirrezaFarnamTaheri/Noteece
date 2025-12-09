@@ -18,8 +18,9 @@ const Journal: React.FC = () => {
     const fetchDailyNote = async () => {
       if (date && activeSpaceId) {
         try {
-          // Format date as YYYY-MM-DD
-          const dateStr = date.toISOString().split('T')[0];
+          // Format date as YYYY-MM-DD using local timezone to avoid off-by-one errors
+          // en-CA locale format is YYYY-MM-DD
+          const dateStr = date.toLocaleDateString('en-CA');
           // Assuming the title format for daily notes is "YYYY-MM-DD"
           // We use get_or_create_daily_note_cmd which handles logic on backend usually,
           // but if it just retrieves by title, we might need a specific command.

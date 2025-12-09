@@ -309,6 +309,8 @@ async function runMigrations(currentVersion: number): Promise<void> {
   if (currentVersion < 5) {
     console.log('Running migration v4 -> v5: Consolidate with core-rs schema');
 
+    await db.execAsync('BEGIN TRANSACTION');
+
     // Check for tags column in old note table before it gets dropped/altered
     let oldTags: { id: string; space_id: string; tags: string }[] = [];
     try {
@@ -489,6 +491,48 @@ async function runMigrations(currentVersion: number): Promise<void> {
       }
     } catch (error) {
       console.error('Migration v4 -> v5 failed:', error);
+      await db.runAsync('ROLLBACK').catch(e => console.error('Rollback failed', e));
+      throw error;
+    }
+    await db.execAsync('COMMIT');
+  }
+
+  // Migration from v5 to v6: Add FTS Triggers
+  if (currentVersion < 6) {
+    console.log('Running migration v5 -> v6: Adding FTS for Notes');
+    try {
+      await db.execAsync('BEGIN TRANSACTION');
+      await db.execAsync(`
+        CREATE VIRTUAL TABLE IF NOT EXISTS fts_note USING fts5(
+          title, content_md, note_id UNINDEXED,
+          tokenize='porter unicode61 remove_diacritics 2'
+        );
+
+        -- Rebuild from base table
+        INSERT INTO fts_note(rowid, title, content_md, note_id)
+        SELECT rowid, title, content_md, id FROM note;
+
+        -- Triggers
+        CREATE TRIGGER IF NOT EXISTS note_ai AFTER INSERT ON note BEGIN
+          INSERT INTO fts_note(rowid, title, content_md, note_id)
+          VALUES (new.rowid, new.title, new.content_md, new.id);
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS note_ad AFTER DELETE ON note BEGIN
+          DELETE FROM fts_note WHERE rowid = old.rowid;
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS note_au AFTER UPDATE ON note BEGIN
+          DELETE FROM fts_note WHERE rowid = old.rowid;
+          INSERT INTO fts_note(rowid, title, content_md, note_id)
+          VALUES (new.rowid, new.title, new.content_md, new.id);
+        END;
+      `);
+      await db.execAsync('COMMIT');
+      console.log('Migration v5 -> v6 completed successfully');
+    } catch (error) {
+      console.error('Migration v5 -> v6 failed:', error);
+      await db.runAsync('ROLLBACK').catch(e => console.error('Rollback failed', e));
       throw error;
     }
   }
