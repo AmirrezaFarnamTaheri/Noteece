@@ -307,6 +307,7 @@ npx react-native start --reset-cache
 **Cause:** Ubuntu 24.04 (Noble Numbat) removed the `libwebkit2gtk-4.0-dev` package, which is a hard dependency for Tauri v1 (via the `wry` and `javascriptcore-rs` crates).
 
 **Solution:**
+
 1.  **Use Ubuntu 22.04 LTS (Jammy Jellyfish):** This is the recommended environment for building Noteece.
 2.  **Use a Docker Container:** Build inside a `ubuntu:22.04` container.
 3.  **Upgrade to Tauri v2 (Future):** We are planning a migration to Tauri v2 which supports `webkit2gtk-4.1`.

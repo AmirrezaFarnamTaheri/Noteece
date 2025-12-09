@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+
 - **Mobile Schema:** Aligned `Task` status (`todo` -> `next`) and priority (string -> int) with the core database schema to prevent data corruption.
 - **Desktop Schema:** Updated Task Board columns to map `To Do` to `next` status, matching the database.
 - **Mobile Search:** Added missing Full-Text Search (FTS) triggers in mobile database migration (v6) to keep search index in sync with notes.
@@ -30,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Backend:** Audited `sync/engine.rs` and `sync/p2p.rs` for race conditions and proper error propagation.
 
 ### Added
+
 - **Documentation:** Added `STATUS.md` to track project state.
 - **UI/UX Overhaul:** Significantly enhanced the Desktop Dashboard with polished widgets for Music, Health, and Social.
 - **Music Widget:** Implemented a new glassmorphism design with visualizers and "disconnected" state handling.
@@ -45,4 +47,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.0] - 2024-05-20
 
 ### Added
+
 - Initial release of Noteece with core features.

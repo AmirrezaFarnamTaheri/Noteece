@@ -491,7 +491,7 @@ async function runMigrations(currentVersion: number): Promise<void> {
       }
     } catch (error) {
       console.error('Migration v4 -> v5 failed:', error);
-      await db.runAsync('ROLLBACK').catch(e => console.error('Rollback failed', e));
+      await db.runAsync('ROLLBACK').catch((e) => console.error('Rollback failed', e));
       throw error;
     }
     await db.execAsync('COMMIT');
@@ -532,7 +532,7 @@ async function runMigrations(currentVersion: number): Promise<void> {
       console.log('Migration v5 -> v6 completed successfully');
     } catch (error) {
       console.error('Migration v5 -> v6 failed:', error);
-      await db.runAsync('ROLLBACK').catch(e => console.error('Rollback failed', e));
+      await db.runAsync('ROLLBACK').catch((e) => console.error('Rollback failed', e));
       throw error;
     }
   }

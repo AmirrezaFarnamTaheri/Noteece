@@ -11,31 +11,35 @@ Noteece provides a powerful, sub-millisecond search experience that respects the
 ## 2. The Solution: Two-Tier Indexing
 
 ### Tier 1: The Encrypted Content
+
 The actual Markdown content (`content_md`) is stored as an encrypted blob in the `note` table.
-- *Status:* Opaque to the database engine.
-- *Searchability:* Zero (via SQL).
+
+- _Status:_ Opaque to the database engine.
+- _Searchability:_ Zero (via SQL).
 
 ### Tier 2: The Decrypted Search Index (FTS5)
+
 To allow search, we maintain a **shadow FTS5 table** (`fts_note`).
+
 - **When:** On `save()`, the application decrypts the content (in memory), tokenizes it, and updates the FTS index.
-- **Security Trade-off:** The FTS index contains tokenized plaintext. However, this index lives inside the *same* SQLCipher-encrypted database file.
-    - If the DB is locked (file on disk), the index is encrypted.
-    - If the DB is unlocked (app running), the index is queryable.
-    - *Mitigation:* We do not store the full content in the FTS table (Contentless or external content mode), only the index tokens, minimizing the leak surface if memory is dumped.
+- **Security Trade-off:** The FTS index contains tokenized plaintext. However, this index lives inside the _same_ SQLCipher-encrypted database file.
+  - If the DB is locked (file on disk), the index is encrypted.
+  - If the DB is unlocked (app running), the index is queryable.
+  - _Mitigation:_ We do not store the full content in the FTS table (Contentless or external content mode), only the index tokens, minimizing the leak surface if memory is dumped.
 
 ## 3. Query Parsing Logic
 
 The search bar accepts a rich syntax. The backend parses this string into a structured `SearchQuery` object.
 
-| Syntax | Example | Meaning |
-| :--- | :--- | :--- |
-| `term` | `apple` | Contains "apple" (FTS) |
-| `"phrase"` | `"apple pie"` | Exact phrase match |
-| `tag:` | `tag:work` | Has tag "work" (Relational Join) |
-| `status:` | `status:active` | Note/Task status is active |
-| `due:` | `due:today` | Due date is <= today |
-| `has:` | `has:task` | Note contains a task |
-| `-term` | `-banana` | Does NOT contain "banana" |
+| Syntax     | Example         | Meaning                          |
+| :--------- | :-------------- | :------------------------------- |
+| `term`     | `apple`         | Contains "apple" (FTS)           |
+| `"phrase"` | `"apple pie"`   | Exact phrase match               |
+| `tag:`     | `tag:work`      | Has tag "work" (Relational Join) |
+| `status:`  | `status:active` | Note/Task status is active       |
+| `due:`     | `due:today`     | Due date is <= today             |
+| `has:`     | `has:task`      | Note contains a task             |
+| `-term`    | `-banana`       | Does NOT contain "banana"        |
 
 ### Execution Flow
 
@@ -48,15 +52,16 @@ The search bar accepts a rich syntax. The backend parses this string into a stru
 
 ## 4. Snippet Generation
 
-Once results are found, we need to show the user *where* the match occurred.
+Once results are found, we need to show the user _where_ the match occurred.
+
 - We cannot ask SQLite for snippets because the FTS table doesn't have the original text (contentless).
 - **Process:**
-    1.  Fetch `rowid` from FTS.
-    2.  Fetch encrypted `content_md` from `note` table.
-    3.  Decrypt in Rust.
-    4.  Locate the term offsets.
-    5.  Extract a window (e.g., 50 chars before/after).
-    6.  Highlight: `...found the **apple** in the...`
+  1.  Fetch `rowid` from FTS.
+  2.  Fetch encrypted `content_md` from `note` table.
+  3.  Decrypt in Rust.
+  4.  Locate the term offsets.
+  5.  Extract a window (e.g., 50 chars before/after).
+  6.  Highlight: `...found the **apple** in the...`
 
 ## 5. Mobile Considerations
 
@@ -69,5 +74,6 @@ On Android/iOS, we use the same SQLite database. The FTS5 extension is standard 
 ---
 
 **References:**
+
 - [SQLite FTS5 Extension](https://www.sqlite.org/fts5.html)
 - [BM25 Ranking Function](https://en.wikipedia.org/wiki/Okapi_BM25)

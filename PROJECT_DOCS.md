@@ -12,8 +12,8 @@ For the Encyclopedical Wiki (Concepts, Glossary, Methodology), see [The Noteece 
 
 ## Quick Links
 
-| Topic                                                          | Description               |
-| -------------------------------------------------------------- | ------------------------- |
+| Topic                                                                    | Description               |
+| ------------------------------------------------------------------------ | ------------------------- |
 | [Getting Started](docs/project_docs/04_User_Guide/01_Getting_Started.md) | First steps for new users |
 | [Dashboard Guide](docs/project_docs/04_User_Guide/02_Dashboard.md)       | Customize your workspace  |
 | [Settings Guide](docs/project_docs/04_User_Guide/03_Settings.md)         | Configure Noteece         |
@@ -26,8 +26,8 @@ For the Encyclopedical Wiki (Concepts, Glossary, Methodology), see [The Noteece 
 
 Understanding the system.
 
-| Document                                                                   | Description                              |
-| -------------------------------------------------------------------------- | ---------------------------------------- |
+| Document                                                                             | Description                              |
+| ------------------------------------------------------------------------------------ | ---------------------------------------- |
 | [01. System Overview](docs/project_docs/01_Architecture/01_Overview.md)              | The monorepo, Tauri, and Rust core       |
 | [02. Database & Schema](docs/project_docs/01_Architecture/02_Database.md)            | SQLite, SQLCipher, and table definitions |
 | [03. Sync Protocol](docs/project_docs/01_Architecture/03_Sync_Protocol.md)           | P2P sync, encryption, and discovery      |
@@ -45,8 +45,8 @@ Understanding the system.
 
 User guides and functional specifications.
 
-| Document                                                               | Description                         |
-| ---------------------------------------------------------------------- | ----------------------------------- |
+| Document                                                                         | Description                         |
+| -------------------------------------------------------------------------------- | ----------------------------------- |
 | [01. Notes & Knowledge](docs/project_docs/02_Features/01_Notes_and_Knowledge.md) | Markdown editor, backlinks, tags    |
 | [02. Project Hub](docs/project_docs/02_Features/02_Project_Hub.md)               | Projects, milestones, kanban        |
 | [03. Personal Growth](docs/project_docs/02_Features/03_Personal_Growth.md)       | Habits, goals, health metrics       |
@@ -64,8 +64,8 @@ User guides and functional specifications.
 
 Guides for contributors.
 
-| Document                                                                  | Description                    |
-| ------------------------------------------------------------------------- | ------------------------------ |
+| Document                                                                            | Description                    |
+| ----------------------------------------------------------------------------------- | ------------------------------ |
 | [01. Setup Guide](docs/project_docs/03_Development/01_Setup.md)                     | Development environment        |
 | [02. Testing Strategy](docs/project_docs/03_Development/02_Testing.md)              | Unit, integration, E2E testing |
 | [03. Release Process](docs/project_docs/03_Development/03_Release_Process.md)       | Versioning and CI/CD           |
@@ -77,8 +77,8 @@ Guides for contributors.
 
 ## User Guide
 
-| Document                                                           | Description                 |
-| ------------------------------------------------------------------ | --------------------------- |
+| Document                                                                     | Description                 |
+| ---------------------------------------------------------------------------- | --------------------------- |
 | [01. Getting Started](docs/project_docs/04_User_Guide/01_Getting_Started.md) | First-time user orientation |
 | [02. Dashboard](docs/project_docs/04_User_Guide/02_Dashboard.md)             | Dashboard customization     |
 | [03. Settings](docs/project_docs/04_User_Guide/03_Settings.md)               | Application settings        |
