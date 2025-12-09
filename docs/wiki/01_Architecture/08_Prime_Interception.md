@@ -1,29 +1,35 @@
 # Prime Interception (Android Sideload)
 
-**Prime Interception** is the flagship feature of the Noteece Android "Prime" flavor (Sideload only). It allows Noteece to act as an intelligent layer *over* other applications, capturing context and linking it to your knowledge base without relying on official "Share" menus.
+**Prime Interception** is the flagship feature of the Noteece Android "Prime" flavor (Sideload only). It allows Noteece to act as an intelligent layer _over_ other applications, capturing context and linking it to your knowledge base without relying on official "Share" menus.
 
 ## 1. The Architecture
 
 The system consists of three distinct layers interacting across process boundaries.
 
 ### Layer A: The Overlay Service (Java/Kotlin)
-*Component:* `OverlayService.kt`
-*Type:* Android Accessibility Service + System Alert Window.
-*Role:*
+
+_Component:_ `OverlayService.kt`
+_Type:_ Android Accessibility Service + System Alert Window.
+_Role:_
+
 - **Draws UI:** Renders the floating "N" button (the Anchor) on top of other apps.
 - **Reads Screen:** Uses `AccessibilityEvent` to traverse the View Hierarchy of the active app.
 - **Extracts Text:** Identifies `TextView`, `EditText`, and `ContentDescription` nodes to gather raw text.
 - **Extracts Metadata:** Grabs Package Name (e.g., `com.twitter.android`), Activity Name, and Screen Bounds.
 
 ### Layer B: The JSI Bridge (C++)
-*Component:* `NoteeceCore.cpp`
-*Role:*
+
+_Component:_ `NoteeceCore.cpp`
+_Role:_
+
 - Acts as the high-performance glue between the Java layer and the React Native JavaScript runtime.
 - Methods like `nativeProcessStream(text, metadata)` allow passing large strings without the serialization overhead of the old RN Bridge.
 
 ### Layer C: The Stream Processor (Rust)
-*Component:* `stream_processor.rs`
-*Role:*
+
+_Component:_ `stream_processor.rs`
+_Role:_
+
 - **Ingestion:** Receives the raw text stream from the Overlay.
 - **Deduplication:** Uses a Bloom Filter (and simple history buffer) to ignore text we just processed (e.g., while scrolling).
 - **Pattern Matching:** Regex engines (`social/processing/extractors/`) look for known patterns (e.g., "Tweet by @user", "YouTube Video Title").
@@ -37,8 +43,8 @@ The system consists of three distinct layers interacting across process boundari
 4.  **Capture:** It sends the text + coordinates to the Rust core.
 5.  **Creation:** Noteece creates a new Note (or opens a Quick Note modal).
 6.  **Linking:** The Note includes a "Backlink" to the app content.
-    - *Format:* `noteece://anchor?pkg=com.twitter.android&data=...`
-    - *Future:* Deep linking to re-open that specific tweet.
+    - _Format:_ `noteece://anchor?pkg=com.twitter.android&data=...`
+    - _Future:_ Deep linking to re-open that specific tweet.
 
 ## 3. Privacy & Security
 
@@ -62,5 +68,6 @@ Google Play policies (and Apple App Store rules) strictly forbid apps from using
 ---
 
 **References:**
+
 - [Android AccessibilityService API](https://developer.android.com/reference/android/accessibilityservice/AccessibilityService)
 - [React Native JSI](https://reactnative.dev/docs/the-new-architecture/landing-page)

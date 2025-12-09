@@ -14,6 +14,7 @@ pnpm test --coverage
 Coverage configuration is in `apps/mobile/jest.config.js`.
 
 We ignore:
+
 - `node_modules`
 - `android/`
 - `ios/`

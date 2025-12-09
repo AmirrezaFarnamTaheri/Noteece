@@ -5,34 +5,42 @@ The **PARA Method**, created by Tiago Forte (Building a Second Brain), is a univ
 ## 1. The Four Categories
 
 ### P - Projects
+
 **Definition:** A series of tasks linked to a goal, with a deadline.
-*Example:* "Ship v1.2", "Plan Japan Trip", "Refactor Sync Engine".
-*Noteece Implementation:*
+_Example:_ "Ship v1.2", "Plan Japan Trip", "Refactor Sync Engine".
+_Noteece Implementation:_
+
 - The **Project Hub** is the dedicated home for these.
 - A `Project` entity exists in the database.
 - It has a `status` (Active, On Hold, Completed), a `deadline`, and linked `Tasks`.
-- **Actionability:** High. These are things you are working on *now*.
+- **Actionability:** High. These are things you are working on _now_.
 
 ### A - Areas
+
 **Definition:** A sphere of activity with a standard to be maintained over time. No deadline.
-*Example:* "Health", "Finances", "Car Maintenance", "Professional Development".
-*Noteece Implementation:*
+_Example:_ "Health", "Finances", "Car Maintenance", "Professional Development".
+_Noteece Implementation:_
+
 - **Tags/Folders:** We typically use Tags (`#area/health`) or top-level Folders to denote Areas.
 - **Dashboards:** You can create a "Health Dashboard" note that queries all data related to that area.
 - **Actionability:** Ongoing. Requires regular review.
 
 ### R - Resources
+
 **Definition:** A topic or theme of ongoing interest.
-*Example:* "Music Theory", "Rust Programming", "Coffee Brewing", "Graphic Design".
-*Noteece Implementation:*
+_Example:_ "Music Theory", "Rust Programming", "Coffee Brewing", "Graphic Design".
+_Noteece Implementation:_
+
 - This is where the **Zettelkasten** lives.
 - These are your reference notes, saved articles, and knowledge base.
 - **Actionability:** Low. Reference material.
 
 ### A - Archives
+
 **Definition:** Inactive items from the other three categories.
-*Example:* "Completed Projects", "Past Areas (e.g., old job)", "No longer interested resources".
-*Noteece Implementation:*
+_Example:_ "Completed Projects", "Past Areas (e.g., old job)", "No longer interested resources".
+_Noteece Implementation:_
+
 - **Project Status:** Setting a project to "Archived" hides it from the main view but keeps it searchable.
 - **Note Status:** Notes can be moved to an "Archive" folder or tagged `#archive`.
 - **Trash:** Distinct from Archive. Trash is for deletion. Archive is for "Cold Storage".
@@ -51,12 +59,13 @@ Information in Noteece flows between these categories:
 ## 3. Technical Support for PARA
 
 - **Project-Note Linking:** You can link a Note (Resource) to a Project.
-    - *UI:* "Related Notes" tab in the Project View.
-    - *DB:* `project_note` join table.
+  - _UI:_ "Related Notes" tab in the Project View.
+  - _DB:_ `project_note` join table.
 - **Tag Hierarchy:** Noteece supports nested tags (`area/finance/taxes`), allowing you to map the PARA hierarchy directly to the tag system.
 - **Filtering:** The Search engine supports `is:project`, `tag:area/*`, making it easy to slice your vault by PARA category.
 
 ---
 
 **References:**
+
 - [The PARA Method: A Universal System for Organizing Your Digital Life](https://fortelabs.com/blog/para/)

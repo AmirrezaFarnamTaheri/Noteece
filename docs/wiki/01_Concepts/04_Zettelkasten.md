@@ -5,30 +5,38 @@ The **Zettelkasten** (German for "slip box") is a knowledge management method po
 ## 1. Core Principles & Implementation
 
 ### A. Atomic Notes (The Zettel)
-*Principle:* Each note should contain one single, complete idea.
-*Noteece:*
+
+_Principle:_ Each note should contain one single, complete idea.
+_Noteece:_
+
 - The **Note** entity is the fundamental unit.
 - Notes are stored as flat files (conceptually) in the database.
 - We encourage short, focused titles (e.g., "The difference between LWW and OR-Sets" rather than "Sync Notes").
 
 ### B. Unique Identifiers (The Address)
-*Principle:* Every note needs a permanent address.
-*Noteece:*
+
+_Principle:_ Every note needs a permanent address.
+_Noteece:_
+
 - We use **ULIDs** (Universally Unique Lexicographically Sortable Identifier).
 - Example: `01ARZ3NDEKTSV4RRFFQ69G5FAV`
 - Unlike timestamps, ULIDs are random enough to avoid collision but sortable by time.
 - Unlike Titles, ULIDs never change. You can rename a note without breaking links.
 
 ### C. Linking (The Network)
-*Principle:* Notes are useless in isolation. The value comes from connections.
-*Noteece:*
+
+_Principle:_ Notes are useless in isolation. The value comes from connections.
+_Noteece:_
+
 - **Wikilinks:** We support the `[[Title]]` or `[[ULID]]` syntax.
 - **Backlinks:** The system automatically indexes inverse relationships. If Note A links to Note B, Note B displays a "Linked From: Note A" section.
 - **Graph View:** A force-directed graph visualization allows you to see the clusters and hubs of your knowledge.
 
 ### D. Structure Notes (Hubs)
-*Principle:* Don't force hierarchy, let it emerge. Create "Hub" notes that just list links to other notes.
-*Noteece:*
+
+_Principle:_ Don't force hierarchy, let it emerge. Create "Hub" notes that just list links to other notes.
+_Noteece:_
+
 - You can create a note called "Architecture MOC" (Map of Content) and just list `[[Sync]]`, `[[Database]]`, `[[Security]]`.
 
 ## 2. Workflow Example
@@ -45,6 +53,7 @@ The **Zettelkasten** (German for "slip box") is a knowledge management method po
 ## 3. The "Why" for Developers
 
 Why did we build Zettelkasten features into a productivity app?
+
 - **Code is Knowledge:** Codebases are complex webs of logic. Documenting them requires a network, not a tree.
 - **Context Preservation:** Linking a task to the note that inspired it preserves the "Why".
 - **Longevity:** A hierarchy (folders) that makes sense today won't make sense next year. A network evolves organically.
@@ -52,5 +61,6 @@ Why did we build Zettelkasten features into a productivity app?
 ---
 
 **References:**
+
 - [Niklas Luhmann's Zettelkasten](https://zettelkasten.de/posts/luhmann-zettelkasten/)
 - [How to Take Smart Notes (Sönke Ahrens)](https://takesmartnotes.com/)

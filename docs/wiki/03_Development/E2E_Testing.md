@@ -14,12 +14,14 @@ We use Playwright for End-to-End (E2E) testing of the desktop application.
 ## Running Tests
 
 Run all tests:
+
 ```bash
 cd apps/desktop
 npx playwright test
 ```
 
 Run a specific test file:
+
 ```bash
 npx playwright test e2e/basic.spec.ts
 ```
@@ -29,6 +31,7 @@ npx playwright test e2e/basic.spec.ts
 Tests are located in `apps/desktop/e2e/`.
 
 Example `basic.spec.ts`:
+
 ```typescript
 import { test, expect } from '@playwright/test';
 

@@ -9,6 +9,7 @@
 ## Current State
 
 The implementation appears solid based on standard practices. However, as the project matures, an external audit is recommended, especially for:
+
 - The custom Key Exchange mechanism (ECDH over P2P).
 - The `SecureDek` memory management (using `zeroize`).
 - The Zero-Trust architecture assumptions.

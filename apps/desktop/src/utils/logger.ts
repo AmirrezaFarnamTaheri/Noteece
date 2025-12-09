@@ -188,13 +188,13 @@ logger.addListener((entry: LogEntry) => {
       timestamp: entry.timestamp,
       context: entry.context ? safeStringify(entry.context) : undefined,
       error: entry.error
-        ? (entry.error instanceof Error
+        ? entry.error instanceof Error
           ? {
               message: entry.error.message,
               stack: entry.error.stack?.slice(0, 5000),
               name: entry.error.name,
             }
-          : safeStringify(entry.error))
+          : safeStringify(entry.error)
         : undefined,
     };
 
