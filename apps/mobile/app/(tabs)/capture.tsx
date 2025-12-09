@@ -38,7 +38,7 @@ export default function CaptureScreen() {
         const finalNoteTitle = noteTitle.length > 0 ? noteTitle : 'Quick Note';
 
         await dbExecute(
-          `INSERT INTO note (id, space_id, title, content, created_at, updated_at)
+          `INSERT INTO note (id, space_id, title, content_md, created_at, modified_at)
            VALUES (?, ?, ?, ?, ?, ?)`,
           [id, 'default', finalNoteTitle, content, now, now],
         );
@@ -56,11 +56,12 @@ export default function CaptureScreen() {
         taskTitle = taskTitle.substring(0, 200);
         const finalTaskTitle = taskTitle.length > 0 ? taskTitle : 'New Task';
 
-        // Initialize all task fields with default values to prevent NULL issues
+        // Initialize all task fields with default values.
+        // Schema: status='next', priority=3 (Normal). Removed created_at as it's not in schema.
         await dbExecute(
-          `INSERT INTO task (id, space_id, title, description, status, created_at, completed_at, priority, due_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [id, 'default', finalTaskTitle, content, 'todo', now, 0, 'normal', 0],
+          `INSERT INTO task (id, space_id, title, description, status, completed_at, priority, due_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [id, 'default', finalTaskTitle, content, 'next', null, 3, null],
         );
       }
 
@@ -91,6 +92,7 @@ export default function CaptureScreen() {
       label: 'Task',
       description: 'Add a quick task',
     },
+    // Voice and Photo hidden/removed as requested until implemented
   ];
 
   return (

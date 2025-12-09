@@ -88,14 +88,16 @@ const colorTokenMap: Record<SafeColor, { bgActive: string; bgIdle: string; borde
     },
   };
 
-type ColumnKey = 'inbox' | 'todo' | 'in_progress' | 'done';
+type ColumnKey = 'inbox' | 'next' | 'in_progress' | 'waiting' | 'done' | 'cancelled';
 type ColumnDef = { readonly title: string; readonly color: SafeColor; readonly icon: string };
 
 const columns: Readonly<Record<ColumnKey, ColumnDef>> = Object.freeze({
   inbox: { title: 'Inbox', color: 'gray', icon: '📥' },
-  todo: { title: 'To Do', color: 'blue', icon: '📋' },
+  next: { title: 'Next', color: 'blue', icon: '📋' },
   in_progress: { title: 'In Progress', color: 'yellow', icon: '⚡' },
+  waiting: { title: 'Waiting', color: 'orange', icon: '⏳' },
   done: { title: 'Done', color: 'green', icon: '✅' },
+  cancelled: { title: 'Cancelled', color: 'gray', icon: '❌' },
 } as const);
 
 const TaskBoard: React.FC = () => {
@@ -142,7 +144,9 @@ const TaskBoard: React.FC = () => {
 
     const task = tasks.find((t) => t.id === draggableId);
     if (task) {
-      const updatedTask = { ...task, status: destination.droppableId };
+      // Cast destination.droppableId to the allowed union type as we control the droppables
+      const newStatus = destination.droppableId as Task['status'];
+      const updatedTask = { ...task, status: newStatus };
       try {
         await invoke('update_task_cmd', { task: updatedTask });
         fetchTasks(); // Refresh the list
@@ -272,9 +276,9 @@ const TaskBoard: React.FC = () => {
                                         {task.description}
                                       </Text>
                                     )}
-                                    {(task.due_date || task.priority) && (
+                                    {(task.due_at || task.priority) && (
                                       <Group gap="xs" mt={4}>
-                                        {task.due_date && (
+                                        {task.due_at && (
                                           <Tooltip label="Deadline">
                                             <Badge
                                               variant="light"
@@ -282,7 +286,7 @@ const TaskBoard: React.FC = () => {
                                               size="xs"
                                               leftSection={<IconCalendar size={10} />}
                                             >
-                                              {new Date(task.due_date * 1000).toLocaleDateString()}
+                                              {new Date(task.due_at).toLocaleDateString()}
                                             </Badge>
                                           </Tooltip>
                                         )}

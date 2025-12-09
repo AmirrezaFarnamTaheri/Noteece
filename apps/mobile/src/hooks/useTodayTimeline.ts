@@ -24,7 +24,6 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
       const todayEnd = todayStart + 86400000; // 24 hours
 
       // Fetch daily brief (Foresight insight)
-      // Note: Database returns snake_case, so we use any and map to camelCase
       const insights = await dbQuery<any>(
         `SELECT * FROM insight
          WHERE insight_type = 'daily_brief'
@@ -44,13 +43,12 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
           suggestedActions = [];
         }
 
-        // Explicitly map insight row to camelCase interface
         setBrief({
           id: insightRow.id,
           insightType: insightRow.insight_type,
           title: insightRow.title,
-          description: insightRow.summary || '', // Map summary to description
-          severity: insightRow.priority || 'info', // Map priority to severity
+          description: insightRow.summary || '',
+          severity: insightRow.priority || 'info',
           suggestedActions,
           dismissed: insightRow.dismissed,
           createdAt: insightRow.created_at,
@@ -58,17 +56,16 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
       }
 
       // Fetch tasks due today
-      // Note: Database returns snake_case, so we use any and map to camelCase
+      // Correct statuses and priority order
       const tasks = await dbQuery<any>(
         `SELECT * FROM task
          WHERE due_at BETWEEN ? AND ?
-         AND status != 'completed'
-         ORDER BY priority DESC, due_at ASC`,
+         AND status != 'done' AND status != 'cancelled'
+         ORDER BY priority ASC, due_at ASC`,
         [todayStart, todayEnd],
       );
 
       // Fetch calendar events for today
-      // Note: Database returns snake_case, so we use any and map to camelCase
       const events = await dbQuery<any>(
         `SELECT * FROM calendar_event
          WHERE start_time BETWEEN ? AND ?
@@ -79,7 +76,7 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
       // Combine into timeline items
       const items: TimelineItem[] = [];
 
-      // Add calendar events - normalize snake_case to camelCase
+      // Add calendar events
       events.forEach((eventRow) => {
         items.push({
           id: eventRow.id,
@@ -102,7 +99,7 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
         });
       });
 
-      // Add tasks - normalize snake_case to camelCase
+      // Add tasks - use snake_case to match Task interface
       tasks.forEach((taskRow) => {
         items.push({
           id: taskRow.id,
@@ -113,17 +110,19 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
           color: colors.primary,
           data: {
             id: taskRow.id,
-            spaceId: taskRow.space_id,
-            projectId: taskRow.project_id,
+            space_id: taskRow.space_id,
+            project_id: taskRow.project_id,
+            parent_task_id: taskRow.parent_task_id,
             title: taskRow.title,
             description: taskRow.description,
             status: taskRow.status,
             priority: taskRow.priority,
-            dueAt: taskRow.due_at,
-            completedAt: taskRow.completed_at,
-            progress: taskRow.progress,
-            createdAt: taskRow.created_at || Date.now(),
-            updatedAt: taskRow.updated_at || Date.now(),
+            due_at: taskRow.due_at,
+            completed_at: taskRow.completed_at,
+            estimate_minutes: taskRow.estimate_minutes,
+            recur_rule: taskRow.recur_rule,
+            context: taskRow.context,
+            area: taskRow.area,
           } as Task,
         });
       });
