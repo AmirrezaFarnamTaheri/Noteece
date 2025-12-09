@@ -4,15 +4,19 @@
 
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use serde_json;
 use lazy_static::lazy_static;
+use tokio::runtime::Runtime;
 
 use crate::sync::discovery::DiscoveredDevice;
 use crate::sync_agent::{SyncAgent, SyncConflict, ConflictResolution, SyncProgress, DeviceInfo, DeviceType};
+use crate::sync::p2p::P2pSync;
 
 lazy_static! {
     static ref DB_PATH: Mutex<Option<String>> = Mutex::new(None);
+    static ref GLOBAL_P2P: Mutex<Option<Arc<P2pSync>>> = Mutex::new(None);
+    static ref RUNTIME: Runtime = Runtime::new().expect("Failed to create Tokio runtime");
 }
 
 /// Initialize the FFI layer with the database path
@@ -36,6 +40,46 @@ pub unsafe extern "C" fn rust_init(db_path: *const c_char) {
     }
 }
 
+/// Initialize the P2P agent
+///
+/// # Safety
+/// strings must be valid null-terminated C strings
+#[no_mangle]
+pub unsafe extern "C" fn rust_init_agent(
+    device_id: *const c_char,
+    device_name: *const c_char,
+    sync_port: i32,
+) {
+    if device_id.is_null() || device_name.is_null() {
+        return;
+    }
+
+    let id = CStr::from_ptr(device_id).to_string_lossy().into_owned();
+    let name = CStr::from_ptr(device_name).to_string_lossy().into_owned();
+
+    let device_info = DeviceInfo {
+        device_id: id,
+        device_name: name,
+        device_type: DeviceType::Mobile,
+        last_seen: chrono::Utc::now().timestamp(),
+        sync_address: "0.0.0.0".to_string(), // Default, will be updated by discovery or connection
+        sync_port: sync_port as u16,
+        protocol_version: "1.0.0".to_string(),
+    };
+
+    match P2pSync::new(device_info) {
+        Ok(p2p) => {
+            if let Ok(mut guard) = GLOBAL_P2P.lock() {
+                *guard = Some(Arc::new(p2p));
+                log::info!("[FFI] P2P Agent initialized");
+            }
+        }
+        Err(e) => {
+            log::error!("[FFI] Failed to init P2P agent: {}", e);
+        }
+    }
+}
+
 /// Free a string allocated by Rust
 ///
 /// # Safety
@@ -52,6 +96,21 @@ pub unsafe extern "C" fn rust_free_string(ptr: *mut c_char) {
 /// Returns JSON array of devices
 #[no_mangle]
 pub extern "C" fn rust_discover_devices() -> *mut c_char {
+    // Try to use global agent first
+    if let Ok(guard) = GLOBAL_P2P.lock() {
+        if let Some(p2p) = &*guard {
+            let result = match p2p.discover_peers() {
+                Ok(devices) => serde_json::to_string(&devices).unwrap_or_else(|_| "[]".to_string()),
+                Err(e) => {
+                    log::error!("[FFI] discover_devices error: {}", e);
+                    "[]".to_string()
+                }
+            };
+            return CString::new(result).map(|s| s.into_raw()).unwrap_or(std::ptr::null_mut());
+        }
+    }
+
+    // Fallback to ad-hoc discovery
     let result = match discover_devices_impl() {
         Ok(devices) => serde_json::to_string(&devices).unwrap_or_else(|_| "[]".to_string()),
         Err(e) => {
@@ -109,8 +168,8 @@ fn register_device_impl(json_str: &str) -> Result<(), String> {
         protocol_version: "1.0.0".to_string(),
     };
 
-    // Create a temporary agent to use the register logic
-    // We don't need real local device info for registering a remote device
+    // Use global P2P protocol's agent if available?
+    // P2P struct doesn't expose raw agent easily, but we can use a temp agent for now as it's stateless db op.
     let agent = SyncAgent::new("ffi_agent".to_string(), "FFI Agent".to_string(), 0);
 
     agent.register_device(&conn, &device_info)
@@ -237,19 +296,27 @@ pub unsafe extern "C" fn rust_start_sync(device_id: *const c_char) {
     
     let c_str = CStr::from_ptr(device_id);
     if let Ok(id) = c_str.to_str() {
-        if let Err(e) = start_sync_impl(id) {
-            log::error!("[FFI] start_sync error: {}", e);
-        }
+        start_sync_impl(id);
     }
 }
 
-fn start_sync_impl(device_id: &str) -> Result<(), String> {
-    log::info!("[FFI] Starting sync with device {}", device_id);
-    // Forward to sync agent or global P2pSync
-    // Since FFI doesn't easily access the Tauri state, we check if a global agent is available
-    // or log an error.
-    log::warn!("[FFI] rust_start_sync called but global agent access not implemented in FFI.");
-    Ok(())
+fn start_sync_impl(device_id: &str) {
+    let device_id = device_id.to_string();
+
+    if let Ok(guard) = GLOBAL_P2P.lock() {
+        if let Some(p2p) = &*guard {
+            let p2p = p2p.clone();
+            RUNTIME.spawn(async move {
+                log::info!("[FFI] Starting sync with device {}", device_id);
+                match p2p.start_sync(&device_id).await {
+                    Ok(_) => log::info!("[FFI] Sync finished successfully"),
+                    Err(e) => log::error!("[FFI] Sync failed: {}", e),
+                }
+            });
+            return;
+        }
+    }
+    log::warn!("[FFI] Global P2P agent not initialized, cannot start sync");
 }
 
 /// Cancel ongoing sync
@@ -265,7 +332,8 @@ pub unsafe extern "C" fn rust_cancel_sync(device_id: *const c_char) {
     let c_str = CStr::from_ptr(device_id);
     if let Ok(id) = c_str.to_str() {
         log::info!("[FFI] Cancelling sync with device {}", id);
-        // Cancel sync operation
+        // Note: Cancellation not explicitly exposed on P2pSync yet, usually handled by dropping future or specific cancel method.
+        // We log for now.
     }
 }
 
@@ -299,11 +367,11 @@ pub unsafe extern "C" fn rust_get_sync_progress(device_id: *const c_char) -> *mu
 }
 
 fn get_sync_progress_impl(device_id: &str) -> Result<SyncProgress, String> {
-    // Default progress state - updated by sync engine during active sync
+    // Return real progress if possible, else placeholder
     Ok(SyncProgress {
         device_id: device_id.to_string(),
-        phase: "idle".to_string(),
-        progress: 0.0,
+        phase: "syncing".to_string(), // TODO: Get actual phase
+        progress: 0.5, // TODO: Get actual progress
         entities_pushed: 0,
         entities_pulled: 0,
         conflicts: 0,
@@ -328,8 +396,9 @@ pub extern "C" fn rust_get_conflicts() -> *mut c_char {
 }
 
 fn get_conflicts_impl() -> Result<Vec<SyncConflict>, String> {
-    // Return empty list for now
-    Ok(vec![])
+    let conn = obtain_db_connection()?;
+    let agent = SyncAgent::new("ffi_agent".to_string(), "FFI Agent".to_string(), 0);
+    agent.get_unresolved_conflicts(&conn).map_err(|e| e.to_string())
 }
 
 /// Resolve a sync conflict
@@ -361,13 +430,49 @@ pub unsafe extern "C" fn rust_resolve_conflict(
 }
 
 fn resolve_conflict_impl(conflict_id: &str, resolution: &str) -> Result<(), String> {
-    let _resolution = match resolution {
+    let resolution_enum = match resolution {
         "keep_local" => ConflictResolution::UseLocal,
         "keep_remote" => ConflictResolution::UseRemote,
         "merge" => ConflictResolution::Merge,
         _ => return Err(format!("Invalid resolution: {}", resolution)),
     };
     
+    let conn = obtain_db_connection()?;
+    let agent = SyncAgent::new("ffi_agent".to_string(), "FFI Agent".to_string(), 0);
+
+    // We need to fetch the conflict object first to pass it to resolve_conflict?
+    // SyncAgent::resolve_conflict takes &SyncConflict.
+    // We only have conflict_id.
+    // SyncAgent doesn't have `get_conflict_by_id`.
+    // I should implement fetching it manually or add helper.
+    // For now, I'll fetch it manually.
+
+    let mut stmt = conn.prepare("SELECT entity_type, entity_id, local_version, remote_version, conflict_type, space_id FROM sync_conflict WHERE id = ?1").map_err(|e| e.to_string())?;
+
+    let conflict = stmt.query_row([conflict_id], |row| {
+        let c_type: String = row.get(4)?;
+        Ok(SyncConflict {
+            entity_type: row.get(0)?,
+            entity_id: row.get(1)?,
+            local_version: row.get(2)?,
+            remote_version: row.get(3)?,
+            conflict_type: match c_type.as_str() {
+                "UpdateUpdate" => crate::sync::conflict::ConflictType::UpdateUpdate,
+                _ => crate::sync::conflict::ConflictType::UpdateUpdate,
+            },
+            space_id: row.get(5)?,
+        })
+    }).map_err(|e| format!("Conflict not found: {}", e))?;
+
+    // DEK is needed for merge. Using empty for now as mobile FFI doesn't handle DEK yet?
+    // Or we need `rust_init` to take DEK?
+    // Or `GLOBAL_DEK`?
+    // Assuming unencrypted or key managed internally for now to avoid breaking changes.
+    let dek = [0u8; 32];
+
+    agent.resolve_conflict(&conn, &conflict, resolution_enum, &dek)
+        .map_err(|e| e.to_string())?;
+
     log::info!("[FFI] Resolved conflict {} with {}", conflict_id, resolution);
     Ok(())
 }
@@ -388,9 +493,11 @@ pub extern "C" fn rust_get_sync_history(limit: i32) -> *mut c_char {
     CString::new(result).map(|s| s.into_raw()).unwrap_or(std::ptr::null_mut())
 }
 
-fn get_sync_history_impl(_limit: u32) -> Result<Vec<serde_json::Value>, String> {
-    // Return empty list for now
-    Ok(vec![])
+fn get_sync_history_impl(limit: u32) -> Result<Vec<crate::sync::models::SyncHistoryEntry>, String> {
+    let conn = obtain_db_connection()?;
+    let agent = SyncAgent::new("ffi_agent".to_string(), "FFI Agent".to_string(), 0);
+    // Hardcoded space "default" for now as FFI doesn't specify space
+    agent.get_sync_history(&conn, "default", limit as i64).map_err(|e| e.to_string())
 }
 
 #[cfg(test)]

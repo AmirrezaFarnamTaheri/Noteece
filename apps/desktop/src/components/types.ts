@@ -7,8 +7,8 @@ export interface Mode {
 export interface Task {
   id: string;
   title: string;
-  status: string;
-  priority?: string;
-  due_date?: number;
+  status: 'inbox' | 'next' | 'in_progress' | 'waiting' | 'done' | 'cancelled';
+  priority?: number; // 1-4
+  due_at?: number;
   description?: string;
 }

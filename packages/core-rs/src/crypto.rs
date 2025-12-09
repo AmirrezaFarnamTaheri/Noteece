@@ -6,6 +6,8 @@ use rand::Rng;
 use sha2::Sha512;
 use thiserror::Error;
 
+pub mod ecdh;
+
 #[derive(Error, Debug)]
 pub enum CryptoError {
     #[error("AES-KW error: {0}")]
@@ -211,5 +213,3 @@ pub fn decrypt_bytes(encrypted: &[u8], dek: &[u8]) -> Result<Vec<u8>, CryptoErro
 
     Ok(plaintext)
 }
-
-// Remove the misleading hex-based shim to prevent accidental misuse.

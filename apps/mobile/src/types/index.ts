@@ -1,17 +1,20 @@
 // Core types for mobile app
 export interface Task {
   id: string;
-  spaceId: string;
-  projectId?: string;
+  space_id: string;
+  project_id?: string;
+  parent_task_id?: string;
   title: string;
   description?: string;
-  status: 'todo' | 'in_progress' | 'completed';
-  priority?: 'low' | 'medium' | 'high' | 'urgent';
-  dueAt?: number;
-  completedAt?: number;
-  progress?: number;
-  createdAt: number;
-  updatedAt: number;
+  status: 'inbox' | 'next' | 'in_progress' | 'waiting' | 'done' | 'cancelled';
+  priority?: number; // 1-4
+  due_at?: number;
+  start_at?: number;
+  completed_at?: number;
+  estimate_minutes?: number;
+  recur_rule?: string;
+  context?: string;
+  area?: string;
 }
 
 export interface Note {
@@ -36,6 +39,7 @@ export interface CalendarEvent {
   color: string;
 }
 
+// Reverted TimeEntry to camelCase (original)
 export interface TimeEntry {
   id: string;
   spaceId: string;
@@ -48,6 +52,7 @@ export interface TimeEntry {
   isRunning: boolean;
 }
 
+// Reverted HealthMetric to camelCase (original)
 export interface HealthMetric {
   id: string;
   spaceId: string;

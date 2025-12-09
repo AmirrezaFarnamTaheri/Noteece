@@ -67,7 +67,7 @@ export default function NotesScreen() {
       <Text style={styles.cardPreview} numberOfLines={3}>
         {item.content_md}
       </Text>
-      <Text style={styles.cardDate}>{new Date(item.modified_at * 1000).toLocaleDateString()}</Text>
+      <Text style={styles.cardDate}>{new Date(item.modified_at).toLocaleDateString()}</Text>
     </TouchableOpacity>
   );
 

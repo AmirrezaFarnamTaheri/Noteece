@@ -7,7 +7,7 @@ import { dbQuery, dbExecute } from '@/lib/database';
 import { Task } from '@/types';
 import { nanoid } from 'nanoid';
 
-type FilterType = 'all' | 'today' | 'upcoming' | 'completed';
+type FilterType = 'all' | 'today' | 'upcoming' | 'done';
 
 export default function TasksScreen() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -31,24 +31,24 @@ export default function TasksScreen() {
         case 'today':
           // Handle NULL due_at by explicitly excluding it
           query += ' WHERE due_at IS NOT NULL AND due_at BETWEEN ? AND ? AND status != ?';
-          params = [todayStart, todayEnd, 'completed'];
+          params = [todayStart, todayEnd, 'done'];
           break;
         case 'upcoming':
           // Handle NULL due_at by explicitly excluding it
           query += ' WHERE due_at IS NOT NULL AND due_at > ? AND status != ?';
-          params = [now, 'completed'];
+          params = [now, 'done'];
           break;
-        case 'completed':
+        case 'done':
           query += ' WHERE status = ?';
-          params = ['completed'];
+          params = ['done'];
           break;
         default:
-          query += ' WHERE status != ?';
-          params = ['completed'];
+          query += ' WHERE status != ? AND status != ?';
+          params = ['done', 'cancelled'];
           break;
       }
 
-      query += ' ORDER BY priority DESC, due_at ASC';
+      query += ' ORDER BY priority ASC, due_at ASC'; // Lower priority number = higher urgency (1=Urgent)
 
       const results = await dbQuery<Task>(query, params);
       setTasks(results);
@@ -66,9 +66,9 @@ export default function TasksScreen() {
 
   const toggleTaskStatus = async (task: Task) => {
     try {
-      const newStatus = task.status === 'completed' ? 'todo' : 'completed';
-      // Use 0 when clearing completion to avoid NULL-related issues in schemas expecting integers
-      const completedAtValue = newStatus === 'completed' ? Date.now() : 0;
+      const newStatus = task.status === 'done' ? 'next' : 'done';
+      // Use 0 when clearing completion to avoid NULL-related issues if strict
+      const completedAtValue = newStatus === 'done' ? Date.now() : null;
 
       await dbExecute('UPDATE task SET status = ?, completed_at = ? WHERE id = ?', [
         newStatus,
@@ -88,11 +88,10 @@ export default function TasksScreen() {
     }
 
     try {
-      const now = Date.now();
       await dbExecute(
-        `INSERT INTO task (id, space_id, title, status, created_at)
+        `INSERT INTO task (id, space_id, title, status, priority)
          VALUES (?, ?, ?, ?, ?)`,
-        [nanoid(), 'default', newTaskTitle.trim(), 'todo', now],
+        [nanoid(), 'default', newTaskTitle.trim(), 'next', 3], // Default to 'next' and Priority 3 (Normal)
       );
 
       setNewTaskTitle('');
@@ -104,11 +103,14 @@ export default function TasksScreen() {
   };
 
   const renderTask = ({ item }: { item: Task }) => {
-    const isCompleted = item.status === 'completed';
-    // Support both due_at (snake_case from DB) and dueAt (camelCase) defensively
-    const dueAt = (item as any).due_at ?? (item as any).dueAt;
+    const isCompleted = item.status === 'done';
+    const dueAt = item.due_at;
     const hasDueDate = typeof dueAt === 'number' && Number.isFinite(dueAt) && dueAt > 0;
     const isPastDue = hasDueDate && dueAt < Date.now() && !isCompleted;
+
+    // Priority badges for 1 (Urgent) and 2 (High)
+    const isUrgent = item.priority === 1;
+    const isHigh = item.priority === 2;
 
     return (
       <TouchableOpacity
@@ -129,9 +131,9 @@ export default function TasksScreen() {
             {item.title}
           </Text>
 
-          {!!(item as any).description && !isCompleted && (
+          {!!item.description && !isCompleted && (
             <Text style={styles.taskDescription} numberOfLines={1}>
-              {(item as any).description}
+              {item.description}
             </Text>
           )}
 
@@ -145,9 +147,9 @@ export default function TasksScreen() {
           )}
         </View>
 
-        {(item as any).priority && ((item as any).priority === 'high' || (item as any).priority === 'urgent') && (
+        {(isUrgent || isHigh) && (
           <View style={styles.taskPriorityBadge}>
-            <Ionicons name="flag" size={16} color={colors.error} />
+            <Ionicons name="flag" size={16} color={isUrgent ? colors.error : colors.warning} />
           </View>
         )}
       </TouchableOpacity>
@@ -164,7 +166,7 @@ export default function TasksScreen() {
       </View>
 
       <View style={styles.filters}>
-        {(['all', 'today', 'upcoming', 'completed'] as FilterType[]).map((f) => (
+        {(['all', 'today', 'upcoming', 'done'] as FilterType[]).map((f) => (
           <TouchableOpacity
             key={f}
             style={[styles.filterButton, filter === f && styles.filterButtonActive]}
@@ -203,9 +205,9 @@ export default function TasksScreen() {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Ionicons name="checkmark-done-outline" size={64} color={colors.textTertiary} />
-            <Text style={styles.emptyStateText}>{filter === 'completed' ? 'No completed tasks' : 'No tasks yet'}</Text>
+            <Text style={styles.emptyStateText}>{filter === 'done' ? 'No completed tasks' : 'No tasks yet'}</Text>
             <Text style={styles.emptyStateSubtext}>
-              {filter === 'completed' ? 'Complete some tasks to see them here' : 'Tap + to add your first task'}
+              {filter === 'done' ? 'Complete some tasks to see them here' : 'Tap + to add your first task'}
             </Text>
           </View>
         }
