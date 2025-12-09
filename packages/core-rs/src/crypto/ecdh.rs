@@ -1,5 +1,5 @@
-use x25519_dalek::{EphemeralSecret, PublicKey};
 use rand::rngs::OsRng;
+use x25519_dalek::{EphemeralSecret, PublicKey};
 
 pub struct EcdhKeyPair {
     secret: EphemeralSecret,
