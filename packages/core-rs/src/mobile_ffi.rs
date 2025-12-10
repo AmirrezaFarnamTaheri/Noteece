@@ -367,11 +367,21 @@ pub unsafe extern "C" fn rust_get_sync_progress(device_id: *const c_char) -> *mu
 }
 
 fn get_sync_progress_impl(device_id: &str) -> Result<SyncProgress, String> {
-    // Return real progress if possible, else placeholder
+    // Return real progress if possible
+    if let Ok(guard) = GLOBAL_P2P.lock() {
+        if let Some(p2p) = &*guard {
+            // Need to run async method in blocking runtime
+            return RUNTIME.block_on(async {
+                p2p.get_peer_status(device_id).await
+            });
+        }
+    }
+
+    // Fallback if no P2P agent or not initialized
     Ok(SyncProgress {
         device_id: device_id.to_string(),
-        phase: "syncing".to_string(), // TODO: Get actual phase
-        progress: 0.5, // TODO: Get actual progress
+        phase: "idle".to_string(),
+        progress: 0.0,
         entities_pushed: 0,
         entities_pulled: 0,
         conflicts: 0,

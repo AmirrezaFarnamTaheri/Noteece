@@ -59,7 +59,7 @@ pub mod sync_agent {
     pub use crate::sync::engine::SyncAgent;
     pub use crate::sync::models::{
         DeviceInfo, DeviceType, SyncConflict, SyncDelta, SyncHistoryEntry, SyncOperation,
-        SyncStats, SyncTask,
+        SyncProgress, SyncStats, SyncTask,
     };
 }
 
