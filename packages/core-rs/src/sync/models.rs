@@ -106,3 +106,14 @@ pub struct SyncHistoryEntry {
     pub success: bool,
     pub error_message: Option<String>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncProgress {
+    pub device_id: String,
+    pub phase: String,
+    pub progress: f64,
+    pub entities_pushed: i32,
+    pub entities_pulled: i32,
+    pub conflicts: i32,
+    pub error_message: Option<String>,
+}
