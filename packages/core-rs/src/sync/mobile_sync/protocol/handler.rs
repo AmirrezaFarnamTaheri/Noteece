@@ -1,4 +1,5 @@
 use super::types::*;
+use crate::sync::models::SyncProgress;
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -22,6 +23,9 @@ pub struct SyncProtocol {
 
     /// Active shared secrets for paired devices (device_id -> shared_secret)
     shared_secrets: HashMap<String, [u8; 32]>,
+
+    /// Active sync progress
+    pub(crate) progress: Option<SyncProgress>,
 }
 
 impl SyncProtocol {
@@ -34,6 +38,7 @@ impl SyncProtocol {
             active_peer_id: None,
             last_sync: None,
             shared_secrets: HashMap::new(),
+            progress: None,
         }
     }
 
@@ -216,6 +221,17 @@ impl SyncProtocol {
         self.sync_state = SyncState::Connecting;
         self.active_peer_id = Some(device_id.to_string());
 
+        // Initialize progress
+        self.progress = Some(SyncProgress {
+            device_id: device_id.to_string(),
+            phase: "connecting".to_string(),
+            progress: 0.0,
+            entities_pushed: 0,
+            entities_pulled: 0,
+            conflicts: 0,
+            error_message: None,
+        });
+
         // Establish encrypted connection with paired device
         // Verify device is reachable at its IP address and port
         log::debug!(
@@ -237,6 +253,10 @@ impl SyncProtocol {
                 log::error!("[mobile_sync] Connection failed: {}", e);
                 self.sync_state = SyncState::Idle;
                 self.active_peer_id = None;
+                if let Some(p) = &mut self.progress {
+                    p.phase = "failed".to_string();
+                    p.error_message = Some(format!("Connection failed: {}", e));
+                }
                 return Err(SyncProtocolError::ConnectionFailed(format!(
                     "Failed to establish connection: {}",
                     e
@@ -254,6 +274,11 @@ impl SyncProtocol {
             categories
         );
 
+        if let Some(p) = &mut self.progress {
+            p.phase = "syncing".to_string();
+            p.progress = 0.1; // Started
+        }
+
         // Begin delta transmission for selected categories
         // Here we would utilize the shared_secret stored in self.shared_secrets.get(device_id)
         // to encrypt the communication channel for the actual sync process.
@@ -264,6 +289,12 @@ impl SyncProtocol {
 
         self.sync_state = SyncState::Syncing;
 
+        // Simulate progress for the stub
+        if let Some(p) = &mut self.progress {
+            p.progress = 1.0;
+            p.phase = "complete".to_string();
+        }
+
         Ok(())
     }
 
@@ -272,7 +303,16 @@ impl SyncProtocol {
         self.sync_state = SyncState::SyncComplete;
         // Do not clear active_peer_id here so we know who completed the sync
         self.last_sync = Some(Utc::now());
+        if let Some(p) = &mut self.progress {
+            p.phase = "complete".to_string();
+            p.progress = 1.0;
+        }
         Ok(())
+    }
+
+    /// Get current sync progress
+    pub fn get_progress(&self) -> Option<SyncProgress> {
+        self.progress.clone()
     }
 
     /// Get current sync state

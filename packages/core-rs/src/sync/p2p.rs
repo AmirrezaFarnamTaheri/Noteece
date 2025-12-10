@@ -3,6 +3,7 @@
 
 use super::discovery::{DiscoveredDevice, DiscoveryService};
 use super::mobile_sync::{DeltaOperation, DeviceInfo, SyncCategory, SyncDelta, SyncProtocol};
+use crate::sync::models::SyncProgress;
 use crate::sync_agent::{SyncDelta as DbSyncDelta, SyncOperation as DbSyncOperation};
 use futures::{SinkExt, StreamExt};
 use std::sync::Arc;
@@ -280,6 +281,15 @@ impl P2pSync {
             conflicts: 0,
             error_message: None,
         })
+    /// Get current progress for a specific device sync
+    pub async fn get_progress(&self, device_id: &str) -> Option<SyncProgress> {
+        let protocol = self.protocol.lock().await;
+        if let Some(progress) = protocol.get_progress() {
+            if progress.device_id == device_id {
+                return Some(progress);
+            }
+        }
+        None
     }
 }
 

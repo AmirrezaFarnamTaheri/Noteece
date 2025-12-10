@@ -10,7 +10,8 @@ use lazy_static::lazy_static;
 use tokio::runtime::Runtime;
 
 use crate::sync::discovery::DiscoveredDevice;
-use crate::sync_agent::{SyncAgent, SyncConflict, ConflictResolution, SyncProgress, DeviceInfo, DeviceType};
+use crate::sync::models::SyncProgress;
+use crate::sync_agent::{SyncAgent, SyncConflict, ConflictResolution, DeviceInfo, DeviceType};
 use crate::sync::p2p::P2pSync;
 
 lazy_static! {
@@ -378,6 +379,25 @@ fn get_sync_progress_impl(device_id: &str) -> Result<SyncProgress, String> {
     }
 
     // Fallback if no P2P agent or not initialized
+    if let Ok(guard) = GLOBAL_P2P.lock() {
+        if let Some(p2p) = &*guard {
+            // Since we need to call an async method from a sync FFI, we use the runtime
+            // We clone p2p to move it into the future, and string to avoid lifetime issues
+            let p2p = p2p.clone();
+            let d_id = device_id.to_string();
+
+            // Block on the async call
+            let progress = RUNTIME.block_on(async move {
+                p2p.get_progress(&d_id).await
+            });
+
+            if let Some(prog) = progress {
+                return Ok(prog);
+            }
+        }
+    }
+
+    // Return placeholder if no active sync found
     Ok(SyncProgress {
         device_id: device_id.to_string(),
         phase: "idle".to_string(),
