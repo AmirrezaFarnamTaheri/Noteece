@@ -229,6 +229,58 @@ impl P2pSync {
         Ok(())
     }
 
+    /// Get sync progress for a specific peer
+    pub async fn get_peer_status(&self, device_id: &str) -> Result<crate::sync_agent::SyncProgress, String> {
+        let protocol = self.protocol.lock().await;
+
+        // Determine phase based on global state and active peer
+        let phase = match protocol.get_sync_state() {
+            crate::sync::mobile_sync::protocol::types::SyncState::Idle => "idle",
+            crate::sync::mobile_sync::protocol::types::SyncState::Connecting => {
+                if protocol.get_active_peer_id().as_deref() == Some(device_id) {
+                    "connecting"
+                } else {
+                    "idle"
+                }
+            },
+            crate::sync::mobile_sync::protocol::types::SyncState::Connected => {
+                 if protocol.get_active_peer_id().as_deref() == Some(device_id) {
+                    "connected"
+                } else {
+                    "idle"
+                }
+            },
+            crate::sync::mobile_sync::protocol::types::SyncState::Syncing => {
+                 if protocol.get_active_peer_id().as_deref() == Some(device_id) {
+                    "syncing"
+                } else {
+                    "idle" // Or "queued" if we had a queue
+                }
+            },
+            crate::sync::mobile_sync::protocol::types::SyncState::SyncComplete => {
+                if protocol.get_active_peer_id().as_deref() == Some(device_id) {
+                    "completed"
+                } else {
+                    "idle"
+                }
+            },
+            crate::sync::mobile_sync::protocol::types::SyncState::Error => "error",
+        };
+
+        // If mismatch in active peer during busy states, forced "idle" above handles it.
+        // For "completed" or "error", we might want to check if it was *this* device.
+        // But SyncProtocol currently doesn't store "last_error_device_id" etc.
+        // Assuming "completed" implies the last operation finished.
+
+        Ok(crate::sync_agent::SyncProgress {
+            device_id: device_id.to_string(),
+            phase: phase.to_string(),
+            progress: if phase == "syncing" { 0.5 } else if phase == "completed" { 1.0 } else { 0.0 },
+            entities_pushed: 0,
+            entities_pulled: 0,
+            conflicts: 0,
+            error_message: None,
+        })
     /// Get current progress for a specific device sync
     pub async fn get_progress(&self, device_id: &str) -> Option<SyncProgress> {
         let protocol = self.protocol.lock().await;

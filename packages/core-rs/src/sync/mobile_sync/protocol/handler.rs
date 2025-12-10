@@ -15,6 +15,9 @@ pub struct SyncProtocol {
     /// Current sync state
     pub(crate) sync_state: SyncState,
 
+    /// ID of the peer currently being synced with
+    pub(crate) active_peer_id: Option<String>,
+
     /// Last sync timestamp
     last_sync: Option<DateTime<Utc>>,
 
@@ -32,6 +35,7 @@ impl SyncProtocol {
             device_info: Arc::new(device_info),
             paired_devices: Vec::new(),
             sync_state: SyncState::Idle,
+            active_peer_id: None,
             last_sync: None,
             shared_secrets: HashMap::new(),
             progress: None,
@@ -215,6 +219,7 @@ impl SyncProtocol {
         }
 
         self.sync_state = SyncState::Connecting;
+        self.active_peer_id = Some(device_id.to_string());
 
         // Initialize progress
         self.progress = Some(SyncProgress {
@@ -247,6 +252,7 @@ impl SyncProtocol {
             Err(e) => {
                 log::error!("[mobile_sync] Connection failed: {}", e);
                 self.sync_state = SyncState::Idle;
+                self.active_peer_id = None;
                 if let Some(p) = &mut self.progress {
                     p.phase = "failed".to_string();
                     p.error_message = Some(format!("Connection failed: {}", e));
@@ -295,6 +301,7 @@ impl SyncProtocol {
     /// Complete sync and update last_sync timestamp
     pub fn complete_sync(&mut self) -> Result<(), SyncProtocolError> {
         self.sync_state = SyncState::SyncComplete;
+        // Do not clear active_peer_id here so we know who completed the sync
         self.last_sync = Some(Utc::now());
         if let Some(p) = &mut self.progress {
             p.phase = "complete".to_string();
@@ -311,6 +318,11 @@ impl SyncProtocol {
     /// Get current sync state
     pub fn get_sync_state(&self) -> SyncState {
         self.sync_state
+    }
+
+    /// Get current active peer ID
+    pub fn get_active_peer_id(&self) -> Option<String> {
+        self.active_peer_id.clone()
     }
 
     /// Get list of paired devices

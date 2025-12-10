@@ -368,6 +368,17 @@ pub unsafe extern "C" fn rust_get_sync_progress(device_id: *const c_char) -> *mu
 }
 
 fn get_sync_progress_impl(device_id: &str) -> Result<SyncProgress, String> {
+    // Return real progress if possible
+    if let Ok(guard) = GLOBAL_P2P.lock() {
+        if let Some(p2p) = &*guard {
+            // Need to run async method in blocking runtime
+            return RUNTIME.block_on(async {
+                p2p.get_peer_status(device_id).await
+            });
+        }
+    }
+
+    // Fallback if no P2P agent or not initialized
     if let Ok(guard) = GLOBAL_P2P.lock() {
         if let Some(p2p) = &*guard {
             // Since we need to call an async method from a sync FFI, we use the runtime
