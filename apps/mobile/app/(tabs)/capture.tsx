@@ -174,6 +174,23 @@ export default function CaptureScreen() {
           </View>
         )}
 
+        {/* Coming Soon Features */}
+        {(captureType === 'voice' || captureType === 'photo') && (
+            <View style={styles.comingSoonContainer}>
+            <Ionicons name="construct-outline" size={48} color={colors.textTertiary} />
+            <Text style={styles.comingSoonText}>{captureType === 'voice' ? 'Voice Memo' : 'Photo Capture'}</Text>
+            <Text style={styles.comingSoonSubtext}>This feature is coming soon</Text>
+            <TouchableOpacity
+                style={styles.notifyButton}
+                onPress={() => {
+                Alert.alert('Noted!', 'We\'ll let you know when this is ready.');
+                }}
+            >
+                <Text style={styles.notifyButtonText}>Notify Me</Text>
+            </TouchableOpacity>
+            </View>
+        )}
+
         {/* Quick Actions */}
         <View style={styles.quickActions}>
           <Text style={styles.quickActionsTitle}>Quick Actions</Text>
@@ -309,7 +326,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     minHeight: 200,
   },
-  comingSoon: {
+  comingSoonContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing['3xl'],
@@ -326,6 +343,20 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     marginTop: spacing.sm,
     textAlign: 'center',
+  },
+  notifyButton: {
+    marginTop: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.backgroundElevated,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  notifyButtonText: {
+    fontSize: typography.fontSize.base,
+    fontFamily: typography.fontFamily.medium,
+    color: colors.primary,
   },
   quickActions: {
     padding: spacing.lg,

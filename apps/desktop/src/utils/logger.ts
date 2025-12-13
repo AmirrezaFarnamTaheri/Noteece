@@ -179,12 +179,26 @@ logger.addListener((entry: LogEntry) => {
     localStorage.setItem(testKey, 'true');
     localStorage.removeItem(testKey);
 
+    // Sanitize sensitive data before persisting
+    const sensitivePatterns = [
+      /password['":\s]*['"]\w+['"]/gi,
+      /token['":\s]*['"]\w+['"]/gi,
+      /key['":\s]*['"]\w+['"]/gi,
+      /secret['":\s]*['"]\w+['"]/gi,
+      /Bearer\s+\S+/gi,
+    ];
+
+    let sanitizedMessage = entry.message;
+    sensitivePatterns.forEach((pattern) => {
+      sanitizedMessage = sanitizedMessage.replace(pattern, '[REDACTED]');
+    });
+
     const raw = localStorage.getItem('noteece_error_logs');
     const logs: StoredLogEntry[] = raw ? (JSON.parse(raw) as StoredLogEntry[]) : [];
 
     const sanitized: StoredLogEntry = {
       level: entry.level,
-      message: entry.message,
+      message: sanitizedMessage,
       timestamp: entry.timestamp,
       context: entry.context ? safeStringify(entry.context) : undefined,
       error: entry.error

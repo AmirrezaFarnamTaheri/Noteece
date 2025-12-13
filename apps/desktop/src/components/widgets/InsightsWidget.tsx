@@ -2,6 +2,7 @@
  * InsightsWidget - AI-powered insights and suggestions from your workspace
  */
 
+import { memo } from 'react';
 import { Paper, Title, Text, Group, Stack, Badge, ActionIcon } from '@mantine/core';
 import { IconBulb, IconRefresh, IconSparkles } from '@tabler/icons-react';
 import { useNotes, useTasks, useProjects } from '../../hooks/useQueries';
@@ -32,7 +33,7 @@ const getTypeColor = (type: string) => {
   }
 };
 
-export default function InsightsWidget() {
+const InsightsWidget: React.FC = () => {
   const { activeSpaceId } = useStore();
   const { data: notes = [] } = useNotes(activeSpaceId || '', !!activeSpaceId);
   const { data: tasks = [] } = useTasks(activeSpaceId || '', !!activeSpaceId);
@@ -302,4 +303,6 @@ export default function InsightsWidget() {
       )}
     </Paper>
   );
-}
+};
+
+export default memo(InsightsWidget);

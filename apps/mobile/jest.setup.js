@@ -38,11 +38,28 @@ jest.mock('expo-sqlite', () => ({
       getFirstAsync: jest.fn().mockResolvedValue(null),
     }),
   ),
+  // More realistic mock that tracks queries
   SQLiteDatabase: class MockDatabase {
-    execAsync = jest.fn().mockResolvedValue(undefined);
-    getAllAsync = jest.fn().mockResolvedValue([]);
-    runAsync = jest.fn().mockResolvedValue(undefined);
+    constructor() {
+      this.queries = [];
+    }
+
+    execAsync = jest.fn(async (sql) => {
+      this.queries.push(sql);
+      return undefined;
+    });
+    getAllAsync = jest.fn(async (sql) => {
+      this.queries.push(sql);
+      return [];
+    });
+    runAsync = jest.fn(async (sql) => {
+      this.queries.push(sql);
+      return { changes: 0, lastInsertRowId: 0 };
+    });
     getFirstAsync = jest.fn().mockResolvedValue(null);
+
+    // Expose for test assertions
+    getExecutedQueries = () => this.queries;
   },
 }));
 

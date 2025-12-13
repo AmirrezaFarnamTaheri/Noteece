@@ -9,12 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Mobile Schema:** Aligned `Task` status (`todo` -> `next`) and priority (string -> int) with the core database schema to prevent data corruption.
-- **Desktop Schema:** Updated Task Board columns to map `To Do` to `next` status, matching the database.
-- **Mobile Search:** Added missing Full-Text Search (FTS) triggers in mobile database migration (v6) to keep search index in sync with notes.
-- **Mobile Sync:** Fixed FFI `register_device` to correctly set `DeviceType` and ensured `rust_start_sync` checks for initialized agent.
-- **P2P Security:** Added connection limit (Semaphore) to prevent DoS, and improved handshake to extract client keys for mutual auth.
-- **Mobile Migrations:** Wrapped database migrations in transactions to prevent race conditions and partial failures.
+- **Critical Security:** Fixed session token storage (localStorage -> secureStore), added rate limiting to auth endpoints, and implemented secure logging to prevent credential leakage.
+- **Mobile Reliability:** Fixed critical race conditions in `unlock.tsx` and transaction rollback issues in migrations. Fixed SQL injection vulnerability in search.
+- **Mobile Performance:** Migrated `SocialHub` to `FlashList`, optimized `HealthHub` SQL queries, and added memoization to `PostCard`.
+- **Infrastructure:** Added `.github/dependabot.yml`, `mobile-ci.yml`, and enabled Rust dependency caching in CI.
+- **Desktop Stability:** Added `ErrorBoundary` for dashboard widgets, fixed `TravelMode` state bugs, and optimized `TemporalGraph` pagination.
+- **Type Safety:** Resolved generic `any` types in API, fixed `unwrap_or` masking DB errors in Rust backend, and fixed mobile TypeScript warnings.
+- **i18n:** Added pluralization support and RTL layout handling to Mobile app.
+- **Code Quality:** Removed unreachable code, fixed dead code paths, and added accessibility labels to mobile components.
+- **Testing:** Fixed mock configuration for `tauri-plugin-store-api` and mobile `react-native-zeroconf`.
+- **Sync:** Fixed `sync_client.ts` fallback logic and added integration tests for sync flow.
 - **Privacy:** Enhanced backup scrubbing to remove `refresh_token`, `client_secret` and other sensitive fields.
 - **Discovery:** Added `device_type` support to `DiscoveredDevice` in P2P discovery protocol.
 - **Desktop:** Fixed Journal timezone issue using local date format.
@@ -32,7 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Documentation:** Added `STATUS.md` to track project state.
+- **Mobile:** Added `FlashList` for performance. Added secure logger. Added `haptics` manager. Added `react-native-ssl-pinning` (prep).
+- **Desktop:** Added `ErrorBoundary` for widgets. Added `tauri-plugin-store` for secure storage.
+- **Infrastructure:** Added `dependabot.yml`. Added Mobile CI workflow. Added Rust dependency caching in CI.
+- **Documentation:** Added `STATUS.md` to track project state. Updated `SECURITY.md` with mobile pinning guidance.
 - **UI/UX Overhaul:** Significantly enhanced the Desktop Dashboard with polished widgets for Music, Health, and Social.
 - **Music Widget:** Implemented a new glassmorphism design with visualizers and "disconnected" state handling.
 - **Health Widget:** Added robust visualization for health metrics with empty state handling and proper unit formatting.

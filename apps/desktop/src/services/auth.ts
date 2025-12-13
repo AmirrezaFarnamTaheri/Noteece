@@ -4,8 +4,12 @@
  */
 
 import { invoke } from '@tauri-apps/api/tauri';
+import { Store } from 'tauri-plugin-store-api';
 import { logger } from '@/utils/logger';
 import { identityService } from './identity';
+
+// Use Tauri's secure store instead of localStorage
+const secureStore = new Store('.auth.dat');
 
 export interface Session {
   id: string;
@@ -37,8 +41,8 @@ class AuthService {
   private currentUser: User | null = null;
 
   constructor() {
-    // Initialize from local storage if available
-    this.loadSessionFromStorage();
+    // Initialize from storage if available
+    void this.loadSessionFromStorage();
   }
 
   /**
@@ -70,7 +74,7 @@ class AuthService {
 
       // Store session
       this.session = session;
-      this.saveSessionToStorage(session);
+      await this.saveSessionToStorage(session);
 
       // Fetch current user info
       const user = await invoke<User>('get_current_user_cmd');
@@ -92,7 +96,7 @@ class AuthService {
       }
       this.session = null;
       this.currentUser = null;
-      this.clearSessionStorage();
+      await this.clearSessionStorage();
     } catch (error) {
       throw this.handleError(error);
     }
@@ -139,30 +143,18 @@ class AuthService {
 
   /**
    * Get session token
+   * Note: This is now async internally, but returns sync for compatibility where possible
+   * Use await getStoredToken() if consistent state is needed
    */
   getToken(): string | null {
-    if (this.session) {
-      return this.session.token;
-    }
-    return localStorage.getItem(SESSION_TOKEN_KEY);
+    return this.session?.token || null;
   }
 
   /**
    * Get current session object
    */
   getSession(): Session | null {
-    if (this.session) {
-      return this.session;
-    }
-    const sessionData = localStorage.getItem(SESSION_DATA_KEY);
-    if (sessionData) {
-      try {
-        return JSON.parse(sessionData) as Session;
-      } catch {
-        return null;
-      }
-    }
-    return null;
+    return this.session;
   }
 
   /**
@@ -212,33 +204,35 @@ class AuthService {
 
   // Private helper methods
 
-  private loadSessionFromStorage(): void {
+  private async loadSessionFromStorage(): Promise<void> {
     try {
-      const token = localStorage.getItem(SESSION_TOKEN_KEY);
-      const sessionData = localStorage.getItem(SESSION_DATA_KEY);
+      const token = await secureStore.get<string>(SESSION_TOKEN_KEY);
+      const sessionData = await secureStore.get<Session>(SESSION_DATA_KEY);
 
       if (token && sessionData) {
-        this.session = JSON.parse(sessionData) as Session;
+        this.session = sessionData;
       }
     } catch (error) {
       logger.error('Failed to load session from storage:', error as Error);
-      this.clearSessionStorage();
+      await this.clearSessionStorage();
     }
   }
 
-  private saveSessionToStorage(session: Session): void {
+  private async saveSessionToStorage(session: Session): Promise<void> {
     try {
-      localStorage.setItem(SESSION_TOKEN_KEY, session.token);
-      localStorage.setItem(SESSION_DATA_KEY, JSON.stringify(session));
+      await secureStore.set(SESSION_TOKEN_KEY, session.token);
+      await secureStore.set(SESSION_DATA_KEY, session);
+      await secureStore.save();
     } catch (error) {
       logger.error('Failed to save session to storage:', error as Error);
     }
   }
 
-  private clearSessionStorage(): void {
+  private async clearSessionStorage(): Promise<void> {
     try {
-      localStorage.removeItem(SESSION_TOKEN_KEY);
-      localStorage.removeItem(SESSION_DATA_KEY);
+      await secureStore.delete(SESSION_TOKEN_KEY);
+      await secureStore.delete(SESSION_DATA_KEY);
+      await secureStore.save();
     } catch (error) {
       logger.error('Failed to clear session storage:', error as Error);
     }

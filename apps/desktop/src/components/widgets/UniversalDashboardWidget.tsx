@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Paper, Title, Grid, Stack, Text, Group, ThemeIcon, RingProgress, Center } from '@mantine/core';
+import { Paper, Title, Grid, Stack, Text, Group, ThemeIcon, RingProgress, Center, Loader } from '@mantine/core';
 import { IconHeartRateMonitor, IconMusic, IconSocial, IconListCheck, IconActivity } from '@tabler/icons-react';
 import { DashboardStats } from '@noteece/types';
 import { useAsync } from '../../hooks/useAsync';
@@ -14,7 +14,6 @@ export const UniversalDashboardWidget: React.FC = () => {
   const {
     data: stats,
     execute,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     loading,
   } = useAsync<DashboardStats>(
     async () => {
@@ -46,6 +45,16 @@ export const UniversalDashboardWidget: React.FC = () => {
       execute();
     }
   }, [activeSpaceId, execute]);
+
+  if (loading) {
+    return (
+      <Paper shadow="sm" p="md" radius="md" withBorder h="100%">
+        <Center h="100%">
+          <Loader size="sm" />
+        </Center>
+      </Paper>
+    );
+  }
 
   const pending = stats?.tasks.pending_count || 0;
   const completed = stats?.tasks.completed_count || 0;

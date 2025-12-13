@@ -4,6 +4,7 @@ module.exports = function (api) {
     presets: ['babel-preset-expo'],
     plugins: [
       '@babel/plugin-transform-flow-strip-types',
+      ['@babel/plugin-transform-private-methods', { loose: true }],
       'react-native-reanimated/plugin',
       [
         'module-resolver',

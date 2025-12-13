@@ -44,6 +44,7 @@ fn main() {
     AppConfig::init();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_store::Builder::default().build())
         .manage(DbConnection {
             pool: Mutex::new(None),
             dek: Mutex::new(None),

@@ -41,6 +41,7 @@ module.exports = {
     '^@mantine/hooks$': '<rootDir>/node_modules/@mantine/hooks',
     '^react$': '<rootDir>/node_modules/react',
     '^react-dom$': '<rootDir>/node_modules/react-dom',
+    '^tauri-plugin-store-api$': '<rootDir>/__mocks__/tauri-plugin-store-api.ts',
   },
   // Avoid altering default resolution; use moduleNameMapper for packages
   // modulePaths: ['<rootDir>/../../packages'], // removed to prevent raw TS resolution

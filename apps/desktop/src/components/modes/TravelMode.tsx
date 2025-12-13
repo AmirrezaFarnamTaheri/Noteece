@@ -15,7 +15,7 @@ import {
   Center,
   Loader,
 } from '@mantine/core';
-import { DatePicker } from '@mantine/dates';
+import { DatePickerInput } from '@mantine/dates';
 import { IconPlus, IconPlane, IconMapPin, IconCalendar } from '@tabler/icons-react';
 import { logger } from '@/utils/logger';
 
@@ -48,7 +48,7 @@ const TravelMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
 
   const [formName, setFormName] = useState('');
   const [formDestination, setFormDestination] = useState('');
-  const [formStartDate, _setFormStartDate] = useState<Date>(new Date());
+  const [formStartDate, setFormStartDate] = useState<Date>(new Date());
   const [formEndDate, setFormEndDate] = useState<Date>(new Date());
 
   useEffect(() => {
@@ -216,15 +216,21 @@ const TravelMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
             placeholder="Paris, France"
             required
           />
-          <DatePicker
-            value={formEndDate}
-            onChange={(value) => {
-              if (value) {
-                setFormEndDate(value as unknown as Date);
-              }
-            }}
-            minDate={formStartDate}
-          />
+          <Group grow>
+            <DatePickerInput
+              label="Start Date"
+              value={formStartDate}
+              onChange={(value) => value && setFormStartDate(value)}
+              required
+            />
+            <DatePickerInput
+              label="End Date"
+              value={formEndDate}
+              onChange={(value) => value && setFormEndDate(value)}
+              minDate={formStartDate}
+              required
+            />
+          </Group>
           <Group justify="flex-end" mt="md">
             <Button variant="light" onClick={() => setModalOpened(false)}>
               Cancel

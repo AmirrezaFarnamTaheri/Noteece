@@ -97,11 +97,11 @@ impl SyncHistory {
         )?;
 
         let stats = stmt.query_row([space_id], |row| {
-            let total_syncs: i32 = row.get(0).unwrap_or(0);
-            let last_sync_at: Option<i64> = row.get(1).ok();
-            let success_count: i32 = row.get(2).unwrap_or(0);
-            let conflicts_total: i32 = row.get(3).unwrap_or(0);
-            let total_entities: i32 = row.get(4).unwrap_or(0);
+            let total_syncs: i32 = row.get(0)?;
+            let last_sync_at: Option<i64> = row.get(1)?;
+            let success_count: i32 = row.get(2).unwrap_or_default();
+            let conflicts_total: i32 = row.get(3).unwrap_or_default();
+            let total_entities: i32 = row.get(4).unwrap_or_default();
 
             let success_rate = if total_syncs > 0 {
                 success_count as f64 / total_syncs as f64
@@ -118,6 +118,11 @@ impl SyncHistory {
         })?;
 
         Ok(stats)
+    }
+
+    /// Alternative: Return default stats on query error for graceful degradation
+    pub fn get_stats_or_default(conn: &Connection, space_id: &str) -> SyncStats {
+        Self::get_stats(conn, space_id).unwrap_or_default()
     }
 
     pub fn get_last_sync_time(conn: &Connection, space_id: &str) -> Result<i64, SyncError> {
