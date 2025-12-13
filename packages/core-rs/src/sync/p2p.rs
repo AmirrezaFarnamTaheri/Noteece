@@ -281,6 +281,8 @@ impl P2pSync {
             conflicts: 0,
             error_message: None,
         })
+    }
+
     /// Get current progress for a specific device sync
     pub async fn get_progress(&self, device_id: &str) -> Option<SyncProgress> {
         let protocol = self.protocol.lock().await;

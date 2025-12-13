@@ -52,6 +52,7 @@
     "react-router-dom": "^6.17.0",
     "react-window": "^1.8.10",
     "recharts": "^3.3.0",
+    "tauri-plugin-store-api": "^0.0.0",
     "zustand": "^5.0.8"
   },
   "devDependencies": {

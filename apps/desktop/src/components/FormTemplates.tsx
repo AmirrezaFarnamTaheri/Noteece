@@ -1,6 +1,6 @@
 // apps/desktop/src/components/FormTemplates.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getFormTemplatesForSpace, createFormTemplate, updateFormTemplate, deleteFormTemplate } from '@/services/api';
 import { FormTemplate, FormFieldType } from '@noteece/types';
 import { Button, Modal, TextInput, Group, Stack, Title, Text, Paper, ActionIcon, Select } from '@mantine/core';
@@ -24,17 +24,16 @@ const FormTemplates: React.FC = () => {
     },
   });
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     if (activeSpaceId) {
       const fetchedTemplates = await getFormTemplatesForSpace(activeSpaceId);
       setTemplates(fetchedTemplates);
     }
-  };
+  }, [activeSpaceId]);
 
   useEffect(() => {
     void fetchTemplates();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSpaceId]);
+  }, [fetchTemplates]);
 
   const handleAddField = () => {
     form.insertListItem('fields', { name: '', label: '', field_type: 'Text' as FormFieldType, default_value: '' });

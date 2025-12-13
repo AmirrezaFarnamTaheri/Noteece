@@ -1,6 +1,30 @@
 use crate::state::DbConnection;
 use core_rs::auth::{AuthService, Session, User};
 use tauri::State;
+use std::collections::HashMap;
+use std::sync::Mutex;
+use std::time::{Duration, Instant};
+
+// Simple rate limiter
+lazy_static::lazy_static! {
+    static ref LOGIN_ATTEMPTS: Mutex<HashMap<String, (u32, Instant)>> = Mutex::new(HashMap::new());
+}
+
+const MAX_ATTEMPTS: u32 = 5;
+const LOCKOUT_DURATION: Duration = Duration::from_secs(300); // 5 minutes
+
+fn check_rate_limit(username: &str) -> Result<(), String> {
+    let mut attempts = LOGIN_ATTEMPTS.lock().map_err(|e| e.to_string())?;
+    if let Some((count, first_attempt)) = attempts.get(username) {
+        if *count >= MAX_ATTEMPTS && first_attempt.elapsed() < LOCKOUT_DURATION {
+            return Err(format!(
+                "Too many login attempts. Try again in {} seconds.",
+                (LOCKOUT_DURATION - first_attempt.elapsed()).as_secs()
+            ));
+        }
+    }
+    Ok(())
+}
 
 #[tauri::command]
 pub fn create_user_cmd(
@@ -20,8 +44,19 @@ pub fn authenticate_user_cmd(
     username: String,
     password: String,
 ) -> Result<Session, String> {
+    check_rate_limit(&username)?;
+
     crate::with_db!(db, conn, {
-        AuthService::authenticate(&conn, &username, &password).map_err(|e| e.to_string())
+        let result = AuthService::authenticate(&conn, &username, &password);
+
+        // Track failed attempts
+        if result.is_err() {
+            let mut attempts = LOGIN_ATTEMPTS.lock().map_err(|e| e.to_string())?;
+            let entry = attempts.entry(username.clone()).or_insert((0, Instant::now()));
+            entry.0 += 1;
+        }
+
+        result.map_err(|e| e.to_string())
     })
 }
 

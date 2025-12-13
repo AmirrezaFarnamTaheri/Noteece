@@ -68,7 +68,26 @@ i18n
     react: {
       useSuspense: false,
     },
+    // Add pluralization support
+    pluralSeparator: '_',
+    contextSeparator: '_',
   });
 
 export default i18n;
 export { LANGUAGE_KEY };
+
+/**
+ * Helper for pluralized translations
+ * Usage: tp('posts', count) => "1 post" or "5 posts"
+ */
+export function tp(key: string, count: number, options?: object): string {
+  return i18n.t(key, { count, ...options });
+}
+
+/**
+ * Helper for RTL-aware formatting
+ */
+export function isRTL(): boolean {
+  const rtlLanguages = ['fa', 'ar', 'he'];
+  return rtlLanguages.includes(i18n.language);
+}

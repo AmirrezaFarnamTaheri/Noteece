@@ -1,24 +1,30 @@
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import type { ComponentProps } from 'react';
 // @ts-ignore: expo vector icons type mismatch
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { colors, typography, spacing } from '@/lib/theme';
 
 interface LoadingStateProps {
-  message?: string;
+  messageKey?: string;
   size?: 'small' | 'large';
 }
 
-export function LoadingState({ message = 'Loading...', size = 'large' }: LoadingStateProps) {
+export function LoadingState({ messageKey = 'common.loading', size = 'large' }: LoadingStateProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.container}>
       <ActivityIndicator size={size} color={colors.primary} />
-      {message && <Text style={styles.message}>{message}</Text>}
+      <Text style={styles.message}>{t(messageKey)}</Text>
     </View>
   );
 }
 
+type IoniconsName = ComponentProps<typeof Ionicons>['name'];
+
 interface EmptyStateProps {
-  icon?: string;
+  icon?: IoniconsName;
   title: string;
   message?: string;
   action?: {
@@ -27,10 +33,15 @@ interface EmptyStateProps {
   };
 }
 
-export function EmptyState({ icon = 'folder-open-outline', title, message, action }: EmptyStateProps) {
+export function EmptyState({
+  icon = 'folder-open-outline' as IoniconsName,
+  title,
+  message,
+  action,
+}: EmptyStateProps) {
   return (
     <View style={styles.container}>
-      <Ionicons name={icon as any} size={64} color={colors.textTertiary} />
+      <Ionicons name={icon} size={64} color={colors.textTertiary} />
       <Text style={styles.emptyTitle}>{title}</Text>
       {message && <Text style={styles.emptyMessage}>{message}</Text>}
     </View>

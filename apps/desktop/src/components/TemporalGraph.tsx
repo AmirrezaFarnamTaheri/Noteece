@@ -74,11 +74,13 @@ const TemporalGraph: React.FC<{ spaceId: string }> = ({ spaceId }) => {
   const [playing, setPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [milestones, setMilestones] = useState<GraphMilestone[]>([]);
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 20;
 
   useEffect(() => {
     void loadGraph();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spaceId]);
+  }, [spaceId, page]);
 
   useEffect(() => {
     if (playing && evolution && currentIndex < evolution.snapshots.length - 1) {
@@ -117,6 +119,8 @@ const TemporalGraph: React.FC<{ spaceId: string }> = ({ spaceId }) => {
         startTime: thirtyDaysAgo,
         endTime: now,
         snapshotLimit: 30,
+        limit: PAGE_SIZE,
+        offset: page * PAGE_SIZE,
       });
       setEvolution(evolutionData);
     } catch (error) {
