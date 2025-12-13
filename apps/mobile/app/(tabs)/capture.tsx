@@ -176,19 +176,19 @@ export default function CaptureScreen() {
 
         {/* Coming Soon Features */}
         {(captureType === 'voice' || captureType === 'photo') && (
-            <View style={styles.comingSoonContainer}>
+          <View style={styles.comingSoonContainer}>
             <Ionicons name="construct-outline" size={48} color={colors.textTertiary} />
             <Text style={styles.comingSoonText}>{captureType === 'voice' ? 'Voice Memo' : 'Photo Capture'}</Text>
             <Text style={styles.comingSoonSubtext}>This feature is coming soon</Text>
             <TouchableOpacity
-                style={styles.notifyButton}
-                onPress={() => {
-                Alert.alert('Noted!', 'We\'ll let you know when this is ready.');
-                }}
+              style={styles.notifyButton}
+              onPress={() => {
+                Alert.alert('Noted!', "We'll let you know when this is ready.");
+              }}
             >
-                <Text style={styles.notifyButtonText}>Notify Me</Text>
+              <Text style={styles.notifyButtonText}>Notify Me</Text>
             </TouchableOpacity>
-            </View>
+          </View>
         )}
 
         {/* Quick Actions */}

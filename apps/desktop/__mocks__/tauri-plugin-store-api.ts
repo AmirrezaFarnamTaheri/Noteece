@@ -1,17 +1,17 @@
 export class Store {
   path: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 
   constructor(path: string) {
     this.path = path;
     this.data = {};
   }
 
-  async set(key: string, value: any): Promise<void> {
+  async set(key: string, value: unknown): Promise<void> {
     this.data[key] = value;
   }
 
-  async get(key: string): Promise<any> {
+  async get(key: string): Promise<unknown> {
     return this.data[key] || null;
   }
 
@@ -37,11 +37,11 @@ export class Store {
     return Object.keys(this.data);
   }
 
-  async values(): Promise<any[]> {
+  async values(): Promise<unknown[]> {
     return Object.values(this.data);
   }
 
-  async entries(): Promise<[string, any][]> {
+  async entries(): Promise<[string, unknown][]> {
     return Object.entries(this.data);
   }
 
@@ -57,11 +57,11 @@ export class Store {
     // Mock save
   }
 
-  async onKeyChange(key: string, cb: (value: any) => void): Promise<() => void> {
+  async onKeyChange(_key: string, _cb: (value: unknown) => void): Promise<() => void> {
     return () => {};
   }
 
-  async onChange(cb: (key: string, value: any) => void): Promise<() => void> {
+  async onChange(_cb: (key: string, value: unknown) => void): Promise<() => void> {
     return () => {};
   }
 }
