@@ -17,9 +17,11 @@ export class Logger {
   private static instance: Logger;
   private minLevel: LogLevel = LogLevel.INFO;
   private listeners: ((entry: LogEntry) => void)[] = [];
+  private maxStoredLogs = 100;
 
   private constructor() {
-    if (import.meta.env.DEV) {
+    // Safe check for import.meta to avoid crashing in Jest/Node environments
+    if (import.meta.env && import.meta.env.DEV) {
       this.minLevel = LogLevel.DEBUG;
     }
   }
@@ -79,23 +81,20 @@ export class Logger {
 
     switch (level) {
       case LogLevel.DEBUG: {
-        // eslint-disable-next-line no-console
         console.debug(...consoleArgs);
         break;
       }
       case LogLevel.INFO: {
-        // eslint-disable-next-line no-console
         console.info(...consoleArgs);
         break;
       }
       case LogLevel.WARN: {
-        // eslint-disable-next-line no-console
         console.warn(...consoleArgs);
         break;
       }
       case LogLevel.ERROR: {
-        // eslint-disable-next-line no-console
         console.error(...consoleArgs);
+        this.persistErrorLog(entry);
         break;
       }
     }
@@ -106,9 +105,26 @@ export class Logger {
         listener(entry);
       } catch (error) {
         // Prevent listener errors from crashing the app
-        // eslint-disable-next-line no-console
         console.error('Error in log listener:', error);
       }
+    }
+  }
+
+  private persistErrorLog(entry: LogEntry) {
+    try {
+      if (typeof localStorage === 'undefined') return;
+
+      const storedLogs = localStorage.getItem('noteece_error_logs');
+      let logs: LogEntry[] = storedLogs ? JSON.parse(storedLogs) : [];
+
+      logs.unshift(entry);
+      if (logs.length > this.maxStoredLogs) {
+        logs = logs.slice(0, this.maxStoredLogs);
+      }
+
+      localStorage.setItem('noteece_error_logs', JSON.stringify(logs));
+    } catch (error) {
+      console.warn('Failed to persist error log:', error);
     }
   }
 
@@ -135,14 +151,39 @@ export class Logger {
   private sanitizeContext(context?: Record<string, unknown>): Record<string, unknown> | undefined {
     if (!context) return undefined;
 
-    // Deep clone to avoid mutation
+    // Use custom stringify to handle circular refs
     try {
-      const sanitized = JSON.parse(JSON.stringify(context));
+      const safeString = this.safeStringify(context);
+      const sanitized = JSON.parse(safeString);
       this.redactSensitiveData(sanitized);
       return sanitized;
     } catch {
       return { error: 'Failed to sanitize context' };
     }
+  }
+
+  private safeStringify(obj: unknown): string {
+    const cache = new Set();
+    return JSON.stringify(obj, (_key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (cache.has(value)) {
+          return '[Circular]';
+        }
+        cache.add(value);
+      }
+
+      if (value instanceof Error) {
+        return {
+          name: value.name,
+          message: value.message,
+          stack: value.stack,
+          // capture other enumerable properties
+          ...value
+        };
+      }
+
+      return value;
+    });
   }
 
   private redactSensitiveData(obj: unknown) {
@@ -159,11 +200,9 @@ export class Logger {
             const value = record[key];
             if (typeof value === 'object' && value !== null) {
                 this.redactSensitiveData(value);
-            } else if (typeof value === 'string') {
+            } else if (typeof value === 'string' && /bearer\s+\S+/i.test(value)) {
                 // Check if value contains sensitive patterns (like Bearer token)
-                 if (/bearer\s+\S+/i.test(value)) {
-                    record[key] = value.replace(/bearer\s+\S+/i, 'Bearer [REDACTED]');
-                 }
+                record[key] = value.replace(/bearer\s+\S+/i, 'Bearer [REDACTED]');
             }
         }
     }
