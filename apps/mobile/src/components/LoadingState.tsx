@@ -33,12 +33,7 @@ interface EmptyStateProps {
   };
 }
 
-export function EmptyState({
-  icon = 'folder-open-outline' as IoniconsName,
-  title,
-  message,
-  action,
-}: EmptyStateProps) {
+export function EmptyState({ icon = 'folder-open-outline' as IoniconsName, title, message, action }: EmptyStateProps) {
   return (
     <View style={styles.container}>
       <Ionicons name={icon} size={64} color={colors.textTertiary} />

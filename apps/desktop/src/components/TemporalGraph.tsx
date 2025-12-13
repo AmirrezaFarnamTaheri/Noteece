@@ -74,7 +74,8 @@ const TemporalGraph: React.FC<{ spaceId: string }> = ({ spaceId }) => {
   const [playing, setPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [milestones, setMilestones] = useState<GraphMilestone[]>([]);
-  const [page, setPage] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [page] = useState(0);
   const PAGE_SIZE = 20;
 
   useEffect(() => {

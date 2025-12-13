@@ -1,9 +1,3 @@
-/**
- * Desktop Application Logger
- *
- * Simple logger for desktop app
- */
-
 export enum LogLevel {
   DEBUG = 0,
   INFO = 1,
@@ -14,215 +8,166 @@ export enum LogLevel {
 export interface LogEntry {
   level: LogLevel;
   message: string;
-  timestamp: number;
+  timestamp: string;
   context?: Record<string, unknown>;
   error?: Error;
 }
 
-interface StoredLogEntry {
-  level: LogLevel;
-  message: string;
-  timestamp: number;
-  context?: string;
-  error?:
-    | {
-        message: string;
-        stack?: string;
-        name: string;
-      }
-    | string;
-}
+export class Logger {
+  private static instance: Logger;
+  private minLevel: LogLevel = LogLevel.INFO;
+  private listeners: ((entry: LogEntry) => void)[] = [];
 
-type LogListener = (entry: LogEntry) => void | Promise<void>;
-
-class Logger {
-  private level: LogLevel = LogLevel.INFO;
-  private context: Record<string, unknown> = {};
-  private listeners: Set<LogListener> = new Set();
-
-  setLevel(level: LogLevel): void {
-    this.level = level;
+  private constructor() {
+    if (import.meta.env.DEV) {
+      this.minLevel = LogLevel.DEBUG;
+    }
   }
 
-  setContext(ctx: Record<string, unknown>): void {
-    this.context = { ...this.context, ...ctx };
+  static getInstance(): Logger {
+    if (!Logger.instance) {
+      Logger.instance = new Logger();
+    }
+    return Logger.instance;
   }
 
-  addListener(listener: LogListener): () => void {
-    this.listeners.add(listener);
-    let removed = false;
+  setLevel(level: LogLevel) {
+    this.minLevel = level;
+  }
+
+  addListener(listener: (entry: LogEntry) => void) {
+    this.listeners.push(listener);
     return () => {
-      if (!removed) {
-        this.listeners.delete(listener);
-        removed = true;
-      }
+      this.listeners = this.listeners.filter((l) => l !== listener);
     };
   }
 
-  private log(level: LogLevel, message: string, error?: Error): void {
-    if (level < this.level) return;
+  debug(message: string, context?: Record<string, unknown>) {
+    this.log(LogLevel.DEBUG, message, context);
+  }
+
+  info(message: string, context?: Record<string, unknown>) {
+    this.log(LogLevel.INFO, message, context);
+  }
+
+  warn(message: string, context?: Record<string, unknown>) {
+    this.log(LogLevel.WARN, message, context);
+  }
+
+  error(message: string, error?: Error | unknown, context?: Record<string, unknown>) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    this.log(LogLevel.ERROR, message, { ...context, error: errorObj });
+  }
+
+  private log(level: LogLevel, message: string, context?: Record<string, unknown>) {
+    if (level < this.minLevel) return;
 
     const entry: LogEntry = {
       level,
       message,
-      timestamp: Date.now(),
-      context: this.context,
-      error,
+      timestamp: new Date().toISOString(),
+      context: this.sanitizeContext(context),
     };
 
-    // Console output by severity
+    // Console output
+    const style = this.getConsoleStyle(level);
+    const consoleArgs = [
+      `%c[${LogLevel[level]}] ${message}`,
+      style,
+      entry.context || '',
+    ];
 
-    const levelStr = LogLevel[level];
-    const args: unknown[] = [`[${levelStr}] ${message}`];
-    if (error) args.push(error);
     switch (level) {
-      case LogLevel.ERROR: {
-        console.error(...args);
-        break;
-      }
-      case LogLevel.WARN: {
-        console.warn(...args);
+      case LogLevel.DEBUG: {
+        // eslint-disable-next-line no-console
+        console.debug(...consoleArgs);
         break;
       }
       case LogLevel.INFO: {
-        console.info(...args);
+        // eslint-disable-next-line no-console
+        console.info(...consoleArgs);
         break;
       }
-      default: {
-        console.debug(...args);
+      case LogLevel.WARN: {
+        // eslint-disable-next-line no-console
+        console.warn(...consoleArgs);
+        break;
+      }
+      case LogLevel.ERROR: {
+        // eslint-disable-next-line no-console
+        console.error(...consoleArgs);
         break;
       }
     }
 
-    // Notify listeners (ignore individual listener failures)
+    // Notify listeners
     for (const listener of this.listeners) {
       try {
-        void listener(entry);
-      } catch {
-        // swallow listener errors
+        listener(entry);
+      } catch (error) {
+        // Prevent listener errors from crashing the app
+        // eslint-disable-next-line no-console
+        console.error('Error in log listener:', error);
       }
     }
   }
 
-  debug(message: string, context?: Record<string, unknown>): void {
-    if (context) this.setContext(context);
-    this.log(LogLevel.DEBUG, message);
-  }
-
-  info(message: string, context?: Record<string, unknown>): void {
-    if (context) this.setContext(context);
-    this.log(LogLevel.INFO, message);
-  }
-
-  warn(message: string, context?: Record<string, unknown>): void {
-    if (context) this.setContext(context);
-    this.log(LogLevel.WARN, message);
-  }
-
-  error(message: string, error?: Error | Record<string, unknown>): void {
-    if (error instanceof Error) {
-      this.log(LogLevel.ERROR, message, error);
-    } else if (error) {
-      this.setContext(error);
-      this.log(LogLevel.ERROR, message);
-    } else {
-      this.log(LogLevel.ERROR, message);
+  private getConsoleStyle(level: LogLevel): string {
+    switch (level) {
+      case LogLevel.DEBUG: {
+        return 'color: #888';
+      }
+      case LogLevel.INFO: {
+        return 'color: #4CAF50';
+      }
+      case LogLevel.WARN: {
+        return 'color: #FFC107';
+      }
+      case LogLevel.ERROR: {
+        return 'color: #F44336; font-weight: bold';
+      }
+      default: {
+        return '';
+      }
     }
   }
-}
 
-export const logger = new Logger();
+  private sanitizeContext(context?: Record<string, unknown>): Record<string, unknown> | undefined {
+    if (!context) return undefined;
 
-// Configure logger for desktop app
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-if (import.meta !== undefined && import.meta.env && import.meta.env.DEV) {
-  logger.setLevel(LogLevel.DEBUG);
-} else {
-  logger.setLevel(LogLevel.INFO);
-}
-
-// Add desktop-specific context
-logger.setContext({
-  platform: 'desktop',
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  env: import.meta !== undefined && import.meta.env ? import.meta.env.MODE : 'test',
-});
-
-// Helper: safe stringify moved to outer scope
-const safeStringify = (obj: unknown): string => {
-  const seen = new WeakSet();
-  try {
-    return JSON.stringify(obj, function (_key, value: unknown) {
-      if (typeof value === 'object' && value !== null) {
-        if (seen.has(value)) return '[Circular]';
-        seen.add(value);
-      }
-      if (typeof value === 'string' && value.length > 1000) {
-        return value.slice(0, 1000) + '…';
-      }
-      return value as string | number | boolean | null | object;
-    });
-  } catch {
-    return '[Unserializable]';
+    // Deep clone to avoid mutation
+    try {
+      const sanitized = JSON.parse(JSON.stringify(context));
+      this.redactSensitiveData(sanitized);
+      return sanitized;
+    } catch {
+      return { error: 'Failed to sanitize context' };
+    }
   }
-};
 
-// Persist critical logs to storage
-logger.addListener((entry: LogEntry) => {
-  if (entry.level < LogLevel.ERROR) return;
+  private redactSensitiveData(obj: unknown) {
+    if (!obj || typeof obj !== 'object') return;
 
-  try {
-    // Check if localStorage is available
-    const testKey = '__localStorage_available__';
-    localStorage.setItem(testKey, 'true');
-    localStorage.removeItem(testKey);
+    // Use type assertion since we checked it's an object
+    const record = obj as Record<string, unknown>;
 
-    // Sanitize sensitive data before persisting
-    const sensitivePatterns = [
-      /password['":\s]*['"]\w+['"]/gi,
-      /token['":\s]*['"]\w+['"]/gi,
-      /key['":\s]*['"]\w+['"]/gi,
-      /secret['":\s]*['"]\w+['"]/gi,
-      /Bearer\s+\S+/gi,
-    ];
-
-    let sanitizedMessage = entry.message;
-    sensitivePatterns.forEach((pattern) => {
-      sanitizedMessage = sanitizedMessage.replace(pattern, '[REDACTED]');
-    });
-
-    const raw = localStorage.getItem('noteece_error_logs');
-    const logs: StoredLogEntry[] = raw ? (JSON.parse(raw) as StoredLogEntry[]) : [];
-
-    const sanitized: StoredLogEntry = {
-      level: entry.level,
-      message: sanitizedMessage,
-      timestamp: entry.timestamp,
-      context: entry.context ? safeStringify(entry.context) : undefined,
-      error: entry.error
-        ? (entry.error instanceof Error
-          ? {
-              message: entry.error.message,
-              stack: entry.error.stack?.slice(0, 5000),
-              name: entry.error.name,
+    for (const key of Object.keys(record)) {
+        // Check if key is sensitive
+        if (['password', 'token', 'key', 'secret', 'authorization'].some(k => key.toLowerCase().includes(k))) {
+            record[key] = '[REDACTED]';
+        } else {
+            const value = record[key];
+            if (typeof value === 'object' && value !== null) {
+                this.redactSensitiveData(value);
+            } else if (typeof value === 'string') {
+                // Check if value contains sensitive patterns (like Bearer token)
+                 if (/bearer\s+\S+/i.test(value)) {
+                    record[key] = value.replace(/bearer\s+\S+/i, 'Bearer [REDACTED]');
+                 }
             }
-          : safeStringify(entry.error))
-        : undefined,
-    };
-
-    logs.push(sanitized);
-    while (logs.length > 100) logs.shift();
-
-    localStorage.setItem('noteece_error_logs', JSON.stringify(logs));
-  } catch (error) {
-    // Silently ignore storage errors (quota exceeded, unavailable, etc)
-    // Don't log to console to avoid recursion
-    if (error instanceof Error && error.name === 'QuotaExceededError') {
-      // Storage quota exceeded - consider clearing old logs or alternative storage
+        }
     }
   }
-});
+}
 
-export default logger;
+export const logger = Logger.getInstance();
