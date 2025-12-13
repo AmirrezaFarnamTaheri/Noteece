@@ -174,11 +174,11 @@ export class Logger {
 
       if (value instanceof Error) {
         return {
+          // capture other enumerable properties
+          ...value,
           name: value.name,
           message: value.message,
           stack: value.stack,
-          // capture other enumerable properties
-          ...value
         };
       }
 
