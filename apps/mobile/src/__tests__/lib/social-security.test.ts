@@ -8,6 +8,9 @@ import {
   requiresSocialAuthentication,
 } from '../../lib/social-security';
 
+import * as LocalAuthentication from 'expo-local-authentication';
+import * as SecureStore from 'expo-secure-store';
+
 // Mock dependencies
 jest.mock('expo-local-authentication', () => ({
   hasHardwareAsync: jest.fn(),
@@ -26,9 +29,6 @@ jest.mock('expo-secure-store', () => ({
   setItemAsync: jest.fn(),
   deleteItemAsync: jest.fn(),
 }));
-
-import * as LocalAuthentication from 'expo-local-authentication';
-import * as SecureStore from 'expo-secure-store';
 
 describe('Social Security Module', () => {
   beforeEach(() => {

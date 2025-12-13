@@ -220,13 +220,17 @@ const TravelMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
             <DatePickerInput
               label="Start Date"
               value={formStartDate}
-              onChange={(value) => value && setFormStartDate(value)}
+              onChange={(value) => {
+                if (value && typeof value !== 'string') setFormStartDate(value);
+              }}
               required
             />
             <DatePickerInput
               label="End Date"
               value={formEndDate}
-              onChange={(value) => value && setFormEndDate(value)}
+              onChange={(value) => {
+                if (value && typeof value !== 'string') setFormEndDate(value);
+              }}
               minDate={formStartDate}
               required
             />

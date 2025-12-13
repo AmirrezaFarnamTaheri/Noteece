@@ -230,7 +230,10 @@ impl P2pSync {
     }
 
     /// Get sync progress for a specific peer
-    pub async fn get_peer_status(&self, device_id: &str) -> Result<crate::sync_agent::SyncProgress, String> {
+    pub async fn get_peer_status(
+        &self,
+        device_id: &str,
+    ) -> Result<crate::sync_agent::SyncProgress, String> {
         let protocol = self.protocol.lock().await;
 
         // Determine phase based on global state and active peer
@@ -242,28 +245,28 @@ impl P2pSync {
                 } else {
                     "idle"
                 }
-            },
+            }
             crate::sync::mobile_sync::protocol::types::SyncState::Connected => {
-                 if protocol.get_active_peer_id().as_deref() == Some(device_id) {
+                if protocol.get_active_peer_id().as_deref() == Some(device_id) {
                     "connected"
                 } else {
                     "idle"
                 }
-            },
+            }
             crate::sync::mobile_sync::protocol::types::SyncState::Syncing => {
-                 if protocol.get_active_peer_id().as_deref() == Some(device_id) {
+                if protocol.get_active_peer_id().as_deref() == Some(device_id) {
                     "syncing"
                 } else {
                     "idle" // Or "queued" if we had a queue
                 }
-            },
+            }
             crate::sync::mobile_sync::protocol::types::SyncState::SyncComplete => {
                 if protocol.get_active_peer_id().as_deref() == Some(device_id) {
                     "completed"
                 } else {
                     "idle"
                 }
-            },
+            }
             crate::sync::mobile_sync::protocol::types::SyncState::Error => "error",
         };
 
@@ -275,7 +278,13 @@ impl P2pSync {
         Ok(crate::sync_agent::SyncProgress {
             device_id: device_id.to_string(),
             phase: phase.to_string(),
-            progress: if phase == "syncing" { 0.5 } else if phase == "completed" { 1.0 } else { 0.0 },
+            progress: if phase == "syncing" {
+                0.5
+            } else if phase == "completed" {
+                1.0
+            } else {
+                0.0
+            },
             entities_pushed: 0,
             entities_pulled: 0,
             conflicts: 0,

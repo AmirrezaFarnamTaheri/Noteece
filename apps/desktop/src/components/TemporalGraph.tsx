@@ -74,7 +74,7 @@ const TemporalGraph: React.FC<{ spaceId: string }> = ({ spaceId }) => {
   const [playing, setPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [milestones, setMilestones] = useState<GraphMilestone[]>([]);
-  const [page, setPage] = useState(0);
+  const [page] = useState(0);
   const PAGE_SIZE = 20;
 
   useEffect(() => {
