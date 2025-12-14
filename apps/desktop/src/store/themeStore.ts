@@ -60,7 +60,7 @@ export const useThemeStore = create<ThemeState>()(
 
       toggleTheme: () => {
         const { mode } = get();
-        const newMode: ThemeMode = mode === 'light' ? 'dark' : (mode === 'dark' ? 'system' : 'light');
+        const newMode: ThemeMode = mode === 'light' ? 'dark' : mode === 'dark' ? 'system' : 'light';
         get().setMode(newMode);
       },
 
