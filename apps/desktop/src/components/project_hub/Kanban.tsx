@@ -245,9 +245,9 @@ const Kanban: React.FC = () => {
                                         color={
                                           (task.priority as unknown as string) === 'high'
                                             ? 'red'
-                                            : ((task.priority as unknown as string) === 'medium'
+                                            : (task.priority as unknown as string) === 'medium'
                                               ? 'yellow'
-                                              : 'blue')
+                                              : 'blue'
                                         }
                                         variant="light"
                                         size="xs"

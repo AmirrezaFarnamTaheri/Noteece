@@ -73,11 +73,7 @@ export class Logger {
 
     // Console output
     const style = this.getConsoleStyle(level);
-    const consoleArgs = [
-      `%c[${LogLevel[level]}] ${message}`,
-      style,
-      entry.context || '',
-    ];
+    const consoleArgs = [`%c[${LogLevel[level]}] ${message}`, style, entry.context || ''];
 
     switch (level) {
       case LogLevel.DEBUG: {
@@ -193,18 +189,18 @@ export class Logger {
     const record = obj as Record<string, unknown>;
 
     for (const key of Object.keys(record)) {
-        // Check if key is sensitive
-        if (['password', 'token', 'key', 'secret', 'authorization'].some(k => key.toLowerCase().includes(k))) {
-            record[key] = '[REDACTED]';
-        } else {
-            const value = record[key];
-            if (typeof value === 'object' && value !== null) {
-                this.redactSensitiveData(value);
-            } else if (typeof value === 'string' && /bearer\s+\S+/i.test(value)) {
-                // Check if value contains sensitive patterns (like Bearer token)
-                record[key] = value.replace(/bearer\s+\S+/i, 'Bearer [REDACTED]');
-            }
+      // Check if key is sensitive
+      if (['password', 'token', 'key', 'secret', 'authorization'].some((k) => key.toLowerCase().includes(k))) {
+        record[key] = '[REDACTED]';
+      } else {
+        const value = record[key];
+        if (typeof value === 'object' && value !== null) {
+          this.redactSensitiveData(value);
+        } else if (typeof value === 'string' && /bearer\s+\S+/i.test(value)) {
+          // Check if value contains sensitive patterns (like Bearer token)
+          record[key] = value.replace(/bearer\s+\S+/i, 'Bearer [REDACTED]');
         }
+      }
     }
   }
 }

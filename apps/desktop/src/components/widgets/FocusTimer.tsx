@@ -113,7 +113,7 @@ export const FocusTimer: React.FC = () => {
                 {formatTime(timeLeft)}
               </Text>
               <Text size="xs" c="dimmed">
-                {isFinished ? 'Complete!' : (isRunning ? 'Running' : 'Ready')}
+                {isFinished ? 'Complete!' : isRunning ? 'Running' : 'Ready'}
               </Text>
             </Stack>
           }
