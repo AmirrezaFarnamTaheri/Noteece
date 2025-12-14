@@ -63,7 +63,7 @@ export default function ProjectTimeline() {
                     {project.title}
                   </Text>
                   {daysUntil !== null && (
-                    <Badge size="sm" color={daysUntil < 0 ? 'red' : (daysUntil < 7 ? 'orange' : 'green')} variant="light">
+                    <Badge size="sm" color={daysUntil < 0 ? 'red' : daysUntil < 7 ? 'orange' : 'green'} variant="light">
                       {daysUntil < 0 ? `${Math.abs(daysUntil)}d overdue` : `${daysUntil}d left`}
                     </Badge>
                   )}
@@ -72,7 +72,7 @@ export default function ProjectTimeline() {
                 <Progress
                   value={progress}
                   size="sm"
-                  color={progress < 30 ? 'red' : (progress < 70 ? 'yellow' : 'green')}
+                  color={progress < 30 ? 'red' : progress < 70 ? 'yellow' : 'green'}
                   mb="xs"
                 />
 

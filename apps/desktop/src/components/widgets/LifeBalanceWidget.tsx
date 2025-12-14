@@ -85,7 +85,7 @@ export function LifeBalanceWidget({ spaceId, timeRange = 'week', showTargets = t
       rest: 0,
     };
 
-    const multiplier = timeRange === 'week' ? 1 : (timeRange === 'month' ? 4 : 13);
+    const multiplier = timeRange === 'week' ? 1 : timeRange === 'month' ? 4 : 13;
 
     return [
       {
@@ -186,7 +186,7 @@ export function LifeBalanceWidget({ spaceId, timeRange = 'week', showTargets = t
 
         <Text size="sm" c="dimmed">
           Time distribution across life areas (
-          {timeRange === 'week' ? 'this week' : (timeRange === 'month' ? 'this month' : 'this quarter')})
+          {timeRange === 'week' ? 'this week' : timeRange === 'month' ? 'this month' : 'this quarter'})
         </Text>
 
         <ResponsiveContainer width="100%" height={280}>
