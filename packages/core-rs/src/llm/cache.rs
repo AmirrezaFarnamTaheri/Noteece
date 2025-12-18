@@ -3,7 +3,7 @@
 // Caches LLM responses to reduce costs and improve latency.
 // Uses SQLite for persistent storage across sessions.
 
-use super::{types::*, LLMError};
+use super::{types::*, LlmError as LLMError};
 use chrono::Utc;
 use rusqlite::{params, Connection};
 

@@ -12,7 +12,7 @@ pub use gemini::GeminiProvider;
 pub use ollama::OllamaProvider;
 pub use openai::OpenAIProvider;
 
-use super::{types::*, LLMError};
+use super::{types::*, LlmError as LLMError};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 

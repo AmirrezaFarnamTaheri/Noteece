@@ -21,9 +21,10 @@ import {
   IconEyeOff,
   IconChartPie,
 } from '@tabler/icons-react';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useProjects } from '../hooks/useQueries';
 import { useStore } from '../store';
+import { getDashboardStats } from '../services/api';
 import classes from './Dashboard.module.css';
 import { Activity } from './activity';
 import { BarChart } from './bar-chart';
@@ -42,12 +43,31 @@ import { TasksByPriority } from './widgets/TasksByPriority';
 import TimeTrackingWidget from './widgets/TimeTrackingWidget';
 import { UniversalDashboardWidget } from './widgets/UniversalDashboardWidget';
 import { CalendarWidget } from './widgets/CalendarWidget';
+import { QuoteWidget } from './widgets/QuoteWidget';
+import { Quote } from '@noteece/types';
 
 const Dashboard: React.FC = () => {
   const theme = useMantineTheme();
   const { activeSpaceId } = useStore();
   const { data: projects = [], isLoading } = useProjects(activeSpaceId || '', !!activeSpaceId);
   const [focusMode, setFocusMode] = useState(false);
+  const [greeting, setGreeting] = useState('');
+  const [quote, setQuote] = useState<Quote | null>(null);
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting('Good morning');
+    else if (hour < 18) setGreeting('Good afternoon');
+    else setGreeting('Good evening');
+  }, []);
+
+  useEffect(() => {
+    if (activeSpaceId) {
+      getDashboardStats(activeSpaceId).then(stats => {
+        if (stats.quote) setQuote(stats.quote);
+      }).catch(err => console.error("Failed to fetch dashboard stats", err));
+    }
+  }, [activeSpaceId]);
 
   const completedProjects = projects.filter((project) => project.status === 'done').length;
   const inProgressProjects = projects.filter((project) => project.status === 'active').length;
@@ -55,12 +75,11 @@ const Dashboard: React.FC = () => {
   return (
     <Container
       fluid
-      className={classes.container}
+      className={`${classes.container} bg-noise`}
       p="xl"
       style={{
         backgroundColor: theme.colors.dark[9],
         minHeight: '100vh',
-        backgroundImage: 'radial-gradient(circle at 90% 10%, rgba(132, 94, 247, 0.08) 0%, transparent 40%)',
       }}
     >
       <LoadingOverlay visible={isLoading} overlayProps={{ blur: 2 }} />
@@ -69,12 +88,12 @@ const Dashboard: React.FC = () => {
         <Group justify="space-between" align="flex-end">
           <div>
             <Title order={1} fw={900} style={{ letterSpacing: '-1px', fontSize: '2.5rem' }}>
-              <Text span inherit variant="gradient" gradient={{ from: 'violet.2', to: 'white' }}>
-                Dashboard
+              <Text span inherit variant="gradient" gradient={{ from: 'violet.3', to: 'white' }}>
+                {greeting}, User
               </Text>
             </Title>
             <Text c="dimmed" size="md" mt={4} fw={500}>
-              Your personal command center
+              Your personal command center is ready.
             </Text>
           </div>
           <Group>
@@ -84,6 +103,7 @@ const Dashboard: React.FC = () => {
               radius="md"
               leftSection={focusMode ? <IconEyeOff size={18} /> : <IconEye size={18} />}
               onClick={() => setFocusMode(!focusMode)}
+              aria-label={focusMode ? 'Exit Focus Mode' : 'Enter Focus Mode'}
             >
               {focusMode ? 'Exit Focus' : 'Focus Mode'}
             </Button>
@@ -94,8 +114,11 @@ const Dashboard: React.FC = () => {
         {!focusMode && (
           <Grid gutter="lg">
             <Grid.Col span={{ base: 12, lg: 8 }}>
-              {/* Universal Widget (Merged Health/Stats) */}
-              <UniversalDashboardWidget />
+              <Stack gap="lg">
+                  {/* Universal Widget (Merged Health/Stats) */}
+                  <UniversalDashboardWidget />
+                  {quote && <QuoteWidget quote={quote} />}
+              </Stack>
             </Grid.Col>
             <Grid.Col span={{ base: 12, lg: 4 }}>
               <Stack gap="lg" h="100%">

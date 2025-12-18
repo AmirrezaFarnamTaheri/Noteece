@@ -12,6 +12,8 @@ pub mod types;
 pub mod validation;
 pub mod pii;
 
-pub use config::LlmConfig;
-pub use error::LlmError;
+pub use config::LLMConfig as LlmConfig;
+pub use error::LLMError as LlmError;
 pub use pii::redact_pii;
+pub use providers::LLMProvider;
+pub use types::{LLMRequest, Message, Role};

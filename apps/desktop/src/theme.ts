@@ -16,10 +16,22 @@ export const theme: MantineThemeOverride = createTheme({
       '#5C5F66',
       '#373A40',
       '#2C2E33',
-      '#25262B', // Dark 6
-      '#1A1B1E', // Dark 7 (Base bg)
-      '#141517', // Dark 8
-      '#101113', // Dark 9
+      '#25262B',
+      '#1A1B1E',
+      '#141517',
+      '#050506', // Dark 9 (Deep Obsidian)
+    ],
+    obsidian: [
+      '#C1C2C5',
+      '#A6A7AB',
+      '#909296',
+      '#5C5F66',
+      '#373A40',
+      '#2C2E33',
+      '#25262B',
+      '#1A1B1E',
+      '#141517',
+      '#050506',
     ],
     violet: [
       '#f3f0ff',
@@ -39,6 +51,15 @@ export const theme: MantineThemeOverride = createTheme({
       defaultProps: {
         size: 'md',
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      styles: (_theme: any) => ({
+        root: {
+          transition: 'transform 0.1s ease, box-shadow 0.2s ease',
+          '&:active': {
+            transform: 'scale(0.98)',
+          },
+        },
+      }),
     },
     Paper: {
       defaultProps: {
@@ -47,9 +68,10 @@ export const theme: MantineThemeOverride = createTheme({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       styles: (_theme: any) => ({
         root: {
-          backgroundColor: 'rgba(26, 27, 30, 0.65)',
-          backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255, 255, 255, 0.05)',
+          backgroundColor: 'rgba(20, 21, 23, 0.75)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
         },
       }),
     },
@@ -60,13 +82,16 @@ export const theme: MantineThemeOverride = createTheme({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       styles: (theme: any) => ({
         root: {
-          backgroundColor: 'rgba(37, 38, 43, 0.65)',
-          backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(255, 255, 255, 0.05)',
-          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+          backgroundColor: 'rgba(32, 33, 36, 0.7)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.06)',
+          transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
           '&:hover': {
-            transform: 'translateY(-2px)',
-            boxShadow: theme.shadows.md,
+            transform: 'translateY(-4px)',
+            boxShadow: theme.shadows.xl,
+            backgroundColor: 'rgba(37, 38, 43, 0.85)',
+            borderColor: 'rgba(132, 94, 247, 0.3)', // Violet hint on hover
           },
         },
       }),

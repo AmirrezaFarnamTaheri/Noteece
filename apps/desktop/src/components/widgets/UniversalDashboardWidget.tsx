@@ -23,6 +23,7 @@ export const UniversalDashboardWidget: React.FC = () => {
           music: { track_count: 0, playlist_count: 0 },
           social: { posts_count: 0, platforms_count: 0 },
           tasks: { pending_count: 0, completed_count: 0 },
+          quote: null,
         };
       }
       try {
@@ -34,6 +35,7 @@ export const UniversalDashboardWidget: React.FC = () => {
           music: { track_count: 1450, playlist_count: 5 },
           social: { posts_count: 24, platforms_count: 2 },
           tasks: { pending_count: 8, completed_count: 15 },
+          quote: null,
         };
       }
     },
