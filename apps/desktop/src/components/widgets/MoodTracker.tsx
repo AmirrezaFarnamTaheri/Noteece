@@ -106,7 +106,7 @@ export default function MoodTracker() {
               This Week
             </Text>
             <Text size="sm" fw={600}>
-              Trending {avgMood > 3.5 ? '↗️' : avgMood > 2.5 ? '→' : '↘️'}
+              Trending {avgMood > 3.5 ? '↗️' : (avgMood > 2.5 ? '→' : '↘️')}
             </Text>
           </div>
         </Group>

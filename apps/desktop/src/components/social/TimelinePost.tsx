@@ -71,13 +71,13 @@ export function TimelinePost({ post }: TimelinePostProperties) {
                   <AspectRatio ratio={16 / 9}>
                     <Image src={media.url} alt={media.alt || 'Post media'} fit="cover" radius="md" />
                   </AspectRatio>
-                ) : media.type === 'video' ? (
+                ) : (media.type === 'video' ? (
                   <AspectRatio ratio={16 / 9}>
                     <video src={media.url} controls style={{ width: '100%', borderRadius: '8px' }}>
                       <track kind="captions" srcLang="en" label="English" />
                     </video>
                   </AspectRatio>
-                ) : null}
+                ) : null)}
               </div>
             ))}
             {post.media.length > 4 && (
