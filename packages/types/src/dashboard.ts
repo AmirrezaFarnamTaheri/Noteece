@@ -15,4 +15,10 @@ export interface DashboardStats {
     pending_count: number;
     completed_count: number;
   };
+  quote: Quote | null;
+}
+
+export interface Quote {
+  text: string;
+  author: string;
 }

@@ -111,7 +111,9 @@ beforeEach(() => {
 describe('Dashboard', () => {
   it('renders dashboard title', async () => {
     renderWithProviders(<Dashboard />);
-    expect(await screen.findByText('Dashboard')).toBeInTheDocument();
+    // Title is now dynamic: "Good morning/afternoon/evening, User"
+    // We check for "User" or part of the greeting
+    expect(await screen.findByText(/User/)).toBeInTheDocument();
   });
 
   it('displays correct project counts', async () => {

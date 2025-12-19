@@ -2,6 +2,8 @@ use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+use crate::quote::{self, Quote};
+
 #[derive(Error, Debug)]
 pub enum DashboardError {
     #[error("Database error: {0}")]
@@ -14,6 +16,7 @@ pub struct DashboardStats {
     pub music: MusicStats,
     pub social: SocialStats,
     pub tasks: TaskStats,
+    pub quote: Option<Quote>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -110,6 +113,8 @@ pub fn get_dashboard_stats(
         )
         .unwrap_or(0);
 
+    let quote = Some(quote::get_daily_quote());
+
     Ok(DashboardStats {
         health: HealthStats {
             metrics_count,
@@ -127,5 +132,6 @@ pub fn get_dashboard_stats(
             pending_count,
             completed_count,
         },
+        quote,
     })
 }

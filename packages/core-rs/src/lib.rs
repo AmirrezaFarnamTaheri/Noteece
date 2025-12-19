@@ -36,6 +36,7 @@ pub mod ocr;
 pub mod personal_modes;
 pub mod plugin;
 pub mod project;
+pub mod quote;
 pub mod search;
 pub mod social;
 pub mod space;

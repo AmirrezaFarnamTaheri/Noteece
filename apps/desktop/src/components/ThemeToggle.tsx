@@ -13,6 +13,7 @@ export const ThemeToggle: React.FC = () => {
         color={dark ? 'yellow' : 'blue'}
         onClick={() => toggleColorScheme()}
         title="Toggle color scheme"
+        aria-label="Toggle color scheme"
         size="lg"
       >
         {dark ? <IconSun size={18} /> : <IconMoon size={18} />}

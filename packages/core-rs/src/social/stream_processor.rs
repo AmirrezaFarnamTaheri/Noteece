@@ -149,7 +149,7 @@ impl StreamProcessor {
         let snapshot: Vec<&String> = self.buffer.iter().collect();
 
         // Try to detect platform first
-        let platform = detect_platform(&snapshot, self.active_platform_hint);
+        let platform = detect_platform(&snapshot.iter().map(|s| s.as_str()).collect::<Vec<_>>().join("\n"));
 
         // Define extraction rules
         const RULES: &[PlatformRule] = &[

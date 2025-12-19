@@ -117,8 +117,9 @@ const MainLayout: React.FC = () => {
         <AppShell.Header
           p="md"
           style={{
-            background: 'rgba(20, 21, 23, 0.8)', // Semi-transparent
-            backdropFilter: 'blur(12px)',
+            background: 'rgba(5, 5, 6, 0.85)', // Deep Obsidian transparent
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
             borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
           }}
         >
@@ -186,7 +187,14 @@ const MainLayout: React.FC = () => {
               <Divider orientation="vertical" mx={4} color="dark.6" />
 
               <Tooltip label="Toggle Zen Mode">
-                <ActionIcon variant="subtle" onClick={toggleZenMode} size="lg" radius="md" color="gray">
+                <ActionIcon
+                  variant="subtle"
+                  onClick={toggleZenMode}
+                  size="lg"
+                  radius="md"
+                  color="gray"
+                  aria-label="Toggle Zen Mode"
+                >
                   <IconEyeOff size={20} />
                 </ActionIcon>
               </Tooltip>
@@ -201,8 +209,9 @@ const MainLayout: React.FC = () => {
         <AppShell.Navbar
           p="sm"
           style={{
-            backgroundColor: 'var(--mantine-color-dark-8)', // Slightly lighter than main
-            borderRight: 'none', // Removed border for cleaner look
+            backgroundColor: 'rgba(15, 16, 20, 0.4)', // Slightly transparent
+            backdropFilter: 'blur(20px)',
+            borderRight: '1px solid rgba(255, 255, 255, 0.03)',
           }}
         >
           <AppShell.Section grow component={ScrollArea} className="no-scrollbar">
@@ -216,7 +225,7 @@ const MainLayout: React.FC = () => {
                     tt="uppercase"
                     pl="xs"
                     mb={4}
-                    style={{ opacity: 0.7, letterSpacing: '1px' }}
+                    style={{ opacity: 0.5, letterSpacing: '1.5px' }}
                   >
                     {group.title}
                   </Text>
@@ -225,27 +234,44 @@ const MainLayout: React.FC = () => {
                       {({ isActive }) => (
                         <MantineNavLink
                           label={
-                            <Text size="sm" fw={isActive ? 600 : 500}>
+                            <Text size="sm" fw={isActive ? 600 : 500} c={isActive ? 'white' : 'dimmed'}>
                               {link.label}
                             </Text>
                           }
                           leftSection={
-                            <link.icon
-                              size={18}
-                              stroke={1.5}
-                              color={isActive ? 'var(--mantine-color-violet-3)' : 'var(--mantine-color-gray-5)'}
-                            />
+                            <ThemeIcon
+                              variant={isActive ? 'light' : 'transparent'}
+                              color={isActive ? 'violet' : 'gray'}
+                              size="sm"
+                              radius="md"
+                            >
+                              <link.icon size={16} stroke={1.5} />
+                            </ThemeIcon>
                           }
                           active={isActive}
                           variant="subtle"
                           rightSection={
-                            isActive && <IconChevronRight size={14} stroke={1.5} style={{ opacity: 0.5 }} />
+                            isActive && (
+                              <IconChevronRight
+                                size={14}
+                                stroke={1.5}
+                                style={{ opacity: 0.5, color: 'var(--mantine-color-violet-4)' }}
+                              />
+                            )
                           }
                           styles={{
                             root: {
                               borderRadius: '8px',
+                              padding: '8px 12px',
+                              transition: 'all 0.2s ease',
+                              marginBottom: 2,
+                              '&:hover': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                                transform: 'translateX(2px)',
+                              },
                               '&[data-active]': {
-                                backgroundColor: 'rgba(132, 94, 247, 0.1)',
+                                backgroundColor: 'rgba(132, 94, 247, 0.08)',
+                                borderLeft: '2px solid var(--mantine-color-violet-5)',
                               },
                             },
                           }}
@@ -262,13 +288,13 @@ const MainLayout: React.FC = () => {
             <Paper
               p="xs"
               radius="md"
+              className="glass-card"
               style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid rgba(255, 255, 255, 0.05)',
+                backgroundColor: 'rgba(5, 5, 6, 0.3)',
               }}
             >
               <Group gap="xs">
-                <ThemeIcon variant="light" color="teal" size="sm" radius="xl">
+                <ThemeIcon variant="gradient" gradient={{ from: 'teal', to: 'green' }} size="sm" radius="xl">
                   <IconCloud size={12} />
                 </ThemeIcon>
                 <Box style={{ flex: 1 }}>
