@@ -322,7 +322,7 @@ function MessageBubble({ message, onSourceClick }: { message: ChatMessage; onSou
                   <Badge
                     size="xs"
                     variant="dot"
-                    color={message.confidence > 0.7 ? 'green' : message.confidence > 0.4 ? 'yellow' : 'red'}
+                    color={message.confidence > 0.7 ? 'green' : (message.confidence > 0.4 ? 'yellow' : 'red')}
                   >
                     {(message.confidence * 100).toFixed(0)}% confidence
                   </Badge>

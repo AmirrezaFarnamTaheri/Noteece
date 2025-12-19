@@ -16,7 +16,10 @@ pub fn extract_engagement(_text: &str) -> EngagementMetrics {
 
 pub fn detect_platform(text: &str) -> crate::social::processing::types::DetectedPlatform {
     use crate::social::processing::types::DetectedPlatform;
-    if text.contains("twitter.com") || text.contains("x.com") || text.contains("@") && text.contains("Retweets") {
+    if text.contains("twitter.com")
+        || text.contains("x.com")
+        || text.contains("@") && text.contains("Retweets")
+    {
         DetectedPlatform::Twitter
     } else if text.contains("instagram.com") {
         DetectedPlatform::Instagram

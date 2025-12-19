@@ -65,7 +65,7 @@ const Dashboard: React.FC = () => {
     if (activeSpaceId) {
       getDashboardStats(activeSpaceId).then(stats => {
         if (stats.quote) setQuote(stats.quote);
-      }).catch(err => console.error("Failed to fetch dashboard stats", err));
+      }).catch(error => console.error("Failed to fetch dashboard stats", error));
     }
   }, [activeSpaceId]);
 
