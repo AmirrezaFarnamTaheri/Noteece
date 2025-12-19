@@ -7,7 +7,6 @@ pub mod reddit;
 pub mod twitter;
 
 use super::types::EngagementMetrics;
-use crate::social::post::SocialPost;
 
 pub fn extract_engagement(_text: &str) -> EngagementMetrics {
     // Placeholder for engagement extraction logic
