@@ -10,6 +10,7 @@ try {
   require('@testing-library/jest-native/extend-expect');
 } catch {
   // jest-native is optional, continue without it
+  // eslint-disable-next-line no-console
   console.log('jest-native not available, continuing without extended matchers');
 }
 

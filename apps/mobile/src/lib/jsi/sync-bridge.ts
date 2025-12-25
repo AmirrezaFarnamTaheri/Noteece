@@ -6,6 +6,7 @@
  */
 
 import { NativeModules } from 'react-native';
+import { Logger } from '../logger';
 
 // JSI Module Types
 export interface SyncDevice {
@@ -108,10 +109,10 @@ class SyncBridge implements SyncJSI {
     this.useJSI = this.jsi !== null;
 
     if (this.useJSI) {
-      console.log('[SyncBridge] Using JSI for sync operations');
+      Logger.info('[SyncBridge] Using JSI for sync operations');
       // Initialization is handled by caller to provide the correct DB path
     } else {
-      console.log('[SyncBridge] Falling back to Native Module');
+      Logger.info('[SyncBridge] Falling back to Native Module');
     }
   }
 

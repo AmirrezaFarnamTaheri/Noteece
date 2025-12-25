@@ -8,6 +8,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { hapticManager } from '@/lib/haptics';
+import { Logger } from '@/lib/logger';
 
 export interface ThemeConfig {
   mode: 'light' | 'dark' | 'auto';
@@ -191,7 +192,7 @@ export const useAppContext = create<AppState>((set, get) => ({
         hapticManager.setEnabled(settings.haptics !== false);
       }
     } catch (error) {
-      console.error('[AppContext] Failed to load settings:', error);
+      Logger.error('[AppContext] Failed to load settings:', error);
     }
   },
 
@@ -235,9 +236,9 @@ export const useAppContext = create<AppState>((set, get) => ({
         set({ lastActiveTab: lastTab });
       }
 
-      console.log('[AppContext] Initialized successfully');
+      Logger.info('[AppContext] Initialized successfully');
     } catch (error) {
-      console.error('[AppContext] Initialization failed:', error);
+      Logger.error('[AppContext] Initialization failed:', error);
     }
   },
 }));

@@ -284,6 +284,7 @@ class ShareViewController: UIViewController {
     fs.writeFileSync(path.join(targetPath, 'Info.plist'), infoPlistContent);
     fs.writeFileSync(path.join(targetPath, 'MainInterface.storyboard'), storyboardContent);
 
+    // eslint-disable-next-line no-console
     console.log('✅ iOS Share Extension files created');
   } catch (error) {
     console.warn('⚠️ Failed to write iOS Share Extension files:', error);
@@ -461,6 +462,7 @@ class ShareActivity : Activity() {
         const activityFile = path.join(activityPath, 'ShareActivity.kt');
         fs.writeFileSync(activityFile, shareActivityContent);
 
+        // eslint-disable-next-line no-console
         console.log('✅ Android ShareActivity created');
       } catch (error) {
         console.warn('⚠️ Failed to create Android ShareActivity:', error);

@@ -4,6 +4,8 @@
 
 - [x] **Security:** Desktop session tokens were in localStorage (Moved to `tauri-plugin-store`).
 - [x] **Security:** Console logs exposed sensitive data (Replaced with secure `Logger`).
+- [x] **Quality:** Mobile app console logs cleaned up and replaced with `Logger`.
+- [x] **Quality:** Removed unsafe `unwrap()` calls in Core-RS critical paths (LLM, CalDAV, DB).
 - [x] **Reliability:** Sync engine masked database errors (Fixed error propagation).
 - [x] **Mobile:** Race condition in vault unlock (Fixed with mutex).
 - [x] **Mobile:** SQL Injection in search (Fixed with parameter binding).

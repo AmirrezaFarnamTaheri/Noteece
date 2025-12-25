@@ -6,6 +6,7 @@
 // @ts-ignore: expo-nfc missing types
 import * as NFC from 'expo-nfc';
 import { dbQuery, dbExecute } from '@/lib/database';
+import { Logger } from '@/lib/logger';
 import { NFCTrigger } from '@/types';
 import { nanoid } from 'nanoid';
 
@@ -22,7 +23,7 @@ export class NFCTriggerManager {
       const isEnabled = await NFC.isEnabledAsync();
       return isSupported && isEnabled;
     } catch (error) {
-      console.error('NFC check failed:', error);
+      Logger.error('NFC check failed:', error);
       return false;
     }
   }
@@ -55,7 +56,7 @@ export class NFCTriggerManager {
         }
       });
     } catch (error) {
-      console.error('Failed to start NFC scanning:', error);
+      Logger.error('Failed to start NFC scanning:', error);
       this.isScanning = false;
       this.tagListener = null;
     }
@@ -313,7 +314,7 @@ export class NFCTriggerManager {
     }
 
     // Open a specific note (handled by navigation)
-    console.log('Open note:', params.noteId);
+    Logger.info('Open note:', params.noteId);
   }
 
   private async executeQuickCapture(params: any): Promise<void> {
@@ -328,7 +329,7 @@ export class NFCTriggerManager {
     }
 
     // Open quick capture with pre-filled data
-    console.log('Quick capture:', params);
+    Logger.info('Quick capture:', params);
   }
 }
 

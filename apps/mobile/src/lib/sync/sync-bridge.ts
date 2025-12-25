@@ -11,6 +11,7 @@
 
 import { NativeModules, Platform } from 'react-native';
 import { SyncClient } from './sync-client';
+import { Logger } from '../logger';
 
 // JSI Module interface
 interface NoteeceCoreModule {
@@ -31,11 +32,11 @@ const NoteeceCoreJSI: NoteeceCoreModule | null = (() => {
       // Try to load the JSI module
       const module = NativeModules.NoteeceCoreModule;
       if (module && typeof module.nativeInit === 'function') {
-        console.log('[SyncBridge] JSI module available');
+        Logger.info('[SyncBridge] JSI module available');
         return module as NoteeceCoreModule;
       }
     } catch {
-      console.log('[SyncBridge] JSI module not available, using TypeScript fallback');
+      Logger.info('[SyncBridge] JSI module not available, using TypeScript fallback');
     }
   }
   return null;
@@ -98,7 +99,7 @@ export class UnifiedSyncBridge {
     this.dbPath = dbPath;
     this.useJSI = NoteeceCoreJSI !== null;
 
-    console.log(`[SyncBridge] Initialized with ${this.useJSI ? 'JSI (Rust)' : 'TypeScript'} engine`);
+    Logger.info(`[SyncBridge] Initialized with ${this.useJSI ? 'JSI (Rust)' : 'TypeScript'} engine`);
   }
 
   /**
@@ -114,11 +115,11 @@ export class UnifiedSyncBridge {
         const result = NoteeceCoreJSI.nativeInit(this.dbPath);
         if (result) {
           this.initialized = true;
-          console.log('[SyncBridge] JSI engine initialized');
+          Logger.info('[SyncBridge] JSI engine initialized');
           return true;
         }
       } catch (e) {
-        console.warn('[SyncBridge] JSI init failed, falling back to TypeScript:', e);
+        Logger.warn('[SyncBridge] JSI init failed, falling back to TypeScript:', e);
         this.useJSI = false;
       }
     }
@@ -126,7 +127,7 @@ export class UnifiedSyncBridge {
     // TypeScript fallback
     this.tsFallback = new SyncClient(this.deviceId);
     this.initialized = true;
-    console.log('[SyncBridge] TypeScript engine initialized');
+    Logger.info('[SyncBridge] TypeScript engine initialized');
     return true;
   }
 
@@ -138,7 +139,7 @@ export class UnifiedSyncBridge {
       try {
         NoteeceCoreJSI.nativeShutdown();
       } catch (e) {
-        console.warn('[SyncBridge] JSI shutdown error:', e);
+        Logger.warn('[SyncBridge] JSI shutdown error:', e);
       }
     }
     this.tsFallback = null;
@@ -163,7 +164,7 @@ export class UnifiedSyncBridge {
           protocol: 'jsi',
         }));
       } catch (e) {
-        console.warn('[SyncBridge] JSI discovery failed:', e);
+        Logger.warn('[SyncBridge] JSI discovery failed:', e);
         // Fall through to TypeScript
       }
     }
@@ -210,7 +211,7 @@ export class UnifiedSyncBridge {
       try {
         return NoteeceCoreJSI.nativeGenerateHandshake();
       } catch (e) {
-        console.warn('[SyncBridge] JSI handshake failed:', e);
+        Logger.warn('[SyncBridge] JSI handshake failed:', e);
       }
     }
 
@@ -226,7 +227,7 @@ export class UnifiedSyncBridge {
       try {
         return NoteeceCoreJSI.nativeProcessSyncPacket(data);
       } catch (e) {
-        console.warn('[SyncBridge] JSI packet processing failed:', e);
+        Logger.warn('[SyncBridge] JSI packet processing failed:', e);
         return JSON.stringify({ error: String(e) });
       }
     }
@@ -311,7 +312,7 @@ export class UnifiedSyncBridge {
           error: parsed.error,
         };
       } catch (e) {
-        console.warn('[SyncBridge] JSI sync failed, trying TypeScript:', e);
+        Logger.warn('[SyncBridge] JSI sync failed, trying TypeScript:', e);
       }
     }
 
@@ -372,7 +373,7 @@ export class UnifiedSyncBridge {
         const result = NoteeceCoreJSI.nativeGetAllNotes();
         return JSON.parse(result);
       } catch (e) {
-        console.warn('[SyncBridge] JSI getAllNotes failed, falling back:', e);
+        Logger.warn('[SyncBridge] JSI getAllNotes failed, falling back:', e);
       }
     }
 
@@ -386,7 +387,7 @@ export class UnifiedSyncBridge {
       const notes = await db.getAllAsync('SELECT * FROM note WHERE is_trashed = 0 ORDER BY modified_at DESC');
       return notes as import('../../types').Note[];
     } catch (e) {
-      console.error('[SyncBridge] getAllNotes failed:', e);
+      Logger.error('[SyncBridge] getAllNotes failed:', e);
       return [];
     }
   }

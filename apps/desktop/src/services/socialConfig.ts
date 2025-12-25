@@ -286,7 +286,7 @@ class SocialConfigService {
 
   // Logger replaced with internal console for WebView context
   // eslint-disable-next-line no-console
-  console.log('[Noteece] Social capture initialized for', PLATFORM_ID);
+  console.log('[Noteece] Social capture initialized for ' + PLATFORM_ID);
 })();
 `;
   }

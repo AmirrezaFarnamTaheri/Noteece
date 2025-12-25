@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, typography, spacing } from '@/lib/theme';
 import { Sentry } from '@/lib/sentry';
+import { Logger } from '@/lib/logger';
 
 interface Props {
   children: ReactNode;
@@ -36,7 +37,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    Logger.error('ErrorBoundary caught an error:', error);
     this.setState({
       error,
       errorInfo,
@@ -59,9 +60,13 @@ export class ErrorBoundary extends Component<Props, State> {
 
       // Log to console in development
       if (__DEV__) {
+        // eslint-disable-next-line no-console
         console.group('🔴 Error Report');
+        // eslint-disable-next-line no-console
         console.error('Error:', error);
+        // eslint-disable-next-line no-console
         console.error('Component Stack:', errorInfo.componentStack);
+        // eslint-disable-next-line no-console
         console.groupEnd();
       }
 
@@ -126,7 +131,7 @@ export class ErrorBoundary extends Component<Props, State> {
           Sentry.captureException(sanitizedError);
         });
       } catch (sentryError) {
-        console.error('Failed to send error to Sentry:', sentryError);
+        Logger.error('Failed to send error to Sentry:', sentryError);
       }
 
       // Also log to AsyncStorage for local debugging
@@ -139,10 +144,10 @@ export class ErrorBoundary extends Component<Props, State> {
           AsyncStorage.setItem('error_logs', JSON.stringify(recentErrors));
         })
         .catch((storageError) => {
-          console.error('Failed to save error log:', storageError);
+          Logger.error('Failed to save error log:', storageError);
         });
     } catch (loggingError) {
-      console.error('Failed to log error:', loggingError);
+      Logger.error('Failed to log error:', loggingError);
     }
   }
 

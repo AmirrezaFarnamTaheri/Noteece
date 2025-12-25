@@ -25,6 +25,7 @@ import {
   Slider,
   ThemeIcon,
 } from '@mantine/core';
+import { logger } from '../../utils/logger';
 import {
   LineChart,
   Line,
@@ -112,7 +113,7 @@ export function TemporalGraph({
         });
       } catch (error) {
         // Return empty array instead of mock data
-        console.warn('Failed to fetch temporal correlations', error);
+        logger.warn('Failed to fetch temporal correlations', error);
         return [];
       }
     },

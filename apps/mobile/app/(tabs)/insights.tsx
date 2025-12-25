@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { colors, typography, spacing } from '@/lib/theme';
 import { dbQuery, dbExecute } from '@/lib/database';
+import { Logger } from '@/lib/logger';
 import { Insight, SuggestedAction } from '@/types';
 
 type InsightFilter = 'all' | 'high' | 'medium' | 'low';
@@ -37,11 +38,11 @@ export default function InsightsScreen() {
           Alert.alert('Insight Action', parameters?.message || 'Action executed');
           break;
         default:
-          console.log('Execute action:', actionType, parameters);
+          Logger.info('Execute action:', actionType, parameters);
           Alert.alert('Action', `Executed: ${action.label}`);
       }
     } catch (error) {
-      console.error('Failed to execute action:', error);
+      Logger.error('Failed to execute action:', error);
       Alert.alert('Error', 'Failed to execute action');
     }
   };
@@ -68,7 +69,7 @@ export default function InsightsScreen() {
         try {
           rawActions = JSON.parse(row.suggested_actions_json || '[]');
         } catch (e) {
-          console.error('Failed to parse suggested actions:', e);
+          Logger.error('Failed to parse suggested actions:', e);
         }
 
         // Sanitize and validate suggested actions structure
@@ -99,7 +100,7 @@ export default function InsightsScreen() {
 
       setInsights(parsedInsights);
     } catch (error) {
-      console.error('Failed to load insights:', error);
+      Logger.error('Failed to load insights:', error);
     } finally {
       setLoading(false);
     }
@@ -114,7 +115,7 @@ export default function InsightsScreen() {
       await dbExecute('UPDATE insight SET dismissed = 1 WHERE id = ?', [insightId]);
       loadInsights();
     } catch (error) {
-      console.error('Failed to dismiss insight:', error);
+      Logger.error('Failed to dismiss insight:', error);
     }
   };
 

@@ -1,8 +1,5 @@
 import {
   isBiometricAvailable,
-  isSocialBiometricEnabled,
-  enableSocialBiometric,
-  disableSocialBiometric,
   authenticateForSocial,
   lockSocialSession,
   requiresSocialAuthentication,
