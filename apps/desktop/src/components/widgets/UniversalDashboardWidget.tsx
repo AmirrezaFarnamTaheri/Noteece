@@ -5,6 +5,7 @@ import { DashboardStats } from '@noteece/types';
 import { useAsync } from '../../hooks/useAsync';
 import { getDashboardStats } from '../../services/api';
 import { useStore } from '../../store';
+import { logger } from '../../utils/logger';
 
 export const UniversalDashboardWidget: React.FC = () => {
   const { activeSpaceId } = useStore();
@@ -29,7 +30,7 @@ export const UniversalDashboardWidget: React.FC = () => {
       try {
         return await getDashboardStats(activeSpaceId);
       } catch (error) {
-        console.warn('Failed to fetch stats, using mock', error);
+        logger.warn('Failed to fetch stats, using mock', error);
         return {
           health: { metrics_count: 12, latest_metric: 'Steps' },
           music: { track_count: 1450, playlist_count: 5 },

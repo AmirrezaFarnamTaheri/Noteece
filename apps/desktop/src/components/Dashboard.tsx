@@ -25,6 +25,7 @@ import React, { useState, useEffect } from 'react';
 import { useProjects } from '../hooks/useQueries';
 import { useStore } from '../store';
 import { getDashboardStats } from '../services/api';
+import { logger } from '@/utils/logger';
 import classes from './Dashboard.module.css';
 import { Activity } from './activity';
 import { BarChart } from './bar-chart';
@@ -65,7 +66,7 @@ const Dashboard: React.FC = () => {
     if (activeSpaceId) {
       getDashboardStats(activeSpaceId).then(stats => {
         if (stats.quote) setQuote(stats.quote);
-      }).catch(error => console.error("Failed to fetch dashboard stats", error));
+      }).catch(error => logger.error("Failed to fetch dashboard stats", error));
     }
   }, [activeSpaceId]);
 

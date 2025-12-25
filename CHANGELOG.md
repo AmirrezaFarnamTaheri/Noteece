@@ -33,10 +33,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Mobile UI:** Improved type safety in `SharedContentBanner` and added validation to `SaveFilterModal`.
 - **Mobile Theme:** Unified dark mode colors in `ThemeContext` to use consistent `obsidianColors`.
 - **Backend:** Audited `sync/engine.rs` and `sync/p2p.rs` for race conditions and proper error propagation.
+- **Safety:** Replaced unsafe `unwrap()` calls in `llm` (PII, Retry, Priority), `caldav`, `logger`, and `mobile_ffi` modules with robust error handling or `expect` with context.
+- **Mobile Logging:** Replaced ad-hoc `console` logging with a unified `Logger` service that integrates with Sentry and respects dev/prod environments.
+- **Code Quality:** Resolved `clippy` warnings across the `core-rs` crate and ESLint warnings in the mobile app build scripts.
 
 ### Added
 
-- **Mobile:** Added `FlashList` for performance. Added secure logger. Added `haptics` manager. Added `react-native-ssl-pinning` (prep).
+- **Mobile:** Added `FlashList` for performance. Added secure `Logger`. Added `haptics` manager. Added `react-native-ssl-pinning` (prep).
 - **Desktop:** Added `ErrorBoundary` for widgets. Added `tauri-plugin-store` for secure storage.
 - **Infrastructure:** Added `dependabot.yml`. Added Mobile CI workflow. Added Rust dependency caching in CI.
 - **Documentation:** Added `STATUS.md` to track project state. Updated `SECURITY.md` with mobile pinning guidance.
