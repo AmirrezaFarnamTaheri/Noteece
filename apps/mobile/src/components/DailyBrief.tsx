@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, ViewStyle, TouchableOpacity } from 'react-nativ
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, typography, borderRadius, shadows } from '@/lib/theme';
+import { Logger } from '@/lib/logger';
 import { Insight } from '@/types';
 
 interface DailyBriefProps {
@@ -30,7 +31,7 @@ export function DailyBrief({ brief, style }: DailyBriefProps) {
                 style={styles.actionButton}
                 onPress={() => {
                   // Handle action
-                  console.log('Action pressed:', action.actionType);
+                  Logger.info('Action pressed:', action.actionType);
                 }}
               >
                 <Text style={styles.actionLabel}>{action.label}</Text>

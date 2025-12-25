@@ -17,6 +17,7 @@ if (!fs.existsSync(iconPath)) {
     'base64',
   );
   fs.writeFileSync(iconPath, TRANSPARENT_PNG);
+  // eslint-disable-next-line no-console
   console.log('Created placeholder icon.png');
 }
 
@@ -24,6 +25,7 @@ if (!fs.existsSync(iconPath)) {
 const adaptiveIconPath = path.join(assetsDir, 'adaptive-icon.png');
 if (!fs.existsSync(adaptiveIconPath)) {
   fs.copyFileSync(iconPath, adaptiveIconPath);
+  // eslint-disable-next-line no-console
   console.log('Created placeholder adaptive-icon.png');
 }
 
@@ -31,6 +33,7 @@ if (!fs.existsSync(adaptiveIconPath)) {
 const splashPath = path.join(assetsDir, 'splash.png');
 if (!fs.existsSync(splashPath)) {
   fs.copyFileSync(iconPath, splashPath);
+  // eslint-disable-next-line no-console
   console.log('Created placeholder splash.png');
 }
 
@@ -38,5 +41,6 @@ if (!fs.existsSync(splashPath)) {
 const faviconPath = path.join(assetsDir, 'favicon.png');
 if (!fs.existsSync(faviconPath)) {
   fs.copyFileSync(iconPath, faviconPath);
+  // eslint-disable-next-line no-console
   console.log('Created placeholder favicon.png');
 }

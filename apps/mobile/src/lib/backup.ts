@@ -13,6 +13,7 @@ import * as SecureStore from 'expo-secure-store';
 import 'react-native-get-random-values';
 import { v4 as uuid } from 'uuid';
 import { dbExecute, dbQuery } from './database';
+import { Logger } from './logger';
 import type { SocialAccount, SocialPost, SocialCategory } from '../types/social';
 
 export interface BackupMetadata {
@@ -190,10 +191,10 @@ async function exportAppSettings(): Promise<Record<string, any>> {
     const shareAnalytics = await SecureStore.getItemAsync('share_analytics');
     if (shareAnalytics) settings.shareAnalytics = shareAnalytics === 'true';
 
-    console.log('[Backup] Exported app settings:', Object.keys(settings));
+    Logger.info('[Backup] Exported app settings:', Object.keys(settings));
     return settings;
   } catch (error) {
-    console.warn('[Backup] Failed to export app settings, returning empty object:', error);
+    Logger.warn('[Backup] Failed to export app settings, returning empty object:', error);
     return {};
   }
 }
@@ -264,11 +265,11 @@ export async function createBackup(
       encoding: FileSystem.EncodingType.UTF8,
     });
 
-    console.log(`[Backup] Created backup: ${filePath} (${backupJson.length} bytes)`);
+    Logger.info(`[Backup] Created backup: ${filePath} (${backupJson.length} bytes)`);
 
     return { success: true, filePath };
   } catch (error) {
-    console.error('[Backup] Failed to create backup:', error);
+    Logger.error('[Backup] Failed to create backup:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -302,7 +303,7 @@ export async function exportAndShare(spaceId: string): Promise<void> {
       UTI: 'public.json',
     });
   } catch (error) {
-    console.error('[Backup] Export failed:', error);
+    Logger.error('[Backup] Export failed:', error);
     Alert.alert('Export Failed', error instanceof Error ? error.message : 'Unknown error');
   }
 }
@@ -385,7 +386,7 @@ export async function importBackup(
 
           imported.categories++;
         } catch (error) {
-          console.error(`[Backup] Failed to import category ${category.id}:`, error);
+          Logger.error(`[Backup] Failed to import category ${category.id}:`, error);
         }
       }
     }
@@ -420,7 +421,7 @@ export async function importBackup(
 
           imported.accounts++;
         } catch (error) {
-          console.error(`[Backup] Failed to import account ${account.id}:`, error);
+          Logger.error(`[Backup] Failed to import account ${account.id}:`, error);
         }
       }
     }
@@ -474,16 +475,16 @@ export async function importBackup(
 
           imported.posts++;
         } catch (error) {
-          console.error(`[Backup] Failed to import post ${post.id}:`, error);
+          Logger.error(`[Backup] Failed to import post ${post.id}:`, error);
         }
       }
     }
 
-    console.log('[Backup] Import completed:', imported);
+    Logger.info('[Backup] Import completed:', imported);
 
     return { success: true, imported };
   } catch (error) {
-    console.error('[Backup] Import failed:', error);
+    Logger.error('[Backup] Import failed:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -517,7 +518,7 @@ export async function listBackups(): Promise<{ filename: string; size: number; c
 
     return backups.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   } catch (error) {
-    console.error('[Backup] Failed to list backups:', error);
+    Logger.error('[Backup] Failed to list backups:', error);
     return [];
   }
 }
@@ -529,10 +530,10 @@ export async function deleteBackup(filename: string): Promise<boolean> {
   try {
     const filePath = getBackupDirectory() + filename;
     await FileSystem.deleteAsync(filePath, { idempotent: true });
-    console.log(`[Backup] Deleted backup: ${filename}`);
+    Logger.info(`[Backup] Deleted backup: ${filename}`);
     return true;
   } catch (error) {
-    console.error(`[Backup] Failed to delete backup ${filename}:`, error);
+    Logger.error(`[Backup] Failed to delete backup ${filename}:`, error);
     return false;
   }
 }
@@ -556,10 +557,10 @@ export async function cleanupOldBackups(keepCount: number = 5): Promise<number> 
       if (success) deletedCount++;
     }
 
-    console.log(`[Backup] Cleaned up ${deletedCount} old backups`);
+    Logger.info(`[Backup] Cleaned up ${deletedCount} old backups`);
     return deletedCount;
   } catch (error) {
-    console.error('[Backup] Cleanup failed:', error);
+    Logger.error('[Backup] Cleanup failed:', error);
     return 0;
   }
 }

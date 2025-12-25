@@ -3,6 +3,7 @@ import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
 import { chacha20poly1305 } from '@noble/ciphers/chacha';
 import { argon2id } from '@noble/hashes/argon2';
+import { Logger } from './logger';
 
 interface VaultMetadata {
   spaceId: string;
@@ -176,13 +177,13 @@ export async function changeVaultPassword(
     } catch {
       // Biometric data might not exist, that's okay
       if (__DEV__) {
-        console.log('No biometric data to clear');
+        Logger.info('No biometric data to clear');
       }
     }
 
     return { success: true };
   } catch (error) {
-    console.error('Failed to change password:', error);
+    Logger.error('Failed to change password:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to change password',
