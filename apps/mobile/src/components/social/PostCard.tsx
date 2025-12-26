@@ -11,10 +11,11 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Share, Alert, Animated
 // @ts-ignore: expo vector icons type mismatch
 import { Ionicons } from '@expo/vector-icons';
 import { Swipeable } from 'react-native-gesture-handler';
-import { format } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { haptics } from '../../lib/haptics';
 import { Logger } from '../../lib/logger';
+import { formatTimelineDate } from '../../utils/dateFormat';
+import { formatCompactNumber } from '../../utils/numberFormat';
 import type { TimelinePost, Platform } from '../../types/social';
 import { PLATFORM_CONFIGS } from '../../types/social';
 
@@ -194,7 +195,7 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
               <Text style={styles.authorName}>{post.author}</Text>
               {post.account_display_name && <Text style={styles.accountName}>@{post.account_username}</Text>}
             </View>
-            <Text style={styles.timestamp}>{format(new Date(post.created_at), 'MMM d, h:mm a')}</Text>
+            <Text style={styles.timestamp}>{formatTimelineDate(post.created_at)}</Text>
           </View>
         </View>
 
@@ -209,7 +210,13 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
         {post.media_urls && post.media_urls.length > 0 && (
           <View style={styles.mediaContainer}>
             {post.media_urls.slice(0, 4).map((url, index) => (
-              <Image key={index} source={{ uri: url }} style={styles.mediaThumbnail} resizeMode="cover" />
+              <Image
+                key={index}
+                source={{ uri: url, cache: 'force-cache' }}
+                style={styles.mediaThumbnail}
+                resizeMode="cover"
+                onError={(error) => Logger.warn('[PostCard] Failed to load image:', error.nativeEvent.error)}
+              />
             ))}
             {post.media_urls.length > 4 && (
               <View style={styles.mediaOverlay}>
@@ -225,25 +232,25 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
             {post.engagement.likes !== undefined && post.engagement.likes > 0 && (
               <View style={styles.engagementItem}>
                 <Text style={styles.engagementIcon}>❤️</Text>
-                <Text style={styles.engagementText}>{formatNumber(post.engagement.likes)}</Text>
+                <Text style={styles.engagementText}>{formatCompactNumber(post.engagement.likes)}</Text>
               </View>
             )}
             {post.engagement.comments !== undefined && post.engagement.comments > 0 && (
               <View style={styles.engagementItem}>
                 <Text style={styles.engagementIcon}>💬</Text>
-                <Text style={styles.engagementText}>{formatNumber(post.engagement.comments)}</Text>
+                <Text style={styles.engagementText}>{formatCompactNumber(post.engagement.comments)}</Text>
               </View>
             )}
             {post.engagement.shares !== undefined && post.engagement.shares > 0 && (
               <View style={styles.engagementItem}>
                 <Text style={styles.engagementIcon}>🔄</Text>
-                <Text style={styles.engagementText}>{formatNumber(post.engagement.shares)}</Text>
+                <Text style={styles.engagementText}>{formatCompactNumber(post.engagement.shares)}</Text>
               </View>
             )}
             {post.engagement.views !== undefined && post.engagement.views > 0 && (
               <View style={styles.engagementItem}>
                 <Text style={styles.engagementIcon}>👁️</Text>
-                <Text style={styles.engagementText}>{formatNumber(post.engagement.views)}</Text>
+                <Text style={styles.engagementText}>{formatCompactNumber(post.engagement.views)}</Text>
               </View>
             )}
           </View>
@@ -329,16 +336,6 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
       </TouchableOpacity>
     </Swipeable>
   );
-}
-
-function formatNumber(num: number): string {
-  if (num >= 1000000) {
-    return `${(num / 1000000).toFixed(1)}M`;
-  }
-  if (num >= 1000) {
-    return `${(num / 1000).toFixed(1)}K`;
-  }
-  return num.toString();
 }
 
 const styles = StyleSheet.create({

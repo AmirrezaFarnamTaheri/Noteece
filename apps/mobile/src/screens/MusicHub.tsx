@@ -24,6 +24,8 @@ import { dbQuery, dbExecute } from '@/lib/database';
 import { nanoid } from 'nanoid/non-secure';
 import { useCurrentSpace } from '../store/app-context';
 import { Logger } from '@/lib/logger';
+import { EmptyState } from '../components/EmptyState';
+import { INITIAL_NUM_TO_RENDER, MAX_TO_RENDER_PER_BATCH, WINDOW_SIZE } from '../constants/pagination';
 import type { Track, Playlist } from '../types/music';
 
 // Database row types (snake_case from SQLite)
@@ -239,7 +241,12 @@ export function MusicHub() {
     >
       <View style={styles.trackArtwork}>
         {item.artworkUrl ? (
-          <Image source={{ uri: item.artworkUrl }} style={styles.artworkImage} />
+          <Image
+            source={{ uri: item.artworkUrl, cache: 'force-cache' }}
+            style={styles.artworkImage}
+            resizeMode="cover"
+            onError={(error) => Logger.warn('[MusicHub] Failed to load track artwork:', error.nativeEvent.error)}
+          />
         ) : (
           <LinearGradient colors={['#6366F1', '#8B5CF6']} style={styles.artworkPlaceholder}>
             <Ionicons name="musical-notes" size={24} color="#FFF" />
@@ -270,7 +277,12 @@ export function MusicHub() {
     >
       <View style={styles.playlistArtwork}>
         {item.artworkUrl ? (
-          <Image source={{ uri: item.artworkUrl }} style={styles.artworkImage} />
+          <Image
+            source={{ uri: item.artworkUrl, cache: 'force-cache' }}
+            style={styles.artworkImage}
+            resizeMode="cover"
+            onError={(error) => Logger.warn('[MusicHub] Failed to load playlist artwork:', error.nativeEvent.error)}
+          />
         ) : (
           <LinearGradient
             colors={item.isSmartPlaylist ? ['#10B981', '#059669'] : ['#6366F1', '#8B5CF6']}
@@ -301,7 +313,14 @@ export function MusicHub() {
           <View style={styles.nowPlayingContent}>
             <View style={styles.nowPlayingArtwork}>
               {currentTrack.artworkUrl ? (
-                <Image source={{ uri: currentTrack.artworkUrl }} style={styles.nowPlayingImage} />
+                <Image
+                  source={{ uri: currentTrack.artworkUrl, cache: 'force-cache' }}
+                  style={styles.nowPlayingImage}
+                  resizeMode="cover"
+                  onError={(error) =>
+                    Logger.warn('[MusicHub] Failed to load now playing artwork:', error.nativeEvent.error)
+                  }
+                />
               ) : (
                 <LinearGradient colors={['#6366F1', '#8B5CF6']} style={styles.nowPlayingImage}>
                   <Ionicons name="musical-notes" size={32} color="#FFF" />
@@ -392,9 +411,9 @@ export function MusicHub() {
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
           contentContainerStyle={styles.list}
-          initialNumToRender={15}
-          maxToRenderPerBatch={10}
-          windowSize={5}
+          initialNumToRender={INITIAL_NUM_TO_RENDER}
+          maxToRenderPerBatch={MAX_TO_RENDER_PER_BATCH}
+          windowSize={WINDOW_SIZE}
           removeClippedSubviews={true}
           getItemLayout={(data, index) => ({
             length: 80,
@@ -402,11 +421,11 @@ export function MusicHub() {
             index,
           })}
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Ionicons name="musical-notes-outline" size={64} color="#9CA3AF" />
-              <Text style={styles.emptyText}>No tracks yet</Text>
-              <Text style={styles.emptySubtext}>Add music to your library to get started</Text>
-            </View>
+            <EmptyState
+              icon="musical-notes-outline"
+              title="No tracks yet"
+              subtitle="Add music to your library to get started"
+            />
           }
         />
       ) : view === 'playlists' ? (
@@ -416,9 +435,9 @@ export function MusicHub() {
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
           contentContainerStyle={styles.list}
-          initialNumToRender={15}
-          maxToRenderPerBatch={10}
-          windowSize={5}
+          initialNumToRender={INITIAL_NUM_TO_RENDER}
+          maxToRenderPerBatch={MAX_TO_RENDER_PER_BATCH}
+          windowSize={WINDOW_SIZE}
           removeClippedSubviews={true}
           getItemLayout={(data, index) => ({
             length: 96,
@@ -426,11 +445,11 @@ export function MusicHub() {
             index,
           })}
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Ionicons name="list-outline" size={64} color="#9CA3AF" />
-              <Text style={styles.emptyText}>No playlists yet</Text>
-              <Text style={styles.emptySubtext}>Create a playlist to organize your music</Text>
-            </View>
+            <EmptyState
+              icon="list-outline"
+              title="No playlists yet"
+              subtitle="Create a playlist to organize your music"
+            />
           }
         />
       ) : null}
@@ -584,22 +603,6 @@ const styles = StyleSheet.create({
   playlistMeta: {
     fontSize: 14,
     color: '#6B7280',
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-  },
-  emptyText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#6B7280',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 15,
-    color: '#9CA3AF',
   },
   loadingContainer: {
     flex: 1,

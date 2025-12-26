@@ -6,6 +6,7 @@ import * as SecureStore from 'expo-secure-store';
 import { chacha20poly1305 } from '@noble/ciphers/chacha';
 import { argon2id } from '@noble/hashes/argon2';
 import { Logger } from '../lib/logger';
+import { getOrCreateDeviceId } from '../utils/deviceId';
 
 // ===== Type Definitions =====
 
@@ -321,12 +322,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         return false;
       }
 
-      // Generate device ID if not exists
-      let deviceId = await AsyncStorage.getItem('device_id');
-      if (!deviceId) {
-        deviceId = `mobile_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-        await AsyncStorage.setItem('device_id', deviceId);
-      }
+      // Get device ID from centralized utility
+      const deviceId = await getOrCreateDeviceId();
 
       set({
         isUnlocked: true,
@@ -376,7 +373,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
       // Generate unique identifiers
       const spaceId = `space_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-      const deviceId = `mobile_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const deviceId = await getOrCreateDeviceId();
 
       // Generate cryptographic salts
       const passwordSalt = await Crypto.getRandomBytesAsync(32);
@@ -406,9 +403,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         dekNonce: btoa(String.fromCharCode(...dekNonce)),
       };
 
-      // Store vault metadata and device ID
+      // Store vault metadata
       await AsyncStorage.setItem('vault_metadata', JSON.stringify(metadata));
-      await AsyncStorage.setItem('device_id', deviceId);
 
       set({
         isUnlocked: true,
@@ -613,12 +609,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         return false;
       }
 
-      // Generate device ID if not exists
-      let deviceId = await AsyncStorage.getItem('device_id');
-      if (!deviceId) {
-        deviceId = `mobile_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-        await AsyncStorage.setItem('device_id', deviceId);
-      }
+      // Get device ID from centralized utility
+      const deviceId = await getOrCreateDeviceId();
 
       // Unlock vault
       set({

@@ -17,6 +17,7 @@ import { dbQuery, dbExecute } from '@/lib/database';
 import { nanoid } from 'nanoid/non-secure';
 import { useCurrentSpace } from '../store/app-context';
 import { Logger } from '@/lib/logger';
+import { formatCompactNumberLowercase } from '../utils/numberFormat';
 import type { HealthStats, GoalProgress } from '../types/health';
 
 const { width } = Dimensions.get('window');
@@ -195,13 +196,6 @@ export function HealthHub() {
     setSelectedView(view);
   };
 
-  const formatNumber = (num: number): string => {
-    if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}k`;
-    }
-    return num.toFixed(0);
-  };
-
   const renderMetricCard = (
     icon: keyof typeof Ionicons.glyphMap,
     label: string,
@@ -372,9 +366,23 @@ export function HealthHub() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Today's Activity</Text>
               <View style={styles.metricsGrid}>
-                {renderMetricCard('footsteps', 'Steps', formatNumber(stats.today.steps), 'steps', '#6366F1', 0)}
+                {renderMetricCard(
+                  'footsteps',
+                  'Steps',
+                  formatCompactNumberLowercase(stats.today.steps, 0),
+                  'steps',
+                  '#6366F1',
+                  0,
+                )}
                 {renderMetricCard('navigate', 'Distance', stats.today.distance.toFixed(1), 'km', '#8B5CF6', 1)}
-                {renderMetricCard('flame', 'Calories', formatNumber(stats.today.calories), 'kcal', '#EF4444', 2)}
+                {renderMetricCard(
+                  'flame',
+                  'Calories',
+                  formatCompactNumberLowercase(stats.today.calories, 0),
+                  'kcal',
+                  '#EF4444',
+                  2,
+                )}
                 {renderMetricCard('timer', 'Active', stats.today.activeMinutes, 'min', '#F59E0B', 3)}
               </View>
             </View>
@@ -419,7 +427,7 @@ export function HealthHub() {
               <View style={styles.summaryCard}>
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Total Steps</Text>
-                  <Text style={styles.summaryValue}>{formatNumber(stats.week.totalSteps)}</Text>
+                  <Text style={styles.summaryValue}>{formatCompactNumberLowercase(stats.week.totalSteps, 0)}</Text>
                 </View>
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Total Distance</Text>
@@ -427,11 +435,13 @@ export function HealthHub() {
                 </View>
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Total Calories</Text>
-                  <Text style={styles.summaryValue}>{formatNumber(stats.week.totalCalories)} kcal</Text>
+                  <Text style={styles.summaryValue}>
+                    {formatCompactNumberLowercase(stats.week.totalCalories, 0)} kcal
+                  </Text>
                 </View>
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Average Steps/Day</Text>
-                  <Text style={styles.summaryValue}>{formatNumber(stats.week.averageSteps)}</Text>
+                  <Text style={styles.summaryValue}>{formatCompactNumberLowercase(stats.week.averageSteps, 0)}</Text>
                 </View>
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Days Active</Text>
@@ -449,7 +459,7 @@ export function HealthHub() {
               <View style={styles.summaryCard}>
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Total Steps</Text>
-                  <Text style={styles.summaryValue}>{formatNumber(stats.month.totalSteps)}</Text>
+                  <Text style={styles.summaryValue}>{formatCompactNumberLowercase(stats.month.totalSteps, 0)}</Text>
                 </View>
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Total Distance</Text>

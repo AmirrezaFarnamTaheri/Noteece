@@ -21,7 +21,7 @@ import {
   IconEyeOff,
   IconChartPie,
 } from '@tabler/icons-react';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useProjects } from '../hooks/useQueries';
 import { useStore } from '../store';
 import { getDashboardStats } from '../services/api';
@@ -70,8 +70,14 @@ const Dashboard: React.FC = () => {
     }
   }, [activeSpaceId]);
 
-  const completedProjects = projects.filter((project) => project.status === 'done').length;
-  const inProgressProjects = projects.filter((project) => project.status === 'active').length;
+  const completedProjects = useMemo(
+    () => projects.filter((project) => project.status === 'done').length,
+    [projects]
+  );
+  const inProgressProjects = useMemo(
+    () => projects.filter((project) => project.status === 'active').length,
+    [projects]
+  );
 
   return (
     <Container

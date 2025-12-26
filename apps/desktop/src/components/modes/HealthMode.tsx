@@ -19,6 +19,7 @@ import {
   Progress,
 } from '@mantine/core';
 import { DateTimePicker } from '@mantine/dates';
+import { notifications } from '@mantine/notifications';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { IconPlus, IconTarget, IconTrendingUp, IconActivity } from '@tabler/icons-react';
 import { logger } from '@/utils/logger';
@@ -134,7 +135,11 @@ const HealthMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       await loadData();
     } catch (error) {
       logger.error('Failed to add metric:', error as Error);
-      alert(`Failed to add metric: ${String(error)}`);
+      notifications.show({
+        title: 'Error',
+        message: `Failed to add metric: ${String(error)}`,
+        color: 'red',
+      });
     }
   };
 

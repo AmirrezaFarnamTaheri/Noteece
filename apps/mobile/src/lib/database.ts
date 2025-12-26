@@ -1,9 +1,8 @@
 import * as SQLite from 'expo-sqlite';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as FileSystem from 'expo-file-system';
-import { Platform } from 'react-native';
 import { syncBridge } from './jsi/sync-bridge';
 import { Logger } from './logger';
+import { getDatabasePath } from '../utils/platform';
 
 let db: SQLite.SQLiteDatabase | null = null;
 
@@ -588,22 +587,7 @@ export const initializeDatabase = async (): Promise<void> => {
     // Initialize Rust JSI Bridge with the correct database path
     if (syncBridge.isJSIAvailable()) {
       try {
-        // Construct the correct path for Rusqlite
-        // FileSystem.documentDirectory includes 'file://' schema which we need to strip
-        const docDirUri = FileSystem.documentDirectory;
-        const docDir = docDirUri?.replace('file://', '') || '';
-
-        // Platform specific path logic
-        let dbPath = '';
-        if (Platform.OS === 'ios') {
-          // Expo SQLite on iOS puts files in 'SQLite' subdirectory of documents
-          dbPath = `${docDir}SQLite/noteece.db`;
-        } else {
-          // On Android, we align with the memory that suggests /files/noteece.db
-          // FileSystem.documentDirectory points to /files/
-          dbPath = `${docDir}noteece.db`;
-        }
-
+        const dbPath = getDatabasePath('noteece.db');
         Logger.info(`[Database] Initializing SyncBridge with path: ${dbPath}`);
         await syncBridge.init(dbPath);
       } catch (e) {

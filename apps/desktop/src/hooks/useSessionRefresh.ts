@@ -2,6 +2,8 @@ import { useEffect, useCallback, useRef, useState } from 'react';
 import { authService } from '../services/auth';
 import { logger } from '@/utils/logger';
 
+const SESSION_REFRESH_INTERVAL = 15 * 60 * 1000; // 15 minutes in milliseconds
+
 interface SessionWarning {
   show: boolean;
   minutesLeft: number;
@@ -83,8 +85,8 @@ export const useSessionRefresh = (onSessionExpired?: () => void, onWarning?: (mi
           return previous;
         });
       },
-      15 * 60 * 1000,
-    ); // 15 minutes
+      SESSION_REFRESH_INTERVAL,
+    );
 
     // Cleanup on unmount
     return () => {

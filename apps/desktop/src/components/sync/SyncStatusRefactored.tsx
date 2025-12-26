@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Card,
   Title,
@@ -79,6 +79,7 @@ const SyncStatus: React.FC = () => {
   const [autoSync, setAutoSync] = useState(true);
   const [syncProgress, setSyncProgress] = useState(0);
   const [settingsModalOpened, setSettingsModalOpened] = useState(false);
+  const syncIntervalRef = useRef<number | null>(null);
 
   // Fetch sync devices
   const { data: devices = [], isLoading: devicesLoading } = useQuery<BackendSyncDevice[]>({
@@ -110,6 +111,16 @@ const SyncStatus: React.FC = () => {
     enabled: !!activeSpaceId,
   });
 
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+        syncIntervalRef.current = null;
+      }
+    };
+  }, []);
+
   // Sync mutation
   const syncMutation = useMutation({
     mutationFn: async (deviceId: string) => {
@@ -118,7 +129,7 @@ const SyncStatus: React.FC = () => {
       setSyncProgress(0);
 
       // Simulate progress
-      const interval = setInterval(() => {
+      syncIntervalRef.current = window.setInterval(() => {
         setSyncProgress((p) => Math.min(p + 10, 90));
       }, 200);
 
@@ -129,7 +140,10 @@ const SyncStatus: React.FC = () => {
         });
         setSyncProgress(100);
       } finally {
-        clearInterval(interval);
+        if (syncIntervalRef.current) {
+          clearInterval(syncIntervalRef.current);
+          syncIntervalRef.current = null;
+        }
         setIsSyncing(false);
       }
     },
