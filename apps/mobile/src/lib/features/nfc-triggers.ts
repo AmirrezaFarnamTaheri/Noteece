@@ -129,7 +129,9 @@ export class NFCTriggerManager {
         {},
         true,
       );
-      if (Object.keys(parameters).length === 0) {
+      // Allow empty parameters for quick_capture action type (content is optional)
+      // Only reject if parse failed (safeJsonParse returns {} on malformed JSON)
+      if (Object.keys(parameters).length === 0 && results[0].actionType !== 'quick_capture') {
         Logger.error('[NFC] Failed to parse trigger parameters', { tagId, triggerId: results[0].id });
         return null;
       }
@@ -268,7 +270,9 @@ export class NFCTriggerManager {
           {},
           true,
         );
-        if (!parameters || Object.keys(parameters).length === 0) {
+        // Allow empty parameters for quick_capture action type (content is optional)
+        // Only reject if parse failed (safeJsonParse returns {} on malformed JSON)
+        if (!parameters || (Object.keys(parameters).length === 0 && row.actionType !== 'quick_capture')) {
           Logger.error('[NFC] Failed to parse trigger parameters, skipping', { triggerId: row.id });
           return null;
         }
