@@ -256,6 +256,7 @@ const NoteEditor: React.FC = () => {
                   onClick={() => setTypewriterMode(!typewriterMode)}
                   color={typewriterMode ? 'violet' : 'gray'}
                   size="lg"
+                  aria-label={typewriterMode ? 'Disable Typewriter Mode' : 'Enable Typewriter Mode'}
                 >
                   {typewriterMode ? <IconMinimize size={20} /> : <IconAlignJustified size={20} />}
                 </ActionIcon>

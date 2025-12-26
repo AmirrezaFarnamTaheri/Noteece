@@ -2,6 +2,7 @@
  * DueTodayWidget - Tasks due today with quick complete actions
  */
 
+import { memo } from 'react';
 import { Paper, Title, Text, Group, Stack, Checkbox, Badge } from '@mantine/core';
 import { IconCalendarEvent } from '@tabler/icons-react';
 import { useTasks, useUpdateTask } from '../../hooks/useQueries';
@@ -49,7 +50,7 @@ const getPriorityLabel = (priority: number) => {
   }
 };
 
-export default function DueTodayWidget() {
+function DueTodayWidget() {
   const { activeSpaceId } = useStore();
   const { data: tasks = [] } = useTasks(activeSpaceId || '', !!activeSpaceId);
   const updateTaskMutation = useUpdateTask();
@@ -140,3 +141,5 @@ export default function DueTodayWidget() {
     </Paper>
   );
 }
+
+export default memo(DueTodayWidget);

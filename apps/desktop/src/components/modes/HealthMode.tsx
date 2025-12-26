@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import {
   Container,
@@ -81,12 +81,7 @@ const HealthMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
   const [goalTarget, setGoalTarget] = useState<number>(0);
   const [goalMetricType, setGoalMetricType] = useState('weight');
 
-  useEffect(() => {
-    void loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spaceId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [metricsData, allGoals] = await Promise.all([
@@ -107,7 +102,11 @@ const HealthMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [spaceId]);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   const addMetric = async () => {
     try {

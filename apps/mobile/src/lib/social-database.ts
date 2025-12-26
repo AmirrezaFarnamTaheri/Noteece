@@ -6,7 +6,7 @@
  * Write operations only for categories and category assignments.
  */
 
-import { dbQuery, dbExecute } from './database';
+import { dbQuery, dbExecute, getDatabase } from './database';
 import { safeJsonParse } from './safe-json';
 import { Logger } from './logger';
 import type {
@@ -19,6 +19,99 @@ import type {
   PlatformStats,
   Platform,
 } from '../types/social';
+
+// ===== Input Validation =====
+
+/**
+ * Validate category name
+ */
+function validateCategoryName(name: unknown): void {
+  if (typeof name !== 'string') {
+    throw new Error('Category name must be a string');
+  }
+  if (name.trim().length === 0) {
+    throw new Error('Category name cannot be empty');
+  }
+  if (name.length > 100) {
+    throw new Error('Category name cannot exceed 100 characters');
+  }
+}
+
+/**
+ * Validate color format (hex color)
+ */
+function validateColor(color: unknown): void {
+  if (color === undefined || color === null) {
+    return; // Optional field
+  }
+  if (typeof color !== 'string') {
+    throw new Error('Color must be a string');
+  }
+  const hexColorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+  if (!hexColorRegex.test(color)) {
+    throw new Error('Color must be a valid hex color (e.g., #FF5733)');
+  }
+}
+
+/**
+ * Validate icon content (emoji or icon identifier)
+ */
+function validateIcon(icon: unknown): void {
+  if (icon === undefined || icon === null) {
+    return; // Optional field
+  }
+  if (typeof icon !== 'string') {
+    throw new Error('Icon must be a string');
+  }
+  if (icon.length > 50) {
+    throw new Error('Icon cannot exceed 50 characters');
+  }
+}
+
+/**
+ * Validate space ID format
+ */
+function validateSpaceId(spaceId: unknown): void {
+  if (typeof spaceId !== 'string') {
+    throw new Error('Space ID must be a string');
+  }
+  if (spaceId.trim().length === 0) {
+    throw new Error('Space ID cannot be empty');
+  }
+  if (spaceId.length > 255) {
+    throw new Error('Space ID cannot exceed 255 characters');
+  }
+}
+
+/**
+ * Validate post ID format
+ */
+function validatePostId(postId: unknown): void {
+  if (typeof postId !== 'string') {
+    throw new Error('Post ID must be a string');
+  }
+  if (postId.trim().length === 0) {
+    throw new Error('Post ID cannot be empty');
+  }
+  if (postId.length > 255) {
+    throw new Error('Post ID cannot exceed 255 characters');
+  }
+}
+
+/**
+ * Validate category ID format
+ */
+function validateCategoryId(categoryId: unknown): void {
+  if (typeof categoryId !== 'string') {
+    throw new Error('Category ID must be a string');
+  }
+  if (categoryId.trim().length === 0) {
+    throw new Error('Category ID cannot be empty');
+  }
+  if (categoryId.length > 255) {
+    throw new Error('Category ID cannot exceed 255 characters');
+  }
+}
 
 // ===== Database Row Types =====
 
@@ -494,84 +587,143 @@ export async function createCategory(
   color?: string,
   icon?: string,
 ): Promise<SocialCategory> {
-  const id = generateId();
-  const now = Date.now();
+  try {
+    // Input validation
+    validateSpaceId(spaceId);
+    validateCategoryName(name);
+    validateColor(color);
+    validateIcon(icon);
 
-  await dbExecute(
-    `INSERT INTO social_category (id, space_id, name, color, icon, filters_json, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [id, spaceId, name, color || null, icon || null, null, now],
-  );
+    const id = generateId();
+    const now = Date.now();
 
-  // Queue for sync to desktop
-  await queueSyncOperation('social_category', id, 'create', {
-    id,
-    space_id: spaceId,
-    name,
-    color,
-    icon,
-    created_at: now,
-  });
+    await dbExecute(
+      `INSERT INTO social_category (id, space_id, name, color, icon, filters_json, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [id, spaceId, name, color || null, icon || null, null, now],
+    );
 
-  return {
-    id,
-    space_id: spaceId,
-    name,
-    color,
-    icon,
-    created_at: now,
-  };
+    // Queue for sync to desktop
+    await queueSyncOperation('social_category', id, 'create', {
+      id,
+      space_id: spaceId,
+      name,
+      color,
+      icon,
+      created_at: now,
+    });
+
+    Logger.info('[SocialDB] Category created successfully', { categoryId: id, spaceId, name });
+
+    return {
+      id,
+      space_id: spaceId,
+      name,
+      color,
+      icon,
+      created_at: now,
+    };
+  } catch (error) {
+    Logger.error('[SocialDB] Failed to create category', { spaceId, name, error });
+    throw error;
+  }
 }
 
 export async function assignCategory(postId: string, categoryId: string): Promise<void> {
-  const now = Date.now();
+  const db = getDatabase();
 
-  // Enforce space isolation: post's space must match category's space
-  const rows = await dbQuery<SpaceCheckRow>(
-    `
-    SELECT
-      (SELECT a.space_id
-         FROM social_post p
-         JOIN social_account a ON p.account_id = a.id
-        WHERE p.id = ?) AS post_space,
-      (SELECT c.space_id
-         FROM social_category c
-        WHERE c.id = ?) AS category_space
-    `,
-    [postId, categoryId],
-  );
-  const postSpace = rows?.[0]?.post_space;
-  const categorySpace = rows?.[0]?.category_space;
-  if (!postSpace || !categorySpace || postSpace !== categorySpace) {
-    throw new Error('Cross-space category assignment denied');
+  try {
+    // Input validation
+    validatePostId(postId);
+    validateCategoryId(categoryId);
+
+    const now = Date.now();
+
+    // Use transaction for atomic multi-step operation
+    await db.execAsync('BEGIN TRANSACTION');
+
+    try {
+      // Enforce space isolation: post's space must match category's space
+      const rows = await dbQuery<SpaceCheckRow>(
+        `
+        SELECT
+          (SELECT a.space_id
+             FROM social_post p
+             JOIN social_account a ON p.account_id = a.id
+            WHERE p.id = ?) AS post_space,
+          (SELECT c.space_id
+             FROM social_category c
+            WHERE c.id = ?) AS category_space
+        `,
+        [postId, categoryId],
+      );
+      const postSpace = rows?.[0]?.post_space;
+      const categorySpace = rows?.[0]?.category_space;
+      if (!postSpace || !categorySpace || postSpace !== categorySpace) {
+        throw new Error('Cross-space category assignment denied');
+      }
+
+      await dbExecute(
+        `INSERT OR IGNORE INTO social_post_category (post_id, category_id, assigned_at, assigned_by)
+         VALUES (?, ?, ?, 'user')`,
+        [postId, categoryId, now],
+      );
+
+      await queueSyncOperation('social_post_category', `${postId}-${categoryId}`, 'assign', {
+        post_id: postId,
+        category_id: categoryId,
+        assigned_at: now,
+        assigned_by: 'user',
+      });
+
+      await db.execAsync('COMMIT');
+
+      Logger.info('[SocialDB] Category assigned successfully', { postId, categoryId });
+    } catch (error) {
+      await db.execAsync('ROLLBACK');
+      throw error;
+    }
+  } catch (error) {
+    Logger.error('[SocialDB] Failed to assign category', { postId, categoryId, error });
+    throw error;
   }
-
-  await dbExecute(
-    `INSERT OR IGNORE INTO social_post_category (post_id, category_id, assigned_at, assigned_by)
-     VALUES (?, ?, ?, 'user')`,
-    [postId, categoryId, now],
-  );
-
-  await queueSyncOperation('social_post_category', `${postId}-${categoryId}`, 'assign', {
-    post_id: postId,
-    category_id: categoryId,
-    assigned_at: now,
-    assigned_by: 'user',
-  });
 }
 
 export async function removeCategory(postId: string, categoryId: string): Promise<void> {
-  await dbExecute(
-    `DELETE FROM social_post_category
-     WHERE post_id = ? AND category_id = ?`,
-    [postId, categoryId],
-  );
+  const db = getDatabase();
 
-  // Queue for sync to desktop
-  await queueSyncOperation('social_post_category', `${postId}-${categoryId}`, 'remove', {
-    post_id: postId,
-    category_id: categoryId,
-  });
+  try {
+    // Input validation
+    validatePostId(postId);
+    validateCategoryId(categoryId);
+
+    // Use transaction for atomic multi-step operation
+    await db.execAsync('BEGIN TRANSACTION');
+
+    try {
+      await dbExecute(
+        `DELETE FROM social_post_category
+         WHERE post_id = ? AND category_id = ?`,
+        [postId, categoryId],
+      );
+
+      // Queue for sync to desktop
+      await queueSyncOperation('social_post_category', `${postId}-${categoryId}`, 'remove', {
+        post_id: postId,
+        category_id: categoryId,
+      });
+
+      await db.execAsync('COMMIT');
+
+      Logger.info('[SocialDB] Category removed successfully', { postId, categoryId });
+    } catch (error) {
+      await db.execAsync('ROLLBACK');
+      throw error;
+    }
+  } catch (error) {
+    Logger.error('[SocialDB] Failed to remove category', { postId, categoryId, error });
+    throw error;
+  }
 }
 
 export async function getPostCategories(postId: string): Promise<SocialCategory[]> {

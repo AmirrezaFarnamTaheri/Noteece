@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import { Paper, Text, Group, Button, Stack, Select, RingProgress } from '@mantine/core';
 import { IconClock, IconPlayerPlay, IconPlayerPause, IconRefresh } from '@tabler/icons-react';
 import { showSuccess, showInfo } from '../../utils/notifications';
@@ -17,7 +17,7 @@ const formatTime = (seconds: number) => {
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
 
-export const FocusTimer: React.FC = () => {
+const FocusTimerComponent: React.FC = () => {
   const [duration, setDuration] = useState('25');
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isRunning, setIsRunning] = useState(false);
@@ -145,3 +145,5 @@ export const FocusTimer: React.FC = () => {
     </Paper>
   );
 };
+
+export const FocusTimer = memo(FocusTimerComponent);

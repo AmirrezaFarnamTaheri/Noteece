@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { Paper, Text, Group, Stack, Badge, RingProgress, useMantineTheme } from '@mantine/core';
 import { IconFlag, IconArrowUpRight } from '@tabler/icons-react';
 import { invoke } from '@tauri-apps/api/tauri';
@@ -14,26 +14,27 @@ interface PriorityStats {
   color: string;
 }
 
-export const TasksByPriority: React.FC = () => {
+const TasksByPriorityComponent: React.FC = () => {
   const theme = useMantineTheme();
   const [tasks, setTasks] = useState<Task[]>([]);
   const { activeSpaceId } = useActiveSpace();
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      if (!activeSpaceId) return;
-      try {
-        const tasksData: Task[] = await invoke('get_all_tasks_in_space_cmd', {
-          spaceId: activeSpaceId,
-        });
-        // Only include incomplete tasks
-        setTasks(tasksData.filter((t) => t.status !== 'done' && t.status !== 'cancelled'));
-      } catch (error) {
-        logger.error('Error fetching tasks:', error as Error);
-      }
-    };
-    void fetchTasks();
+  const fetchTasks = useCallback(async () => {
+    if (!activeSpaceId) return;
+    try {
+      const tasksData: Task[] = await invoke('get_all_tasks_in_space_cmd', {
+        spaceId: activeSpaceId,
+      });
+      // Only include incomplete tasks
+      setTasks(tasksData.filter((t) => t.status !== 'done' && t.status !== 'cancelled'));
+    } catch (error) {
+      logger.error('Error fetching tasks:', error as Error);
+    }
   }, [activeSpaceId]);
+
+  useEffect(() => {
+    void fetchTasks();
+  }, [fetchTasks]);
 
   const priorityStats: PriorityStats[] = [
     {
@@ -120,3 +121,5 @@ export const TasksByPriority: React.FC = () => {
     </Paper>
   );
 };
+
+export const TasksByPriority = memo(TasksByPriorityComponent);

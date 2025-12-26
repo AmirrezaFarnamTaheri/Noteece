@@ -344,10 +344,26 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   },
 
   lockVault: () => {
+    // Zeroize DEK before setting to null to prevent memory residue
+    const currentState = get();
+    if (currentState.dek) {
+      try {
+        // Overwrite DEK bytes with zeros
+        for (let i = 0; i < currentState.dek.length; i++) {
+          currentState.dek[i] = 0;
+        }
+      } catch (error) {
+        // Best-effort zeroization - log if it fails but don't throw
+        Logger.warn('[Vault] Failed to zeroize DEK during lock', error);
+      }
+    }
+
     set({
       isUnlocked: false,
       dek: null,
     });
+
+    Logger.info('[Vault] Vault locked and DEK zeroized');
   },
 
   createVault: async (password: string) => {
@@ -450,7 +466,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       // Verify password is correct first
       const vaultData = await AsyncStorage.getItem('vault_metadata');
       if (!vaultData) {
-        console.error('No vault found');
+        Logger.error('No vault found');
         return false;
       }
 

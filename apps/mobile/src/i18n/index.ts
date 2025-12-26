@@ -2,6 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Localization from 'expo-localization';
+import { Logger } from '../lib/logger';
 
 // Import translations
 import en from './locales/en.json';
@@ -33,7 +34,7 @@ const languageDetector = {
       const deviceLanguage = locales?.[0]?.languageCode || 'en';
       callback(deviceLanguage);
     } catch (error) {
-      console.error('Error detecting language:', error);
+      Logger.error('Error detecting language:', error);
       callback('en'); // Fallback to English
     }
   },
@@ -42,7 +43,7 @@ const languageDetector = {
     try {
       await AsyncStorage.setItem(LANGUAGE_KEY, language);
     } catch (error) {
-      console.error('Error saving language:', error);
+      Logger.error('Error saving language:', error);
     }
   },
 };

@@ -175,7 +175,14 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
       overshootLeft={false}
       friction={2}
     >
-      <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={onPress}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={`Post by ${post.author} on ${platformConfig.name}`}
+        accessibilityHint="View post details"
+      >
         {/* Header: Platform Badge + Author Info */}
         <View style={styles.header}>
           <View style={[styles.platformBadge, { backgroundColor: platformConfig.color }]}>
@@ -244,7 +251,13 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
 
         {/* Action Buttons */}
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionButton} onPress={handleBookmark}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleBookmark}
+            accessibilityRole="button"
+            accessibilityLabel={isBookmarked ? 'Unsave post' : 'Save post'}
+            accessibilityHint={isBookmarked ? 'Remove this post from saved items' : 'Save this post for later'}
+          >
             <Ionicons
               name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
               size={20}
@@ -255,12 +268,24 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleShare}
+            accessibilityRole="button"
+            accessibilityLabel="Share post"
+            accessibilityHint="Share this post with others"
+          >
             <Ionicons name="share-outline" size={20} color="#666" />
             <Text style={styles.actionText}>Share</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton} onPress={handleHide}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleHide}
+            accessibilityRole="button"
+            accessibilityLabel="Hide post"
+            accessibilityHint="Hide this post from your timeline"
+          >
             <Ionicons name="eye-off-outline" size={20} color="#666" />
             <Text style={styles.actionText}>Hide</Text>
           </TouchableOpacity>
@@ -280,6 +305,9 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
                   },
                 ]}
                 onPress={() => onCategoryPress?.(category.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`${category.name} category`}
+                accessibilityHint="Filter posts by this category"
               >
                 {category.icon && <Text style={styles.categoryIcon}>{category.icon}</Text>}
                 <Text style={[styles.categoryText, { color: category.color || '#666' }]}>{category.name}</Text>
@@ -287,7 +315,13 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
             ))}
 
             {/* Add Category Button */}
-            <TouchableOpacity style={styles.addCategoryButton} onPress={onAssignCategory}>
+            <TouchableOpacity
+              style={styles.addCategoryButton}
+              onPress={onAssignCategory}
+              accessibilityRole="button"
+              accessibilityLabel="Add category"
+              accessibilityHint="Assign categories to this post"
+            >
               <Text style={styles.addCategoryText}>+ Category</Text>
             </TouchableOpacity>
           </View>

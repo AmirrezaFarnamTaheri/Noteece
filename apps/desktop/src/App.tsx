@@ -1,8 +1,6 @@
 import { MantineProvider } from '@mantine/core';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Notifications } from '@mantine/notifications';
 import { theme } from './theme';
 import { useStore } from './store';
@@ -33,21 +31,6 @@ import LocalAnalytics from './components/LocalAnalytics';
 import { OcrManager } from './components/OcrManager';
 import Journal from './pages/Journal';
 import Habits from './pages/Habits';
-
-// Create a client with optimized settings
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5000, // 5 seconds
-      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-    mutations: {
-      retry: 0,
-    },
-  },
-});
 
 // Wrapper component to initialize spaces
 function SpaceInitializer({ children }: { children: React.ReactNode }) {
@@ -135,13 +118,10 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <MantineProvider theme={theme}>
-          <Notifications position="top-right" zIndex={9999} />
-          <RouterProvider router={router} />
-        </MantineProvider>
-        {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
-      </QueryClientProvider>
+      <MantineProvider theme={theme}>
+        <Notifications position="top-right" zIndex={9999} />
+        <RouterProvider router={router} />
+      </MantineProvider>
     </ErrorBoundary>
   );
 }

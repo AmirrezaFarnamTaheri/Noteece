@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button, TextInput, Group, Paper, Title, Stack, Text, Badge, Tooltip } from '@mantine/core';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import type { DropResult } from 'react-beautiful-dnd';
@@ -105,7 +105,7 @@ const TaskBoard: React.FC = () => {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const { activeSpaceId } = useStore();
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     if (!activeSpaceId) return;
     try {
       const tasksData: Task[] = await invoke('get_all_tasks_in_space_cmd', { spaceId: activeSpaceId });
@@ -113,12 +113,11 @@ const TaskBoard: React.FC = () => {
     } catch (error) {
       logger.error('Failed to fetch tasks:', error as Error);
     }
-  };
+  }, [activeSpaceId]);
 
   useEffect(() => {
     void fetchTasks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSpaceId]);
+  }, [fetchTasks]);
 
   const handleCreateTask = async () => {
     if (!newTaskTitle.trim() || !activeSpaceId) return;

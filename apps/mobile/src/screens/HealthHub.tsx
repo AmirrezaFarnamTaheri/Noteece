@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Dimensions, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 // @ts-ignore: expo vector icons type mismatch
 import { Ionicons } from '@expo/vector-icons';
@@ -156,15 +156,16 @@ export function HealthHub() {
       const dbStats = await loadHealthDataFromDB();
 
       if (dbStats) {
-        setStats(dbStats);
+        setStats(() => dbStats);
       } else {
         // If no data, seed some initial data so the UI isn't empty
         await seedHealthData(spaceId);
         const seededStats = await loadHealthDataFromDB();
-        setStats(seededStats);
+        setStats(() => seededStats);
       }
     } catch (error) {
       Logger.error('Failed to load health data', { error, spaceId });
+      Alert.alert('Error', 'Failed to load health data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -180,8 +181,10 @@ export function HealthHub() {
     try {
       await loadHealthData();
       haptics.success();
-    } catch {
+    } catch (error) {
       haptics.error();
+      Logger.error('Failed to refresh health data', { error });
+      Alert.alert('Error', 'Failed to refresh health data. Please try again.');
     } finally {
       setRefreshing(false);
     }
@@ -208,7 +211,14 @@ export function HealthHub() {
     index: number = 0,
   ) => (
     <ScaleIn delay={200 + index * 50} bounce initialScale={0.8}>
-      <TouchableOpacity style={styles.metricCard} onPress={() => haptics.light()} activeOpacity={0.8}>
+      <TouchableOpacity
+        style={styles.metricCard}
+        onPress={() => haptics.light()}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={`${label}: ${value} ${unit}`}
+        accessibilityHint={`View details for ${label}`}
+      >
         <View style={[styles.metricIcon, { backgroundColor: `${color}20` }]}>
           <Ionicons name={icon} size={24} color={color} />
         </View>
@@ -304,7 +314,13 @@ export function HealthHub() {
           end={{ x: 1, y: 1 }}
         >
           <Text style={styles.headerTitle}>Health</Text>
-          <TouchableOpacity style={styles.headerButton} onPress={() => haptics.medium()}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => haptics.medium()}
+            accessibilityRole="button"
+            accessibilityLabel="Add health data"
+            accessibilityHint="Log a new health activity or metric"
+          >
             <Ionicons name="add-circle-outline" size={24} color="#FFF" />
           </TouchableOpacity>
         </LinearGradient>
@@ -316,18 +332,30 @@ export function HealthHub() {
           <TouchableOpacity
             style={[styles.tab, selectedView === 'today' && styles.tabActive]}
             onPress={() => handleViewChange('today')}
+            accessibilityRole="tab"
+            accessibilityLabel="Today"
+            accessibilityState={{ selected: selectedView === 'today' }}
+            accessibilityHint="View today's health metrics"
           >
             <Text style={[styles.tabText, selectedView === 'today' && styles.tabTextActive]}>Today</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, selectedView === 'week' && styles.tabActive]}
             onPress={() => handleViewChange('week')}
+            accessibilityRole="tab"
+            accessibilityLabel="Week"
+            accessibilityState={{ selected: selectedView === 'week' }}
+            accessibilityHint="View this week's health metrics"
           >
             <Text style={[styles.tabText, selectedView === 'week' && styles.tabTextActive]}>Week</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, selectedView === 'month' && styles.tabActive]}
             onPress={() => handleViewChange('month')}
+            accessibilityRole="tab"
+            accessibilityLabel="Month"
+            accessibilityState={{ selected: selectedView === 'month' }}
+            accessibilityHint="View this month's health metrics"
           >
             <Text style={[styles.tabText, selectedView === 'month' && styles.tabTextActive]}>Month</Text>
           </TouchableOpacity>
@@ -371,7 +399,11 @@ export function HealthHub() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Today's Goals</Text>
-                <TouchableOpacity>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="Manage goals"
+                  accessibilityHint="Edit your health goals"
+                >
                   <Text style={styles.sectionAction}>Manage</Text>
                 </TouchableOpacity>
               </View>
@@ -449,7 +481,12 @@ export function HealthHub() {
         )}
 
         {/* Add Data Button */}
-        <TouchableOpacity style={styles.addButton}>
+        <TouchableOpacity
+          style={styles.addButton}
+          accessibilityRole="button"
+          accessibilityLabel="Log Activity"
+          accessibilityHint="Add a new health activity or metric"
+        >
           <LinearGradient
             colors={['#10B981', '#059669']}
             style={styles.addButtonGradient}
