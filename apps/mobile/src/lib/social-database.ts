@@ -7,6 +7,8 @@
  */
 
 import { dbQuery, dbExecute } from './database';
+import { safeJsonParse } from './safe-json';
+import { Logger } from './logger';
 import type {
   SocialAccount,
   TimelinePost,
@@ -18,10 +20,98 @@ import type {
   Platform,
 } from '../types/social';
 
+// ===== Database Row Types =====
+
+interface SocialAccountRow {
+  id: string;
+  space_id: string;
+  platform: string;
+  username: string;
+  display_name: string;
+  credentials_encrypted: unknown; // Can be Uint8Array, ArrayBuffer, or string
+  enabled: number;
+  sync_frequency_minutes: number;
+  last_sync: number | null;
+  created_at: number;
+}
+
+interface SocialPostRow {
+  id: string;
+  account_id: string;
+  platform: string;
+  platform_post_id: string;
+  author: string;
+  author_avatar: string | null;
+  content: string;
+  content_html: string | null;
+  url: string;
+  media_urls: string | null;
+  engagement_likes: number;
+  engagement_comments: number;
+  engagement_shares: number;
+  engagement_views: number;
+  created_at: number;
+  collected_at: number;
+  account_username: string;
+  account_display_name: string;
+  category_ids: string | null;
+  category_names: string | null;
+  category_colors: string | null;
+  category_icons: string | null;
+}
+
+interface CategoryRow {
+  id: string;
+  space_id: string;
+  name: string;
+  color: string | null;
+  icon: string | null;
+  filters_json: string | null;
+  created_at: number;
+}
+
+interface FocusModeRow {
+  id: string;
+  space_id: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  is_active: number;
+  blocked_platforms: string | null;
+  allowed_platforms: string | null;
+  created_at: number;
+}
+
+interface SpaceCheckRow {
+  post_space: string | null;
+  category_space: string | null;
+}
+
+interface CategoryFilters {
+  platforms?: string[];
+  keywords?: string[];
+  authors?: string[];
+  [key: string]: unknown;
+}
+
+interface SyncOperationData {
+  id?: string;
+  space_id?: string;
+  name?: string;
+  color?: string;
+  icon?: string;
+  created_at?: number;
+  post_id?: string;
+  category_id?: string;
+  assigned_at?: number;
+  assigned_by?: string;
+  [key: string]: unknown;
+}
+
 // ===== Social Account Operations (Read-Only) =====
 
 export async function getSocialAccounts(spaceId: string): Promise<SocialAccount[]> {
-  const rows = await dbQuery<any>(
+  const rows = await dbQuery<SocialAccountRow>(
     `SELECT id, space_id, platform, username, display_name, credentials_encrypted,
             enabled, sync_frequency_minutes, last_sync, created_at
      FROM social_account
@@ -37,9 +127,9 @@ export async function getSocialAccounts(spaceId: string): Promise<SocialAccount[
 
     if (raw instanceof Uint8Array) {
       creds = raw;
-    } else if (raw && typeof raw.byteLength === 'number') {
+    } else if (raw && typeof raw === 'object' && 'byteLength' in raw && typeof raw.byteLength === 'number') {
       // ArrayBuffer or similar
-      creds = new Uint8Array(raw);
+      creds = new Uint8Array(raw as ArrayBufferLike);
     } else if (raw && typeof raw === 'string') {
       // Some SQLite drivers can yield base64 strings; safely decode without relying on atob in RN
       try {
@@ -65,15 +155,22 @@ export async function getSocialAccounts(spaceId: string): Promise<SocialAccount[
     }
 
     return {
-      ...row,
-      enabled: row.enabled === 1,
+      id: row.id,
+      space_id: row.space_id,
+      platform: row.platform as Platform,
+      username: row.username,
+      display_name: row.display_name || undefined,
       credentials_encrypted: creds,
+      enabled: row.enabled === 1,
+      sync_frequency_minutes: row.sync_frequency_minutes,
+      last_sync: row.last_sync ?? undefined,
+      created_at: row.created_at,
     };
   });
 }
 
 export async function getSocialAccount(accountId: string): Promise<SocialAccount | null> {
-  const rows = await dbQuery<any>(
+  const rows = await dbQuery<SocialAccountRow>(
     `SELECT id, space_id, platform, username, display_name, credentials_encrypted,
             enabled, sync_frequency_minutes, last_sync, created_at
      FROM social_account
@@ -91,9 +188,9 @@ export async function getSocialAccount(accountId: string): Promise<SocialAccount
 
   if (raw instanceof Uint8Array) {
     creds = raw;
-  } else if (raw && typeof raw.byteLength === 'number') {
+  } else if (raw && typeof raw === 'object' && 'byteLength' in raw && typeof raw.byteLength === 'number') {
     // ArrayBuffer or similar
-    creds = new Uint8Array(raw);
+    creds = new Uint8Array(raw as ArrayBufferLike);
   } else if (raw && typeof raw === 'string') {
     // Some SQLite drivers can yield base64 strings; best-effort decode
     try {
@@ -109,9 +206,16 @@ export async function getSocialAccount(accountId: string): Promise<SocialAccount
   }
 
   return {
-    ...row,
-    enabled: row.enabled === 1,
+    id: row.id,
+    space_id: row.space_id,
+    platform: row.platform as Platform,
+    username: row.username,
+    display_name: row.display_name || undefined,
     credentials_encrypted: creds,
+    enabled: row.enabled === 1,
+    sync_frequency_minutes: row.sync_frequency_minutes,
+    last_sync: row.last_sync ?? undefined,
+    created_at: row.created_at,
   };
 }
 
@@ -144,7 +248,7 @@ export async function getTimelinePosts(
     WHERE a.space_id = ?
   `;
 
-  const params: any[] = [spaceId];
+  const params: (string | number)[] = [spaceId];
 
   // Add filters
   if (filters?.platforms && filters.platforms.length > 0) {
@@ -211,7 +315,7 @@ export async function getTimelinePosts(
   `;
   params.push(limit, offset);
 
-  const rows = await dbQuery<any>(sql, params);
+  const rows = await dbQuery<SocialPostRow>(sql, params);
 
   return rows.map((row) => {
     // Safely parse media_urls JSON with validation
@@ -229,7 +333,7 @@ export async function getTimelinePosts(
       }
     }
 
-    const nn = (v: any) => {
+    const nn = (v: unknown): number => {
       const n = Number(v);
       return Number.isFinite(n) && n > 0 ? n : 0;
     };
@@ -240,9 +344,9 @@ export async function getTimelinePosts(
       platform: row.platform as Platform,
       platform_post_id: row.platform_post_id,
       author: row.author,
-      author_avatar: row.author_avatar,
+      author_avatar: row.author_avatar ?? undefined,
       content: row.content,
-      content_html: row.content_html,
+      content_html: row.content_html ?? undefined,
       url: row.url,
       media_urls: mediaUrls,
       engagement: {
@@ -260,7 +364,7 @@ export async function getTimelinePosts(
   });
 }
 
-function parseCategories(row: any): SocialCategory[] {
+function parseCategories(row: SocialPostRow): SocialCategory[] {
   if (!row.category_ids) return [];
 
   const sep = String.fromCharCode(31);
@@ -278,6 +382,7 @@ function parseCategories(row: any): SocialCategory[] {
     name: names[i] || '',
     color: colors[i] || undefined,
     icon: icons[i] || undefined,
+    filters: undefined,
     created_at: 0,
   }));
 }
@@ -306,7 +411,7 @@ export async function getPostById(postId: string): Promise<TimelinePost | null> 
     LIMIT 1
   `;
 
-  const rows = await dbQuery<any>(sql, [postId]);
+  const rows = await dbQuery<SocialPostRow>(sql, [postId]);
   if (rows.length === 0) return null;
 
   const row = rows[0];
@@ -333,9 +438,9 @@ export async function getPostById(postId: string): Promise<TimelinePost | null> 
     platform: row.platform as Platform,
     platform_post_id: row.platform_post_id,
     author: row.author,
-    author_avatar: row.author_avatar,
+    author_avatar: row.author_avatar ?? undefined,
     content: row.content,
-    content_html: row.content_html,
+    content_html: row.content_html ?? undefined,
     url: row.url,
     media_urls: mediaUrls,
     engagement: {
@@ -355,7 +460,7 @@ export async function getPostById(postId: string): Promise<TimelinePost | null> 
 // ===== Social Category Operations (Read-Write) =====
 
 export async function getCategories(spaceId: string): Promise<SocialCategory[]> {
-  const rows = await dbQuery<any>(
+  const rows = await dbQuery<CategoryRow>(
     `SELECT id, space_id, name, color, icon, filters_json, created_at
      FROM social_category
      WHERE space_id = ?
@@ -363,10 +468,24 @@ export async function getCategories(spaceId: string): Promise<SocialCategory[]> 
     [spaceId],
   );
 
-  return rows.map((row) => ({
-    ...row,
-    filters: row.filters_json ? JSON.parse(row.filters_json) : undefined,
-  }));
+  return rows.map((row) => {
+    let filters: CategoryFilters | undefined = undefined;
+    if (row.filters_json) {
+      filters = safeJsonParse(row.filters_json, undefined, true);
+      if (filters === undefined) {
+        Logger.warn('[SocialDB] Failed to parse category filters', { categoryId: row.id });
+      }
+    }
+    return {
+      id: row.id,
+      space_id: row.space_id,
+      name: row.name,
+      color: row.color ?? undefined,
+      icon: row.icon ?? undefined,
+      filters,
+      created_at: row.created_at,
+    };
+  });
 }
 
 export async function createCategory(
@@ -408,7 +527,7 @@ export async function assignCategory(postId: string, categoryId: string): Promis
   const now = Date.now();
 
   // Enforce space isolation: post's space must match category's space
-  const rows = await dbQuery<any>(
+  const rows = await dbQuery<SpaceCheckRow>(
     `
     SELECT
       (SELECT a.space_id
@@ -456,7 +575,7 @@ export async function removeCategory(postId: string, categoryId: string): Promis
 }
 
 export async function getPostCategories(postId: string): Promise<SocialCategory[]> {
-  const rows = await dbQuery<any>(
+  const rows = await dbQuery<CategoryRow>(
     `SELECT c.id, c.space_id, c.name, c.color, c.icon, c.filters_json, c.created_at
      FROM social_category c
      JOIN social_post_category pc ON c.id = pc.category_id
@@ -465,16 +584,30 @@ export async function getPostCategories(postId: string): Promise<SocialCategory[
     [postId],
   );
 
-  return rows.map((row) => ({
-    ...row,
-    filters: row.filters_json ? JSON.parse(row.filters_json) : undefined,
-  }));
+  return rows.map((row) => {
+    let filters: CategoryFilters | undefined = undefined;
+    if (row.filters_json) {
+      filters = safeJsonParse(row.filters_json, undefined, true);
+      if (filters === undefined) {
+        Logger.warn('[SocialDB] Failed to parse post category filters', { postId, categoryId: row.id });
+      }
+    }
+    return {
+      id: row.id,
+      space_id: row.space_id,
+      name: row.name,
+      color: row.color ?? undefined,
+      icon: row.icon ?? undefined,
+      filters,
+      created_at: row.created_at,
+    };
+  });
 }
 
 // ===== Focus Mode Operations (Read-Only) =====
 
 // Helper to safely parse platform arrays from database
-function safeParsePlatformArray(val: any): Platform[] {
+function safeParsePlatformArray(val: unknown): Platform[] {
   if (!val) return [];
   try {
     const parsed = typeof val === 'string' ? JSON.parse(val) : val;
@@ -486,7 +619,7 @@ function safeParsePlatformArray(val: any): Platform[] {
 }
 
 export async function getFocusModes(spaceId: string): Promise<FocusMode[]> {
-  const rows = await dbQuery<any>(
+  const rows = await dbQuery<FocusModeRow>(
     `SELECT id, space_id, name, description, icon, is_active,
             blocked_platforms, allowed_platforms, created_at
      FROM social_focus_mode
@@ -496,15 +629,20 @@ export async function getFocusModes(spaceId: string): Promise<FocusMode[]> {
   );
 
   return rows.map((row) => ({
-    ...row,
+    id: row.id,
+    space_id: row.space_id,
+    name: row.name,
+    description: row.description ?? undefined,
+    icon: row.icon ?? undefined,
     is_active: row.is_active === 1,
     blocked_platforms: safeParsePlatformArray(row.blocked_platforms),
     allowed_platforms: safeParsePlatformArray(row.allowed_platforms),
+    created_at: row.created_at,
   }));
 }
 
 export async function getActiveFocusMode(spaceId: string): Promise<FocusMode | null> {
-  const rows = await dbQuery<any>(
+  const rows = await dbQuery<FocusModeRow>(
     `SELECT id, space_id, name, description, icon, is_active,
             blocked_platforms, allowed_platforms, created_at
      FROM social_focus_mode
@@ -517,17 +655,22 @@ export async function getActiveFocusMode(spaceId: string): Promise<FocusMode | n
 
   const row = rows[0];
   return {
-    ...row,
+    id: row.id,
+    space_id: row.space_id,
+    name: row.name,
+    description: row.description ?? undefined,
+    icon: row.icon ?? undefined,
     is_active: true,
     blocked_platforms: safeParsePlatformArray(row.blocked_platforms),
     allowed_platforms: safeParsePlatformArray(row.allowed_platforms),
+    created_at: row.created_at,
   };
 }
 
 // ===== Analytics Operations =====
 
 export async function getPlatformStats(spaceId: string): Promise<PlatformStats[]> {
-  const rows = await dbQuery<any>(
+  const rows = await dbQuery<{ platform: string; post_count: number }>(
     `SELECT
        p.platform,
        COUNT(*) as post_count
@@ -550,7 +693,7 @@ export async function getPlatformStats(spaceId: string): Promise<PlatformStats[]
 }
 
 export async function getCategoryStats(spaceId: string): Promise<CategoryStats[]> {
-  const rows = await dbQuery<any>(
+  const rows = await dbQuery<CategoryStats>(
     `SELECT
        c.id as category_id,
        c.name as category_name,
@@ -593,7 +736,12 @@ function generateId(): string {
   return `${Date.now().toString(36)}-${rand}`;
 }
 
-async function queueSyncOperation(entityType: string, entityId: string, operation: string, data: any): Promise<void> {
+async function queueSyncOperation(
+  entityType: string,
+  entityId: string,
+  operation: string,
+  data: SyncOperationData,
+): Promise<void> {
   const id = generateId();
   const now = Date.now();
 

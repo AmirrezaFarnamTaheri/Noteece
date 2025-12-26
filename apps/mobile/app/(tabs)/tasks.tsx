@@ -6,6 +6,7 @@ import { colors, typography, spacing } from '@/lib/theme';
 import { dbQuery, dbExecute } from '@/lib/database';
 import { Task } from '@/types';
 import { nanoid } from 'nanoid';
+import { Logger } from '@/lib/logger';
 
 type FilterType = 'all' | 'today' | 'upcoming' | 'done';
 
@@ -53,7 +54,7 @@ export default function TasksScreen() {
       const results = await dbQuery<Task>(query, params);
       setTasks(results);
     } catch (error) {
-      console.error('Failed to load tasks:', error);
+      Logger.error('Failed to load tasks', error);
     } finally {
       setLoading(false);
     }
@@ -78,7 +79,7 @@ export default function TasksScreen() {
 
       await loadTasks();
     } catch (error) {
-      console.error('Failed to toggle task:', error);
+      Logger.error('Failed to toggle task', error);
     }
   };
 
@@ -98,7 +99,7 @@ export default function TasksScreen() {
       setShowAddTask(false);
       loadTasks();
     } catch (error) {
-      console.error('Failed to add task:', error);
+      Logger.error('Failed to add task', error);
     }
   };
 

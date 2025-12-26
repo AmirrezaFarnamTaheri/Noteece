@@ -16,9 +16,22 @@ import { haptics } from '@/lib/haptics';
 import { dbQuery, dbExecute } from '@/lib/database';
 import { nanoid } from 'nanoid/non-secure';
 import { useCurrentSpace } from '../store/app-context';
-import type { HealthStats } from '../types/health';
+import { Logger } from '@/lib/logger';
+import type { HealthStats, GoalProgress } from '../types/health';
 
 const { width } = Dimensions.get('window');
+
+// Database row type for health metrics (snake_case from SQLite)
+interface HealthMetricDbRow {
+  id: string;
+  space_id: string;
+  metric_type: string;
+  value: number;
+  unit: string;
+  recorded_at: number;
+  source: string;
+  meta_json: string | null;
+}
 
 // Helper function to load health data from database
 async function loadHealthDataFromDB(): Promise<HealthStats | null> {
@@ -38,12 +51,10 @@ async function loadHealthDataFromDB(): Promise<HealthStats | null> {
 
     const todayMetrics = metrics.filter((m) => m.recorded_at >= todayStart);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const getMetricSum = (list: any[], type: string) =>
+    const getMetricSum = (list: HealthMetricDbRow[], type: string) =>
       list.filter((m) => m.metric_type === type).reduce((acc, curr) => acc + curr.value, 0);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const getMetricLatest = (list: any[], type: string) => {
+    const getMetricLatest = (list: HealthMetricDbRow[], type: string) => {
       const found = list.find((m) => m.metric_type === type);
       return found ? found.value : 0;
     };
@@ -78,7 +89,7 @@ async function loadHealthDataFromDB(): Promise<HealthStats | null> {
       goals: [], // Fetch goals from DB if we had a goals table
     };
   } catch (error) {
-    console.error('Error loading health stats:', error);
+    Logger.error('Error loading health stats from database', { error });
     return null;
   }
 }
@@ -153,7 +164,7 @@ export function HealthHub() {
         setStats(seededStats);
       }
     } catch (error) {
-      console.error('Failed to load health data:', error);
+      Logger.error('Failed to load health data', { error, spaceId });
     } finally {
       setLoading(false);
     }
@@ -209,8 +220,7 @@ export function HealthHub() {
     </ScaleIn>
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const renderGoalProgress = (goal: any) => {
+  const renderGoalProgress = (goal: GoalProgress) => {
     const percentage = Math.min(goal.percentage, 100);
     const isAchieved = goal.isAchieved;
 

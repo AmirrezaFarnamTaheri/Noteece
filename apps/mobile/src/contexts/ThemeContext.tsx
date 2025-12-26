@@ -9,6 +9,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors as obsidianColors } from '@/lib/theme';
+import { Logger } from '@/lib/logger';
 
 export type ThemeMode = 'light' | 'dark' | 'auto';
 export type ActiveTheme = 'light' | 'dark';
@@ -199,7 +200,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         setThemeModeState(saved as ThemeMode);
       }
     } catch (error) {
-      console.error('[Theme] Failed to load theme preference:', error);
+      Logger.error('Failed to load theme preference', error);
     } finally {
       setIsLoading(false);
     }
@@ -209,7 +210,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     try {
       await AsyncStorage.setItem(THEME_STORAGE_KEY, themeMode);
     } catch (error) {
-      console.error('[Theme] Failed to save theme preference:', error);
+      Logger.error('Failed to save theme preference', error);
     }
   };
 

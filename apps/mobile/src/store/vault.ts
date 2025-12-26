@@ -7,6 +7,21 @@ import { chacha20poly1305 } from '@noble/ciphers/chacha';
 import { argon2id } from '@noble/hashes/argon2';
 import { Logger } from '../lib/logger';
 
+// ===== Type Definitions =====
+
+interface SecureStoreOptions {
+  requireAuthentication?: boolean;
+  authenticationPrompt?: string;
+  keychainAccessible?: number;
+  authenticationType?: number;
+}
+
+interface BiometricVaultData {
+  dek: string; // base64 encoded
+  spaceId: string;
+  enabledAt: number;
+}
+
 /**
  * Vault Security Architecture
  * ============================
@@ -465,7 +480,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       };
 
       // Store with strongest available security options
-      const secureStoreOptions: any = {
+      const secureStoreOptions: SecureStoreOptions = {
         requireAuthentication: true,
         authenticationPrompt: 'Authenticate to enable biometric unlock',
       };
@@ -545,22 +560,25 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       }
 
       // Parse and validate biometric data with strict error handling
-      let biometricData: any;
+      let biometricData: BiometricVaultData;
       try {
-        biometricData = JSON.parse(biometricDataStr);
+        const parsed = JSON.parse(biometricDataStr);
+
+        // Validate biometric data structure
+        if (
+          !parsed ||
+          typeof parsed !== 'object' ||
+          typeof parsed.dek !== 'string' ||
+          typeof parsed.spaceId !== 'string' ||
+          typeof parsed.enabledAt !== 'number'
+        ) {
+          Logger.error('Invalid biometric data shape');
+          return false;
+        }
+
+        biometricData = parsed as BiometricVaultData;
       } catch (error) {
         Logger.error('Malformed biometric data JSON:', error);
-        return false;
-      }
-
-      // Validate biometric data structure
-      if (
-        !biometricData ||
-        typeof biometricData !== 'object' ||
-        typeof biometricData.dek !== 'string' ||
-        (biometricData.spaceId && typeof biometricData.spaceId !== 'string')
-      ) {
-        Logger.error('Invalid biometric data shape');
         return false;
       }
 

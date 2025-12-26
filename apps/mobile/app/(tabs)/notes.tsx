@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { colors, spacing, typography, borderRadius, shadows } from '@/lib/theme';
 import { getSyncBridge } from '@/lib/sync/sync-bridge';
 import { Note } from '@/types';
+import { Logger } from '@/lib/logger';
 
 export default function NotesScreen() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -42,7 +43,7 @@ export default function NotesScreen() {
 
       setNotes(filtered);
     } catch (e) {
-      console.error('Failed to fetch notes', e);
+      Logger.error('Failed to fetch notes', e);
     }
   }, [searchQuery, sortBy]);
 

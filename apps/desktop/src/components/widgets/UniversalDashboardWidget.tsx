@@ -30,7 +30,7 @@ export const UniversalDashboardWidget: React.FC = () => {
       try {
         return await getDashboardStats(activeSpaceId);
       } catch (error) {
-        logger.warn('Failed to fetch stats, using mock', error);
+        logger.error('Failed to fetch stats, using mock', error);
         return {
           health: { metrics_count: 12, latest_metric: 'Steps' },
           music: { track_count: 1450, playlist_count: 5 },

@@ -22,34 +22,61 @@ import { Ionicons } from '@expo/vector-icons';
 import { dbQuery, dbExecute } from '@/lib/database';
 import { nanoid } from 'nanoid/non-secure';
 import { useCurrentSpace } from '../store/app-context';
+import { Logger } from '@/lib/logger';
 import type { Track, Playlist } from '../types/music';
+
+// Database row types (snake_case from SQLite)
+interface TrackDbRow {
+  id: string;
+  title: string;
+  artist: string;
+  album: string | null;
+  duration: number;
+  uri: string | null;
+  artwork_url: string | null;
+  genre: string | null;
+  year: number | null;
+  track_number: number | null;
+  play_count: number;
+  last_played_at: number | null;
+  is_favorite: number; // SQLite boolean (0 or 1)
+  added_at: number;
+}
+
+interface PlaylistDbRow {
+  id: string;
+  name: string;
+  description: string | null;
+  artwork_url: string | null;
+  created_at: number;
+  updated_at: number;
+  is_smart_playlist: number; // SQLite boolean (0 or 1)
+  smart_criteria_json: string | null;
+}
 
 // Database helper functions for loading music data
 async function loadTracksFromDatabase(): Promise<Track[]> {
   try {
     const tracks = await dbQuery('SELECT * FROM track ORDER BY title ASC');
-    // Map snake_case DB columns to camelCase Track type if necessary,
-    // but assuming direct mapping for now or that Track type matches DB.
-    // Actually Track type likely uses camelCase.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return tracks.map((t: any) => ({
+    // Map snake_case DB columns to camelCase Track type
+    return tracks.map((t: TrackDbRow) => ({
       id: t.id,
       title: t.title,
       artist: t.artist,
       album: t.album,
       duration: t.duration,
-      uri: t.uri,
+      uri: t.uri || '', // Provide default empty string for nullable uri
       artworkUrl: t.artwork_url,
       genre: t.genre,
       year: t.year,
       trackNumber: t.track_number,
-      playCount: t.play_count,
+      playCount: t.play_count || 0,
       lastPlayedAt: t.last_played_at,
       isFavorite: t.is_favorite === 1,
       addedAt: t.added_at,
     }));
   } catch (e) {
-    console.error('Error loading tracks:', e);
+    Logger.error('Error loading tracks from database', { error: e });
     return [];
   }
 }
@@ -59,8 +86,7 @@ async function loadPlaylistsFromDatabase(): Promise<Playlist[]> {
     const playlists = await dbQuery('SELECT * FROM playlist ORDER BY name ASC');
     // Need to get track counts and duration for each playlist
     const enhancedPlaylists = await Promise.all(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      playlists.map(async (p: any) => {
+      playlists.map(async (p: PlaylistDbRow) => {
         // Join with track table to get total duration
         const stats = await dbQuery(
           `SELECT COUNT(*) as count, SUM(t.duration) as total_duration
@@ -88,7 +114,7 @@ async function loadPlaylistsFromDatabase(): Promise<Playlist[]> {
     );
     return enhancedPlaylists;
   } catch (e) {
-    console.error('Error loading playlists:', e);
+    Logger.error('Error loading playlists from database', { error: e });
     return [];
   }
 }
@@ -155,7 +181,7 @@ export function MusicHub() {
       setTracks(loadedTracks);
       setPlaylists(loadedPlaylists);
     } catch (error) {
-      console.error('Failed to load music:', error);
+      Logger.error('Failed to load music data', { error, spaceId });
     } finally {
       setLoading(false);
     }

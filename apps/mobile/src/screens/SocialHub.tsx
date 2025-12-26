@@ -28,6 +28,7 @@ import { SaveFilterModal } from '../components/social/hub/SaveFilterModal';
 import { useSharedContent } from '../hooks/useSharedContent';
 import { useCurrentSpace } from '../store/app-context';
 import { Logger } from '../lib/logger';
+import { SharedItem } from '../lib/share-handler';
 import {
   getTimelinePosts,
   getCategories,
@@ -267,7 +268,7 @@ export function SocialHub() {
     );
   };
 
-  const handleSharedItemPress = (item: any) => {
+  const handleSharedItemPress = (item: SharedItem) => {
     Alert.alert('Shared Content', `Type: ${item.type}\n${item.url || item.text || ''}`, [
       { text: 'Dismiss', style: 'cancel' },
       {
@@ -337,7 +338,7 @@ export function SocialHub() {
       {/* Shared Content Banner */}
       {hasSharedContent && sharedItems.length > 0 && (
         <SharedContentBanner
-          sharedItems={sharedItems as any}
+          sharedItems={sharedItems}
           onDismiss={handleDismissSharedContent}
           onItemPress={handleSharedItemPress}
         />

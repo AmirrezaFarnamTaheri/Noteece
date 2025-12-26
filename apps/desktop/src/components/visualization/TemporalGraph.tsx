@@ -113,7 +113,7 @@ export function TemporalGraph({
         });
       } catch (error) {
         // Return empty array instead of mock data
-        logger.warn('Failed to fetch temporal correlations', error);
+        logger.error('Failed to fetch temporal correlations', error);
         return [];
       }
     },

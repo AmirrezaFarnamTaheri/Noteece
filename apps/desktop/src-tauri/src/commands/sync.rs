@@ -195,7 +195,7 @@ pub fn get_sync_progress_cmd(
             stats.success_rate as f32
         } else {
             // If success_rate is stored as percentage (e.g., 100 for complete):
-    (stats.success_rate.clamp(0.0, 100.0) / 100.0) as f32
+            (stats.success_rate.clamp(0.0, 100.0) / 100.0) as f32
         };
         let total = stats.total_synced as u64;
         // success_rate is likely successful/total, so we can reverse it or just use progress

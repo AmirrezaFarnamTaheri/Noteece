@@ -24,13 +24,19 @@ export function BiometricLockScreen({ onUnlock, onCancel }: BiometricLockScreenP
 
   useEffect(() => {
     loadBiometricTypes();
+
     // Auto-trigger authentication on mount
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       handleAuthenticate();
     }, 500);
 
     // Start pulse animation
     startPulseAnimation();
+
+    // Cleanup timeout on unmount
+    return () => {
+      clearTimeout(timeoutId);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -26,6 +26,7 @@ import {
 import { startBackgroundSync, stopBackgroundSync, triggerManualSync } from '../lib/sync/background-sync';
 import { useCurrentSpace } from '../store/app-context';
 import { dbQuery } from '../lib/database';
+import { Logger } from '@/lib/logger';
 
 interface SettingsItem {
   key: string;
@@ -152,7 +153,7 @@ export function SocialSettings() {
         );
       }
     } catch (error) {
-      console.error('Sync error:', error);
+      Logger.error('Failed to sync social data', { error, spaceId });
       Alert.alert('Sync Error', 'Failed to synchronize. Please try again.');
     } finally {
       setIsSyncing(false);
@@ -276,7 +277,7 @@ export function SocialSettings() {
         Alert.alert('Export Complete', `Data saved to ${fileName}. Sharing not available on this device.`);
       }
     } catch (error) {
-      console.error('Export failed:', error);
+      Logger.error('Failed to export social data', { error, spaceId });
       Alert.alert('Export Failed', 'Failed to export data. Please try again.');
     } finally {
       setIsExporting(false);

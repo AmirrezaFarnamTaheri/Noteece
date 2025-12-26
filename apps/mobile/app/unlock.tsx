@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, typography, spacing } from '@/lib/theme';
 import { useVaultStore } from '@/store/vault';
+import { Logger } from '@/lib/logger';
 
 export default function UnlockScreen() {
   const { unlockVault, unlockWithBiometric, isBiometricAvailable, isBiometricEnabled } = useVaultStore();
@@ -28,6 +29,8 @@ export default function UnlockScreen() {
 
   // Check biometric availability on mount
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout | undefined;
+
     async function checkBiometric() {
       const available = await isBiometricAvailable();
       const enabled = await isBiometricEnabled();
@@ -37,13 +40,20 @@ export default function UnlockScreen() {
       // Auto-trigger biometric unlock if enabled and available
       if (available && enabled) {
         // Small delay to show UI first
-        setTimeout(() => {
+        timeoutId = setTimeout(() => {
           handleBiometricUnlock();
         }, 500);
       }
     }
 
     checkBiometric();
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -100,7 +110,7 @@ export default function UnlockScreen() {
         Alert.alert('Incorrect Password', 'The password you entered is incorrect. Please try again.');
       }
     } catch (error) {
-      console.error('Unlock error:', error);
+      Logger.error('Unlock error', error);
       shake();
       Alert.alert('Error', 'Failed to unlock vault. Please try again.');
     } finally {
@@ -144,7 +154,7 @@ export default function UnlockScreen() {
         );
       }
     } catch (error) {
-      console.error('Biometric unlock error:', error);
+      Logger.error('Biometric unlock error', error);
       shake();
       Alert.alert('Error', 'Failed to unlock with biometrics. Please use your password.', [{ text: 'OK' }]);
     } finally {

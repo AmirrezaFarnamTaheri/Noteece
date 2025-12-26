@@ -18,6 +18,7 @@ import {
   cleanupProcessedItems,
   SharedItem,
 } from '../lib/share-handler';
+import { Logger } from '../lib/logger';
 
 interface PendingItem extends SharedItem {
   savedAt: number;
@@ -87,7 +88,7 @@ export function useSharedContent() {
       // Cleanup old processed items
       await cleanupProcessedItems();
     } catch (error) {
-      console.error('[useSharedContent] Failed to check for shared content:', error);
+      Logger.error('Failed to check for shared content', error);
     }
   };
 
@@ -96,7 +97,7 @@ export function useSharedContent() {
       await markItemsProcessed(timestamps);
       await checkForSharedContent();
     } catch (error) {
-      console.error('[useSharedContent] Failed to process items:', error);
+      Logger.error('Failed to process items', error);
     }
   };
 

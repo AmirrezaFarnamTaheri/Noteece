@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { TimelineItem, Insight, Task, CalendarEvent } from '@/types';
 import { dbQuery } from '@/lib/database';
 import { colors } from '@/lib/theme';
+import { Logger } from '@/lib/logger';
 
 interface UseTodayTimelineReturn {
   timeline: TimelineItem[];
@@ -39,7 +40,7 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
         try {
           suggestedActions = JSON.parse(insightRow.suggested_actions_json || '[]');
         } catch (parseError) {
-          console.error('Failed to parse suggested actions JSON:', parseError);
+          Logger.error('Failed to parse suggested actions JSON', parseError);
           suggestedActions = [];
         }
 
@@ -132,7 +133,7 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
 
       setTimeline(items);
     } catch (error) {
-      console.error('Failed to load timeline:', error);
+      Logger.error('Failed to load timeline', error);
     } finally {
       setLoading(false);
     }

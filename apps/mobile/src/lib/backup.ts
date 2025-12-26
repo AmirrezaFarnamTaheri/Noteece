@@ -64,7 +64,7 @@ async function getOrCreateDeviceId(): Promise<string> {
     await SecureStore.setItemAsync('device_id', newDeviceId);
     return newDeviceId;
   } catch (error) {
-    console.warn('Failed to access secure storage for device ID, using temporary UUID:', error);
+    Logger.warn('[Backup] Failed to access secure storage for device ID, using temporary UUID:', error);
     // Fallback to a temporary UUID if secure storage fails
     return uuid();
   }

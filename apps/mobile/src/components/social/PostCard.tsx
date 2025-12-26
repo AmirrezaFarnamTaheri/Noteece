@@ -14,6 +14,7 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { format } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { haptics } from '../../lib/haptics';
+import { Logger } from '../../lib/logger';
 import type { TimelinePost, Platform } from '../../types/social';
 import { PLATFORM_CONFIGS } from '../../types/social';
 
@@ -29,12 +30,22 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
   const platformConfig = PLATFORM_CONFIGS[post.platform as Platform];
   const [isBookmarked, setIsBookmarked] = useState(false);
   const swipeableRef = useRef<Swipeable>(null);
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load bookmark status
   React.useEffect(() => {
     loadBookmarkStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [post.id]);
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const loadBookmarkStatus = async () => {
     try {
@@ -44,7 +55,7 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
         setIsBookmarked(bookmarkedIds.includes(post.id));
       }
     } catch (error) {
-      console.error('Failed to load bookmark status:', error);
+      Logger.error('Failed to load bookmark status:', error);
     }
   };
 
@@ -65,7 +76,7 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
       // Close swipeable after action
       swipeableRef.current?.close();
     } catch (error) {
-      console.error('Failed to update bookmark:', error);
+      Logger.error('Failed to update bookmark:', error);
       Alert.alert('Error', 'Failed to update bookmark');
     }
   };
@@ -79,7 +90,13 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
   const handleSwipeHide = () => {
     haptics.warning();
     swipeableRef.current?.close();
-    setTimeout(() => {
+
+    // Clear any existing timeout
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+    }
+
+    hideTimeoutRef.current = setTimeout(() => {
       handleHide();
     }, 200);
   };
@@ -92,7 +109,7 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
         url: post.url,
       });
     } catch (error) {
-      console.error('Failed to share:', error);
+      Logger.error('Failed to share:', error);
     }
   };
 

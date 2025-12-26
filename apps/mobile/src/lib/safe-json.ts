@@ -5,6 +5,8 @@
  * to prevent crashes from malformed data.
  */
 
+import { Logger } from './logger';
+
 /**
  * Safely parse JSON with error handling and optional default value
  * @param jsonString - The JSON string to parse
@@ -21,7 +23,7 @@ export function safeJsonParse<T>(jsonString: string | null | undefined, defaultV
     return JSON.parse(jsonString) as T;
   } catch (error) {
     if (logError) {
-      console.error('JSON parse error:', error, 'Input:', jsonString?.substring(0, 100));
+      Logger.error('[SafeJson] JSON parse error:', error);
     }
     return defaultValue;
   }
@@ -45,7 +47,7 @@ export function safeJsonParseWithValidation<T>(
     return parsed;
   }
 
-  console.error('JSON validation failed for:', jsonString?.substring(0, 100));
+  Logger.error('[SafeJson] JSON validation failed');
   return defaultValue;
 }
 
@@ -61,7 +63,7 @@ export function safeJsonStringify(data: unknown, defaultValue = '{}'): string {
     // JSON.stringify(undefined) returns undefined; fall back to defaultValue in that case
     return result ?? defaultValue;
   } catch (error) {
-    console.error('JSON stringify error:', error);
+    Logger.error('[SafeJson] JSON stringify error:', error);
     return defaultValue;
   }
 }

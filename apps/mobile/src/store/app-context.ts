@@ -9,6 +9,7 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { hapticManager } from '@/lib/haptics';
 import { Logger } from '@/lib/logger';
+import { safeJsonParse } from '@/lib/safe-json';
 
 export interface ThemeConfig {
   mode: 'light' | 'dark' | 'auto';
@@ -223,7 +224,10 @@ export const useAppContext = create<AppState>((set, get) => ({
       // Load spaces
       const spacesData = await AsyncStorage.getItem('user_spaces');
       if (spacesData) {
-        const spaces = JSON.parse(spacesData);
+        const spaces = safeJsonParse<UserSpace[]>(spacesData, [], true);
+        if (spaces.length === 0 && spacesData.trim().length > 0) {
+          Logger.error('[AppContext] Failed to parse user spaces, using defaults');
+        }
         set({ spaces });
       }
 

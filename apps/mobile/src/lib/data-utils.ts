@@ -3,6 +3,7 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as SecureStore from 'expo-secure-store';
 import { getDatabase } from './database';
+import { Logger } from './logger';
 
 /**
  * Export all user data to a JSON file
@@ -137,13 +138,13 @@ export async function exportAllData(): Promise<{
         await FileSystem.deleteAsync(filePath, { idempotent: true });
       } catch (cleanupError) {
         // Ignore cleanup errors, but log them
-        console.warn('Failed to cleanup export file:', cleanupError);
+        Logger.warn('[DataUtils] Failed to cleanup export file:', cleanupError);
       }
     }
 
     return { success: true };
   } catch (error) {
-    console.error('Failed to export data:', error);
+    Logger.error('[DataUtils] Failed to export data:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to export data',
@@ -200,7 +201,7 @@ export async function clearAllData(): Promise<{
 
     return { success: true };
   } catch (error) {
-    console.error('Failed to clear all data:', error);
+    Logger.error('[DataUtils] Failed to clear all data:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to clear all data',
@@ -246,7 +247,7 @@ export async function getDataStats(): Promise<{
       total,
     };
   } catch (error) {
-    console.error('Failed to get data stats:', error);
+    Logger.error('[DataUtils] Failed to get data stats:', error);
     return {
       tasks: 0,
       notes: 0,
