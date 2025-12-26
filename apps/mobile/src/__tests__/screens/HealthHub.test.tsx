@@ -62,7 +62,7 @@ describe('HealthHub Screen', () => {
 
     // Check for Today view metrics
     // Use regex for values that might be part of a larger string
-    expect(await findByText(/5\.0k/)).toBeTruthy(); // Steps formatted
+    expect(await findByText(/5k/)).toBeTruthy(); // Steps formatted as "5k" (0 decimals)
     expect(await findByText(/8/)).toBeTruthy(); // Water
     expect(await findByText('Steps')).toBeTruthy();
   });
