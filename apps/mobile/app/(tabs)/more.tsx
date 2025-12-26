@@ -13,6 +13,7 @@ import { nfcTriggerManager } from '@/lib/features/nfc-triggers';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { changeVaultPassword } from '@/lib/vault-utils';
 import { exportAllData, clearAllData, getDataStats } from '@/lib/data-utils';
+import { Logger } from '@/lib/logger';
 
 export default function MoreScreen() {
   const { lockVault } = useVaultStore();
@@ -55,7 +56,7 @@ export default function MoreScreen() {
       // Only update state after all operations succeed
       setBackgroundSyncEnabled(value);
     } catch (error) {
-      console.error('Failed to toggle background sync:', error);
+      Logger.error('Failed to toggle background sync', error);
       haptics.error();
       // Revert to previous state on failure
       setBackgroundSyncEnabled(previous);
@@ -85,7 +86,7 @@ export default function MoreScreen() {
         Alert.alert('NFC Enabled', 'You can now use NFC tags to trigger quick actions');
       }
     } catch (error) {
-      console.error('Failed to toggle NFC:', error);
+      Logger.error('Failed to toggle NFC', error);
       haptics.error();
       Alert.alert('Error', 'Failed to update NFC setting');
     }
@@ -105,7 +106,7 @@ export default function MoreScreen() {
         Alert.alert('No Devices', 'No devices found to sync with');
       }
     } catch (error) {
-      console.error('Failed to sync:', error);
+      Logger.error('Failed to sync', error);
       haptics.error();
       Alert.alert('Error', 'Sync failed. Please try again.');
     } finally {
@@ -178,7 +179,7 @@ export default function MoreScreen() {
                                   Alert.alert('Error', result.error || 'Failed to change password');
                                 }
                               } catch (error) {
-                                console.error('Change password failed:', error);
+                                Logger.error('Change password failed', error);
                                 Alert.alert('Error', 'Failed to change password. Please try again.');
                               }
                             },
@@ -250,7 +251,7 @@ export default function MoreScreen() {
         ],
       );
     } catch (error) {
-      console.error('Failed to export data:', error);
+      Logger.error('Failed to export data', error);
       haptics.error();
       Alert.alert('Error', 'Failed to export data. Please try again.');
     }
@@ -318,7 +319,7 @@ export default function MoreScreen() {
         ],
       );
     } catch (error) {
-      console.error('Failed to clear data:', error);
+      Logger.error('Failed to clear data', error);
       haptics.error();
       Alert.alert('Error', 'Failed to clear data. Please try again.');
     }
@@ -416,7 +417,7 @@ export default function MoreScreen() {
       haptics.medium();
       await updateSetting('notifications', value);
     } catch (error) {
-      console.error('Failed to toggle notifications:', error);
+      Logger.error('Failed to toggle notifications', error);
       haptics.error();
       Alert.alert('Error', 'Failed to update notification settings');
     }
@@ -430,7 +431,7 @@ export default function MoreScreen() {
       }
       await updateSetting('haptics', value);
     } catch (error) {
-      console.error('Failed to toggle haptics:', error);
+      Logger.error('Failed to toggle haptics', error);
       haptics.error();
       Alert.alert('Error', 'Failed to update haptic settings');
     }

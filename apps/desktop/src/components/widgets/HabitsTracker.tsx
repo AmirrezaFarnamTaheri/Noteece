@@ -2,7 +2,7 @@
  * HabitsTracker Widget - Track daily habits with visual indicators
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Paper,
   Title,
@@ -45,7 +45,7 @@ export default function HabitsTracker() {
     },
   });
 
-  const fetchHabits = async () => {
+  const fetchHabits = useCallback(async () => {
     if (activeSpaceId) {
       try {
         const fetchedHabits = await invoke<Habit[]>('get_habits_cmd', { spaceId: activeSpaceId });
@@ -66,12 +66,11 @@ export default function HabitsTracker() {
         logger.error('Error fetching habits:', error as Error);
       }
     }
-  };
+  }, [activeSpaceId]);
 
   useEffect(() => {
     void fetchHabits();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSpaceId]);
+  }, [fetchHabits]);
 
   const handleAddHabit = async (values: typeof form.values) => {
     if (!activeSpaceId) return;
@@ -182,7 +181,13 @@ export default function HabitsTracker() {
                 >
                   🔥 {habit.streak}
                 </Badge>
-                <ActionIcon size="sm" color="red" variant="subtle" onClick={() => handleDeleteHabit(habit.id)}>
+                <ActionIcon
+                  size="sm"
+                  color="red"
+                  variant="subtle"
+                  onClick={() => handleDeleteHabit(habit.id)}
+                  aria-label={`Delete habit ${habit.name}`}
+                >
                   <IconTrash size={14} />
                 </ActionIcon>
               </Group>

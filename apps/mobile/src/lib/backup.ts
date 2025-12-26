@@ -9,11 +9,9 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-// Ensure crypto.getRandomValues is available in RN
-import 'react-native-get-random-values';
-import { v4 as uuid } from 'uuid';
 import { dbExecute, dbQuery } from './database';
 import { Logger } from './logger';
+import { getOrCreateDeviceId } from '../utils/deviceId';
 import type { SocialAccount, SocialPost, SocialCategory } from '../types/social';
 
 export interface BackupMetadata {
@@ -45,29 +43,6 @@ function generateBackupFilename(): string {
  */
 function getBackupDirectory(): string {
   return `${FileSystem.documentDirectory}backups/`;
-}
-
-/**
- * Get or create a unique device ID for this device
- * Stores the ID in secure storage for persistence across app launches
- */
-async function getOrCreateDeviceId(): Promise<string> {
-  try {
-    // Try to retrieve existing device ID from secure storage
-    const existingId = await SecureStore.getItemAsync('device_id');
-    if (existingId) {
-      return existingId;
-    }
-
-    // Generate a new unique device ID if not found
-    const newDeviceId = uuid();
-    await SecureStore.setItemAsync('device_id', newDeviceId);
-    return newDeviceId;
-  } catch (error) {
-    console.warn('Failed to access secure storage for device ID, using temporary UUID:', error);
-    // Fallback to a temporary UUID if secure storage fails
-    return uuid();
-  }
 }
 
 /**

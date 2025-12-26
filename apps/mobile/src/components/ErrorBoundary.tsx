@@ -60,14 +60,8 @@ export class ErrorBoundary extends Component<Props, State> {
 
       // Log to console in development
       if (__DEV__) {
-        // eslint-disable-next-line no-console
-        console.group('🔴 Error Report');
-        // eslint-disable-next-line no-console
-        console.error('Error:', error);
-        // eslint-disable-next-line no-console
-        console.error('Component Stack:', errorInfo.componentStack);
-        // eslint-disable-next-line no-console
-        console.groupEnd();
+        Logger.error('🔴 Error Report - Error:', error);
+        Logger.error('Component Stack:', errorInfo.componentStack);
       }
 
       // Send error to Sentry with component stack context (with scrubbing)

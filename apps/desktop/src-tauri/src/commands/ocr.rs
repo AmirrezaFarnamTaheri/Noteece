@@ -180,13 +180,14 @@ pub async fn process_ocr_queue_cmd(
 
     for blob_id in pending_jobs {
         // Retrieve blob
-        let blob_data = match core_rs::blob::retrieve_blob(&vault_path_str, dek.as_slice(), &blob_id) {
-            Ok(data) => data,
-            Err(e) => {
-                log::warn!("[ocr] Failed to retrieve blob {}: {}", blob_id, e);
-                continue;
-            }
-        };
+        let blob_data =
+            match core_rs::blob::retrieve_blob(&vault_path_str, dek.as_slice(), &blob_id) {
+                Ok(data) => data,
+                Err(e) => {
+                    log::warn!("[ocr] Failed to retrieve blob {}: {}", blob_id, e);
+                    continue;
+                }
+            };
 
         // Write to temp file
         let temp_file_path = std::env::temp_dir().join(format!(
@@ -201,11 +202,16 @@ pub async fn process_ocr_queue_cmd(
         // Process
         // We need a separate connection for each iteration to not hold the lock
         let result = {
-             let temp_file_path_clone = temp_file_path.clone();
-             let blob_id_clone = blob_id.clone();
-             let language_clone = language.clone();
-             crate::with_db!(db, conn, {
-                core_rs::ocr::process_ocr_job(&conn, &blob_id_clone, &temp_file_path_clone, language_clone.as_deref())
+            let temp_file_path_clone = temp_file_path.clone();
+            let blob_id_clone = blob_id.clone();
+            let language_clone = language.clone();
+            crate::with_db!(db, conn, {
+                core_rs::ocr::process_ocr_job(
+                    &conn,
+                    &blob_id_clone,
+                    &temp_file_path_clone,
+                    language_clone.as_deref(),
+                )
             })
         };
 

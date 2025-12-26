@@ -9,6 +9,7 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { hapticManager } from '@/lib/haptics';
 import { Logger } from '@/lib/logger';
+import { safeJsonParse } from '@/lib/safe-json';
 
 export interface ThemeConfig {
   mode: 'light' | 'dark' | 'auto';
@@ -223,7 +224,10 @@ export const useAppContext = create<AppState>((set, get) => ({
       // Load spaces
       const spacesData = await AsyncStorage.getItem('user_spaces');
       if (spacesData) {
-        const spaces = JSON.parse(spacesData);
+        const spaces = safeJsonParse<UserSpace[]>(spacesData, [], true);
+        if (spaces.length === 0 && spacesData.trim().length > 0) {
+          Logger.error('[AppContext] Failed to parse user spaces, using defaults');
+        }
         set({ spaces });
       }
 
@@ -252,6 +256,7 @@ export function useCurrentSpace() {
 
 /**
  * Hook to get app settings
+ * @deprecated Use granular selectors (useTheme, useLanguage, etc.) instead to avoid unnecessary re-renders
  */
 export function useSettings() {
   return useAppContext((state) => state.settings);
@@ -288,4 +293,82 @@ export function useUpdateSetting() {
     // @ts-ignore: TS cannot fully resolve the dynamic key type here, but the logic is sound.
     return updateSettings(newPartialSettings);
   };
+}
+
+// ===== Granular Selectors =====
+// These selectors only trigger re-renders when their specific value changes
+
+/**
+ * Hook to get theme configuration
+ */
+export function useTheme() {
+  return useAppContext((state) => state.settings.theme);
+}
+
+/**
+ * Hook to get language setting
+ */
+export function useLanguage() {
+  return useAppContext((state) => state.settings.language);
+}
+
+/**
+ * Hook to get notifications enabled setting
+ */
+export function useNotificationsEnabled() {
+  return useAppContext((state) => state.settings.notifications);
+}
+
+/**
+ * Hook to get haptics enabled setting
+ */
+export function useHapticsEnabled() {
+  return useAppContext((state) => state.settings.haptics);
+}
+
+/**
+ * Hook to get analytics enabled setting
+ */
+export function useAnalyticsEnabled() {
+  return useAppContext((state) => state.settings.analyticsEnabled);
+}
+
+/**
+ * Hook to get crash reporting enabled setting
+ */
+export function useCrashReportingEnabled() {
+  return useAppContext((state) => state.settings.crashReportingEnabled);
+}
+
+/**
+ * Hook to get social settings
+ */
+export function useSocialSettings() {
+  return useAppContext((state) => ({
+    biometricEnabled: state.settings.socialBiometricEnabled,
+    autoSync: state.settings.socialAutoSync,
+    wifiOnly: state.settings.socialWifiOnly,
+    backgroundSync: state.settings.socialBackgroundSync,
+  }));
+}
+
+/**
+ * Hook to get productivity settings
+ */
+export function useProductivitySettings() {
+  return useAppContext((state) => ({
+    focusModeEnabled: state.settings.focusModeEnabled,
+    pomodoroLength: state.settings.pomodoroLength,
+    breakLength: state.settings.breakLength,
+  }));
+}
+
+/**
+ * Hook to get backup settings
+ */
+export function useBackupSettings() {
+  return useAppContext((state) => ({
+    autoBackup: state.settings.autoBackup,
+    backupFrequency: state.settings.backupFrequency,
+  }));
 }

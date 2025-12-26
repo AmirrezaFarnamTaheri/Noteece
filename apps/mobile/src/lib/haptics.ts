@@ -7,6 +7,7 @@
 
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Logger } from './logger';
 
 class HapticManager {
   private enabled: boolean = true;
@@ -22,7 +23,7 @@ class HapticManager {
         this.enabled = parsed.haptics !== false;
       }
     } catch (error) {
-      console.error('Failed to load haptic preferences:', error);
+      Logger.error('[Haptics] Failed to load haptic preferences:', error);
       this.enabled = true; // Default to enabled
     }
   }

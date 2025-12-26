@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { Paper, Text, Group, Stack, Badge, Avatar, useMantineTheme } from '@mantine/core';
 import { IconFolderOpen, IconArrowUpRight } from '@tabler/icons-react';
 import { Project } from '@noteece/types';
@@ -28,28 +28,29 @@ const getStatusColor = (status: string) => {
   }
 };
 
-export const RecentProjects: React.FC = () => {
+const RecentProjectsComponent: React.FC = () => {
   const theme = useMantineTheme();
   const [projects, setProjects] = useState<Project[]>([]);
   const { activeSpaceId } = useActiveSpace();
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      if (!activeSpaceId) return;
-      try {
-        const projectsData = await getAllProjectsInSpace(activeSpaceId);
-        // Get only active projects, sorted by start date
-        const activeProjects = projectsData
-          .filter((p) => p.status === 'active')
-          .sort((a, b) => (b.start_at || 0) - (a.start_at || 0))
-          .slice(0, 5);
-        setProjects(activeProjects);
-      } catch (error) {
-        logger.error('Error fetching projects:', error as Error);
-      }
-    };
-    void fetchProjects();
+  const fetchProjects = useCallback(async () => {
+    if (!activeSpaceId) return;
+    try {
+      const projectsData = await getAllProjectsInSpace(activeSpaceId);
+      // Get only active projects, sorted by start date
+      const activeProjects = projectsData
+        .filter((p) => p.status === 'active')
+        .sort((a, b) => (b.start_at || 0) - (a.start_at || 0))
+        .slice(0, 5);
+      setProjects(activeProjects);
+    } catch (error) {
+      logger.error('Error fetching projects:', error as Error);
+    }
   }, [activeSpaceId]);
+
+  useEffect(() => {
+    void fetchProjects();
+  }, [fetchProjects]);
 
   return (
     <Paper style={{ border: '1px solid #e0e0e0' }} p="md" radius="md" shadow="xs">
@@ -96,3 +97,5 @@ export const RecentProjects: React.FC = () => {
     </Paper>
   );
 };
+
+export const RecentProjects = memo(RecentProjectsComponent);

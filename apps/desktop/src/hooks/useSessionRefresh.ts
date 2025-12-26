@@ -2,6 +2,8 @@ import { useEffect, useCallback, useRef, useState } from 'react';
 import { authService } from '../services/auth';
 import { logger } from '@/utils/logger';
 
+const SESSION_REFRESH_INTERVAL = 15 * 60 * 1000; // 15 minutes in milliseconds
+
 interface SessionWarning {
   show: boolean;
   minutesLeft: number;
@@ -9,7 +11,6 @@ interface SessionWarning {
 
 export const useSessionRefresh = (onSessionExpired?: () => void, onWarning?: (minutesLeft: number) => void) => {
   const refreshIntervalReference = useRef<NodeJS.Timeout | null>(null);
-  const warningTimeoutReference = useRef<NodeJS.Timeout | null>(null);
   const [sessionWarning, setSessionWarning] = useState<SessionWarning>({ show: false, minutesLeft: 0 });
 
   const checkSession = useCallback(async () => {
@@ -84,17 +85,13 @@ export const useSessionRefresh = (onSessionExpired?: () => void, onWarning?: (mi
           return previous;
         });
       },
-      15 * 60 * 1000,
-    ); // 15 minutes
+      SESSION_REFRESH_INTERVAL,
+    );
 
     // Cleanup on unmount
     return () => {
       if (refreshIntervalReference.current) {
         clearInterval(refreshIntervalReference.current);
-      }
-      if (warningTimeoutReference.current) {
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- Refs are safe to access in cleanup
-        clearTimeout(warningTimeoutReference.current);
       }
     };
   }, [checkSession, getSessionTimeRemaining, onWarning]);

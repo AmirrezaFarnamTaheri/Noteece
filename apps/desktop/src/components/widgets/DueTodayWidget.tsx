@@ -2,12 +2,15 @@
  * DueTodayWidget - Tasks due today with quick complete actions
  */
 
+import { memo } from 'react';
 import { Paper, Title, Text, Group, Stack, Checkbox, Badge } from '@mantine/core';
 import { IconCalendarEvent } from '@tabler/icons-react';
 import { useTasks, useUpdateTask } from '../../hooks/useQueries';
 import { useStore } from '../../store';
 import { Task } from '@noteece/types';
 import { notifications } from '@mantine/notifications';
+
+const MAX_DISPLAYED_TASKS = 8;
 
 const getPriorityColor = (priority: number | undefined) => {
   switch (priority) {
@@ -49,7 +52,7 @@ const getPriorityLabel = (priority: number) => {
   }
 };
 
-export default function DueTodayWidget() {
+function DueTodayWidget() {
   const { activeSpaceId } = useStore();
   const { data: tasks = [] } = useTasks(activeSpaceId || '', !!activeSpaceId);
   const updateTaskMutation = useUpdateTask();
@@ -108,7 +111,7 @@ export default function DueTodayWidget() {
         </Stack>
       ) : (
         <Stack gap="sm">
-          {tasksToday.slice(0, 8).map((task) => (
+          {tasksToday.slice(0, MAX_DISPLAYED_TASKS).map((task) => (
             <Group key={task.id} gap="xs" wrap="nowrap">
               <Checkbox checked={task.status === 'done'} onChange={() => handleToggleTask(task)} size="sm" />
               <Text
@@ -130,9 +133,9 @@ export default function DueTodayWidget() {
             </Group>
           ))}
 
-          {tasksToday.length > 8 && (
+          {tasksToday.length > MAX_DISPLAYED_TASKS && (
             <Text size="xs" c="dimmed" ta="center">
-              +{tasksToday.length - 8} more tasks
+              +{tasksToday.length - MAX_DISPLAYED_TASKS} more tasks
             </Text>
           )}
         </Stack>
@@ -140,3 +143,5 @@ export default function DueTodayWidget() {
     </Paper>
   );
 }
+
+export default memo(DueTodayWidget);

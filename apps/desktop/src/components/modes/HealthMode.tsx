@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import {
   Container,
@@ -19,6 +19,7 @@ import {
   Progress,
 } from '@mantine/core';
 import { DateTimePicker } from '@mantine/dates';
+import { notifications } from '@mantine/notifications';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { IconPlus, IconTarget, IconTrendingUp, IconActivity } from '@tabler/icons-react';
 import { logger } from '@/utils/logger';
@@ -81,12 +82,7 @@ const HealthMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
   const [goalTarget, setGoalTarget] = useState<number>(0);
   const [goalMetricType, setGoalMetricType] = useState('weight');
 
-  useEffect(() => {
-    void loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spaceId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [metricsData, allGoals] = await Promise.all([
@@ -107,7 +103,11 @@ const HealthMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [spaceId]);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   const addMetric = async () => {
     try {
@@ -135,7 +135,11 @@ const HealthMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       await loadData();
     } catch (error) {
       logger.error('Failed to add metric:', error as Error);
-      alert(`Failed to add metric: ${String(error)}`);
+      notifications.show({
+        title: 'Error',
+        message: `Failed to add metric: ${String(error)}`,
+        color: 'red',
+      });
     }
   };
 

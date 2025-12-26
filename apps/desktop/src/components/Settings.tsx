@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { Mode } from './types';
 import { useStore } from '../store';
 import { logger } from '@/utils/logger';
+import { Container, Title, Stack, TextInput, Button, Text, Checkbox } from '@mantine/core';
 
 const availableModes: Mode[] = [
   { id: 'meeting-notes', name: 'Meeting Notes', category: 'productivity' },
@@ -68,26 +69,50 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <div>
-      <h2>Settings</h2>
+    <Container size="lg" py="xl">
+      <Stack gap="xl">
+        <Title order={2}>Settings</Title>
 
-      <h3>Vault Management</h3>
-      <input type="text" placeholder="Vault Path" value={path} onChange={(e) => setPath(e.target.value)} />
-      <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-      <button onClick={handleCreateVault}>Create Vault</button>
-      <button onClick={handleUnlockVault}>Unlock Vault</button>
-      {message && <p>{message}</p>}
+        <Stack gap="md">
+          <Title order={3}>Vault Management</Title>
+          <TextInput
+            placeholder="Vault Path"
+            value={path}
+            onChange={(e) => setPath(e.target.value)}
+            label="Vault Path"
+          />
+          <TextInput
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            label="Password"
+          />
+          <Stack gap="xs">
+            <Button onClick={handleCreateVault}>Create Vault</Button>
+            <Button onClick={handleUnlockVault} variant="light">
+              Unlock Vault
+            </Button>
+          </Stack>
+          {message && <Text c="blue">{message}</Text>}
+        </Stack>
 
-      <h3>Mode Management</h3>
-      <div>
-        {availableModes.map((mode) => (
-          <div key={mode.id}>
-            <input type="checkbox" id={mode.id} checked={isModeEnabled(mode)} onChange={() => handleToggleMode(mode)} />
-            <label htmlFor={mode.id}>{mode.name}</label>
-          </div>
-        ))}
-      </div>
-    </div>
+        <Stack gap="md">
+          <Title order={3}>Mode Management</Title>
+          <Stack gap="sm">
+            {availableModes.map((mode) => (
+              <Checkbox
+                key={mode.id}
+                id={mode.id}
+                label={mode.name}
+                checked={isModeEnabled(mode)}
+                onChange={() => handleToggleMode(mode)}
+              />
+            ))}
+          </Stack>
+        </Stack>
+      </Stack>
+    </Container>
   );
 };
 

@@ -10,6 +10,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 // @ts-ignore: expo vector icons type mismatch
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing } from '@/lib/theme';
+import { Logger } from '@/lib/logger';
 
 interface Props {
   children: ReactNode;
@@ -41,7 +42,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('[ErrorBoundary] Caught error:', error, errorInfo);
+    Logger.error('[ErrorBoundary] Caught error', error);
 
     this.setState({
       error,

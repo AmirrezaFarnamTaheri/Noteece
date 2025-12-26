@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Dimensions, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 // @ts-ignore: expo vector icons type mismatch
 import { Ionicons } from '@expo/vector-icons';
@@ -16,9 +16,23 @@ import { haptics } from '@/lib/haptics';
 import { dbQuery, dbExecute } from '@/lib/database';
 import { nanoid } from 'nanoid/non-secure';
 import { useCurrentSpace } from '../store/app-context';
-import type { HealthStats } from '../types/health';
+import { Logger } from '@/lib/logger';
+import { formatCompactNumberLowercase } from '../utils/numberFormat';
+import type { HealthStats, GoalProgress } from '../types/health';
 
 const { width } = Dimensions.get('window');
+
+// Database row type for health metrics (snake_case from SQLite)
+interface HealthMetricDbRow {
+  id: string;
+  space_id: string;
+  metric_type: string;
+  value: number;
+  unit: string;
+  recorded_at: number;
+  source: string;
+  meta_json: string | null;
+}
 
 // Helper function to load health data from database
 async function loadHealthDataFromDB(): Promise<HealthStats | null> {
@@ -38,12 +52,10 @@ async function loadHealthDataFromDB(): Promise<HealthStats | null> {
 
     const todayMetrics = metrics.filter((m) => m.recorded_at >= todayStart);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const getMetricSum = (list: any[], type: string) =>
+    const getMetricSum = (list: HealthMetricDbRow[], type: string) =>
       list.filter((m) => m.metric_type === type).reduce((acc, curr) => acc + curr.value, 0);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const getMetricLatest = (list: any[], type: string) => {
+    const getMetricLatest = (list: HealthMetricDbRow[], type: string) => {
       const found = list.find((m) => m.metric_type === type);
       return found ? found.value : 0;
     };
@@ -78,7 +90,7 @@ async function loadHealthDataFromDB(): Promise<HealthStats | null> {
       goals: [], // Fetch goals from DB if we had a goals table
     };
   } catch (error) {
-    console.error('Error loading health stats:', error);
+    Logger.error('Error loading health stats from database', { error });
     return null;
   }
 }
@@ -145,15 +157,16 @@ export function HealthHub() {
       const dbStats = await loadHealthDataFromDB();
 
       if (dbStats) {
-        setStats(dbStats);
+        setStats(() => dbStats);
       } else {
         // If no data, seed some initial data so the UI isn't empty
         await seedHealthData(spaceId);
         const seededStats = await loadHealthDataFromDB();
-        setStats(seededStats);
+        setStats(() => seededStats);
       }
     } catch (error) {
-      console.error('Failed to load health data:', error);
+      Logger.error('Failed to load health data', { error, spaceId });
+      Alert.alert('Error', 'Failed to load health data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -169,8 +182,10 @@ export function HealthHub() {
     try {
       await loadHealthData();
       haptics.success();
-    } catch {
+    } catch (error) {
       haptics.error();
+      Logger.error('Failed to refresh health data', { error });
+      Alert.alert('Error', 'Failed to refresh health data. Please try again.');
     } finally {
       setRefreshing(false);
     }
@@ -179,13 +194,6 @@ export function HealthHub() {
   const handleViewChange = (view: 'today' | 'week' | 'month') => {
     haptics.selection();
     setSelectedView(view);
-  };
-
-  const formatNumber = (num: number): string => {
-    if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}k`;
-    }
-    return num.toFixed(0);
   };
 
   const renderMetricCard = (
@@ -197,7 +205,14 @@ export function HealthHub() {
     index: number = 0,
   ) => (
     <ScaleIn delay={200 + index * 50} bounce initialScale={0.8}>
-      <TouchableOpacity style={styles.metricCard} onPress={() => haptics.light()} activeOpacity={0.8}>
+      <TouchableOpacity
+        style={styles.metricCard}
+        onPress={() => haptics.light()}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={`${label}: ${value} ${unit}`}
+        accessibilityHint={`View details for ${label}`}
+      >
         <View style={[styles.metricIcon, { backgroundColor: `${color}20` }]}>
           <Ionicons name={icon} size={24} color={color} />
         </View>
@@ -209,8 +224,7 @@ export function HealthHub() {
     </ScaleIn>
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const renderGoalProgress = (goal: any) => {
+  const renderGoalProgress = (goal: GoalProgress) => {
     const percentage = Math.min(goal.percentage, 100);
     const isAchieved = goal.isAchieved;
 
@@ -294,7 +308,13 @@ export function HealthHub() {
           end={{ x: 1, y: 1 }}
         >
           <Text style={styles.headerTitle}>Health</Text>
-          <TouchableOpacity style={styles.headerButton} onPress={() => haptics.medium()}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => haptics.medium()}
+            accessibilityRole="button"
+            accessibilityLabel="Add health data"
+            accessibilityHint="Log a new health activity or metric"
+          >
             <Ionicons name="add-circle-outline" size={24} color="#FFF" />
           </TouchableOpacity>
         </LinearGradient>
@@ -306,18 +326,30 @@ export function HealthHub() {
           <TouchableOpacity
             style={[styles.tab, selectedView === 'today' && styles.tabActive]}
             onPress={() => handleViewChange('today')}
+            accessibilityRole="tab"
+            accessibilityLabel="Today"
+            accessibilityState={{ selected: selectedView === 'today' }}
+            accessibilityHint="View today's health metrics"
           >
             <Text style={[styles.tabText, selectedView === 'today' && styles.tabTextActive]}>Today</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, selectedView === 'week' && styles.tabActive]}
             onPress={() => handleViewChange('week')}
+            accessibilityRole="tab"
+            accessibilityLabel="Week"
+            accessibilityState={{ selected: selectedView === 'week' }}
+            accessibilityHint="View this week's health metrics"
           >
             <Text style={[styles.tabText, selectedView === 'week' && styles.tabTextActive]}>Week</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, selectedView === 'month' && styles.tabActive]}
             onPress={() => handleViewChange('month')}
+            accessibilityRole="tab"
+            accessibilityLabel="Month"
+            accessibilityState={{ selected: selectedView === 'month' }}
+            accessibilityHint="View this month's health metrics"
           >
             <Text style={[styles.tabText, selectedView === 'month' && styles.tabTextActive]}>Month</Text>
           </TouchableOpacity>
@@ -334,9 +366,23 @@ export function HealthHub() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Today's Activity</Text>
               <View style={styles.metricsGrid}>
-                {renderMetricCard('footsteps', 'Steps', formatNumber(stats.today.steps), 'steps', '#6366F1', 0)}
+                {renderMetricCard(
+                  'footsteps',
+                  'Steps',
+                  formatCompactNumberLowercase(stats.today.steps, 0),
+                  'steps',
+                  '#6366F1',
+                  0,
+                )}
                 {renderMetricCard('navigate', 'Distance', stats.today.distance.toFixed(1), 'km', '#8B5CF6', 1)}
-                {renderMetricCard('flame', 'Calories', formatNumber(stats.today.calories), 'kcal', '#EF4444', 2)}
+                {renderMetricCard(
+                  'flame',
+                  'Calories',
+                  formatCompactNumberLowercase(stats.today.calories, 0),
+                  'kcal',
+                  '#EF4444',
+                  2,
+                )}
                 {renderMetricCard('timer', 'Active', stats.today.activeMinutes, 'min', '#F59E0B', 3)}
               </View>
             </View>
@@ -361,7 +407,11 @@ export function HealthHub() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Today's Goals</Text>
-                <TouchableOpacity>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="Manage goals"
+                  accessibilityHint="Edit your health goals"
+                >
                   <Text style={styles.sectionAction}>Manage</Text>
                 </TouchableOpacity>
               </View>
@@ -377,7 +427,7 @@ export function HealthHub() {
               <View style={styles.summaryCard}>
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Total Steps</Text>
-                  <Text style={styles.summaryValue}>{formatNumber(stats.week.totalSteps)}</Text>
+                  <Text style={styles.summaryValue}>{formatCompactNumberLowercase(stats.week.totalSteps, 0)}</Text>
                 </View>
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Total Distance</Text>
@@ -385,11 +435,13 @@ export function HealthHub() {
                 </View>
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Total Calories</Text>
-                  <Text style={styles.summaryValue}>{formatNumber(stats.week.totalCalories)} kcal</Text>
+                  <Text style={styles.summaryValue}>
+                    {formatCompactNumberLowercase(stats.week.totalCalories, 0)} kcal
+                  </Text>
                 </View>
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Average Steps/Day</Text>
-                  <Text style={styles.summaryValue}>{formatNumber(stats.week.averageSteps)}</Text>
+                  <Text style={styles.summaryValue}>{formatCompactNumberLowercase(stats.week.averageSteps, 0)}</Text>
                 </View>
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Days Active</Text>
@@ -407,7 +459,7 @@ export function HealthHub() {
               <View style={styles.summaryCard}>
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Total Steps</Text>
-                  <Text style={styles.summaryValue}>{formatNumber(stats.month.totalSteps)}</Text>
+                  <Text style={styles.summaryValue}>{formatCompactNumberLowercase(stats.month.totalSteps, 0)}</Text>
                 </View>
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Total Distance</Text>
@@ -439,7 +491,12 @@ export function HealthHub() {
         )}
 
         {/* Add Data Button */}
-        <TouchableOpacity style={styles.addButton}>
+        <TouchableOpacity
+          style={styles.addButton}
+          accessibilityRole="button"
+          accessibilityLabel="Log Activity"
+          accessibilityHint="Add a new health activity or metric"
+        >
           <LinearGradient
             colors={['#10B981', '#059669']}
             style={styles.addButtonGradient}

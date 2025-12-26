@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Modal, TextInput, Paper, Group, Text, ThemeIcon, Stack, ScrollArea } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -22,6 +22,18 @@ const CommandPalette: React.FC<{ opened: boolean; onClose: () => void }> = ({ op
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const navigate = useNavigate();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Focus input when modal opens
+  useEffect(() => {
+    if (opened) {
+      // Small delay to ensure modal is fully rendered
+      const timeoutId = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 10);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [opened]);
 
   const filteredCommands = commands.filter(
     (c) =>
@@ -94,6 +106,7 @@ const CommandPalette: React.FC<{ opened: boolean; onClose: () => void }> = ({ op
       }}
     >
       <TextInput
+        ref={inputRef}
         placeholder="Type a command or search..."
         value={query}
         onChange={(event) => {

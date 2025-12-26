@@ -12,6 +12,7 @@ import { useAppContext } from '@/store/app-context';
 import { initializeDatabase } from '@/lib/database';
 import { startBackgroundSync } from '@/lib/sync/background-sync';
 import { initSentry } from '@/lib/sentry';
+import { Logger } from '@/lib/logger';
 
 // Initialize Sentry for error tracking
 initSentry();
@@ -33,7 +34,7 @@ function AppContent() {
   useEffect(() => {
     if (loaded || error) {
       SplashScreen.hideAsync().catch((err) => {
-        console.error('Failed to hide splash screen:', err);
+        Logger.error('Failed to hide splash screen', err);
       });
     }
   }, [loaded, error]);
@@ -41,18 +42,18 @@ function AppContent() {
   useEffect(() => {
     // Initialize app context
     initialize().catch((err) => {
-      console.error('Failed to initialize app context:', err);
+      Logger.error('Failed to initialize app context', err);
     });
 
     // Initialize database on app start
     initializeDatabase().catch((err) => {
-      console.error('Failed to initialize database:', err);
+      Logger.error('Failed to initialize database', err);
     });
 
     // Start background sync if vault is unlocked
     if (isUnlocked) {
       startBackgroundSync().catch((err) => {
-        console.error('Failed to start background sync:', err);
+        Logger.error('Failed to start background sync', err);
       });
     }
   }, [isUnlocked, initialize]);

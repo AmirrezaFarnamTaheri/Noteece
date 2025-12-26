@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { authService, User } from '../../services/auth';
 import styles from './Auth.module.css';
 
@@ -31,12 +31,28 @@ const AccountSettings: React.FC<AccountSettingsProperties> = ({ onLogout }) => {
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
 
+  // Refs to track timers for cleanup
+  const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const logoutTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Load user info on mount
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
     if (currentUser) {
       setUser(currentUser);
     }
+  }, []);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (messageTimeoutRef.current) {
+        clearTimeout(messageTimeoutRef.current);
+      }
+      if (logoutTimeoutRef.current) {
+        clearTimeout(logoutTimeoutRef.current);
+      }
+    };
   }, []);
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -82,7 +98,12 @@ const AccountSettings: React.FC<AccountSettingsProperties> = ({ onLogout }) => {
       setNewPassword('');
       setConfirmPassword('');
       setShowPasswordChange(false);
-      setTimeout(() => setMessage(''), 5000);
+
+      // Clear any existing message timeout
+      if (messageTimeoutRef.current) {
+        clearTimeout(messageTimeoutRef.current);
+      }
+      messageTimeoutRef.current = setTimeout(() => setMessage(''), 5000);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Failed to change password');
       setMessageType('error');
@@ -97,7 +118,12 @@ const AccountSettings: React.FC<AccountSettingsProperties> = ({ onLogout }) => {
       await authService.logout();
       setMessage('Logged out successfully');
       setMessageType('success');
-      setTimeout(() => onLogout(), 1500);
+
+      // Clear any existing logout timeout
+      if (logoutTimeoutRef.current) {
+        clearTimeout(logoutTimeoutRef.current);
+      }
+      logoutTimeoutRef.current = setTimeout(() => onLogout(), 1500);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Logout failed');
       setMessageType('error');

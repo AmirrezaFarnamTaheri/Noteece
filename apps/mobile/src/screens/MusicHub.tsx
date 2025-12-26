@@ -15,6 +15,7 @@ import {
   Image,
   RefreshControl,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 // @ts-ignore: expo vector icons type mismatch
@@ -22,34 +23,63 @@ import { Ionicons } from '@expo/vector-icons';
 import { dbQuery, dbExecute } from '@/lib/database';
 import { nanoid } from 'nanoid/non-secure';
 import { useCurrentSpace } from '../store/app-context';
+import { Logger } from '@/lib/logger';
+import { EmptyState } from '../components/EmptyState';
+import { INITIAL_NUM_TO_RENDER, MAX_TO_RENDER_PER_BATCH, WINDOW_SIZE } from '../constants/pagination';
 import type { Track, Playlist } from '../types/music';
+
+// Database row types (snake_case from SQLite)
+interface TrackDbRow {
+  id: string;
+  title: string;
+  artist: string;
+  album: string | null;
+  duration: number;
+  uri: string | null;
+  artwork_url: string | null;
+  genre: string | null;
+  year: number | null;
+  track_number: number | null;
+  play_count: number;
+  last_played_at: number | null;
+  is_favorite: number; // SQLite boolean (0 or 1)
+  added_at: number;
+}
+
+interface PlaylistDbRow {
+  id: string;
+  name: string;
+  description: string | null;
+  artwork_url: string | null;
+  created_at: number;
+  updated_at: number;
+  is_smart_playlist: number; // SQLite boolean (0 or 1)
+  smart_criteria_json: string | null;
+}
 
 // Database helper functions for loading music data
 async function loadTracksFromDatabase(): Promise<Track[]> {
   try {
     const tracks = await dbQuery('SELECT * FROM track ORDER BY title ASC');
-    // Map snake_case DB columns to camelCase Track type if necessary,
-    // but assuming direct mapping for now or that Track type matches DB.
-    // Actually Track type likely uses camelCase.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return tracks.map((t: any) => ({
+    // Map snake_case DB columns to camelCase Track type
+    return tracks.map((t: TrackDbRow) => ({
       id: t.id,
       title: t.title,
       artist: t.artist,
       album: t.album,
       duration: t.duration,
-      uri: t.uri,
+      uri: t.uri || '', // Provide default empty string for nullable uri
       artworkUrl: t.artwork_url,
       genre: t.genre,
       year: t.year,
       trackNumber: t.track_number,
-      playCount: t.play_count,
+      playCount: t.play_count || 0,
       lastPlayedAt: t.last_played_at,
       isFavorite: t.is_favorite === 1,
       addedAt: t.added_at,
     }));
   } catch (e) {
-    console.error('Error loading tracks:', e);
+    Logger.error('Error loading tracks from database', { error: e });
     return [];
   }
 }
@@ -59,8 +89,7 @@ async function loadPlaylistsFromDatabase(): Promise<Playlist[]> {
     const playlists = await dbQuery('SELECT * FROM playlist ORDER BY name ASC');
     // Need to get track counts and duration for each playlist
     const enhancedPlaylists = await Promise.all(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      playlists.map(async (p: any) => {
+      playlists.map(async (p: PlaylistDbRow) => {
         // Join with track table to get total duration
         const stats = await dbQuery(
           `SELECT COUNT(*) as count, SUM(t.duration) as total_duration
@@ -88,7 +117,7 @@ async function loadPlaylistsFromDatabase(): Promise<Playlist[]> {
     );
     return enhancedPlaylists;
   } catch (e) {
-    console.error('Error loading playlists:', e);
+    Logger.error('Error loading playlists from database', { error: e });
     return [];
   }
 }
@@ -152,10 +181,11 @@ export function MusicHub() {
       const loadedTracks = await loadTracksFromDatabase();
       const loadedPlaylists = await loadPlaylistsFromDatabase();
 
-      setTracks(loadedTracks);
-      setPlaylists(loadedPlaylists);
+      setTracks(() => loadedTracks);
+      setPlaylists(() => loadedPlaylists);
     } catch (error) {
-      console.error('Failed to load music:', error);
+      Logger.error('Failed to load music data', { error, spaceId });
+      Alert.alert('Error', 'Failed to load music data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -167,8 +197,14 @@ export function MusicHub() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadMusic();
-    setRefreshing(false);
+    try {
+      await loadMusic();
+    } catch (error) {
+      Logger.error('Failed to refresh music data', { error });
+      Alert.alert('Error', 'Failed to refresh music. Please try again.');
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const formatDuration = (seconds: number): string => {
@@ -196,10 +232,21 @@ export function MusicHub() {
   };
 
   const renderTrackItem = ({ item }: { item: Track }) => (
-    <TouchableOpacity style={styles.trackItem} onPress={() => handleTrackPress(item)}>
+    <TouchableOpacity
+      style={styles.trackItem}
+      onPress={() => handleTrackPress(item)}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.title} by ${item.artist}`}
+      accessibilityHint={`Play track, duration ${formatDuration(item.duration)}${item.isFavorite ? ', favorited' : ''}`}
+    >
       <View style={styles.trackArtwork}>
         {item.artworkUrl ? (
-          <Image source={{ uri: item.artworkUrl }} style={styles.artworkImage} />
+          <Image
+            source={{ uri: item.artworkUrl, cache: 'force-cache' }}
+            style={styles.artworkImage}
+            resizeMode="cover"
+            onError={(error) => Logger.warn('[MusicHub] Failed to load track artwork:', error.nativeEvent.error)}
+          />
         ) : (
           <LinearGradient colors={['#6366F1', '#8B5CF6']} style={styles.artworkPlaceholder}>
             <Ionicons name="musical-notes" size={24} color="#FFF" />
@@ -222,10 +269,20 @@ export function MusicHub() {
   );
 
   const renderPlaylistItem = ({ item }: { item: Playlist }) => (
-    <TouchableOpacity style={styles.playlistItem}>
+    <TouchableOpacity
+      style={styles.playlistItem}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.name} playlist`}
+      accessibilityHint={`${item.trackCount} tracks, ${formatTotalDuration(item.duration)}${item.isSmartPlaylist ? ', smart playlist' : ''}`}
+    >
       <View style={styles.playlistArtwork}>
         {item.artworkUrl ? (
-          <Image source={{ uri: item.artworkUrl }} style={styles.artworkImage} />
+          <Image
+            source={{ uri: item.artworkUrl, cache: 'force-cache' }}
+            style={styles.artworkImage}
+            resizeMode="cover"
+            onError={(error) => Logger.warn('[MusicHub] Failed to load playlist artwork:', error.nativeEvent.error)}
+          />
         ) : (
           <LinearGradient
             colors={item.isSmartPlaylist ? ['#10B981', '#059669'] : ['#6366F1', '#8B5CF6']}
@@ -256,7 +313,14 @@ export function MusicHub() {
           <View style={styles.nowPlayingContent}>
             <View style={styles.nowPlayingArtwork}>
               {currentTrack.artworkUrl ? (
-                <Image source={{ uri: currentTrack.artworkUrl }} style={styles.nowPlayingImage} />
+                <Image
+                  source={{ uri: currentTrack.artworkUrl, cache: 'force-cache' }}
+                  style={styles.nowPlayingImage}
+                  resizeMode="cover"
+                  onError={(error) =>
+                    Logger.warn('[MusicHub] Failed to load now playing artwork:', error.nativeEvent.error)
+                  }
+                />
               ) : (
                 <LinearGradient colors={['#6366F1', '#8B5CF6']} style={styles.nowPlayingImage}>
                   <Ionicons name="musical-notes" size={32} color="#FFF" />
@@ -271,7 +335,13 @@ export function MusicHub() {
                 {currentTrack.artist}
               </Text>
             </View>
-            <TouchableOpacity style={styles.playPauseButton} onPress={handlePlayPause}>
+            <TouchableOpacity
+              style={styles.playPauseButton}
+              onPress={handlePlayPause}
+              accessibilityRole="button"
+              accessibilityLabel={isPlaying ? 'Pause' : 'Play'}
+              accessibilityHint={`${isPlaying ? 'Pause' : 'Play'} ${currentTrack.title}`}
+            >
               <Ionicons name={isPlaying ? 'pause' : 'play'} size={28} color="#FFF" />
             </TouchableOpacity>
           </View>
@@ -286,10 +356,20 @@ export function MusicHub() {
       <LinearGradient colors={['#6366F1', '#8B5CF6']} style={styles.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <Text style={styles.headerTitle}>Music</Text>
         <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerButton}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            accessibilityRole="button"
+            accessibilityLabel="Search music"
+            accessibilityHint="Search for tracks and playlists"
+          >
             <Ionicons name="search" size={24} color="#FFF" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            accessibilityRole="button"
+            accessibilityLabel="Add music"
+            accessibilityHint="Add new tracks or create a playlist"
+          >
             <Ionicons name="add-circle-outline" size={24} color="#FFF" />
           </TouchableOpacity>
         </View>
@@ -300,12 +380,20 @@ export function MusicHub() {
         <TouchableOpacity
           style={[styles.tab, view === 'library' && styles.tabActive]}
           onPress={() => setView('library')}
+          accessibilityRole="tab"
+          accessibilityLabel="Library"
+          accessibilityState={{ selected: view === 'library' }}
+          accessibilityHint="View your music library"
         >
           <Text style={[styles.tabText, view === 'library' && styles.tabTextActive]}>Library</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, view === 'playlists' && styles.tabActive]}
           onPress={() => setView('playlists')}
+          accessibilityRole="tab"
+          accessibilityLabel="Playlists"
+          accessibilityState={{ selected: view === 'playlists' }}
+          accessibilityHint="View your playlists"
         >
           <Text style={[styles.tabText, view === 'playlists' && styles.tabTextActive]}>Playlists</Text>
         </TouchableOpacity>
@@ -323,12 +411,21 @@ export function MusicHub() {
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
           contentContainerStyle={styles.list}
+          initialNumToRender={INITIAL_NUM_TO_RENDER}
+          maxToRenderPerBatch={MAX_TO_RENDER_PER_BATCH}
+          windowSize={WINDOW_SIZE}
+          removeClippedSubviews={true}
+          getItemLayout={(data, index) => ({
+            length: 80,
+            offset: 80 * index + (index > 0 ? 12 * index : 0),
+            index,
+          })}
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Ionicons name="musical-notes-outline" size={64} color="#9CA3AF" />
-              <Text style={styles.emptyText}>No tracks yet</Text>
-              <Text style={styles.emptySubtext}>Add music to your library to get started</Text>
-            </View>
+            <EmptyState
+              icon="musical-notes-outline"
+              title="No tracks yet"
+              subtitle="Add music to your library to get started"
+            />
           }
         />
       ) : view === 'playlists' ? (
@@ -338,12 +435,21 @@ export function MusicHub() {
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
           contentContainerStyle={styles.list}
+          initialNumToRender={INITIAL_NUM_TO_RENDER}
+          maxToRenderPerBatch={MAX_TO_RENDER_PER_BATCH}
+          windowSize={WINDOW_SIZE}
+          removeClippedSubviews={true}
+          getItemLayout={(data, index) => ({
+            length: 96,
+            offset: 96 * index + (index > 0 ? 12 * index : 0),
+            index,
+          })}
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Ionicons name="list-outline" size={64} color="#9CA3AF" />
-              <Text style={styles.emptyText}>No playlists yet</Text>
-              <Text style={styles.emptySubtext}>Create a playlist to organize your music</Text>
-            </View>
+            <EmptyState
+              icon="list-outline"
+              title="No playlists yet"
+              subtitle="Create a playlist to organize your music"
+            />
           }
         />
       ) : null}
@@ -497,22 +603,6 @@ const styles = StyleSheet.create({
   playlistMeta: {
     fontSize: 14,
     color: '#6B7280',
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-  },
-  emptyText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#6B7280',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 15,
-    color: '#9CA3AF',
   },
   loadingContainer: {
     flex: 1,

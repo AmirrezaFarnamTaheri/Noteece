@@ -11,9 +11,11 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Share, Alert, Animated
 // @ts-ignore: expo vector icons type mismatch
 import { Ionicons } from '@expo/vector-icons';
 import { Swipeable } from 'react-native-gesture-handler';
-import { format } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { haptics } from '../../lib/haptics';
+import { Logger } from '../../lib/logger';
+import { formatTimelineDate } from '../../utils/dateFormat';
+import { formatCompactNumber } from '../../utils/numberFormat';
 import type { TimelinePost, Platform } from '../../types/social';
 import { PLATFORM_CONFIGS } from '../../types/social';
 
@@ -29,12 +31,22 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
   const platformConfig = PLATFORM_CONFIGS[post.platform as Platform];
   const [isBookmarked, setIsBookmarked] = useState(false);
   const swipeableRef = useRef<Swipeable>(null);
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load bookmark status
   React.useEffect(() => {
     loadBookmarkStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [post.id]);
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const loadBookmarkStatus = async () => {
     try {
@@ -44,7 +56,7 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
         setIsBookmarked(bookmarkedIds.includes(post.id));
       }
     } catch (error) {
-      console.error('Failed to load bookmark status:', error);
+      Logger.error('Failed to load bookmark status:', error);
     }
   };
 
@@ -65,7 +77,7 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
       // Close swipeable after action
       swipeableRef.current?.close();
     } catch (error) {
-      console.error('Failed to update bookmark:', error);
+      Logger.error('Failed to update bookmark:', error);
       Alert.alert('Error', 'Failed to update bookmark');
     }
   };
@@ -79,7 +91,13 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
   const handleSwipeHide = () => {
     haptics.warning();
     swipeableRef.current?.close();
-    setTimeout(() => {
+
+    // Clear any existing timeout
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+    }
+
+    hideTimeoutRef.current = setTimeout(() => {
       handleHide();
     }, 200);
   };
@@ -92,7 +110,7 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
         url: post.url,
       });
     } catch (error) {
-      console.error('Failed to share:', error);
+      Logger.error('Failed to share:', error);
     }
   };
 
@@ -158,7 +176,14 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
       overshootLeft={false}
       friction={2}
     >
-      <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={onPress}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={`Post by ${post.author} on ${platformConfig.name}`}
+        accessibilityHint="View post details"
+      >
         {/* Header: Platform Badge + Author Info */}
         <View style={styles.header}>
           <View style={[styles.platformBadge, { backgroundColor: platformConfig.color }]}>
@@ -170,7 +195,7 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
               <Text style={styles.authorName}>{post.author}</Text>
               {post.account_display_name && <Text style={styles.accountName}>@{post.account_username}</Text>}
             </View>
-            <Text style={styles.timestamp}>{format(new Date(post.created_at), 'MMM d, h:mm a')}</Text>
+            <Text style={styles.timestamp}>{formatTimelineDate(post.created_at)}</Text>
           </View>
         </View>
 
@@ -185,7 +210,13 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
         {post.media_urls && post.media_urls.length > 0 && (
           <View style={styles.mediaContainer}>
             {post.media_urls.slice(0, 4).map((url, index) => (
-              <Image key={index} source={{ uri: url }} style={styles.mediaThumbnail} resizeMode="cover" />
+              <Image
+                key={index}
+                source={{ uri: url, cache: 'force-cache' }}
+                style={styles.mediaThumbnail}
+                resizeMode="cover"
+                onError={(error) => Logger.warn('[PostCard] Failed to load image:', error.nativeEvent.error)}
+              />
             ))}
             {post.media_urls.length > 4 && (
               <View style={styles.mediaOverlay}>
@@ -201,25 +232,25 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
             {post.engagement.likes !== undefined && post.engagement.likes > 0 && (
               <View style={styles.engagementItem}>
                 <Text style={styles.engagementIcon}>❤️</Text>
-                <Text style={styles.engagementText}>{formatNumber(post.engagement.likes)}</Text>
+                <Text style={styles.engagementText}>{formatCompactNumber(post.engagement.likes)}</Text>
               </View>
             )}
             {post.engagement.comments !== undefined && post.engagement.comments > 0 && (
               <View style={styles.engagementItem}>
                 <Text style={styles.engagementIcon}>💬</Text>
-                <Text style={styles.engagementText}>{formatNumber(post.engagement.comments)}</Text>
+                <Text style={styles.engagementText}>{formatCompactNumber(post.engagement.comments)}</Text>
               </View>
             )}
             {post.engagement.shares !== undefined && post.engagement.shares > 0 && (
               <View style={styles.engagementItem}>
                 <Text style={styles.engagementIcon}>🔄</Text>
-                <Text style={styles.engagementText}>{formatNumber(post.engagement.shares)}</Text>
+                <Text style={styles.engagementText}>{formatCompactNumber(post.engagement.shares)}</Text>
               </View>
             )}
             {post.engagement.views !== undefined && post.engagement.views > 0 && (
               <View style={styles.engagementItem}>
                 <Text style={styles.engagementIcon}>👁️</Text>
-                <Text style={styles.engagementText}>{formatNumber(post.engagement.views)}</Text>
+                <Text style={styles.engagementText}>{formatCompactNumber(post.engagement.views)}</Text>
               </View>
             )}
           </View>
@@ -227,7 +258,13 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
 
         {/* Action Buttons */}
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionButton} onPress={handleBookmark}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleBookmark}
+            accessibilityRole="button"
+            accessibilityLabel={isBookmarked ? 'Unsave post' : 'Save post'}
+            accessibilityHint={isBookmarked ? 'Remove this post from saved items' : 'Save this post for later'}
+          >
             <Ionicons
               name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
               size={20}
@@ -238,12 +275,24 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleShare}
+            accessibilityRole="button"
+            accessibilityLabel="Share post"
+            accessibilityHint="Share this post with others"
+          >
             <Ionicons name="share-outline" size={20} color="#666" />
             <Text style={styles.actionText}>Share</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton} onPress={handleHide}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleHide}
+            accessibilityRole="button"
+            accessibilityLabel="Hide post"
+            accessibilityHint="Hide this post from your timeline"
+          >
             <Ionicons name="eye-off-outline" size={20} color="#666" />
             <Text style={styles.actionText}>Hide</Text>
           </TouchableOpacity>
@@ -263,6 +312,9 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
                   },
                 ]}
                 onPress={() => onCategoryPress?.(category.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`${category.name} category`}
+                accessibilityHint="Filter posts by this category"
               >
                 {category.icon && <Text style={styles.categoryIcon}>{category.icon}</Text>}
                 <Text style={[styles.categoryText, { color: category.color || '#666' }]}>{category.name}</Text>
@@ -270,7 +322,13 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
             ))}
 
             {/* Add Category Button */}
-            <TouchableOpacity style={styles.addCategoryButton} onPress={onAssignCategory}>
+            <TouchableOpacity
+              style={styles.addCategoryButton}
+              onPress={onAssignCategory}
+              accessibilityRole="button"
+              accessibilityLabel="Add category"
+              accessibilityHint="Assign categories to this post"
+            >
               <Text style={styles.addCategoryText}>+ Category</Text>
             </TouchableOpacity>
           </View>
@@ -278,16 +336,6 @@ export function PostCard({ post, onPress, onCategoryPress, onAssignCategory, onH
       </TouchableOpacity>
     </Swipeable>
   );
-}
-
-function formatNumber(num: number): string {
-  if (num >= 1000000) {
-    return `${(num / 1000000).toFixed(1)}M`;
-  }
-  if (num >= 1000) {
-    return `${(num / 1000).toFixed(1)}K`;
-  }
-  return num.toString();
 }
 
 const styles = StyleSheet.create({

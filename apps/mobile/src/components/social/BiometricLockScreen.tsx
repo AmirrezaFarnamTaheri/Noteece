@@ -11,6 +11,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, Animated } from 'react
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { authenticateForSocial, getSupportedBiometricTypes } from '../../lib/social-security';
+import { Logger } from '../../lib/logger';
 
 interface BiometricLockScreenProps {
   onUnlock: () => void;
@@ -24,13 +25,19 @@ export function BiometricLockScreen({ onUnlock, onCancel }: BiometricLockScreenP
 
   useEffect(() => {
     loadBiometricTypes();
+
     // Auto-trigger authentication on mount
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       handleAuthenticate();
     }, 500);
 
     // Start pulse animation
     startPulseAnimation();
+
+    // Cleanup timeout on unmount
+    return () => {
+      clearTimeout(timeoutId);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -73,7 +80,7 @@ export function BiometricLockScreen({ onUnlock, onCancel }: BiometricLockScreenP
         ]);
       }
     } catch (error) {
-      console.error('Authentication error:', error);
+      Logger.error('Authentication error:', error);
       Alert.alert('Error', 'Failed to authenticate. Please try again.', [
         { text: 'Cancel', onPress: onCancel, style: 'cancel' },
         { text: 'Retry', onPress: handleAuthenticate },

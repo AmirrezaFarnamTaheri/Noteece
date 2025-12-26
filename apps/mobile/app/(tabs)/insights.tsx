@@ -38,7 +38,7 @@ export default function InsightsScreen() {
           Alert.alert('Insight Action', parameters?.message || 'Action executed');
           break;
         default:
-          Logger.info('Execute action:', actionType, parameters);
+          Logger.info('Execute action', { actionType, parameters });
           Alert.alert('Action', `Executed: ${action.label}`);
       }
     } catch (error) {

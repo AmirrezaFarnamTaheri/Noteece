@@ -28,6 +28,7 @@ import { SaveFilterModal } from '../components/social/hub/SaveFilterModal';
 import { useSharedContent } from '../hooks/useSharedContent';
 import { useCurrentSpace } from '../store/app-context';
 import { Logger } from '../lib/logger';
+import { SharedItem } from '../lib/share-handler';
 import {
   getTimelinePosts,
   getCategories,
@@ -190,6 +191,7 @@ export function SocialHub() {
       setHasMore(newPosts.length === 50);
     } catch (error) {
       Logger.error('Failed to refresh:', error);
+      Alert.alert('Error', 'Failed to refresh feed. Please try again.');
     } finally {
       setRefreshing(false);
     }
@@ -209,14 +211,15 @@ export function SocialHub() {
       const newPosts = await getTimelinePosts(spaceId, filters, 50, offset + 50);
 
       if (newPosts.length > 0) {
-        setPosts([...posts, ...newPosts]);
-        setOffset(offset + 50);
+        setPosts((prevPosts) => [...prevPosts, ...newPosts]);
+        setOffset((prevOffset) => prevOffset + 50);
         setHasMore(newPosts.length === 50);
       } else {
         setHasMore(false);
       }
     } catch (error) {
       Logger.error('Failed to load more:', error);
+      Alert.alert('Error', 'Failed to load more posts. Please try again.');
     }
   };
 
@@ -243,6 +246,7 @@ export function SocialHub() {
       await handleRefresh();
     } catch (error) {
       Logger.error('Failed to assign categories:', error);
+      Alert.alert('Error', 'Failed to assign categories. Please try again.');
     }
   };
 
@@ -252,6 +256,7 @@ export function SocialHub() {
       setCategories([...categories, newCategory]);
     } catch (error) {
       Logger.error('Failed to create category:', error);
+      Alert.alert('Error', 'Failed to create category. Please try again.');
     }
   };
 
@@ -267,7 +272,7 @@ export function SocialHub() {
     );
   };
 
-  const handleSharedItemPress = (item: any) => {
+  const handleSharedItemPress = (item: SharedItem) => {
     Alert.alert('Shared Content', `Type: ${item.type}\n${item.url || item.text || ''}`, [
       { text: 'Dismiss', style: 'cancel' },
       {
@@ -311,7 +316,13 @@ export function SocialHub() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Social Hub</Text>
-        <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilters(!showFilters)}>
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={() => setShowFilters(!showFilters)}
+          accessibilityRole="button"
+          accessibilityLabel={showFilters ? 'Hide Filters' : 'Show Filters'}
+          accessibilityHint="Toggle filter options for social posts"
+        >
           <Text style={styles.filterButtonText}>{showFilters ? 'Hide Filters' : 'Filters'}</Text>
         </TouchableOpacity>
       </View>
@@ -337,7 +348,7 @@ export function SocialHub() {
       {/* Shared Content Banner */}
       {hasSharedContent && sharedItems.length > 0 && (
         <SharedContentBanner
-          sharedItems={sharedItems as any}
+          sharedItems={sharedItems}
           onDismiss={handleDismissSharedContent}
           onItemPress={handleSharedItemPress}
         />
@@ -368,6 +379,10 @@ export function SocialHub() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={true}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyIcon}>📭</Text>

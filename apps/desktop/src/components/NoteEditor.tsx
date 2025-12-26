@@ -195,6 +195,15 @@ const NoteEditor: React.FC = () => {
             <List.Item
               key={note.id.toString()}
               onClick={() => setSelectedNote(note)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setSelectedNote(note);
+                }
+              }}
+              tabIndex={0}
+              role="button"
+              aria-label={`Select note: ${note.title || 'Untitled'}`}
               style={{
                 cursor: 'pointer',
                 padding: '10px 12px',
@@ -256,6 +265,7 @@ const NoteEditor: React.FC = () => {
                   onClick={() => setTypewriterMode(!typewriterMode)}
                   color={typewriterMode ? 'violet' : 'gray'}
                   size="lg"
+                  aria-label={typewriterMode ? 'Disable Typewriter Mode' : 'Enable Typewriter Mode'}
                 >
                   {typewriterMode ? <IconMinimize size={20} /> : <IconAlignJustified size={20} />}
                 </ActionIcon>

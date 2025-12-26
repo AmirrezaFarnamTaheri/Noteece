@@ -274,6 +274,7 @@ const SegmentedControlWithIcons: React.FC<SegmentedControlProps> = ({ viewMode, 
       color={viewMode === 'grid' ? 'violet' : 'gray'}
       onClick={() => setViewMode('grid')}
       radius="md"
+      aria-label="Grid view"
     >
       <IconLayoutGrid size={18} />
     </ActionIcon>
@@ -282,6 +283,7 @@ const SegmentedControlWithIcons: React.FC<SegmentedControlProps> = ({ viewMode, 
       color={viewMode === 'list' ? 'violet' : 'gray'}
       onClick={() => setViewMode('list')}
       radius="md"
+      aria-label="List view"
     >
       <IconList size={18} />
     </ActionIcon>
@@ -290,6 +292,7 @@ const SegmentedControlWithIcons: React.FC<SegmentedControlProps> = ({ viewMode, 
       color={viewMode === 'kanban' ? 'violet' : 'gray'}
       onClick={() => setViewMode('kanban')}
       radius="md"
+      aria-label="Kanban view"
     >
       <IconLayoutKanban size={18} />
     </ActionIcon>

@@ -22,6 +22,7 @@ export default function TabLayout() {
         options={{
           title: 'Today',
           tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" size={size} color={color} />,
+          tabBarAccessibilityLabel: 'Today',
         }}
       />
       <Tabs.Screen
@@ -29,6 +30,7 @@ export default function TabLayout() {
         options={{
           title: 'Tasks',
           tabBarIcon: ({ color, size }) => <Ionicons name="checkmark-circle-outline" size={size} color={color} />,
+          tabBarAccessibilityLabel: 'Tasks',
         }}
       />
       <Tabs.Screen
@@ -36,6 +38,7 @@ export default function TabLayout() {
         options={{
           title: 'Notes',
           tabBarIcon: ({ color, size }) => <Ionicons name="document-text-outline" size={size} color={color} />,
+          tabBarAccessibilityLabel: 'Notes',
         }}
       />
       <Tabs.Screen
@@ -44,6 +47,7 @@ export default function TabLayout() {
           title: 'Capture',
           tabBarIcon: ({ color, size }) => <Ionicons name="add-circle" size={size * 1.5} color={colors.primary} />,
           tabBarLabel: () => null,
+          tabBarAccessibilityLabel: 'Capture',
         }}
       />
       <Tabs.Screen
@@ -51,6 +55,7 @@ export default function TabLayout() {
         options={{
           title: 'Insights',
           tabBarIcon: ({ color, size }) => <Ionicons name="bulb-outline" size={size} color={color} />,
+          tabBarAccessibilityLabel: 'Insights',
         }}
       />
       <Tabs.Screen
@@ -58,6 +63,7 @@ export default function TabLayout() {
         options={{
           title: 'Social',
           tabBarIcon: ({ color, size }) => <Ionicons name="people-outline" size={size} color={color} />,
+          tabBarAccessibilityLabel: 'Social Hub',
         }}
       />
       <Tabs.Screen
@@ -65,6 +71,7 @@ export default function TabLayout() {
         options={{
           title: 'Music',
           tabBarIcon: ({ color, size }) => <Ionicons name="musical-notes-outline" size={size} color={color} />,
+          tabBarAccessibilityLabel: 'Music Hub',
         }}
       />
       <Tabs.Screen
@@ -72,6 +79,7 @@ export default function TabLayout() {
         options={{
           title: 'Health',
           tabBarIcon: ({ color, size }) => <Ionicons name="fitness-outline" size={size} color={color} />,
+          tabBarAccessibilityLabel: 'Health Hub',
         }}
       />
       <Tabs.Screen
@@ -79,6 +87,7 @@ export default function TabLayout() {
         options={{
           title: 'More',
           tabBarIcon: ({ color, size }) => <Ionicons name="menu-outline" size={size} color={color} />,
+          tabBarAccessibilityLabel: 'More options',
         }}
       />
     </Tabs>

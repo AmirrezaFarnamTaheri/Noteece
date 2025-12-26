@@ -1,14 +1,13 @@
 import * as SQLite from 'expo-sqlite';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as FileSystem from 'expo-file-system';
-import { Platform } from 'react-native';
 import { syncBridge } from './jsi/sync-bridge';
 import { Logger } from './logger';
+import { getDatabasePath } from '../utils/platform';
 
 let db: SQLite.SQLiteDatabase | null = null;
 
 // Database version for migrations
-const CURRENT_DB_VERSION = 5;
+const CURRENT_DB_VERSION = 7;
 const DB_VERSION_KEY = 'database_version';
 
 /**
@@ -24,6 +23,7 @@ async function runMigrations(currentVersion: number): Promise<void> {
     Logger.info('Running migration v1 -> v2: Adding columns to calendar_event');
 
     try {
+      await db.execAsync('BEGIN TRANSACTION');
       // Ensure table exists first (handling upgrade from v0/fresh installs via migration)
       await db.execAsync(`
         CREATE TABLE IF NOT EXISTS calendar_event (
@@ -73,9 +73,11 @@ async function runMigrations(currentVersion: number): Promise<void> {
         Logger.info('Added updated_at column');
       }
 
+      await db.execAsync('COMMIT');
       Logger.info('Migration v1 -> v2 completed successfully');
     } catch (error) {
       Logger.error('Migration v1 -> v2 failed:', error);
+      await db.runAsync('ROLLBACK').catch((e) => Logger.error('Rollback failed', e));
       throw error;
     }
   }
@@ -85,6 +87,7 @@ async function runMigrations(currentVersion: number): Promise<void> {
     Logger.info('Running migration v2 -> v3: Adding social media suite tables');
 
     try {
+      await db.execAsync('BEGIN TRANSACTION');
       await db.execAsync(`
         -- Social Accounts
         CREATE TABLE IF NOT EXISTS social_account (
@@ -208,9 +211,11 @@ async function runMigrations(currentVersion: number): Promise<void> {
           WHERE platform_post_id IS NOT NULL;
       `);
 
+      await db.execAsync('COMMIT');
       Logger.info('Migration v2 -> v3 completed successfully');
     } catch (error) {
       Logger.error('Migration v2 -> v3 failed:', error);
+      await db.runAsync('ROLLBACK').catch((e) => Logger.error('Rollback failed', e));
       throw error;
     }
   }
@@ -220,6 +225,7 @@ async function runMigrations(currentVersion: number): Promise<void> {
     Logger.info('Running migration v3 -> v4: Adding Music, Health, and Calendar tables');
 
     try {
+      await db.execAsync('BEGIN TRANSACTION');
       await db.execAsync(`
         -- Music Tracks
         CREATE TABLE IF NOT EXISTS track (
@@ -299,9 +305,11 @@ async function runMigrations(currentVersion: number): Promise<void> {
         CREATE INDEX IF NOT EXISTS idx_calendar_event_time ON calendar_event(start_time);
       `);
 
+      await db.execAsync('COMMIT');
       Logger.info('Migration v3 -> v4 completed successfully');
     } catch (error) {
       Logger.error('Migration v3 -> v4 failed:', error);
+      await db.runAsync('ROLLBACK').catch((e) => Logger.error('Rollback failed', e));
       throw error;
     }
   }
@@ -538,6 +546,35 @@ async function runMigrations(currentVersion: number): Promise<void> {
     }
   }
 
+  // Migration from v6 to v7: Add performance indexes
+  if (currentVersion < 7) {
+    Logger.info('Running migration v6 -> v7: Adding performance indexes');
+    try {
+      await db.execAsync('BEGIN TRANSACTION');
+      await db.execAsync(`
+        -- Health metrics indexes for common query patterns
+        CREATE INDEX IF NOT EXISTS idx_health_metric_type ON health_metric(metric_type);
+        CREATE INDEX IF NOT EXISTS idx_health_metric_recorded ON health_metric(recorded_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_health_metric_space_type ON health_metric(space_id, metric_type, recorded_at DESC);
+
+        -- Playlist indexes for efficient lookups
+        CREATE INDEX IF NOT EXISTS idx_playlist_track_playlist ON playlist_track(playlist_id);
+        CREATE INDEX IF NOT EXISTS idx_playlist_track_track ON playlist_track(track_id);
+
+        -- Composite indexes for common query patterns
+        CREATE INDEX IF NOT EXISTS idx_task_space_status ON task(space_id, status);
+        CREATE INDEX IF NOT EXISTS idx_note_space_modified ON note(space_id, modified_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_calendar_event_space_date ON calendar_event(space_id, start_time);
+      `);
+      await db.execAsync('COMMIT');
+      Logger.info('Migration v6 -> v7 completed successfully');
+    } catch (error) {
+      Logger.error('Migration v6 -> v7 failed:', error);
+      await db.runAsync('ROLLBACK').catch((e) => Logger.error('Rollback failed', e));
+      throw error;
+    }
+  }
+
   // Update database version
   await AsyncStorage.setItem(DB_VERSION_KEY, CURRENT_DB_VERSION.toString());
   Logger.info(`Database migrated to version ${CURRENT_DB_VERSION}`);
@@ -550,22 +587,7 @@ export const initializeDatabase = async (): Promise<void> => {
     // Initialize Rust JSI Bridge with the correct database path
     if (syncBridge.isJSIAvailable()) {
       try {
-        // Construct the correct path for Rusqlite
-        // FileSystem.documentDirectory includes 'file://' schema which we need to strip
-        const docDirUri = FileSystem.documentDirectory;
-        const docDir = docDirUri?.replace('file://', '') || '';
-
-        // Platform specific path logic
-        let dbPath = '';
-        if (Platform.OS === 'ios') {
-          // Expo SQLite on iOS puts files in 'SQLite' subdirectory of documents
-          dbPath = `${docDir}SQLite/noteece.db`;
-        } else {
-          // On Android, we align with the memory that suggests /files/noteece.db
-          // FileSystem.documentDirectory points to /files/
-          dbPath = `${docDir}noteece.db`;
-        }
-
+        const dbPath = getDatabasePath('noteece.db');
         Logger.info(`[Database] Initializing SyncBridge with path: ${dbPath}`);
         await syncBridge.init(dbPath);
       } catch (e) {

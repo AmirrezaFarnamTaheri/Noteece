@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing } from '@/lib/theme';
 import { dbExecute } from '@/lib/database';
 import { nanoid } from 'nanoid';
+import { Logger } from '@/lib/logger';
 
 type CaptureType = 'note' | 'task' | 'voice' | 'photo';
 
@@ -74,7 +75,7 @@ export default function CaptureScreen() {
 
       Alert.alert('Success', `${captureType === 'note' ? 'Note' : 'Task'} captured successfully`);
     } catch (error) {
-      console.error('Failed to capture:', error);
+      Logger.error('Failed to capture', error);
       Alert.alert('Error', 'Failed to capture. Please try again.');
     }
   };

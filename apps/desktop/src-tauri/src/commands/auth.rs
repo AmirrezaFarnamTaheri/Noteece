@@ -1,9 +1,9 @@
 use crate::state::DbConnection;
 use core_rs::auth::{AuthService, Session, User};
-use tauri::State;
 use std::collections::HashMap;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
+use tauri::State;
 
 // Simple rate limiter
 lazy_static::lazy_static! {
@@ -52,7 +52,9 @@ pub fn authenticate_user_cmd(
         // Track failed attempts
         if result.is_err() {
             let mut attempts = LOGIN_ATTEMPTS.lock().map_err(|e| e.to_string())?;
-            let entry = attempts.entry(username.clone()).or_insert((0, Instant::now()));
+            let entry = attempts
+                .entry(username.clone())
+                .or_insert((0, Instant::now()));
             entry.0 += 1;
         }
 

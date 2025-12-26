@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform, ScrollView } from '
 import { NativeModules } from 'react-native';
 // @ts-ignore: expo vector icons type mismatch
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Logger } from '@/lib/logger';
 
 const { AppLauncher } = NativeModules;
 
@@ -248,10 +249,10 @@ export const SocialDock: React.FC = () => {
         await AppLauncher.launchWithSession(app.pkg, app.name.toLowerCase());
       } else {
         // Fallback or iOS logic (Linking)
-        console.warn('Active Interception not supported on this platform');
+        Logger.warn('Active Interception not supported on this platform');
       }
     } catch (error) {
-      console.error('Failed to launch session:', error);
+      Logger.error('Failed to launch session:', error);
       // Show toast/alert
     }
   };

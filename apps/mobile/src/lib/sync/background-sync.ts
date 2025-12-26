@@ -6,18 +6,15 @@
 import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
 import { SyncClient } from './sync-client';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Logger } from '../logger';
+import { getOrCreateDeviceId } from '../../utils/deviceId';
 
 const BACKGROUND_SYNC_TASK = 'background-sync-task';
 
 // Define the background task
 TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
   try {
-    const deviceId = await AsyncStorage.getItem('device_id');
-    if (!deviceId) {
-      return BackgroundFetch.BackgroundFetchResult.Failed;
-    }
+    const deviceId = await getOrCreateDeviceId();
 
     const syncClient = new SyncClient(deviceId);
 
@@ -79,10 +76,7 @@ export async function stopBackgroundSync(): Promise<void> {
  */
 export async function triggerManualSync(): Promise<boolean> {
   try {
-    const deviceId = await AsyncStorage.getItem('device_id');
-    if (!deviceId) {
-      return false;
-    }
+    const deviceId = await getOrCreateDeviceId();
 
     const syncClient = new SyncClient(deviceId);
     const devices = await syncClient.discoverDevices();

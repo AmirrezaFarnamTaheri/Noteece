@@ -16,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as Crypto from 'expo-crypto';
+import { Logger } from './logger';
 
 const SOCIAL_BIOMETRIC_ENABLED_KEY = 'social_biometric_enabled';
 const SOCIAL_KEY_STORAGE_KEY = 'social_db_key_wrapped'; // The wrapped key stored in SecureStore
@@ -32,7 +33,7 @@ export async function isBiometricAvailable(): Promise<boolean> {
     const enrolled = await LocalAuthentication.isEnrolledAsync();
     return compatible && enrolled;
   } catch (error) {
-    console.error('[SocialSecurity] Failed to check biometric availability:', error);
+    Logger.error('[SocialSecurity] Failed to check biometric availability:', error);
     return false;
   }
 }
@@ -45,7 +46,7 @@ export async function isSocialBiometricEnabled(): Promise<boolean> {
     const enabled = await AsyncStorage.getItem(SOCIAL_BIOMETRIC_ENABLED_KEY);
     return enabled === 'true';
   } catch (error) {
-    console.error('[SocialSecurity] Failed to check biometric status:', error);
+    Logger.error('[SocialSecurity] Failed to check biometric status:', error);
     return false;
   }
 }
@@ -59,7 +60,7 @@ export async function enableSocialBiometric(dbKey?: string): Promise<boolean> {
   try {
     const available = await isBiometricAvailable();
     if (!available) {
-      console.warn('[SocialSecurity] Biometric not available on device');
+      Logger.warn('[SocialSecurity] Biometric not available on device');
       return false;
     }
 
@@ -80,7 +81,7 @@ export async function enableSocialBiometric(dbKey?: string): Promise<boolean> {
 
     return true;
   } catch (error) {
-    console.error('[SocialSecurity] Failed to enable biometric:', error);
+    Logger.error('[SocialSecurity] Failed to enable biometric:', error);
     return false;
   }
 }
@@ -95,7 +96,7 @@ export async function disableSocialBiometric(): Promise<boolean> {
     sessionKey = null;
     return true;
   } catch (error) {
-    console.error('[SocialSecurity] Failed to disable biometric:', error);
+    Logger.error('[SocialSecurity] Failed to disable biometric:', error);
     return false;
   }
 }
@@ -123,7 +124,7 @@ export async function authenticateForSocial(): Promise<boolean> {
     // Check if biometric is available
     const available = await isBiometricAvailable();
     if (!available) {
-      console.warn('[SocialSecurity] Biometric not available');
+      Logger.warn('[SocialSecurity] Biometric not available');
       return false;
     }
 
@@ -148,15 +149,15 @@ export async function authenticateForSocial(): Promise<boolean> {
         sessionKey = key;
         return true;
       } else {
-        console.error('[SocialSecurity] Auth success but key not found');
+        Logger.error('[SocialSecurity] Auth success but key not found');
         return false;
       }
     }
 
-    console.warn('[SocialSecurity] Authentication failed:', result.error);
+    Logger.warn('[SocialSecurity] Authentication failed:', result.error);
     return false;
   } catch (error) {
-    console.error('[SocialSecurity] Authentication error:', error);
+    Logger.error('[SocialSecurity] Authentication error:', error);
     return false;
   }
 }
@@ -181,7 +182,7 @@ export async function requiresSocialAuthentication(): Promise<boolean> {
 
     return sessionKey === null; // Requires auth if key not in memory
   } catch (error) {
-    console.error('[SocialSecurity] Failed to check auth requirement:', error);
+    Logger.error('[SocialSecurity] Failed to check auth requirement:', error);
     // SECURITY: Fail closed
     return true;
   }
@@ -211,7 +212,7 @@ export async function getSupportedBiometricTypes(): Promise<string[]> {
 
     return typeNames;
   } catch (error) {
-    console.error('[SocialSecurity] Failed to get biometric types:', error);
+    Logger.error('[SocialSecurity] Failed to get biometric types:', error);
     return [];
   }
 }

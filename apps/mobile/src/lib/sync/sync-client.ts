@@ -6,11 +6,67 @@
 import { nanoid } from 'nanoid/non-secure';
 import * as Crypto from 'expo-crypto';
 import { dbQuery, dbExecute } from '@/lib/database';
+import { Logger } from '@/lib/logger';
+import { safeJsonParse } from '@/lib/safe-json';
 import { chacha20poly1305 } from '@noble/ciphers/chacha';
 import { sha256 } from '@noble/hashes/sha256';
 import { hmac } from '@noble/hashes/hmac';
 import { x25519 } from '@noble/curves/ed25519';
 import Zeroconf from 'react-native-zeroconf';
+
+// ===== Type Definitions =====
+
+interface ZeroconfResolvedService {
+  name: string;
+  fullName?: string;
+  addresses: string[];
+  port: number;
+  txt?: Record<string, string>;
+}
+
+interface WebSocketMessageEvent {
+  data?: string;
+  message?: string;
+}
+
+interface WebSocketErrorEvent {
+  message?: string;
+  error?: Error;
+}
+
+interface HandshakeMessage {
+  type: string;
+  publicKey?: string;
+  message?: string;
+}
+
+interface ManifestResponseMessage {
+  type: string;
+  requestId?: string;
+  manifest?: SyncManifest;
+}
+
+interface DeltaResponseMessage {
+  type: string;
+  requestId?: string;
+  delta?: SyncDelta;
+}
+
+interface SyncQueueRow {
+  id: string;
+  entity_type: string;
+  entity_id: string;
+  operation: string;
+  data: string;
+  created_at: number;
+  synced: number;
+}
+
+interface EntityData {
+  id?: string;
+  space_id?: string;
+  [key: string]: unknown;
+}
 
 export interface SyncManifest {
   deviceId?: string;
@@ -73,7 +129,7 @@ export class SyncClient {
 
       this.zeroconf.scan('noteece-sync', 'tcp', 'local.');
 
-      this.zeroconf.on('resolved', (data: any) => {
+      this.zeroconf.on('resolved', (data: ZeroconfResolvedService) => {
         // Filter for our service type
         if (data.name && data.addresses && data.addresses.length > 0) {
           devices.push({
@@ -85,7 +141,7 @@ export class SyncClient {
         }
       });
 
-      this.zeroconf.on('error', (err: any) => {
+      this.zeroconf.on('error', (err: Error) => {
         clearTimeout(timeout);
         this.zeroconf.stop();
         reject(err);
@@ -119,7 +175,7 @@ export class SyncClient {
       ws.close();
       return true;
     } catch (error) {
-      console.error('Sync failed:', error);
+      Logger.error('[Sync] Sync failed:', error);
       return false;
     }
   }
@@ -149,11 +205,18 @@ export class SyncClient {
           );
 
           // Wait for handshake response with peer's public key
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const handshakeHandler = (e: any) => {
+          const handshakeHandler = (e: WebSocketMessageEvent) => {
             try {
               const messageData = e.data || e.message;
-              const data = JSON.parse(messageData);
+              const data = safeJsonParse<HandshakeMessage | null>(messageData, null, true);
+
+              if (!data || !data.type) {
+                Logger.error('[Sync] Invalid handshake response - failed to parse JSON');
+                ws.removeEventListener('message', handshakeHandler);
+                reject(new Error('Invalid handshake response'));
+                return;
+              }
+
               if (data.type === 'handshake_response') {
                 ws.removeEventListener('message', handshakeHandler);
 
@@ -179,6 +242,7 @@ export class SyncClient {
                 reject(new Error(`Handshake error: ${data.message}`));
               }
             } catch (err) {
+              Logger.error('[Sync] Handshake handler error:', err);
               reject(err);
             }
           };
@@ -189,9 +253,9 @@ export class SyncClient {
         }
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ws.onerror = (e: any) => {
-        reject(new Error(`WebSocket connection failed: ${e.message}`));
+      ws.onerror = (e: Event) => {
+        const errorEvent = e as WebSocketErrorEvent;
+        reject(new Error(`WebSocket connection failed: ${errorEvent.message || 'Unknown error'}`));
       };
     });
   }
@@ -212,14 +276,23 @@ export class SyncClient {
     return new Promise((resolve, reject) => {
       const requestId = nanoid();
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const handler = (e: any) => {
+      const handler = (e: WebSocketMessageEvent) => {
         const messageData = 'data' in e ? e.data : e.message;
         if (typeof messageData !== 'string') return;
 
-        const data = JSON.parse(messageData);
+        const data = safeJsonParse<ManifestResponseMessage | null>(messageData, null, true);
+        if (!data || !data.type) {
+          Logger.error('[Sync] Failed to parse manifest response');
+          return;
+        }
+
         if (data.type === 'manifest_response' && data.requestId === requestId) {
           ws.removeEventListener('message', handler);
+          if (!data.manifest) {
+            Logger.error('[Sync] Manifest response missing manifest data');
+            reject(new Error('Invalid manifest response'));
+            return;
+          }
           resolve(data.manifest);
         }
       };
@@ -259,12 +332,22 @@ export class SyncClient {
   private async requestDelta(ws: WebSocket, change: ChangeEntry): Promise<SyncDelta> {
     return new Promise((resolve, reject) => {
       const requestId = nanoid();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const handler = (e: any) => {
+      const handler = (e: WebSocketMessageEvent) => {
         const messageData = e.data || e.message;
-        const data = JSON.parse(messageData);
+        const data = safeJsonParse<DeltaResponseMessage | null>(messageData, null, true);
+
+        if (!data || !data.type) {
+          Logger.error('[Sync] Failed to parse delta response');
+          return;
+        }
+
         if (data.type === 'delta_response' && data.requestId === requestId) {
           ws.removeEventListener('message', handler);
+          if (!data.delta) {
+            Logger.error('[Sync] Delta response missing delta data');
+            reject(new Error('Invalid delta response'));
+            return;
+          }
           // Convert hex/base64 payload back to Uint8Array if needed
           // Assuming server sends base64
           // const payload = Uint8Array.from(atob(data.delta.payload), c => c.charCodeAt(0));
@@ -282,6 +365,12 @@ export class SyncClient {
           entityType: change.entityType,
         }),
       );
+
+      // Timeout fallback
+      setTimeout(() => {
+        ws.removeEventListener('message', handler);
+        reject(new Error('Timeout waiting for delta'));
+      }, 10000);
     });
   }
 
@@ -325,7 +414,7 @@ export class SyncClient {
     }
 
     // Decrypt payload when needed
-    let payload: any = null;
+    let payload: EntityData | null = null;
     if (delta.operation === 'create' || delta.operation === 'update') {
       // Validate payload exists
       if (!delta.encryptedPayload || delta.encryptedPayload.length === 0) {
@@ -345,6 +434,9 @@ export class SyncClient {
     switch (delta.operation) {
       case 'create':
       case 'update':
+        if (!payload) {
+          throw new Error('Payload is required for create/update operation');
+        }
         await this.upsertEntity(delta.entityType, delta.entityId, payload);
         break;
       case 'delete':
@@ -368,7 +460,7 @@ export class SyncClient {
   /**
    * Decrypt encrypted payload using ChaCha20-Poly1305
    */
-  private async decryptPayload(encryptedPayload: Uint8Array): Promise<any> {
+  private async decryptPayload(encryptedPayload: Uint8Array): Promise<EntityData> {
     // Ensure authenticated session
     this.ensureAuthenticatedSession();
 
@@ -397,7 +489,7 @@ export class SyncClient {
   /**
    * Upsert entity into database with column validation
    */
-  private async upsertEntity(entityType: string, entityId: string, data: any): Promise<void> {
+  private async upsertEntity(entityType: string, entityId: string, data: EntityData): Promise<void> {
     // Use explicit table mapping to prevent SQL injection
     const tableMap: Record<string, string> = {
       task: 'task',
@@ -550,7 +642,7 @@ export class SyncClient {
     try {
       await dbExecute(query, values);
     } catch (error) {
-      console.error(`Failed to upsert ${entityType} entity:`, error);
+      Logger.error(`[Sync] Failed to upsert ${entityType} entity:`, error);
       throw new Error(`Upsert failed for ${entityType}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -610,13 +702,15 @@ export class SyncClient {
       [sinceTimestamp],
     );
 
-    return changes.map((row: any) => ({
-      entityType: row.entity_type,
-      entityId: row.entity_id,
-      operation: row.operation,
-      timestamp: row.created_at,
-      dependencyChain: [],
-    }));
+    return changes.map(
+      (row: SyncQueueRow): ChangeEntry => ({
+        entityType: row.entity_type as ChangeEntry['entityType'],
+        entityId: row.entity_id,
+        operation: row.operation as ChangeEntry['operation'],
+        timestamp: row.created_at,
+        dependencyChain: [],
+      }),
+    );
   }
 
   /**
@@ -624,6 +718,10 @@ export class SyncClient {
    */
   private async createEncryptedDelta(change: ChangeEntry): Promise<SyncDelta> {
     const entityData = await this.fetchEntityData(change.entityType, change.entityId);
+
+    if (!entityData) {
+      throw new Error(`Entity not found: ${change.entityType} ${change.entityId}`);
+    }
 
     const encryptedPayload = await this.encryptPayload(entityData);
     const signature = await this.signDelta(encryptedPayload);
@@ -642,7 +740,7 @@ export class SyncClient {
   /**
    * Fetch entity data from database
    */
-  private async fetchEntityData(entityType: string, entityId: string): Promise<any> {
+  private async fetchEntityData(entityType: string, entityId: string): Promise<EntityData | null> {
     const tableMap: Record<string, string> = {
       task: 'task',
       note: 'note',
@@ -668,7 +766,7 @@ export class SyncClient {
   /**
    * Encrypt payload using ChaCha20-Poly1305
    */
-  private async encryptPayload(data: any): Promise<Uint8Array> {
+  private async encryptPayload(data: EntityData): Promise<Uint8Array> {
     this.ensureAuthenticatedSession();
 
     if (!data || typeof data !== 'object') {
@@ -730,7 +828,7 @@ export class SyncClient {
       }
       return diff === 0;
     } catch (error) {
-      console.error('Signature verification failed:', error);
+      Logger.error('[Sync] Signature verification failed:', error);
       return false;
     }
   }
@@ -780,7 +878,7 @@ export class SyncClient {
     entityType: string,
     entityId: string,
     operation: 'create' | 'update' | 'delete',
-    data: any,
+    data: EntityData,
   ): Promise<void> {
     const now = Date.now();
 
@@ -794,12 +892,12 @@ export class SyncClient {
   // --- Missing Methods Stubbed for SyncBridge compatibility ---
 
   async initiateKeyExchange(_address: string, _port: number): Promise<void> {
-    console.warn('[SyncClient] initiateKeyExchange stub called');
+    Logger.warn('[SyncClient] initiateKeyExchange stub called');
     // Implement key exchange logic here or in SyncBridge
   }
 
   async buildManifest(_since: number): Promise<SyncManifest> {
-    console.warn('[SyncClient] buildManifest stub called');
+    Logger.warn('[SyncClient] buildManifest stub called');
     return {
       entries: [],
       vectorClock: {},
@@ -808,7 +906,7 @@ export class SyncClient {
   }
 
   async sendManifest(_address: string, _port: number, _manifest: SyncManifest): Promise<SyncResult> {
-    console.warn('[SyncClient] sendManifest stub called');
+    Logger.warn('[SyncClient] sendManifest stub called');
     return {
       pushed: 0,
       pulled: 0,
@@ -827,7 +925,7 @@ export class SyncClient {
   }
 
   cancelSync(): void {
-    console.warn('[SyncClient] cancelSync stub called');
+    Logger.warn('[SyncClient] cancelSync stub called');
   }
 }
 

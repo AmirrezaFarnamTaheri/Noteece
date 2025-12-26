@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors, typography, spacing } from '@/lib/theme';
 import { MUSIC_LIBRARY, Track, getTracksByGenre } from '@/lib/music-service';
 import { isValidMusicUrl } from '@/lib/music-security';
+import { Logger } from '@/lib/logger';
 
 type GenreFilter =
   | 'all'
@@ -38,7 +39,7 @@ export default function MusicLabScreen() {
           shouldDuckAndroid: true,
         });
       } catch (error) {
-        console.error('Failed to setup audio:', error);
+        Logger.error('Failed to setup audio', error);
       }
     }
 
@@ -78,7 +79,7 @@ export default function MusicLabScreen() {
     try {
       // Validate URL against allowlist for security
       if (!isValidMusicUrl(track.url)) {
-        console.error('Blocked music URL from untrusted domain:', track.url);
+        Logger.error('Blocked music URL from untrusted domain', track.url);
         Alert.alert(
           'Security Error',
           'This track is from an untrusted source and cannot be played. Only music from verified royalty-free sources is allowed.',
@@ -98,7 +99,7 @@ export default function MusicLabScreen() {
       setCurrentTrack(track);
       setIsPlaying(true);
     } catch (error) {
-      console.error('Failed to play track:', error);
+      Logger.error('Failed to play track', error);
       Alert.alert('Error', 'Failed to play track. Please try again.');
     }
   };
@@ -125,7 +126,7 @@ export default function MusicLabScreen() {
         }
       }
     } catch (error) {
-      console.error('Failed to toggle playback:', error);
+      Logger.error('Failed to toggle playback', error);
     }
   };
 

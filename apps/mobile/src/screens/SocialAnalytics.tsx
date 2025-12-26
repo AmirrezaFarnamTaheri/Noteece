@@ -27,6 +27,7 @@ import * as Sharing from 'expo-sharing';
 import { getPlatformStats, getCategoryStats, getTotalPostCount } from '../lib/social-database';
 import { ErrorFallback } from '../components/errors';
 import { useCurrentSpace } from '../store/app-context';
+import { Logger } from '@/lib/logger';
 import type { PlatformStats, CategoryStats } from '../types/social';
 
 export function SocialAnalytics() {
@@ -54,7 +55,7 @@ export function SocialAnalytics() {
       setCategoryStats(categories);
       setTotalPosts(total);
     } catch (err) {
-      console.error('Failed to load analytics:', err);
+      Logger.error('Failed to load analytics data', { error: err, spaceId });
       setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setLoading(false);
@@ -97,7 +98,7 @@ export function SocialAnalytics() {
         });
       }
     } catch (error) {
-      console.error('Failed to export analytics:', error);
+      Logger.error('Failed to export analytics report', { error });
       Alert.alert('Error', 'Failed to export analytics report');
     }
   };

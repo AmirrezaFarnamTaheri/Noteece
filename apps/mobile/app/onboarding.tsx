@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, typography, spacing } from '@/lib/theme';
 import { useVaultStore } from '@/store/vault';
+import { Logger } from '@/lib/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -127,7 +128,7 @@ export default function OnboardingScreen() {
         Alert.alert('Error', 'Failed to create vault. Please try again.');
       }
     } catch (error) {
-      console.error('Create vault error:', error);
+      Logger.error('Create vault error', error);
       Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     } finally {
       setIsCreating(false);

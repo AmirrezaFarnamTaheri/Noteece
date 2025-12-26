@@ -5,6 +5,8 @@
  * malicious content from being loaded into the audio player.
  */
 
+import { Logger } from './logger';
+
 /**
  * Allowed domains for music streaming
  * These are trusted sources for royalty-free music
@@ -61,30 +63,30 @@ export function isValidMusicUrl(url: string): boolean {
   try {
     // Disallow non-network schemes explicitly
     if (url.startsWith('blob:') || url.startsWith('data:')) {
-      console.warn('Music URL blocked: Non-network scheme not allowed');
+      Logger.warn('[MusicSecurity] Music URL blocked: Non-network scheme not allowed');
       return false;
     }
 
     const urlObj = new URL(url);
 
     if (urlObj.protocol !== 'https:') {
-      console.warn(`Music URL blocked: Only HTTPS is allowed, got ${urlObj.protocol}`);
+      Logger.warn(`[MusicSecurity] Music URL blocked: Only HTTPS is allowed, got ${urlObj.protocol}`);
       return false;
     }
 
     if (urlObj.username || urlObj.password) {
-      console.warn('Music URL blocked: URLs with credentials are not allowed');
+      Logger.warn('[MusicSecurity] Music URL blocked: URLs with credentials are not allowed');
       return false;
     }
 
     if (urlObj.port && urlObj.port !== '443') {
-      console.warn(`Music URL blocked: Non-standard port ${urlObj.port} not allowed`);
+      Logger.warn(`[MusicSecurity] Music URL blocked: Non-standard port ${urlObj.port} not allowed`);
       return false;
     }
 
     const norm = normalizeHostname(urlObj.hostname);
     if (!norm.ok || !norm.value) {
-      console.warn('Music URL blocked: Unsupported hostname');
+      Logger.warn('[MusicSecurity] Music URL blocked: Unsupported hostname');
       return false;
     }
     const hostname = norm.value;
@@ -95,7 +97,7 @@ export function isValidMusicUrl(url: string): boolean {
     });
 
     if (!isAllowed) {
-      console.warn(`Music URL blocked: ${hostname} is not in the allowlist`);
+      Logger.warn(`[MusicSecurity] Music URL blocked: ${hostname} is not in the allowlist`);
       return false;
     }
 
@@ -103,19 +105,19 @@ export function isValidMusicUrl(url: string): boolean {
     const pathname = urlObj.pathname.toLowerCase();
     const hasSafeExt = SAFE_AUDIO_EXTENSIONS.some((ext) => pathname.endsWith(ext));
     if (!hasSafeExt) {
-      console.warn('Music URL blocked: Path does not end with a safe audio extension');
+      Logger.warn('[MusicSecurity] Music URL blocked: Path does not end with a safe audio extension');
       return false;
     }
 
     // Basic traversal guard
     if (pathname.includes('..')) {
-      console.warn('Music URL blocked: Path traversal detected');
+      Logger.warn('[MusicSecurity] Music URL blocked: Path traversal detected');
       return false;
     }
 
     return true;
   } catch (error) {
-    console.error('Invalid music URL:', error);
+    Logger.error('[MusicSecurity] Invalid music URL:', error);
     return false;
   }
 }
