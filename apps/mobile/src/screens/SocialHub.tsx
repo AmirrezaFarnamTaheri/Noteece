@@ -300,13 +300,17 @@ export function SocialHub() {
   // Track if initial load is complete
   const isInitialLoadComplete = useRef(false);
 
+  // Mark initial load as complete when loading finishes
+  useEffect(() => {
+    if (!loading && !isInitialLoadComplete.current) {
+      isInitialLoadComplete.current = true;
+    }
+  }, [loading]);
+
   // Apply filters when they change (debounced to prevent race conditions)
   useEffect(() => {
-    // Skip the first render and during initial loading
+    // Skip during initial loading phase
     if (!isInitialLoadComplete.current) {
-      if (!loading) {
-        isInitialLoadComplete.current = true;
-      }
       return;
     }
 

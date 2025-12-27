@@ -68,12 +68,7 @@ export default function TodayScreen() {
           ) : (
             <View style={styles.timeline}>
               {timeline.map((item, index) => (
-                <TimelineItemCard
-                  key={item.id}
-                  item={item}
-                  isFirst={index === 0}
-                  isLast={index === timeline.length - 1}
-                />
+                <TimelineItemCard key={item.id} item={item} isLast={index === timeline.length - 1} />
               ))}
             </View>
           )}

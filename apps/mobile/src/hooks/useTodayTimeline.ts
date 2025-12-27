@@ -86,16 +86,23 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
           suggestedActions = [];
         }
 
+        const validSeverities = ['info', 'low', 'medium', 'high', 'critical'] as const;
+        type Severity = (typeof validSeverities)[number];
+        const rawSeverity = insightRow.priority || 'info';
+        const severity: Severity = validSeverities.includes(rawSeverity as Severity)
+          ? (rawSeverity as Severity)
+          : 'info';
+
         setBrief({
           id: insightRow.id,
           insightType: insightRow.insight_type,
           title: insightRow.title,
           description: insightRow.summary || '',
-          severity: insightRow.priority || 'info',
+          severity,
           suggestedActions,
-          dismissed: insightRow.dismissed,
+          dismissed: Boolean(insightRow.dismissed),
           createdAt: insightRow.created_at,
-        } as Insight);
+        });
       }
 
       // Fetch tasks due today
@@ -127,13 +134,13 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
           time: eventRow.start_time,
           endTime: eventRow.end_time,
           title: eventRow.title,
-          subtitle: eventRow.location,
+          subtitle: eventRow.location ?? undefined,
           color: eventRow.color || colors.primary,
           data: {
             id: eventRow.id,
             title: eventRow.title,
-            description: eventRow.description,
-            location: eventRow.location,
+            description: eventRow.description ?? undefined,
+            location: eventRow.location ?? undefined,
             startTime: eventRow.start_time,
             endTime: eventRow.end_time,
             source: eventRow.source || 'internal',
@@ -149,23 +156,23 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
           type: 'task',
           time: taskRow.due_at || todayStart,
           title: taskRow.title,
-          subtitle: taskRow.description,
+          subtitle: taskRow.description ?? undefined,
           color: colors.primary,
           data: {
             id: taskRow.id,
             space_id: taskRow.space_id,
-            project_id: taskRow.project_id,
-            parent_task_id: taskRow.parent_task_id,
+            project_id: taskRow.project_id ?? undefined,
+            parent_task_id: taskRow.parent_task_id ?? undefined,
             title: taskRow.title,
-            description: taskRow.description,
+            description: taskRow.description ?? undefined,
             status: taskRow.status,
             priority: taskRow.priority,
-            due_at: taskRow.due_at,
-            completed_at: taskRow.completed_at,
-            estimate_minutes: taskRow.estimate_minutes,
-            recur_rule: taskRow.recur_rule,
-            context: taskRow.context,
-            area: taskRow.area,
+            due_at: taskRow.due_at ?? undefined,
+            completed_at: taskRow.completed_at ?? undefined,
+            estimate_minutes: taskRow.estimate_minutes ?? undefined,
+            recur_rule: taskRow.recur_rule ?? undefined,
+            context: taskRow.context ?? undefined,
+            area: taskRow.area ?? undefined,
           } as Task,
         });
       });

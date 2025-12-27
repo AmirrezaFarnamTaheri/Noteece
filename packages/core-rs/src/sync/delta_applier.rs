@@ -24,8 +24,7 @@ impl DeltaApplier {
     pub fn apply_single_delta(
         conn: &Connection,
         delta: &SyncDelta,
-        #[allow(unused_variables)]
-        dek: &[u8],
+        #[allow(unused_variables)] dek: &[u8],
     ) -> Result<(), SyncError> {
         match delta.entity_type.as_str() {
             "note" => Self::apply_note_delta(conn, delta),
