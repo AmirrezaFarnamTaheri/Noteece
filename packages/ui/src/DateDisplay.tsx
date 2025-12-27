@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, Tooltip } from '@mantine/core';
 
 export interface DateDisplayProps {
-  /** Timestamp in milliseconds */
+  /** Timestamp in milliseconds (positive number) */
   timestamp: number;
   /** Display format: 'relative' or 'absolute' */
   format?: 'relative' | 'absolute';
@@ -15,11 +15,43 @@ export interface DateDisplayProps {
 }
 
 /**
+ * Validates that timestamp is a valid positive number in milliseconds
+ */
+function isValidTimestamp(timestamp: number): boolean {
+  return (
+    typeof timestamp === 'number' &&
+    Number.isFinite(timestamp) &&
+    timestamp >= 0 &&
+    !Number.isNaN(new Date(timestamp).getTime())
+  );
+}
+
+/**
  * Converts timestamp to relative time string (e.g., "2 hours ago")
+ * Handles both past and future dates
  */
 function getRelativeTime(timestamp: number): string {
+  if (!isValidTimestamp(timestamp)) {
+    return 'Invalid date';
+  }
+
   const now = Date.now();
   const diff = now - timestamp;
+
+  // Handle future dates
+  if (diff < 0) {
+    const futureDiff = Math.abs(diff);
+    const seconds = Math.floor(futureDiff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `in ${days} day${days > 1 ? 's' : ''}`;
+    if (hours > 0) return `in ${hours} hour${hours > 1 ? 's' : ''}`;
+    if (minutes > 0) return `in ${minutes} minute${minutes > 1 ? 's' : ''}`;
+    return 'in a moment';
+  }
+
   const seconds = Math.floor(diff / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
@@ -39,14 +71,22 @@ function getRelativeTime(timestamp: number): string {
  * Formats timestamp to absolute date string
  */
 function getAbsoluteDate(timestamp: number): string {
-  const date = new Date(timestamp);
-  return date.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  if (!isValidTimestamp(timestamp)) {
+    return 'Invalid date';
+  }
+
+  try {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return 'Invalid date';
+  }
 }
 
 /**
@@ -68,12 +108,12 @@ export function DateDisplay({
   const tooltipText = getAbsoluteDate(timestamp);
 
   const textElement = (
-    <Text size={size} c={color}>
+    <Text size={size} c={color} aria-label={tooltipText}>
       {displayText}
     </Text>
   );
 
-  if (withTooltip) {
+  if (withTooltip && isValidTimestamp(timestamp)) {
     return <Tooltip label={tooltipText}>{textElement}</Tooltip>;
   }
 

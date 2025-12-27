@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3] - 2025-12-27
+
+### Fixed
+
+- **Code Duplication:** Removed duplicate `EmptyState` component from `LoadingState.tsx`
+- **Dead Code:** Removed unused `isFirst` prop from `TimelineItemCard.tsx`
+- **Type Safety:** Added proper TypeScript types to `useTodayTimeline.ts` replacing `any` types
+
+### Changed
+
+- **Accessibility - Mobile:** Enhanced accessibility in `TimelineItemCard`, `DailyBrief`, `BiometricLockScreen`, and `FilterBar` components
+- **Accessibility - Desktop:** Added aria-labels to `MusicWidget` and `FocusTimer` components
+- **Code Quality:** Replaced index-based React keys with unique identifiers, added progressbar role to LoadingState
+
+## [1.1.2] - 2025-12-27
+
+### Fixed
+
+- **Critical Security:** Fixed zero-initialized DEK vulnerability in `mobile_ffi.rs` - now properly retrieves DEK from vault for conflict resolution
+- **Mobile Memory Leaks:** Fixed `SyncManager.tsx` useEffect dependencies causing memory leaks and re-renders
+- **Mobile Error Handling:** Added try-catch for JSON.parse in `ErrorBoundary.tsx` to prevent crash when parsing corrupted error logs
+- **Mobile Race Conditions:** Fixed filter change race condition in `SocialHub.tsx` with debouncing and initial load tracking
+- **Mobile Async:** Fixed fire-and-forget async operation in `app-context.ts` store initialization
+- **Desktop Auth:** Added missing await on `clearSessionStorage()` calls in `auth.ts`
+- **Timer Logic:** Fixed off-by-one error in `FocusTimer.tsx` timer countdown condition
+- **Timestamp Validation:** Added comprehensive timestamp validation in `DateDisplay.tsx` with future date handling
+- **Config Alignment:** Fixed version mismatch in `build.config.ts`
+- **ESLint Config:** Fixed hardcoded path in `eslintrc.js`, added multiple project references for monorepo support
+
+### Changed
+
+- **UI Button Component:** Complete rewrite of `Button.tsx` with forwardRef, accessibility (aria-disabled, aria-busy), loading states, and proper TypeScript types
+- **Automation Runtime:** Replaced console.log in `runtime.ts` with MockLogger interface for better production behavior
+- **Accessibility:** Added aria-labels to `FocusTimer.tsx` and `DateDisplay.tsx` components
+
+### Added
+
+- **DEK Retrieval:** New `get_dek_for_space()` function in Rust FFI for secure key management
+- **Logger Interface:** MockLogger interface and createConsoleLogger utility for automation DSL testing
+
+## [1.1.1] - 2024-11
+
 ### Fixed
 
 - **Critical Security:** Fixed session token storage (localStorage -> secureStore), added rate limiting to auth endpoints, and implemented secure logging to prevent credential leakage.

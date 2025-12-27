@@ -4,6 +4,48 @@ import { dbQuery } from '@/lib/database';
 import { colors } from '@/lib/theme';
 import { Logger } from '@/lib/logger';
 
+/** Database row type for insight table */
+interface InsightRow {
+  id: string;
+  insight_type: string;
+  title: string;
+  summary: string | null;
+  priority: string | null;
+  suggested_actions_json: string | null;
+  dismissed: number;
+  created_at: number;
+}
+
+/** Database row type for task table */
+interface TaskRow {
+  id: string;
+  space_id: string;
+  project_id: string | null;
+  parent_task_id: string | null;
+  title: string;
+  description: string | null;
+  status: string;
+  priority: number;
+  due_at: number | null;
+  completed_at: number | null;
+  estimate_minutes: number | null;
+  recur_rule: string | null;
+  context: string | null;
+  area: string | null;
+}
+
+/** Database row type for calendar_event table */
+interface CalendarEventRow {
+  id: string;
+  title: string;
+  description: string | null;
+  start_time: number;
+  end_time: number;
+  location: string | null;
+  source: string | null;
+  color: string | null;
+}
+
 interface UseTodayTimelineReturn {
   timeline: TimelineItem[];
   brief: Insight | null;
@@ -25,7 +67,7 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
       const todayEnd = todayStart + 86400000; // 24 hours
 
       // Fetch daily brief (Foresight insight)
-      const insights = await dbQuery<any>(
+      const insights = await dbQuery<InsightRow>(
         `SELECT * FROM insight
          WHERE insight_type = 'daily_brief'
          AND dismissed = 0
@@ -44,21 +86,28 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
           suggestedActions = [];
         }
 
+        const validSeverities = ['info', 'low', 'medium', 'high', 'critical'] as const;
+        type Severity = (typeof validSeverities)[number];
+        const rawSeverity = insightRow.priority || 'info';
+        const severity: Severity = validSeverities.includes(rawSeverity as Severity)
+          ? (rawSeverity as Severity)
+          : 'info';
+
         setBrief({
           id: insightRow.id,
           insightType: insightRow.insight_type,
           title: insightRow.title,
           description: insightRow.summary || '',
-          severity: insightRow.priority || 'info',
+          severity,
           suggestedActions,
-          dismissed: insightRow.dismissed,
+          dismissed: Boolean(insightRow.dismissed),
           createdAt: insightRow.created_at,
-        } as Insight);
+        });
       }
 
       // Fetch tasks due today
       // Correct statuses and priority order
-      const tasks = await dbQuery<any>(
+      const tasks = await dbQuery<TaskRow>(
         `SELECT * FROM task
          WHERE due_at BETWEEN ? AND ?
          AND status != 'done' AND status != 'cancelled'
@@ -67,7 +116,7 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
       );
 
       // Fetch calendar events for today
-      const events = await dbQuery<any>(
+      const events = await dbQuery<CalendarEventRow>(
         `SELECT * FROM calendar_event
          WHERE start_time BETWEEN ? AND ?
          ORDER BY start_time ASC`,
@@ -85,13 +134,13 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
           time: eventRow.start_time,
           endTime: eventRow.end_time,
           title: eventRow.title,
-          subtitle: eventRow.location,
+          subtitle: eventRow.location ?? undefined,
           color: eventRow.color || colors.primary,
           data: {
             id: eventRow.id,
             title: eventRow.title,
-            description: eventRow.description,
-            location: eventRow.location,
+            description: eventRow.description ?? undefined,
+            location: eventRow.location ?? undefined,
             startTime: eventRow.start_time,
             endTime: eventRow.end_time,
             source: eventRow.source || 'internal',
@@ -107,23 +156,23 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
           type: 'task',
           time: taskRow.due_at || todayStart,
           title: taskRow.title,
-          subtitle: taskRow.description,
+          subtitle: taskRow.description ?? undefined,
           color: colors.primary,
           data: {
             id: taskRow.id,
             space_id: taskRow.space_id,
-            project_id: taskRow.project_id,
-            parent_task_id: taskRow.parent_task_id,
+            project_id: taskRow.project_id ?? undefined,
+            parent_task_id: taskRow.parent_task_id ?? undefined,
             title: taskRow.title,
-            description: taskRow.description,
+            description: taskRow.description ?? undefined,
             status: taskRow.status,
             priority: taskRow.priority,
-            due_at: taskRow.due_at,
-            completed_at: taskRow.completed_at,
-            estimate_minutes: taskRow.estimate_minutes,
-            recur_rule: taskRow.recur_rule,
-            context: taskRow.context,
-            area: taskRow.area,
+            due_at: taskRow.due_at ?? undefined,
+            completed_at: taskRow.completed_at ?? undefined,
+            estimate_minutes: taskRow.estimate_minutes ?? undefined,
+            recur_rule: taskRow.recur_rule ?? undefined,
+            context: taskRow.context ?? undefined,
+            area: taskRow.area ?? undefined,
           } as Task,
         });
       });

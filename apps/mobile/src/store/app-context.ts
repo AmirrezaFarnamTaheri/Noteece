@@ -204,7 +204,9 @@ export const useAppContext = create<AppState>((set, get) => ({
 
   setLastActiveTab: (tab: string) => {
     set({ lastActiveTab: tab });
-    AsyncStorage.setItem('last_active_tab', tab);
+    AsyncStorage.setItem('last_active_tab', tab).catch((error) => {
+      Logger.error('[AppContext] Failed to save last active tab:', error);
+    });
   },
 
   initialize: async () => {

@@ -5,7 +5,7 @@
  * Displays unified timeline with filtering, search, and category management.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -77,16 +77,23 @@ export function SocialHub() {
   }, []);
 
   // Load saved filters from storage
-  const loadSavedFilters = async () => {
+  const loadSavedFilters = useCallback(async () => {
     try {
       const saved = await AsyncStorage.getItem(`social_filters_${spaceId}`);
       if (saved) {
-        setSavedFilters(JSON.parse(saved));
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            setSavedFilters(parsed);
+          }
+        } catch (parseError) {
+          Logger.error('Failed to parse saved filters:', parseError);
+        }
       }
     } catch (error) {
       Logger.error('Failed to load saved filters:', error);
     }
-  };
+  }, [spaceId]);
 
   // Save current filter as preset
   const saveCurrentFilter = async () => {
@@ -290,11 +297,29 @@ export function SocialHub() {
     await processItems(timestamps);
   };
 
-  // Apply filters when they change
+  // Track if initial load is complete
+  const isInitialLoadComplete = useRef(false);
+
+  // Mark initial load as complete when loading finishes
   useEffect(() => {
-    if (!loading) {
-      handleRefresh();
+    if (!loading && !isInitialLoadComplete.current) {
+      isInitialLoadComplete.current = true;
     }
+  }, [loading]);
+
+  // Apply filters when they change (debounced to prevent race conditions)
+  useEffect(() => {
+    // Skip during initial loading phase
+    if (!isInitialLoadComplete.current) {
+      return;
+    }
+
+    // Debounce filter changes to prevent rapid successive calls
+    const timeoutId = setTimeout(() => {
+      handleRefresh();
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPlatforms, selectedCategories, searchQuery]);
 

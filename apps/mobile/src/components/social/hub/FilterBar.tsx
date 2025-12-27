@@ -49,6 +49,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 },
               ]}
               onPress={() => onTogglePlatform(platform)}
+              accessibilityRole="checkbox"
+              accessibilityLabel={`${config.name} platform filter`}
+              accessibilityState={{ checked: isSelected }}
             >
               <Text style={styles.filterChipIcon}>{config.icon}</Text>
               <Text style={[styles.filterChipText, isSelected && styles.filterChipTextActive]}>{config.name}</Text>
@@ -73,6 +76,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 },
               ]}
               onPress={() => onToggleCategory(category.id)}
+              accessibilityRole="checkbox"
+              accessibilityLabel={`${category.name} category filter`}
+              accessibilityState={{ checked: isSelected }}
             >
               {category.icon && <Text style={styles.filterChipIcon}>{category.icon}</Text>}
               <Text style={[styles.filterChipText, isSelected && styles.filterChipTextActive]}>{category.name}</Text>
@@ -84,11 +90,22 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       {/* Filter Actions */}
       {(selectedPlatforms.length > 0 || selectedCategories.length > 0) && (
         <View style={styles.filterActions}>
-          <TouchableOpacity style={styles.saveFilterButton} onPress={onSaveFilter}>
+          <TouchableOpacity
+            style={styles.saveFilterButton}
+            onPress={onSaveFilter}
+            accessibilityRole="button"
+            accessibilityLabel="Save current filter"
+            accessibilityHint="Save the current filter combination for later use"
+          >
             <Ionicons name="bookmark-outline" size={16} color="#007AFF" />
             <Text style={styles.saveFilterText}>Save Filter</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.clearFiltersButton} onPress={onClearFilters}>
+          <TouchableOpacity
+            style={styles.clearFiltersButton}
+            onPress={onClearFilters}
+            accessibilityRole="button"
+            accessibilityLabel="Clear all filters"
+          >
             <Text style={styles.clearFiltersText}>Clear All</Text>
           </TouchableOpacity>
         </View>

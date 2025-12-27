@@ -32,7 +32,7 @@ export interface BuildTarget {
 
 const config: BuildConfig = {
   name: 'Noteece',
-  version: '1.0.0',
+  version: '1.1.0',
 
   targets: [
     // Desktop - macOS

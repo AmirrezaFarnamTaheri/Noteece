@@ -25,14 +25,16 @@ export function DailyBrief({ brief, style }: DailyBriefProps) {
 
         {brief.suggestedActions.length > 0 && (
           <View style={styles.actions}>
-            {brief.suggestedActions.slice(0, 2).map((action, index) => (
+            {brief.suggestedActions.slice(0, 2).map((action) => (
               <TouchableOpacity
-                key={index}
+                key={action.actionType + action.label}
                 style={styles.actionButton}
                 onPress={() => {
-                  // Handle action
                   Logger.info('Action pressed:', action.actionType);
                 }}
+                accessibilityRole="button"
+                accessibilityLabel={action.label}
+                accessibilityHint={`Perform ${action.actionType} action`}
               >
                 <Text style={styles.actionLabel}>{action.label}</Text>
                 <Ionicons name="chevron-forward" size={16} color={colors.primary} />

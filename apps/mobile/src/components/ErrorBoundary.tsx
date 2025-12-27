@@ -131,11 +131,21 @@ export class ErrorBoundary extends Component<Props, State> {
       // Also log to AsyncStorage for local debugging
       AsyncStorage.getItem('error_logs')
         .then((logs) => {
-          const errorLogs = logs ? JSON.parse(logs) : [];
+          let errorLogs: unknown[] = [];
+          if (logs) {
+            try {
+              const parsed = JSON.parse(logs);
+              errorLogs = Array.isArray(parsed) ? parsed : [];
+            } catch {
+              // If parsing fails, start with empty array
+              Logger.warn('Failed to parse existing error logs, starting fresh');
+              errorLogs = [];
+            }
+          }
           errorLogs.push(errorLog);
           // Keep only last 50 errors to avoid storage bloat
           const recentErrors = errorLogs.slice(-50);
-          AsyncStorage.setItem('error_logs', JSON.stringify(recentErrors));
+          return AsyncStorage.setItem('error_logs', JSON.stringify(recentErrors));
         })
         .catch((storageError) => {
           Logger.error('Failed to save error log:', storageError);

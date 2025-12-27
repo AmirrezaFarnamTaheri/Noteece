@@ -6,10 +6,25 @@ use crate::sync::models::{SyncDelta, SyncOperation};
 pub struct DeltaApplier;
 
 impl DeltaApplier {
+    /// Apply a single sync delta to the database
+    ///
+    /// # Arguments
+    /// * `conn` - Database connection
+    /// * `delta` - The sync delta to apply
+    /// * `dek` - Data Encryption Key for decrypting encrypted payloads.
+    ///   Currently, deltas are transmitted with plaintext data after
+    ///   being decrypted at the transport layer. The DEK is reserved
+    ///   for future field-level encryption support.
+    ///
+    /// # Note
+    /// The DEK parameter is currently unused because encryption/decryption
+    /// happens at the transport layer (ChaCha20-Poly1305 with session keys).
+    /// When field-level encryption is implemented, this DEK will be used to
+    /// decrypt sensitive fields within the delta payload.
     pub fn apply_single_delta(
         conn: &Connection,
         delta: &SyncDelta,
-        _dek: &[u8],
+        #[allow(unused_variables)] dek: &[u8],
     ) -> Result<(), SyncError> {
         match delta.entity_type.as_str() {
             "note" => Self::apply_note_delta(conn, delta),

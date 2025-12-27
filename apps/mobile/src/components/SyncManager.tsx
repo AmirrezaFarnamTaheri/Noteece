@@ -21,11 +21,6 @@ const SyncManager: React.FC = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
 
-  const updateStatus = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    setSyncStatus(syncClient.getSyncStatus() as any);
-  }, [syncClient]);
-
   const discoverDevices = useCallback(async () => {
     try {
       setIsScanning(true);
@@ -51,11 +46,27 @@ const SyncManager: React.FC = () => {
     }
   }, [syncClient]);
 
+  // Initial device discovery - runs once on mount
   useEffect(() => {
     discoverDevices();
-    const interval = setInterval(updateStatus, 1000); // Poll for status updates
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Status polling - uses ref to avoid dependency on updateStatus callback
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const status = syncClient.getSyncStatus();
+      setSyncStatus({
+        status: status.status,
+        message: status.message,
+        active: status.active,
+        progress: status.progress,
+        error: status.lastError || status.error,
+        last_sync: status.last_sync,
+      });
+    }, 1000);
     return () => clearInterval(interval);
-  }, [updateStatus, discoverDevices]);
+  }, [syncClient]);
 
   const initiateSync = async (deviceId: string) => {
     try {
