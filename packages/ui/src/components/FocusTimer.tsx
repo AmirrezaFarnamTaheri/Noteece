@@ -31,7 +31,7 @@ export function FocusTimer({ onComplete, onStart, onPause, onReset }: FocusTimer
   useEffect(() => {
     tickRef.current = () => {
       setTimeLeft((prev) => {
-        if (prev <= 1) {
+        if (prev <= 0) {
           setIsRunning(false);
           setCompleted((c) => c + 1);
           onComplete?.();
@@ -40,7 +40,7 @@ export function FocusTimer({ onComplete, onStart, onPause, onReset }: FocusTimer
         return prev - 1;
       });
     };
-  }, [onComplete]);
+  }, [mode, onComplete]);
 
   useEffect(() => {
     if (!isRunning) {
@@ -128,6 +128,7 @@ export function FocusTimer({ onComplete, onStart, onPause, onReset }: FocusTimer
             { value: 'long-break', label: 'Long Break (15 min)' },
           ]}
           disabled={isRunning}
+          aria-label="Select focus duration"
         />
 
         <Stack gap="xs" align="center">
@@ -211,7 +212,13 @@ export function MinimalFocusTimer({ onComplete }: Pick<FocusTimerProps, 'onCompl
       <Text size="lg" fw={600} style={{ fontVariantNumeric: 'tabular-nums' }}>
         {formatTime(timeLeft)}
       </Text>
-      <ActionIcon onClick={() => setIsRunning(!isRunning)} variant="light" color={isRunning ? 'red' : 'blue'} size="lg">
+      <ActionIcon
+        onClick={() => setIsRunning(!isRunning)}
+        variant="light"
+        color={isRunning ? 'red' : 'blue'}
+        size="lg"
+        aria-label={isRunning ? 'Pause timer' : 'Start timer'}
+      >
         {isRunning ? <IconPlayerPause size={18} /> : <IconPlayerPlay size={18} />}
       </ActionIcon>
     </Group>

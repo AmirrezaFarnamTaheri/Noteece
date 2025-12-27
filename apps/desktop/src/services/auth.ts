@@ -190,14 +190,14 @@ class AuthService {
         // Clear both storage and in-memory state for consistency
         this.session = null;
         this.currentUser = null;
-        this.clearSessionStorage();
+        await this.clearSessionStorage();
         return false;
       }
     } catch {
       // Clear both storage and in-memory state for consistency on error
       this.session = null;
       this.currentUser = null;
-      this.clearSessionStorage();
+      await this.clearSessionStorage();
       return false;
     }
   }

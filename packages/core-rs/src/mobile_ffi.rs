@@ -200,6 +200,31 @@ fn obtain_db_connection() -> Result<rusqlite::Connection, String> {
         .map_err(|e| format!("Failed to open DB at {}: {}", path, e))
 }
 
+/// Attempt to retrieve the DEK for a space from the vault metadata
+/// Returns an error if the vault is locked or DEK is not available
+fn get_dek_for_space(conn: &rusqlite::Connection, space_id: &Option<String>) -> Result<[u8; 32], String> {
+    let sid = space_id.as_ref().ok_or("No space_id provided")?;
+
+    // Query the vault_metadata table for the encrypted DEK
+    // Note: In a full implementation, this would require the user's password or biometric
+    // to decrypt the DEK. For now, we check if a session DEK is cached.
+    let result: Result<Vec<u8>, _> = conn.query_row(
+        "SELECT dek_encrypted FROM vault_metadata WHERE space_id = ?1 AND unlocked = 1",
+        [sid],
+        |row| row.get(0),
+    );
+
+    match result {
+        Ok(dek_bytes) if dek_bytes.len() == 32 => {
+            let mut dek = [0u8; 32];
+            dek.copy_from_slice(&dek_bytes);
+            Ok(dek)
+        }
+        Ok(_) => Err("Invalid DEK length".to_string()),
+        Err(_) => Err("Vault is locked or DEK not available".to_string()),
+    }
+}
+
 /// Initiate key exchange with a device
 ///
 /// Returns the local public key as base64
@@ -275,13 +300,23 @@ pub unsafe extern "C" fn rust_complete_key_exchange(
 
 fn complete_key_exchange_impl(device_id: &str, peer_public_key: &str) -> Result<(), String> {
     use base64::Engine;
-    let _peer_key_bytes = base64::engine::general_purpose::STANDARD.decode(peer_public_key)
+    let peer_key_bytes = base64::engine::general_purpose::STANDARD.decode(peer_public_key)
         .map_err(|e| format!("Invalid peer public key: {}", e))?;
-    
-    // ECDH key exchange completion derives the shared secret
-    // The shared secret is used for subsequent encrypted communication
-    log::info!("[FFI] Key exchange completed for device {}", device_id);
-    
+
+    // Validate peer public key length (X25519 keys are 32 bytes)
+    if peer_key_bytes.len() != 32 {
+        return Err(format!("Invalid peer public key length: expected 32 bytes, got {}", peer_key_bytes.len()));
+    }
+
+    // Store the peer's public key for future encrypted communication
+    let conn = obtain_db_connection()?;
+    conn.execute(
+        "INSERT OR REPLACE INTO device_keys (device_id, public_key, exchanged_at) VALUES (?1, ?2, ?3)",
+        rusqlite::params![device_id, peer_public_key, chrono::Utc::now().timestamp()],
+    ).map_err(|e| format!("Failed to store peer key: {}", e))?;
+
+    log::info!("[FFI] Key exchange completed and stored for device {}", device_id);
+
     Ok(())
 }
 
@@ -494,11 +529,22 @@ fn resolve_conflict_impl(conflict_id: &str, resolution: &str) -> Result<(), Stri
         })
     }).map_err(|e| format!("Conflict not found: {}", e))?;
 
-    // DEK is needed for merge. Using empty for now as mobile FFI doesn't handle DEK yet?
-    // Or we need `rust_init` to take DEK?
-    // Or `GLOBAL_DEK`?
-    // Assuming unencrypted or key managed internally for now to avoid breaking changes.
-    let dek = [0u8; 32];
+    // For conflict resolution, we need to fetch the DEK from the vault
+    // Since conflicts are space-scoped, we use the space_id from the conflict
+    // For now, we skip DEK-dependent operations if no DEK is available
+    // The merge operation will use plaintext data from the conflict versions
+    // which are already decrypted when stored in the conflict table
+    let dek = match get_dek_for_space(&conn, &conflict.space_id) {
+        Ok(key) => key,
+        Err(_) => {
+            // If no DEK available, we can still resolve using UseLocal/UseRemote
+            // as those don't require re-encryption of data
+            if resolution_enum == ConflictResolution::Merge {
+                return Err("Cannot merge without DEK - vault must be unlocked".to_string());
+            }
+            [0u8; 32] // Placeholder for non-merge operations
+        }
+    };
 
     agent.resolve_conflict(&conn, &conflict, resolution_enum, &dek)
         .map_err(|e| e.to_string())?;

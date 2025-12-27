@@ -242,49 +242,81 @@ export class AutomationRuntimeImpl implements AutomationRuntime {
 }
 
 /**
- * Create a default NoteeceAPI implementation for testing
+ * Optional logger interface for mock API
  */
-export function createMockNoteeceAPI(): NoteeceAPI {
+export interface MockLogger {
+  log: (message: string, data?: unknown) => void;
+}
+
+/**
+ * Default no-op logger for production
+ */
+const noopLogger: MockLogger = {
+  log: () => {},
+};
+
+/**
+ * Create a default NoteeceAPI implementation for testing
+ * @param logger Optional logger for debugging - defaults to no-op in production
+ */
+export function createMockNoteeceAPI(logger: MockLogger = noopLogger): NoteeceAPI {
   return {
     async createNote(title, content, tags) {
-      console.log(`[Mock] Create note: ${title}`, { content, tags });
+      logger.log(`[Mock] Create note: ${title}`, { content, tags });
       return `note_${Date.now()}`;
     },
     async updateNote(id, updates) {
-      console.log(`[Mock] Update note: ${id}`, updates);
+      logger.log(`[Mock] Update note: ${id}`, updates);
     },
     async deleteNote(id) {
-      console.log(`[Mock] Delete note: ${id}`);
+      logger.log(`[Mock] Delete note: ${id}`);
     },
     async searchNotes(query) {
-      console.log(`[Mock] Search notes: ${query}`);
+      logger.log(`[Mock] Search notes: ${query}`);
       return [];
     },
     async createTask(title, dueDate) {
-      console.log(`[Mock] Create task: ${title}`, { dueDate });
+      logger.log(`[Mock] Create task: ${title}`, { dueDate });
       return `task_${Date.now()}`;
     },
     async updateTask(id, updates) {
-      console.log(`[Mock] Update task: ${id}`, updates);
+      logger.log(`[Mock] Update task: ${id}`, updates);
     },
     async completeTask(id) {
-      console.log(`[Mock] Complete task: ${id}`);
+      logger.log(`[Mock] Complete task: ${id}`);
     },
     async addTag(noteId, tag) {
-      console.log(`[Mock] Add tag: ${tag} to ${noteId}`);
+      logger.log(`[Mock] Add tag: ${tag} to ${noteId}`);
     },
     async removeTag(noteId, tag) {
-      console.log(`[Mock] Remove tag: ${tag} from ${noteId}`);
+      logger.log(`[Mock] Remove tag: ${tag} from ${noteId}`);
     },
     async getTags() {
-      console.log('[Mock] Get tags');
+      logger.log('[Mock] Get tags');
       return [];
     },
     async sendNotification(title, body) {
-      console.log(`[Mock] Notification: ${title} - ${body}`);
+      logger.log(`[Mock] Notification: ${title} - ${body}`);
     },
     log(message) {
-      console.log(`[Automation Log] ${message}`);
+      logger.log(`[Automation Log] ${message}`);
+    },
+  };
+}
+
+/**
+ * Create a console-based logger for development/testing
+ */
+export function createConsoleLogger(): MockLogger {
+  return {
+    log: (message: string, data?: unknown) => {
+      if (data !== undefined) {
+        // eslint-disable-next-line no-console
+        console.log(message, data);
+      } else {
+        // eslint-disable-next-line no-console
+        console.log(message);
+      }
     },
   };
 }

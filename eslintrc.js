@@ -17,12 +17,20 @@ module.exports = {
     "import/resolver": {
       typescript: {
         alwaysTryTypes: true,
-        project: "apps/desktop/tsconfig.json",
+        // Use multiple project references to support all packages
+        project: [
+          "./tsconfig.json",
+          "./apps/desktop/tsconfig.json",
+          "./apps/mobile/tsconfig.json",
+          "./packages/*/tsconfig.json",
+        ],
       },
     },
   },
-  ignorePatterns: ["vite.config.ts"],
+  ignorePatterns: ["vite.config.ts", "dist", "node_modules", "*.js"],
   env: {
     node: true,
+    browser: true,
+    es2022: true,
   },
 };
