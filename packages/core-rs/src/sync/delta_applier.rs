@@ -12,9 +12,9 @@ impl DeltaApplier {
     /// * `conn` - Database connection
     /// * `delta` - The sync delta to apply
     /// * `dek` - Data Encryption Key for decrypting encrypted payloads.
-    ///           Currently, deltas are transmitted with plaintext data after
-    ///           being decrypted at the transport layer. The DEK is reserved
-    ///           for future field-level encryption support.
+    ///   Currently, deltas are transmitted with plaintext data after
+    ///   being decrypted at the transport layer. The DEK is reserved
+    ///   for future field-level encryption support.
     ///
     /// # Note
     /// The DEK parameter is currently unused because encryption/decryption
