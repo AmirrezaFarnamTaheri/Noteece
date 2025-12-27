@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3] - 2025-12-27
+
+### Fixed
+
+- **Code Duplication:** Removed duplicate `EmptyState` component from `LoadingState.tsx`
+- **Dead Code:** Removed unused `isFirst` prop from `TimelineItemCard.tsx`
+- **Type Safety:** Added proper TypeScript types to `useTodayTimeline.ts` replacing `any` types
+
+### Changed
+
+- **Accessibility - Mobile:** Enhanced accessibility in `TimelineItemCard`, `DailyBrief`, `BiometricLockScreen`, and `FilterBar` components
+- **Accessibility - Desktop:** Added aria-labels to `MusicWidget` and `FocusTimer` components
+- **Code Quality:** Replaced index-based React keys with unique identifiers, added progressbar role to LoadingState
+
 ## [1.1.2] - 2025-12-27
 
 ### Fixed

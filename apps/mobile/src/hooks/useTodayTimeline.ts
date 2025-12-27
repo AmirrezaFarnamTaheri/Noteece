@@ -4,6 +4,48 @@ import { dbQuery } from '@/lib/database';
 import { colors } from '@/lib/theme';
 import { Logger } from '@/lib/logger';
 
+/** Database row type for insight table */
+interface InsightRow {
+  id: string;
+  insight_type: string;
+  title: string;
+  summary: string | null;
+  priority: string | null;
+  suggested_actions_json: string | null;
+  dismissed: number;
+  created_at: number;
+}
+
+/** Database row type for task table */
+interface TaskRow {
+  id: string;
+  space_id: string;
+  project_id: string | null;
+  parent_task_id: string | null;
+  title: string;
+  description: string | null;
+  status: string;
+  priority: number;
+  due_at: number | null;
+  completed_at: number | null;
+  estimate_minutes: number | null;
+  recur_rule: string | null;
+  context: string | null;
+  area: string | null;
+}
+
+/** Database row type for calendar_event table */
+interface CalendarEventRow {
+  id: string;
+  title: string;
+  description: string | null;
+  start_time: number;
+  end_time: number;
+  location: string | null;
+  source: string | null;
+  color: string | null;
+}
+
 interface UseTodayTimelineReturn {
   timeline: TimelineItem[];
   brief: Insight | null;
@@ -25,7 +67,7 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
       const todayEnd = todayStart + 86400000; // 24 hours
 
       // Fetch daily brief (Foresight insight)
-      const insights = await dbQuery<any>(
+      const insights = await dbQuery<InsightRow>(
         `SELECT * FROM insight
          WHERE insight_type = 'daily_brief'
          AND dismissed = 0
@@ -58,7 +100,7 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
 
       // Fetch tasks due today
       // Correct statuses and priority order
-      const tasks = await dbQuery<any>(
+      const tasks = await dbQuery<TaskRow>(
         `SELECT * FROM task
          WHERE due_at BETWEEN ? AND ?
          AND status != 'done' AND status != 'cancelled'
@@ -67,7 +109,7 @@ export function useTodayTimeline(): UseTodayTimelineReturn {
       );
 
       // Fetch calendar events for today
-      const events = await dbQuery<any>(
+      const events = await dbQuery<CalendarEventRow>(
         `SELECT * FROM calendar_event
          WHERE start_time BETWEEN ? AND ?
          ORDER BY start_time ASC`,

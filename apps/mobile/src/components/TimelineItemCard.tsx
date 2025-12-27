@@ -7,11 +7,10 @@ import { TimelineItem } from '@/types';
 
 interface TimelineItemCardProps {
   item: TimelineItem;
-  isFirst?: boolean;
   isLast?: boolean;
 }
 
-export function TimelineItemCard({ item, isFirst, isLast }: TimelineItemCardProps) {
+export function TimelineItemCard({ item, isLast }: TimelineItemCardProps) {
   const getIcon = () => {
     switch (item.type) {
       case 'task':
@@ -39,7 +38,13 @@ export function TimelineItemCard({ item, isFirst, isLast }: TimelineItemCardProp
   const isPast = validTime < Date.now();
 
   return (
-    <TouchableOpacity style={styles.container} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={styles.container}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.type}: ${item.title}`}
+      accessibilityHint={`Scheduled for ${format(new Date(validTime), 'HH:mm')}`}
+    >
       <View style={styles.timeline}>
         <View style={[styles.dot, { backgroundColor: item.color }]} />
         {!isLast && <View style={styles.line} />}

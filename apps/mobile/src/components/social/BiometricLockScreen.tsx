@@ -123,6 +123,10 @@ export function BiometricLockScreen({ onUnlock, onCancel }: BiometricLockScreenP
             onPress={handleAuthenticate}
             disabled={isAuthenticating}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={isAuthenticating ? 'Authenticating' : 'Authenticate with biometrics'}
+            accessibilityState={{ disabled: isAuthenticating }}
+            accessibilityHint="Use biometric authentication to unlock Social Hub"
           >
             <LinearGradient
               colors={isAuthenticating ? ['#4B5563', '#6B7280'] : ['#6366F1', '#8B5CF6']}
@@ -139,7 +143,14 @@ export function BiometricLockScreen({ onUnlock, onCancel }: BiometricLockScreenP
 
           {/* Cancel Button */}
           {onCancel && (
-            <TouchableOpacity style={styles.cancelButton} onPress={onCancel} disabled={isAuthenticating}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={onCancel}
+              disabled={isAuthenticating}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel authentication"
+              accessibilityState={{ disabled: isAuthenticating }}
+            >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
           )}

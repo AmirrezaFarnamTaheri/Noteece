@@ -125,19 +125,20 @@ const FocusTimerComponent: React.FC = () => {
           onChange={handleDurationChange}
           disabled={isRunning}
           style={{ width: '100%' }}
+          aria-label="Select focus duration"
         />
 
         <Group gap="xs">
           {isRunning ? (
-            <Button leftSection={<IconPlayerPause size={16} />} onClick={handlePause} color="orange">
+            <Button leftSection={<IconPlayerPause size={16} />} onClick={handlePause} color="orange" aria-label="Pause focus timer">
               Pause
             </Button>
           ) : (
-            <Button leftSection={<IconPlayerPlay size={16} />} onClick={handleStart} color="blue">
+            <Button leftSection={<IconPlayerPlay size={16} />} onClick={handleStart} color="blue" aria-label="Start focus timer">
               Start
             </Button>
           )}
-          <Button leftSection={<IconRefresh size={16} />} onClick={handleReset} variant="light">
+          <Button leftSection={<IconRefresh size={16} />} onClick={handleReset} variant="light" aria-label="Reset focus timer">
             Reset
           </Button>
         </Group>

@@ -44,9 +44,9 @@ const MusicWidget: React.FC = () => {
             </div>
           </Group>
           {isPlaying && (
-            <div className={classes.visualizer}>
+            <div className={classes.visualizer} aria-hidden="true">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className={classes.bar} style={{ animationDelay: `${i * 0.1}s` }} />
+                <div key={`bar-${i}`} className={classes.bar} style={{ animationDelay: `${i * 0.1}s` }} />
               ))}
             </div>
           )}
@@ -65,7 +65,7 @@ const MusicWidget: React.FC = () => {
         </Stack>
 
         <Group justify="center" gap="xl">
-          <ActionIcon variant="transparent" color="gray" size="lg">
+          <ActionIcon variant="transparent" color="gray" size="lg" aria-label="Previous track">
             <IconPlayerSkipBack size={24} />
           </ActionIcon>
           <ActionIcon
@@ -75,6 +75,7 @@ const MusicWidget: React.FC = () => {
             radius="xl"
             onClick={() => setIsPlaying(!isPlaying)}
             className={classes.playButton}
+            aria-label={isPlaying ? 'Pause' : 'Play'}
           >
             {isPlaying ? (
               <IconPlayerPause size={24} color="black" fill="black" />
@@ -82,7 +83,7 @@ const MusicWidget: React.FC = () => {
               <IconPlayerPlay size={24} color="black" fill="black" style={{ marginLeft: 2 }} />
             )}
           </ActionIcon>
-          <ActionIcon variant="transparent" color="gray" size="lg">
+          <ActionIcon variant="transparent" color="gray" size="lg" aria-label="Next track">
             <IconPlayerSkipForward size={24} />
           </ActionIcon>
         </Group>
