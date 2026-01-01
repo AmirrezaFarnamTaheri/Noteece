@@ -1,91 +1,50 @@
-# Phase 4: Refinement & Modernization Audit
+# Phase 4: Refinement & Modernization Report
 
-**Status:** Optimization Opportunities Identified
-**Goal:** Optimization and Polish. Make it fast, make it smooth.
+**Status:** Ready for Execution
+**Goal:** Shift focus from "correctness" to "excellence". Optimize performance and modernize the visual layer.
 
-## Overview
-Once the critical security and correctness issues (Phase 1-3) are resolved, Phase 4 targets performance and code quality. The audit identified specific bottlenecks in the Sync Engine, Frontend rendering, and Database query patterns.
+## 4.1 Database Optimization (`core-rs`)
 
-## 4.1 Backend Optimization (`core-rs`)
+### Index Tuning
+*   **Missing:** `idx_task_project_status`, `idx_health_metric_space_recorded`.
+*   **Redundant:** `idx_note_mod` (superseded by `idx_note_space_mod`).
+*   **Action:** Add/Remove indices via migration.
 
-### Database Query Tuning
-*   **Indexing:**
-    *   **Missing:** `CREATE INDEX idx_note_space_mod ON note(space_id, modified_at DESC)` is critical for the `get_deltas` query. Currently, it might be doing a full table scan if filtering by space.
-    *   **Redundant:** Check if `idx_note_mod` (global) is needed if we always query by `space_id`.
-*   **Query Plans:**
-    *   **Action:** Use `EXPLAIN QUERY PLAN` on the `compute_entity_hashes` query.
-    *   **Goal:** Ensure it uses a Covering Index (reading only from the B-Tree, not the heap).
-
-### Query Optimization (Cartesian Products)
-*   **File:** `packages/core-rs/src/project/db/project.rs` -> `get_projects_in_space`
-*   **Observation:** The query performs a `LEFT JOIN` on `task` AND `project_milestone`.
-*   **Risk:** Cartesian Product Explosion.
-    *   Example: 1 Project * 50 Tasks * 10 Milestones = 500 rows returned for a single project.
-    *   If a space has 20 projects, this could return 10,000+ rows, consuming massive memory and CPU for deserialization.
-*   **Fix:**
-    *   **Option A:** Fetch Projects, then fetch Tasks (filtered by project IDs), then fetch Milestones. Stitch them together in Rust (Application-Side Join).
-    *   **Option B:** Use `JSON_GROUP_ARRAY` (if SQLite version permits) to aggregate tasks/milestones into a single column per project row.
-
-### Graph Indexer Integration
-*   **File:** `packages/core-rs/src/graph.rs`
-*   **Current State:** `get_vault_graph` performs a fresh query on the `link` table every time.
-*   **Optimization:**
-    *   Ensure the `link` table is populated (it is currently disconnected in `note.rs`).
-    *   For large vaults, pre-compute the Graph JSON or cache it. Only invalidate cache when `link` table changes.
-
-### SRS Event Sourcing
-*   **File:** `packages/core-rs/src/srs.rs`
-*   **Observation:** `revision_history_json` duplicates data found in `review_log`.
-*   **Optimization:** Remove the JSON blob column. Reconstruct history on-the-fly from the normalized `review_log` table to save disk space and ensure consistency.
+### Query Optimization (Deep Dive)
+*   **Issue:** Cartesian Product in `get_projects_in_space`.
+    *   **Logic:** `LEFT JOIN task` AND `LEFT JOIN milestone`.
+    *   **Risk:** Returns `Projects * Tasks * Milestones` rows.
+    *   **Fix:** Split into 3 queries or use `JSON_GROUP_ARRAY`.
 
 ### Search Optimization
-*   **File:** `packages/core-rs/src/search/mod.rs`
-*   **Observation:** `search_notes` constructs a `MATCH` query dynamically.
-*   **Risk:** FTS5 Syntax Errors.
-*   **Fix:** Sanitize the input string (escape quotes, handle special FTS operators) before binding it to `MATCH`.
+*   **Issue:** FTS5 Query Construction.
+    *   **Risk:** Syntax errors on user input (`*`, `"`).
+    *   **Fix:** Sanitize input string before binding to `MATCH`.
 
-### Memory & Allocation
-*   **Serialization:**
-    *   **Observation:** `smart_merge_entity` deserializes `serde_json::Value`. This is flexible but slow and heap-intensive.
-    *   **Optimization:** Define strict Structs (`TaskPartial`, `NotePartial`) for the merge logic to use `serde`'s zero-copy deserialization where possible.
-*   **Cloning:**
-    *   **Audit:** Review `DeltaGatherer`. Are we cloning the entire content of a note just to check a hash?
-    *   **Fix:** Hash the content stream directly from the DB row without loading the full string into RAM.
+### Memory Optimization
+*   **JSON:** `serde_json::from_slice::<Value>` allocates heavily.
+    *   **Fix:** Use struct deserialization (`Task`).
+*   **Blobs:** `retrieve_blob` reads full file to RAM.
+    *   **Fix:** Implement streaming retrieval.
 
-## 4.2 Frontend Polish (`apps/desktop`)
+## 4.2 Frontend Performance
 
-### Rendering Performance
-*   **Task Board:**
-    *   **Issue:** Dragging a card causes re-renders of the entire column.
-    *   **Fix:** Use `React.memo` with custom comparison functions. Move "Drag State" to a transient atom (Jotai/Zustand) to avoid React Context ripple effects.
-*   **Large Lists:**
-    *   **Issue:** `NoteList` renders all items?
-    *   **Fix:** Strict Virtualization (`react-window`).
+### React Native
+*   **FlashList:** Tune `drawDistance` and `estimatedItemSize`.
+*   **Animations:** Use `Reanimated` on UI thread.
 
-### Visual Polish
-*   **Glassmorphism:**
-    *   **Issue:** `backdrop-filter: blur()` is GPU expensive.
-    *   **Fix:** Disable on Low Power Mode or if battery < 20%.
-*   **Transitions:**
-    *   **Issue:** Layout thrashing when sidebar toggles.
-    *   **Fix:** Use CSS `transform: translateX` instead of changing `width`.
+### Desktop UI
+*   **CSS:** Prefer `transform` over `width/height` transitions.
+*   **Glassmorphism:** Toggle blur based on power mode.
 
-## 4.3 Mobile Polish (`apps/mobile`)
-
-### Startup Time
-*   **Issue:** `initializeDatabase` runs migrations on every start.
-*   **Fix:** Cache the `db_version` in `AsyncStorage` and only run migration check if the App Version changed.
-
-### Gestures
-*   **Issue:** `react-native-gesture-handler` vs built-in Responder system.
-*   **Fix:** Ensure all swipe actions (Archive Note) use Reanimated 2/3 for 60fps native-thread interaction.
+## 4.3 Technical Debt
+*   **Graph:** Replace SVG placeholder with `react-force-graph`.
+*   **Differential Sync:** Implement `modified_at > last_sync` query.
 
 ## Phase 4 Checklist
-- [ ] **HIGH:** Fix Cartesian Product in `get_projects_in_space`.
-- [ ] **HIGH:** Add `idx_note_space_mod` index.
-- [ ] **MEDIUM:** Sanitize FTS5 Search Queries.
-- [ ] **MEDIUM:** Connect Graph Indexer (`update_links`).
-- [ ] **MEDIUM:** Optimize `smart_merge_entity` serialization.
-- [ ] **MEDIUM:** Implement `React.memo` on Task Cards.
-- [ ] **LOW:** CSS Transform optimization for Sidebar.
-- [ ] **LOW:** Optimize Mobile Migration check.
+- [ ] **HIGH:** Fix Cartesian Product query.
+- [ ] **HIGH:** Add `idx_note_space_mod`.
+- [ ] **MEDIUM:** Sanitize Search Queries.
+- [ ] **MEDIUM:** Optimize `apply_deltas` memory.
+- [ ] **LOW:** Implement Streaming Blobs.
+- [ ] **LOW:** CSS Optimizations.
