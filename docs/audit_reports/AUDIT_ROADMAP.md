@@ -10,6 +10,7 @@ This document is the **Single Source of Truth** for the final polish of the Note
 *   **CRITICAL SECURITY FINDING:** Mobile App (Expo) likely stores data in Plaintext due to lack of SQLCipher support in `expo-sqlite`. This requires immediate architectural remediation (Phase 3.1).
 *   **CRITICAL SECURITY FINDING:** Auth Service vulnerable to Timing Attacks (Phase 1.1).
 *   **ARCHITECTURAL GAP:** Sync Engine uses Wall Clock time instead of Vector Clocks (Phase 1.3).
+*   **ARCHITECTURAL INCONSISTENCY:** Export logic expects Double Encryption (ALE) but Database stores Plaintext (relying on SQLCipher), breaking exports.
 
 ---
 
@@ -22,6 +23,7 @@ This document is the **Single Source of Truth** for the final polish of the Note
 **Goal:** Mathematical correctness, data integrity, and absolute security.
 *   **Key Action:** Fix Timing Attacks in Auth.
 *   **Key Action:** Implement `Zeroize` for key memory protection.
+*   **Key Action:** Clarify Encryption Model (Fix Export vs Storage mismatch).
 *   **Key Action:** Implement Vector Clocks for correct Sync.
 
 ## 🖥️ Phase 2: The Frontend Audit (`apps/desktop` & `apps/mobile`)

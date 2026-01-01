@@ -9,10 +9,10 @@ Noteece promises a seamless experience across devices. Currently, there are sign
 ## 3.1 Critical Parity Gaps
 
 ### 3.1.1 Encryption at Rest (The "Split Brain" Problem)
-*   **Desktop:** Uses `rusqlite` + `sqlcipher` (Bundled OpenSSL). The DB file is fully encrypted.
+*   **Desktop:** Uses `rusqlite` + `sqlcipher` (Bundled OpenSSL). The DB file is fully encrypted (Page 0 + Content).
 *   **Mobile:** Uses `expo-sqlite` (Standard SQLite). The DB file is likely plaintext.
 *   **Conflict:**
-    *   If a user copies their `noteece.db` from Desktop to Mobile (manual sync/backup restore), Mobile **cannot open it** (it expects plaintext, gets ciphertext).
+    *   If a user copies their `noteece.db` from Desktop to Mobile (manual sync/backup restore), Mobile **cannot open it** (it expects plaintext, gets ciphertext header).
     *   If Mobile creates the DB, it is plaintext.
 *   **Harmonization Strategy:**
     *   Mobile **MUST** adopt SQLCipher.

@@ -10,14 +10,14 @@ This phase audits the user-facing applications. The Desktop app (Tauri/React) an
 
 ### 2.1.1 Security (Tauri & Web)
 *   **CSP (Content Security Policy):**
-    *   **Finding:** `tauri.conf.json` enables `unsafe-inline` and `unsafe-eval` for scripts. `connect-src` allows `https://*`.
+    *   **Finding:** `tauri.conf.json` enables `unsafe-inline` and `unsafe-eval` for scripts. `img-src` allows `https:` (any domain).
     *   **Risk:**
         *   `unsafe-inline`: Allows XSS if any markdown/content is improperly sanitized.
         *   `unsafe-eval`: Increases attack surface.
-        *   `https://*`: Allows exfiltration of data to arbitrary servers if an XSS is achieved.
-    *   **Action:** Tighten CSP. Remove `unsafe-eval` if possible. Whitelist specific `connect-src` domains if known (e.g., specific social APIs). Use Nonces for inline scripts.
+        *   `img-src https:`: Allows external tracking pixels or loading malicious images.
+    *   **Action:** Tighten CSP. Remove `unsafe-eval` if possible. Restrict `img-src` to `self` and specific trusted domains (e.g., `blob:`, `data:`). Use Nonces for inline scripts.
 *   **DEK Protection:**
-    *   **Finding:** The Data Encryption Key (DEK) is held in memory in the `DbConnection` struct.
+    *   **Finding:** The Data Encryption Key (DEK) is held in memory in the `DbConnection` struct (`db_pool.rs`).
     *   **Risk:** No protection against memory dumping.
     *   **Action:** Although `Zeroize` is a Rust-side fix, the Frontend should ensure it calls `shutdown_clear_keys_cmd` explicitly on app exit/logout to trigger the cleanup.
 
@@ -70,7 +70,7 @@ This phase audits the user-facing applications. The Desktop app (Tauri/React) an
 *   **Action:** Implement a `FeatureFlag` context/provider. Wrap "Beta" features in checks. Ensure "Coming Soon" UI is used or the entry point is hidden.
 
 ## Phase 2 Checklist
-- [ ] **Desktop:** Tighten CSP (remove `unsafe-eval`, restrict `connect-src`).
+- [ ] **Desktop:** Tighten CSP (remove `unsafe-eval`, restrict `img-src`).
 - [ ] **Desktop:** Implement `onRehydrateStorage` validation for `activeSpaceId`.
 - [ ] **Mobile:** **CRITICAL:** Switch to Encrypted SQLite (SQLCipher).
 - [ ] **Mobile:** Paginate database migrations.

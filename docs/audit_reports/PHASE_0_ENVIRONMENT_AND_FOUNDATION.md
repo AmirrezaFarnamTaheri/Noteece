@@ -26,7 +26,7 @@ Phase 0 is the bedrock of the project. If the build environment is shaky, the re
     *   **Remediation:** If vulnerabilities are found, update crates. If a patch isn't available, document the risk in `ISSUES.md`.
 *   **OpenSSL / SQLCipher Complexity (Diamond Dependency):**
     *   **File:** `Cargo.toml`
-    *   **Observation:** `rusqlite` uses `bundled-sqlcipher-vendored-openssl`, while `tokio-tungstenite` uses `native-tls`.
+    *   **Observation:** `rusqlite` uses `bundled-sqlcipher-vendored-openssl`, while `tokio-tungstenite` (and potentially `reqwest`) uses `native-tls`.
     *   **Risk:** This creates a potential conflict where two different versions of OpenSSL are linked (one vendored by SQLCipher, one system-provided by native-tls), leading to symbol collisions and random segfaults on Linux.
     *   **Action:** Switch `tokio-tungstenite` to use `rustls-tls-native-roots` instead of `native-tls` to remove the system OpenSSL dependency entirely.
 *   **Crate Hygiene:**
@@ -70,10 +70,11 @@ Phase 0 is the bedrock of the project. If the build environment is shaky, the re
 *   **Risk:** Expo plugins *automatically* inject permissions (`ACCESS_FINE_LOCATION`, `CAMERA`) into the final `AndroidManifest.xml` during prebuild, even if they are not explicitly listed in the `android.permissions` array.
 *   **Action:** Inspect the generated `android/app/src/main/AndroidManifest.xml` after `npx expo prebuild`. If unused permissions are present, remove the corresponding plugins or configure them to exclude permissions.
 
-### Database Binary Capability
+### Database Binary Capability (SQLCipher Check)
 *   **Critical Check:** The mobile app uses `expo-sqlite`. Standard `expo-sqlite` builds DO NOT include SQLCipher.
 *   **Implication:** If the Rust core expects to open an encrypted database (created by Desktop), but the Mobile UI opens it with standard SQLite, it will fail (file is not a database). If Mobile creates the DB, it will be plaintext.
 *   **Action:** Verify if `expo-sqlite` is replaced by a custom build or if `op-sqlite` / `react-native-quick-sqlite` (with encryption support) is required to match Core-RS encryption.
+*   **Note:** `mobile_ffi.rs` opens the database via `rusqlite`. If the underlying binary is not linked against SQLCipher on Android, Rust encryption features will panic or fail.
 
 ---
 
@@ -146,4 +147,4 @@ Phase 0 is the bedrock of the project. If the build environment is shaky, the re
 - [ ] `pnpm dedupe --check` passes.
 - [ ] CI workflows pin specific runner OS versions.
 - [ ] `perf-harness` is excluded from release artifacts.
-- [ ] Mobile `expo-sqlite` vs `sqlcipher` compatibility verified.
+- [ ] Mobile `expo-sqlite` vs `sqlcipher` binary capability verified (Critical).

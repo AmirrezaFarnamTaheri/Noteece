@@ -18,15 +18,23 @@ The `packages/core-rs` crate is the brain of Noteece. It handles encryption, syn
     *   **Finding:** Keys (`DEK`, `KEK`, `SessionToken`) are stored as `Vec<u8>` or `String` and are dropped normally.
     *   **Risk:** Memory dump or swap file analysis could reveal keys.
     *   **Fix:** Implement `Zeroize` trait for all structs holding sensitive data. Ensure keys are overwritten with zeros on drop.
-*   **Encryption at Rest (Mobile Gap):**
+*   **Encryption at Rest (The Mobile Gap):**
     *   **Finding:** `note.rs` inserts `content_md` directly into the database. It relies on SQLCipher for encryption.
     *   **Critical Risk:** If the Mobile App (using `expo-sqlite`) opens this DB without SQLCipher support, it creates a **Plaintext** database. The `mobile_ffi.rs` bridge does not appear to pass a key to `rusqlite::Connection::open`.
     *   **Action:** Verify Mobile DB stack immediately. If unencrypted, this violates the "End-to-End Encrypted" promise.
+*   **Export Encryption Confusion (The Double Encryption Bug):**
+    *   **Finding:** `import.rs` (`export_to_json`) attempts to decrypt `content_md` using the DEK. However, `note.rs` (`create_note`) inserts `content_md` as plaintext (relying on SQLCipher).
+    *   **Risk:** Exporting will fail because `decrypt_string` (XChaCha20Poly1305) will be called on plaintext data (which lacks a valid nonce/tag), resulting in error.
+    *   **Fix:** Clarify the encryption model. If SQLCipher is the sole encryption layer, `import.rs` must NOT attempt manual decryption. If Application-Layer Encryption (ALE) is desired, `create_note` must encrypt before insertion.
 
 ### 1.1.2 Import Safety (`import.rs`)
-*   **Zip Bombs:**
-    *   **Risk:** Malicious exports could crash the app or fill the disk.
-    *   **Fix:** Implement strict file size limits (e.g., 100MB max per file) and a global expansion ratio check (e.g., max 10x compression ratio) during unzip.
+*   **Zip Bombs & Resource Exhaustion:**
+    *   **Finding:** `import_from_notion` reads extracted files fully into memory (`file.read_to_string`).
+    *   **Risk:** Malicious exports (Zip Bomb) or extremely large files (10GB text) will cause Out-Of-Memory (OOM) crashes (DoS).
+    *   **Fix:**
+        1.  Check uncompressed size header before reading.
+        2.  Implement strict file size limits (e.g., 100MB max per file).
+        3.  Stream the read or fail if size limit exceeded.
 *   **Path Traversal:**
     *   **Check:** Verify `file.enclosed_name()` is used. Ensure extracted paths do not contain `..` or resolve outside the target directory.
 
@@ -75,8 +83,10 @@ The `packages/core-rs` crate is the brain of Noteece. It handles encryption, syn
 ## Phase 1 Checklist
 - [ ] **Security:** Implement "dummy verify" for Auth timing attack mitigation.
 - [ ] **Security:** Implement `Zeroize` for `DEK`, `KEK`, and `SessionToken`.
+- [ ] **Security:** Fix Export logic (Remove double-decryption attempt).
 - [ ] **Mobile:** Confirm/Fix Encryption at Rest architecture.
 - [ ] **Sync:** Replace Wall Clock conflict detection with Logical/Vector Clocks.
 - [ ] **Sync:** Replace "Longer Title Wins" with Field-Level LWW.
 - [ ] **DB:** Verify `PRAGMA foreign_keys = ON` on connection pool.
 - [ ] **Perf:** Optimize `compute_entity_hashes` (avoid full scan).
+- [ ] **Import:** Add Max Size Check to avoid Zip Bombs.
