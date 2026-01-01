@@ -14,6 +14,7 @@ This document is the **Single Source of Truth** for the final polish of the Note
 ### 0.1 Dependency Audit
 *   **Rust (`Cargo.toml`):**
     *   [ ] `rusqlite`: Verify feature `bundled-sqlcipher-vendored-openssl` uses the correct OpenSSL version.
+        *   *Check:* `cargo tree -i openssl-sys`
     *   [ ] `gray_matter`: Check pinned to `0.2.2` (critical for frontmatter parsing).
     *   [ ] `jni`: Ensure optional dependency is correctly gated for Android builds.
 *   **Mobile (`apps/mobile/package.json`):**
@@ -27,6 +28,7 @@ This document is the **Single Source of Truth** for the final polish of the Note
 *   **Desktop:**
     *   [ ] Verify `tauri-cli` version matches `package.json`.
     *   [ ] Check `libwebkit2gtk` headers availability on Linux CI runners.
+        *   *Check:* `dpkg -l | grep libwebkit2gtk`
 
 ---
 
@@ -36,6 +38,7 @@ This document is the **Single Source of Truth** for the final polish of the Note
 ### 1.1 Core Security & Cryptography
 *   **Encryption (`crypto.rs`, `crypto/`):**
     *   [ ] `derive_key(password, salt)`: Verify Argon2id parameters (Memory=64MB, Iterations=3).
+        *   *Test:* `cargo test --package core-rs --lib crypto::tests::test_derive_key`
     *   [ ] `wrap_dek(dek, kek)` / `unwrap_dek(...)`: Audit for leakage of raw DEK.
     *   [ ] `encrypt_string(...)`: Verify `XChaCha20Poly1305` nonce generation is unique per write.
 *   **Authentication (`auth.rs`):**
@@ -58,10 +61,13 @@ This document is the **Single Source of Truth** for the final polish of the Note
     *   [ ] `verify_device()`: Audit Trust-On-First-Use (TOFU) logic. Does it reject unknown devices?
 *   **Logic & State (`sync/engine.rs`, `sync/vector_clock.rs`):**
     *   [ ] `VectorClock`: Verify causal ordering logic. Test scenarios with 3+ devices (A->B, B->C, A->C).
+        *   *Test:* `cargo test --package core-rs --lib sync::vector_clock::test_vector_clock_merge`
     *   [ ] `DeltaApplier`: Verify atomicity. If applying a delta fails, does the transaction rollback?
-*   **Networking (`sync/p2p.rs`):**
+    *   [ ] `get_deltas_since()`: Verify pagination and filtering by `updated_at`.
+*   **Networking (`sync/p2p.rs`, `sync/relay.rs`):**
     *   [ ] `mdns`: Audit service advertising timeouts. Does it stop advertising when sync is disabled?
     *   [ ] `websocket`: Verify handshake timeout (prevent hanging connections).
+    *   [ ] `submit_message()` / `fetch_messages()`: Check relay envelope size limits (e.g., 10MB max).
 
 ---
 
@@ -103,6 +109,7 @@ This document is the **Single Source of Truth** for the final polish of the Note
     *   [ ] **Optimization:** Refactor `social` extraction to reduce memory allocations (zero-copy parsing).
 *   **Frontend (UI/UX):**
     *   [ ] **Glassmorphism:** Apply backdrop-filter to Sidebar, Modals, and Cards.
+        *   *Action:* Use `backdrop-filter: blur(12px)` in CSS modules.
     *   [ ] **Transitions:** Implement `framer-motion` (Desktop) and `Reanimated` (Mobile) shared element transitions.
 
 ---
@@ -111,6 +118,7 @@ This document is the **Single Source of Truth** for the final polish of the Note
 **Goal:** Feature completeness.
 
 *   [ ] **Cloud Relay:** Implement `BlindRelayServer` for encrypted internet sync (Rust/Axum).
+    *   *Spec:* End-to-end encrypted blobs. Server sees only random IDs and encrypted bytes.
 *   [ ] **Plugin System:** Finalize `NoteecePlugin` trait and integration with WASM runtime (`wasmer`).
 *   [ ] **Smart Tags:** Implement NLP-based auto-tagging in `ai/intelligence.rs`.
 
