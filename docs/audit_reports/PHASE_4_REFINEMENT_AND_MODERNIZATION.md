@@ -1,75 +1,60 @@
-# Phase 4: Refinement & Modernization Report
+# Phase 4: Refinement & Modernization Audit
 
-**Status:** Ready for Execution
-**Goal:** Shift focus from "correctness" to "excellence". Optimize performance (memory, CPU, battery) and modernize the visual layer.
+**Status:** Optimization Opportunities Identified
+**Goal:** Optimization and Polish. Make it fast, make it smooth.
 
-## 4.1 Database Optimization (`core-rs`)
+## Overview
+Once the critical security and correctness issues (Phase 1-3) are resolved, Phase 4 targets performance and code quality. The audit identified specific bottlenecks in the Sync Engine and Frontend rendering.
 
-### Index Tuning
-*   **Method:** `EXPLAIN QUERY PLAN` analysis.
-*   **Target Queries:**
-    *   **Dashboard Load:** `SELECT * FROM task WHERE status != 'done'`.
-    *   **Project Kanban:** `SELECT * FROM task WHERE project_id = ? AND status = ?`.
-    *   **Sync:** `SELECT * FROM note WHERE modified_at > ?`.
-    *   **Health:** `SELECT * FROM health_metric WHERE space_id = ? ORDER BY recorded_at DESC`.
-*   **Findings:**
-    *   **Missing Index:** `idx_task_project_status` on `task(project_id, status)`. Current scan is inefficient for large projects.
-    *   **Missing Index:** `idx_health_metric_space_recorded` on `health_metric(space_id, recorded_at DESC)`. Used heavily for charts.
-    *   **Redundant Index:** `idx_note_mod` (modified_at) vs `idx_note_space_mod` (space_id, modified_at).
-        *   **Action:** Drop `idx_note_mod`. Queries almost always filter by `space_id` first.
-    *   **FTS Overhead:** `fts_task` triggers run on every insert.
-        *   **Optimization:** For bulk imports, disable triggers, run insert, then `REBUILD` FTS index.
+## 4.1 Backend Optimization (`core-rs`)
 
-### Rust Memory Optimization
-*   **Profiling Tool:** `valgrind --tool=massif` or `dhat`.
-*   **Hot Path:** `sync/engine.rs` -> `apply_deltas`.
-    *   **Issue:** `serde_json::from_slice::<Value>` allocates a HashMap for every JSON object.
-    *   **Optimization:** Use strong typing `serde_json::from_slice::<Task>`. This allows Serde to deserialize directly into the struct memory layout, avoiding heap allocations for field names.
-*   **String Churn:**
-    *   **Issue:** `delta.entity_id.clone()` is called frequently in loops.
-    *   **Optimization:** Use `Rc<str>` or `Arc<str>` for IDs if they are shared across threads/structs, or simply pass by reference `&str` where ownership isn't needed.
-*   **Blob Storage:**
-    *   **Optimization:** Implement streaming for `retrieve_blob` to handle >100MB files without OOM.
+### Database Query Tuning
+*   **Indexing:**
+    *   **Missing:** `CREATE INDEX idx_note_space_mod ON note(space_id, modified_at DESC)` is critical for the `get_deltas` query. Currently, it might be doing a full table scan if filtering by space.
+    *   **Redundant:** Check if `idx_note_mod` (global) is needed if we always query by `space_id`.
+*   **Query Plans:**
+    *   **Action:** Use `EXPLAIN QUERY PLAN` on the `compute_entity_hashes` query.
+    *   **Goal:** Ensure it uses a Covering Index (reading only from the B-Tree, not the heap).
 
-## 4.2 Frontend Performance
+### Memory & Allocation
+*   **Serialization:**
+    *   **Observation:** `smart_merge_entity` deserializes `serde_json::Value`. This is flexible but slow and heap-intensive.
+    *   **Optimization:** Define strict Structs (`TaskPartial`, `NotePartial`) for the merge logic to use `serde`'s zero-copy deserialization where possible.
+*   **Cloning:**
+    *   **Audit:** Review `DeltaGatherer`. Are we cloning the entire content of a note just to check a hash?
+    *   **Fix:** Hash the content stream directly from the DB row without loading the full string into RAM.
 
-### React Native Optimization
-*   **List Rendering (`FlashList`):**
-    *   **Prop:** `estimatedItemSize`.
-    *   **Audit:** If inaccurate, scroll bar jumps. Measure average height of `PostCard` (e.g., 250px) and set it explicitly.
-    *   **Prop:** `drawDistance`. Set to ~2000 (approx 2 screens) to pre-render content smoothly.
-*   **Animations (`Reanimated`):**
-    *   **Audit:** Check for `runOnJS(true)` usage.
-    *   **Goal:** Minimize. Animations should run purely on the UI thread.
-    *   **Shared Values:** Ensure heavily updated values (like scroll offset) are `SharedValue`s, not React State.
+## 4.2 Frontend Polish (`apps/desktop`)
 
-### Desktop UI Modernization
-*   **CSS Compositing:**
-    *   **Anti-Pattern:** `transition: width 0.3s`. (Triggers Layout).
-    *   **Fix:** `transform: scaleX(...)`. (Triggers Composite only).
+### Rendering Performance
+*   **Task Board:**
+    *   **Issue:** Dragging a card causes re-renders of the entire column.
+    *   **Fix:** Use `React.memo` with custom comparison functions. Move "Drag State" to a transient atom (Jotai/Zustand) to avoid React Context ripple effects.
+*   **Large Lists:**
+    *   **Issue:** `NoteList` renders all items?
+    *   **Fix:** Strict Virtualization (`react-window`).
+
+### Visual Polish
 *   **Glassmorphism:**
-    *   **Performance:** `backdrop-filter: blur(20px)` is expensive on 4K screens.
-    *   **Optimization:** Use a "Low Quality" mode toggle that replaces blur with a solid semi-transparent background (`rgba(5,5,6,0.95)`).
+    *   **Issue:** `backdrop-filter: blur()` is GPU expensive.
+    *   **Fix:** Disable on Low Power Mode or if battery < 20%.
+*   **Transitions:**
+    *   **Issue:** Layout thrashing when sidebar toggles.
+    *   **Fix:** Use CSS `transform: translateX` instead of changing `width`.
 
-## 4.3 Technical Debt & Cleanup (Codebase Scan Results)
+## 4.3 Mobile Polish (`apps/mobile`)
 
-### TODOs & Placeholders
-*   **Sync Logic:**
-    *   `packages/core-rs/src/sync/engine.rs`: "Check for notes modified since last sync if possible".
-        *   **Action:** Implement differential sync query using `modified_at > last_sync`.
-*   **Graph Visualizer:**
-    *   `apps/desktop/src/components/TemporalGraph.tsx`: "In a full production build, we would use 'react-force-graph-2d'".
-        *   **Action:** Replace the SVG placeholder with a proper WebGL-based graph library (`react-force-graph` or `sigma.js`) once dependencies allow.
-*   **General:**
-    *   **Action:** Execute `grep -r "TODO" .` and resolve or document remaining items in `ISSUES.md`.
+### Startup Time
+*   **Issue:** `initializeDatabase` runs migrations on every start.
+*   **Fix:** Cache the `db_version` in `AsyncStorage` and only run migration check if the App Version changed.
+
+### Gestures
+*   **Issue:** `react-native-gesture-handler` vs built-in Responder system.
+*   **Fix:** Ensure all swipe actions (Archive Note) use Reanimated 2/3 for 60fps native-thread interaction.
 
 ## Phase 4 Checklist
-- [ ] Create `idx_task_project_status`.
-- [ ] Create `idx_health_metric_space_recorded`.
-- [ ] Drop `idx_note_mod` if unused.
-- [ ] Refactor `apply_deltas` to use struct deserialization.
-- [ ] Profile memory usage of Sync Engine under load (10k items).
-- [ ] Set `FlashList` `drawDistance` and `estimatedItemSize` correctly.
-- [ ] Replace layout animations with transform animations where possible.
-- [ ] Resolve SVG placeholder in `TemporalGraph.tsx`.
-- [ ] Implement Streaming Blob Retrieval.
+- [ ] **HIGH:** Add `idx_note_space_mod` index.
+- [ ] **MEDIUM:** optimize `smart_merge_entity` serialization.
+- [ ] **MEDIUM:** Implement `React.memo` on Task Cards.
+- [ ] **LOW:** CSS Transform optimization for Sidebar.
+- [ ] **LOW:** Optimize Mobile Migration check.

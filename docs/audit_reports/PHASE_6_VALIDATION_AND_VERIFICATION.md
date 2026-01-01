@@ -1,67 +1,51 @@
-# Phase 6: Validation & Verification Report
+# Phase 6: Validation & Verification Audit
 
-**Status:** Ready for Execution
-**Goal:** Prove system stability through aggressive automated testing and structured manual "torture tests".
+**Status:** Testing Gaps Identified
+**Goal:** 100% Confidence. Prove it works.
 
-## 6.1 Sync Logic Tests (`packages/core-rs/tests/sync_logic.rs`)
+## Overview
+We cannot rely on "it compiles". The audit reveals a lack of adversarial testing, particularly for the Sync Engine and Security modules.
 
-### Scenario: The "Zombie" Task
-*   **Setup:**
-    *   Device A: Deletes Task T1.
-    *   Device B: Updates Task T1 (Title change).
-    *   Sync happens.
-*   **Expected Behavior:**
-    *   Conflict `UpdateDelete`.
-    *   Resolution: User intervention OR strict policy (usually Delete wins in LWW if timestamp is later).
-*   **Test:**
-    1.  Create T1. Sync.
-    2.  Dev A: `delete_task(T1)`.
-    3.  Dev B: `update_task(T1, "New Title")`.
-    4.  Sync.
-    5.  Assert `get_unresolved_conflicts` returns 1.
+## 6.1 Security Testing (Adversarial)
+*   **Timing Attack Test:**
+    *   **Goal:** Prove `AuthService::authenticate` is constant-time.
+    *   **Method:** Write a harness that measures `authenticate` duration for "User Found + Wrong Password" vs "User Not Found".
+    *   **Pass Criteria:** Difference must be statistically insignificant (< 5% variance).
+*   **Mobile Encryption Verification:**
+    *   **Goal:** Prove Mobile DB is encrypted.
+    *   **Method:**
+        1.  Run Mobile App in Simulator.
+        2.  Create a note "SECRET_PAYLOAD_123".
+        3.  Locate the `.sqlite` file on the host filesystem.
+        4.  Run `strings note.db | grep SECRET_PAYLOAD_123`.
+    *   **Pass Criteria:** Grep returns nothing.
+*   **Memory Dump Analysis:**
+    *   **Goal:** Prove DEK is not lingering.
+    *   **Method:** Run `procdump` (Windows) or `gcore` (Linux) on the running Desktop process. Search dump for the DEK hex string.
 
-### Scenario: The "Time Traveler"
-*   **Setup:**
-    *   Device A: Clock set to 2030. Edits Note N1.
-    *   Device B: Clock set to 2024. Edits Note N1.
-*   **Expected Behavior:**
-    *   LWW Logic: Device A wins.
-    *   **Risk:** Device B can *never* overwrite Device A until 2030.
-    *   **Test:** Verify "Hybrid Logical Clock" behavior (if implemented) or assert this is a known limitation.
+## 6.2 Sync Engine Verification
+*   **Torture Test 1: The Partition:**
+    *   **Setup:** Two devices (A, B).
+    *   **Action:** Cut network. Modify Note X on A. Modify Note X on B. Reconnect.
+    *   **Expectation:** Conflict detected. "Smart Merge" or "Conflict Copy" created. No data lost.
+*   **Torture Test 2: The Time Traveler:**
+    *   **Setup:** Device A clock is set to 2025. Device B is 2024.
+    *   **Action:** Sync.
+    *   **Expectation:** Logic should rely on Vector Clocks/Counters, NOT physical time. If physical time is used, ensure it handles "future" updates gracefully.
+*   **Torture Test 3: The Zip Bomb (Import):**
+    *   **Setup:** Import a 10KB zip that expands to 10GB.
+    *   **Expectation:** Import fails gracefully with "Quota Exceeded". App does not crash.
 
-## 6.2 Mobile Integration Tests
-
-### Scenario: Background Sync
-*   **Tool:** Maestro.
-*   **Flow:**
-    1.  Open App.
-    2.  Sync 100 notes.
-    3.  Background App (Home button).
-    4.  Wait 10s.
-    5.  Foreground App.
-    6.  **Assert:** Database connection is still valid (no "Socket closed").
-
-### Scenario: Large Vault Migration (v4->v5)
-*   **Test:**
-    1.  Populate DB v4 with 10,000 tasks.
-    2.  Launch App.
-    3.  Measure Migration Time.
-    4.  Assert < 5 seconds.
-
-## 6.3 Security Fuzzing
-
-### Input Fuzzing
-*   **Target:** `import_from_notion` (Zip Parser) and `process_sync_packet` (JSON Parser).
-*   **Tool:** `cargo-fuzz` or `afl`.
-*   **Scenarios:**
-    *   **Zip Bomb:** A tiny zip expanding to petabytes.
-    *   **Path Traversal:** Zip entries named `../../../../etc/passwd`.
-    *   **Malformed JSON:** Deeply nested arrays `[[[[...]]]]` to stack overflow the deserializer.
-*   **Goal:** Ensure `Result::Err` is returned, not `panic!`.
+## 6.3 Automated Testing Strategy
+*   **Unit Tests:** Increase coverage for `core-rs/src/sync/conflict.rs`.
+*   **Integration Tests:**
+    *   Use `TestContext` pattern in Rust to spin up ephemeral DBs.
+    *   Test full sync flow: `Init -> Create -> Sync -> Verify`.
+*   **E2E (Desktop):** Playwright tests for the "Golden Path" (Onboarding -> Create Note -> Search).
 
 ## Phase 6 Checklist
-- [ ] Implement "Zombie Task" integration test.
-- [ ] Implement "Time Traveler" integration test.
-- [ ] Verify Background/Foreground DB stability on Android.
-- [ ] Benchmark v4->v5 migration.
-- [ ] Run `cargo-fuzz` on `process_sync_packet`.
+- [ ] **CRITICAL:** Perform Mobile Encryption verification (grep test).
+- [ ] **HIGH:** Write Timing Attack harness.
+- [ ] **HIGH:** Implement "Time Traveler" sync test.
+- [ ] **MEDIUM:** Add Zip Bomb protection test.
+- [ ] **MEDIUM:** Set up Playwright for Desktop.

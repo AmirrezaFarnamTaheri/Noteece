@@ -1,88 +1,76 @@
-# Phase 2: The Frontend Audit Report
+# Phase 2: Frontend Audit Report (`apps/desktop` & `apps/mobile`)
 
-**Status:** Ready for Execution
-**Goal:** Ensure the User Interface is responsive, bug-free, and handles state mutations safely across both Desktop and Mobile platforms.
+**Status:** Significant Improvements Required
+**Goal:** Unbreakable UI state, fluid performance, and mobile stability.
 
-## 2.1 Desktop State (`apps/desktop/src/store.ts`)
+## Overview
+Phase 2 focuses on the user-facing applications. The audit reveals security weaknesses in the Desktop configuration and a fundamental encryption gap in the Mobile architecture.
 
-### Zustand Persistence
-*   **Config:** `persist(store, { name: 'app-storage' })`.
-*   **Audit Finding:** `activeSpaceId` is persisted.
-*   **Risk:** If the user deletes the active space (on another device or via manual DB edit), then opens Desktop, `activeSpaceId` points to a ghost. The app will likely show a blank screen or crash on `get_space(id)`.
-*   **Fix:** `onRehydrateStorage` callback should verify `activeSpaceId` exists in `spaces` array. If not, reset to `null`.
-*   **Performance:**
-    *   **Finding:** `spaces` array is also persisted.
-    *   **Risk:** If the user has 1000 spaces (unlikely but possible), local storage gets heavy.
-    *   **Fix:** Only persist `activeSpaceId` and `zenMode`. Fetch `spaces` from DB on boot.
+## 2.1 Desktop Experience (`apps/desktop`)
 
-### React Component Performance (`apps/desktop`)
-*   **TaskBoard:**
-    *   **Audit:** Check for `React.memo` on `TaskCard`.
-    *   **Risk:** Dragging one card causes re-render of *all* cards in the column.
-    *   **Fix:** Memoize `TaskCard`. Use `dnd-kit`'s `<DragOverlay>` to optimize the dragging visual.
-*   **API Layer (`api.ts`):**
-    *   **Type Safety:** `createManualTimeEntry` manually maps `started_at` (Rust snake_case) to `startedAt` (JS camelCase).
-    *   **Risk:** Fragile. If Rust struct changes, TS won't complain until runtime failure.
-    *   **Fix:** Use `serde` rename attributes in Rust to force camelCase JSON output, matching JS conventions automatically.
+### Security Configuration
+*   **File:** `src-tauri/tauri.conf.json`
+*   **Finding:** CSP `script-src` includes `'unsafe-inline'` and `'unsafe-eval'`.
+*   **Risk:** Critical XSS vulnerability. If a malicious note (imported or synced) contains `<script>`, it could execute code.
+*   **Fix:**
+    *   Remove `'unsafe-eval'`.
+    *   Remove `'unsafe-inline'` and use Nonces or Hashes for allowed scripts.
+    *   Move all inline event handlers (e.g., `onclick="..."`) to external React event bindings.
+*   **Finding:** `connect-src https://*`.
+*   **Risk:** Data exfiltration. An attacker (via XSS) could send vault data to any server.
+*   **Fix:** Whitelist only specific domains if needed (e.g., for link previews), or proxy them through the Rust backend.
 
-## 2.2 Mobile Database (`apps/mobile/src/lib/database.ts`)
+### State Management (`store.ts`)
+*   **Finding:** `activeSpaceId` is persisted via `zustand/persist`.
+*   **Scenario:** User deletes a Space on Device A. Syncs to Device B. Device B's UI tries to load `activeSpaceId` (which no longer exists).
+*   **Result:** UI crash or blank screen ("Space not found").
+*   **Fix:** Add a `hydrate` callback to validate `activeSpaceId` against the actual list of spaces in the DB upon load. If missing, reset to default.
 
-### Migration Logic
-*   **Function:** `runMigrations`
-*   **Audit Finding (v4->v5):**
-    *   `const tagNames = item.tags.split(',')`.
-    *   **Logic:** In-memory processing of *all* notes with tags.
-    *   **Memory Risk:** If a user has 10,000 notes, `oldTags` array might cause OOM on low-end Android.
-    *   **Fix:** Process in chunks (LIMIT/OFFSET) or use a cursor.
+### Memory Safety
+*   **File:** `src-tauri/src/state.rs`
+*   **Finding:** `DbConnection` holds `dek: Mutex<Option<Vec<u8>>>`.
+*   **Risk:** The Data Encryption Key exists in process memory.
+*   **Fix:** Use `secrecy` crate or `Zeroize` to protect this memory region. Ensure it is explicitly zeroed on Lock Screen or App Suspend.
 
-### JSI Bridge Integration
-*   **Code:** `if (syncBridge.isJSIAvailable()) ... syncBridge.init(dbPath)`.
-*   **Concurrency:**
-    *   SQLite is opened in JS (`SQLite.openDatabaseAsync`) AND in Rust (`syncBridge.init`).
-    *   **Risk:** `SQLITE_BUSY`. If Rust Sync Engine writes while JS UI reads, one will fail if WAL mode isn't perfect.
-    *   **Check:** `PRAGMA journal_mode=WAL` is set in Rust, but is it set in Expo SQLite? Expo SQLite often uses `DELETE` mode by default.
-    *   **Action:** Explicitly run `db.execAsync('PRAGMA journal_mode = WAL;')` in `initializeDatabase`.
+---
 
-## 2.3 Mobile UI Components (`src/components/social`)
+## 2.2 Mobile Experience (`apps/mobile`)
 
-### List Performance
-*   **Component:** `PostCard.tsx` (inferred).
-*   **Images:** Social feeds are image-heavy.
-*   **Risk:** Using standard `<Image />` without caching causes re-downloads on every scroll.
-*   **Audit:** Check if `expo-image` is used.
-*   **Fix:** Mandatory usage of `expo-image` with `cachePolicy="memory-disk"` for all user-generated content.
-*   **Draw Distance:**
-    *   **Component:** `FlashList`.
-    *   **Setting:** `drawDistance`.
-    *   **Tuning:** Set to roughly 2x screen height. Too low = blank spaces on fast scroll. Too high = memory waste.
+### Data Privacy & Encryption (Critical)
+*   **File:** `apps/mobile/src/lib/database.ts`
+*   **Finding:** Uses `expo-sqlite` to open the database.
+*   **Deep Dive:** `expo-sqlite` does not natively support SQLCipher encrypted databases.
+*   **Implication:**
+    *   **Scenario A:** Mobile app uses a plaintext database. This breaks the "End-to-End Encrypted" security model.
+    *   **Scenario B:** Mobile app fails to open the encrypted DB synced from Desktop.
+*   **Action:** Verify if `op-sqlite` (which supports SQLCipher) or a custom native module is required. The entire mobile storage security model needs a review.
 
-### Interaction & Accessibility
-*   **Component:** `CategoryPicker.tsx`.
-*   **Touch Targets:** Ensure category chips are at least 44x44 points.
-*   **State:** Does selecting a category trigger a full list re-render?
-*   **Audit:** Check for `useCallback` on selection handlers passed to children.
-*   **Accessibility:** Ensure `accessibilityLabel` is set for all icon-only buttons.
+### Permissions & Privacy
+*   **File:** `app.json`
+*   **Finding:** Plugins (`expo-location`, `expo-camera`) are included.
+*   **Risk:** These plugins add permissions to the manifest.
+*   **Action:**
+    *   **Least Privilege:** If "Geo-tagging Tasks" is not a V1 feature, remove `expo-location`.
+    *   **Runtime Check:** Ensure permissions are only requested when the user explicitly triggers the feature.
 
-## 2.4 Mobile Screens (`src/screens`)
+### JSI Bridge Stability
+*   **File:** `apps/mobile/src/lib/sync/sync-bridge.ts`
+*   **Finding:** `syncBridge.init` is called.
+*   **Risk:** If the Rust JSI module panics (e.g., on unwrap), it crashes the entire App (VM exit).
+*   **Fix:**
+    *   Ensure `packages/core-rs` catches ALL panics at the FFI boundary (`std::panic::catch_unwind`).
+    *   Return error codes to JS instead of crashing.
 
-### Navigation State
-*   **Issue:** Android "Don't Keep Activities" setting.
-*   **Risk:** If user backgrounds app while editing a note, OS kills activity.
-*   **Audit:** Does the app restore the draft state on restart?
-*   **Fix:** Persist draft content to `AsyncStorage` on every keystroke (debounced 500ms) or `onBlur`.
-
-## 2.5 Desktop Hooks & Utils (`src/hooks`)
-
-### Stale Closures
-*   **Pattern:** `useEffect(() => { ... }, [])` using `props`.
-*   **Audit:** Check complex hooks like `useSyncStatus`. If `activeSpaceId` changes but isn't in the dep array, the hook might poll the *old* space.
-*   **Fix:** Exhaustive Deps rule (`eslint-plugin-react-hooks`).
+### Performance
+*   **Component:** `SocialFeed` / `TaskBoard`
+*   **Finding:** Usage of standard `<Image>` vs `expo-image`.
+*   **Impact:** Poor memory management on long lists (FlashList).
+*   **Fix:** Enforce `expo-image` for all user content to leverage disk caching and downsampling.
 
 ## Phase 2 Checklist
-- [ ] Add `PRAGMA journal_mode = WAL` to `initializeDatabase` in Mobile.
-- [ ] Paginate the v4->v5 migration tag processing.
-- [ ] Implement `onRehydrateStorage` validation for `activeSpaceId`.
-- [ ] Switch Social Feed images to `expo-image` if not already.
-- [ ] Verify `CategoryPicker` handlers are memoized.
-- [ ] Implement Draft Persistence for Note Editor (Mobile).
-- [ ] Enable `react-hooks/exhaustive-deps` and fix all warnings.
+- [ ] **CRITICAL:** Fix Mobile Database Encryption (Replace `expo-sqlite`?).
+- [ ] **HIGH:** Tighten Desktop CSP (Remove `unsafe-inline`).
+- [ ] **HIGH:** Implement State Hydration Validation (Zustand).
+- [ ] **HIGH:** Secure DEK in Desktop Memory.
+- [ ] **MEDIUM:** Remove unused Expo Plugins (Location/Camera).
+- [ ] **MEDIUM:** Wrap JSI calls in Panic Catchers (Rust side).

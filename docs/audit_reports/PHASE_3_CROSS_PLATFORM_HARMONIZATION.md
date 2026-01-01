@@ -1,82 +1,58 @@
-# Phase 3: Cross-Platform Harmonization Report
+# Phase 3: Cross-Platform Harmonization Audit
 
-**Status:** Ready for Execution
-**Goal:** Guarantee that logic, data, and design behave identically across Desktop (Tauri) and Mobile (React Native), eliminating the "Second-Class Citizen" feel of the mobile app.
+**Status:** Major Discrepancies Found
+**Goal:** One Logic, Two Faces. Total feature and data parity between Desktop and Mobile.
 
-## 3.1 Data Schema Divergence
+## Overview
+Noteece promises a unified experience. However, the audit shows the Desktop app (Rust-heavy) and Mobile app (JS-heavy) are drifting apart in critical areas like Encryption and Schema interpretation.
 
-### Task Model
-*   **Desktop (Rust `migrations.rs`):**
-    *   `status` IN ('inbox', 'next', 'in_progress', 'waiting', 'done', 'cancelled').
-*   **Mobile (Code Review):**
-    *   Often mobile apps simplify to `todo` / `done`.
-    *   **Audit Finding:** `apps/desktop/src/services/api.ts` maps `Task` directly.
-    *   **Risk:** If Mobile UI writes `status = 'todo'`, the Rust backend CHECK constraint (`CHECK(status IN...)`) will reject it, causing Sync failure.
-    *   **Action:**
-        *   Verify `apps/mobile/src/types/index.ts` matches the CHECK constraint exactly.
-        *   Audit `TaskForm` on mobile to ensure it only offers valid status options.
+## 3.1 The Encryption Gap
+*   **Desktop:** Uses `rusqlite` + `SQLCipher`. Data is encrypted at rest.
+*   **Mobile:** Uses `expo-sqlite`. Data is likely plaintext at rest.
+*   **Consequence:**
+    *   **Security:** Mobile is the "weak link".
+    *   **Sync:** Direct file transfer (e.g., via iTunes/USB) of the database is impossible because the formats are incompatible (Encrypted vs Plain). Sync must rely solely on the P2P Delta protocol.
+*   **Harmonization Strategy:**
+    *   Must adopt a SQLCipher-compatible layer on Mobile (`op-sqlite` or `react-native-quick-sqlite` with encryption support).
+    *   The `rust_init` FFI function must accept the vault password to key the connection on the Rust side for JSI.
 
-### Time Entry
-*   **Desktop:** `duration_seconds` (INTEGER).
-*   **Mobile:** Often calculates duration on the fly.
-*   **Audit:** `createManualTimeEntry` in `api.ts` takes `durationSeconds`.
-*   **Parity:** Ensure Mobile sync logic calculates `duration_seconds` before sending to Rust, or Rust handles `ended_at - started_at` calculation.
-*   **Proposal:** Deprecate `duration_seconds` in the API and only send `started_at` and `ended_at`. Let the backend compute duration.
+## 3.2 Schema & Data Parity
 
-### JSON Serialization Mappings
-*   **Goal:** 100% consistent JSON shapes.
-*   **Audit Target:**
-    *   **Rust:** `#[derive(Serialize)]` structs.
-    *   **TS:** `interface` definitions.
-*   **Specifics:**
-    *   `Note`:
-        *   Rust: `content_md`
-        *   Mobile JS: `content`? `body`?
-        *   **Fix:** Force `#[serde(rename = "content")]` in Rust to align with "Content" concept, or update JS to `content_md`.
-    *   `Project`:
-        *   Rust: `goal_outcome`
-        *   Mobile JS: `goal`?
-        *   **Fix:** Align to `goal_outcome`.
+### Database Schema
+*   **File:** `packages/core-rs/src/db/migrations.rs` (Desktop)
+*   **File:** `apps/mobile/src/lib/database.ts` (Mobile)
+*   **Audit:**
+    *   Mobile `runMigrations` (v5) manually replicates Core `migrations.rs`.
+    *   **Risk:** Double maintenance. If Core changes `Task` schema, Mobile *will* break or data loss will occur during sync if Mobile logic isn't updated simultaneously.
+*   **Fix:**
+    *   **Short Term:** Add a CI check that verifies `schema.sql` (generated from Rust) matches Mobile migration constants.
+    *   **Long Term:** Mobile should *only* use Rust for migrations via JSI. The JS side should not run DDL statements.
 
-## 3.2 Feature Parity
+### Business Logic Divergence
+*   **Task Status:**
+    *   Mobile maps `todo` -> `next`.
+    *   Core `task` table `CHECK` constraint allows `inbox, next, in_progress, waiting, done, cancelled`.
+    *   **Gap:** Does Mobile support `inbox` or `waiting`? If not, valid tasks synced from Desktop might break the Mobile UI.
+*   **Time Entries:**
+    *   Desktop calculates duration using `chrono` (Rust).
+    *   Mobile calculates duration using `Date` (JS).
+    *   **Risk:** Timezone handling differences could lead to slightly different "Hours Worked" stats.
 
-### Sync Conflicts
-*   **Desktop:** `getSyncConflicts` command returns detailed `SyncConflict` objects.
-*   **Mobile:** `nativeGetSyncProgress` returns a summary.
-*   **Gap:** Mobile users cannot *resolve* conflicts (choose "Mine" vs "Theirs").
-*   **Action:** Expose `nativeResolveConflict` via JSI.
-    *   Signature: `nativeResolveConflict(conflictId: string, resolution: "local" | "remote")`.
-
-### Social Media
-*   **Desktop:** Can view `WebViewSession` logic (cookies).
-*   **Mobile:** Needs native `WebView` to replicate the session capture logic.
-*   **Audit:** Does `apps/mobile` have a `SocialLoginScreen` that saves cookies to the `social_account` table?
-    *   **Requirement:** Mobile app must implement a hidden `WebView` or a specific Login Flow that extracts `session_id` cookies and injects them into the SQLite `social_account` table (encrypted).
-
-## 3.3 Visual & Design System
-
-### Design Tokens
-*   **Problem:** Colors are hardcoded in `theme.ts` (Desktop) and `constants/Colors.ts` (Mobile).
-*   **Fix:** Extract a `tokens.json` (or `packages/ui/tokens.ts`):
-    *   `primary`: `#...`
-    *   `background`: `#050506`
-    *   `surface`: `#...`
-*   **Typography:**
-    *   Desktop: `rem` units.
-    *   Mobile: `sp` (Scaleable Pixels).
-    *   **Audit:** Verify that `text-base` on Desktop roughly matches `16sp` on Mobile visually.
-
-### Touch Targets & Contrast
-*   **Contrast:** Check "Deep Obsidian" theme against WCAG AA.
-    *   Dark Gray text on Black background often fails.
-    *   **Fix:** Ensure text is at least `#A1A1AA` (Zinc-400) on `#050506`.
-*   **Mobile Touch:**
-    *   **Audit:** `SocialHub` filter chips.
-    *   **Fix:** Ensure `padding` creates a hit slop of 44dp minimum.
+## 3.3 Design System & UI
+*   **Theme:**
+    *   Desktop: `apps/desktop/src/theme.ts`
+    *   Mobile: `apps/mobile/src/lib/theme.ts`
+    *   **Gap:** Colors are manually duplicated.
+    *   **Fix:** Extract `packages/ui/tokens.json` (Design Tokens) and generate both TS files from this source.
+*   **Icons:**
+    *   Desktop: `tabler-icons`.
+    *   Mobile: `MaterialCommunityIcons`.
+    *   **Gap:** Visual inconsistency. User sees a "Check" icon on Desktop and a different "Check" on Mobile.
+    *   **Fix:** Standardize on one set (e.g., `lucide-react` / `lucide-react-native` or `tabler`).
 
 ## Phase 3 Checklist
-- [ ] Add `nativeResolveConflict` to Mobile JSI.
-- [ ] Align `Task` status enums across Rust, Desktop TS, and Mobile TS.
-- [ ] Verify `TimeEntry` duration calculation logic on Mobile.
-- [ ] Implement Mobile WebView cookie capture for Social Accounts.
-- [ ] Create `packages/ui/tokens.ts` and refactor both apps to use it.
+- [ ] **CRITICAL:** Harmonize Database Encryption (Mobile must use SQLCipher).
+- [ ] **HIGH:** Move Database Migrations logic to Rust (JSI) to avoid split-brain schema.
+- [ ] **MEDIUM:** Shared Design Tokens (JSON Source of Truth).
+- [ ] **MEDIUM:** Standardize Icon Set.
+- [ ] **LOW:** Verify Timezone math parity (Rust vs JS).

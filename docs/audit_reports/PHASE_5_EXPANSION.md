@@ -1,72 +1,45 @@
-# Phase 5: Expansion Report
+# Phase 5: Expansion (New Features) Audit
 
-**Status:** Ready for Execution
-**Goal:** Implement differentiating features (`Blind Relay`, `Plugins`, `Local AI`) securely and robustly.
+**Status:** Future Planning
+**Goal:** Feature completeness and ecosystem growth.
 
-## 5.1 Cloud Relay (Blind Relay Server)
+## Overview
+Phase 5 defines the trajectory after V1. The audit highlights the infrastructure required to support these features safely.
 
-### Protocol Specification
-*   **Concept:** "Dumb Pipe". The server stores encrypted blobs addressed by a hash.
-*   **Sequence:**
-    1.  **Device A (Push):**
-        *   Generates `Payload = Encrypt(Data, Key)`.
-        *   Generates `BoxID = Hash(PublicKey + "Relay")`.
-        *   `POST /box/{BoxID}` with `Payload`.
-    2.  **Server:**
-        *   Stores `Payload` at `BoxID`.
-        *   Sets TTL (e.g., 24 hours).
-    3.  **Device B (Pull):**
-        *   Derives `BoxID`.
-        *   `GET /box/{BoxID}`.
-        *   `Decrypt(Payload, Key)`.
-*   **Security:**
-    *   Server *never* sees `Key`.
-    *   Server *never* sees `PublicKey` (only Hash).
-    *   **Rate Limiting:** 1GB/day per IP.
+## 5.1 Cloud Relay (The "Blind" Server)
+*   **Concept:** A dumb pipe server that forwards encrypted blobs between devices when P2P is unavailable (different networks).
+*   **Audit Requirement:**
+    *   **Zero Knowledge:** The Relay MUST NOT possess the KEK or DEK.
+    *   **Protocol:** Use Noise Protocol Framework or similar for the transport layer.
+    *   **DoS Protection:** Rate limiting (e.g., "Max 1GB transfer/day/IP").
+    *   **Ephemeral:** The Relay should not store data longer than 24h.
 
 ## 5.2 Plugin System (`packages/core-rs/src/plugin.rs`)
+*   **Current State:** Trait definition exists.
+*   **Security Risk:** Running 3rd party code.
+*   **Requirement:**
+    *   **Sandboxing:** WASM (WebAssembly) is the only viable path for safe plugins.
+    *   **Host Functions:** Define a strict API (`get_note(id)`, `save_note(id)`) that the plugin can call.
+    *   **Fuel Metering:** Prevent infinite loops in plugins from freezing the Core.
 
-### WASM Host Functions
-*   **API Surface:**
-    *   `get_note(id: &str) -> Option<String>`
-    *   `create_note(title: &str, content: &str) -> String`
-    *   `log(msg: &str)`
-*   **Sandboxing:**
-    *   **Runtime:** `wasmer` / `wasmtime`.
-    *   **Memory:** Limit to 64MB per plugin.
-    *   **Fuel:** Meter instructions. Kill if > 1M ops (prevent infinite loops).
-    *   **IO:** No network access. No FS access outside the vault.
+## 5.3 Local AI (RAG)
+*   **Current State:** `llm` module exists but depends on external APIs?
+*   **Goal:** Local Inference.
+*   **Requirement:**
+    *   **Model Management:** Download/Cache quantized models (GGUF format).
+    *   **Hardware:** Use `wgpu` or Metal on macOS / Vulkan on Android.
+    *   **Context Window:** Smart chunking of notes (Markdown-aware) for the Vector Database.
+    *   **Privacy:** Ensure no data leaves the device during inference.
 
-## 5.3 Local AI & Intelligence
-
-### RAG Pipeline
-*   **Embedding Model:** `all-MiniLM-L6-v2` (Quantized).
-    *   Small, fast, runs on CPU.
-*   **Vector Store:** `sqlite-vss` or a simple in-memory K-D Tree (for < 10k notes).
-*   **Inference:**
-    *   **Engine:** `ort` (ONNX Runtime).
-    *   **Flow:** User Query -> Embed -> Search Vectors -> Retrieve Top 5 Notes -> LLM Context.
-*   **Resource Management:**
-    *   **Critical:** Unload the model immediately after response generation to free ~500MB RAM.
-
-## 5.4 Advanced Visualizers & Widgets
-
-### Temporal Graph
-*   **Feature:** Interactive 2D/3D knowledge graph evolution.
-*   **Implementation:** Replace current SVG placeholder with `react-force-graph-2d`.
-*   **Data:** Use `get_graph_evolution_cmd` (already audited) to feed the visualizer.
-
-### Rich Widgets
-*   **Goal:** Expand Dashboard capabilities.
-*   **New Widgets:**
-    *   `HabitHeatmap`: GitHub-style contribution graph for habit completions.
-    *   `FocusTimer`: Pomodoro timer integrated with Task state (In Progress -> Done).
-    *   `SocialTrends`: Sparklines showing engagement metrics from the Social Suite.
+## 5.4 Multi-User / Collaboration (Future)
+*   **Current State:** `project_hub` has `assignee` fields.
+*   **Gap:** Encryption is currently Single-Key (Shared Vault Password).
+*   **Requirement:**
+    *   **MLS (Messaging Layer Security):** Move to Group Encryption where each user has their own key, and a Group Key is derived.
+    *   **ACLs:** `db` schema needs `owner_id` and `permissions` bitmask on every entity.
 
 ## Phase 5 Checklist
-- [ ] Implement Blind Relay Server (Rust/Axum).
-- [ ] Define `HostFunctions` trait for WASM.
-- [ ] Implement `Fuel` metering for plugins.
-- [ ] Integrate `ort` for local embeddings.
-- [ ] Implement `react-force-graph-2d` visualizer.
-- [ ] Build `HabitHeatmap` widget.
+- [ ] Define Relay Protocol (Noise).
+- [ ] Prototype WASM Plugin Host (using `wasmer` or `wasmtime`).
+- [ ] Evaluate `candle` or `burn` for Rust-based Local LLM inference.
+- [ ] Design MLS-based Key Management for Multi-User vaults.
