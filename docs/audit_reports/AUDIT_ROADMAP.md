@@ -1,168 +1,56 @@
 # 🗺️ The Ultimate Noteece Audit & Execution Roadmap
 
-**Status:** Definitive Execution Plan (Expanded)
+**Status:** Definitive Execution Plan (Expanded & Enriched)
 **Goal:** Production Release v1.0.0
 **Scope:** Every File. Every Line. Every Interaction.
 
 This document is the **Single Source of Truth** for the final polish of the Noteece ecosystem. It is designed to be executed linearly, ensuring no layer is built upon a shaky foundation.
 
+**Recent Updates:**
+*   **CRITICAL SECURITY FINDING:** Mobile App (Expo) likely stores data in Plaintext due to lack of SQLCipher support in `expo-sqlite`. This requires immediate architectural remediation (Phase 3.1).
+*   **CRITICAL SECURITY FINDING:** Auth Service vulnerable to Timing Attacks (Phase 1.1).
+*   **ARCHITECTURAL GAP:** Sync Engine uses Wall Clock time instead of Vector Clocks (Phase 1.3).
+*   **ARCHITECTURAL INCONSISTENCY:** Export logic expects Double Encryption (ALE) but Database stores Plaintext (relying on SQLCipher), breaking exports.
+
 ---
 
 ## 🏗️ Phase 0: Environment & Foundation
 **Goal:** Ensure the build system is deterministic, secure, and reproducible.
-
-### 0.1 Dependency Audit & Security
-*   **Rust (`Cargo.toml`):**
-    *   [ ] `rusqlite`: Verify `bundled-sqlcipher-vendored-openssl` links correctly against OpenSSL 3.x+ to avoid legacy vulnerabilities.
-    *   [ ] `gray_matter`: Ensure pinned to `=0.2.2` to prevent breaking frontmatter parsing changes.
-    *   [ ] `jni`: Strict conditional compilation (`target_os = "android"`) to prevent symbol pollution in desktop binaries.
-    *   [ ] `audit`: Run `cargo audit` and resolve all RUSTSEC advisories.
-    *   [ ] `sbom`: Generate Software Bill of Materials using `cargo-sbom` or `syft`.
-*   **Mobile (`apps/mobile/package.json`):**
-    *   [ ] `expo-file-system`: Verify exact version match with `expo-sqlite` for consistent JSI filesystem access.
-    *   [ ] `react-native-reanimated`: Confirm version matches the Expo SDK recommendation (avoiding binary mismatches).
-    *   [ ] `pnpm`: Validate lockfile consistency (`pnpm install --frozen-lockfile`) in CI.
-    *   [ ] `permissions`: Audit `app.json` / `AndroidManifest.xml` to remove unused permissions (e.g., LOCATION, CAMERA).
-
-### 0.2 Toolchain & CI Verification
-*   **Android:**
-    *   [ ] NDK: Verify version (e.g., `25.2.9519653`) in `android/build.gradle`.
-    *   [ ] JDK: Enforce JDK 17 (Zulu/Corretto) in CI pipelines.
-    *   [ ] Gradle: Optimize JVM args (`-Xmx2g`) to prevent CI OOM kills.
-*   **Desktop:**
-    *   [ ] Tauri: Match CLI version with `package.json`.
-    *   [ ] Linux: Verify `libwebkit2gtk-4.1-dev` presence on Ubuntu 24.04+ runners.
-    *   [ ] Windows: Ensure MSVC v143 toolchain is used (not MinGW).
-
----
+*   **Key Action:** Resolve `rusqlite` vs `native-tls` OpenSSL conflict.
+*   **Key Action:** Verify Mobile Database Binary Capability (SQLCipher).
 
 ## 🔬 Phase 1: The Core Backend Audit (`packages/core-rs`)
 **Goal:** Mathematical correctness, data integrity, and absolute security.
-
-### 1.1 Core Security & Cryptography
-*   **Encryption (`crypto.rs`, `auth.rs`):**
-    *   [ ] `derive_key`: Transition from PBKDF2 (256k) to Argon2id for new vaults (Security vs Mobile Perf balance).
-    *   [ ] `Zeroize`: Implement `Zeroize` trait on all structs holding keys (`MasterKey`, `SessionToken`, `DEK`).
-    *   [ ] `random`: Verify `OsRng` usage for nonces and salts (specifically on Android via `getrandom`).
-    *   [ ] `timing`: Ensure `validate_session` uses constant-time comparison (`subtle::ConstantTimeEq`).
-*   **Import Safety (`import.rs`):**
-    *   [ ] `ZipBomb`: Implement strict file size limits (e.g., 10MB/file) and decompression ratio checks.
-    *   [ ] `PathTraversal`: Verify `file.enclosed_name()` is used correctly for all archive extractions.
-
-### 1.2 Data Persistence (`db/`)
-*   **Schema & Migrations (`migrations.rs`):**
-    *   [ ] `migrate`: Verify atomicity of complex migrations (v5 tags, v20 FTS triggers).
-    *   [ ] `performance`: Audit `CREATE TRIGGER` overhead on bulk operations.
-    *   [ ] `foreign_keys`: Ensure `PRAGMA foreign_keys = ON` is executed on every connection open.
-*   **Tuning (`pragma_tuning.rs`):**
-    *   [ ] `WAL`: Verify `PRAGMA journal_mode=WAL` is active on *both* Rust and Mobile-JS connections.
-    *   [ ] `mmap`: Configure `mmap_size` for optimal read performance.
-
-### 1.3 The Synchronization Engine (`sync/`)
-*   **Concurrency & State:**
-    *   [ ] `ClockSkew`: Replace wall-clock conflict detection with **Vector Clocks** (Lamport Timestamps).
-    *   **CRDTs:**
-        *   [ ] `Task`: Replace "Longer Title Wins" with LWW (Last Write Wins) based on logical clock.
-        *   [ ] `Note`: Review "Concat" merge strategy; consider 3-way text merge or keep as fallback.
-    *   [ ] `Threads`: Ensure `apply_deltas` runs in `spawn_blocking` to avoid UI freezes.
-*   **Protocol (`p2p.rs`):**
-    *   [ ] `Handshake`: Verify state machine (must complete handshake before accepting deltas).
-    *   [ ] `DoS`: Limit JSON recursion depth and message payload size (max 5MB).
-
----
+*   **Key Action:** Fix Timing Attacks in Auth.
+*   **Key Action:** Implement `Zeroize` for key memory protection.
+*   **Key Action:** Clarify Encryption Model (Fix Export vs Storage mismatch).
+*   **Key Action:** Implement Vector Clocks for correct Sync.
 
 ## 🖥️ Phase 2: The Frontend Audit (`apps/desktop` & `apps/mobile`)
 **Goal:** Unbreakable UI state, fluid performance, and mobile stability.
-
-### 2.1 Desktop Experience (`apps/desktop`)
-*   **State Management:**
-    *   [ ] `Zustand`: Implement `onRehydrateStorage` check to purge invalid `activeSpaceId`.
-    *   [ ] `ReactQuery`: Configure `retry: false` for 404s, `refetchOnWindowFocus: false` for heavy queries.
-*   **Performance:**
-    *   [ ] `TaskBoard`: Audit `dnd-kit` collision detection and `React.memo` on Task Cards.
-    *   [ ] `Virtualization`: Verify `react-window` is used for lists > 50 items.
-
-### 2.2 Mobile Experience (`apps/mobile`)
-*   **Stability:**
-    *   [ ] `Migration`: Paginate the v4->v5 tag migration to prevent OOM on large vaults.
-    *   [ ] `Concurrency`: Explicitly enable WAL mode in `Expo SQLite` initialization.
-*   **Performance:**
-    *   [ ] `FlashList`: Verify `estimatedItemSize` accuracy.
-    *   [ ] `Images`: Replace `<Image>` with `expo-image` (memory/disk caching) in Social Feed.
-    *   [ ] `Reanimated`: Audit shared value updates (run on UI thread).
-*   **Interaction:**
-    *   [ ] `TouchTargets`: Ensure all interactive elements are min 44x44pt.
-
----
+*   **Key Action:** Tighten Desktop CSP (Content Security Policy).
+*   **Key Action:** Fix Mobile Encryption at Rest.
 
 ## 🌉 Phase 3: Cross-Platform Harmonization
 **Goal:** One Logic, Two Faces. Total feature and data parity.
-
-*   [ ] **Schema Parity:**
-    *   Align `Task` status enums (`todo` vs `next`, etc.) in `types/index.ts` vs Rust `CHECK` constraints.
-    *   Standardize `TimeEntry` duration calculation (Mobile vs Desktop).
-*   **Feature Gap:**
-    *   Expose `resolve_conflict` via JSI for Mobile users.
-    *   Implement `WebView` cookie capture on Mobile for Social Accounts.
-*   **Design System:**
-    *   Create shared Design Tokens (JSON) for Colors/Typography.
-    *   Verify WCAG AA Contrast compliance.
-
----
+*   **Key Action:** Harmonize Encryption Stack (Mobile MUST use SQLCipher).
+*   **Key Action:** Standardize Timestamps (Seconds vs Milliseconds).
 
 ## 💎 Phase 4: Refinement & Modernization
 **Goal:** Optimization and Polish.
-
-*   **Backend Optimization:**
-    *   [ ] `SQL`: Add missing indices (e.g., `idx_task_project_status`). Remove redundant ones.
-    *   [ ] `Memory`: Optimize `apply_deltas` to deserialize into Structs (not `serde_json::Value`).
-    *   [ ] `Search`: Enable `trigram` tokenizer for FTS5 if fuzzy search is poor.
-*   **Frontend Polish:**
-    *   [ ] `CSS`: Use `transform` / `opacity` for animations (avoid layout thrashing).
-    *   [ ] `Glassmorphism`: Optimize `backdrop-filter` usage (disable on low-power mode).
-
----
+*   **Key Action:** Optimize Sync Manifest generation (O(1) vs O(N)).
 
 ## 🚀 Phase 5: Expansion (New Features)
 **Goal:** Feature completeness.
-
-*   [ ] **Cloud Relay:**
-    *   Implement "Blind Relay" protocol (Server sees only encrypted blobs).
-    *   Enforce TTL (24h) and Rate Limiting.
-*   **Plugin System:**
-    *   Finalize `NoteecePlugin` trait and `HostFunctions` (Sandboxed API).
-    *   Implement WASM loader with "Fuel" metering (prevent infinite loops).
-*   **Local AI:**
-    *   Integrate quantized models (`candle` / `ort`) for RAG.
-    *   Ensure models are unloaded from RAM immediately after inference.
-
----
+*   **Key Action:** Design "Blind Relay" and WASM Plugin System.
 
 ## 🛡️ Phase 6: Validation & Verification
 **Goal:** 100% Confidence.
-
-*   **Automated Testing:**
-    *   [ ] `Proptest`: Fuzz the Sync Engine (Network Partitions, Reordering).
-    *   [ ] `Playwright`: E2E tests for Golden Path (Install -> Sync).
-    *   [ ] `Maestro`: Mobile UI flows (Background/Foreground persistence).
-*   **Torture Tests:**
-    *   [ ] **Zombie Task:** Verify deletion propagation against stale updates.
-    *   [ ] **Time Traveler:** Verify Sync behavior with significant clock skew.
-    *   [ ] **Zip Bomb:** Verify Import resilience against 2GB+ files.
-    *   [ ] **Migration:** Benchmark v4->v5 migration with 10k notes (< 5s target).
-
----
+*   **Key Action:** Implement "Mobile File Inspection" test to prove encryption.
 
 ## 📚 Phase 7: Documentation & Release
 **Goal:** Public readiness.
-
-*   **Documentation:**
-    *   [ ] `Wiki`: Architecture diagrams (Sync, Encryption), User Guide.
-    *   [ ] `Legal`: Privacy Policy, Terms (if using Relay).
-*   **Release Artifacts:**
-    *   [ ] `Signing`: EV Cert (Windows), Notarization (macOS), Keystore (Android).
-    *   [ ] `SBOM`: Generate Software Bill of Materials.
-    *   [ ] `Checksums`: Publish SHA256 hashes of all binaries.
+*   **Key Action:** Generate SBOMs and Code Signing.
 
 ---
 

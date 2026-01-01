@@ -24,16 +24,15 @@ Phase 0 is the bedrock of the project. If the build environment is shaky, the re
 *   **Command:** `cargo audit`
     *   **Action:** Run this in `packages/core-rs`. It checks `RustSec` database for known vulnerabilities in the dependency tree.
     *   **Remediation:** If vulnerabilities are found, update crates. If a patch isn't available, document the risk in `ISSUES.md`.
-*   **OpenSSL / SQLCipher Complexity:**
-    *   **File:** `Cargo.toml` -> `rusqlite`
-    *   **Deep Dive:** We rely on `bundled-sqlcipher-vendored-openssl`.
-    *   **Verification:**
-        *   Run `cargo tree -p core-rs -i openssl-sys`.
-        *   **Acceptance Criteria:** It MUST show `openssl-sys` as a child of `rusqlite` (via `libsqlite3-sys`). It MUST NOT show a second `openssl-sys` being pulled in by another crate (e.g., `reqwest` without `rustls`).
-        *   **Risk:** "Diamond dependency" on OpenSSL causes symbol conflicts and random segfaults on Linux.
+*   **OpenSSL / SQLCipher Complexity (Diamond Dependency):**
+    *   **File:** `Cargo.toml`
+    *   **Observation:** `rusqlite` uses `bundled-sqlcipher-vendored-openssl`, while `tokio-tungstenite` (and potentially `reqwest`) uses `native-tls`.
+    *   **Risk:** This creates a potential conflict where two different versions of OpenSSL are linked (one vendored by SQLCipher, one system-provided by native-tls), leading to symbol collisions and random segfaults on Linux.
+    *   **Action:** Switch `tokio-tungstenite` to use `rustls-tls-native-roots` instead of `native-tls` to remove the system OpenSSL dependency entirely.
 *   **Crate Hygiene:**
     *   `perf-harness`: Ensure this binary is explicitly excluded from the release build pipeline (via `exclude` in `Cargo.toml` or build script filters) to prevent artifact bloat.
     *   `jni`: Ensure it is strictly guarded by `target_os = "android"` to prevent polluting the symbol table of the Desktop app.
+    *   `uuid` vs `ulid`: Project uses both (v1.10.0 and v1.2.1 respectively). Consolidate where possible, or document why both are needed (ULID for sortable IDs, UUID for standard compliance?).
 
 ### Build Scripts (`build.rs`)
 *   **Context:** Custom build logic that runs before compilation.
@@ -65,6 +64,17 @@ Phase 0 is the bedrock of the project. If the build environment is shaky, the re
 *   **Autolinking Logs:**
     *   **Action:** Run `npx expo prebuild --clean` and inspect the output.
     *   **Look for:** "Skipping package..." warnings. This indicates a native module is installed but not being linked, leading to runtime "Module not found" errors.
+
+### Permission Audit (`app.json` vs `AndroidManifest.xml`)
+*   **Observation:** `app.json` plugins list `expo-location` and `expo-camera`, but `android.permissions` only lists `VIBRATE` and `USE_BIOMETRIC`.
+*   **Risk:** Expo plugins *automatically* inject permissions (`ACCESS_FINE_LOCATION`, `CAMERA`) into the final `AndroidManifest.xml` during prebuild, even if they are not explicitly listed in the `android.permissions` array.
+*   **Action:** Inspect the generated `android/app/src/main/AndroidManifest.xml` after `npx expo prebuild`. If unused permissions are present, remove the corresponding plugins or configure them to exclude permissions.
+
+### Database Binary Capability (SQLCipher Check)
+*   **Critical Check:** The mobile app uses `expo-sqlite`. Standard `expo-sqlite` builds DO NOT include SQLCipher.
+*   **Implication:** If the Rust core expects to open an encrypted database (created by Desktop), but the Mobile UI opens it with standard SQLite, it will fail (file is not a database). If Mobile creates the DB, it will be plaintext.
+*   **Action:** Verify if `expo-sqlite` is replaced by a custom build or if `op-sqlite` / `react-native-quick-sqlite` (with encryption support) is required to match Core-RS encryption.
+*   **Note:** `mobile_ffi.rs` opens the database via `rusqlite`. If the underlying binary is not linked against SQLCipher on Android, Rust encryption features will panic or fail.
 
 ---
 
@@ -131,9 +141,10 @@ Phase 0 is the bedrock of the project. If the build environment is shaky, the re
 ## Phase 0 Checklist
 - [ ] `rust-toolchain.toml` exists and pins a stable version.
 - [ ] `cargo audit` returns 0 vulnerabilities.
-- [ ] `openssl-sys` is strictly deduped in the dependency tree.
+- [ ] `openssl-sys` conflict resolved (native-tls vs bundled).
 - [ ] `java -version` is 17.x.x.
 - [ ] `pkg-config` finds `webkit2gtk` on the Linux build machine.
 - [ ] `pnpm dedupe --check` passes.
 - [ ] CI workflows pin specific runner OS versions.
 - [ ] `perf-harness` is excluded from release artifacts.
+- [ ] Mobile `expo-sqlite` vs `sqlcipher` binary capability verified (Critical).
