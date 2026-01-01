@@ -1,162 +1,82 @@
-# Phase 1: The Core Backend Audit Report
+# Phase 1: Core Backend Audit Report (`packages/core-rs`)
 
-**Status:** Ready for Execution
-**Goal:** Verify the mathematical correctness, security properties, and logical robustness of the `packages/core-rs` library.
+**Status:** In Progress
+**Goal:** Ensure mathematical correctness, data integrity, and absolute security of the Rust core.
 
-## 1.1 Synchronization Logic (`sync/engine.rs`)
+## Overview
+The `packages/core-rs` crate is the brain of Noteece. It handles encryption, synchronization, and data storage. A failure here is catastrophic (data loss or leak). This audit dives into the deepest implementation details.
 
-### Concurrency & Locks
-*   **Struct:** `SyncAgent`
-*   **Threading:** The `SyncAgent` does *not* appear to hold internal state locks (Mutex/RwLock). It relies on `&Connection` being passed in.
-*   **Risk:** `rusqlite::Connection` is not thread-safe.
-*   **Audit Finding:** `apply_deltas` takes `&mut Connection`. This forces single-threaded access, which is good for safety but potentially blocks the UI if the transaction is long.
-*   **Action:** Ensure `apply_deltas` is run in a separate thread (e.g. `tauri::async_runtime::spawn_blocking`).
+## 1.1 Core Security & Cryptography
 
-### Conflict Detection & Resolution
-*   **Function:** `detect_conflict`
-*   **Logic:**
-    *   It currently checks `local_ts > last_sync` AND `remote_delta.timestamp > last_sync`.
-    *   **Vulnerability:** Clock Skew. If `last_sync` is based on local time, and `remote_delta.timestamp` is from a device with a clock 1 year in the future, it might falsely trigger (or miss) conflict logic.
-    *   **Fix:** **Vector Clocks**.
-        *   Implement a `VectorClock` struct (Map<DeviceID, Counter>).
-        *   Increment local counter on every write.
-        *   Send Vector Clock with every `SyncDelta`.
-        *   Conflict exists if `RemoteVC` is neither dominant nor subordinate to `LocalVC` (Concurrent).
-*   **Smart Merge (`smart_merge_entity`):**
-    *   **Task Merge:**
-        *   Logic: `merged["title"] = remote["title"]` if remote is longer.
-        *   **Flaw:** "Longer title wins" is a heuristic, not a CRDT.
-        *   **Fix:** Implement **Last Write Wins (LWW)** based on a logical timestamp (or wall clock with drift correction) for the *field* level, or manual resolution.
-    *   **Note Merge:**
-        *   Logic: Concatenates content with `--- MERGED REMOTE CONTENT ---`.
-        *   **Flaw:** This duplicates content on every sync cycle if the conflict isn't resolved immediately.
-        *   **Fix:** Store the conflict as a "Conflict Copy" (e.g., `Note Title (Conflict 2023-10-27)`) instead of merging inline.
+### 1.1.1 Authentication & Key Derivation (`auth.rs`, `crypto.rs`)
+*   **Password Hashing:**
+    *   **Current:** `Argon2id` is used for password verification. `PBKDF2-HMAC-SHA512` (256k iterations) is used for Database Key (KEK) derivation.
+    *   **Finding (Timing Attack):** `AuthService::authenticate` returns `InvalidCredentials` immediately if the user is not found, but takes ~500ms (Argon2 verify) if the password is wrong.
+    *   **Risk:** Allows username enumeration via timing analysis.
+    *   **Fix:** Implement a "dummy verify" path. If user not found, perform a dummy Argon2 verification on a fake hash to equalize timing.
+*   **Key Management in Memory:**
+    *   **Finding:** Keys (`DEK`, `KEK`, `SessionToken`) are stored as `Vec<u8>` or `String` and are dropped normally.
+    *   **Risk:** Memory dump or swap file analysis could reveal keys.
+    *   **Fix:** Implement `Zeroize` trait for all structs holding sensitive data. Ensure keys are overwritten with zeros on drop.
+*   **Encryption at Rest (Mobile Gap):**
+    *   **Finding:** `note.rs` inserts `content_md` directly into the database. It relies on SQLCipher for encryption.
+    *   **Critical Risk:** If the Mobile App (using `expo-sqlite`) opens this DB without SQLCipher support, it creates a **Plaintext** database. The `mobile_ffi.rs` bridge does not appear to pass a key to `rusqlite::Connection::open`.
+    *   **Action:** Verify Mobile DB stack immediately. If unencrypted, this violates the "End-to-End Encrypted" promise.
 
-## 1.2 Data Persistence (`db/migrations.rs`)
+### 1.1.2 Import Safety (`import.rs`)
+*   **Zip Bombs:**
+    *   **Risk:** Malicious exports could crash the app or fill the disk.
+    *   **Fix:** Implement strict file size limits (e.g., 100MB max per file) and a global expansion ratio check (e.g., max 10x compression ratio) during unzip.
+*   **Path Traversal:**
+    *   **Check:** Verify `file.enclosed_name()` is used. Ensure extracted paths do not contain `..` or resolve outside the target directory.
 
-### Migration Safety
-*   **Function:** `migrate`
-*   **Pattern:** Checks `current_version` and applies batches.
-*   **Audit Finding (Version 5):**
-    *   Logic: `SELECT ... FROM task` -> `DROP TABLE task` -> `ALTER TABLE task_new RENAME`.
-    *   **Risk:** If `task_new` creation fails (e.g. OOM), the transaction rolls back. Safe.
-    *   **Risk:** `tags` migration logic is complex (string splitting). It assumes tags are comma-separated. If a tag contains a comma, data is corrupted.
-    *   **Fix:** Write a dedicated unit test for this migration block using a mock DB with dirty data.
+## 1.2 Data Persistence (`db/`)
 
-### FTS Triggers (Version 20)
-*   **Logic:** `CREATE TRIGGER task_ai ... INSERT INTO fts_task`.
-*   **Performance:** Triggers add overhead to every write.
-*   **Audit:** Check if bulk imports disable triggers? No. Bulk import of 10k tasks will be 2x slower due to FTS updates.
-*   **Fix:** For bulk operations (Import), consider temporarily dropping triggers and rebuilding the FTS index at the end.
+### 1.2.1 Schema & Migrations
+*   **Atomicity:**
+    *   **Finding:** `migrate` function checks version and applies updates.
+    *   **Check:** Ensure *all* steps of a migration version are wrapped in a *single* transaction. If step 2 fails, step 1 must roll back.
+*   **Foreign Keys:**
+    *   **Finding:** SQLite does not enforce FKs by default.
+    *   **Action:** Verify `PRAGMA foreign_keys = ON;` is executed on *every* new connection (in `DbConnection` setup or connection pool factory).
 
-## 1.3 Authentication (`auth.rs`)
+### 1.2.2 Performance
+*   **Hashing:**
+    *   **Finding:** `SyncAgent::compute_entity_hashes` performs a full table scan (`SELECT id, modified_at FROM note`) to generate the Merkle/Hash tree.
+    *   **Risk:** O(N) operation on every sync. For 10k+ notes, this causes noticeable lag.
+    *   **Fix:** Maintain a pre-computed `merkle_tree` or `manifest_hash` in a separate table, updated via Triggers on Insert/Update/Delete.
 
-### Timing Attacks
-*   **Function:** `authenticate`
-*   **Code:** `Argon2::default().verify_password(...)`.
-*   **Finding:** `argon2` crate handles constant-time comparison. This is safe.
-*   **Token Gen:** `rand::thread_rng().fill(...)`. Safe.
+## 1.3 The Synchronization Engine (`sync/`)
 
-### Session Management
-*   **Function:** `validate_session`
-*   **Query:** `SELECT ... FROM sessions WHERE token = ?`.
-*   **Performance:** `token` is indexed (`idx_sessions_token`). Fast.
+### 1.3.1 Concurrency & Conflict Detection
+*   **Vector Clocks (Critical Gap):**
+    *   **Finding:** `engine.rs` uses Wall Clock Time (`local_ts > last_sync`) for conflict detection. `vector_clock` map is present but derived from `sync_history` (Hybrid Clock), not a true Logical Clock carried with Deltas.
+    *   **Risk:** Clock skew between devices leads to false conflicts or lost updates (Last Write Wins based on skewed clock).
+    *   **Action:** Implement true Vector Clocks (Lamport Timestamps) attached to every `SyncDelta` and persisted in `entity_metadata`.
+*   **Merge Heuristics:**
+    *   **Task:** Uses "Longer Title Wins".
+    *   **Risk:** User corrects a typo (shortening title) -> Remote longer title overwrites it.
+    *   **Fix:** Use Timestamp/Logical Clock for field-level LWW (Last Write Wins).
+    *   **Note:** "Concat" strategy for notes is safe but poor UX. Consider `diff-match-patch` text merging.
 
-## 1.4 Social Media Suite (`social/stream_processor.rs`)
+### 1.3.2 Protocol (`p2p.rs`)
+*   **State Machine:**
+    *   **Check:** Verify `Handshake` -> `Auth` -> `Sync` state transitions are enforced. A peer sending `SyncDelta` before `Handshake` should be dropped.
+*   **DoS Protection:**
+    *   **Risk:** `serde_json` recursion limit. A deeply nested JSON payload could stack overflow the sync thread.
+    *   **Fix:** Configure `serde_json` recursion limit and enforce max payload size (e.g., 5MB).
 
-### Data Ingestion
-*   **Struct:** `StreamProcessor`
-*   **Buffer:** Uses `VecDeque` with fixed capacity (30 lines).
-*   **Deduplication:** `bloomfilter::Bloom` with 0.01 error rate.
-    *   **Audit:** Bloom filter is probablistic. 1 in 100 duplicate posts might slip through.
-    *   **Risk:** Low. Only results in minor data duplication.
-*   **Platform Detection:**
-    *   **Logic:** Simple substring checks ("Twitter", "Reddit").
-    *   **Risk:** Generic text "I like Reddit" might be misclassified as a Reddit post.
-    *   **Fix:** Use specific selectors (package ID from Android Accessibility event) if possible, rather than raw text.
-    *   **Persistance:** Ensure the Bloom Filter is cleared on "Session End" or explicitly managed to prevent it from filling up over weeks of uptime.
-
-## 1.5 Search Module (`search/mod.rs`)
-
-### Query Parsing
-*   **Function:** `search_notes`
-*   **Logic:** Splits query by whitespace. Extracts `tag:value`.
-*   **SQL Injection:**
-    *   **Audit:** Uses `params.push(...)` for FTS query and tags. Safe.
-    *   **FTS Syntax:** Uses `MATCH ?2`.
-    *   **Risk:** If user types `title:foo OR title:bar` directly into the search bar, `MATCH` might throw a syntax error if not sanitized/escaped.
-    *   **Fix:** Sanitize the user input. Escape quotes `"` and FTS operators `NEAR`, `OR`, `AND` unless explicitly supported.
-
-## 1.6 Task & Calendar Modules (`task`, `calendar`)
-
-### Recurrence Logic (`task/db.rs`)
-*   **Function:** `handle_recurrence`
-*   **Logic:** Checks for `parent_task_id` to prevent infinite loops. Parses `RRULE`.
-*   **Flaw:** Uses `dt.timestamp() > current_due`.
-*   **Risk:** Timezone handling. If `current_due` is UTC timestamp but `RRULE` is floating (no TZ), shifts might occur.
-*   **Edge Case:** If `due_at` is `None`, defaults to `now`. A task without a due date cannot logically recur "Weekly".
-*   **Fix:** Require `due_at` for recurrence.
-
-### ICS Export (`calendar.rs`)
-*   **Logic:** `calendar.add_event(event)`.
-*   **Audit:** Generates a new ULID for every export event (`Event::new(ulid::Ulid::new().to_string(), ...)`).
-*   **Risk:** Importing this ICS into Google Calendar repeatedly will create duplicates because the UID changes every time.
-*   **Fix:** Use the `Task.id` as the persistent UID for the ICS event.
-
-## 1.7 Import & Export (`import.rs`)
-
-### Zip Bomb & Path Traversal
-*   **Function:** `import_from_notion` / `import_from_obsidian`
-*   **Audit:** `WalkDir` for Obsidian. `ZipArchive` for Notion.
-*   **Path Traversal:** `file.enclosed_name()` is used. Safe.
-*   **Resource Exhaustion:** `file.read_to_string(&mut content)` reads entire files into RAM.
-    *   **Risk:** DoS via large file.
-    *   **Fix:** Limit read size (e.g. `take(10MB)`) and check zip header size.
-
-### Decryption Safety
-*   **Function:** `export_to_json`
-*   **Logic:** Iterates notes, calls `decrypt_string`.
-*   **Failure Mode:** If decryption fails, it logs a warning and clears content. Safe.
-
-## 1.8 Goals, Habits, Health (`goals.rs`, `habits.rs`, `health.rs`)
-
-### Data Integrity
-*   **Goals:** `update_goal_progress` checks `current >= target`. Logic is sound.
-*   **Habits:** `complete_habit` logic for streaks (`diff <= 7` for weekly).
-    *   **Risk:** Timezone boundary issues. `chrono::DateTime::from_timestamp(..., 0)` assumes UTC. A user completing a habit at 1AM Tuesday (UTC) might be Monday (local).
-    *   **Fix:** Store timezone offset with habit logs or normalize to "User Day".
-*   **Health:** `create_health_metric` inserts raw float values.
-    *   **Risk:** No validation on `value` (e.g., negative heart rate).
-    *   **Fix:** Add `min/max` constraints based on `metric_type`.
-
-## 1.9 Note Versioning & Blobs (`versioning.rs`, `blob.rs`)
-
-### Blob Storage (`blob.rs`)
-*   **Chunking:** 4KB chunks.
-*   **Encryption:** `XChaCha20Poly1305` per chunk.
-*   **Key Derivation:** `HKDF(MasterKey, Hash(Chunk))`.
-*   **Audit Finding:** This is **Content-Addressed Storage** (CAS).
-    *   **Good:** Automatic deduplication of identical chunks (e.g., common images, headers).
-    *   **Risk:** `retrieve_chunk` decrypts into memory `Vec<u8>`. For a 50MB file, `retrieve_blob` accumulates all chunks in RAM.
-    *   **Fix:** Implement streaming retrieval (`Iterator<Item = Result<Vec<u8>>>`) to avoid OOM on large attachments.
-
-### Versioning (`versioning.rs`)
-*   **Format:** `zstd` compressed raw bytes.
-*   **Naming:** ULID filenames.
-*   **Limit:** `create_snapshot` does *not* prune old snapshots.
-    *   **Risk:** Infinite growth of history folder.
-    *   **Fix:** Implement a "retention policy" (keep last 10, or 1 per day for 30 days) in `create_snapshot`.
+## 1.4 API Surface (FFI)
+*   **Safety:**
+    *   `mobile_ffi.rs` uses `unsafe` pointers (`*const c_char`).
+    *   **Check:** Ensure all pointers are checked for NULL. Ensure strings are valid UTF-8. Ensure `CString` memory is freed correctly (`rust_free_string`).
+    *   **Thread Safety:** The `GLOBAL_P2P` and `DB_PATH` are `Mutex` protected, which is good.
 
 ## Phase 1 Checklist
-- [ ] Refactor `smart_merge_entity` for Task Titles (Timestamp LWW instead of Length).
-- [ ] Verify `apply_deltas` is never called on the UI thread.
-- [ ] Implement Vector Clock logic for `detect_conflict`.
-- [ ] Test migration v5 with tags containing commas.
-- [ ] Implement FTS query sanitization in `search_notes`.
-- [ ] Verify `StreamProcessor` bloom filter lifecycle.
-- [ ] Fix `handle_recurrence` to handle `due_at = None`.
-- [ ] Fix `export_ics` to use stable UIDs.
-- [ ] Add strict file size limit (10MB) to `import_from_notion`.
-- [ ] Add timezone awareness to Habit Streak calculation.
-- [ ] Implement retention policy for Note Snapshots.
-- [ ] Refactor `retrieve_blob` to return a Stream/Iterator.
+- [ ] **Security:** Implement "dummy verify" for Auth timing attack mitigation.
+- [ ] **Security:** Implement `Zeroize` for `DEK`, `KEK`, and `SessionToken`.
+- [ ] **Mobile:** Confirm/Fix Encryption at Rest architecture.
+- [ ] **Sync:** Replace Wall Clock conflict detection with Logical/Vector Clocks.
+- [ ] **Sync:** Replace "Longer Title Wins" with Field-Level LWW.
+- [ ] **DB:** Verify `PRAGMA foreign_keys = ON` on connection pool.
+- [ ] **Perf:** Optimize `compute_entity_hashes` (avoid full scan).
