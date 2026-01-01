@@ -38,7 +38,20 @@ This phase defines the roadmap for features that are currently stubs or planned.
     *   **Space Key:** A symmetric key for the Space, encrypted with each member's Public Key.
     *   **ACL:** `rbac` tables exist. Need to enforce them in the Sync logic.
 
+## 5.5 Deep Dive: Social Intelligence Privacy
+*   **Privacy Guarantee:**
+    *   The `StreamProcessor` ingests raw accessibility text (highly sensitive).
+    *   **Audit Requirement:** Implement a "Local Processing Guarantee" (LPG). Code must technically prevent this stream from being networked.
+*   **Deduplication:** Move from probabilistic Bloom Filter to deterministic Content-Addressable Storage (CAS) hashes for long-term reliability.
+
 ## Phase 5 Checklist
+- [ ] Implement Blind Relay Server (Rust/Axum).
+- [ ] Define `HostFunctions` trait for WASM.
+- [ ] Implement `Fuel` metering for plugins.
+- [ ] Integrate `ort` for local embeddings.
+- [ ] Implement `react-force-graph-2d` visualizer.
+- [ ] Build `HabitHeatmap` widget.
+- [ ] Audit `StreamProcessor` for network isolation.
 - [ ] **Relay:** Design "Blind Relay" API spec.
 - [ ] **Plugin:** Prototype WASM host with `wasmtime`.
 - [ ] **AI:** Benchmark `candle` vs `ort` for on-device inference.

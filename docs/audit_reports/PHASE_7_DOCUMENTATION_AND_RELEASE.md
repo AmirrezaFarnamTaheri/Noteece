@@ -33,7 +33,20 @@ Documentation must be treated as code. It must be versioned, accurate, and compr
 *   **Terms of Service:**
     *   Liability limitations (Software provided "AS IS").
 
+## 7.4 Deep Dive: Architecture Diagrams
+*   **Missing:** Encryption Key Hierarchy (Master Key -> KEK -> DEK -> Content).
+*   **Missing:** Sync Protocol Sequence (Handshake -> Delta Exchange -> Conflict).
+*   **Action:** Create MermaidJS diagrams in `docs/wiki/Architecture/`.
+
 ## Phase 7 Checklist
+- [ ] SBOM is generated and archived.
+- [ ] Windows binary has a valid Digital Signature.
+- [ ] macOS binary passes Notarization.
+- [ ] Android APK signature verifies.
+- [ ] `SHA256SUMS.txt` matches artifacts.
+- [ ] Third-party licenses are compiled and included.
+- [ ] Wiki content populated according to `STRUCTURE.md`.
+- [ ] Create Encryption & Sync Diagrams.
 - [ ] **Docs:** Complete Architecture Diagrams (Mermaid.js).
 - [ ] **Release:** Automate SBOM generation in GitHub Actions.
 - [ ] **Release:** Set up Code Signing secrets in CI.

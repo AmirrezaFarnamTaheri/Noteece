@@ -46,7 +46,18 @@ Once correctness (Phase 1) and Security (Phase 0/2) are addressed, we optimize. 
     *   **Audit:** Remove `unwrap()` and `expect()` from `core-rs`. Replace with proper `Result` propagation (`?`).
     *   **Logging:** Ensure structured logging (JSON in production, pretty in dev) via `tracing` crate instead of `log` + `env_logger`.
 
+### SRS Event Sourcing
+*   **Observation:** `revision_history_json` duplicates `review_log`.
+*   **Fix:** Remove JSON blob. Reconstruct history from logs on-the-fly.
+
 ## Phase 4 Checklist
+- [ ] **HIGH:** Fix Cartesian Product query.
+- [ ] **HIGH:** Add `idx_note_space_mod`.
+- [ ] **MEDIUM:** Sanitize Search Queries.
+- [ ] **MEDIUM:** Optimize `apply_deltas` memory.
+- [ ] **LOW:** Implement Streaming Blobs.
+- [ ] **LOW:** CSS Optimizations.
+- [ ] **LOW:** Resolve all TODOs.
 - [ ] **DB:** Add `idx_note_space_mod` index.
 - [ ] **Sync:** Optimize Manifest generation (Merkle Tree or Timestamp Index).
 - [ ] **Search:** Test `trigram` tokenizer for FTS5.

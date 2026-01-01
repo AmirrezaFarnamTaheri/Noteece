@@ -44,7 +44,20 @@ We move beyond unit tests to "Torture Testing" and Security Validation.
 *   **Zip Bomb:**
     *   Import a "Zip Bomb" (42.zip). App must fail gracefully (Error message), not crash or hang system.
 
+### Security Verification
+*   **Mobile Encryption:** Run `grep` on simulator filesystem to verify encryption.
+    *   *Method:* Create a note with unique string "SECRET_PAYLOAD", find `.sqlite` file, run `grep "SECRET_PAYLOAD"`. Should return empty.
+*   **Timing Attack:** Measure `authenticate` latency delta.
+    *   *Method:* Loop 1000 times: `authenticate("valid_user", "wrong_pass")` vs `authenticate("invalid_user", "wrong_pass")`.
+
 ## Phase 6 Checklist
+- [ ] Implement "Zombie Task" integration test.
+- [ ] Implement "Time Traveler" integration test.
+- [ ] Verify Background/Foreground DB stability on Android.
+- [ ] Benchmark v4->v5 migration.
+- [ ] Run `cargo-fuzz` on `process_sync_packet`.
+- [ ] Perform Mobile Encryption Verification (grep).
+- [ ] Run Auth Timing Harness.
 - [ ] **Fuzz:** Implement Property-Based Tests for Sync.
 - [ ] **Security:** Implement "Mobile File Inspection" test script.
 - [ ] **Security:** Implement Auth Timing benchmark.
