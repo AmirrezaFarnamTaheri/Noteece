@@ -1,63 +1,48 @@
 # Phase 6: Validation & Verification Report
 
-**Status:** Ready for Execution
-**Goal:** Prove system stability through aggressive automated testing and structured manual "torture tests".
+**Status:** Continuous
+**Goal:** 100% Confidence. Testing is not an afterthought; it is the acceptance criteria.
 
-## 6.1 Sync Logic Tests (`packages/core-rs/tests/sync_logic.rs`)
+## Overview
+We move beyond unit tests to "Torture Testing" and Security Validation.
 
-### Scenario: The "Zombie" Task
-*   **Setup:**
-    *   Device A: Deletes Task T1.
-    *   Device B: Updates Task T1 (Title change).
-    *   Sync happens.
-*   **Expected Behavior:**
-    *   Conflict `UpdateDelete`.
-    *   Resolution: User intervention OR strict policy (usually Delete wins in LWW if timestamp is later).
-*   **Test:**
-    1.  Create T1. Sync.
-    2.  Dev A: `delete_task(T1)`.
-    3.  Dev B: `update_task(T1, "New Title")`.
-    4.  Sync.
-    5.  Assert `get_unresolved_conflicts` returns 1.
+## 6.1 Automated Testing Strategy
 
-### Scenario: The "Time Traveler"
-*   **Setup:**
-    *   Device A: Clock set to 2030. Edits Note N1.
-    *   Device B: Clock set to 2024. Edits Note N1.
-*   **Expected Behavior:**
-    *   LWW Logic: Device A wins.
-    *   **Risk:** Device B can *never* overwrite Device A until 2030.
-    *   **Test:** Verify "Hybrid Logical Clock" behavior (if implemented) or assert this is a known limitation.
+### 6.1.1 Fuzz Testing (`proptest`)
+*   **Target:** Sync Engine (`core-rs/sync`).
+*   **Scenario:**
+    *   Generate random `SyncDelta` streams.
+    *   Simulate network partitions, message reordering, and dropped packets.
+    *   **Invariant:** `A.merge(B).merge(C) == A.merge(C).merge(B)` (Convergence).
 
-## 6.2 Mobile Integration Tests
+### 6.1.2 Security Regression Tests
+*   **Timing Attack Test:**
+    *   **Setup:** Measure response time of `AuthService::authenticate` for:
+        1.  Unknown User.
+        2.  Known User + Wrong Password.
+    *   **Pass:** Delta < 50ms (standard deviation).
+*   **Mobile Encryption Test:**
+    *   **Setup:**
+        1.  Run Mobile App in Emulator.
+        2.  Create a note "SECRET_PAYLOAD".
+        3.  Pull the `.db` file via `adb pull`.
+        4.  Run `strings noteece.db | grep SECRET_PAYLOAD`.
+    *   **Pass:** grep returns NOTHING.
+    *   **Fail:** grep finds the string (Plaintext at Rest).
 
-### Scenario: Background Sync
-*   **Tool:** Maestro.
-*   **Flow:**
-    1.  Open App.
-    2.  Sync 100 notes.
-    3.  Background App (Home button).
-    4.  Wait 10s.
-    5.  Foreground App.
-    6.  **Assert:** Database connection is still valid (no "Socket closed").
+### 6.1.3 End-to-End (E2E)
+*   **Desktop:** Playwright.
+    *   **Flow:** Install -> Create Vault -> Create Note -> Restart App -> Verify Persistence.
+*   **Mobile:** Maestro.
+    *   **Flow:** Install -> Scan QR (Sync) -> Verify Data appears.
 
-### Scenario: Large Vault Migration (v4->v5)
-*   **Test:**
-    1.  Populate DB v4 with 10,000 tasks.
-    2.  Launch App.
-    3.  Measure Migration Time.
-    4.  Assert < 5 seconds.
-
-## 6.3 Security Fuzzing (Deep Dive)
-
-### Input Fuzzing
-*   **Target:** `import_from_notion` (Zip Parser) and `process_sync_packet` (JSON Parser).
-*   **Tool:** `cargo-fuzz` or `afl`.
-*   **Scenarios:**
-    *   **Zip Bomb:** A tiny zip expanding to petabytes.
-    *   **Path Traversal:** Zip entries named `../../../../etc/passwd`.
-    *   **Malformed JSON:** Deeply nested arrays `[[[[...]]]]` to stack overflow the deserializer.
-*   **Goal:** Ensure `Result::Err` is returned, not `panic!`.
+## 6.2 Manual Torture Tests
+*   **Zombie Task:**
+    *   Delete a task on A. Update it on B. Sync. Ensure it stays deleted (or resurrects properly based on LWW).
+*   **Time Traveler:**
+    *   Set Device A clock to 2020. Set Device B to 2025. Edit same note. Sync. Verify behavior matches defined conflict resolution strategy.
+*   **Zip Bomb:**
+    *   Import a "Zip Bomb" (42.zip). App must fail gracefully (Error message), not crash or hang system.
 
 ### Security Verification
 *   **Mobile Encryption:** Run `grep` on simulator filesystem to verify encryption.
@@ -73,3 +58,8 @@
 - [ ] Run `cargo-fuzz` on `process_sync_packet`.
 - [ ] Perform Mobile Encryption Verification (grep).
 - [ ] Run Auth Timing Harness.
+- [ ] **Fuzz:** Implement Property-Based Tests for Sync.
+- [ ] **Security:** Implement "Mobile File Inspection" test script.
+- [ ] **Security:** Implement Auth Timing benchmark.
+- [ ] **E2E:** Set up Playwright/Maestro pipelines.
+- [ ] **Perf:** Benchmark Migration v4->v5 with 10k notes.

@@ -1,78 +1,50 @@
 # Phase 4: Refinement & Modernization Report
 
-**Status:** Ready for Execution
-**Goal:** Shift focus from "correctness" to "excellence". Optimize performance (memory, CPU, battery) and modernize the visual layer.
+**Status:** Planned
+**Goal:** Optimization, Code Polish, and Architectural Clean-up.
 
-## 4.1 Database Optimization (`core-rs`)
+## Overview
+Once correctness (Phase 1) and Security (Phase 0/2) are addressed, we optimize. This phase targets performance bottlenecks and technical debt identified during the deep dive.
 
-### Index Tuning
-*   **Method:** `EXPLAIN QUERY PLAN` analysis.
-*   **Target Queries:**
-    *   **Dashboard Load:** `SELECT * FROM task WHERE status != 'done'`.
-    *   **Project Kanban:** `SELECT * FROM task WHERE project_id = ? AND status = ?`.
-    *   **Sync:** `SELECT * FROM note WHERE modified_at > ?`.
-    *   **Health:** `SELECT * FROM health_metric WHERE space_id = ? ORDER BY recorded_at DESC`.
-*   **Findings:**
-    *   **Missing Index:** `idx_task_project_status` on `task(project_id, status)`. Current scan is inefficient for large projects.
-    *   **Missing Index:** `idx_health_metric_space_recorded` on `health_metric(space_id, recorded_at DESC)`. Used heavily for charts.
-    *   **Redundant Index:** `idx_note_mod` (modified_at) vs `idx_note_space_mod` (space_id, modified_at).
-        *   **Action:** Drop `idx_note_mod`. Queries almost always filter by `space_id` first.
-    *   **FTS Overhead:** `fts_task` triggers run on every insert.
-        *   **Optimization:** For bulk imports, disable triggers, run insert, then `REBUILD` FTS index.
+## 4.1 Backend Optimization (`packages/core-rs`)
 
-### Query Optimization (Deep Dive)
-*   **Issue:** Cartesian Product in `get_projects_in_space`.
-    *   **Logic:** `LEFT JOIN task` AND `LEFT JOIN milestone`.
-    *   **Risk:** Returns `Projects * Tasks * Milestones` rows.
-    *   **Fix:** Split into 3 queries or use `JSON_GROUP_ARRAY`.
+### 4.1.1 Database Tuning
+*   **Indexing Strategy:**
+    *   **Missing Indices:**
+        *   `idx_task_project_status`: For "Get all active tasks in project".
+        *   `idx_note_space_mod`: For Sync Manifest generation (`SELECT id, modified_at FROM note WHERE space_id = ?`).
+    *   **Redundant Indices:** Audit `db/migrations.rs` for duplicate indices created by automatic tools.
+*   **Query Optimization:**
+    *   **Sync Manifest:**
+        *   **Current:** O(N) scan of `note` table.
+        *   **Optimization:** Introduce a `merkle_tree` table or a `last_sync_state` table to reduce scan scope to only modified items since `last_sync_at`.
+    *   **Memory:**
+        *   **Current:** `apply_deltas` deserializes JSON to `serde_json::Value` then to Structs.
+        *   **Refinement:** Deserialize directly to Structs (`ZeroCopy` if possible) to reduce allocation churn.
 
-### Search Optimization
-*   **Issue:** FTS5 Query Construction.
-    *   **Risk:** Syntax errors on user input (`*`, `"`).
-    *   **Fix:** Sanitize input string before binding to `MATCH`.
+### 4.1.2 Search Engine (`search/`)
+*   **FTS5 Configuration:**
+    *   **Current:** `porter unicode61 remove_diacritics 2`.
+    *   **Refinement:** Evaluate `trigram` tokenizer for better fuzzy matching (substring search).
+    *   **Ranking:** Implement `bm25` ranking function for better relevance sorting.
 
-### Rust Memory Optimization
-*   **Profiling Tool:** `valgrind --tool=massif` or `dhat`.
-*   **Hot Path:** `sync/engine.rs` -> `apply_deltas`.
-    *   **Issue:** `serde_json::from_slice::<Value>` allocates a HashMap for every JSON object.
-    *   **Optimization:** Use strong typing `serde_json::from_slice::<Task>`. This allows Serde to deserialize directly into the struct memory layout, avoiding heap allocations for field names.
-*   **String Churn:**
-    *   **Issue:** `delta.entity_id.clone()` is called frequently in loops.
-    *   **Optimization:** Use `Rc<str>` or `Arc<str>` for IDs if they are shared across threads/structs, or simply pass by reference `&str` where ownership isn't needed.
-*   **Blob Storage:**
-    *   **Optimization:** Implement streaming for `retrieve_blob` to handle >100MB files without OOM.
+## 4.2 Frontend Polish (`apps/desktop` & `apps/mobile`)
 
-## 4.2 Frontend Performance
+### 4.2.1 Visual Performance
+*   **CSS/Animation:**
+    *   **Check:** Ensure animations use `transform` and `opacity` only (GPU accelerated). Avoid animating `width`, `height`, or `top/left` (Layout thrashing).
+    *   **Glassmorphism:** `backdrop-filter: blur()` is expensive.
+        *   **Optimization:** Disable blur on Low Power Mode or low-end devices. Use a static semi-transparent fallback.
 
-### React Native Optimization
-*   **List Rendering (`FlashList`):**
-    *   **Prop:** `estimatedItemSize`.
-    *   **Audit:** If inaccurate, scroll bar jumps. Measure average height of `PostCard` (e.g., 250px) and set it explicitly.
-    *   **Prop:** `drawDistance`. Set to ~2000 (approx 2 screens) to pre-render content smoothly.
-*   **Animations (`Reanimated`):**
-    *   **Audit:** Check for `runOnJS(true)` usage.
-    *   **Goal:** Minimize. Animations should run purely on the UI thread.
-    *   **Shared Values:** Ensure heavily updated values (like scroll offset) are `SharedValue`s, not React State.
+### 4.2.2 Code Hygiene
+*   **React Best Practices:**
+    *   **Memoization:** Audit `useMemo` and `useCallback` usage in high-frequency components (`TaskBoard`, `GraphView`).
+    *   **Bundle Size:** Analyze `dist` output. Tree-shake unused icons from `@tabler/icons-react`.
 
-### Desktop UI Modernization
-*   **CSS Compositing:**
-    *   **Anti-Pattern:** `transition: width 0.3s`. (Triggers Layout).
-    *   **Fix:** `transform: scaleX(...)`. (Triggers Composite only).
-*   **Glassmorphism:**
-    *   **Performance:** `backdrop-filter: blur(20px)` is expensive on 4K screens.
-    *   **Optimization:** Use a "Low Quality" mode toggle that replaces blur with a solid semi-transparent background (`rgba(5,5,6,0.95)`).
-
-## 4.3 Technical Debt & Cleanup (Codebase Scan Results)
-
-### TODOs & Placeholders
-*   **Sync Logic:**
-    *   `packages/core-rs/src/sync/engine.rs`: "Check for notes modified since last sync if possible".
-        *   **Action:** Implement differential sync query using `modified_at > last_sync`.
-*   **Graph Visualizer:**
-    *   `apps/desktop/src/components/TemporalGraph.tsx`: "In a full production build, we would use 'react-force-graph-2d'".
-        *   **Action:** Replace the SVG placeholder with a proper WebGL-based graph library (`react-force-graph` or `sigma.js`) once dependencies allow.
-*   **General:**
-    *   **Action:** Execute `grep -r "TODO" .` and resolve or document remaining items in `ISSUES.md`.
+## 4.3 Rust Code Quality
+*   **Error Handling:**
+    *   **Audit:** Remove `unwrap()` and `expect()` from `core-rs`. Replace with proper `Result` propagation (`?`).
+    *   **Logging:** Ensure structured logging (JSON in production, pretty in dev) via `tracing` crate instead of `log` + `env_logger`.
 
 ### SRS Event Sourcing
 *   **Observation:** `revision_history_json` duplicates `review_log`.
@@ -86,3 +58,9 @@
 - [ ] **LOW:** Implement Streaming Blobs.
 - [ ] **LOW:** CSS Optimizations.
 - [ ] **LOW:** Resolve all TODOs.
+- [ ] **DB:** Add `idx_note_space_mod` index.
+- [ ] **Sync:** Optimize Manifest generation (Merkle Tree or Timestamp Index).
+- [ ] **Search:** Test `trigram` tokenizer for FTS5.
+- [ ] **UI:** Optimize Glassmorphism performance.
+- [ ] **Code:** Replace `unwrap()` with error propagation in `core-rs`.
+- [ ] **Code:** Tree-shake unused icons.

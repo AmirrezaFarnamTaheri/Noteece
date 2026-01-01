@@ -1,89 +1,62 @@
 # Phase 3: Cross-Platform Harmonization Report
 
-**Status:** Ready for Execution
-**Goal:** Guarantee that logic, data, and design behave identically across Desktop (Tauri) and Mobile (React Native), eliminating the "Second-Class Citizen" feel of the mobile app.
+**Status:** In Progress
+**Goal:** Achieve total feature and data parity between Desktop (Rust/Tauri) and Mobile (React Native/Rust-JSI). One Logic, Two Faces.
 
-## 3.1 Data Schema Divergence
+## Overview
+Noteece promises a seamless experience across devices. Currently, there are significant divergences in data security and implementation details that threaten this promise.
 
-### Task Model
-*   **Desktop (Rust `migrations.rs`):**
-    *   `status` IN ('inbox', 'next', 'in_progress', 'waiting', 'done', 'cancelled').
-*   **Mobile (Code Review):**
-    *   Often mobile apps simplify to `todo` / `done`.
-    *   **Audit Finding:** `apps/desktop/src/services/api.ts` maps `Task` directly.
-    *   **Risk:** If Mobile UI writes `status = 'todo'`, the Rust backend CHECK constraint (`CHECK(status IN...)`) will reject it, causing Sync failure.
-    *   **Action:**
-        *   Verify `apps/mobile/src/types/index.ts` matches the CHECK constraint exactly.
-        *   Audit `TaskForm` on mobile to ensure it only offers valid status options.
+## 3.1 Critical Parity Gaps
 
-### Time Entry
-*   **Desktop:** `duration_seconds` (INTEGER).
-*   **Mobile:** Often calculates duration on the fly.
-*   **Audit:** `createManualTimeEntry` in `api.ts` takes `durationSeconds`.
-*   **Parity:** Ensure Mobile sync logic calculates `duration_seconds` before sending to Rust, or Rust handles `ended_at - started_at` calculation.
-*   **Proposal:** Deprecate `duration_seconds` in the API and only send `started_at` and `ended_at`. Let the backend compute duration.
+### 3.1.1 Encryption at Rest (The "Split Brain" Problem)
+*   **Desktop:** Uses `rusqlite` + `sqlcipher` (Bundled OpenSSL). The DB file is fully encrypted (Page 0 + Content).
+*   **Mobile:** Uses `expo-sqlite` (Standard SQLite). The DB file is likely plaintext.
+*   **Conflict:**
+    *   If a user copies their `noteece.db` from Desktop to Mobile (manual sync/backup restore), Mobile **cannot open it** (it expects plaintext, gets ciphertext header).
+    *   If Mobile creates the DB, it is plaintext.
+*   **Harmonization Strategy:**
+    *   Mobile **MUST** adopt SQLCipher.
+    *   The JSI Bridge must support passing the encryption key to the Rust layer.
+    *   `packages/core-rs` must standardize on a single crypto provider (Ring/RustCrypto) to avoid OpenSSL linking issues on Android.
 
-### JSON Serialization Mappings
-*   **Goal:** 100% consistent JSON shapes.
-*   **Audit Target:**
-    *   **Rust:** `#[derive(Serialize)]` structs.
-    *   **TS:** `interface` definitions.
-*   **Specifics:**
-    *   `Note`:
-        *   Rust: `content_md`
-        *   Mobile JS: `content`? `body`?
-        *   **Fix:** Force `#[serde(rename = "content")]` in Rust to align with "Content" concept, or update JS to `content_md`.
-    *   `Project`:
-        *   Rust: `goal_outcome`
-        *   Mobile JS: `goal`?
-        *   **Fix:** Align to `goal_outcome`.
+### 3.1.2 Schema & Data Types
+*   **Task Status:**
+    *   **Desktop:** Rust `CHECK` constraint: `inbox, next, in_progress, waiting, done, cancelled`.
+    *   **Mobile:** TypeScript definitions must match exactly.
+    *   **Finding:** Mobile migration v4->v5 maps `todo` -> `next`. Ensure UI dropdowns match the Rust Enum.
+*   **Timestamps:**
+    *   **Desktop:** Uses `i64` (Unix Timestamp).
+    *   **Mobile:** JS uses `Date` (ms precision).
+    *   **Check:** Ensure all `i64` timestamps from Rust are treated as **Seconds** (not milliseconds) in JS, or standardized to Milliseconds everywhere. `chrono::Utc::now().timestamp()` returns Seconds. JS `Date.now()` returns Milliseconds.
+    *   **Risk:** Dates appearing as "1970" or "50,000 AD".
 
-## 3.2 The Encryption Gap (Deep Dive)
-*   **Desktop:** `rusqlite` + `SQLCipher` (Encrypted).
-*   **Mobile:** `expo-sqlite` (Plaintext).
-*   **Impact:** Mobile is the security weak link. Direct DB transfer is impossible.
-*   **Fix:** Mobile must adopt a SQLCipher-compatible layer (`op-sqlite` or custom build).
+## 3.2 Feature Gaps
 
-## 3.3 Feature Parity
+### 3.2.1 Sync Capability
+*   **Desktop:** Can host P2P Server and initiate Sync.
+*   **Mobile:**
+    *   **Discovery:** Can discover peers (mDNS).
+    *   **Conflict Resolution:** UI for resolving conflicts is limited compared to Desktop.
+    *   **Action:** Expose `resolve_conflict` via JSI (already present in FFI, needs UI wiring).
 
-### Sync Conflicts
-*   **Desktop:** `getSyncConflicts` command returns detailed `SyncConflict` objects.
-*   **Mobile:** `nativeGetSyncProgress` returns a summary.
-*   **Gap:** Mobile users cannot *resolve* conflicts (choose "Mine" vs "Theirs").
-*   **Action:** Expose `nativeResolveConflict` via JSI.
-    *   Signature: `nativeResolveConflict(conflictId: string, resolution: "local" | "remote")`.
+### 3.2.2 Social Media Suite
+*   **Desktop:** Uses `webview` injection (`universal.js`) to scrape cookies and posts.
+*   **Mobile:**
+    *   **Gap:** WebView scraping on mobile is harder (OS restrictions, background execution).
+    *   **Strategy:** "Cookie Capture" mode. User logs in via embedded WebView, app captures cookie, passes to Rust. Rust runs the scraper (if possible) or Mobile relies on Desktop for heavy scraping.
 
-### Social Media
-*   **Desktop:** Can view `WebViewSession` logic (cookies).
-*   **Mobile:** Needs native `WebView` to replicate the session capture logic.
-*   **Audit:** Does `apps/mobile` have a `SocialLoginScreen` that saves cookies to the `social_account` table?
-    *   **Requirement:** Mobile app must implement a hidden `WebView` or a specific Login Flow that extracts `session_id` cookies and injects them into the SQLite `social_account` table (encrypted).
-
-## 3.4 Visual & Design System
-
-### Design Tokens
-*   **Problem:** Colors are hardcoded in `theme.ts` (Desktop) and `constants/Colors.ts` (Mobile).
-*   **Fix:** Extract a `tokens.json` (or `packages/ui/tokens.ts`):
-    *   `primary`: `#...`
-    *   `background`: `#050506`
-    *   `surface`: `#...`
-*   **Typography:**
-    *   Desktop: `rem` units.
-    *   Mobile: `sp` (Scaleable Pixels).
-    *   **Audit:** Verify that `text-base` on Desktop roughly matches `16sp` on Mobile visually.
-
-### Touch Targets & Contrast
-*   **Contrast:** Check "Deep Obsidian" theme against WCAG AA.
-    *   Dark Gray text on Black background often fails.
-    *   **Fix:** Ensure text is at least `#A1A1AA` (Zinc-400) on `#050506`.
-*   **Mobile Touch:**
-    *   **Audit:** `SocialHub` filter chips.
-    *   **Fix:** Ensure `padding` creates a hit slop of 44dp minimum.
+## 3.3 Design System Harmonization
+*   **Tokens:**
+    *   **Action:** Create a shared `packages/design-tokens` (JSON/TS) package.
+    *   **Content:** Colors (Deep Obsidian palette), Spacing, Typography.
+    *   **Usage:** Desktop imports for Tailwind config. Mobile imports for Styled Components/Unistyles.
+*   **Accessibility:**
+    *   **Check:** Verify WCAG AA Contrast compliance on both platforms.
+    *   **Mobile:** Ensure minimal touch target size (44x44pt).
 
 ## Phase 3 Checklist
-- [ ] **CRITICAL:** Harmonize Database Encryption.
-- [ ] Add `nativeResolveConflict` to Mobile JSI.
-- [ ] Align `Task` status enums across Rust, Desktop TS, and Mobile TS.
-- [ ] Verify `TimeEntry` duration calculation logic on Mobile.
-- [ ] Implement Mobile WebView cookie capture for Social Accounts.
-- [ ] Create `packages/ui/tokens.ts` and refactor both apps to use it.
+- [ ] **Critical:** Implement SQLCipher on Mobile to match Desktop.
+- [ ] **Schema:** Verify `Task` status enum parity in `packages/types`.
+- [ ] **Data:** Standardize Timestamp precision (Seconds vs Milliseconds) in `packages/core-rs` serialization.
+- [ ] **Social:** Define Mobile Social Strategy (Scrape vs View-Only).
+- [ ] **UI:** Extract Design Tokens to shared package.

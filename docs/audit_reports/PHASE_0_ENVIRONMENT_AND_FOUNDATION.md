@@ -24,20 +24,15 @@ Phase 0 is the bedrock of the project. If the build environment is shaky, the re
 *   **Command:** `cargo audit`
     *   **Action:** Run this in `packages/core-rs`. It checks `RustSec` database for known vulnerabilities in the dependency tree.
     *   **Remediation:** If vulnerabilities are found, update crates. If a patch isn't available, document the risk in `ISSUES.md`.
-*   **OpenSSL / SQLCipher Complexity:**
-    *   **File:** `Cargo.toml` -> `rusqlite`
-    *   **Deep Dive:** We rely on `bundled-sqlcipher-vendored-openssl`.
-    *   **Verification:**
-        *   Run `cargo tree -p core-rs -i openssl-sys`.
-        *   **Acceptance Criteria:** It MUST show `openssl-sys` as a child of `rusqlite` (via `libsqlite3-sys`). It MUST NOT show a second `openssl-sys` being pulled in by another crate (e.g., `reqwest` without `rustls`).
-        *   **Risk:** "Diamond dependency" on OpenSSL causes symbol conflicts and random segfaults on Linux.
-    *   **Expansion:** If `tokio-tungstenite` (used for P2P) pulls in `native-tls`, it will link system OpenSSL.
-    *   **Fix:** Switch `tokio-tungstenite` to use `rustls-tls-native-roots` to avoid system OpenSSL entirely.
+*   **OpenSSL / SQLCipher Complexity (Diamond Dependency):**
+    *   **File:** `Cargo.toml`
+    *   **Observation:** `rusqlite` uses `bundled-sqlcipher-vendored-openssl`, while `tokio-tungstenite` (and potentially `reqwest`) uses `native-tls`.
+    *   **Risk:** This creates a potential conflict where two different versions of OpenSSL are linked (one vendored by SQLCipher, one system-provided by native-tls), leading to symbol collisions and random segfaults on Linux.
+    *   **Action:** Switch `tokio-tungstenite` to use `rustls-tls-native-roots` instead of `native-tls` to remove the system OpenSSL dependency entirely.
 *   **Crate Hygiene:**
     *   `perf-harness`: Ensure this binary is explicitly excluded from the release build pipeline (via `exclude` in `Cargo.toml` or build script filters) to prevent artifact bloat.
     *   `jni`: Ensure it is strictly guarded by `target_os = "android"` to prevent polluting the symbol table of the Desktop app.
-    *   `gray_matter`: Ensure pinned to `=0.2.2` to prevent breaking frontmatter parsing changes.
-    *   `uuid` vs `ulid`: Project uses both. Consolidate where possible.
+    *   `uuid` vs `ulid`: Project uses both (v1.10.0 and v1.2.1 respectively). Consolidate where possible, or document why both are needed (ULID for sortable IDs, UUID for standard compliance?).
 
 ### Build Scripts (`build.rs`)
 *   **Context:** Custom build logic that runs before compilation.
@@ -70,25 +65,16 @@ Phase 0 is the bedrock of the project. If the build environment is shaky, the re
     *   **Action:** Run `npx expo prebuild --clean` and inspect the output.
     *   **Look for:** "Skipping package..." warnings. This indicates a native module is installed but not being linked, leading to runtime "Module not found" errors.
 
-### Deep Dive: Mobile Binary & Permissions
-*   **Database Capability:**
-    *   **Finding:** The app uses `expo-sqlite`. Standard builds of this library DO NOT include SQLCipher.
-    *   **Critical Risk:** If the Rust core writes an encrypted DB, the Mobile UI cannot read it. If Mobile creates the DB, it is plaintext.
-    *   **Verification:** Run `strings android/app/build/outputs/apk/debug/app-debug.apk | grep "sqlcipher"` or check linked libs using `readelf`.
-    *   **Action:** Switch to `op-sqlite` or a custom build of `expo-sqlite` that links `sqlcipher`.
-*   **Permission Auto-Injection:**
-    *   **Finding:** `app.json` includes plugins like `expo-location` and `expo-camera`.
-    *   **Risk:** These plugins inject `ACCESS_FINE_LOCATION` and `CAMERA` permissions into `AndroidManifest.xml` automatically.
-    *   **Action:** Inspect generated manifest. Remove unused plugins to adhere to "Least Privilege".
+### Permission Audit (`app.json` vs `AndroidManifest.xml`)
+*   **Observation:** `app.json` plugins list `expo-location` and `expo-camera`, but `android.permissions` only lists `VIBRATE` and `USE_BIOMETRIC`.
+*   **Risk:** Expo plugins *automatically* inject permissions (`ACCESS_FINE_LOCATION`, `CAMERA`) into the final `AndroidManifest.xml` during prebuild, even if they are not explicitly listed in the `android.permissions` array.
+*   **Action:** Inspect the generated `android/app/src/main/AndroidManifest.xml` after `npx expo prebuild`. If unused permissions are present, remove the corresponding plugins or configure them to exclude permissions.
 
-### Dependency Hygiene (Mobile)
-*   **SSL Pinning:** `react-native-ssl-pinning` is installed.
-    *   **Audit:** If the App uses `core-rs` for networking (Sync), this JS-side library might be unused bloat.
-    *   **Action:** Verify usage. Remove if redundancy exists.
-*   **Crypto Split-Brain:** `expo-crypto` and `expo-secure-store` are installed.
-    *   **Audit:** `core-rs` handles Argon2 and ChaCha20.
-    *   **Risk:** If JS uses `expo-crypto` for random UUIDs, it's fine. If it attempts encryption, we have two crypto stacks.
-    *   **Action:** Audit JS usage. Prefer Rust implementation.
+### Database Binary Capability (SQLCipher Check)
+*   **Critical Check:** The mobile app uses `expo-sqlite`. Standard `expo-sqlite` builds DO NOT include SQLCipher.
+*   **Implication:** If the Rust core expects to open an encrypted database (created by Desktop), but the Mobile UI opens it with standard SQLite, it will fail (file is not a database). If Mobile creates the DB, it will be plaintext.
+*   **Action:** Verify if `expo-sqlite` is replaced by a custom build or if `op-sqlite` / `react-native-quick-sqlite` (with encryption support) is required to match Core-RS encryption.
+*   **Note:** `mobile_ffi.rs` opens the database via `rusqlite`. If the underlying binary is not linked against SQLCipher on Android, Rust encryption features will panic or fail.
 
 ---
 
@@ -155,13 +141,10 @@ Phase 0 is the bedrock of the project. If the build environment is shaky, the re
 ## Phase 0 Checklist
 - [ ] `rust-toolchain.toml` exists and pins a stable version.
 - [ ] `cargo audit` returns 0 vulnerabilities.
-- [ ] `openssl-sys` is strictly deduped (resolve Diamond Dependency).
-- [ ] `gray_matter` pinned to `=0.2.2`.
+- [ ] `openssl-sys` conflict resolved (native-tls vs bundled).
 - [ ] `java -version` is 17.x.x.
 - [ ] `pkg-config` finds `webkit2gtk` on the Linux build machine.
 - [ ] `pnpm dedupe --check` passes.
 - [ ] CI workflows pin specific runner OS versions.
 - [ ] `perf-harness` is excluded from release artifacts.
-- [ ] Mobile Binary verified: `expo-sqlite` + SQLCipher or `op-sqlite`.
-- [ ] Mobile Permissions audited (remove unused plugins).
-- [ ] Mobile Dependency Audit (Remove bloat).
+- [ ] Mobile `expo-sqlite` vs `sqlcipher` binary capability verified (Critical).
