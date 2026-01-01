@@ -71,6 +71,13 @@
 *   **Audit:** Does the app restore the draft state on restart?
 *   **Fix:** Persist draft content to `AsyncStorage` on every keystroke (debounced 500ms) or `onBlur`.
 
+## 2.5 Desktop Hooks & Utils (`src/hooks`)
+
+### Stale Closures
+*   **Pattern:** `useEffect(() => { ... }, [])` using `props`.
+*   **Audit:** Check complex hooks like `useSyncStatus`. If `activeSpaceId` changes but isn't in the dep array, the hook might poll the *old* space.
+*   **Fix:** Exhaustive Deps rule (`eslint-plugin-react-hooks`).
+
 ## Phase 2 Checklist
 - [ ] Add `PRAGMA journal_mode = WAL` to `initializeDatabase` in Mobile.
 - [ ] Paginate the v4->v5 migration tag processing.
@@ -78,3 +85,4 @@
 - [ ] Switch Social Feed images to `expo-image` if not already.
 - [ ] Verify `CategoryPicker` handlers are memoized.
 - [ ] Implement Draft Persistence for Note Editor (Mobile).
+- [ ] Enable `react-hooks/exhaustive-deps` and fix all warnings.

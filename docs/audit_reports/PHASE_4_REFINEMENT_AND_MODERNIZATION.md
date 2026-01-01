@@ -28,6 +28,8 @@
 *   **String Churn:**
     *   **Issue:** `delta.entity_id.clone()` is called frequently in loops.
     *   **Optimization:** Use `Rc<str>` or `Arc<str>` for IDs if they are shared across threads/structs, or simply pass by reference `&str` where ownership isn't needed.
+*   **Blob Storage:**
+    *   **Optimization:** Implement streaming for `retrieve_blob` to handle >100MB files without OOM.
 
 ## 4.2 Frontend Performance
 
@@ -70,3 +72,4 @@
 - [ ] Set `FlashList` `drawDistance` and `estimatedItemSize` correctly.
 - [ ] Replace layout animations with transform animations where possible.
 - [ ] Resolve SVG placeholder in `TemporalGraph.tsx`.
+- [ ] Implement Streaming Blob Retrieval.

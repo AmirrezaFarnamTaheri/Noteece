@@ -87,38 +87,65 @@
     *   **Risk:** If user types `title:foo OR title:bar` directly into the search bar, `MATCH` might throw a syntax error if not sanitized/escaped.
     *   **Fix:** Sanitize the user input. Escape quotes `"` and FTS operators `NEAR`, `OR`, `AND` unless explicitly supported.
 
-## 1.6 Task Module (`task/db.rs`)
+## 1.6 Task & Calendar Modules (`task`, `calendar`)
 
-### Recurrence Logic
+### Recurrence Logic (`task/db.rs`)
 *   **Function:** `handle_recurrence`
-*   **Logic:**
-    *   Checks for `parent_task_id` to prevent infinite loops of duplicates. Good.
-    *   Parses `RRULE` using `rrule` crate.
-    *   **Flaw:** Uses `dt.timestamp() > current_due`.
-    *   **Risk:** Timezone handling. `rrule` usually works in UTC or Local. If `current_due` is UTC timestamp but `RRULE` is floating (no TZ), shifts might occur.
-    *   **Edge Case:** If `due_at` is `None`, defaults to `now`. A task without a due date cannot logically recur "Weekly".
-    *   **Fix:** Require `due_at` for recurrence. If missing, return error or disable recurrence.
+*   **Logic:** Checks for `parent_task_id` to prevent infinite loops. Parses `RRULE`.
+*   **Flaw:** Uses `dt.timestamp() > current_due`.
+*   **Risk:** Timezone handling. If `current_due` is UTC timestamp but `RRULE` is floating (no TZ), shifts might occur.
+*   **Edge Case:** If `due_at` is `None`, defaults to `now`. A task without a due date cannot logically recur "Weekly".
+*   **Fix:** Require `due_at` for recurrence.
+
+### ICS Export (`calendar.rs`)
+*   **Logic:** `calendar.add_event(event)`.
+*   **Audit:** Generates a new ULID for every export event (`Event::new(ulid::Ulid::new().to_string(), ...)`).
+*   **Risk:** Importing this ICS into Google Calendar repeatedly will create duplicates because the UID changes every time.
+*   **Fix:** Use the `Task.id` as the persistent UID for the ICS event.
 
 ## 1.7 Import & Export (`import.rs`)
 
 ### Zip Bomb & Path Traversal
 *   **Function:** `import_from_notion` / `import_from_obsidian`
-*   **Audit:** `WalkDir` is used for Obsidian. `ZipArchive` for Notion.
-*   **Path Traversal:** `file.enclosed_name()` is used in Zip extraction.
-    *   **Verdict:** Safe. `enclosed_name()` specifically sanitizes paths (strips `..`).
-*   **Resource Exhaustion:**
-    *   **Risk:** `file.read_to_string(&mut content)` reads entire files into RAM.
-    *   **Attack Vector:** A 2GB markdown file in a zip will crash the app.
-    *   **Fix:**
-        *   Limit read size (e.g. `take(10MB)`).
-        *   Check `zip_file.size()` header before reading.
-        *   Implement a "decompression ratio" check (Compressed Size vs Uncompressed Size) to detect Zip Bombs.
+*   **Audit:** `WalkDir` for Obsidian. `ZipArchive` for Notion.
+*   **Path Traversal:** `file.enclosed_name()` is used. Safe.
+*   **Resource Exhaustion:** `file.read_to_string(&mut content)` reads entire files into RAM.
+    *   **Risk:** DoS via large file.
+    *   **Fix:** Limit read size (e.g. `take(10MB)`) and check zip header size.
 
 ### Decryption Safety
 *   **Function:** `export_to_json`
 *   **Logic:** Iterates notes, calls `decrypt_string`.
-*   **Failure Mode:** If decryption fails, it logs a warning and clears content.
-    *   **Verdict:** Safe. It does *not* export encrypted ciphertext.
+*   **Failure Mode:** If decryption fails, it logs a warning and clears content. Safe.
+
+## 1.8 Goals, Habits, Health (`goals.rs`, `habits.rs`, `health.rs`)
+
+### Data Integrity
+*   **Goals:** `update_goal_progress` checks `current >= target`. Logic is sound.
+*   **Habits:** `complete_habit` logic for streaks (`diff <= 7` for weekly).
+    *   **Risk:** Timezone boundary issues. `chrono::DateTime::from_timestamp(..., 0)` assumes UTC. A user completing a habit at 1AM Tuesday (UTC) might be Monday (local).
+    *   **Fix:** Store timezone offset with habit logs or normalize to "User Day".
+*   **Health:** `create_health_metric` inserts raw float values.
+    *   **Risk:** No validation on `value` (e.g., negative heart rate).
+    *   **Fix:** Add `min/max` constraints based on `metric_type`.
+
+## 1.9 Note Versioning & Blobs (`versioning.rs`, `blob.rs`)
+
+### Blob Storage (`blob.rs`)
+*   **Chunking:** 4KB chunks.
+*   **Encryption:** `XChaCha20Poly1305` per chunk.
+*   **Key Derivation:** `HKDF(MasterKey, Hash(Chunk))`.
+*   **Audit Finding:** This is **Content-Addressed Storage** (CAS).
+    *   **Good:** Automatic deduplication of identical chunks (e.g., common images, headers).
+    *   **Risk:** `retrieve_chunk` decrypts into memory `Vec<u8>`. For a 50MB file, `retrieve_blob` accumulates all chunks in RAM.
+    *   **Fix:** Implement streaming retrieval (`Iterator<Item = Result<Vec<u8>>>`) to avoid OOM on large attachments.
+
+### Versioning (`versioning.rs`)
+*   **Format:** `zstd` compressed raw bytes.
+*   **Naming:** ULID filenames.
+*   **Limit:** `create_snapshot` does *not* prune old snapshots.
+    *   **Risk:** Infinite growth of history folder.
+    *   **Fix:** Implement a "retention policy" (keep last 10, or 1 per day for 30 days) in `create_snapshot`.
 
 ## Phase 1 Checklist
 - [ ] Refactor `smart_merge_entity` for Task Titles (Timestamp LWW instead of Length).
@@ -127,5 +154,9 @@
 - [ ] Test migration v5 with tags containing commas.
 - [ ] Implement FTS query sanitization in `search_notes`.
 - [ ] Verify `StreamProcessor` bloom filter lifecycle.
-- [ ] Fix `handle_recurrence` to handle `due_at = None` gracefully.
+- [ ] Fix `handle_recurrence` to handle `due_at = None`.
+- [ ] Fix `export_ics` to use stable UIDs.
 - [ ] Add strict file size limit (10MB) to `import_from_notion`.
+- [ ] Add timezone awareness to Habit Streak calculation.
+- [ ] Implement retention policy for Note Snapshots.
+- [ ] Refactor `retrieve_blob` to return a Stream/Iterator.
