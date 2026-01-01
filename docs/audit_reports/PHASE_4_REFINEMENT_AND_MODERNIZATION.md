@@ -4,7 +4,7 @@
 **Goal:** Optimization and Polish. Make it fast, make it smooth.
 
 ## Overview
-Once the critical security and correctness issues (Phase 1-3) are resolved, Phase 4 targets performance and code quality. The audit identified specific bottlenecks in the Sync Engine and Frontend rendering.
+Once the critical security and correctness issues (Phase 1-3) are resolved, Phase 4 targets performance and code quality. The audit identified specific bottlenecks in the Sync Engine, Frontend rendering, and Database query patterns.
 
 ## 4.1 Backend Optimization (`core-rs`)
 
@@ -15,6 +15,24 @@ Once the critical security and correctness issues (Phase 1-3) are resolved, Phas
 *   **Query Plans:**
     *   **Action:** Use `EXPLAIN QUERY PLAN` on the `compute_entity_hashes` query.
     *   **Goal:** Ensure it uses a Covering Index (reading only from the B-Tree, not the heap).
+
+### Query Optimization (Cartesian Products)
+*   **File:** `packages/core-rs/src/project/db/project.rs` -> `get_projects_in_space`
+*   **Observation:** The query performs a `LEFT JOIN` on `task` AND `project_milestone`.
+*   **Risk:** Cartesian Product Explosion.
+    *   Example: 1 Project * 50 Tasks * 10 Milestones = 500 rows returned for a single project.
+    *   If a space has 20 projects, this could return 10,000+ rows, consuming massive memory and CPU for deserialization.
+*   **Fix:**
+    *   **Option A:** Fetch Projects, then fetch Tasks (filtered by project IDs), then fetch Milestones. Stitch them together in Rust (Application-Side Join).
+    *   **Option B:** Use `JSON_GROUP_ARRAY` (if SQLite version permits) to aggregate tasks/milestones into a single column per project row.
+
+### Search Optimization
+*   **File:** `packages/core-rs/src/search/mod.rs`
+*   **Observation:** `search_notes` constructs a `MATCH` query dynamically.
+*   **Risk:** FTS5 Syntax Errors.
+    *   If a user searches for `foo"bar` or `foo*`, it might break the FTS syntax.
+*   **Fix:** Sanitize the input string (escape quotes, handle special FTS operators) before binding it to `MATCH`.
+*   **Robustness:** The fallback to `LIKE` is a good fail-safe, but FTS should be reliable.
 
 ### Memory & Allocation
 *   **Serialization:**
@@ -53,8 +71,10 @@ Once the critical security and correctness issues (Phase 1-3) are resolved, Phas
 *   **Fix:** Ensure all swipe actions (Archive Note) use Reanimated 2/3 for 60fps native-thread interaction.
 
 ## Phase 4 Checklist
+- [ ] **HIGH:** Fix Cartesian Product in `get_projects_in_space`.
 - [ ] **HIGH:** Add `idx_note_space_mod` index.
-- [ ] **MEDIUM:** optimize `smart_merge_entity` serialization.
+- [ ] **MEDIUM:** Sanitize FTS5 Search Queries.
+- [ ] **MEDIUM:** Optimize `smart_merge_entity` serialization.
 - [ ] **MEDIUM:** Implement `React.memo` on Task Cards.
 - [ ] **LOW:** CSS Transform optimization for Sidebar.
 - [ ] **LOW:** Optimize Mobile Migration check.

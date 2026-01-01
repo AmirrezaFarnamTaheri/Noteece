@@ -16,6 +16,16 @@ The `core-rs` crate is the brain of the application. It handles encryption, sync
     *   Implement `rust_unlock_vault(password)` in FFI.
     *   Ensure `expo-sqlite` (or replacement) on the UI side supports SQLCipher or switch to a pure-Rust JSI access model where UI *only* talks to Rust, and Rust holds the DB connection.
 
+### Encryption Layering Confusion
+*   **File:** `packages/core-rs/src/note.rs` vs `packages/core-rs/src/import.rs`
+*   **Observation:**
+    *   `create_note` inserts `content_md` directly (implying plaintext application data, relying on SQLCipher for disk encryption).
+    *   `export_to_zip` calls `decrypt_string` on `content_md` before writing to file.
+*   **Conflict:** If `create_note` writes plaintext (Layer 1 encryption only), and `export` tries to decrypt it (expecting Layer 2 encryption), the Export function will **FAIL** or produce garbage.
+*   **Fix:** Standardize on one model.
+    *   **Option A (Preferred):** Rely on SQLCipher (Layer 1) for all data. Remove `decrypt_string` from Export.
+    *   **Option B:** Implement Application-Layer Encryption (Layer 2) consistently in `create_note`/`update_note`.
+
 ### Timing Attacks in Authentication
 *   **File:** `packages/core-rs/src/auth.rs`
 *   **Observation:** `authenticate` returns early with `InvalidCredentials` if the user is not found (database lookup speed ~1ms). If the user is found, it proceeds to `Argon2::verify_password` (~500ms).
@@ -43,6 +53,14 @@ The `core-rs` crate is the brain of the application. It handles encryption, sync
 *   **Risk:** If the second insert fails (e.g., FTS5 error), the database is left in an inconsistent state (note exists but is unsearchable).
 *   **Fix:** Wrap all multi-table operations (Note+FTS, Project+Milestone) in explicit transactions.
 
+### Import Vulnerabilities (Zip Bomb)
+*   **File:** `packages/core-rs/src/import.rs`
+*   **Observation:** `import_from_notion` iterates `archive.len()` and calls `read_to_string` on entries.
+*   **Risk:** A malicious Zip file (Zip Bomb) can contain a small compressed file that expands to gigabytes, causing OOM (Out of Memory) crashes.
+*   **Fix:**
+    *   Implement a `MAX_FILE_SIZE` limit (e.g., 10MB) for imported notes.
+    *   Check compression ratio before reading the full stream.
+
 ### Performance - Hashing
 *   **File:** `packages/core-rs/src/sync/engine.rs` -> `compute_entity_hashes`
 *   **Observation:** `SELECT id, modified_at FROM note`.
@@ -52,6 +70,15 @@ The `core-rs` crate is the brain of the application. It handles encryption, sync
 ---
 
 ## 1.3 The Synchronization Engine (`sync/`)
+
+### Ambiguous Protocol Definitions (Split-Brain)
+*   **Observation:**
+    *   `sync/engine.rs` uses `models::SyncDelta` (Plaintext `data: Option<Vec<u8>>`).
+    *   `sync/mobile_sync.rs` uses `protocol::types::SyncDelta` (Encrypted `encrypted_data: Some(Vec<u8>)`).
+*   **Risk:** Two competing definitions of the sync data structure exist.
+    *   If Desktop uses `engine.rs` (Plaintext Merge), and Mobile uses `mobile_sync.rs` (Encrypted), they cannot talk to each other.
+    *   If Mobile uses Plaintext Merge, the "Encrypted at Rest" promise is violated on the device.
+*   **Fix:** Consolidate to a single `SyncDelta` definition that supports End-to-End Encryption (Layer 2) or explicit SQLCipher-based replication.
 
 ### Vector Clocks (Major Architectural Gap)
 *   **File:** `packages/core-rs/src/sync/vector_clock.rs` / `engine.rs`
@@ -85,9 +112,12 @@ The `core-rs` crate is the brain of the application. It handles encryption, sync
 
 ## Phase 1 Checklist
 - [ ] **CRITICAL:** Implement Encryption at Rest for Mobile (SQLCipher integration).
+- [ ] **CRITICAL:** Resolve Encryption Layering Confusion (Import vs Export).
 - [ ] **CRITICAL:** Fix Timing Attack in `AuthService`.
+- [ ] **CRITICAL:** Consolidate Sync Protocol (`SyncDelta` definition).
 - [ ] **HIGH:** Implement `Zeroize` for key material.
 - [ ] **HIGH:** Transition Sync Engine to true Logical Vector Clocks.
+- [ ] **MEDIUM:** Implement Zip Bomb protection.
 - [ ] **MEDIUM:** Wrap all multi-write DB operations in transactions.
 - [ ] **MEDIUM:** Optimize Sync Manifest generation (Merkle Tree?).
 - [ ] **LOW:** Refine Task merge heuristic (LWW on timestamp preferred over string length).

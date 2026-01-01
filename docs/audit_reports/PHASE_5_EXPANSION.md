@@ -13,6 +13,8 @@ Phase 5 defines the trajectory after V1. The audit highlights the infrastructure
     *   **Protocol:** Use Noise Protocol Framework or similar for the transport layer.
     *   **DoS Protection:** Rate limiting (e.g., "Max 1GB transfer/day/IP").
     *   **Ephemeral:** The Relay should not store data longer than 24h.
+*   **Social Privacy Integration:**
+    *   The `StreamProcessor` output (private social feed) must **NEVER** be sent to the Relay in plaintext. It must be encrypted with the User's Key before leaving the device.
 
 ## 5.2 Plugin System (`packages/core-rs/src/plugin.rs`)
 *   **Current State:** Trait definition exists.
@@ -38,8 +40,15 @@ Phase 5 defines the trajectory after V1. The audit highlights the infrastructure
     *   **MLS (Messaging Layer Security):** Move to Group Encryption where each user has their own key, and a Group Key is derived.
     *   **ACLs:** `db` schema needs `owner_id` and `permissions` bitmask on every entity.
 
+## 5.5 Social Intelligence (`social/stream_processor.rs`)
+*   **Privacy Guarantee:**
+    *   The `StreamProcessor` ingests raw accessibility text (highly sensitive).
+    *   **Audit Requirement:** Implement a "Local Processing Guarantee" (LPG) mechanism. Code must technically prevent this stream from being networked.
+    *   **Deduplication:** Move from probabilistic Bloom Filter to deterministic Content-Addressable Storage (CAS) hashes for long-term reliability.
+
 ## Phase 5 Checklist
 - [ ] Define Relay Protocol (Noise).
 - [ ] Prototype WASM Plugin Host (using `wasmer` or `wasmtime`).
 - [ ] Evaluate `candle` or `burn` for Rust-based Local LLM inference.
 - [ ] Design MLS-based Key Management for Multi-User vaults.
+- [ ] Audit `StreamProcessor` for network isolation.
