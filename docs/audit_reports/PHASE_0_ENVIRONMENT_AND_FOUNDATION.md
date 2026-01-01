@@ -81,6 +81,15 @@ Phase 0 is the bedrock of the project. If the build environment is shaky, the re
     *   **Risk:** These plugins inject `ACCESS_FINE_LOCATION` and `CAMERA` permissions into `AndroidManifest.xml` automatically.
     *   **Action:** Inspect generated manifest. Remove unused plugins to adhere to "Least Privilege".
 
+### Dependency Hygiene (Mobile)
+*   **SSL Pinning:** `react-native-ssl-pinning` is installed.
+    *   **Audit:** If the App uses `core-rs` for networking (Sync), this JS-side library might be unused bloat.
+    *   **Action:** Verify usage. Remove if redundancy exists.
+*   **Crypto Split-Brain:** `expo-crypto` and `expo-secure-store` are installed.
+    *   **Audit:** `core-rs` handles Argon2 and ChaCha20.
+    *   **Risk:** If JS uses `expo-crypto` for random UUIDs, it's fine. If it attempts encryption, we have two crypto stacks.
+    *   **Action:** Audit JS usage. Prefer Rust implementation.
+
 ---
 
 ## 0.3 Desktop Environment (`apps/desktop`)
@@ -155,3 +164,4 @@ Phase 0 is the bedrock of the project. If the build environment is shaky, the re
 - [ ] `perf-harness` is excluded from release artifacts.
 - [ ] Mobile Binary verified: `expo-sqlite` + SQLCipher or `op-sqlite`.
 - [ ] Mobile Permissions audited (remove unused plugins).
+- [ ] Mobile Dependency Audit (Remove bloat).

@@ -18,7 +18,8 @@
 *   **Vulnerability:** Clock Skew. If `last_sync` is based on local time, and `remote_delta.timestamp` is from a device with a clock 1 year in the future, it might falsely trigger (or miss) conflict logic.
 *   **Deep Dive - Vector Clocks:**
     *   **Current State:** Code uses a "Hybrid Clock" (Map of DeviceID -> Max Timestamp). This relies on physical time.
-    *   **Fix:** Implement **Vector Clocks** (Lamport Timestamps). Increment logical counters on every write. Send Vector Clock with every `SyncDelta`.
+    *   **Dead Code:** A `sync_vector_clock` table is created in `db_init.rs` but appears unused by the engine.
+    *   **Fix:** Implement **Vector Clocks** (Lamport Timestamps) fully. Increment logical counters on every write and persist to `sync_vector_clock`.
 *   **Smart Merge (`smart_merge_entity`):**
     *   **Task Merge:** "Longer title wins".
         *   **Flaw:** Heuristic, not deterministic CRDT.
@@ -33,6 +34,11 @@
     *   `sync/mobile_sync.rs` uses `protocol::types::SyncDelta` (Encrypted `encrypted_data`).
 *   **Risk:** Split-Brain Logic. Two competing definitions of the sync data structure exist.
 *   **Fix:** Consolidate to a single `SyncDelta` definition that supports End-to-End Encryption (Layer 2) or explicit SQLCipher-based replication.
+
+### Deep Dive: Sync Schema Mismatch
+*   **Observation:** `db_init.rs` defines `sync_state` with `last_seen`. Mobile code often references `last_sync_timestamp`.
+*   **Risk:** If Mobile reads this table directly via FFI, it may crash or read garbage.
+*   **Fix:** Ensure strict schema alignment between Rust struct `DeviceInfo` and Mobile TS interface.
 
 ## 1.2 Data Persistence (`db/migrations.rs`)
 
@@ -105,7 +111,7 @@
 ### Calendar Data Loss
 *   **Import:** `import_ics` ignores `DTSTART`/`DTEND`.
     *   **Bug:** Imported tasks are undated.
-*   **Export:** `export_ics` hardcodes timestamp to `19970714...` (UID generation creates dupes).
+*   **Export:** `export_ics` hardcodes timestamp to `19970714...`.
 *   **Fix:** Map `DTSTART` to `due_at`. Use `Task.id` as persistent UID.
 
 ## 1.7 Import & Export (`import.rs`)
@@ -164,13 +170,14 @@
 - [ ] **CRITICAL:** Fix Backup Integrity (VACUUM INTO).
 - [ ] **CRITICAL:** Wire up Link Indexer.
 - [ ] **CRITICAL:** Fix Calendar Import/Export.
-- [ ] **HIGH:** Implement Vector Clocks.
+- [ ] **HIGH:** Implement Vector Clocks (Use unused DB table).
 - [ ] **HIGH:** Fix Zip Bomb vulnerability.
 - [ ] **HIGH:** Fix SRS Scheduler Math.
 - [ ] **MEDIUM:** Sanitize Search Queries.
 - [ ] **MEDIUM:** Verify Thread safety (`spawn_blocking`).
 - [ ] **MEDIUM:** Implement Versioning Retention Policy.
 - [ ] **MEDIUM:** Streaming Blob Retrieval.
+- [ ] **MEDIUM:** Resolve Sync Schema Mismatch.
 
 ---
 
@@ -239,6 +246,7 @@ Prevent timing attacks by normalizing execution time for invalid users.
 // packages/core-rs/src/auth.rs
 
 pub fn authenticate(...) -> Result<Session, AuthError> {
+    let start = Instant::now();
     let user_opt = get_user_by_username(username);
 
     let (stored_hash, user_id) = match user_opt {
