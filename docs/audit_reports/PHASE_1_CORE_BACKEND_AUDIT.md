@@ -38,16 +38,24 @@ The `core-rs` crate is the brain of the application. It handles encryption, sync
 *   **Risk:** Keys remain in RAM after use. A core dump or debugger could extract them.
 *   **Fix:** Implement `Zeroize` trait for all structs holding sensitive key material.
 
-### Randomness
-*   **Observation:** `generate_dek` uses `rand::random()` (ThreadRng). While usually seeded securely, explicit use of `OsRng` (as done in `encrypt_string`) is preferred for cryptographic keys to ensure direct OS entropy source.
-
 ---
 
 ## 1.2 Data Persistence (`db/`)
 
+### Backup Integrity (Live Zipping)
+*   **File:** `packages/core-rs/src/backup.rs`
+*   **Observation:** `create_backup` recursively zips the vault directory, including the live SQLite database file (`noteece.db`).
+*   **Risk:** Database Corruption. If the app is writing to the DB while zip is reading it, the backup may contain "torn pages" or partial WAL states, resulting in a corrupt, unrestoreable file.
+*   **Fix:** Use `VACUUM INTO` to create a safe snapshot of the DB, then zip the snapshot.
+
+### Disconnected Link Indexer (Dead Code)
+*   **File:** `packages/core-rs/src/backlink.rs` vs `note.rs`
+*   **Observation:** `update_links` exists to parse `[[links]]` and populate the `link` table.
+*   **Bug:** `note.rs` (`create_note`/`update_note`) **NEVER** calls `update_links`.
+*   **Result:** The `link` table is permanently empty. The Knowledge Graph will show 0 connections between notes.
+*   **Fix:** Call `backlink::update_links` inside the `handle_note_update` hook.
+
 ### Transaction Boundaries
-*   **File:** `packages/core-rs/src/sync/engine.rs`
-*   **Observation:** `apply_deltas` correctly uses a transaction.
 *   **File:** `packages/core-rs/src/note.rs` -> `create_note`
 *   **Observation:** Inserts into `note` and `fts_note` in separate statements.
 *   **Risk:** If the second insert fails (e.g., FTS5 error), the database is left in an inconsistent state (note exists but is unsearchable).
@@ -57,15 +65,13 @@ The `core-rs` crate is the brain of the application. It handles encryption, sync
 *   **File:** `packages/core-rs/src/import.rs`
 *   **Observation:** `import_from_notion` iterates `archive.len()` and calls `read_to_string` on entries.
 *   **Risk:** A malicious Zip file (Zip Bomb) can contain a small compressed file that expands to gigabytes, causing OOM (Out of Memory) crashes.
-*   **Fix:**
-    *   Implement a `MAX_FILE_SIZE` limit (e.g., 10MB) for imported notes.
-    *   Check compression ratio before reading the full stream.
+*   **Fix:** Implement a `MAX_FILE_SIZE` limit (e.g., 10MB) for imported notes.
 
-### Performance - Hashing
-*   **File:** `packages/core-rs/src/sync/engine.rs` -> `compute_entity_hashes`
-*   **Observation:** `SELECT id, modified_at FROM note`.
-*   **Analysis:** This is an O(N) operation on every sync manifest generation. For 10,000 notes, this scans the index.
-*   **Optimization:** Implement a `Merkle Tree` or `Hash Chain` updated on every write, allowing O(1) checking if nothing changed, or O(log N) to find differences.
+### Calendar Data Loss
+*   **File:** `packages/core-rs/src/calendar.rs`
+*   **Import:** `import_ics` parses `SUMMARY` and `DESCRIPTION` but **ignores** `DTSTART`/`DTEND`. Importing a calendar results in undated tasks.
+*   **Export:** `export_ics` hardcodes the event time to "19970714T170000Z".
+*   **Fix:** Map ICS `DTSTART` to Task `due_at`. Use real timestamps for export.
 
 ---
 
@@ -77,47 +83,32 @@ The `core-rs` crate is the brain of the application. It handles encryption, sync
     *   `sync/mobile_sync.rs` uses `protocol::types::SyncDelta` (Encrypted `encrypted_data: Some(Vec<u8>)`).
 *   **Risk:** Two competing definitions of the sync data structure exist.
     *   If Desktop uses `engine.rs` (Plaintext Merge), and Mobile uses `mobile_sync.rs` (Encrypted), they cannot talk to each other.
-    *   If Mobile uses Plaintext Merge, the "Encrypted at Rest" promise is violated on the device.
 *   **Fix:** Consolidate to a single `SyncDelta` definition that supports End-to-End Encryption (Layer 2) or explicit SQLCipher-based replication.
 
 ### Vector Clocks (Major Architectural Gap)
-*   **File:** `packages/core-rs/src/sync/vector_clock.rs` / `engine.rs`
-*   **Observation:** `get_vector_clock` constructs a clock based on `MAX(sync_time)`.
-*   **Analysis:** This is a **Hybrid Clock** relying on physical timestamps, not a true **Logical Vector Clock**.
-*   **Risk:** Clock skew between devices (e.g., User sets phone time back 1 day) will break conflict detection (`local_ts > last_sync`).
-*   **Fix:** Implement true Logical Clocks (Lamport counters) incremented on every edit. Persist these counters in `note_headers` or similar.
+*   **Observation:** `get_vector_clock` constructs a clock based on `MAX(sync_time)`. This is a **Hybrid Clock** relying on physical timestamps.
+*   **Risk:** Clock skew breaks conflict detection.
+*   **Fix:** Implement true Logical Clocks (Lamport counters).
 
 ### Conflict Resolution Heuristics
-*   **File:** `packages/core-rs/src/sync/engine.rs` -> `smart_merge_entity`
-*   **Task:** "Longer title wins".
-    *   *Critique:* Simple but annoying. If I correct a typo (shortening title), the remote stale version (longer) might win.
-*   **Note:** Concatenation.
-    *   *Critique:* Safe, but creates cleanup work for the user.
-*   **Recommendation:** Move to **CRDTs** (Conflict-free Replicated Data Types) for Tasks (e.g., `LWW-Element-Set` for status) and `Yjs`/`Automerge` concepts for Notes (text editing).
-
-### Sync Protocol
-*   **File:** `packages/core-rs/src/sync/p2p.rs`
-*   **Observation:** `register_device` trusts any device that connects?
-*   **Check:** `trusted` field exists but defaults to `false`. However, `start_sync` might process deltas from untrusted devices?
-*   **Audit:** Verify `process_sync_packet` checks `trusted == true` before applying any database changes.
+*   **Observation:** "Longer title wins" (Tasks) and Concatenation (Notes).
+*   **Recommendation:** Move to **CRDTs** (LWW-Element-Set, Yjs).
 
 ---
 
-## 1.4 API & FFI Boundaries
+## 1.4 Business Logic Algorithms
 
-### FFI Safety (`mobile_ffi.rs`)
-*   **Observation:** `rust_init` takes a path string.
-*   **Safety:** No validation that the path is within the app's sandbox.
-*   **String Handling:** Uses `CStr` and `CString`. Looks correct, but ensure `rust_free_string` is called by the consumer (Kotlin/Swift) to avoid leaks.
+### SRS Scheduler Precision
+*   **File:** `packages/core-rs/src/srs.rs`
+*   **Observation:** `next_due` calculation uses `Duration::days(new_stability as i64)`.
+*   **Bug:** Casting `f64` stability (e.g., 2.5 days) to `i64` (2 days) causes cumulative scheduling drift. The algorithm systematically under-schedules.
+*   **Fix:** Use `Duration::seconds((stability * 86400.0) as i64)`.
 
 ## Phase 1 Checklist
-- [ ] **CRITICAL:** Implement Encryption at Rest for Mobile (SQLCipher integration).
-- [ ] **CRITICAL:** Resolve Encryption Layering Confusion (Import vs Export).
-- [ ] **CRITICAL:** Fix Timing Attack in `AuthService`.
-- [ ] **CRITICAL:** Consolidate Sync Protocol (`SyncDelta` definition).
-- [ ] **HIGH:** Implement `Zeroize` for key material.
-- [ ] **HIGH:** Transition Sync Engine to true Logical Vector Clocks.
-- [ ] **MEDIUM:** Implement Zip Bomb protection.
-- [ ] **MEDIUM:** Wrap all multi-write DB operations in transactions.
-- [ ] **MEDIUM:** Optimize Sync Manifest generation (Merkle Tree?).
-- [ ] **LOW:** Refine Task merge heuristic (LWW on timestamp preferred over string length).
+- [ ] **CRITICAL:** Implement Encryption at Rest for Mobile.
+- [ ] **CRITICAL:** Fix Backup Integrity (VACUUM INTO).
+- [ ] **CRITICAL:** Wire up Link Indexer (`update_links`).
+- [ ] **CRITICAL:** Fix Calendar Import/Export (Timestamps).
+- [ ] **HIGH:** Fix SRS Scheduler Math.
+- [ ] **HIGH:** Resolve Encryption Layering Confusion.
+- [ ] **HIGH:** Fix Timing Attack in Auth.

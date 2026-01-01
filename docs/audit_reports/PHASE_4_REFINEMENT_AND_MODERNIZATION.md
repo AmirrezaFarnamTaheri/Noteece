@@ -26,13 +26,23 @@ Once the critical security and correctness issues (Phase 1-3) are resolved, Phas
     *   **Option A:** Fetch Projects, then fetch Tasks (filtered by project IDs), then fetch Milestones. Stitch them together in Rust (Application-Side Join).
     *   **Option B:** Use `JSON_GROUP_ARRAY` (if SQLite version permits) to aggregate tasks/milestones into a single column per project row.
 
+### Graph Indexer Integration
+*   **File:** `packages/core-rs/src/graph.rs`
+*   **Current State:** `get_vault_graph` performs a fresh query on the `link` table every time.
+*   **Optimization:**
+    *   Ensure the `link` table is populated (it is currently disconnected in `note.rs`).
+    *   For large vaults, pre-compute the Graph JSON or cache it. Only invalidate cache when `link` table changes.
+
+### SRS Event Sourcing
+*   **File:** `packages/core-rs/src/srs.rs`
+*   **Observation:** `revision_history_json` duplicates data found in `review_log`.
+*   **Optimization:** Remove the JSON blob column. Reconstruct history on-the-fly from the normalized `review_log` table to save disk space and ensure consistency.
+
 ### Search Optimization
 *   **File:** `packages/core-rs/src/search/mod.rs`
 *   **Observation:** `search_notes` constructs a `MATCH` query dynamically.
 *   **Risk:** FTS5 Syntax Errors.
-    *   If a user searches for `foo"bar` or `foo*`, it might break the FTS syntax.
 *   **Fix:** Sanitize the input string (escape quotes, handle special FTS operators) before binding it to `MATCH`.
-*   **Robustness:** The fallback to `LIKE` is a good fail-safe, but FTS should be reliable.
 
 ### Memory & Allocation
 *   **Serialization:**
@@ -74,6 +84,7 @@ Once the critical security and correctness issues (Phase 1-3) are resolved, Phas
 - [ ] **HIGH:** Fix Cartesian Product in `get_projects_in_space`.
 - [ ] **HIGH:** Add `idx_note_space_mod` index.
 - [ ] **MEDIUM:** Sanitize FTS5 Search Queries.
+- [ ] **MEDIUM:** Connect Graph Indexer (`update_links`).
 - [ ] **MEDIUM:** Optimize `smart_merge_entity` serialization.
 - [ ] **MEDIUM:** Implement `React.memo` on Task Cards.
 - [ ] **LOW:** CSS Transform optimization for Sidebar.
