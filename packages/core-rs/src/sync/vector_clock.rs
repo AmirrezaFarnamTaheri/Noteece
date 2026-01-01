@@ -42,6 +42,18 @@ impl VectorClock {
         self.increment();
     }
 
+    /// Check if this clock dominates another clock (this >= other in all dimensions)
+    pub fn dominates(&self, other: &Self) -> bool {
+        other.clock.iter().all(|(id, &other_val)| {
+            self.clock.get(id).copied().unwrap_or(0) >= other_val
+        })
+    }
+
+    /// Check if clocks are concurrent (neither happens before the other)
+    pub fn is_concurrent(&self, other: &Self) -> bool {
+        !self.dominates(other) && !other.dominates(self)
+    }
+
     /// Check if this clock happened before other clock (causal ordering)
     pub fn happens_before(&self, other: &VectorClock) -> bool {
         let mut at_least_one_smaller = false;

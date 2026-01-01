@@ -2,7 +2,7 @@
 /// Handles user authentication, password hashing, and session management
 use argon2::{password_hash::SaltString, Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use rand_core::OsRng;
-use rusqlite::Connection;
+use rusqlite::{Connection, OptionalExtension};
 use thiserror::Error;
 use ulid::Ulid;
 
@@ -135,19 +135,37 @@ impl AuthService {
             .prepare("SELECT id, password_hash FROM users WHERE username = ?1")
             .map_err(|e| AuthError::DatabaseError(e.to_string()))?;
 
-        let (user_id, stored_hash) = stmt
+        let user_opt = stmt
             .query_row(rusqlite::params![username], |row| {
                 Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
             })
-            .map_err(|_| AuthError::InvalidCredentials)?;
+            .optional()
+            .map_err(|e| AuthError::DatabaseError(e.to_string()))?;
 
-        // Verify password
-        let parsed_hash =
-            PasswordHash::new(&stored_hash).map_err(|_| AuthError::InvalidCredentials)?;
-        Argon2::default()
-            .verify_password(password.as_bytes(), &parsed_hash)
-            .map_err(|_| AuthError::InvalidCredentials)?;
+        let (user_id, stored_hash) = match &user_opt {
+            Some((uid, hash)) => (uid.clone(), hash.clone()),
+            None => (
+                "dummy_id".to_string(),
+                "$argon2id$v=19$m=4096,t=3,p=1$ZHVtbXlzYWx0$dummyhashvalue".to_string(),
+            ),
+        };
 
+        // Always run verify to ensure constant time execution.
+        let verify_ok = match PasswordHash::new(&stored_hash) {
+            Ok(parsed_hash) => Argon2::default()
+                .verify_password(password.as_bytes(), &parsed_hash)
+                .is_ok(),
+            Err(_) => false,
+        };
+
+        if user_opt.is_some() && verify_ok {
+            Self::create_session(conn, &user_id)
+        } else {
+            Err(AuthError::InvalidCredentials)
+        }
+    }
+
+    fn create_session(conn: &Connection, user_id: &str) -> Result<Session, AuthError> {
         // Create session
         let session_id = Ulid::new().to_string();
         let session_token = generate_session_token();
@@ -168,7 +186,7 @@ impl AuthService {
 
         Ok(Session {
             id: session_id,
-            user_id,
+            user_id: user_id.to_string(),
             token: session_token,
             expires_at,
             created_at: now,

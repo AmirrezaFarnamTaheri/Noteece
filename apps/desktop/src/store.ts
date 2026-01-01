@@ -1,6 +1,7 @@
 import { create, StateCreator } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Space } from '@noteece/types';
+import { checkSpaceExists } from './services/api';
 
 export interface AppState {
   spaces: Space[];
@@ -26,4 +27,28 @@ const store: StateCreator<AppState> = (set) => ({
 export const useStore =
   process.env.NODE_ENV === 'test'
     ? create<AppState>(store)
-    : create<AppState>()(persist(store, { name: 'app-storage' }));
+    : create<AppState>()(
+        persist(store, {
+          name: 'app-storage',
+          partialize: (state) => ({
+            activeSpaceId: state.activeSpaceId,
+            zenMode: state.zenMode,
+            // spaces are not persisted to ensure fresh data on load
+            spaces: [],
+          }),
+          onRehydrateStorage: () => (state) => {
+            const spaceId = state?.activeSpaceId;
+            if (spaceId) {
+              return new Promise((resolve) => {
+                checkSpaceExists(spaceId).then((exists) => {
+                  if (!exists && state) {
+                    console.warn('Hydrated space ID not found, resetting.');
+                    state.activeSpaceId = null;
+                  }
+                  resolve(undefined);
+                });
+              });
+            }
+          },
+        })
+      );

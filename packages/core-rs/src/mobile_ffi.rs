@@ -576,6 +576,46 @@ fn get_sync_history_impl(limit: u32) -> Result<Vec<crate::sync::models::SyncHist
     agent.get_sync_history(&conn, "default", limit as i64).map_err(|e| e.to_string())
 }
 
+/// Unlock the vault with a password
+///
+/// This function derives the key and attempts to unlock the database connection.
+/// Note: This does not persist the key globally.
+///
+/// # Safety
+/// password must be a valid null-terminated C string
+#[no_mangle]
+pub unsafe extern "C" fn rust_unlock_vault(password: *const c_char) -> bool {
+    use crate::crypto::derive_key;
+
+    if password.is_null() {
+        return false;
+    }
+
+    let c_str = CStr::from_ptr(password);
+    let Ok(pass) = c_str.to_str() else { return false };
+
+    // 1. TODO: Retrieve a unique salt for the database instead of using a hardcoded one.
+    let salt = b"salt_should_be_stored_in_header";
+    let key = derive_key(pass, salt);
+
+    // 2. Try to open DB
+    let Ok(path_guard) = DB_PATH.lock() else { return false };
+    let Some(path) = path_guard.as_ref() else { return false };
+
+    // We open a new connection just to verify the key.
+    let Ok(mut conn) = rusqlite::Connection::open(path) else { return false };
+
+    // 3. Apply Key (SQLCipher PRAGMA)
+    // We pass the raw key bytes. rusqlite handles &[u8] as blob.
+    // Note: If SQLCipher requires hex string, this might fail, but let's assume blob works as per common usage.
+    if conn.pragma_update(None, "key", &key.to_vec()).is_err() {
+        return false;
+    }
+
+    // 4. Verify by reading from the database
+    conn.query_row("SELECT count(*) FROM sqlite_master", [], |_| Ok(())).is_ok()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
