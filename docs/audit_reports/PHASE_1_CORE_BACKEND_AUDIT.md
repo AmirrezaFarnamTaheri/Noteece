@@ -1,6 +1,6 @@
 # Phase 1: The Core Backend Audit Report (`packages/core-rs`)
 
-**Status:** Ready for Execution
+**Status:** Critical Issues Identified
 **Goal:** Verify the mathematical correctness, security properties, and logical robustness of the `packages/core-rs` library.
 
 ## 1.1 Synchronization Logic (`sync/engine.rs`)
@@ -74,12 +74,17 @@
 
 ### Data Ingestion
 *   **Struct:** `StreamProcessor`
+*   **Buffer:** Uses `VecDeque` with fixed capacity (30 lines).
 *   **Privacy Guarantee:**
     *   **Finding:** The processor ingests raw accessibility text (highly sensitive).
     *   **Audit Requirement:** Implement a "Local Processing Guarantee" (LPG). Code must technically prevent this stream from being networked.
 *   **Deduplication:** Uses Bloom Filter.
     *   **Risk:** Probabilistic false positives (missing posts).
+    *   **Persistence:** Ensure Bloom Filter is cleared on session end to prevent saturation.
     *   **Fix:** Monitor false positive rate or switch to deterministic CAS hash for long-term storage.
+*   **Platform Detection:**
+    *   **Logic:** Simple substring checks.
+    *   **Fix:** Use specific selectors (package ID) from Android Accessibility event.
 
 ## 1.5 Search Module (`search/mod.rs`)
 
@@ -100,29 +105,49 @@
 ### Calendar Data Loss
 *   **Import:** `import_ics` ignores `DTSTART`/`DTEND`.
     *   **Bug:** Imported tasks are undated.
-*   **Export:** `export_ics` hardcodes timestamp to `19970714...`.
-*   **Fix:** Map `DTSTART` to `due_at`. Use real timestamps for export.
+*   **Export:** `export_ics` hardcodes timestamp to `19970714...` (UID generation creates dupes).
+*   **Fix:** Map `DTSTART` to `due_at`. Use `Task.id` as persistent UID.
 
 ## 1.7 Import & Export (`import.rs`)
 
 ### Zip Bomb & Encryption Layering
 *   **Zip Bomb:** `import_from_notion` reads full files into RAM.
-    *   **Fix:** Limit read size (10MB).
+    *   **Fix:** Limit read size (10MB) and check compression ratio.
 *   **Encryption Confusion:**
     *   `create_note` writes plaintext (Layer 1 encryption only).
     *   `export_to_zip` tries to `decrypt_string` (expecting Layer 2).
     *   **Result:** Export fails.
     *   **Fix:** Standardize on Layer 1 (SQLCipher) or consistently implement Layer 2.
 
-## 1.8 Business Logic Algorithms
+## 1.8 Goals, Habits, Health (`goals.rs`, `habits.rs`, `health.rs`)
+
+### Data Integrity
+*   **Goals:** Logic is sound (`update_goal_progress`).
+*   **Habits:** `complete_habit` streak logic needs Timezone Awareness.
+    *   **Risk:** Users crossing timezone boundaries break streaks.
+*   **Health:** `create_health_metric` inserts raw float.
+    *   **Fix:** Add min/max validation constraints.
+
+## 1.9 Note Versioning & Blobs (`versioning.rs`, `blob.rs`)
+
+### Blob Storage (`blob.rs`)
+*   **Chunking:** 4KB chunks. Encryption `XChaCha20Poly1305`.
+*   **Audit Finding:** Content-Addressed Storage (CAS).
+    *   **Risk:** `retrieve_blob` accumulates chunks in RAM. OOM risk for large files.
+    *   **Fix:** Implement streaming retrieval (`Iterator`).
+
+### Versioning (`versioning.rs`)
+*   **Format:** `zstd` compressed raw bytes.
+*   **Limit:** `create_snapshot` does not prune.
+    *   **Risk:** Infinite growth of history folder.
+    *   **Fix:** Implement a "retention policy" (keep last 10, or 1 per day for 30 days).
+
+## 1.10 Business Logic Algorithms
 
 ### SRS Scheduler Precision (`srs.rs`)
 *   **Bug:** `Duration::days(stability as i64)` truncates fractional days.
 *   **Risk:** Cumulative scheduling drift (under-scheduling).
 *   **Fix:** Use `Duration::seconds()` for precision.
-
-### Goals/Habits
-*   **Habits:** `complete_habit` streak logic needs Timezone Awareness.
 
 ### Backup Integrity (`backup.rs`)
 *   **Observation:** Zips live `noteece.db`.
@@ -144,3 +169,93 @@
 - [ ] **HIGH:** Fix SRS Scheduler Math.
 - [ ] **MEDIUM:** Sanitize Search Queries.
 - [ ] **MEDIUM:** Verify Thread safety (`spawn_blocking`).
+- [ ] **MEDIUM:** Implement Versioning Retention Policy.
+- [ ] **MEDIUM:** Streaming Blob Retrieval.
+
+---
+
+## Technical Appendix: Implementation Guides
+
+### A.1 Secure Mobile FFI (`rust_unlock_vault`)
+To resolve the "Plaintext Mobile DB" issue, the FFI must support keying.
+
+```rust
+// packages/core-rs/src/mobile_ffi.rs
+
+static ref DB_KEY: Mutex<Option<String>> = Mutex::new(None);
+
+#[no_mangle]
+pub unsafe extern "C" fn rust_unlock_vault(password: *const c_char) -> bool {
+    let c_str = CStr::from_ptr(password);
+    if let Ok(pass) = c_str.to_str() {
+        // 1. Derive Key from Password + Salt
+        let salt = b"salt_should_be_stored_in_header";
+        let key = derive_key(pass, salt);
+
+        // 2. Try to open DB
+        let path = DB_PATH.lock().unwrap().clone().unwrap();
+        let mut conn = Connection::open(path).unwrap();
+
+        // 3. Apply Key (SQLCipher PRAGMA)
+        match conn.pragma_update(None, "key", &key) {
+            Ok(_) => {
+                // 4. Verify by reading scalar
+                if conn.query_row("SELECT count(*) FROM sqlite_master", [], |_| Ok(())).is_ok() {
+                    *DB_KEY.lock().unwrap() = Some(key);
+                    return true;
+                }
+            }
+            Err(_) => return false,
+        }
+    }
+    false
+}
+```
+
+### A.2 Vector Clock Definition
+Replace the Hybrid Clock with this structure.
+
+```rust
+// packages/core-rs/src/sync/vector_clock.rs
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct VectorClock {
+    // Map<DeviceID, Counter>
+    pub clocks: HashMap<String, u64>,
+}
+
+impl VectorClock {
+    pub fn increment(&mut self, device_id: &str) {
+        let counter = self.clocks.entry(device_id.to_string()).or_insert(0);
+        *counter += 1;
+    }
+}
+```
+
+### A.3 Constant-Time Auth (Dummy Verify)
+Prevent timing attacks by normalizing execution time for invalid users.
+
+```rust
+// packages/core-rs/src/auth.rs
+
+pub fn authenticate(...) -> Result<Session, AuthError> {
+    let user_opt = get_user_by_username(username);
+
+    let (stored_hash, user_id) = match user_opt {
+        Some(u) => (u.password_hash, u.id),
+        None => {
+            // DUMMY: Hash of "password" (Pre-computed)
+            ("$argon2id$v=19$m=4096,t=3,p=1$ZHVtbXlzYWx0$...", "dummy_id".to_string())
+        }
+    };
+
+    // Always run verify - this consumes the ~500ms
+    let verify_result = Argon2::default().verify_password(password.as_bytes(), &stored_hash);
+
+    if user_opt.is_none() {
+        return Err(AuthError::InvalidCredentials);
+    }
+
+    verify_result.map(|_| create_session(user_id))
+}
+```

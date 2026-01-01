@@ -24,15 +24,20 @@ Phase 0 is the bedrock of the project. If the build environment is shaky, the re
 *   **Command:** `cargo audit`
     *   **Action:** Run this in `packages/core-rs`. It checks `RustSec` database for known vulnerabilities in the dependency tree.
     *   **Remediation:** If vulnerabilities are found, update crates. If a patch isn't available, document the risk in `ISSUES.md`.
-*   **Deep Dive: OpenSSL / SQLCipher Complexity:**
+*   **OpenSSL / SQLCipher Complexity:**
     *   **File:** `Cargo.toml` -> `rusqlite`
-    *   **Finding:** We rely on `bundled-sqlcipher-vendored-openssl`.
-    *   **Risk:** "Diamond dependency". If another crate (like `tokio-tungstenite` via `native-tls`) links against the system OpenSSL, we might end up with two OpenSSL versions in the same process. This causes random segfaults on Linux.
-    *   **Fix:** Switch `tokio-tungstenite` to use `rustls-tls-native-roots` to avoid pulling in system OpenSSL.
+    *   **Deep Dive:** We rely on `bundled-sqlcipher-vendored-openssl`.
+    *   **Verification:**
+        *   Run `cargo tree -p core-rs -i openssl-sys`.
+        *   **Acceptance Criteria:** It MUST show `openssl-sys` as a child of `rusqlite` (via `libsqlite3-sys`). It MUST NOT show a second `openssl-sys` being pulled in by another crate (e.g., `reqwest` without `rustls`).
+        *   **Risk:** "Diamond dependency" on OpenSSL causes symbol conflicts and random segfaults on Linux.
+    *   **Expansion:** If `tokio-tungstenite` (used for P2P) pulls in `native-tls`, it will link system OpenSSL.
+    *   **Fix:** Switch `tokio-tungstenite` to use `rustls-tls-native-roots` to avoid system OpenSSL entirely.
 *   **Crate Hygiene:**
     *   `perf-harness`: Ensure this binary is explicitly excluded from the release build pipeline (via `exclude` in `Cargo.toml` or build script filters) to prevent artifact bloat.
     *   `jni`: Ensure it is strictly guarded by `target_os = "android"` to prevent polluting the symbol table of the Desktop app.
-    *   `uuid` vs `ulid`: Project uses both. Consolidate where possible or document the distinction.
+    *   `gray_matter`: Ensure pinned to `=0.2.2` to prevent breaking frontmatter parsing changes.
+    *   `uuid` vs `ulid`: Project uses both. Consolidate where possible.
 
 ### Build Scripts (`build.rs`)
 *   **Context:** Custom build logic that runs before compilation.
@@ -69,10 +74,11 @@ Phase 0 is the bedrock of the project. If the build environment is shaky, the re
 *   **Database Capability:**
     *   **Finding:** The app uses `expo-sqlite`. Standard builds of this library DO NOT include SQLCipher.
     *   **Critical Risk:** If the Rust core writes an encrypted DB, the Mobile UI cannot read it. If Mobile creates the DB, it is plaintext.
+    *   **Verification:** Run `strings android/app/build/outputs/apk/debug/app-debug.apk | grep "sqlcipher"` or check linked libs using `readelf`.
     *   **Action:** Switch to `op-sqlite` or a custom build of `expo-sqlite` that links `sqlcipher`.
 *   **Permission Auto-Injection:**
     *   **Finding:** `app.json` includes plugins like `expo-location` and `expo-camera`.
-    *   **Risk:** These plugins inject `ACCESS_FINE_LOCATION` and `CAMERA` permissions into `AndroidManifest.xml` automatically, even if `android.permissions` list is minimal.
+    *   **Risk:** These plugins inject `ACCESS_FINE_LOCATION` and `CAMERA` permissions into `AndroidManifest.xml` automatically.
     *   **Action:** Inspect generated manifest. Remove unused plugins to adhere to "Least Privilege".
 
 ---
@@ -141,6 +147,7 @@ Phase 0 is the bedrock of the project. If the build environment is shaky, the re
 - [ ] `rust-toolchain.toml` exists and pins a stable version.
 - [ ] `cargo audit` returns 0 vulnerabilities.
 - [ ] `openssl-sys` is strictly deduped (resolve Diamond Dependency).
+- [ ] `gray_matter` pinned to `=0.2.2`.
 - [ ] `java -version` is 17.x.x.
 - [ ] `pkg-config` finds `webkit2gtk` on the Linux build machine.
 - [ ] `pnpm dedupe --check` passes.

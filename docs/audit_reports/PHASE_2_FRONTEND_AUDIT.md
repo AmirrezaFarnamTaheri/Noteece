@@ -58,6 +58,7 @@
 ### Interaction & Accessibility
 *   **Touch Targets:** Ensure 44x44pt minimum.
 *   **State:** Check `useCallback` on handlers to prevent re-renders.
+*   **Accessibility:** Ensure `accessibilityLabel` is set for all icon-only buttons.
 
 ## 2.4 Mobile Screens (`src/screens`)
 
@@ -79,3 +80,52 @@
 - [ ] **MEDIUM:** Paginate v4->v5 migration.
 - [ ] **MEDIUM:** Memoize `TaskCard` and `CategoryPicker`.
 - [ ] **LOW:** Implement Draft Persistence.
+
+---
+
+## Technical Appendix: Implementation Guides
+
+### B.1 Secure Zustand Hydration
+Prevent "Ghost State" crashes by validating persisted IDs against the database.
+
+```typescript
+// apps/desktop/src/store.ts
+
+export const useStore = create<AppState>()(
+  persist(store, {
+    name: 'app-storage',
+    partialize: (state) => ({
+      activeSpaceId: state.activeSpaceId, // Only persist ID
+      zenMode: state.zenMode
+    }),
+    onRehydrateStorage: () => (state) => {
+      if (state && state.activeSpaceId) {
+        checkSpaceExists(state.activeSpaceId).then(exists => {
+          if (!exists) {
+            console.warn("Hydrated space ID not found, resetting.");
+            useStore.setState({ activeSpaceId: null });
+          }
+        });
+      }
+    }
+  })
+);
+```
+
+### B.2 Migration from expo-sqlite to op-sqlite
+To support SQLCipher on Mobile.
+
+```typescript
+// apps/mobile/src/lib/database.ts
+
+import { open } from '@op-engineering/op-sqlite';
+
+export const initializeDatabase = async (key: string): Promise<void> => {
+  db = open({
+    name: 'noteece.db',
+    encryptionKey: key, // Pass the key derived from User Password
+  });
+
+  await db.execute('PRAGMA journal_mode = WAL;');
+};
+```
