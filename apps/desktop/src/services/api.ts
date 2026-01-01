@@ -102,6 +102,10 @@ export const updateTask = (task: Task): Promise<void> => invokeCmd('update_task_
 
 // Spaces & Tags
 export const getAllSpaces = (): Promise<Space[]> => invokeCmd('get_all_spaces_cmd');
+export const checkSpaceExists = async (spaceId: string): Promise<boolean> => {
+  const spaces = await getAllSpaces();
+  return spaces.some((s) => s.id === spaceId);
+};
 export const getAllTagsInSpace = (spaceId: string): Promise<Tag[]> =>
   invokeCmd('get_all_tags_in_space_cmd', { spaceId });
 
