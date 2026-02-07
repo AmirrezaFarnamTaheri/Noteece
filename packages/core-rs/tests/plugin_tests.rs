@@ -1,5 +1,5 @@
-use core_rs::plugin::{NoteecePlugin, PluginRegistry};
 use core_rs::db::DbError;
+use core_rs::plugin::{NoteecePlugin, PluginRegistry};
 use rusqlite::Connection;
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
