@@ -27,7 +27,7 @@ fn derive_blob_key(mk: &[u8], blob_hash: &[u8]) -> [u8; 32] {
     okm
 }
 
-fn store_chunk(vault_path: &str, mk: &[u8], chunk: &[u8]) -> Result<String, BlobError> {
+pub fn store_chunk(vault_path: &str, mk: &[u8], chunk: &[u8]) -> Result<String, BlobError> {
     log::info!("[blob] Storing chunk of size: {}", chunk.len());
     let hash = Sha256::digest(chunk);
     let hex_hash = hex::encode(hash);
@@ -51,7 +51,7 @@ fn store_chunk(vault_path: &str, mk: &[u8], chunk: &[u8]) -> Result<String, Blob
     Ok(hex_hash)
 }
 
-fn retrieve_chunk(vault_path: &str, mk: &[u8], hex_hash: &str) -> Result<Vec<u8>, BlobError> {
+pub fn retrieve_chunk(vault_path: &str, mk: &[u8], hex_hash: &str) -> Result<Vec<u8>, BlobError> {
     log::info!("[blob] Retrieving chunk with hash: {}", hex_hash);
     let hash = hex::decode(hex_hash)?;
     let chunk_key = derive_blob_key(mk, &hash);

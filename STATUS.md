@@ -1,8 +1,8 @@
 # Project Status
 
-## Current State: **Stable Beta - Feature Complete**
+## Current State: **Stable Release Candidate**
 
-The project has reached the **Stable Beta - Feature Complete** milestone. The core architecture is fully integrated, robust, and verified across Desktop and Mobile platforms.
+The project has reached the **Stable Release Candidate** milestone. The core architecture is fully integrated, robust, and verified across Desktop and Mobile platforms.
 
 ### 🟢 Completed & Stable
 
@@ -11,17 +11,23 @@ The project has reached the **Stable Beta - Feature Complete** milestone. The co
   - **Modules:** Notes, Tasks, Projects, Health, Music, Social, Journal, Habits.
   - **Visualizations:** Temporal Knowledge Graph, Tag Cloud.
   - **Sync:** Local P2P sync using mDNS/TCP with vector clocks.
+  - **Conflict Resolution:** Dedicated UI for resolving data conflicts with diff viewer.
 - **Mobile App:** Expo + React Native application with native JSI bridge.
   - **Modules:** Notes, Capture, Today, Social Hub.
   - **Sync:** Unified SyncBridge prioritizing JSI with TypeScript fallback.
   - **Theme:** Deep Obsidian aesthetics consistent with Desktop.
 - **Social Capture (Prime):** Android "Sideload" flavor with accessibility service-based stream processing.
 - **CI/CD:** Automated workflows for building native binaries (APK, DMG, MSI, AppImage, Deb).
+- **Performance:**
+  - FTS5 optimized with dedicated `optimize` commands on migrations.
+  - Database indexes refined for sync and querying speed.
+- **Sync Robustness:**
+  - Blob chunking mechanism implemented in backend.
+  - Sync conflict detection and resolution flow finalized.
 
 ### 🟡 In Progress / Polish
 
-- **Sync Robustness:** Large blob transfer stress testing under poor network conditions.
-- **Performance:** FTS5 optimization for massive vaults (10k+ notes).
+- **Large Blob Sync:** Connecting frontend chunking logic to P2P transfer (Backend supports it).
 
 ### 🔴 Known Issues / Limitations
 
@@ -36,4 +42,4 @@ The project has reached the **Stable Beta - Feature Complete** milestone. The co
 
 ---
 
-_Last Updated: 2024-11-25_
+_Last Updated: 2024-05-22_

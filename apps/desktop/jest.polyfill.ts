@@ -60,3 +60,12 @@ if (globalWithResizeObserver.ResizeObserver === undefined) {
 
   globalWithResizeObserver.ResizeObserver = ResizeObserver;
 }
+
+// Polyfill for TextEncoder/TextDecoder
+const util = require('util');
+if (typeof TextEncoder === 'undefined') {
+  global.TextEncoder = util.TextEncoder;
+}
+if (typeof TextDecoder === 'undefined') {
+  global.TextDecoder = util.TextDecoder;
+}

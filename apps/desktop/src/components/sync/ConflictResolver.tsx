@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, Group, Stack, Text, Button, Badge, Code, Accordion } from '@mantine/core';
-import { IconGitMerge, IconDeviceDesktop, IconCloud, IconCheck } from '@tabler/icons-react';
+import { Card, Group, Stack, Text, Button, Badge, Accordion, Grid, Paper, Divider } from '@mantine/core';
+import { IconGitMerge, IconDeviceDesktop, IconCloud, IconCheck, IconArrowRight } from '@tabler/icons-react';
 import { SyncConflict } from './types';
 
 interface ConflictResolverProps {
@@ -10,6 +10,72 @@ interface ConflictResolverProps {
 
 const formatEntityType = (type: string): string => {
   return type.charAt(0).toUpperCase() + type.slice(1).replaceAll('_', ' ');
+};
+
+const DiffField: React.FC<{ label: string; local: any; remote: any }> = ({ label, local, remote }) => {
+  const isDifferent = JSON.stringify(local) !== JSON.stringify(remote);
+
+  if (!isDifferent) return null;
+
+  return (
+    <Paper withBorder p="xs" bg="var(--mantine-color-body)">
+      <Text size="xs" fw={700} c="dimmed" mb={4}>{label}</Text>
+      <Grid>
+        <Grid.Col span={5}>
+          <Text size="sm" style={{ wordBreak: 'break-word' }}>
+            {typeof local === 'object' ? JSON.stringify(local) : String(local)}
+          </Text>
+        </Grid.Col>
+        <Grid.Col span={2} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <IconArrowRight size={14} color="gray" />
+        </Grid.Col>
+        <Grid.Col span={5}>
+          <Text size="sm" c="blue" fw={500} style={{ wordBreak: 'break-word' }}>
+            {typeof remote === 'object' ? JSON.stringify(remote) : String(remote)}
+          </Text>
+        </Grid.Col>
+      </Grid>
+    </Paper>
+  );
+};
+
+const ConflictDiffViewer: React.FC<{ conflict: SyncConflict }> = ({ conflict }) => {
+  let localData: any = {};
+  let remoteData: any = {};
+
+  try {
+    localData = JSON.parse(conflict.local_version);
+    remoteData = JSON.parse(conflict.remote_version);
+  } catch (e) {
+    return (
+      <Text c="red" size="sm">
+        Error parsing conflict data. Raw data available in debug logs.
+      </Text>
+    );
+  }
+
+  // Identify common fields based on entity type (heuristic)
+  const allKeys = Array.from(new Set([...Object.keys(localData), ...Object.keys(remoteData)]));
+  const ignoredKeys = ['id', 'created_at', 'modified_at', 'vector_clock']; // Ignore internal fields
+  const diffKeys = allKeys.filter(k => !ignoredKeys.includes(k));
+
+  return (
+    <Stack gap="xs">
+      {diffKeys.map(key => (
+        <DiffField
+          key={key}
+          label={key}
+          local={localData[key]}
+          remote={remoteData[key]}
+        />
+      ))}
+      {diffKeys.length === 0 && (
+        <Text c="dimmed" size="sm" fs="italic">
+          No visible differences in content (metadata conflict only).
+        </Text>
+      )}
+    </Stack>
+  );
 };
 
 /**
@@ -50,25 +116,27 @@ export const ConflictResolver: React.FC<ConflictResolverProps> = ({ conflicts, o
               <Group gap="sm">
                 <IconGitMerge size={16} />
                 <Text size="sm">{formatEntityType(conflict.entity_type)}</Text>
-                <Text size="xs" c="dimmed">
-                  v{conflict.local_version} vs v{conflict.remote_version}
-                </Text>
+                <Badge size="xs" variant="outline">{conflict.entity_id.substring(0, 8)}</Badge>
               </Group>
             </Accordion.Control>
             <Accordion.Panel>
               <Stack gap="md">
-                <Code block>{JSON.stringify(JSON.parse(conflict.conflict_data), null, 2)}</Code>
+                <ConflictDiffViewer conflict={conflict} />
 
-                <Group gap="sm">
+                <Divider />
+
+                <Group gap="sm" justify="flex-end">
                   <Button
-                    variant="light"
+                    variant="default"
+                    size="xs"
                     leftSection={<IconDeviceDesktop size={14} />}
                     onClick={() => onResolve(conflict.id, 'local')}
                   >
                     Keep Local
                   </Button>
                   <Button
-                    variant="light"
+                    variant="default"
+                    size="xs"
                     leftSection={<IconCloud size={14} />}
                     onClick={() => onResolve(conflict.id, 'remote')}
                   >
@@ -76,10 +144,12 @@ export const ConflictResolver: React.FC<ConflictResolverProps> = ({ conflicts, o
                   </Button>
                   <Button
                     variant="filled"
+                    size="xs"
+                    color="blue"
                     leftSection={<IconGitMerge size={14} />}
                     onClick={() => onResolve(conflict.id, 'merged')}
                   >
-                    Merge
+                    Merge (Not Implemented)
                   </Button>
                 </Group>
               </Stack>

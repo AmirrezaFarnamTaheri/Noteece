@@ -888,6 +888,22 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
         )?;
     }
 
+    if current_version < 22 {
+        log::info!("[db] Migrating to version 22 - Final Optimization");
+        tx.execute_batch(
+            "
+            CREATE INDEX IF NOT EXISTS idx_sync_conflict_entity ON sync_conflict(entity_id);
+
+            -- Optimize FTS indexes
+            INSERT INTO fts_note(fts_note) VALUES('optimize');
+            INSERT INTO fts_task(fts_task) VALUES('optimize');
+            INSERT INTO fts_project(fts_project) VALUES('optimize');
+
+            INSERT INTO schema_version (version) VALUES (22);
+            ",
+        )?;
+    }
+
     // Run Personal Modes Initialization (Idempotent)
     crate::personal_modes::init_personal_modes_tables(&tx)?;
 
