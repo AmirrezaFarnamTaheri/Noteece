@@ -10,6 +10,7 @@
 - [x] **Mobile:** Race condition in vault unlock (Fixed with mutex).
 - [x] **Mobile:** SQL Injection in search (Fixed with parameter binding).
 - [x] **Mobile:** Transaction rollback issues in migrations (Fixed).
+- [x] **Mobile:** Encryption/Salt issue (Fixed with GLOBAL_KEY and salt helper).
 - [x] **Performance:** Mobile SocialHub list was slow (Migrated to `FlashList`).
 - [x] **Performance:** Desktop graph loading was unpaginated (Added pagination).
 - [x] **Infrastructure:** CI was slow (Added caching).

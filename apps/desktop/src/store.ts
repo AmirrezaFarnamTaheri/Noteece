@@ -23,6 +23,21 @@ const store: StateCreator<AppState> = (set) => ({
   clearStorage: () => set({ spaces: [], activeSpaceId: null, zenMode: false }),
 });
 
+const validateHydratedState = (state: AppState | undefined) => {
+  const spaceId = state?.activeSpaceId;
+  if (spaceId) {
+    checkSpaceExists(spaceId).then((exists) => {
+      if (!exists && state) {
+        console.warn('Hydrated space ID not found, resetting.');
+        // We can't easily modify state here directly if it's not a draft,
+        // but zustand's onRehydrateStorage allows returning a callback that receives the state.
+        // However, modifying it here is the intended usage.
+        state.activeSpaceId = null;
+      }
+    });
+  }
+};
+
 // Only use persist middleware in browser environment
 export const useStore =
   process.env.NODE_ENV === 'test'
@@ -36,19 +51,6 @@ export const useStore =
             // spaces are not persisted to ensure fresh data on load
             spaces: [],
           }),
-          onRehydrateStorage: () => (state) => {
-            const spaceId = state?.activeSpaceId;
-            if (spaceId) {
-              return new Promise((resolve) => {
-                checkSpaceExists(spaceId).then((exists) => {
-                  if (!exists && state) {
-                    console.warn('Hydrated space ID not found, resetting.');
-                    state.activeSpaceId = null;
-                  }
-                  resolve(undefined);
-                });
-              });
-            }
-          },
+          onRehydrateStorage: () => validateHydratedState,
         })
       );

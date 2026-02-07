@@ -51,6 +51,13 @@ jest.mock('expo-task-manager', () => ({
 }));
 
 jest.mock('expo-sqlite', () => ({
+  openDatabaseAsync: jest.fn(() =>
+    Promise.resolve({
+      execAsync: jest.fn(() => Promise.resolve()),
+      runAsync: jest.fn(() => Promise.resolve({ insertId: 1, rowsAffected: 0 })),
+      getAllAsync: jest.fn(() => Promise.resolve([])),
+    })
+  ),
   openDatabase: jest.fn(() => ({
     transaction: jest.fn((cb) => cb({ executeSql: jest.fn() })),
   })),
@@ -105,6 +112,8 @@ jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
 if (!jest.isMockFunction(require('./src/lib/database').dbQuery)) {
   jest.mock('./src/lib/database', () => ({
     dbQuery: jest.fn(() => Promise.resolve([])),
+    dbExecute: jest.fn(() => Promise.resolve()),
+    getDatabase: jest.fn(() => ({})),
     initDatabase: jest.fn(() => Promise.resolve()),
     initializeDatabase: jest.fn(() => Promise.resolve()),
   }));

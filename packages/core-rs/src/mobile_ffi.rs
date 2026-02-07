@@ -18,6 +18,7 @@ lazy_static! {
     static ref DB_PATH: Mutex<Option<String>> = Mutex::new(None);
     static ref GLOBAL_P2P: Mutex<Option<Arc<P2pSync>>> = Mutex::new(None);
     static ref RUNTIME: Runtime = Runtime::new().expect("Failed to create Tokio runtime");
+    static ref GLOBAL_KEY: Mutex<Option<Vec<u8>>> = Mutex::new(None);
 }
 
 /// Initialize the FFI layer with the database path
@@ -196,8 +197,20 @@ fn obtain_db_connection() -> Result<rusqlite::Connection, String> {
         default_path
     };
 
-    rusqlite::Connection::open(&path)
-        .map_err(|e| format!("Failed to open DB at {}: {}", path, e))
+    let conn = rusqlite::Connection::open(&path)
+        .map_err(|e| format!("Failed to open DB at {}: {}", path, e))?;
+
+    // Apply key if available
+    if let Ok(guard) = GLOBAL_KEY.lock() {
+        if let Some(key) = &*guard {
+            if let Err(e) = conn.pragma_update(None, "key", key) {
+                log::error!("[FFI] Failed to apply key to connection: {}", e);
+                return Err(format!("Failed to apply encryption key: {}", e));
+            }
+        }
+    }
+
+    Ok(conn)
 }
 
 /// Attempt to retrieve the DEK for a space from the vault metadata
@@ -583,6 +596,33 @@ fn get_sync_history_impl(limit: u32) -> Result<Vec<crate::sync::models::SyncHist
 ///
 /// # Safety
 /// password must be a valid null-terminated C string
+
+fn load_or_create_salt(db_path: &str) -> Vec<u8> {
+    let salt_path = format!("{}.salt", db_path);
+
+    // Try to read existing salt file
+    if let Ok(content) = std::fs::read(&salt_path) {
+        log::info!("[FFI] Loaded salt from {}", salt_path);
+        return content;
+    }
+
+    // If DB exists but no salt file, assume legacy DB created with hardcoded salt
+    if std::path::Path::new(db_path).exists() {
+        log::warn!("[FFI] DB exists without salt file. Using legacy hardcoded salt.");
+        return b"salt_should_be_stored_in_header".to_vec();
+    }
+
+    // New DB: Generate new random salt
+    let salt: [u8; 16] = rand::random();
+    if let Err(e) = std::fs::write(&salt_path, &salt) {
+        log::error!("[FFI] Failed to write salt to {}: {}", salt_path, e);
+    } else {
+        log::info!("[FFI] Generated new salt for new DB at {}", db_path);
+    }
+    salt.to_vec()
+}
+
+
 #[no_mangle]
 pub unsafe extern "C" fn rust_unlock_vault(password: *const c_char) -> bool {
     use crate::crypto::derive_key;
@@ -594,26 +634,38 @@ pub unsafe extern "C" fn rust_unlock_vault(password: *const c_char) -> bool {
     let c_str = CStr::from_ptr(password);
     let Ok(pass) = c_str.to_str() else { return false };
 
-    // 1. TODO: Retrieve a unique salt for the database instead of using a hardcoded one.
-    let salt = b"salt_should_be_stored_in_header";
-    let key = derive_key(pass, salt);
-
-    // 2. Try to open DB
+    // Get DB Path
     let Ok(path_guard) = DB_PATH.lock() else { return false };
     let Some(path) = path_guard.as_ref() else { return false };
 
+    // 1. Get salt (load or create)
+    let salt = load_or_create_salt(path);
+    let key = derive_key(pass, &salt);
+
+    // 2. Try to open DB
     // We open a new connection just to verify the key.
     let Ok(mut conn) = rusqlite::Connection::open(path) else { return false };
 
     // 3. Apply Key (SQLCipher PRAGMA)
     // We pass the raw key bytes. rusqlite handles &[u8] as blob.
-    // Note: If SQLCipher requires hex string, this might fail, but let's assume blob works as per common usage.
-    if conn.pragma_update(None, "key", &key.to_vec()).is_err() {
+    let key_vec = key.to_vec();
+    if conn.pragma_update(None, "key", &key_vec).is_err() {
+        log::error!("[FFI] Failed to apply key during unlock verification");
         return false;
     }
 
     // 4. Verify by reading from the database
-    conn.query_row("SELECT count(*) FROM sqlite_master", [], |_| Ok(())).is_ok()
+    if conn.query_row("SELECT count(*) FROM sqlite_master", [], |_| Ok(())).is_ok() {
+        // Success! Store key globally
+        if let Ok(mut key_guard) = GLOBAL_KEY.lock() {
+            *key_guard = Some(key_vec);
+            log::info!("[FFI] Vault unlocked and key stored in memory");
+        }
+        true
+    } else {
+        log::warn!("[FFI] Unlock verification failed (invalid password or corrupted DB)");
+        false
+    }
 }
 
 #[cfg(test)]
