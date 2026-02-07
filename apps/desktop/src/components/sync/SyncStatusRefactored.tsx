@@ -73,8 +73,8 @@ interface BackendSyncConflict {
 const decodeVersion = (version: number[]): string => {
   try {
     return new TextDecoder().decode(new Uint8Array(version));
-  } catch (e) {
-    console.error('Failed to decode version', e);
+  } catch (error) {
+    console.error('Failed to decode version', error);
     return '{}';
   }
 };

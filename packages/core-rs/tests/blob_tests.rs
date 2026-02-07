@@ -1,4 +1,4 @@
-use core_rs::blob::{retrieve_blob, store_blob, retrieve_chunk, store_chunk};
+use core_rs::blob::{retrieve_blob, retrieve_chunk, store_blob, store_chunk};
 use tempfile::tempdir;
 
 #[test]
@@ -30,7 +30,11 @@ fn test_blob_chunking_large_payload() {
 
     // Verify chunks exist individually (implementation detail test)
     // The manifest should contain 3 lines (4096 + 4096 + 2048)
-    let manifest_path = dir.path().join("objects").join(&hex_hash[0..2]).join(&hex_hash[2..]);
+    let manifest_path = dir
+        .path()
+        .join("objects")
+        .join(&hex_hash[0..2])
+        .join(&hex_hash[2..]);
     let manifest = std::fs::read_to_string(manifest_path).unwrap();
     let chunks: Vec<&str> = manifest.lines().collect();
 

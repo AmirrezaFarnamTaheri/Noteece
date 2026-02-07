@@ -1,8 +1,8 @@
 use core_rs::db::migrate;
-use rusqlite::Connection;
-use tempfile::tempdir;
 use core_rs::note::create_note;
 use core_rs::search::search_notes;
+use rusqlite::Connection;
+use tempfile::tempdir;
 
 fn setup_db() -> (tempfile::TempDir, Connection) {
     let dir = tempdir().unwrap();
@@ -12,7 +12,11 @@ fn setup_db() -> (tempfile::TempDir, Connection) {
     migrate(&mut conn).unwrap();
 
     // Create default space (only id and name are guaranteed)
-    conn.execute("INSERT INTO space (id, name) VALUES ('default', 'Default Space')", []).unwrap();
+    conn.execute(
+        "INSERT INTO space (id, name) VALUES ('default', 'Default Space')",
+        [],
+    )
+    .unwrap();
 
     (dir, conn)
 }
@@ -22,7 +26,11 @@ fn test_fts_optimization_migration_22() {
     let (_dir, conn) = setup_db();
 
     // Check if migration 22 ran by checking schema_version
-    let version: i32 = conn.query_row("SELECT MAX(version) FROM schema_version", [], |row| row.get(0)).unwrap();
+    let version: i32 = conn
+        .query_row("SELECT MAX(version) FROM schema_version", [], |row| {
+            row.get(0)
+        })
+        .unwrap();
     assert!(version >= 22, "Schema version should be at least 22");
 
     // Check if sync_conflict index exists
@@ -45,7 +53,8 @@ fn test_fts_query_functionality() {
         "default",
         "Rust Programming",
         "Rust is a systems programming language that runs blazingly fast.",
-    ).unwrap();
+    )
+    .unwrap();
 
     // Search for "systems"
     let results = search_notes(&conn, "systems", "default").unwrap();
@@ -86,6 +95,12 @@ fn test_sync_conflict_storage() {
     ).unwrap();
 
     // Verify retrieval
-    let count: i32 = conn.query_row("SELECT count(*) FROM sync_conflict WHERE entity_id = ?1", [entity_id], |row| row.get(0)).unwrap();
+    let count: i32 = conn
+        .query_row(
+            "SELECT count(*) FROM sync_conflict WHERE entity_id = ?1",
+            [entity_id],
+            |row| row.get(0),
+        )
+        .unwrap();
     assert_eq!(count, 1);
 }
