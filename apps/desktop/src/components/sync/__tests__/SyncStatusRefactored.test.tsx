@@ -36,7 +36,7 @@ const mockDevices = [
     device_id: 'd1',
     device_name: 'Desktop A',
     device_type: 'Desktop',
-    last_seen: 1700000000,
+    last_seen: 1_700_000_000,
     sync_address: '192.168.1.2',
     sync_port: 8080,
     protocol_version: '1.0.0',
@@ -50,7 +50,7 @@ const mockHistory = [
     direction: 'push',
     entities_pushed: 5,
     entities_pulled: 0,
-    sync_time: 1700000000,
+    sync_time: 1_700_000_000,
     success: true,
     error_message: null,
   },
@@ -71,16 +71,20 @@ describe('SyncStatusRefactored', () => {
     (useStore as unknown as jest.Mock).mockReturnValue({
       activeSpaceId: 'space-1',
     });
-    (invoke as jest.Mock).mockImplementation((cmd, args) => {
+    (invoke as jest.Mock).mockImplementation((cmd, _args) => {
       switch (cmd) {
-        case 'get_devices_cmd':
+        case 'get_devices_cmd': {
           return Promise.resolve(mockDevices);
-        case 'get_sync_conflicts_cmd':
+        }
+        case 'get_sync_conflicts_cmd': {
           return Promise.resolve(mockConflicts);
-        case 'get_sync_history_for_space_cmd':
+        }
+        case 'get_sync_history_for_space_cmd': {
           return Promise.resolve(mockHistory);
-        default:
+        }
+        default: {
           return Promise.resolve([]);
+        }
       }
     });
   });

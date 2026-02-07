@@ -51,7 +51,13 @@ jest.mock('expo-task-manager', () => ({
 }));
 
 jest.mock('expo-sqlite', () => ({
-  openDatabaseAsync: jest.fn(() => Promise.resolve({ execAsync: jest.fn(() => Promise.resolve()), runAsync: jest.fn(() => Promise.resolve({ insertId: 1, rowsAffected: 0 })), getAllAsync: jest.fn(() => Promise.resolve([])) })),
+  openDatabaseAsync: jest.fn(() =>
+    Promise.resolve({
+      execAsync: jest.fn(() => Promise.resolve()),
+      runAsync: jest.fn(() => Promise.resolve({ insertId: 1, rowsAffected: 0 })),
+      getAllAsync: jest.fn(() => Promise.resolve([])),
+    })
+  ),
   openDatabase: jest.fn(() => ({
     transaction: jest.fn((cb) => cb({ executeSql: jest.fn() })),
   })),

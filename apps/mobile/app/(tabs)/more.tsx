@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { typography, spacing } from '@/lib/theme';
 import { useVaultStore } from '@/store/vault';
-import { useSettings, useUpdateSetting } from '@/store/app-context';
+import { useAppContext, useUpdateSetting } from '@/store/app-context';
 import { useTheme, useThemeColors } from '@/contexts/ThemeContext';
 import { haptics } from '@/lib/haptics';
 import { startBackgroundSync, stopBackgroundSync, triggerManualSync } from '@/lib/sync/background-sync';
@@ -17,7 +17,7 @@ import { Logger } from '@/lib/logger';
 
 export default function MoreScreen() {
   const { lockVault } = useVaultStore();
-  const settings = useSettings();
+  const settings = useAppContext(state => state.settings);
   const updateSetting = useUpdateSetting();
   const { themeMode, setThemeMode } = useTheme();
   const colors = useThemeColors();

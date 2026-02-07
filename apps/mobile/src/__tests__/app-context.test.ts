@@ -134,11 +134,21 @@ describe('AppContext', () => {
     it('should load persisted state on initialize', async () => {
       (AsyncStorage.getItem as jest.Mock).mockImplementation((key) => {
         switch (key) {
-          case 'is_onboarded': return Promise.resolve('true');
-          case 'current_space_id': return Promise.resolve('space_123');
-          case 'user_spaces': return Promise.resolve(JSON.stringify([{ id: 'default', name: 'Default' }, { id: 'space_123', name: 'Work' }]));
-          case 'last_active_tab': return Promise.resolve('settings');
-          default: return Promise.resolve(null);
+          case 'is_onboarded':
+            return Promise.resolve('true');
+          case 'current_space_id':
+            return Promise.resolve('space_123');
+          case 'user_spaces':
+            return Promise.resolve(
+              JSON.stringify([
+                { id: 'default', name: 'Default' },
+                { id: 'space_123', name: 'Work' },
+              ])
+            );
+          case 'last_active_tab':
+            return Promise.resolve('settings');
+          default:
+            return Promise.resolve(null);
         }
       });
 

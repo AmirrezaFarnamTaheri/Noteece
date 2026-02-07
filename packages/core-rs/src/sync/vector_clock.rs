@@ -44,9 +44,10 @@ impl VectorClock {
 
     /// Check if this clock dominates another clock (this >= other in all dimensions)
     pub fn dominates(&self, other: &Self) -> bool {
-        other.clock.iter().all(|(id, &other_val)| {
-            self.clock.get(id).copied().unwrap_or(0) >= other_val
-        })
+        other
+            .clock
+            .iter()
+            .all(|(id, &other_val)| self.clock.get(id).copied().unwrap_or(0) >= other_val)
     }
 
     /// Check if clocks are concurrent (neither happens before the other)

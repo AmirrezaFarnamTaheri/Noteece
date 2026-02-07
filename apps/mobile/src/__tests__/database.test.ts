@@ -65,8 +65,11 @@ describe('Database', () => {
     }));
 
     // Re-require modules to get fresh instances wired together
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     AsyncStorage = require('@react-native-async-storage/async-storage');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     syncBridge = require('../lib/jsi/sync-bridge').syncBridge;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const dbModule = require('../lib/database');
     initializeDatabase = dbModule.initializeDatabase;
     getDatabase = dbModule.getDatabase;
@@ -86,7 +89,9 @@ describe('Database', () => {
       expect(AsyncStorage.getItem).toHaveBeenCalledWith('database_version');
 
       expect(mockDb.execAsync).toHaveBeenCalled();
-      const createCall = mockDb.execAsync.mock.calls.find((call: any[]) => call[0].includes('CREATE TABLE IF NOT EXISTS space'));
+      const createCall = mockDb.execAsync.mock.calls.find((call: any[]) =>
+        call[0].includes('CREATE TABLE IF NOT EXISTS space')
+      );
       expect(createCall).toBeTruthy();
     });
 
