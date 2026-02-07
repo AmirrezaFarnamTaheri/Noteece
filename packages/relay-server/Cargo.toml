@@ -5,6 +5,14 @@ edition = "2021"
 authors = ["Noteece Team"]
 description = "Blind Relay Server for Noteece P2P Sync"
 
+[lib]
+name = "relay_server"
+path = "src/lib.rs"
+
+[[bin]]
+name = "relay-server"
+path = "src/main.rs"
+
 [dependencies]
 axum = "0.7"
 tokio = { version = "1", features = ["full"] }
@@ -13,3 +21,8 @@ serde_json = "1"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 core-rs = { path = "../core-rs" }
+
+[dev-dependencies]
+tower = { version = "0.4", features = ["util"] }
+http = "1"
+http-body-util = "0.1"

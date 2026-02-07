@@ -2,7 +2,7 @@
 
 ![Build Status](https://img.shields.io/github/actions/workflow/status/noteece/noteece/ci.yml?branch=main)
 ![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)
-![Version](https://img.shields.io/badge/version-1.1.0-purple.svg)
+![Version](https://img.shields.io/badge/version-1.2.0-purple.svg)
 
 **Noteece** is a comprehensive, local-first workspace for your second brain. It combines encrypted note-taking, project management, and personal growth tracking into a single, beautiful application.
 
