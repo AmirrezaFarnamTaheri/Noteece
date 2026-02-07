@@ -16,8 +16,8 @@ export interface SyncConflict {
   id: string;
   entity_type: string;
   entity_id: string;
-  local_version: number;
-  remote_version: number;
+  local_version: string;
+  remote_version: string;
   conflict_data: string;
   created_at: number;
   resolved_at?: number;

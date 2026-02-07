@@ -70,6 +70,15 @@ interface BackendSyncConflict {
 /**
  * Sync Status Component - Refactored to use sub-components
  */
+const decodeVersion = (version: number[]): string => {
+  try {
+    return new TextDecoder().decode(new Uint8Array(version));
+  } catch (error) {
+    console.error('Failed to decode version', error);
+    return '{}';
+  }
+};
+
 const SyncStatus: React.FC = () => {
   const queryClient = useQueryClient();
   const { activeSpaceId } = useStore();
@@ -208,8 +217,8 @@ const SyncStatus: React.FC = () => {
     id: `${c.entity_type}-${c.entity_id}`,
     entity_type: c.entity_type,
     entity_id: c.entity_id,
-    local_version: c.local_version[0] || 0,
-    remote_version: c.remote_version[0] || 0,
+    local_version: decodeVersion(c.local_version),
+    remote_version: decodeVersion(c.remote_version),
     conflict_data: JSON.stringify({ type: c.conflict_type }),
     created_at: Date.now() / 1000,
   }));

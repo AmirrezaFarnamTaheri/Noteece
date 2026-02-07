@@ -5,8 +5,8 @@ This document outlines the immediate and near-term goals for the Noteece project
 ## 1. Performance Tuning
 
 - [x] **Database Indexing:** Added `idx_note_space_mod` and `idx_note_space_trashed` (Migration v21).
-- [ ] **Query Optimization:** Review slow queries in `search.rs` and `graph.rs` on large datasets (10k+ notes).
-- [ ] **FTS Tuning:** Experiment with `trigram` tokenizer for better fuzzy search support.
+- [x] **Query Optimization:** Review slow queries in `search.rs` and `graph.rs` on large datasets (10k+ notes).
+- [x] **FTS Tuning:** Optimized FTS indexes and added conflict resolution indexes (Migration v22).
 
 ## 2. Cloud Relay (Optional)
 
@@ -22,5 +22,11 @@ This document outlines the immediate and near-term goals for the Noteece project
 
 ## 4. Feature Polish
 
-- [ ] **Blob Sync Chunking:** Implement robust chunking for large file sync.
-- [ ] **Conflict Resolution UI:** A dedicated UI to resolve "Manual" conflicts (currently falls back to keeping both).
+- [x] **Blob Sync Chunking:** Implemented robust chunking logic in backend (`blob.rs`).
+- [x] **Conflict Resolution UI:** Implemented a dedicated UI with diff viewer for resolving sync conflicts.
+
+## 5. Release Candidate Tasks
+
+- [x] **Backend Finalization:** Added comprehensive tests for critical paths.
+- [x] **Frontend Polish:** Improved sync status and conflict UI.
+- [x] **Documentation:** Updated status and roadmap.

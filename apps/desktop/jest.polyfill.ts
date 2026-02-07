@@ -1,3 +1,5 @@
+import { TextDecoder, TextEncoder } from 'node:util';
+
 // Polyfill for import.meta in Jest without shadowing dynamic import()
 // Prefer a safe, explicit global to avoid clobbering native behavior.
 const importMetaPolyfill = {
@@ -59,4 +61,13 @@ if (globalWithResizeObserver.ResizeObserver === undefined) {
   }
 
   globalWithResizeObserver.ResizeObserver = ResizeObserver;
+}
+
+// Polyfill for TextEncoder/TextDecoder
+if (global.TextEncoder === undefined) {
+  global.TextEncoder = TextEncoder;
+}
+if (global.TextDecoder === undefined) {
+  // @ts-expect-error - TextDecoder in node:util is compatible enough for tests
+  global.TextDecoder = TextDecoder;
 }
