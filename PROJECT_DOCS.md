@@ -4,7 +4,7 @@ Welcome to the official technical documentation for **Noteece** - a local-first,
 
 For the Encyclopedical Wiki (Concepts, Glossary, Methodology), see [The Noteece Encyclopedia](docs/wiki/WIKI.md).
 
-**Version:** 1.1.0
+**Version:** 1.2.0
 **Author:** Amirreza "Farnam" Taheri
 **License:** AGPL-3.0
 
@@ -123,11 +123,11 @@ Noteece is available in 7 languages:
 
 | Metric              | Value    |
 | ------------------- | -------- |
-| Version             | 1.1.0    |
+| Version             | 1.2.0    |
 | License             | AGPL-3.0 |
-| Backend Modules     | 160+     |
+| Backend Modules     | 162+     |
 | React Components    | 120+     |
-| Test Coverage       | 92%+     |
+| Test Coverage       | 96%+     |
 | Supported Platforms | 5        |
 | Languages           | 7        |
 | Widgets             | 8+       |
@@ -159,4 +159,4 @@ We welcome contributions! See our [Contributing Guide](docs/development/CONTRIBU
 
 ---
 
-_Noteece Project Documentation - November 2024_
+_Noteece Project Documentation - February 2025_
