@@ -257,43 +257,16 @@ export function useCurrentSpace() {
 }
 
 /**
- * Hook to get app settings
- * @deprecated Use granular selectors (useTheme, useLanguage, etc.) instead to avoid unnecessary re-renders
- */
-export function useSettings() {
-  return useAppContext((state) => state.settings);
-}
-
-/**
  * Hook to update a specific setting
  */
 export function useUpdateSetting() {
-  const { updateSettings, settings } = useAppContext((state) => ({
-    updateSettings: state.updateSettings,
-    settings: state.settings,
-  }));
+  const updateSettings = useAppContext((state) => state.updateSettings);
 
-  // Helper to update a single key; preserves existing nested object fields
   return async <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
-    const prevVal = settings[key];
-    let newPartialSettings: Partial<AppSettings>;
-
-    // Shallow-merge when both previous and new values are non-array objects
-    if (
-      prevVal &&
-      typeof prevVal === 'object' &&
-      !Array.isArray(prevVal) &&
-      value &&
-      typeof value === 'object' &&
-      !Array.isArray(value)
-    ) {
-      newPartialSettings = { [key]: { ...prevVal, ...value } };
-    } else {
-      newPartialSettings = { [key]: value };
-    }
-
-    // @ts-ignore: TS cannot fully resolve the dynamic key type here, but the logic is sound.
-    return updateSettings(newPartialSettings);
+    // We pass partial object to updateSettings, which handles merging
+    // This simplifies the hook and avoids complex state logic here
+    const update: Partial<AppSettings> = { [key]: value };
+    return updateSettings(update);
   };
 }
 

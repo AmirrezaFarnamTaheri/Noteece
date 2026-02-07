@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Mobile Security:** Implemented proper encryption key management in FFI layer with salt file support, fixing hardcoded salt vulnerability.
+- **Mobile Cleanup:** Removed deprecated `useSettings` hook and cleaned up AppContext.
+- **Tests:** Added comprehensive test suites for Mobile Database, AppContext, and Desktop Sync components.
+
 ## [1.1.3] - 2025-12-27
 
 ### Fixed
