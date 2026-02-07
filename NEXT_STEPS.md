@@ -11,12 +11,13 @@ This document outlines the immediate and near-term goals for the Noteece project
 ## 2. Cloud Relay (Optional)
 
 - [x] **Interface Definition:** Created `packages/core-rs/src/sync/relay.rs` with `RelayClient` trait.
-- [ ] **Implementation:** Build a standalone relay server (Rust/Axum) that implements the `BlindRelayServer` logic.
+- [x] **Implementation:** Built standalone relay server `packages/relay-server` (Rust/Axum).
 - [ ] **Client Integration:** Connect the desktop/mobile sync agents to the relay for internet sync.
 
 ## 3. Plugin System
 
 - [x] **API Design:** Defined `NoteecePlugin` trait in `packages/core-rs/src/plugin.rs`.
+- [x] **Validation:** Added plugin registry tests `packages/core-rs/tests/plugin_tests.rs`.
 - [ ] **WASM Host:** Integrate `wasmer` or `wasmtime` to run untrusted plugins safely.
 - [ ] **Event Hooks:** Add hooks for `on_note_save`, `on_task_complete`, etc.
 

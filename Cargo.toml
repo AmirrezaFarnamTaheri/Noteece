@@ -3,4 +3,5 @@ resolver = "2"
 members = [
     "packages/core-rs",
     "apps/desktop/src-tauri",
+    "packages/relay-server",
 ]
