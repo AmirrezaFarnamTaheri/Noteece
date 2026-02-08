@@ -16,7 +16,7 @@ import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { ListItemNode, ListNode } from '@lexical/list';
 import { CodeNode, CodeHighlightNode } from '@lexical/code';
 import { LinkNode } from '@lexical/link';
-import type { EditorState } from 'lexical';
+import { EditorState, COMMAND_PRIORITY_CRITICAL, SELECTION_CHANGE_COMMAND } from 'lexical';
 import { $convertFromMarkdownString, $convertToMarkdownString, TRANSFORMERS } from '@lexical/markdown';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { Paper } from '@mantine/core';
@@ -27,6 +27,8 @@ interface LexicalEditorProperties {
   initialContent?: string;
   onChange?: (content: string) => void;
   placeholder?: string;
+  typewriterMode?: boolean;
+  scrollContainerRef?: React.RefObject<HTMLElement>;
 }
 
 // Theme configuration for Lexical editor
@@ -135,10 +137,75 @@ function ChangePlugin({
   return <OnChangePlugin onChange={handleChange} ignoreSelectionChange />;
 }
 
+function TypewriterScrollingPlugin({
+  scrollContainerRef,
+  isActive,
+}: {
+  scrollContainerRef?: React.RefObject<HTMLElement>;
+  isActive: boolean;
+}) {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    if (!isActive || !scrollContainerRef?.current) return;
+
+    const scroll = () => {
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) return;
+
+      try {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        const containerRect = container.getBoundingClientRect();
+
+        const cursorVisualTop = rect.top;
+        const containerCenter = containerRect.top + (containerRect.height / 2);
+        const offset = cursorVisualTop - containerCenter;
+
+        if (Math.abs(offset) > 15) {
+           container.scrollTo({
+              top: container.scrollTop + offset,
+              behavior: 'smooth'
+           });
+        }
+      } catch (e) {
+        // Ignore
+      }
+    };
+
+    const removeUpdateListener = editor.registerUpdateListener(() => {
+        requestAnimationFrame(scroll);
+    });
+
+    const removeSelectionListener = editor.registerCommand(
+        SELECTION_CHANGE_COMMAND,
+        () => {
+            requestAnimationFrame(scroll);
+            return false;
+        },
+        COMMAND_PRIORITY_CRITICAL
+    );
+
+    return () => {
+        removeUpdateListener();
+        removeSelectionListener();
+    };
+
+  }, [editor, isActive, scrollContainerRef]);
+
+  return null;
+}
+
 export default function LexicalEditorComponent({
   initialContent = '',
   onChange,
   placeholder = 'Start typing...',
+  typewriterMode = false,
+  scrollContainerRef,
 }: LexicalEditorProperties) {
   const suppressChangeReference = useRef(false);
 
@@ -166,6 +233,7 @@ export default function LexicalEditorComponent({
           <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
           <MarkdownSyncPlugin initialContent={initialContent} suppressChangeRef={suppressChangeReference} />
           <ChangePlugin onChange={onChange} suppressChangeRef={suppressChangeReference} />
+          <TypewriterScrollingPlugin isActive={typewriterMode} scrollContainerRef={scrollContainerRef} />
         </div>
       </Paper>
     </LexicalComposer>

@@ -1,8 +1,9 @@
-node_modules
-.DS_Store
-target/
-dist/
-build/
+/target
+/dist
+/node_modules
+**/.DS_Store
 *.log
-coverage/
-.coverage/
+.env
+.idea
+.vscode
+*.swp

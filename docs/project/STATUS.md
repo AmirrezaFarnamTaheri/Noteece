@@ -1,26 +1,5 @@
 # Project Status
 
-**Version:** 1.1.0  
-**Status:** Production Ready  
-**Last Updated:** November 2025  
-**Author:** Amirreza "Farnam" Taheri
-
----
-
-## Overview
-
-Noteece is a production-ready, local-first, privacy-focused workspace application featuring:
-
-- **Desktop App:** Tauri + React (Windows, macOS, Linux)
-- **Mobile App:** Expo + React Native (iOS, Android)
-- **Prime Mode:** Android meta-layer with 30+ platform support
-- **LLM Integration:** 4 providers with streaming and cost tracking
-- **P2P Sync:** Encrypted device-to-device synchronization
-
-## Component Status
-
-### Backend (Rust)
-
 | Component              | Status      | Coverage |
 | ---------------------- | ----------- | -------- |
 | Database & Migrations  | ✅ Stable   | 95%+     |
@@ -52,6 +31,7 @@ Noteece is a production-ready, local-first, privacy-focused workspace applicatio
 | AI Assistant            | ✅ Complete |
 | i18n (7 languages)      | ✅ Complete |
 | Dark Mode Sync          | ✅ Complete |
+| Typewriter Mode         | ✅ Complete |
 
 ### Mobile Application
 
@@ -80,7 +60,9 @@ Noteece is a production-ready, local-first, privacy-focused workspace applicatio
 
 ## Recent Achievements (v1.1.0)
 
-- ✅ Enhanced Control Panel with presets
+- ✅ Full Typewriter Scrolling mode in Desktop Editor
+- ✅ Enhanced Search Engine with Unicode support and SQLi protection
+- ✅ Deprecated `packages/editor` cleanup
 - ✅ Full i18n implementation (7 languages)
 - ✅ Dark mode OS preference sync
 - ✅ Local AI integration (Ollama)
@@ -129,4 +111,4 @@ See [ISSUES.md](ISSUES.md) for detailed tracking.
 
 ---
 
-_Noteece v1.1.0 - November 2025_
+_Noteece v1.1.0 - Feb 2024_
