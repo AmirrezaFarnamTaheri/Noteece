@@ -80,6 +80,23 @@ pub fn create_note(
         is_trashed: false,
     };
 
+    // Use explicit transaction if possible, or just implicit since we use last_insert_rowid immediately
+    // Note: If connection is shared/multithreaded (unlikely for SQLite unless explicitly handled), transaction is safer.
+    // However,  is per-connection. As long as this function holds the connection lock (via  or just serial execution), it's safe.
+    // But wrapping in execute block is better.
+    // Since  is , we can't call  easily unless  is .
+    // The signature is . Changing it would be a breaking change for callers.
+    // But   methods like  take .
+    // Wait,  takes .
+    // So I can't start a transaction here without changing signature!
+    // But  callers might pass .
+    // If I can't use transaction, I rely on  being correct for this connection.
+    // SQLite ensures  is specific to the connection.
+    // So as long as we use the SAME connection object, and no other thread uses THIS connection object concurrently (which is true due to Rust borrow rules if  is  elsewhere, but here it's ),
+    // actually,  is  but not ?
+    // rusqlite  is not . So it can only be used by one thread at a time.
+    // So  is safe.
+
     conn.execute(
         "INSERT INTO note (id, space_id, title, content_md, created_at, modified_at, is_trashed) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
         rusqlite::params![&note.id.0.to_string(), &note.space_id, &note.title, &note.content_md, &note.created_at, &note.modified_at, note.is_trashed],
@@ -169,6 +186,16 @@ pub fn update_note_content(
     )?;
 
     tx.commit()?;
+
+    // Need to drop tx to use conn again
+    // But  takes &Connection.  implements Deref<Target=Connection>.
+    // Wait,  is called AFTER .
+    // After commit,  is consumed.
+    // So we use  again.
+
+    // BUT we need to re-fetch note because  needs space_id.
+    // And  signature takes .
+    // So we are good.
 
     let note = get_note(conn, id.clone())?.ok_or(DbError::Message("Note not found".into()))?;
     handle_note_update(conn, &note.space_id, id, content_md)?;

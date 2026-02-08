@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Button,
   TextInput,
@@ -32,6 +32,7 @@ const NoteEditor: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [typewriterMode, setTypewriterMode] = useState(false);
   const { activeSpaceId } = useStore();
+  const editorScrollRef = useRef<HTMLDivElement>(null);
 
   // Use React Query hooks for data fetching
   const {
@@ -240,9 +241,6 @@ const NoteEditor: React.FC = () => {
       >
         <div
           style={{
-            paddingTop: typewriterMode ? '40vh' : 0,
-            paddingBottom: typewriterMode ? '40vh' : 0,
-            transition: 'padding 0.3s ease',
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
@@ -281,12 +279,24 @@ const NoteEditor: React.FC = () => {
           </Group>
 
           {/* Lexical Editor with full rich text and markdown support */}
-          <Box style={{ flex: 1, overflowY: 'auto', paddingRight: '8px' }}>
+          <Box
+            ref={editorScrollRef}
+            style={{
+                flex: 1,
+                overflowY: 'auto',
+                paddingRight: '8px',
+                paddingTop: typewriterMode ? '40vh' : '0',
+                paddingBottom: typewriterMode ? '40vh' : '0',
+                transition: 'padding 0.3s ease'
+            }}
+          >
             <LexicalEditor
               key={selectedNote ? String(selectedNote.id) : 'new-note'}
               initialContent={content}
               onChange={handleContentChange}
               placeholder="Start writing..."
+              typewriterMode={typewriterMode}
+              scrollContainerRef={editorScrollRef}
             />
           </Box>
 

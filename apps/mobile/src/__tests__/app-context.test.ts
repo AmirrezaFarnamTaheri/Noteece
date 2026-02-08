@@ -143,7 +143,7 @@ describe('AppContext', () => {
               JSON.stringify([
                 { id: 'default', name: 'Default' },
                 { id: 'space_123', name: 'Work' },
-              ])
+              ]),
             );
           case 'last_active_tab':
             return Promise.resolve('settings');
