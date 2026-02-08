@@ -172,7 +172,7 @@ function TypewriterScrollingPlugin({
               behavior: 'smooth'
            });
         }
-      } catch (e) {
+      } catch {
         // Ignore
       }
     };

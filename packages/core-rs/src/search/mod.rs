@@ -27,11 +27,11 @@ pub fn search_notes(conn: &Connection, query: &str, scope: &str) -> Result<Vec<N
         if let Some(stripped) = part.strip_prefix("tag:") {
             tags.push(stripped.to_string());
         } else {
-             // Sanitize FTS5 input:
-             // 1. Escape double quotes (replace " with "")
-             // 2. Wrap in double quotes to treat as a string literal (phrase)
-             let escaped = part.replace("\"", "\"\"");
-             fts_query_parts.push(format!("\"{}\"", escaped));
+            // Sanitize FTS5 input:
+            // 1. Escape double quotes (replace " with "")
+            // 2. Wrap in double quotes to treat as a string literal (phrase)
+            let escaped = part.replace("\"", "\"\"");
+            fts_query_parts.push(format!("\"{}\"", escaped));
         }
     }
 

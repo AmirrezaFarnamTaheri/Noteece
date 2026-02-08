@@ -27,7 +27,9 @@ fn test_search_sql_injection_resilience() -> Result<(), DbError> {
     let _results = search_notes(&conn, injection_query, &space_id.to_string());
 
     // Verify table still exists and has data
-    let count: i64 = conn.query_row("SELECT count(*) FROM note", [], |row| row.get(0)).unwrap();
+    let count: i64 = conn
+        .query_row("SELECT count(*) FROM note", [], |row| row.get(0))
+        .unwrap();
     assert_eq!(count, 2, "Table should not be dropped");
 
     Ok(())
@@ -43,7 +45,13 @@ fn test_search_unicode_handling() -> Result<(), DbError> {
     // However, searching for text WITH emojis should still work for the text part.
     // Let's test standard unicode text support (Kanji, Cyrillic, etc) which is critical.
 
-    create_note(&conn, &space_id.to_string(), "Kanji Note 漢字", "日本語のテスト").unwrap();
+    create_note(
+        &conn,
+        &space_id.to_string(),
+        "Kanji Note 漢字",
+        "日本語のテスト",
+    )
+    .unwrap();
     create_note(&conn, &space_id.to_string(), "Cyrillic Note Привет", "Мир").unwrap();
 
     // Search for Kanji in title

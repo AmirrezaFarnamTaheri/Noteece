@@ -17,7 +17,7 @@ import { Logger } from '@/lib/logger';
 
 export default function MoreScreen() {
   const { lockVault } = useVaultStore();
-  const settings = useAppContext(state => state.settings);
+  const settings = useAppContext((state) => state.settings);
   const updateSetting = useUpdateSetting();
   const { themeMode, setThemeMode } = useTheme();
   const colors = useThemeColors();

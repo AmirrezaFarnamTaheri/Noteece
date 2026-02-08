@@ -1,5 +1,9 @@
-import type * as SQLite from 'expo-sqlite';
-import type { initializeDatabase as InitDbType, getDatabase as GetDbType, dbQuery as DbQueryType, dbExecute as DbExecuteType } from '../lib/database';
+import type {
+  initializeDatabase as InitDbType,
+  getDatabase as GetDbType,
+  dbQuery as DbQueryType,
+  dbExecute as DbExecuteType,
+} from '../lib/database';
 
 // Types for mocks
 type MockDatabase = {
@@ -90,7 +94,7 @@ describe('Database', () => {
 
       expect(mockDb.execAsync).toHaveBeenCalled();
       const createCall = mockDb.execAsync.mock.calls.find((call: any[]) =>
-        call[0].includes('CREATE TABLE IF NOT EXISTS space')
+        call[0].includes('CREATE TABLE IF NOT EXISTS space'),
       );
       expect(createCall).toBeTruthy();
     });
@@ -102,7 +106,7 @@ describe('Database', () => {
 
       expect(mockDb.execAsync).toHaveBeenCalledWith('BEGIN TRANSACTION');
       const migrationCall = mockDb.execAsync.mock.calls.find((call: any[]) =>
-        call[0].includes('CREATE INDEX IF NOT EXISTS idx_health_metric_type')
+        call[0].includes('CREATE INDEX IF NOT EXISTS idx_health_metric_type'),
       );
       expect(migrationCall).toBeTruthy();
       expect(mockDb.execAsync).toHaveBeenCalledWith('COMMIT');

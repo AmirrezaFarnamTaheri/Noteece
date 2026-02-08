@@ -56,7 +56,7 @@ jest.mock('expo-sqlite', () => ({
       execAsync: jest.fn(() => Promise.resolve()),
       runAsync: jest.fn(() => Promise.resolve({ insertId: 1, rowsAffected: 0 })),
       getAllAsync: jest.fn(() => Promise.resolve([])),
-    })
+    }),
   ),
   openDatabase: jest.fn(() => ({
     transaction: jest.fn((cb) => cb({ executeSql: jest.fn() })),
