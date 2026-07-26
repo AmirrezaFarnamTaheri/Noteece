@@ -16,9 +16,9 @@ Noteece assumes the following threats:
 - **Algorithm:** AES-256-CBC (Page level).
 - **Key Management:**
   - **User Password:** The root of trust.
-  - **KEK (Key Encryption Key):** Derived from password via `Argon2id` (memory-hard).
+  - **KEK (Key Encryption Key):** Derived from password via **`PBKDF2-HMAC-SHA512`, 256,000 iterations** (`packages/core-rs/src/crypto.rs:28`; matches `PRAGMA cipher_kdf_algorithm = PBKDF2_HMAC_SHA512` in `vault.rs:35`). This is **not** a memory-hard KDF. Argon2id appears in the codebase only for password *authentication* hashing (`auth.rs:90-93`), not for key derivation.
   - **DEK (Data Encryption Key):** Random 32-byte key.
-  - **Process:** `Password -> Argon2id -> KEK -> Decrypt(Encrypted_DEK) -> DEK -> Unlock Database`.
+  - **Process:** `Password -> PBKDF2-HMAC-SHA512 (256k iters) -> KEK -> Decrypt(Encrypted_DEK) -> DEK -> Unlock Database`.
 
 ### 2. Data in Transit (Sync)
 

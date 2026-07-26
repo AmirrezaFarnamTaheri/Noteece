@@ -1,5 +1,28 @@
 # App Store Preparation for Noteece
 
+> # ⚠️ DO NOT SUBMIT THIS LISTING
+>
+> **This store copy makes false material claims about encryption and MUST NOT be submitted to the
+> Apple App Store, Google Play, or any other channel until mobile at-rest encryption is actually
+> implemented.**
+>
+> As of the 2026-07-26 audit, the mobile app stores **all user data in a plaintext SQLite
+> database** — `apps/mobile/src/lib/database.ts:585` opens the database with no encryption key and
+> no SQLCipher PRAGMA. Therefore every claim of "zero-knowledge", "encrypted locally", "encrypted
+> on your device", "we cannot access your data", or "Argon2 key derivation" is **false as applied
+> to the mobile app**. Publishing them would constitute a deceptive representation to consumers and
+> a violation of both stores' policies on accurate metadata.
+>
+> Claims below have been struck through or qualified in place rather than deleted, so that they can
+> be restored verbatim once the underlying functionality ships. **Restoring them before then is a
+> legal and compliance risk.**
+>
+> Blocking work before this listing is usable:
+>
+> 1. Implement SQLCipher (or equivalent) at-rest encryption in the mobile app.
+> 2. Key the database from a real KEK/DEK chain rather than opening it unkeyed.
+> 3. Re-audit and only then un-strike the claims below.
+
 Complete guide for submitting Noteece to iOS App Store and Google Play Store.
 
 ## Table of Contents
@@ -65,8 +88,16 @@ Personal Intelligence Vault
 
 **Promotional Text** (170 characters, updatable):
 
+> ⚠️ **BLOCKED — false claim.** "Zero-knowledge encrypted" is not true on mobile (plaintext database). Do not ship this string.
+
 ```
-Zero-knowledge encrypted note-taking with AI-powered insights. Your data stays on your device. Local-first, offline-capable, open source.
+[BLOCKED — DO NOT SUBMIT] Zero-knowledge encrypted note-taking with AI-powered insights. Your data stays on your device. Local-first, offline-capable, open source.
+```
+
+Compliant interim alternative (accurate today):
+
+```
+Local-first note-taking with AI-powered insights. Your data stays on your device. Offline-capable, open source.
 ```
 
 **Description** (4000 characters max):
@@ -74,12 +105,16 @@ Zero-knowledge encrypted note-taking with AI-powered insights. Your data stays o
 ```
 NOTEECE - YOUR PERSONAL INTELLIGENCE VAULT
 
-Noteece is a revolutionary personal knowledge management app that puts privacy first while delivering powerful AI-powered insights. Unlike cloud-based alternatives, Noteece keeps all your data encrypted locally on your device - we literally cannot access your information.
+> ⚠️ **BLOCKED — false claims below.** Mobile data is stored in plaintext; "encrypted locally",
+> "we literally cannot access your information", and "ZERO-KNOWLEDGE SECURITY" are false for the
+> mobile app. ChaCha20-Poly1305 is used for **sync transport**, not for data at rest on mobile.
 
-🔐 ZERO-KNOWLEDGE SECURITY
-• End-to-end encryption using industry-standard ChaCha20-Poly1305
+Noteece is a revolutionary personal knowledge management app that puts privacy first while delivering powerful AI-powered insights. Unlike cloud-based alternatives, Noteece keeps all your data locally on your device. ~~encrypted locally on your device - we literally cannot access your information~~ [BLOCKED — not true on mobile]
+
+🔐 ~~ZERO-KNOWLEDGE SECURITY~~ [BLOCKED — not true on mobile] → PRIVACY-FIRST, LOCAL-FIRST
+• ~~End-to-end encryption using industry-standard ChaCha20-Poly1305~~ → ChaCha20-Poly1305 encryption **for device-to-device sync in transit** (data at rest on mobile is currently NOT encrypted)
 • Your password never leaves your device
-• No cloud storage means no data breaches
+• No cloud storage by default means no cloud data breaches
 • Open source and auditable
 
 📝 COMPREHENSIVE CAPTURE
@@ -133,10 +168,10 @@ Unlike Notion, Evernote, or OneNote, Noteece doesn't require an account, doesn't
 
 TECHNICAL FEATURES:
 • React Native for native performance
-• SQLite with SQLCipher encryption
+• ~~SQLite with SQLCipher encryption~~ [BLOCKED — SQLCipher is **desktop only**; mobile uses plaintext SQLite via expo-sqlite]
 • Offline-first architecture
 • CRDT-based sync for conflict resolution
-• Argon2 password key derivation
+• ~~Argon2 password key derivation~~ [BLOCKED — false. Argon2id is used only for password **authentication** hashing. Key derivation is PBKDF2-HMAC-SHA512 (256,000 iterations), and no key derivation protects the mobile database at all]
 • No external dependencies or tracking SDKs
 
 NOTE: Your vault password is unrecoverable by design. Store it securely (we recommend a password manager) and back up your data regularly using the built-in export feature.
@@ -172,9 +207,9 @@ NEW FEATURES:
 • Multiple language support (EN, ES, FR, DE, JA, ZH)
 
 SECURITY:
-• End-to-end encryption with ChaCha20-Poly1305
-• Zero-knowledge architecture - we cannot access your data
-• Local-first storage for maximum privacy
+• ~~End-to-end encryption with ChaCha20-Poly1305~~ → ChaCha20-Poly1305 **for sync in transit** (mobile data at rest is NOT encrypted)
+• ~~Zero-knowledge architecture - we cannot access your data~~ [BLOCKED — false on mobile]
+• Local-first storage
 
 DESIGN:
 • Dark-themed, beautiful Material Design-inspired UI
@@ -293,10 +328,10 @@ Encrypted notes & tasks with AI insights. Privacy-first, offline, open source.
 ```
 NOTEECE - YOUR PERSONAL INTELLIGENCE VAULT
 
-Take control of your data with Noteece, the privacy-first personal knowledge management app that keeps everything encrypted locally on your device.
+Take control of your data with Noteece, the privacy-first personal knowledge management app that keeps everything ~~encrypted~~ locally on your device. [BLOCKED — "encrypted" is false on mobile]
 
-🔐 ZERO-KNOWLEDGE ENCRYPTION
-Unlike cloud apps that can access your data, Noteece uses end-to-end encryption with a password only you know. We literally cannot see your notes, tasks, or any information you store.
+🔐 ~~ZERO-KNOWLEDGE ENCRYPTION~~ [BLOCKED — false on mobile] → LOCAL-FIRST STORAGE
+~~Unlike cloud apps that can access your data, Noteece uses end-to-end encryption with a password only you know. We literally cannot see your notes, tasks, or any information you store.~~ [BLOCKED — mobile stores data unencrypted; do not publish this paragraph.] Accurate interim wording: "Noteece stores your notes on your own device rather than in our cloud. We do not receive or store your notes."
 
 ✨ KEY FEATURES
 
@@ -862,7 +897,7 @@ Location: `apps/mobile/assets/icon.png`
 
 **Key Selling Points**:
 
-1. 🔐 Zero-knowledge encryption
+1. ~~🔐 Zero-knowledge encryption~~ [BLOCKED — false on mobile; use "🔐 Local-first, your data stays on your device" until at-rest encryption ships]
 2. 📱 Offline-first, no cloud
 3. 💎 100% open source (GPL v3)
 4. 🧠 AI-powered insights

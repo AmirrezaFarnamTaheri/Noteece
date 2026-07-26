@@ -5,15 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+> **Versioning note (2026-07-26):** No release has ever been tagged. Every
+> package manifest is at **1.1.0** (`package.json`, `apps/mobile/package.json`,
+> `apps/desktop/src-tauri/tauri.conf.json`, `packages/core-rs/Cargo.toml`), while
+> the sections below previously claimed shipped 1.1.1/1.1.2/1.1.3 releases. The
+> manifests are the source of truth: **1.1.0 is the current version**, and the
+> 1.1.1–1.1.3 sections are retained as *unreleased* development milestones rather
+> than shipped versions. Several section dates predated the repository's own first
+> commit (2025-12-01) and have been corrected.
+
 ## [Unreleased]
+
+### Security
+
+- **Relay Server:** `packages/relay-server` now issues a real capability token on device registration and requires `Authorization: Bearer <token>` on `/fetch` and `/pending`, replacing the stubbed auth that allowed anyone to drain any device's mailbox.
+- **Mobile Backups:** Set `android:allowBackup="false"` in the Android manifest so vault metadata is excluded from ADB/cloud backups.
+- **Path Traversal:** Added validation to social backup identifiers so a crafted `backup_id` can no longer escape the backups directory.
+- **CI:** Added a security scanning workflow (`.github/workflows/security.yml`).
 
 ### Fixed
 
+- **Desktop Vault Entry:** `VaultManagement` invoked `create_vault`/`unlock_vault`, which the Rust backend never registered (it registers `create_vault_cmd`/`unlock_vault_cmd`), so the app could not open a vault. Corrected the command names and surfaced the error in the UI instead of swallowing it into the logger.
+- **Mobile Vault Lockout:** `changeVaultPassword` re-wrapped the DEK without the `vault:dek:v1` AEAD associated data that the unlock path requires, permanently locking the vault after any password change. Unified the wrap/unwrap primitive.
+- **UTF-8 Panic:** The social stream processor byte-sliced untrusted accessibility-captured text at a fixed offset, panicking on any multibyte character. Now slices on character boundaries.
+- **Fabricated Widget Data:** Dashboard widgets (Finance snapshot, Gamification) rendered `Math.random()` figures when their backend commands failed. They now show explicit empty/error states.
+- **FinanceMode Currency:** Amounts stored in cents were rendered with `.toFixed(2)` and no division by 100, showing every total at 100× its real value.
 - **Mobile Security:** Implemented proper encryption key management in FFI layer with salt file support, fixing hardcoded salt vulnerability.
 - **Mobile Cleanup:** Removed deprecated `useSettings` hook and cleaned up AppContext.
 - **Tests:** Added comprehensive test suites for Mobile Database, AppContext, and Desktop Sync components.
 
-## [1.1.3] - 2025-12-27
+### Known blockers
+
+Mobile data is still stored in plaintext at rest, the desktop AI backend is still
+unregistered, and the Prime capture feature still has no consent surface. See
+[`STATUS.md`](STATUS.md) and
+[`docs/audit_reports/FORENSIC_AUDIT_2026-07-26.md`](docs/audit_reports/FORENSIC_AUDIT_2026-07-26.md).
+
+## [1.1.3] - 2025-12-27 (unreleased)
 
 ### Fixed
 
@@ -27,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Accessibility - Desktop:** Added aria-labels to `MusicWidget` and `FocusTimer` components
 - **Code Quality:** Replaced index-based React keys with unique identifiers, added progressbar role to LoadingState
 
-## [1.1.2] - 2025-12-27
+## [1.1.2] - 2025-12-27 (unreleased)
 
 ### Fixed
 
@@ -53,7 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **DEK Retrieval:** New `get_dek_for_space()` function in Rust FFI for secure key management
 - **Logger Interface:** MockLogger interface and createConsoleLogger utility for automation DSL testing
 
-## [1.1.1] - 2024-11
+## [1.1.1] - 2025-12 (unreleased)
 
 ### Fixed
 
@@ -102,7 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Safety:** Replaced unsafe `unwrap()` calls in `srs.rs`, `versioning.rs`, and `tag.rs` with proper error propagation.
 - **Linting:** Resolved over 100 ESLint warnings in the Desktop and Mobile applications, improving code quality and type safety.
 
-## [1.1.0] - 2024-05-20
+## [1.1.0] - 2025-12-01
 
 ### Added
 

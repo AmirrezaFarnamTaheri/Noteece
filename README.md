@@ -1,19 +1,19 @@
 # Noteece
 
-![Build Status](https://img.shields.io/github/actions/workflow/status/noteece/noteece/ci.yml?branch=main)
+![Build Status](https://img.shields.io/github/actions/workflow/status/AmirrezaFarnamTaheri/Noteece/ci.yml?branch=main)
 ![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)
-![Version](https://img.shields.io/badge/version-1.2.0-purple.svg)
+![Version](https://img.shields.io/badge/version-1.1.0-purple.svg)
 
 **Noteece** is a comprehensive, local-first workspace for your second brain. It combines encrypted note-taking, project management, and personal growth tracking into a single, beautiful application.
 
 ## 📚 Documentation
 
-The complete documentation is available in the **[Wiki](WIKI.md)**.
+The full documentation set lives in **[docs/project_docs/](docs/project_docs/00_Home.md)**. Supplementary concept and glossary pages are in the **[Encyclopedia](docs/wiki/WIKI.md)**.
 
-- **[Getting Started](docs/wiki/04_User_Guide/01_Getting_Started.md)**: First steps for new users
-- **[Architecture](docs/wiki/01_Architecture/01_Overview.md)**: System design and security model
-- **[Features](docs/wiki/02_Features/01_Notes_and_Knowledge.md)**: Detailed feature guides
-- **[Development](docs/wiki/03_Development/01_Setup.md)**: Contributor guide and setup
+- **[Getting Started](docs/project_docs/04_User_Guide/01_Getting_Started.md)**: First steps for new users
+- **[Architecture](docs/project_docs/01_Architecture/01_Overview.md)**: System design and security model
+- **[Features](docs/project_docs/02_Features/01_Notes_and_Knowledge.md)**: Detailed feature guides
+- **[Development](docs/project_docs/03_Development/01_Setup.md)**: Contributor guide and setup
 
 ## 🚀 Quick Start
 
@@ -36,14 +36,14 @@ pnpm dev:tauri
 
 ## ✨ Key Features
 
-- **🔒 Private by Default:** AES-256 encryption at rest. Zero-knowledge architecture.
+- **🔒 Private by Default (Desktop):** The desktop vault is encrypted at rest with SQLCipher (AES-256-CBC + HMAC-SHA512) and note content is sealed with XChaCha20-Poly1305; keys never leave your device. **Note:** the mobile app currently stores its local database unencrypted (see `apps/mobile/src/lib/database.ts`) — rely on device-level full-disk encryption there.
 - **⚡ Local-First:** Works offline. Syncs peer-to-peer over WiFi.
 - **📝 Markdown Centric:** First-class writing experience with backlinks and tags.
 - **📊 Integrated Workflow:** Tasks, Projects, Habits, and Goals in one place.
 - **📱 Mobile Companion:** React Native app for iOS and Android.
 - **🌐 Multi-Language:** Support for English, Spanish, French, German, Japanese, Chinese, and Farsi.
 - **🤖 AI Integration:** Multiple LLM providers (Ollama, OpenAI, Claude, Gemini) with cost tracking.
-- **🔮 Prime Mode:** Android "Cyborg-Life OS" with 30+ platform content capture.
+- **🔮 Prime Mode (sideload):** Android "Cyborg-Life OS" with 30+ platform content capture. Opt-in only, and subject to the legal caveats below.
 
 ## 🔮 Noteece Prime (Sideload)
 
@@ -58,6 +58,8 @@ The mobile app includes a "Prime" sideload flavor that enables **Sovereign Inter
 | Media     | YouTube, Twitch, Spotify                               |
 
 All capture happens **on-device** using the Accessibility Service - no cloud required.
+
+> **⚠️ Legal and consent notice.** Sovereign Interception reads on-screen content from third-party apps, which includes messages, posts, and profiles authored by **other people** who have not consented to being recorded. Depending on your jurisdiction this may implicate wiretapping/interception laws, two-party consent rules, data-protection law (e.g. GDPR — you become a controller of other people's personal data), and the terms of service of the captured apps. Prime is distributed as a sideload flavor and is **not** available through app stores. You are solely responsible for determining whether your use is lawful, for obtaining any consent required, and for safeguarding and deleting captured third-party data. Do not enable Prime to monitor another person's device or communications without their knowledge.
 
 ## 🤖 LLM Integration
 
@@ -78,16 +80,19 @@ noteece/
 │   ├── desktop/     # Tauri + React desktop app
 │   └── mobile/      # Expo + React Native mobile app
 ├── packages/
-│   ├── core-rs/     # Rust core library
-│   ├── types/       # Shared TypeScript types
-│   ├── ui/          # Shared UI components
-│   └── editor/      # Lexical editor wrapper
-└── docs/            # Documentation
+│   ├── automation-dsl/  # Automation rule language
+│   ├── core-rs/         # Rust core library
+│   ├── locale/          # i18n message catalogs
+│   ├── modes/           # Workspace mode definitions
+│   ├── relay-server/    # Blind relay for internet sync
+│   ├── types/           # Shared TypeScript types
+│   └── ui/              # Shared UI components
+└── docs/                # Documentation
 ```
 
 ## 🤝 Contributing
 
-We welcome contributions! Please read our [Contributing Guide](docs/development/CONTRIBUTING.md) and [Code of Conduct](docs/legal/CODE_OF_CONDUCT.md).
+We welcome contributions! Please read our [Contributing Guide](docs/development/CONTRIBUTING.md) and the [Code Review Guide](docs/development/CODE_REVIEW_GUIDE.md).
 
 ## 👤 Author
 

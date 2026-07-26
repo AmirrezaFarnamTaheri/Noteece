@@ -1,6 +1,12 @@
 # Noteece Mobile
 
-> Your Life OS on the go - Offline-first, end-to-end encrypted mobile companion
+> Your Life OS on the go - Offline-first mobile companion
+
+> ⚠️ **Mobile data is NOT encrypted at rest.** The app opens a plaintext SQLite database
+> (`src/lib/database.ts:585` — `SQLite.openDatabaseAsync('noteece.db')` with no key or SQLCipher
+> PRAGMA). Encryption on mobile currently covers **sync traffic in transit only**, so "end-to-end
+> encrypted" overstates what ships. Desktop at-rest encryption (SQLCipher) is real; mobile's is not
+> yet implemented. See `apps/mobile/SECURITY.md`.
 
 ## Overview
 
@@ -74,8 +80,8 @@ Advanced security and data control:
 - **Password Management**: Change vault password anytime (iOS)
 - **Data Export**: Export all data to JSON for backup
 - **Data Clearing**: Securely wipe all local data
-- **Encrypted Storage**: All data encrypted at rest with ChaCha20-Poly1305
-- **Argon2id**: Password hashing with industry-standard parameters
+- **⚠️ Storage is NOT encrypted at rest on mobile** (`src/lib/database.ts:585`). ChaCha20-Poly1305 is applied to **sync payloads in transit**, not to the on-device database.
+- **Argon2id**: Password **authentication** hashing only (`packages/core-rs/src/auth.rs:90-93`). It derives no encryption key and does not protect stored data.
 
 ## Architecture
 
@@ -260,9 +266,9 @@ User resolution required for:
 
 ### Encryption
 
-- **At Rest**: SQLite database encrypted with SQLCipher
-- **In Transit**: All sync data encrypted with ChaCha20-Poly1305
-- **Key Derivation**: Argon2id for password → KEK → DEK
+- **At Rest**: ⚠️ **Mobile: none — the SQLite database is plaintext** (`src/lib/database.ts:585`). SQLCipher (AES-256-CBC + HMAC-SHA512) applies to the **desktop** app only.
+- **In Transit**: Sync data encrypted with ChaCha20-Poly1305 over an X25519 key exchange
+- **Key Derivation**: ⚠️ The `password → KEK → DEK → database` chain **does not exist on mobile**. On desktop it is **PBKDF2-HMAC-SHA512 with 256,000 iterations** (`packages/core-rs/src/crypto.rs:28`), not Argon2id.
 
 ### Privacy
 

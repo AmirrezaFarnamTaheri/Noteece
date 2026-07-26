@@ -1,5 +1,24 @@
 # Security Documentation
 
+> # ⚠️ CRITICAL WARNING: MOBILE DATA IS **NOT** ENCRYPTED AT REST
+>
+> The Noteece mobile app stores **all** notes and user content in a **plaintext SQLite database**.
+> `apps/mobile/src/lib/database.ts:585` calls `SQLite.openDatabaseAsync('noteece.db')` with **no
+> encryption key and no SQLCipher PRAGMA**. There is no at-rest encryption on mobile whatsoever.
+>
+> **Consequences:**
+>
+> - Anyone with file-system access, a rooted/jailbroken device, an unencrypted device backup, or a
+>   forensic extraction tool can read every note in plaintext.
+> - Claims of "zero-knowledge", "encrypted at rest", or "AES-256 at rest" are **FALSE for mobile**.
+>   They are true only for the **desktop** app, which uses SQLCipher.
+> - The vault lock on mobile is a **UI-level gate only**. Locking the vault does not make the data
+>   on disk unreadable.
+>
+> Much of the architecture described below is **aspirational / desktop-only**. Sections that do not
+> reflect the shipped mobile implementation are marked inline. Do not rely on this document as a
+> description of mobile's actual at-rest protections until this warning is removed.
+
 This document details the security architecture, threat model, and security fixes implemented in Noteece Mobile.
 
 ## Security Fixes Applied
@@ -77,7 +96,7 @@ if (!isValidMusicUrl(track.url)) {
 
 **Current Implementation**:
 
-- ✅ ECDH key exchange (P-256 curve)
+- ✅ ECDH key exchange (**X25519** curve — see `src/lib/sync/sync-client.ts:191-232`; this is not P-256)
 - ✅ HKDF session key derivation
 - ✅ ChaCha20-Poly1305 authenticated encryption
 - ⚠️ Peer authentication (simulated)
@@ -115,8 +134,13 @@ if (!isValidMusicUrl(track.url)) {
 **Security Architecture**:
 
 ```
+> ⚠️ **The chain below describes the DESKTOP design and is NOT implemented on mobile.** On mobile
+> there is no KEK, no DEK, and no encrypted database — data is stored in plaintext. Additionally,
+> the KDF in the shipped Rust core is **PBKDF2-HMAC-SHA512 (256,000 iterations)**, not Argon2id.
+> Argon2id is used only for password authentication hashing.
+
 User Password (memorized secret)
-    ↓ Argon2id (memory-hard KDF)
+    ↓ PBKDF2-HMAC-SHA512, 256,000 iterations (NOT memory-hard) — desktop only
 KEK (Key Encryption Key)
     ↓ ChaCha20-Poly1305 AEAD
 DEK (Data Encryption Key)
@@ -159,10 +183,13 @@ DEK (Data Encryption Key)
 Protects Against:
 
 - ✅ Lost/stolen device (device locked)
-- ✅ Physical access to unlocked device (vault locked)
-- ✅ Malware attempting to read vault data
-- ✅ Cloud backup compromise (DEK not backed up)
-- ✅ Password brute-force (Argon2id with high cost)
+> ⚠️ **The protections below apply to the DESKTOP app only.** On mobile the database is
+> unencrypted, so none of them hold.
+
+- 🖥️ Desktop only — Physical access to a locked device (vault locked). ❌ **Mobile: NOT protected** — the database is plaintext regardless of vault lock state.
+- 🖥️ Desktop only — Malware attempting to read vault data. ❌ **Mobile: NOT protected** — any process or tool with file access reads plaintext.
+- 🖥️ Desktop only — Cloud backup compromise. ❌ **Mobile: NOT protected** — the plaintext database is included in ordinary device backups.
+- 🖥️ Desktop only — Password brute-force is slowed by PBKDF2-HMAC-SHA512 at 256,000 iterations. Note this is **not** a memory-hard KDF, so it offers limited resistance to GPU/ASIC-accelerated cracking. ❌ **Mobile: not applicable** — no password is required to read the data off disk at all.
 
 Does NOT Protect Against:
 
@@ -185,10 +212,11 @@ Does NOT Protect Against:
 
 | Component        | Algorithm         | Purpose                |
 | ---------------- | ----------------- | ---------------------- |
-| Password hashing | Argon2id          | KDF for password → KEK |
-| Key derivation   | HKDF-SHA256       | Session key derivation |
-| Encryption       | ChaCha20-Poly1305 | AEAD for DEK & data    |
-| Key exchange     | ECDH (P-256)      | Sync session keys      |
+| Password hashing | Argon2id          | Password **authentication** hashing only (`packages/core-rs/src/auth.rs:90-93`). It does **not** derive any key and does **not** protect the mobile database, which is unencrypted. |
+| Key derivation (vault/DEK, **desktop only**) | **PBKDF2-HMAC-SHA512, 256,000 iterations** | Password → KEK (`packages/core-rs/src/crypto.rs:28`). Not memory-hard; not GPU/ASIC resistant. Not applied on mobile. |
+| Key derivation (sync session) | HKDF-SHA256 | Derives an **ephemeral sync session key** from the X25519 shared secret. It is **not** used to derive any database or at-rest key. |
+| Encryption       | ChaCha20-Poly1305 | AEAD for sync transport payloads. **Not** used for mobile data at rest. |
+| Key exchange     | ECDH (**X25519**) | Sync session keys      |
 | Signatures       | HMAC-SHA256       | Data integrity         |
 
 All cryptographic primitives are from the `@noble` suite, which is:
@@ -200,8 +228,8 @@ All cryptographic primitives are from the `@noble` suite, which is:
 
 ### Security Best Practices Implemented
 
-1. ✅ **Zero-knowledge architecture**: Server never sees plaintext data
-2. ✅ **Defense in depth**: Multiple layers of encryption
+1. ⚠️ **Sync transport encryption**: sync payloads are encrypted in transit, so a relay/server does not see plaintext sync data. This is **not** a zero-knowledge architecture end to end — mobile data is stored unencrypted on the device itself.
+2. ⚠️ **Defense in depth**: applies to desktop (SQLCipher at rest + AEAD note content). **Mobile has no at-rest encryption layer at all.**
 3. ✅ **Secure defaults**: Strong crypto parameters
 4. ✅ **Input validation**: All user inputs validated
 5. ✅ **Constant-time comparisons**: Prevents timing attacks
