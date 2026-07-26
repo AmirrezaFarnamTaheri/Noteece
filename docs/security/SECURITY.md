@@ -144,9 +144,9 @@ _Location: `packages/core-rs/src/search.rs`_
 **Mitigations**:
 
 - DEK is never written to disk unencrypted
-- Automatically zeroed on application exit (including panic scenarios)
+- ⚠️ **NOT automatically zeroed.** `zeroize` is not a dependency of `core-rs`, so key material is not scrubbed on exit or on panic and may remain in freed memory or swap.
 - Protected by OS process isolation
-- Derived from password using Argon2id (not stored directly)
+- Wrapped by a KEK derived from the password using **PBKDF2-HMAC-SHA512 (256,000 iterations)**, not stored directly. (Argon2id is used only for password authentication hashing, not for this derivation.)
 
 **Alternative Approach for Enhanced Security**: Future versions could integrate with OS keystore services (macOS Keychain, Windows Credential Manager, Linux Secret Service) to minimize in-memory lifetime, with the trade-off of platform-specific complexity and potential loss of cross-platform consistency.
 
