@@ -8,6 +8,7 @@ import android.content.IntentFilter
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.util.Log
+import com.noteece.BuildConfig
 
 // Active implementation for Sideload flavor
 class NoteeceAccessibilityService : AccessibilityService() {
@@ -157,7 +158,13 @@ class NoteeceAccessibilityService : AccessibilityService() {
             lastCapturedText = rawText
             // Send to Rust Bridge
             com.noteece.RustBridge.ingest(rawText)
-            Log.d(TAG, "Captured: ${rawText.take(50)}...")
+            // Never log captured content. This text is scraped from third-party
+            // apps and can contain other people's private messages; android.util.Log
+            // is readable via adb/logcat and by crash-reporting tooling. Log only
+            // the length, and only in debug builds.
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Captured ${rawText.length} chars")
+            }
         }
 
         root.recycle()

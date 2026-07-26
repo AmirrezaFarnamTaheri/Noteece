@@ -127,15 +127,41 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        // Release signing is supplied at build time (CI injects the keystore and
+        // secrets; see .github/workflows/release.yml). Nothing secret lives here.
+        release {
+            def storePathProp = findProperty('NOTEECE_RELEASE_STORE_FILE')
+            if (storePathProp) {
+                storeFile file(storePathProp)
+                storePassword findProperty('NOTEECE_RELEASE_STORE_PASSWORD')
+                keyAlias findProperty('NOTEECE_RELEASE_KEY_ALIAS')
+                keyPassword findProperty('NOTEECE_RELEASE_KEY_PASSWORD')
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            // Never fall back to the debug keystore here. debug.keystore is the
+            // universally-known AOSP debug key (CN=Android Debug, password
+            // "android") and is committed to this repo, so its private half is
+            // public: a debug-signed release can be forged by anyone, cannot be
+            // updated by a properly-signed build, and is rejected by Play.
+            //
+            // Signing is applied only when release credentials are provided. An
+            // unsigned release artifact is a loud, obvious failure; a
+            // debug-signed one silently looks fine, which is far worse.
+            if (findProperty('NOTEECE_RELEASE_STORE_FILE')) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig null
+                logger.warn('WARNING: no release signing credentials supplied ' +
+                    '(set NOTEECE_RELEASE_STORE_FILE / _STORE_PASSWORD / _KEY_ALIAS / ' +
+                    '_KEY_PASSWORD). Producing an UNSIGNED release artifact. ' +
+                    'Do NOT distribute it.')
+            }
             shrinkResources (findProperty('android.enableShrinkResourcesInReleaseBuilds')?.toBoolean() ?: false)
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
