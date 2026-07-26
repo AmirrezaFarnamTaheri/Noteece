@@ -625,4 +625,3 @@ it('should call invite API with correct email', () => {
 
 _Last Updated: November 6, 2025_
 _Version: 1.0_
-_Status: Production Ready_

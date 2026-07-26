@@ -341,9 +341,9 @@ Update in:
 
 ### Data Privacy
 
-- All data encrypted at rest (AES-256)
-- Sync uses ECDH key exchange
-- Local-first architecture (no cloud)
+- **Desktop:** data encrypted at rest via SQLCipher (AES-256-CBC + HMAC-SHA512). **⚠️ Mobile: data is NOT encrypted at rest** — the mobile app stores notes in a plaintext database.
+- Sync uses ECDH key exchange (**X25519** on mobile)
+- Local-first architecture (no cloud by default; an optional relay server is available for store-and-forward sync)
 - Backups encrypted with vault key
 
 ### Updates

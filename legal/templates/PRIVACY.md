@@ -99,7 +99,7 @@ These are only requested if you choose to use specific features:
 ### Encryption
 
 - **Algorithm**: ChaCha20-Poly1305 authenticated encryption
-- **Key Derivation**: Argon2 for password-based key derivation
+- **Key Derivation**: **PBKDF2-HMAC-SHA512 with 256,000 iterations** for password-based key derivation. (Argon2id is used only for password *authentication* hashing, not for deriving encryption keys.)
 - **Local Only**: Keys never leave your device
 
 ### What Happens If You Lose Your Password?

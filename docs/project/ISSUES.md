@@ -1,8 +1,16 @@
-# Known Issues
+# Known Issues — Build & Tooling
 
-_Last Updated: 2025-11-25 (v1.1.0)_
+_Last reviewed: 2026-07-26 (v1.1.0)_
 
-This document tracks persistent, hard-to-debug issues in the codebase. Each issue includes status, description, impact, and workaround information.
+> **Not the canonical issue list.** Security, correctness, and release-blocking
+> issues are tracked in [`ISSUES.md`](../../ISSUES.md) at the repository root,
+> with full evidence in
+> [`docs/audit_reports/FORENSIC_AUDIT_2026-07-26.md`](../audit_reports/FORENSIC_AUDIT_2026-07-26.md).
+> In particular, the Critical items (mobile plaintext at rest, Prime capture
+> without consent, unregistered desktop AI backend) are **not** listed here.
+>
+> This file is scoped to persistent, hard-to-debug **build, test, and CI**
+> quirks, which are not duplicated at the root.
 
 ---
 
@@ -80,10 +88,11 @@ This document tracks persistent, hard-to-debug issues in the codebase. Each issu
 
 ### 4.2. Android Keystore in CI
 
-- **Status:** **Mitigated**
-- **Description:** Android release builds require a keystore for signing.
-- **Resolution:** CI workflow checks for `ANDROID_KEYSTORE_BASE64` secret. If absent, builds unsigned APK.
-- **Production:** Store keystore as base64-encoded secret in GitHub repository settings.
+- **Status:** **Open** (previously recorded as "Mitigated" — that was inaccurate)
+- **Severity:** High
+- **Description:** Android release builds require a keystore for signing. `apps/mobile/android/app/build.gradle` currently sets `release { signingConfig signingConfigs.debug }`, so release APKs are signed with the well-known checked-in Android debug key (password `android`) and carry no authenticity guarantee.
+- **Partial mitigation:** the CI workflow decodes an `ANDROID_KEYSTORE_BASE64` secret, but Gradle is not pointed at it.
+- **Resolution required:** generate and secure a release keystore, wire the Gradle release `signingConfig` to it, and verify with `apksigner verify --print-certs`.
 
 ---
 
@@ -118,6 +127,7 @@ This document tracks persistent, hard-to-debug issues in the codebase. Each issu
 - **Status:** **Resolved**
 - **Description:** Extensive use of `unwrap()` in critical backend modules (`relay.rs`, `priority.rs`, `mobile_ffi.rs`) posed a risk of runtime panics.
 - **Resolution:** Systematically replaced unsafe unwraps with `Result` propagation or safe defaults (e.g., `unwrap_or` for timestamps). Implemented proper error handling for Mutex poisoning.
+- **Caveat (2026-07-26):** this was **not** exhaustive. The accessibility-ingest path still panics on untrusted input — `packages/core-rs/src/social/jni.rs:78` calls `.expect()` on attacker-controlled content. Core-rs is not `unwrap()`-free.
 
 ### 5.6. Frontend Injection Vulnerabilities (v1.1.1)
 

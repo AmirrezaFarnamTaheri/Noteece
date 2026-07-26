@@ -1,7 +1,6 @@
 # Social Media Suite - Core Module
 
 **Version:** 1.1
-**Status:** Production Ready
 **Language:** Rust
 
 ## Overview
@@ -118,9 +117,9 @@ social_post_ad              # Auto-delete from FTS on DELETE
 
 ### Encryption
 
-- **Database**: SQLCipher with 256-bit AES
+- **Database**: SQLCipher with AES-256-**CBC** + HMAC-SHA512
 - **Credentials**: XChaCha20-Poly1305 AEAD
-- **Key Derivation**: Argon2id
+- **Key Derivation**: **PBKDF2-HMAC-SHA512, 256,000 iterations** (`packages/core-rs/src/crypto.rs:28`). Not memory-hard. Argon2id is used only for password *authentication* hashing (`auth.rs:90-93`), not key derivation.
 
 ### Input Validation
 
@@ -133,7 +132,7 @@ social_post_ad              # Auto-delete from FTS on DELETE
 ### Memory Safety
 
 - Pure Rust (no unsafe blocks)
-- Zeroize trait for sensitive data
+- ⚠️ **Sensitive data is NOT zeroized.** `zeroize` is not a dependency of `core-rs`; key and credential material is left to normal drop semantics and may persist in freed memory or swap. Adding zeroization is an open hardening item.
 - Connection pooling with Mutex
 
 ## API Reference
@@ -259,8 +258,10 @@ serde_json = "1.0"
 ulid = "1.1"
 chrono = "0.4"
 chacha20poly1305 = "0.10"
-argon2 = "0.5"
-zeroize = "1.7"
+argon2 = "0.5"      # password authentication hashing only
+pbkdf2 = "0.12.2"   # vault/KEK key derivation (PBKDF2-HMAC-SHA512, 256k iterations)
+# NOTE: zeroize is NOT a dependency of core-rs. Any claim that key material is
+# zeroized is inaccurate — see the Memory Safety section above.
 log = "0.4"
 ```
 
