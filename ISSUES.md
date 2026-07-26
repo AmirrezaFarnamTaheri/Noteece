@@ -27,6 +27,8 @@ findings: [`docs/audit_reports/FORENSIC_AUDIT_2026-07-26.md`](docs/audit_reports
 
 ## Resolved
 
+_`[x]` = verified resolved. `[~]` = previously claimed resolved but only partially true._
+
 - [x] **Security:** Desktop session tokens were in localStorage (Moved to `tauri-plugin-store`).
 - [x] **Security:** Console logs exposed sensitive data (Replaced with secure `Logger`).
 - [x] **Quality:** Mobile app console logs cleaned up and replaced with `Logger`.
@@ -35,7 +37,7 @@ findings: [`docs/audit_reports/FORENSIC_AUDIT_2026-07-26.md`](docs/audit_reports
 - [x] **Mobile:** Race condition in vault unlock (Fixed with mutex).
 - [x] **Mobile:** SQL Injection in search (Fixed with parameter binding).
 - [x] **Mobile:** Transaction rollback issues in migrations (Fixed).
-- [x] **Mobile:** Encryption/Salt issue (Fixed with GLOBAL_KEY and salt helper).
+- [~] **Mobile:** Encryption/Salt issue — **not fixed on the shipping path.** `GLOBAL_KEY` and the salt helper apply only to the Rust FFI/SQLCipher route, which is not how the React-Native app persists data; the RN path (`apps/mobile/src/lib/database.ts:585`) remains unencrypted. That FFI route also still falls back to a hardcoded salt for legacy vaults (`mobile_ffi.rs:611-612`). See the Critical and High sections above.
 - [x] **Performance:** Mobile SocialHub list was slow (Migrated to `FlashList`).
 - [x] **Performance:** Desktop graph loading was unpaginated (Added pagination).
 - [x] **Infrastructure:** CI was slow (Added caching).

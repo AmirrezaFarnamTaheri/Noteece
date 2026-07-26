@@ -71,10 +71,11 @@ A **vault** is your encrypted workspace containing all your notes, tasks, and pr
 
 ### Vault Security
 
-- All data is encrypted at rest using **XChaCha20-Poly1305** AEAD encryption
-- Your master password is hashed using **Argon2id** (industry standard)
-- Each piece of data has unique encryption keys derived using **HKDF**
-- **Zero knowledge**: No one (including developers) can access your data without your password
+- **Desktop:** data is encrypted at rest — note content with **XChaCha20-Poly1305** AEAD, and the database itself with SQLCipher (**AES-256-CBC + HMAC-SHA512**).
+- **⚠️ Mobile: data is NOT encrypted at rest.** The mobile app currently stores notes in a plaintext database. Anyone with access to your phone's files or an unencrypted backup can read them. Do not keep confidential material in the mobile app.
+- Your master password is hashed using **Argon2id** when you log in. The key that protects your vault is derived separately using **PBKDF2-HMAC-SHA512 (256,000 iterations)** — strong, but not a memory-hard KDF, so a well-funded attacker with specialized hardware has an advantage. Choose a long, unique password.
+- Each piece of data has unique encryption keys derived using **HKDF** (desktop).
+- **Zero knowledge (desktop only):** no one, including the developers, can read your desktop vault without your password. This does **not** hold on mobile, where data is unencrypted on the device.
 
 ---
 
@@ -889,8 +890,8 @@ When conflicts occur (same note edited on multiple devices):
 
 ### Security & Privacy
 
-- **End-to-end encryption**: Server cannot read your data
-- **Zero-knowledge**: Only you have decryption keys
+- **End-to-end encryption in transit**: sync payloads are encrypted, so a relay server cannot read your data in transit
+- **Zero-knowledge**: only you have the decryption keys. ⚠️ This describes **sync and desktop storage**. It does **not** describe the mobile app's on-device storage, which is currently unencrypted.
 - **Device keys**: Each device has unique keys
 - **Conflict encryption**: Even conflicts are encrypted
 

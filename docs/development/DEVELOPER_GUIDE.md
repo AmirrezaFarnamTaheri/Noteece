@@ -220,7 +220,9 @@ noteece/
 | **Rust**             | Latest stable | Core language               |
 | **rusqlite**         | 0.37+         | SQLite interface            |
 | **SQLCipher**        | Bundled       | Database encryption         |
-| **argon2**           | 0.5+          | Password hashing (Argon2id) |
+| **argon2**           | 0.5+          | Password **authentication** hashing only (Argon2id, `auth.rs:90-93`) — not used for key derivation |
+| **pbkdf2**           | 0.12.2        | **Vault/KEK key derivation** — PBKDF2-HMAC-SHA512, 256,000 iterations (`crypto.rs:28`) |
+| **sha2**             | 0.10.9        | SHA-512/SHA-256 primitives backing PBKDF2 and HKDF |
 | **chacha20poly1305** | 0.10+         | AEAD encryption             |
 | **hkdf**             | 0.12+         | Key derivation              |
 | **yrs**              | 0.15+         | CRDT for sync               |
@@ -1033,18 +1035,22 @@ Noteece implements **defense-in-depth** encryption:
 ```
 User Password
     ↓
-Argon2id (time=3, memory=64MB, parallelism=4)
+PBKDF2-HMAC-SHA512 (256,000 iterations)
     ↓
-Master Key (256-bit)
+Master Key / KEK (256-bit)
 ```
 
-**Parameters**:
+**Parameters** (`packages/core-rs/src/crypto.rs:28`):
 
-- Algorithm: Argon2id
-- Time cost: 3 iterations
-- Memory: 64 MB
-- Parallelism: 4 threads
+- Algorithm: **PBKDF2-HMAC-SHA512**
+- Iterations: 256,000
+- Salt: 16+ bytes
 - Output: 32 bytes (256-bit key)
+
+> ⚠️ PBKDF2 is **not** memory-hard. It provides no meaningful GPU/ASIC resistance beyond its
+> iteration count. Argon2id is present in the codebase but is used **only** for password
+> *authentication* hashing (`packages/core-rs/src/auth.rs:90-93`) — it derives no encryption key.
+> Migrating vault key derivation to Argon2id is an open hardening item.
 
 #### 2. Data Encryption Key (DEK)
 
@@ -1085,10 +1091,16 @@ Encrypted Blob
 SQLCipher provides **transparent database encryption**:
 
 ```
-SQLCipher Key = HKDF-SHA256(DEK, "sqlcipher-key")
+SQLCipher Key = the raw 32-byte DEK, passed directly as PRAGMA key = "x'<hex>'"
     ↓
-SQLCipher encrypts database pages with AES-256
+SQLCipher encrypts database pages with AES-256-CBC + HMAC-SHA512
 ```
+
+> ⚠️ **Correction:** there is **no** `HKDF-SHA256(DEK, "sqlcipher-key")` step. `apply_sqlcipher_settings`
+> in `packages/core-rs/src/vault.rs:29-40` hex-encodes the DEK and supplies it verbatim as the
+> SQLCipher key, alongside `PRAGMA kdf_iter = 256000`,
+> `PRAGMA cipher_hmac_algorithm = HMAC_SHA512`, and
+> `PRAGMA cipher_kdf_algorithm = PBKDF2_HMAC_SHA512`. The page cipher is **AES-256-CBC**, not GCM.
 
 ### Encryption Flow Diagram
 
@@ -1099,25 +1111,24 @@ SQLCipher encrypts database pages with AES-256
          │
          ▼
 ┌─────────────────┐
-│   Argon2id KDF  │
+│  PBKDF2-HMAC-   │
+│  SHA512 (256k)  │
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│   Master Key    │
+│ Master Key/KEK  │
 └────────┬────────┘
-         │
-         ├─────────────────────┐
-         │                     │
-         ▼                     ▼
-┌─────────────────┐   ┌─────────────────┐
-│  Decrypt DEK    │   │  SQLCipher Key  │
-└────────┬────────┘   └─────────────────┘
          │
          ▼
 ┌─────────────────┐
-│      DEK        │
+│  Decrypt DEK    │
 └────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│      DEK        │──────▶ used directly as the SQLCipher PRAGMA key
+└────────┬────────┘        (no HKDF step)
          │
          ├─────┬─────┬─────┬─────┐
          │     │     │     │     │

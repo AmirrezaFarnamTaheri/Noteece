@@ -76,7 +76,6 @@ docs/
 │   └── STATUS.md
 │
 ├── audit_reports/          # Forensic audit (2026-07-26) and phase reports
-│   ├── EXECUTIVE_SUMMARY.md
 │   ├── FORENSIC_AUDIT_2026-07-26.md
 │   ├── AUDIT_ROADMAP.md
 │   └── PHASE_0..PHASE_7 reports
@@ -206,13 +205,12 @@ docs/
 
 ### Audit and History
 
-1. [Executive Summary](audit_reports/EXECUTIVE_SUMMARY.md)
-2. [Forensic Audit 2026-07-26](audit_reports/FORENSIC_AUDIT_2026-07-26.md)
-3. [Audit Roadmap](audit_reports/AUDIT_ROADMAP.md)
-4. [Archived Development Reports](reports/archive/ARCHIVED_DEVELOPMENT_REPORTS.md)
-5. [Implementation Status](reports/archive/IMPLEMENTATION_STATUS.md)
-6. [Code Quality Report](reports/archive/CODE_QUALITY_REPORT.md)
-7. [Final Project Completion Report](reports/archive/FINAL_PROJECT_COMPLETION_REPORT.md)
+1. [Forensic Audit 2026-07-26](audit_reports/FORENSIC_AUDIT_2026-07-26.md)
+2. [Audit Roadmap](audit_reports/AUDIT_ROADMAP.md)
+3. [Archived Development Reports](reports/archive/ARCHIVED_DEVELOPMENT_REPORTS.md)
+4. [Implementation Status](reports/archive/IMPLEMENTATION_STATUS.md)
+5. [Code Quality Report](reports/archive/CODE_QUALITY_REPORT.md)
+6. [Final Project Completion Report](reports/archive/FINAL_PROJECT_COMPLETION_REPORT.md)
 
 ---
 

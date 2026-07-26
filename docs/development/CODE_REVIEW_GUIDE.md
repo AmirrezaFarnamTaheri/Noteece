@@ -134,7 +134,8 @@ This document guides reviewers through the peer feedback implementation changes.
 #### Review Checklist
 
 - [ ] Password validation (8+ characters minimum)
-- [ ] Argon2id hashing is properly configured
+- [ ] Argon2id hashing is properly configured **for password authentication** (`auth.rs`)
+- [ ] **Key derivation** uses the KDF actually in use — PBKDF2-HMAC-SHA512 at 256,000 iterations (`crypto.rs:28`) — and the iteration count has not been silently lowered. Note this KDF is not memory-hard; flag any doc or comment that describes it as Argon2id or as GPU/ASIC-resistant.
 - [ ] Session tokens are cryptographically secure (32 bytes)
 - [ ] Session expiration is checked (24 hours)
 - [ ] Database foreign keys are correct
@@ -147,7 +148,8 @@ This document guides reviewers through the peer feedback implementation changes.
 
 #### Security Considerations
 
-✅ Argon2id for password hashing (industry standard)
+✅ Argon2id for password **authentication** hashing (industry standard)
+⚠️ Vault/DEK **key derivation** uses PBKDF2-HMAC-SHA512 (256,000 iterations), which is not memory-hard — weaker than Argon2id against GPU/ASIC attackers. Open hardening item.
 ✅ Cryptographically secure token generation
 ✅ Session expiration enforced
 ✅ Proper error messages (no user enumeration)
@@ -406,7 +408,7 @@ If issues occur:
 ### ✅ Passed
 
 - [x] No hardcoded secrets
-- [x] Passwords use Argon2id
+- [x] Passwords use Argon2id **for authentication hashing** (key derivation separately uses PBKDF2-HMAC-SHA512, 256,000 iterations)
 - [x] Tokens are cryptographically generated
 - [x] Session expiration enforced
 - [x] No SQL injection vulnerabilities
