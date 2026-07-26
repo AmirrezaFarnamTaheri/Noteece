@@ -11,6 +11,7 @@
 //!                                  plaintext)
 //! ```
 
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -26,6 +27,22 @@ const MAX_MESSAGE_SIZE: usize = 10 * 1024 * 1024;
 /// Maximum pending messages per device
 const MAX_PENDING_PER_DEVICE: usize = 100;
 
+/// Maximum size for the small binary envelope fields (pubkey/nonce/signature).
+const MAX_SMALL_FIELD: usize = 4 * 1024;
+
+/// Maximum length for envelope string fields (ids, device ids, message type).
+const MAX_ID_LEN: usize = 256;
+
+/// Maximum number of distinct recipient queues held in memory (DoS ceiling).
+const MAX_TOTAL_QUEUES: usize = 100_000;
+
+/// Maximum number of registered devices (DoS ceiling).
+const MAX_REGISTERED_DEVICES: usize = 100_000;
+
+/// Reject client timestamps more than this far in the future (clock-skew ceiling)
+/// so a far-future timestamp cannot defeat message expiry.
+const MAX_FUTURE_SKEW_SECS: u64 = 300;
+
 #[derive(Error, Debug)]
 pub enum RelayError {
     #[error("Device not registered")]
@@ -38,6 +55,10 @@ pub enum RelayError {
     MessageExpired,
     #[error("Invalid signature")]
     InvalidSignature,
+    #[error("Invalid envelope: {0}")]
+    InvalidEnvelope(String),
+    #[error("Relay at capacity")]
+    AtCapacity,
     #[error("Encryption error: {0}")]
     EncryptionError(String),
     #[error("Network error: {0}")]
@@ -111,6 +132,38 @@ impl RelayEnvelope {
         }
         Ok(())
     }
+
+    /// Validate all attacker-controlled fields, not just the ciphertext. Bounds the
+    /// small binary fields and string fields so a small ciphertext cannot smuggle a
+    /// multi-megabyte nonce/pubkey/signature or an unbounded device-id map key.
+    pub fn validate(&self) -> Result<(), RelayError> {
+        self.validate_size()?;
+        if self.ephemeral_pubkey.len() > MAX_SMALL_FIELD
+            || self.nonce.len() > MAX_SMALL_FIELD
+            || self.signature.len() > MAX_SMALL_FIELD
+        {
+            return Err(RelayError::InvalidEnvelope("binary field too large".into()));
+        }
+        if self.id.len() > MAX_ID_LEN
+            || self.from_device.len() > MAX_ID_LEN
+            || self.to_device.len() > MAX_ID_LEN
+            || self.message_type.len() > MAX_ID_LEN
+        {
+            return Err(RelayError::InvalidEnvelope("string field too long".into()));
+        }
+        if self.id.is_empty() || self.to_device.is_empty() {
+            return Err(RelayError::InvalidEnvelope("missing id or recipient".into()));
+        }
+        // Reject far-future timestamps so client-supplied time cannot defeat expiry.
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or(std::time::Duration::from_secs(0))
+            .as_secs();
+        if self.timestamp > now.saturating_add(MAX_FUTURE_SKEW_SECS) {
+            return Err(RelayError::InvalidEnvelope("timestamp too far in future".into()));
+        }
+        Ok(())
+    }
 }
 
 /// Pending message in relay queue
@@ -127,6 +180,8 @@ pub struct BlindRelayServer {
     pending: Arc<Mutex<HashMap<String, Vec<PendingMessage>>>>,
     /// Registered devices (device_id -> public_key_hash)
     devices: Arc<Mutex<HashMap<String, String>>>,
+    /// Capability tokens (device_id -> bearer token) gating mailbox access.
+    tokens: Arc<Mutex<HashMap<String, String>>>,
 }
 
 impl Default for BlindRelayServer {
@@ -141,6 +196,33 @@ impl BlindRelayServer {
         Self {
             pending: Arc::new(Mutex::new(HashMap::new())),
             devices: Arc::new(Mutex::new(HashMap::new())),
+            tokens: Arc::new(Mutex::new(HashMap::new())),
+        }
+    }
+
+    /// Issue (or return the existing) capability token for a registered device.
+    /// The token must be presented to fetch/inspect that device's mailbox, closing
+    /// the unauthenticated-drain hole where any caller could read a queue by id.
+    pub fn issue_token(&self, device_id: &str) -> Result<String, RelayError> {
+        let mut tokens = self
+            .tokens
+            .lock()
+            .map_err(|_| RelayError::EncryptionError("Mutex poisoned".to_string()))?;
+        if let Some(existing) = tokens.get(device_id) {
+            return Ok(existing.clone());
+        }
+        let mut raw = [0u8; 32];
+        rand::rngs::OsRng.fill_bytes(&mut raw);
+        let token = hex::encode(raw);
+        tokens.insert(device_id.to_string(), token.clone());
+        Ok(token)
+    }
+
+    /// Constant-time-ish check that a token authorizes access to a device mailbox.
+    pub fn verify_token(&self, device_id: &str, token: &str) -> bool {
+        match self.tokens.lock() {
+            Ok(tokens) => tokens.get(device_id).map(|t| t.as_str()) == Some(token),
+            Err(_) => false,
         }
     }
 
@@ -150,11 +232,35 @@ impl BlindRelayServer {
         device_id: &str,
         public_key_hash: &str,
     ) -> Result<(), RelayError> {
+        if device_id.is_empty()
+            || device_id.len() > MAX_ID_LEN
+            || public_key_hash.is_empty()
+            || public_key_hash.len() > MAX_ID_LEN
+        {
+            return Err(RelayError::InvalidEnvelope("invalid registration".into()));
+        }
         let mut devices = self
             .devices
             .lock()
             .map_err(|_| RelayError::EncryptionError("Mutex poisoned".to_string()))?;
-        devices.insert(device_id.to_string(), public_key_hash.to_string());
+
+        match devices.get(device_id) {
+            // Re-registration with the same key is idempotent and allowed.
+            Some(existing) if existing == public_key_hash => {}
+            // Reject silently overwriting an existing device's key (TOFU): a mismatch
+            // would let anyone hijack a registered device id's identity mapping.
+            Some(_) => {
+                return Err(RelayError::InvalidEnvelope(
+                    "device id already registered with a different key".into(),
+                ));
+            }
+            None => {
+                if devices.len() >= MAX_REGISTERED_DEVICES {
+                    return Err(RelayError::AtCapacity);
+                }
+                devices.insert(device_id.to_string(), public_key_hash.to_string());
+            }
+        }
         log::info!("[relay] Registered device: {}", device_id);
         Ok(())
     }
@@ -170,31 +276,21 @@ impl BlindRelayServer {
             pending.remove(device_id);
         }
 
+        // Revoke the mailbox capability token.
+        if let Ok(mut tokens) = self.tokens.lock() {
+            tokens.remove(device_id);
+        }
+
         log::info!("[relay] Unregistered device: {}", device_id);
     }
 
     /// Submit a message for relay
     pub fn submit_message(&self, envelope: RelayEnvelope) -> Result<String, RelayError> {
-        // Validate
-        envelope.validate_size()?;
+        // Validate all attacker-controlled fields (size, small fields, ids, skew).
+        envelope.validate()?;
 
         if envelope.is_expired() {
             return Err(RelayError::MessageExpired);
-        }
-
-        // Check recipient exists
-        {
-            let devices = self
-                .devices
-                .lock()
-                .map_err(|_| RelayError::EncryptionError("Mutex poisoned".to_string()))?;
-            if !devices.contains_key(&envelope.to_device) {
-                // Still accept - device might register later
-                log::debug!(
-                    "[relay] Recipient not yet registered: {}",
-                    envelope.to_device
-                );
-            }
         }
 
         // Add to pending queue
@@ -209,6 +305,13 @@ impl BlindRelayServer {
                 .pending
                 .lock()
                 .map_err(|_| RelayError::EncryptionError("Mutex poisoned".to_string()))?;
+
+            // Cap the number of distinct recipient queues so an attacker cannot
+            // exhaust memory by sending to unlimited random device ids.
+            if !pending.contains_key(&envelope.to_device) && pending.len() >= MAX_TOTAL_QUEUES {
+                return Err(RelayError::AtCapacity);
+            }
+
             let queue = pending.entry(envelope.to_device.clone()).or_default();
 
             // Check limits
@@ -279,6 +382,10 @@ impl BlindRelayServer {
             queue.retain(|m| !m.envelope.is_expired());
             cleaned += before - queue.len();
         }
+
+        // Drop now-empty queues so the queue map itself cannot grow without bound
+        // from transient recipients that never fetch.
+        pending.retain(|_, queue| !queue.is_empty());
 
         if cleaned > 0 {
             log::info!("[relay] Cleaned up {} expired messages", cleaned);

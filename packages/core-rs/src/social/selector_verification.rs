@@ -11,14 +11,14 @@ use thiserror::Error;
 /// For now, we use hash verification as the primary method
 const SELECTOR_PUBLIC_KEY: &[u8] = &[];
 
-/// Fallback: SHA256 hash of known-good selector configuration
-/// Used when signature verification is not available
-const KNOWN_GOOD_HASHES: &[&str] = &[
-    // v1.0.0 selectors hash
-    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    // v1.1.0 selectors hash
-    "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e",
-];
+/// Fallback: SHA256 hashes of known-good selector configurations, used when
+/// signature verification is not available.
+///
+/// NOTE: this list must never contain the SHA-256 of an empty or trivial input
+/// (e.g. `e3b0c442…` = sha256("")), otherwise a tampered config that serves empty
+/// selectors would verify as "known good". Populate it only with digests of real,
+/// reviewed selector bundles produced by the build pipeline.
+const KNOWN_GOOD_HASHES: &[&str] = &[];
 
 #[derive(Error, Debug)]
 pub enum VerificationError {
@@ -87,6 +87,14 @@ impl SignedSelectors {
 
     /// Verify the selectors are authentic
     pub fn verify(&self) -> Result<(), VerificationError> {
+        // Reject empty/whitespace-only selector payloads outright. This closes the
+        // bypass where an attacker serves empty selectors whose hash happens to be
+        // an allowlisted trivial digest.
+        if self.selectors.trim().is_empty() {
+            log::error!("[selectors] Rejecting empty selector payload");
+            return Err(VerificationError::HashMismatch);
+        }
+
         // Method 1: Signature verification (preferred)
         if let Some(ref sig) = self.signature {
             return verify_signature(&self.selectors, sig);
@@ -161,20 +169,28 @@ pub fn load_verified_selectors(
         }
     }
 
-    // Fetch from remote
+    // Fetch from remote with a bounded timeout so a slow/unresponsive host cannot
+    // hang the calling thread indefinitely (this is a blocking call).
     log::info!("[selectors] Fetching from: {}", url);
-    let response =
-        reqwest::blocking::get(url).map_err(|e| VerificationError::ParseError(e.to_string()))?;
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(15))
+        .connect_timeout(std::time::Duration::from_secs(10))
+        .build()
+        .map_err(|e| VerificationError::ParseError(e.to_string()))?;
+    let response = client
+        .get(url)
+        .send()
+        .map_err(|e| VerificationError::ParseError(e.to_string()))?;
 
     let body = response
         .text()
         .map_err(|e| VerificationError::ParseError(e.to_string()))?;
 
-    // Parse and verify
+    // Parse and verify before persisting anything.
     let signed = SignedSelectors::parse(&body)?;
     signed.verify()?;
 
-    // Cache verified selectors
+    // Cache only the verified selector content (not the raw, unverified body).
     if let Some(path) = cache_path {
         if let Err(e) = std::fs::write(path, &body) {
             log::warn!("[selectors] Failed to cache: {}", e);

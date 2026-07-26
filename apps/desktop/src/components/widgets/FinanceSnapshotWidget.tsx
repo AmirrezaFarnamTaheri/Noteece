@@ -47,50 +47,14 @@ interface FinanceSnapshotWidgetProps {
 export function FinanceSnapshotWidget({ spaceId }: FinanceSnapshotWidgetProps) {
   const [timeRange, setTimeRange] = useState<'week' | 'month'>('month');
 
-  // Fetch finance stats
-  const { data, isLoading } = useQuery({
+  // Fetch finance stats. Never fabricate values on failure: showing invented
+  // income/expenses as if they were real is worse than showing nothing.
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['finance-snapshot', spaceId, timeRange],
-    queryFn: async (): Promise<FinanceStats> => {
-      try {
-        return await invoke('get_finance_stats_cmd', { spaceId, timeRange });
-      } catch {
-        // Return mock data if command not available
-        const days = timeRange === 'week' ? 7 : 30;
-        const dailyData = Array.from({ length: days }, (_, i) => {
-          const date = new Date();
-          date.setDate(date.getDate() - (days - 1 - i));
-          return {
-            date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            income: Math.random() * 200 + (i % 7 === 0 ? 500 : 0),
-            expenses: Math.random() * 150 + 50,
-          };
-        });
-
-        return {
-          total_income: 4500,
-          total_expenses: 2850,
-          net: 1650,
-          by_category: {
-            food: 650,
-            transport: 320,
-            entertainment: 180,
-            utilities: 450,
-            shopping: 580,
-            subscriptions: 120,
-            other: 550,
-          },
-          daily_data: dailyData,
-          top_expenses: [
-            { category: 'Food', amount: 650 },
-            { category: 'Shopping', amount: 580 },
-            { category: 'Other', amount: 550 },
-            { category: 'Utilities', amount: 450 },
-            { category: 'Transport', amount: 320 },
-          ],
-        };
-      }
-    },
+    queryFn: async (): Promise<FinanceStats> =>
+      invoke('get_finance_stats_cmd', { spaceId, timeRange }),
     staleTime: 300_000, // 5 minutes
+    retry: false,
   });
 
   // Calculate trend
@@ -120,12 +84,31 @@ export function FinanceSnapshotWidget({ spaceId }: FinanceSnapshotWidgetProps) {
     return 'gray';
   };
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return (
       <Paper shadow="sm" p="md" radius="md" withBorder>
         <Center h={300}>
           <Loader />
         </Center>
+      </Paper>
+    );
+  }
+
+  // Honest empty/unavailable state — no fabricated figures.
+  if (isError || !data) {
+    return (
+      <Paper shadow="sm" p="md" radius="md" withBorder>
+        <Stack gap="xs" align="center" justify="center" h={300}>
+          <ThemeIcon color="gray" variant="light" size="lg">
+            <IconWallet size={20} />
+          </ThemeIcon>
+          <Text size="sm" fw={500}>
+            Finance data unavailable
+          </Text>
+          <Text size="xs" c="dimmed" ta="center">
+            No transactions yet, or the finance service is not available.
+          </Text>
+        </Stack>
       </Paper>
     );
   }

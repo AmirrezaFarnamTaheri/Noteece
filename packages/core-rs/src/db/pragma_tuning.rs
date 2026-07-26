@@ -223,8 +223,19 @@ impl PragmaTuner {
     pub fn apply(&self, conn: &Connection) -> Result<(), rusqlite::Error> {
         let cfg = &self.config;
 
-        // Journal mode (must be set before other pragmas in some cases)
-        conn.execute_batch(&format!("PRAGMA journal_mode = {};", cfg.journal_mode))?;
+        // Journal mode is the only string-typed pragma value and is interpolated into
+        // SQL, so whitelist it against the valid SQLite modes to prevent PRAGMA
+        // injection (e.g. "WAL; ATTACH DATABASE ...") from a deserialized config.
+        let journal_mode = match cfg.journal_mode.to_uppercase().as_str() {
+            m @ ("DELETE" | "TRUNCATE" | "PERSIST" | "MEMORY" | "WAL" | "OFF") => m.to_string(),
+            other => {
+                log::warn!(
+                    "[pragma] Rejecting unknown journal_mode {other:?}; falling back to WAL"
+                );
+                "WAL".to_string()
+            }
+        };
+        conn.execute_batch(&format!("PRAGMA journal_mode = {};", journal_mode))?;
 
         // Synchronous mode
         conn.execute_batch(&format!("PRAGMA synchronous = {};", cfg.synchronous))?;
@@ -252,10 +263,13 @@ impl PragmaTuner {
         // Auto-vacuum
         conn.execute_batch(&format!("PRAGMA auto_vacuum = {};", cfg.auto_vacuum))?;
 
-        // SQLCipher-specific (if available)
+        // SQLCipher-specific (if available). Do not silently discard the result:
+        // a swallowed failure here would leave the vault at the default KDF strength
+        // without any signal. Log it so the security-relevant downgrade is visible.
         if let Some(kdf_iter) = cfg.kdf_iter {
-            // This will fail silently if SQLCipher is not available
-            let _ = conn.execute_batch(&format!("PRAGMA kdf_iter = {};", kdf_iter));
+            if let Err(e) = conn.execute_batch(&format!("PRAGMA kdf_iter = {};", kdf_iter)) {
+                log::warn!("[pragma] Failed to set kdf_iter={kdf_iter} (SQLCipher unavailable?): {e}");
+            }
         }
 
         Ok(())

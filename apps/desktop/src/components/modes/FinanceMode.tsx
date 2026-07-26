@@ -145,12 +145,24 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
     }
   };
 
+  // Amounts are persisted as integer cents (see amountInCents on submit). Sum in
+  // cents to avoid float drift, then convert to currency units exactly once.
+  const centsToDollars = (cents: number) => cents / 100;
+
   const calculateTotals = () => {
-    const income = transactions.filter((t) => t.transaction_type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const incomeCents = transactions
+      .filter((t) => t.transaction_type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
 
-    const expenses = transactions.filter((t) => t.transaction_type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    const expensesCents = transactions
+      .filter((t) => t.transaction_type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0);
 
-    return { income, expenses, balance: income - expenses };
+    return {
+      income: centsToDollars(incomeCents),
+      expenses: centsToDollars(expensesCents),
+      balance: centsToDollars(incomeCents - expensesCents),
+    };
   };
 
   const getCategoryBreakdown = () => {
@@ -162,7 +174,7 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
 
     return Object.entries(breakdown).map(([name, value]) => ({
       name,
-      value,
+      value: centsToDollars(value),
     }));
   };
 
@@ -311,7 +323,8 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
                       <Table.Td>{transaction.account}</Table.Td>
                       <Table.Td>
                         <Text fw={600} c={transaction.transaction_type === 'income' ? 'green' : 'red'}>
-                          {transaction.transaction_type === 'income' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                          {transaction.transaction_type === 'income' ? '+' : '-'}$
+                          {centsToDollars(transaction.amount).toFixed(2)}
                         </Text>
                       </Table.Td>
                     </Table.Tr>

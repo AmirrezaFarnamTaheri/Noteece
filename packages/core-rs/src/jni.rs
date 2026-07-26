@@ -73,10 +73,16 @@ pub extern "system" fn Java_com_noteece_RustBridge_anchorLatest(
         None => "{}".to_string(),
     };
 
-    let output_ptr = env
-        .new_string(output)
-        .expect("Couldn't create java string!");
-    output_ptr.into_raw()
+    // Never panic across the JNI boundary (UB for the Java caller). On failure
+    // (e.g. an interior NUL in attacker-influenced content) return a null jstring;
+    // the Kotlin side already treats null/empty as "no candidate".
+    match env.new_string(output) {
+        Ok(s) => s.into_raw(),
+        Err(e) => {
+            log::error!("Failed to create java string: {:?}", e);
+            std::ptr::null_mut()
+        }
+    }
 }
 
 #[cfg(feature = "android")]

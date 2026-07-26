@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, TextInput, Paper, Title, Container } from '@mantine/core';
+import { Button, TextInput, Paper, Title, Container, Alert } from '@mantine/core';
 import { invoke } from '@tauri-apps/api/tauri';
 import { useNavigate } from 'react-router-dom';
 import { logger } from '@/utils/logger';
@@ -7,25 +7,26 @@ import { logger } from '@/utils/logger';
 const VaultManagement: React.FC = () => {
   const [path, setPath] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
 
-  const handleCreateVault = async () => {
+  const runVaultAction = async (command: 'create_vault_cmd' | 'unlock_vault_cmd') => {
+    setError(null);
+    setBusy(true);
     try {
-      await invoke('create_vault', { path, password });
+      await invoke(command, { path, password });
       navigate('/main');
-    } catch (error) {
-      logger.error('Failed to create vault:', error as Error);
+    } catch (err) {
+      logger.error(`Vault action ${command} failed:`, err as Error);
+      setError(typeof err === 'string' ? err : (err as Error)?.message ?? 'Vault operation failed.');
+    } finally {
+      setBusy(false);
     }
   };
 
-  const handleUnlockVault = async () => {
-    try {
-      await invoke('unlock_vault', { path, password });
-      navigate('/main');
-    } catch (error) {
-      logger.error('Failed to unlock vault:', error as Error);
-    }
-  };
+  const handleCreateVault = () => runVaultAction('create_vault_cmd');
+  const handleUnlockVault = () => runVaultAction('unlock_vault_cmd');
 
   return (
     <Container size="xs" my={40}>
@@ -34,6 +35,11 @@ const VaultManagement: React.FC = () => {
       </Title>
 
       <Paper withBorder shadow="md" p={30} mt={30} radius="md">
+        {error && (
+          <Alert color="red" title="Vault error" mb="md" role="alert">
+            {error}
+          </Alert>
+        )}
         <TextInput
           label="Vault Path"
           placeholder="/path/to/vault"
@@ -50,10 +56,22 @@ const VaultManagement: React.FC = () => {
           required
           mt="md"
         />
-        <Button fullWidth mt="xl" onClick={handleCreateVault}>
+        <Button
+          fullWidth
+          mt="xl"
+          onClick={handleCreateVault}
+          loading={busy}
+          disabled={busy || !path || !password}
+        >
           Create Vault
         </Button>
-        <Button fullWidth mt="md" onClick={handleUnlockVault}>
+        <Button
+          fullWidth
+          mt="md"
+          onClick={handleUnlockVault}
+          loading={busy}
+          disabled={busy || !path || !password}
+        >
           Unlock Vault
         </Button>
       </Paper>

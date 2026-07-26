@@ -93,17 +93,18 @@ export function GamificationWidget({ userId, compact = false }: GamificationWidg
       try {
         return await invoke('get_gamification_data_cmd', { userId });
       } catch {
-        // Return mock data if command not available
+        // Honest zero-state when the backend is unavailable. Do not fabricate XP,
+        // levels, or streaks — showing invented achievements as real is misleading.
         return {
-          xp: 2450,
-          level: 8,
-          xp_to_next_level: 550,
-          streak_days: 14,
-          streak_freezes: 3,
-          max_streak: 45,
-          total_tasks_completed: 234,
-          total_habits_completed: 156,
-          achievements_unlocked: 12,
+          xp: 0,
+          level: 1,
+          xp_to_next_level: 100,
+          streak_days: 0,
+          streak_freezes: 0,
+          max_streak: 0,
+          total_tasks_completed: 0,
+          total_habits_completed: 0,
+          achievements_unlocked: 0,
           total_achievements: 30,
         };
       }

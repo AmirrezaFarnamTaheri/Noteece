@@ -84,6 +84,23 @@ impl BackupService {
         Ok(BackupService { backup_dir })
     }
 
+    /// Validate a client-supplied backup id before it is used to build a filesystem
+    /// path. Rejects path-traversal and separators so a malicious id such as
+    /// `../../etc/passwd` cannot escape the backup directory.
+    fn validated_backup_path(&self, backup_id: &str) -> Result<PathBuf, BackupError> {
+        let valid = !backup_id.is_empty()
+            && backup_id.len() <= 128
+            && backup_id
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-');
+        if !valid {
+            return Err(BackupError::InvalidBackup(format!(
+                "Invalid backup id: {backup_id:?}"
+            )));
+        }
+        Ok(self.backup_dir.join(format!("{}.json.enc", backup_id)))
+    }
+
     /// Create an encrypted backup of the database
     pub fn create_backup(
         &self,
@@ -103,7 +120,7 @@ impl BackupService {
         let backup_id = format!("backup_{}", timestamp);
 
         // Backup filename: backup_20251108_143022.json.enc
-        let backup_path = self.backup_dir.join(format!("{}.json.enc", backup_id));
+        let backup_path = self.validated_backup_path(&backup_id)?;
 
         // Serialize all tables to JSON
         let backup_data = self.export_database(conn)?;
@@ -151,7 +168,7 @@ impl BackupService {
         conn: &mut Connection,
         dek: &[u8],
     ) -> Result<(), BackupError> {
-        let backup_path = self.backup_dir.join(format!("{}.json.enc", backup_id));
+        let backup_path = self.validated_backup_path(backup_id)?;
 
         // Check if backup exists
         if !backup_path.exists() {
@@ -233,7 +250,7 @@ impl BackupService {
 
     /// Delete a backup file
     pub fn delete_backup(&self, backup_id: &str) -> Result<(), BackupError> {
-        let backup_path = self.backup_dir.join(format!("{}.json.enc", backup_id));
+        let backup_path = self.validated_backup_path(backup_id)?;
 
         if backup_path.exists() {
             fs::remove_file(&backup_path)?;

@@ -18,11 +18,15 @@ const getDaysUntilDue = (dueTimestamp: number | undefined) => {
   return diffDays;
 };
 
-const getProgress = (project: Project) => {
-  // Simple progress calculation based on tasks
-  // In a real implementation, this would come from project data
-  // Using a deterministic placeholder based on the project ID to avoid flickering on re-renders
-  return ((project.id.codePointAt(0) ?? 0) + project.id.length) % 100;
+// Real schedule progress = fraction of the planned window that has elapsed.
+// Returns null when the project has no start/target window, so the UI can omit
+// the bar instead of inventing a percentage from the project id.
+const getScheduleProgress = (project: Project): number | null => {
+  const { start_at, target_end_at } = project;
+  if (!start_at || !target_end_at || target_end_at <= start_at) return null;
+  const now = Date.now() / 1000;
+  const fraction = (now - start_at) / (target_end_at - start_at);
+  return Math.round(Math.min(1, Math.max(0, fraction)) * 100);
 };
 
 export default function ProjectTimeline() {
@@ -54,7 +58,7 @@ export default function ProjectTimeline() {
         <Stack gap="md">
           {activeProjects.map((project) => {
             const daysUntil = getDaysUntilDue(project.target_end_at);
-            const progress = getProgress(project);
+            const progress = getScheduleProgress(project);
 
             return (
               <div key={project.id} style={{ position: 'relative' }}>
@@ -69,16 +73,18 @@ export default function ProjectTimeline() {
                   )}
                 </Group>
 
-                <Progress
-                  value={progress}
-                  size="sm"
-                  color={progress < 30 ? 'red' : (progress < 70 ? 'yellow' : 'green')}
-                  mb="xs"
-                />
+                {progress !== null && (
+                  <Progress
+                    value={progress}
+                    size="sm"
+                    color={progress < 30 ? 'green' : (progress < 70 ? 'yellow' : 'red')}
+                    mb="xs"
+                  />
+                )}
 
                 <Group justify="space-between">
                   <Text size="xs" c="dimmed">
-                    {progress}% complete
+                    {progress !== null ? `${progress}% of schedule elapsed` : 'No schedule set'}
                   </Text>
                   {project.target_end_at && (
                     <Text size="xs" c="dimmed">
