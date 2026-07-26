@@ -74,13 +74,32 @@ describe('ProjectTimeline', () => {
     expect(screen.getByText(/2d overdue|3d overdue/)).toBeInTheDocument();
   });
 
-  it('shows progress and due date', () => {
+  it('shows real schedule progress when a start/target window exists', () => {
     const today = Math.floor(Date.now() / 1000);
+    // Half of the planned window has elapsed, so progress should read ~50%.
+    mockProjects = [
+      {
+        id: 'A',
+        title: 'Project Progress',
+        status: 'active',
+        start_at: today - 86_400 * 5,
+        target_end_at: today + 86_400 * 5,
+      } as Project,
+    ];
+
+    renderWithProviders(<ProjectTimeline />);
+    expect(screen.getByText(/(49|50|51)% of schedule elapsed/)).toBeInTheDocument();
+    expect(screen.getByText(/Due:/)).toBeInTheDocument();
+  });
+
+  it('reports no schedule instead of inventing a percentage', () => {
+    const today = Math.floor(Date.now() / 1000);
+    // Only a due date, no start_at — there is no window to measure progress against.
     mockProjects = [{ id: 'A', title: 'Project Progress', status: 'active', target_end_at: today } as Project];
 
     renderWithProviders(<ProjectTimeline />);
-    // Progress is deterministic: ('A'.codePointAt(0) + 1) % 100 = (65 + 1) % 100 = 66
-    expect(screen.getByText('66% complete')).toBeInTheDocument();
+    expect(screen.getByText('No schedule set')).toBeInTheDocument();
+    expect(screen.queryByText(/% of schedule elapsed/)).not.toBeInTheDocument();
     expect(screen.getByText(/Due:/)).toBeInTheDocument();
   });
 });

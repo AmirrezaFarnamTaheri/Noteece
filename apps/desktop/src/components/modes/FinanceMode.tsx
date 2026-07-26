@@ -38,6 +38,10 @@ interface Transaction {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28DFF', '#FF6B6B'];
 
+// Amounts are persisted as integer cents (see amountInCents on submit). Sum in
+// cents to avoid float drift, then convert to currency units exactly once.
+const centsToDollars = (cents: number) => cents / 100;
+
 const categories = [
   'Food',
   'Transport',
@@ -144,10 +148,6 @@ const FinanceMode: React.FC<{ spaceId: string }> = ({ spaceId }) => {
       alert(`Failed to add transaction: ${String(error)}`);
     }
   };
-
-  // Amounts are persisted as integer cents (see amountInCents on submit). Sum in
-  // cents to avoid float drift, then convert to currency units exactly once.
-  const centsToDollars = (cents: number) => cents / 100;
 
   const calculateTotals = () => {
     const incomeCents = transactions

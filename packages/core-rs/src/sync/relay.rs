@@ -152,7 +152,9 @@ impl RelayEnvelope {
             return Err(RelayError::InvalidEnvelope("string field too long".into()));
         }
         if self.id.is_empty() || self.to_device.is_empty() {
-            return Err(RelayError::InvalidEnvelope("missing id or recipient".into()));
+            return Err(RelayError::InvalidEnvelope(
+                "missing id or recipient".into(),
+            ));
         }
         // Reject far-future timestamps so client-supplied time cannot defeat expiry.
         let now = SystemTime::now()
@@ -160,7 +162,9 @@ impl RelayEnvelope {
             .unwrap_or(std::time::Duration::from_secs(0))
             .as_secs();
         if self.timestamp > now.saturating_add(MAX_FUTURE_SKEW_SECS) {
-            return Err(RelayError::InvalidEnvelope("timestamp too far in future".into()));
+            return Err(RelayError::InvalidEnvelope(
+                "timestamp too far in future".into(),
+            ));
         }
         Ok(())
     }
@@ -569,8 +573,16 @@ impl RelayClient {
         let url = format!("{}/pending?device_id={}", self.relay_url, self.device_id);
 
         let client = reqwest::Client::new();
-        let response = client
-            .get(&url)
+        let mut request = client.get(&url);
+
+        // `/pending` is token-gated like `/fetch`; without this header the server
+        // answers 401 and the old `Ok(0)` fallback would silently report "no
+        // pending messages", stalling sync instead of surfacing the auth failure.
+        if let Some(ref token) = self.auth_token {
+            request = request.header("Authorization", format!("Bearer {}", token));
+        }
+
+        let response = request
             .send()
             .await
             .map_err(|e| RelayError::NetworkError(e.to_string()))?;
@@ -585,7 +597,10 @@ impl RelayClient {
 
             Ok(count)
         } else {
-            Ok(0)
+            Err(RelayError::NetworkError(format!(
+                "Pending check failed: {}",
+                response.status()
+            )))
         }
     }
 }

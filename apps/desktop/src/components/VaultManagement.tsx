@@ -17,9 +17,11 @@ const VaultManagement: React.FC = () => {
     try {
       await invoke(command, { path, password });
       navigate('/main');
-    } catch (err) {
-      logger.error(`Vault action ${command} failed:`, err as Error);
-      setError(typeof err === 'string' ? err : (err as Error)?.message ?? 'Vault operation failed.');
+    } catch (error_) {
+      logger.error(`Vault action ${command} failed:`, error_ as Error);
+      setError(
+        typeof error_ === 'string' ? error_ : (error_ as Error)?.message ?? 'Vault operation failed.',
+      );
     } finally {
       setBusy(false);
     }

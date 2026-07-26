@@ -84,7 +84,7 @@ export default function ProjectTimeline() {
 
                 <Group justify="space-between">
                   <Text size="xs" c="dimmed">
-                    {progress !== null ? `${progress}% of schedule elapsed` : 'No schedule set'}
+                    {progress === null ? 'No schedule set' : `${progress}% of schedule elapsed`}
                   </Text>
                   {project.target_end_at && (
                     <Text size="xs" c="dimmed">

@@ -268,7 +268,9 @@ impl PragmaTuner {
         // without any signal. Log it so the security-relevant downgrade is visible.
         if let Some(kdf_iter) = cfg.kdf_iter {
             if let Err(e) = conn.execute_batch(&format!("PRAGMA kdf_iter = {};", kdf_iter)) {
-                log::warn!("[pragma] Failed to set kdf_iter={kdf_iter} (SQLCipher unavailable?): {e}");
+                log::warn!(
+                    "[pragma] Failed to set kdf_iter={kdf_iter} (SQLCipher unavailable?): {e}"
+                );
             }
         }
 

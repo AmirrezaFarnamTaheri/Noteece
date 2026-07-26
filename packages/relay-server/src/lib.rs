@@ -122,10 +122,7 @@ async fn check_pending(
     match bearer_token(&headers) {
         Some(token) if state.verify_token(&query.device_id, &token) => {
             let count = state.pending_count(&query.device_id);
-            (
-                StatusCode::OK,
-                Json(serde_json::json!({ "count": count })),
-            )
+            (StatusCode::OK, Json(serde_json::json!({ "count": count })))
         }
         _ => (
             StatusCode::UNAUTHORIZED,
