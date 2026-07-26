@@ -56,21 +56,10 @@ export function LifeBalanceWidget({ spaceId, timeRange = 'week', showTargets = t
           spaceId,
           timeRange,
         });
-        return result;
-      } catch {
-        // Return mock data if command not available
-        return {
-          work: 35,
-          personal: 15,
-          health: 8,
-          learning: 5,
-          social: 10,
-          creative: 3,
-          rest: 45,
-        };
-      }
+      return result;
     },
     staleTime: 300_000, // 5 minutes
+    retry: false,
   });
 
   // Transform data for radar chart

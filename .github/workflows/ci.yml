@@ -32,6 +32,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Guards the class of bug that shipped a completely unopenable vault: the
+      # frontend invoked `create_vault`/`unlock_vault` while the backend registered
+      # `create_vault_cmd`/`unlock_vault_cmd`. Jest mocks `invoke` with a bare
+      # jest.fn() that resolves any name, so no unit test can catch this — several
+      # tests actually assert dead command names and pass.
+      #
+      # Currently reports 30 pre-existing breakages, so it is non-blocking. Flip
+      # continue-on-error to false once they are triaged; leaving it advisory keeps
+      # the list visible on every run instead of hiding it.
+      - name: Check Tauri IPC contract (frontend invoke vs registered commands)
+        continue-on-error: true
+        run: node scripts/check-ipc-contract.mjs
+
       - name: Run lint
         run: pnpm lint
 
