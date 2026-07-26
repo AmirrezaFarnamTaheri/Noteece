@@ -18,6 +18,8 @@ pub enum BlobError {
     Encrypt(String),
     #[error("Hex error: {0}")]
     Hex(#[from] hex::FromHexError),
+    #[error("Invalid content address: expected 64 lowercase hex characters")]
+    InvalidContentAddress,
 }
 
 fn derive_blob_key(mk: &[u8], blob_hash: &[u8]) -> [u8; 32] {
@@ -99,8 +101,32 @@ pub fn store_blob(vault_path: &str, mk: &[u8], content: &[u8]) -> Result<String,
     Ok(hex_manifest_hash)
 }
 
+/// Validate a content-address before it is ever used to build a filesystem path.
+///
+/// `hex_hash` reaches this module from caller-controlled input (the `blob_id`
+/// parameter of the registered `process_ocr_job_cmd`). Without this check the
+/// value flowed straight into `Path::join`, and `join` REPLACES the base path
+/// when given an absolute component — so a `blob_id` of `xx/etc/passwd` resolved
+/// to `/etc/passwd`, turning a blob read into arbitrary file read. Slicing it as
+/// `[0..2]` / `[2..]` also panicked on inputs shorter than two bytes or on a
+/// non-UTF-8 char boundary, which is a remotely triggerable abort.
+///
+/// A content address is a SHA-256 digest, so it is exactly 64 lowercase hex
+/// characters and nothing else. Enforce precisely that.
+fn validate_content_address(hex_hash: &str) -> Result<(), BlobError> {
+    const SHA256_HEX_LEN: usize = 64;
+    if hex_hash.len() != SHA256_HEX_LEN
+        || !hex_hash
+            .bytes()
+            .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
+    {
+        return Err(BlobError::InvalidContentAddress);
+    }
+    Ok(())
+}
+
 pub fn retrieve_blob(vault_path: &str, mk: &[u8], hex_hash: &str) -> Result<Vec<u8>, BlobError> {
-    println!("[blob] Retrieving blob with hash: {}", hex_hash);
+    validate_content_address(hex_hash)?;
     let manifest_path = Path::new(vault_path).join("objects").join(&hex_hash[0..2]);
     let manifest_file_path = manifest_path.join(&hex_hash[2..]);
     let manifest = fs::read_to_string(manifest_file_path)?;
