@@ -136,3 +136,39 @@ Stated plainly, because a report this long otherwise reads as "everything is bro
 **Still open:** iOS has **no native project** (managed Expo; no `Info.plist` to audit — its `usesNonExemptEncryption: false` looks inaccurate given ChaCha20+Argon2 ship). The database/migrations agent had not reported at the time of writing. No finding here was validated with a working exploit; all are established by code reading. `rustsec.org`, `tauri.app`, and `jestjs.io` returned 403 through the environment proxy, so those citations rest on vendored source and GitHub advisories instead — stronger evidence than prose docs, but different sources than requested.
 
 _No claim in this document should be acted on without opening the cited file. Three findings across the two passes were confidently wrong and were caught only that way._
+
+---
+
+## 8. Addendum — persistence layer (empirically verified)
+
+This section landed after §7 was written and **removes the "database/migrations" item from that section's open list**. Unlike the rest of this report, these findings were *reproduced* by replaying the project's actual migration SQL against SQLite 3.45.1 — they are not code-reading inferences. (`sqlite.org` and `zetetic.net` are proxy-blocked, so official docs could not be cited; empirical replay was used instead.)
+
+### Confirmed broken, with reproductions
+
+| # | Finding | Reproduction |
+| :--- | :--- | :--- |
+| V2-14 | **Task sync has never worked.** `delta_applier.rs:97` writes `task.created_at`; that column does not exist. **100% of task deltas fail.** | `table task has no column named created_at` |
+| V2-15 | **Mobile fresh install cannot start.** `database.ts:600` defaults a missing version key to `1`, so a brand-new install replays every migration against the current base schema. v4→v5 selects `note.content` / `note.updated_at`, which the base schema does not have. | `no such column: content` |
+| V2-16 | **Migration v17 bricks any populated vault.** `migrations.rs:771` adds a **STORED** generated column via `ALTER TABLE`. SQLite forbids this on a non-empty table. | empty table → OK; **≥1 row → `cannot add a STORED column`** |
+| V2-17 | **There is no upgrade path at all.** `migrate()` is called *only* from `create_vault`. `unlock_vault` reads `schema_version` and never compares it. Older vaults open at their old schema forever — and V2-16 means wiring the obvious fix would brick every existing vault. | `vault.rs:106` vs `:177` |
+| V2-18 | **Deletes fail under the FKs the app enables.** With `foreign_keys=ON`, deleting a task with a tag, a note with a tag, or a space all raise. Most v1 relations lack `ON DELETE`. A remote note-delete therefore errors and the note is never removed → permanent sync divergence. | `FOREIGN KEY constraint failed` (×3) |
+| V2-19 | **Trashed notes resurrect with titles destroyed.** Confirms V2-04 empirically: `title='MyTitle', is_trashed=1` → `title='', is_trashed=0` after one applied delta. | reproduced on real schema |
+| V2-20 | **Projects with logged time cannot be deleted.** `delete_project` nullifies `time_entry.project_id`, violating the CHECK that exactly one parent be non-NULL. | `CHECK constraint failed` |
+| V2-21 | **`clearAllData` leaves plaintext user content behind.** Drops `note`/`task` but not `fts_note`, `space`, `project`, `tag`, or any `social_*` table. After "clear all local data", every note title and body **remains in the unencrypted FTS index**. | `data-utils.ts:166-183` |
+| V2-22 | **Ordinary search input raises errors.** `advanced.rs:157,264,383` bind raw user text into `MATCH`. `C++`, `a-b`, `-hello`, `foo AND`, `col:val` all error; the last is also a column-existence oracle. `search/mod.rs:32-34` escapes correctly — the fix already exists in-repo but is inline and unused elsewhere. | 7 inputs reproduced |
+| V2-23 | **`with_db!` serializes the whole app.** It holds the pool `Mutex` guard across the entire block, so `max_size(10)` is inert and WAL's reader concurrency — the reason WAL was chosen — is defeated at the application layer. | `main.rs:18-33` |
+| V2-24 | **Mobile/desktop schema drift breaks sync both ways.** `sync-client.ts:522` whitelists `content`, `updated_at`, `tags` on `note`; mobile's own table has `content_md`, `modified_at`, and no `tags`. Same for `task`. Every note sync from desktop fails. | column lists compared |
+
+### Why none of this was caught
+
+`apps/mobile/src/__tests__/database.test.ts:44` mocks `execAsync` as `jest.fn().mockResolvedValue(undefined)` — **no SQL is ever executed by the mobile test suite.** This is the same structural blindness as §4's mocked `invoke`: the tests exercise the calling code and never the thing that actually fails.
+
+### Also found
+
+~1,200 lines of dead code under `db/` with **zero callers** (`pragma_tuning.rs`, `materialized_views.rs`, `vault_backup.rs`), two containing schema bugs against columns that do not exist. `fts_note` is the only FTS table with no maintenance triggers, so synced notes are unsearchable while their stale content stays searchable. Migration v10 never records its version and is non-idempotent. `social/backup.rs:386` builds `INSERT INTO {table} ({cols})` from unvalidated JSON keys.
+
+**One hypothesis was tested and refuted:** `ON DELETE CASCADE` does *not* skip `AFTER DELETE` triggers absent `recursive_triggers`. FTS cleanup on social-account deletion works correctly.
+
+### Revised priority
+
+V2-14, V2-15, and V2-16/17 outrank everything in §6 except V2-01. Task sync has never functioned, mobile cannot cold-start, and the migration ladder is a trap that springs the moment anyone fixes the upgrade path.
