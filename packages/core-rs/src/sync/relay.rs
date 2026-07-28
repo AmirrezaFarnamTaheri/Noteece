@@ -1,52 +1,49 @@
-//! Blind Relay Server Implementation
+//! Blind relay implementation for encrypted store-and-forward sync.
 //!
-//! Provides encrypted store-and-forward sync for devices outside the LAN.
-//! The relay server never has access to plaintext - all data is end-to-end encrypted.
-//!
-//! Architecture:
-//! ```text
-//! Device A -> [Encrypted Blob] -> Relay Server -> [Encrypted Blob] -> Device B
-//!                                      |
-//!                                 (No access to
-//!                                  plaintext)
-//! ```
+//! The relay never receives plaintext. Device registration uses an Ed25519
+//! challenge-response so a public key (or its hash) is never sufficient to obtain
+//! a mailbox capability. Successful registration rotates an expiring bearer token.
 
+use base64::Engine as _;
+use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
+use subtle::ConstantTimeEq;
 use thiserror::Error;
 
-/// Maximum age for pending messages (24 hours)
-const MAX_MESSAGE_AGE_SECS: u64 = 86400;
-
-/// Maximum message size (10 MB)
+/// Maximum age for pending messages (24 hours).
+const MAX_MESSAGE_AGE_SECS: u64 = 86_400;
+/// Maximum ciphertext size (10 MiB).
 const MAX_MESSAGE_SIZE: usize = 10 * 1024 * 1024;
-
-/// Maximum pending messages per device
+/// Maximum pending messages per recipient.
 const MAX_PENDING_PER_DEVICE: usize = 100;
-
-/// Maximum size for the small binary envelope fields (pubkey/nonce/signature).
+/// Maximum size for public-key, nonce, and signature envelope fields.
 const MAX_SMALL_FIELD: usize = 4 * 1024;
-
-/// Maximum length for envelope string fields (ids, device ids, message type).
+/// Maximum length for IDs and message-type strings.
 const MAX_ID_LEN: usize = 256;
-
-/// Maximum number of distinct recipient queues held in memory (DoS ceiling).
+/// Maximum number of distinct recipient queues.
 const MAX_TOTAL_QUEUES: usize = 100_000;
-
-/// Maximum number of registered devices (DoS ceiling).
+/// Maximum number of registered devices.
 const MAX_REGISTERED_DEVICES: usize = 100_000;
-
-/// Reject client timestamps more than this far in the future (clock-skew ceiling)
-/// so a far-future timestamp cannot defeat message expiry.
+/// Maximum accepted future clock skew for an envelope.
 const MAX_FUTURE_SKEW_SECS: u64 = 300;
+/// Registration challenges are short-lived and single-use.
+const REGISTRATION_CHALLENGE_TTL_SECS: u64 = 300;
+/// Capability tokens expire after 30 days and are rotated on every registration.
+const CAPABILITY_TOKEN_TTL_SECS: u64 = 30 * 24 * 60 * 60;
+const REGISTRATION_DOMAIN: &str = "noteece-relay-registration-v1";
 
 #[derive(Error, Debug)]
 pub enum RelayError {
     #[error("Device not registered")]
     DeviceNotRegistered,
+    #[error("Authentication required")]
+    AuthenticationRequired,
+    #[error("Invalid or expired capability token")]
+    InvalidToken,
     #[error("Message too large (max {MAX_MESSAGE_SIZE} bytes)")]
     MessageTooLarge,
     #[error("Too many pending messages")]
@@ -55,6 +52,8 @@ pub enum RelayError {
     MessageExpired,
     #[error("Invalid signature")]
     InvalidSignature,
+    #[error("Invalid or expired registration challenge")]
+    InvalidRegistrationChallenge,
     #[error("Invalid envelope: {0}")]
     InvalidEnvelope(String),
     #[error("Relay at capacity")]
@@ -65,31 +64,22 @@ pub enum RelayError {
     NetworkError(String),
 }
 
-/// Encrypted message envelope for relay
+/// Encrypted message envelope retained by the blind relay.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RelayEnvelope {
-    /// Unique message ID
     pub id: String,
-    /// Sender device ID (anonymous hash)
     pub from_device: String,
-    /// Recipient device ID (anonymous hash)
     pub to_device: String,
-    /// Encrypted payload (opaque to relay)
     pub ciphertext: Vec<u8>,
-    /// Ephemeral public key for decryption
     pub ephemeral_pubkey: Vec<u8>,
-    /// Nonce used for encryption
     pub nonce: Vec<u8>,
-    /// Timestamp (for expiry)
     pub timestamp: u64,
-    /// Message type hint (sync_manifest, sync_delta, etc.)
     pub message_type: String,
-    /// Signature for authenticity
     pub signature: Vec<u8>,
 }
 
 impl RelayEnvelope {
-    /// Create a new relay envelope
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         from_device: &str,
         to_device: &str,
@@ -98,11 +88,6 @@ impl RelayEnvelope {
         nonce: Vec<u8>,
         message_type: &str,
     ) -> Self {
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or(std::time::Duration::from_secs(0))
-            .as_secs();
-
         Self {
             id: ulid::Ulid::new().to_string(),
             from_device: from_device.to_string(),
@@ -110,22 +95,20 @@ impl RelayEnvelope {
             ciphertext,
             ephemeral_pubkey,
             nonce,
-            timestamp,
+            timestamp: now_secs(),
             message_type: message_type.to_string(),
-            signature: Vec::new(), // Filled by sign()
+            signature: Vec::new(),
         }
     }
 
-    /// Check if message has expired
     pub fn is_expired(&self) -> bool {
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or(std::time::Duration::from_secs(0))
-            .as_secs();
+        self.is_expired_at(now_secs())
+    }
+
+    fn is_expired_at(&self, now: u64) -> bool {
         now.saturating_sub(self.timestamp) > MAX_MESSAGE_AGE_SECS
     }
 
-    /// Validate envelope size
     pub fn validate_size(&self) -> Result<(), RelayError> {
         if self.ciphertext.len() > MAX_MESSAGE_SIZE {
             return Err(RelayError::MessageTooLarge);
@@ -133,17 +116,21 @@ impl RelayEnvelope {
         Ok(())
     }
 
-    /// Validate all attacker-controlled fields, not just the ciphertext. Bounds the
-    /// small binary fields and string fields so a small ciphertext cannot smuggle a
-    /// multi-megabyte nonce/pubkey/signature or an unbounded device-id map key.
+    /// Validate every attacker-controlled field before queue insertion.
     pub fn validate(&self) -> Result<(), RelayError> {
+        self.validate_at(now_secs())
+    }
+
+    fn validate_at(&self, now: u64) -> Result<(), RelayError> {
         self.validate_size()?;
+
         if self.ephemeral_pubkey.len() > MAX_SMALL_FIELD
             || self.nonce.len() > MAX_SMALL_FIELD
             || self.signature.len() > MAX_SMALL_FIELD
         {
             return Err(RelayError::InvalidEnvelope("binary field too large".into()));
         }
+
         if self.id.len() > MAX_ID_LEN
             || self.from_device.len() > MAX_ID_LEN
             || self.to_device.len() > MAX_ID_LEN
@@ -151,41 +138,52 @@ impl RelayEnvelope {
         {
             return Err(RelayError::InvalidEnvelope("string field too long".into()));
         }
-        if self.id.is_empty() || self.to_device.is_empty() {
+
+        if self.id.is_empty()
+            || self.from_device.is_empty()
+            || self.to_device.is_empty()
+            || self.message_type.is_empty()
+        {
             return Err(RelayError::InvalidEnvelope(
-                "missing id or recipient".into(),
+                "missing id, sender, recipient, or message type".into(),
             ));
         }
-        // Reject far-future timestamps so client-supplied time cannot defeat expiry.
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or(std::time::Duration::from_secs(0))
-            .as_secs();
+
         if self.timestamp > now.saturating_add(MAX_FUTURE_SKEW_SECS) {
             return Err(RelayError::InvalidEnvelope(
                 "timestamp too far in future".into(),
             ));
         }
+
         Ok(())
     }
 }
 
-/// Pending message in relay queue
 #[derive(Debug, Clone)]
 struct PendingMessage {
     envelope: RelayEnvelope,
-    _received_at: u64,
 }
 
-/// In-memory relay server (for development/testing)
-/// Production would use a distributed store (Redis, etc.)
+#[derive(Debug, Clone)]
+struct RegistrationChallenge {
+    public_key: [u8; 32],
+    challenge: [u8; 32],
+    expires_at: u64,
+}
+
+#[derive(Debug, Clone)]
+struct CapabilityToken {
+    value: [u8; 32],
+    expires_at: u64,
+}
+
+/// In-memory relay state. Production deployments should replace the backing
+/// maps with a durable, rate-limited store while preserving these invariants.
 pub struct BlindRelayServer {
-    /// Pending messages per device
     pending: Arc<Mutex<HashMap<String, Vec<PendingMessage>>>>,
-    /// Registered devices (device_id -> public_key_hash)
-    devices: Arc<Mutex<HashMap<String, String>>>,
-    /// Capability tokens (device_id -> bearer token) gating mailbox access.
-    tokens: Arc<Mutex<HashMap<String, String>>>,
+    devices: Arc<Mutex<HashMap<String, [u8; 32]>>>,
+    challenges: Arc<Mutex<HashMap<String, RegistrationChallenge>>>,
+    tokens: Arc<Mutex<HashMap<String, CapabilityToken>>>,
 }
 
 impl Default for BlindRelayServer {
@@ -195,244 +193,359 @@ impl Default for BlindRelayServer {
 }
 
 impl BlindRelayServer {
-    /// Create new relay server
     pub fn new() -> Self {
         Self {
             pending: Arc::new(Mutex::new(HashMap::new())),
             devices: Arc::new(Mutex::new(HashMap::new())),
+            challenges: Arc::new(Mutex::new(HashMap::new())),
             tokens: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
-    /// Issue (or return the existing) capability token for a registered device.
-    /// The token must be presented to fetch/inspect that device's mailbox, closing
-    /// the unauthenticated-drain hole where any caller could read a queue by id.
-    pub fn issue_token(&self, device_id: &str) -> Result<String, RelayError> {
-        let mut tokens = self
-            .tokens
-            .lock()
-            .map_err(|_| RelayError::EncryptionError("Mutex poisoned".to_string()))?;
-        if let Some(existing) = tokens.get(device_id) {
-            return Ok(existing.clone());
-        }
-        let mut raw = [0u8; 32];
-        rand::rngs::OsRng.fill_bytes(&mut raw);
-        let token = hex::encode(raw);
-        tokens.insert(device_id.to_string(), token.clone());
-        Ok(token)
+    /// Begin registration by issuing a single-use challenge bound to the device ID
+    /// and Ed25519 public key. Existing device IDs may only use their original key.
+    pub fn begin_registration(
+        &self,
+        device_id: &str,
+        public_key_b64: &str,
+    ) -> Result<String, RelayError> {
+        self.begin_registration_at(device_id, public_key_b64, now_secs())
     }
 
-    /// Constant-time-ish check that a token authorizes access to a device mailbox.
+    fn begin_registration_at(
+        &self,
+        device_id: &str,
+        public_key_b64: &str,
+        now: u64,
+    ) -> Result<String, RelayError> {
+        validate_identifier(device_id, "device id")?;
+        let public_key = decode_b64_32(public_key_b64)
+            .map_err(|_| RelayError::InvalidEnvelope("invalid Ed25519 public key".into()))?;
+        VerifyingKey::from_bytes(&public_key).map_err(|_| RelayError::InvalidSignature)?;
+
+        {
+            let devices = self
+                .devices
+                .lock()
+                .map_err(|_| RelayError::EncryptionError("Mutex poisoned".into()))?;
+            if let Some(existing) = devices.get(device_id) {
+                if !bool::from(existing.ct_eq(&public_key)) {
+                    return Err(RelayError::InvalidSignature);
+                }
+            } else if devices.len() >= MAX_REGISTERED_DEVICES {
+                return Err(RelayError::AtCapacity);
+            }
+        }
+
+        let mut challenge = [0_u8; 32];
+        rand::rngs::OsRng.fill_bytes(&mut challenge);
+        let challenge_b64 = base64::engine::general_purpose::STANDARD.encode(challenge);
+
+        self.challenges
+            .lock()
+            .map_err(|_| RelayError::EncryptionError("Mutex poisoned".into()))?
+            .insert(
+                device_id.to_string(),
+                RegistrationChallenge {
+                    public_key,
+                    challenge,
+                    expires_at: now.saturating_add(REGISTRATION_CHALLENGE_TTL_SECS),
+                },
+            );
+
+        Ok(challenge_b64)
+    }
+
+    /// Complete registration by verifying a signature over the server challenge.
+    /// The challenge is consumed regardless of success, preventing replay. Every
+    /// successful proof rotates the capability token and invalidates the old token.
+    pub fn complete_registration(
+        &self,
+        device_id: &str,
+        public_key_b64: &str,
+        challenge_b64: &str,
+        signature_b64: &str,
+    ) -> Result<(String, u64), RelayError> {
+        self.complete_registration_at(
+            device_id,
+            public_key_b64,
+            challenge_b64,
+            signature_b64,
+            now_secs(),
+        )
+    }
+
+    fn complete_registration_at(
+        &self,
+        device_id: &str,
+        public_key_b64: &str,
+        challenge_b64: &str,
+        signature_b64: &str,
+        now: u64,
+    ) -> Result<(String, u64), RelayError> {
+        validate_identifier(device_id, "device id")?;
+        let public_key = decode_b64_32(public_key_b64)
+            .map_err(|_| RelayError::InvalidEnvelope("invalid Ed25519 public key".into()))?;
+        let challenge = decode_b64_32(challenge_b64)
+            .map_err(|_| RelayError::InvalidRegistrationChallenge)?;
+
+        let issued = self
+            .challenges
+            .lock()
+            .map_err(|_| RelayError::EncryptionError("Mutex poisoned".into()))?
+            .remove(device_id)
+            .ok_or(RelayError::InvalidRegistrationChallenge)?;
+
+        if now >= issued.expires_at
+            || !bool::from(issued.public_key.ct_eq(&public_key))
+            || !bool::from(issued.challenge.ct_eq(&challenge))
+        {
+            return Err(RelayError::InvalidRegistrationChallenge);
+        }
+
+        let signature_bytes = base64::engine::general_purpose::STANDARD
+            .decode(signature_b64)
+            .map_err(|_| RelayError::InvalidSignature)?;
+        let signature =
+            Signature::from_slice(&signature_bytes).map_err(|_| RelayError::InvalidSignature)?;
+        let verifying_key =
+            VerifyingKey::from_bytes(&public_key).map_err(|_| RelayError::InvalidSignature)?;
+        let message = registration_message(device_id, challenge_b64);
+        verifying_key
+            .verify(message.as_bytes(), &signature)
+            .map_err(|_| RelayError::InvalidSignature)?;
+
+        {
+            let mut devices = self
+                .devices
+                .lock()
+                .map_err(|_| RelayError::EncryptionError("Mutex poisoned".into()))?;
+            match devices.get(device_id) {
+                Some(existing) if bool::from(existing.ct_eq(&public_key)) => {}
+                Some(_) => return Err(RelayError::InvalidSignature),
+                None => {
+                    if devices.len() >= MAX_REGISTERED_DEVICES {
+                        return Err(RelayError::AtCapacity);
+                    }
+                    devices.insert(device_id.to_string(), public_key);
+                }
+            }
+        }
+
+        self.rotate_token_at(device_id, now)
+    }
+
+    fn rotate_token_at(&self, device_id: &str, now: u64) -> Result<(String, u64), RelayError> {
+        if !self.is_registered(device_id) {
+            return Err(RelayError::DeviceNotRegistered);
+        }
+
+        let mut value = [0_u8; 32];
+        rand::rngs::OsRng.fill_bytes(&mut value);
+        let expires_at = now.saturating_add(CAPABILITY_TOKEN_TTL_SECS);
+        self.tokens
+            .lock()
+            .map_err(|_| RelayError::EncryptionError("Mutex poisoned".into()))?
+            .insert(device_id.to_string(), CapabilityToken { value, expires_at });
+
+        Ok((hex::encode(value), expires_at))
+    }
+
     pub fn verify_token(&self, device_id: &str, token: &str) -> bool {
+        self.verify_token_at(device_id, token, now_secs())
+    }
+
+    fn verify_token_at(&self, device_id: &str, token: &str, now: u64) -> bool {
+        let supplied = match hex::decode(token) {
+            Ok(bytes) if bytes.len() == 32 => {
+                let mut value = [0_u8; 32];
+                value.copy_from_slice(&bytes);
+                value
+            }
+            _ => return false,
+        };
+
         match self.tokens.lock() {
-            Ok(tokens) => tokens.get(device_id).map(|t| t.as_str()) == Some(token),
+            Ok(tokens) => tokens.get(device_id).is_some_and(|stored| {
+                now < stored.expires_at && bool::from(stored.value.ct_eq(&supplied))
+            }),
             Err(_) => false,
         }
     }
 
-    /// Register a device with the relay
-    pub fn register_device(
-        &self,
-        device_id: &str,
-        public_key_hash: &str,
-    ) -> Result<(), RelayError> {
-        if device_id.is_empty()
-            || device_id.len() > MAX_ID_LEN
-            || public_key_hash.is_empty()
-            || public_key_hash.len() > MAX_ID_LEN
-        {
-            return Err(RelayError::InvalidEnvelope("invalid registration".into()));
-        }
-        let mut devices = self
-            .devices
+    pub fn is_registered(&self, device_id: &str) -> bool {
+        self.devices
             .lock()
-            .map_err(|_| RelayError::EncryptionError("Mutex poisoned".to_string()))?;
-
-        match devices.get(device_id) {
-            // Re-registration with the same key is idempotent and allowed.
-            Some(existing) if existing == public_key_hash => {}
-            // Reject silently overwriting an existing device's key (TOFU): a mismatch
-            // would let anyone hijack a registered device id's identity mapping.
-            Some(_) => {
-                return Err(RelayError::InvalidEnvelope(
-                    "device id already registered with a different key".into(),
-                ));
-            }
-            None => {
-                if devices.len() >= MAX_REGISTERED_DEVICES {
-                    return Err(RelayError::AtCapacity);
-                }
-                devices.insert(device_id.to_string(), public_key_hash.to_string());
-            }
-        }
-        log::info!("[relay] Registered device: {}", device_id);
-        Ok(())
+            .map(|devices| devices.contains_key(device_id))
+            .unwrap_or(false)
     }
 
-    /// Unregister a device
     pub fn unregister_device(&self, device_id: &str) {
         if let Ok(mut devices) = self.devices.lock() {
             devices.remove(device_id);
         }
-
-        // Also clear pending messages
         if let Ok(mut pending) = self.pending.lock() {
             pending.remove(device_id);
         }
-
-        // Revoke the mailbox capability token.
+        if let Ok(mut challenges) = self.challenges.lock() {
+            challenges.remove(device_id);
+        }
         if let Ok(mut tokens) = self.tokens.lock() {
             tokens.remove(device_id);
         }
-
-        log::info!("[relay] Unregistered device: {}", device_id);
+        log::info!("[relay] Unregistered device: {device_id}");
     }
 
-    /// Submit a message for relay
-    pub fn submit_message(&self, envelope: RelayEnvelope) -> Result<String, RelayError> {
-        // Validate all attacker-controlled fields (size, small fields, ids, skew).
-        envelope.validate()?;
+    /// Submit an envelope from an authenticated sender. The token must be bound to
+    /// `from_device`; both sender and recipient must already be registered.
+    pub fn submit_message_authorized(
+        &self,
+        token: &str,
+        envelope: RelayEnvelope,
+    ) -> Result<String, RelayError> {
+        if !self.verify_token(&envelope.from_device, token) {
+            return Err(RelayError::InvalidToken);
+        }
+        self.submit_message(envelope)
+    }
 
+    /// Queue a validated envelope. This method is retained for trusted in-process
+    /// callers; HTTP callers must use `submit_message_authorized`.
+    pub fn submit_message(&self, envelope: RelayEnvelope) -> Result<String, RelayError> {
+        envelope.validate()?;
         if envelope.is_expired() {
             return Err(RelayError::MessageExpired);
         }
-
-        // Add to pending queue
-        let msg_id = envelope.id.clone();
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or(std::time::Duration::from_secs(0))
-            .as_secs();
-
+        if !self.is_registered(&envelope.from_device)
+            || !self.is_registered(&envelope.to_device)
         {
-            let mut pending = self
-                .pending
-                .lock()
-                .map_err(|_| RelayError::EncryptionError("Mutex poisoned".to_string()))?;
-
-            // Cap the number of distinct recipient queues so an attacker cannot
-            // exhaust memory by sending to unlimited random device ids.
-            if !pending.contains_key(&envelope.to_device) && pending.len() >= MAX_TOTAL_QUEUES {
-                return Err(RelayError::AtCapacity);
-            }
-
-            let queue = pending.entry(envelope.to_device.clone()).or_default();
-
-            // Check limits
-            if queue.len() >= MAX_PENDING_PER_DEVICE {
-                // Prune expired messages first
-                queue.retain(|m| !m.envelope.is_expired());
-
-                if queue.len() >= MAX_PENDING_PER_DEVICE {
-                    return Err(RelayError::TooManyPending);
-                }
-            }
-
-            queue.push(PendingMessage {
-                envelope,
-                _received_at: now,
-            });
+            return Err(RelayError::DeviceNotRegistered);
         }
 
-        log::info!("[relay] Message {} queued for delivery", msg_id);
+        let msg_id = envelope.id.clone();
+        let mut pending = self
+            .pending
+            .lock()
+            .map_err(|_| RelayError::EncryptionError("Mutex poisoned".into()))?;
+
+        if !pending.contains_key(&envelope.to_device) && pending.len() >= MAX_TOTAL_QUEUES {
+            return Err(RelayError::AtCapacity);
+        }
+
+        let queue = pending.entry(envelope.to_device.clone()).or_default();
+        if queue.len() >= MAX_PENDING_PER_DEVICE {
+            queue.retain(|message| !message.envelope.is_expired());
+            if queue.len() >= MAX_PENDING_PER_DEVICE {
+                return Err(RelayError::TooManyPending);
+            }
+        }
+
+        queue.push(PendingMessage { envelope });
+        log::info!("[relay] Message {msg_id} queued for delivery");
         Ok(msg_id)
     }
 
-    /// Fetch pending messages for a device
     pub fn fetch_messages(&self, device_id: &str, limit: usize) -> Vec<RelayEnvelope> {
         let mut pending = match self.pending.lock() {
-            Ok(g) => g,
+            Ok(pending) => pending,
             Err(_) => return Vec::new(),
         };
 
-        if let Some(queue) = pending.get_mut(device_id) {
-            // Remove expired messages
-            queue.retain(|m| !m.envelope.is_expired());
-
-            // Take up to limit messages
-            let count = queue.len().min(limit);
-            let messages: Vec<RelayEnvelope> = queue.drain(..count).map(|m| m.envelope).collect();
-
-            log::info!(
-                "[relay] Delivered {} messages to {}",
-                messages.len(),
-                device_id
-            );
-            messages
-        } else {
-            Vec::new()
+        let Some(queue) = pending.get_mut(device_id) else {
+            return Vec::new();
+        };
+        queue.retain(|message| !message.envelope.is_expired());
+        let count = queue.len().min(limit);
+        let messages = queue
+            .drain(..count)
+            .map(|message| message.envelope)
+            .collect::<Vec<_>>();
+        if queue.is_empty() {
+            pending.remove(device_id);
         }
+        messages
     }
 
-    /// Get pending message count for a device
     pub fn pending_count(&self, device_id: &str) -> usize {
-        let pending = match self.pending.lock() {
-            Ok(g) => g,
-            Err(_) => return 0,
-        };
-        pending.get(device_id).map(|q| q.len()).unwrap_or(0)
+        self.pending
+            .lock()
+            .ok()
+            .and_then(|pending| pending.get(device_id).cloned())
+            .map(|queue| {
+                queue
+                    .iter()
+                    .filter(|message| !message.envelope.is_expired())
+                    .count()
+            })
+            .unwrap_or(0)
     }
 
-    /// Cleanup expired messages
+    /// Remove expired messages, challenges, and capability tokens.
+    ///
+    /// The return value remains the number of expired messages removed so existing
+    /// operational logging does not change semantics.
     pub fn cleanup_expired(&self) -> usize {
-        let mut pending = match self.pending.lock() {
-            Ok(g) => g,
-            Err(_) => return 0,
-        };
-        let mut cleaned = 0;
+        let now = now_secs();
+        let mut cleaned_messages = 0;
 
-        for queue in pending.values_mut() {
-            let before = queue.len();
-            queue.retain(|m| !m.envelope.is_expired());
-            cleaned += before - queue.len();
+        if let Ok(mut pending) = self.pending.lock() {
+            for queue in pending.values_mut() {
+                let before = queue.len();
+                queue.retain(|message| !message.envelope.is_expired_at(now));
+                cleaned_messages += before.saturating_sub(queue.len());
+            }
+            pending.retain(|_, queue| !queue.is_empty());
         }
 
-        // Drop now-empty queues so the queue map itself cannot grow without bound
-        // from transient recipients that never fetch.
-        pending.retain(|_, queue| !queue.is_empty());
-
-        if cleaned > 0 {
-            log::info!("[relay] Cleaned up {} expired messages", cleaned);
+        if let Ok(mut challenges) = self.challenges.lock() {
+            challenges.retain(|_, challenge| now < challenge.expires_at);
+        }
+        if let Ok(mut tokens) = self.tokens.lock() {
+            tokens.retain(|_, token| now < token.expires_at);
         }
 
-        cleaned
+        cleaned_messages
     }
 
-    /// Get server statistics
     pub fn stats(&self) -> RelayStats {
+        let registered_devices = self
+            .devices
+            .lock()
+            .map(|devices| devices.len())
+            .unwrap_or(0);
         let pending = match self.pending.lock() {
-            Ok(g) => g,
+            Ok(pending) => pending,
             Err(_) => {
                 return RelayStats {
-                    registered_devices: 0,
+                    registered_devices,
                     total_pending_messages: 0,
                     active_queues: 0,
                 }
             }
         };
-
-        let devices = match self.devices.lock() {
-            Ok(g) => g,
-            Err(_) => {
-                return RelayStats {
-                    registered_devices: 0,
-                    total_pending_messages: 0,
-                    active_queues: 0,
-                }
-            }
-        };
-
-        let total_pending: usize = pending.values().map(|q| q.len()).sum();
+        let now = now_secs();
+        let total_pending_messages = pending
+            .values()
+            .flat_map(|queue| queue.iter())
+            .filter(|message| !message.envelope.is_expired_at(now))
+            .count();
+        let active_queues = pending
+            .values()
+            .filter(|queue| {
+                queue
+                    .iter()
+                    .any(|message| !message.envelope.is_expired_at(now))
+            })
+            .count();
 
         RelayStats {
-            registered_devices: devices.len(),
-            total_pending_messages: total_pending,
-            active_queues: pending.len(),
+            registered_devices,
+            total_pending_messages,
+            active_queues,
         }
     }
 }
 
-/// Relay server statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RelayStats {
     pub registered_devices: usize,
@@ -440,265 +553,416 @@ pub struct RelayStats {
     pub active_queues: usize,
 }
 
-/// Client for connecting to a blind relay server
+/// Domain-separated bytes signed during registration.
+pub fn registration_message(device_id: &str, challenge_b64: &str) -> String {
+    format!("{REGISTRATION_DOMAIN}\0{device_id}\0{challenge_b64}")
+}
+
+/// HTTP client for the challenge-response relay protocol.
 pub struct RelayClient {
-    /// Device ID
     device_id: String,
-    /// Relay server URL
     relay_url: String,
-    /// Authentication token
     auth_token: Option<String>,
+    token_expires_at: Option<u64>,
 }
 
 impl RelayClient {
-    /// Create new relay client
     pub fn new(device_id: &str, relay_url: &str) -> Self {
         Self {
             device_id: device_id.to_string(),
-            relay_url: relay_url.to_string(),
+            relay_url: relay_url.trim_end_matches('/').to_string(),
             auth_token: None,
+            token_expires_at: None,
         }
     }
 
-    /// Register with relay server
-    pub async fn register(&mut self, public_key_hash: &str) -> Result<(), RelayError> {
-        let url = format!("{}/register", self.relay_url);
-
-        let body = serde_json::json!({
-            "device_id": self.device_id,
-            "public_key_hash": public_key_hash,
-        });
-
+    /// Register or re-register using proof of possession of the device signing key.
+    /// Re-registration rotates the previous capability token.
+    pub async fn register(&mut self, signing_key: &SigningKey) -> Result<(), RelayError> {
+        validate_identifier(&self.device_id, "device id")?;
+        let public_key_b64 = base64::engine::general_purpose::STANDARD
+            .encode(signing_key.verifying_key().to_bytes());
         let client = reqwest::Client::new();
-        let response = client
-            .post(&url)
-            .json(&body)
+
+        let challenge_response = client
+            .post(format!("{}/register/challenge", self.relay_url))
+            .json(&serde_json::json!({
+                "device_id": self.device_id,
+                "public_key": public_key_b64,
+            }))
             .send()
             .await
-            .map_err(|e| RelayError::NetworkError(e.to_string()))?;
+            .map_err(|error| RelayError::NetworkError(error.to_string()))?;
 
-        if response.status().is_success() {
-            let result: serde_json::Value = response
-                .json()
-                .await
-                .map_err(|e| RelayError::NetworkError(e.to_string()))?;
+        if !challenge_response.status().is_success() {
+            return Err(RelayError::NetworkError(format!(
+                "Registration challenge failed: {}",
+                challenge_response.status()
+            )));
+        }
 
-            if let Some(token) = result.get("token").and_then(|t| t.as_str()) {
-                self.auth_token = Some(token.to_string());
-            }
+        let challenge_json: serde_json::Value = challenge_response
+            .json()
+            .await
+            .map_err(|error| RelayError::NetworkError(error.to_string()))?;
+        let challenge = challenge_json
+            .get("challenge")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| RelayError::NetworkError("Missing registration challenge".into()))?;
+        let signature = signing_key.sign(registration_message(&self.device_id, challenge).as_bytes());
+        let signature_b64 =
+            base64::engine::general_purpose::STANDARD.encode(signature.to_bytes());
 
-            log::info!("[relay_client] Registered with relay server");
-            Ok(())
-        } else {
-            Err(RelayError::NetworkError(format!(
+        let registration_response = client
+            .post(format!("{}/register", self.relay_url))
+            .json(&serde_json::json!({
+                "device_id": self.device_id,
+                "public_key": public_key_b64,
+                "challenge": challenge,
+                "signature": signature_b64,
+            }))
+            .send()
+            .await
+            .map_err(|error| RelayError::NetworkError(error.to_string()))?;
+
+        if !registration_response.status().is_success() {
+            return Err(RelayError::NetworkError(format!(
                 "Registration failed: {}",
-                response.status()
-            )))
+                registration_response.status()
+            )));
         }
+
+        let result: serde_json::Value = registration_response
+            .json()
+            .await
+            .map_err(|error| RelayError::NetworkError(error.to_string()))?;
+        let token = result
+            .get("token")
+            .and_then(serde_json::Value::as_str)
+            .filter(|token| !token.is_empty())
+            .ok_or_else(|| RelayError::NetworkError("Missing capability token".into()))?;
+        let expires_at = result
+            .get("expires_at")
+            .and_then(serde_json::Value::as_u64)
+            .ok_or_else(|| RelayError::NetworkError("Missing token expiry".into()))?;
+
+        self.auth_token = Some(token.to_string());
+        self.token_expires_at = Some(expires_at);
+        Ok(())
     }
 
-    /// Send message via relay
-    pub async fn send(&self, envelope: RelayEnvelope) -> Result<String, RelayError> {
-        let url = format!("{}/send", self.relay_url);
+    pub fn auth_token(&self) -> Option<&str> {
+        self.auth_token.as_deref()
+    }
 
-        let client = reqwest::Client::new();
-        let mut request = client.post(&url).json(&envelope);
+    pub fn token_expires_at(&self) -> Option<u64> {
+        self.token_expires_at
+    }
 
-        if let Some(ref token) = self.auth_token {
-            request = request.header("Authorization", format!("Bearer {}", token));
+    pub fn restore_auth_token(&mut self, token: String, expires_at: u64) {
+        self.auth_token = Some(token);
+        self.token_expires_at = Some(expires_at);
+    }
+
+    fn required_token(&self) -> Result<&str, RelayError> {
+        let token = self
+            .auth_token
+            .as_deref()
+            .ok_or(RelayError::AuthenticationRequired)?;
+        if self.token_expires_at.is_some_and(|expiry| now_secs() >= expiry) {
+            return Err(RelayError::InvalidToken);
         }
+        Ok(token)
+    }
 
-        let response = request
+    pub async fn send(&self, envelope: RelayEnvelope) -> Result<String, RelayError> {
+        if envelope.from_device != self.device_id {
+            return Err(RelayError::InvalidEnvelope(
+                "envelope sender does not match relay client".into(),
+            ));
+        }
+        let response = reqwest::Client::new()
+            .post(format!("{}/send", self.relay_url))
+            .header("Authorization", format!("Bearer {}", self.required_token()?))
+            .json(&envelope)
             .send()
             .await
-            .map_err(|e| RelayError::NetworkError(e.to_string()))?;
+            .map_err(|error| RelayError::NetworkError(error.to_string()))?;
 
-        if response.status().is_success() {
-            let result: serde_json::Value = response
-                .json()
-                .await
-                .map_err(|e| RelayError::NetworkError(e.to_string()))?;
-
-            let msg_id = result
-                .get("id")
-                .and_then(|id| id.as_str())
-                .unwrap_or("unknown")
-                .to_string();
-
-            Ok(msg_id)
-        } else {
-            Err(RelayError::NetworkError(format!(
+        if !response.status().is_success() {
+            return Err(RelayError::NetworkError(format!(
                 "Send failed: {}",
                 response.status()
-            )))
+            )));
         }
+        let result: serde_json::Value = response
+            .json()
+            .await
+            .map_err(|error| RelayError::NetworkError(error.to_string()))?;
+        result
+            .get("id")
+            .and_then(serde_json::Value::as_str)
+            .map(str::to_string)
+            .ok_or_else(|| RelayError::NetworkError("Missing relay message id".into()))
     }
 
-    /// Fetch pending messages
     pub async fn fetch(&self, limit: usize) -> Result<Vec<RelayEnvelope>, RelayError> {
-        let url = format!(
-            "{}/fetch?device_id={}&limit={}",
-            self.relay_url, self.device_id, limit
-        );
-
-        let client = reqwest::Client::new();
-        let mut request = client.get(&url);
-
-        if let Some(ref token) = self.auth_token {
-            request = request.header("Authorization", format!("Bearer {}", token));
-        }
-
-        let response = request
+        let response = reqwest::Client::new()
+            .get(format!(
+                "{}/fetch?device_id={}&limit={}",
+                self.relay_url, self.device_id, limit
+            ))
+            .header("Authorization", format!("Bearer {}", self.required_token()?))
             .send()
             .await
-            .map_err(|e| RelayError::NetworkError(e.to_string()))?;
+            .map_err(|error| RelayError::NetworkError(error.to_string()))?;
 
-        if response.status().is_success() {
-            let messages: Vec<RelayEnvelope> = response
-                .json()
-                .await
-                .map_err(|e| RelayError::NetworkError(e.to_string()))?;
-
-            Ok(messages)
-        } else {
-            Err(RelayError::NetworkError(format!(
+        if !response.status().is_success() {
+            return Err(RelayError::NetworkError(format!(
                 "Fetch failed: {}",
                 response.status()
-            )))
+            )));
         }
+        response
+            .json()
+            .await
+            .map_err(|error| RelayError::NetworkError(error.to_string()))
     }
 
-    /// Check for pending messages
     pub async fn check_pending(&self) -> Result<usize, RelayError> {
-        let url = format!("{}/pending?device_id={}", self.relay_url, self.device_id);
-
-        let client = reqwest::Client::new();
-        let mut request = client.get(&url);
-
-        // `/pending` is token-gated like `/fetch`; without this header the server
-        // answers 401 and the old `Ok(0)` fallback would silently report "no
-        // pending messages", stalling sync instead of surfacing the auth failure.
-        if let Some(ref token) = self.auth_token {
-            request = request.header("Authorization", format!("Bearer {}", token));
-        }
-
-        let response = request
+        let response = reqwest::Client::new()
+            .get(format!(
+                "{}/pending?device_id={}",
+                self.relay_url, self.device_id
+            ))
+            .header("Authorization", format!("Bearer {}", self.required_token()?))
             .send()
             .await
-            .map_err(|e| RelayError::NetworkError(e.to_string()))?;
+            .map_err(|error| RelayError::NetworkError(error.to_string()))?;
 
-        if response.status().is_success() {
-            let result: serde_json::Value = response
-                .json()
-                .await
-                .map_err(|e| RelayError::NetworkError(e.to_string()))?;
-
-            let count = result.get("count").and_then(|c| c.as_u64()).unwrap_or(0) as usize;
-
-            Ok(count)
-        } else {
-            Err(RelayError::NetworkError(format!(
+        if !response.status().is_success() {
+            return Err(RelayError::NetworkError(format!(
                 "Pending check failed: {}",
                 response.status()
-            )))
+            )));
         }
+        let result: serde_json::Value = response
+            .json()
+            .await
+            .map_err(|error| RelayError::NetworkError(error.to_string()))?;
+        Ok(result
+            .get("count")
+            .and_then(serde_json::Value::as_u64)
+            .unwrap_or(0) as usize)
     }
+}
+
+fn now_secs() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs()
+}
+
+fn validate_identifier(value: &str, name: &str) -> Result<(), RelayError> {
+    if value.is_empty() || value.len() > MAX_ID_LEN {
+        return Err(RelayError::InvalidEnvelope(format!("invalid {name}")));
+    }
+    Ok(())
+}
+
+fn decode_b64_32(value: &str) -> Result<[u8; 32], ()> {
+    let decoded = base64::engine::general_purpose::STANDARD
+        .decode(value)
+        .map_err(|_| ())?;
+    decoded.try_into().map_err(|_| ())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_envelope_creation() {
-        let envelope = RelayEnvelope::new(
-            "device_a",
-            "device_b",
-            vec![1, 2, 3, 4],
-            vec![5, 6, 7, 8],
-            vec![9, 10, 11, 12],
-            "sync_manifest",
-        );
+    fn signing_key(seed: u8) -> SigningKey {
+        SigningKey::from_bytes(&[seed; 32])
+    }
 
-        assert!(!envelope.id.is_empty());
-        assert_eq!(envelope.from_device, "device_a");
-        assert_eq!(envelope.to_device, "device_b");
-        assert!(!envelope.is_expired());
+    fn register_at(
+        server: &BlindRelayServer,
+        device_id: &str,
+        key: &SigningKey,
+        now: u64,
+    ) -> (String, u64, String) {
+        let public_key = base64::engine::general_purpose::STANDARD
+            .encode(key.verifying_key().to_bytes());
+        let challenge = server
+            .begin_registration_at(device_id, &public_key, now)
+            .expect("challenge should be issued");
+        let signature = key.sign(registration_message(device_id, &challenge).as_bytes());
+        let signature = base64::engine::general_purpose::STANDARD.encode(signature.to_bytes());
+        let (token, expires_at) = server
+            .complete_registration_at(
+                device_id,
+                &public_key,
+                &challenge,
+                &signature,
+                now,
+            )
+            .expect("registration proof should verify");
+        (token, expires_at, challenge)
     }
 
     #[test]
-    fn test_relay_server_basic() {
+    fn registration_requires_proof_rotates_tokens_and_rejects_replay() {
         let server = BlindRelayServer::new();
+        let key = signing_key(7);
+        let (first_token, _, first_challenge) = register_at(&server, "device-a", &key, 1_000);
+        assert!(server.verify_token_at("device-a", &first_token, 1_001));
 
-        // Register devices
-        server
-            .register_device("device_a", "hash_a")
-            .expect("Register device_a failed");
-        server
-            .register_device("device_b", "hash_b")
-            .expect("Register device_b failed");
+        let public_key = base64::engine::general_purpose::STANDARD
+            .encode(key.verifying_key().to_bytes());
+        let replay_signature = key.sign(
+            registration_message("device-a", &first_challenge).as_bytes(),
+        );
+        let replay_signature =
+            base64::engine::general_purpose::STANDARD.encode(replay_signature.to_bytes());
+        assert!(matches!(
+            server.complete_registration_at(
+                "device-a",
+                &public_key,
+                &first_challenge,
+                &replay_signature,
+                1_002,
+            ),
+            Err(RelayError::InvalidRegistrationChallenge)
+        ));
 
-        // Submit message
-        let envelope = RelayEnvelope::new(
-            "device_a",
-            "device_b",
+        let (second_token, _, _) = register_at(&server, "device-a", &key, 1_003);
+        assert_ne!(first_token, second_token);
+        assert!(!server.verify_token_at("device-a", &first_token, 1_004));
+        assert!(server.verify_token_at("device-a", &second_token, 1_004));
+    }
+
+    #[test]
+    fn registration_rejects_wrong_key_and_expired_challenge() {
+        let server = BlindRelayServer::new();
+        let first_key = signing_key(1);
+        let other_key = signing_key(2);
+        register_at(&server, "device-a", &first_key, 100);
+
+        let other_public_key = base64::engine::general_purpose::STANDARD
+            .encode(other_key.verifying_key().to_bytes());
+        assert!(matches!(
+            server.begin_registration_at("device-a", &other_public_key, 101),
+            Err(RelayError::InvalidSignature)
+        ));
+
+        let public_key = base64::engine::general_purpose::STANDARD
+            .encode(first_key.verifying_key().to_bytes());
+        let challenge = server
+            .begin_registration_at("device-a", &public_key, 200)
+            .unwrap();
+        let signature = first_key.sign(registration_message("device-a", &challenge).as_bytes());
+        let signature = base64::engine::general_purpose::STANDARD.encode(signature.to_bytes());
+        assert!(matches!(
+            server.complete_registration_at(
+                "device-a",
+                &public_key,
+                &challenge,
+                &signature,
+                200 + REGISTRATION_CHALLENGE_TTL_SECS,
+            ),
+            Err(RelayError::InvalidRegistrationChallenge)
+        ));
+    }
+
+    #[test]
+    fn capability_tokens_expire() {
+        let server = BlindRelayServer::new();
+        let (token, expires_at, _) = register_at(&server, "device-a", &signing_key(3), 500);
+        assert!(server.verify_token_at("device-a", &token, expires_at - 1));
+        assert!(!server.verify_token_at("device-a", &token, expires_at));
+    }
+
+    #[test]
+    fn relay_requires_registered_sender_recipient_and_sender_token() {
+        let server = BlindRelayServer::new();
+        let (sender_token, _, _) = register_at(&server, "device-a", &signing_key(4), 1_000);
+        register_at(&server, "device-b", &signing_key(5), 1_000);
+
+        let mut envelope = RelayEnvelope::new(
+            "device-a",
+            "device-b",
             vec![1, 2, 3],
             vec![4, 5, 6],
             vec![7, 8, 9],
-            "test",
+            "sync_delta",
         );
+        envelope.timestamp = 1_000;
+        let id = server
+            .submit_message_authorized(&sender_token, envelope)
+            .expect("authenticated sender should queue a message");
+        assert!(!id.is_empty());
+        assert_eq!(server.pending_count("device-b"), 1);
 
-        let msg_id = server
-            .submit_message(envelope)
-            .expect("Submit message failed");
-        assert!(!msg_id.is_empty());
-
-        // Check pending
-        assert_eq!(server.pending_count("device_b"), 1);
-
-        // Fetch messages
-        let messages = server.fetch_messages("device_b", 10);
+        let messages = server.fetch_messages("device-b", 10);
         assert_eq!(messages.len(), 1);
-        assert_eq!(messages[0].from_device, "device_a");
+        assert_eq!(messages[0].from_device, "device-a");
 
-        // Queue should be empty now
-        assert_eq!(server.pending_count("device_b"), 0);
+        let unknown_recipient = RelayEnvelope {
+            to_device: "unknown".into(),
+            timestamp: now_secs(),
+            ..RelayEnvelope::new(
+                "device-a",
+                "device-b",
+                vec![1],
+                vec![],
+                vec![],
+                "sync_delta",
+            )
+        };
+        assert!(matches!(
+            server.submit_message_authorized(&sender_token, unknown_recipient),
+            Err(RelayError::DeviceNotRegistered)
+        ));
     }
 
     #[test]
-    fn test_message_size_limit() {
-        let server = BlindRelayServer::new();
-        server
-            .register_device("device_a", "hash_a")
-            .expect("Register device_a failed");
-        server
-            .register_device("device_b", "hash_b")
-            .expect("Register device_b failed");
-
-        // Create oversized message
-        let large_payload = vec![0u8; MAX_MESSAGE_SIZE + 1];
-        let envelope = RelayEnvelope::new(
-            "device_a",
-            "device_b",
-            large_payload,
+    fn envelope_limits_and_future_skew_are_enforced() {
+        let oversized = RelayEnvelope::new(
+            "device-a",
+            "device-b",
+            vec![0_u8; MAX_MESSAGE_SIZE + 1],
             vec![],
             vec![],
-            "test",
+            "sync_delta",
         );
+        assert!(matches!(
+            oversized.validate_size(),
+            Err(RelayError::MessageTooLarge)
+        ));
 
-        let result = server.submit_message(envelope);
-        assert!(matches!(result, Err(RelayError::MessageTooLarge)));
+        let mut future = RelayEnvelope::new(
+            "device-a",
+            "device-b",
+            vec![1],
+            vec![],
+            vec![],
+            "sync_delta",
+        );
+        future.timestamp = 1_000 + MAX_FUTURE_SKEW_SECS + 1;
+        assert!(matches!(
+            future.validate_at(1_000),
+            Err(RelayError::InvalidEnvelope(_))
+        ));
     }
 
     #[test]
-    fn test_stats() {
+    fn stats_report_registered_devices() {
         let server = BlindRelayServer::new();
-        server
-            .register_device("device_a", "hash_a")
-            .expect("Register device_a failed");
-
+        register_at(&server, "device-a", &signing_key(6), 1_000);
         let stats = server.stats();
         assert_eq!(stats.registered_devices, 1);
         assert_eq!(stats.total_pending_messages, 0);
+        assert_eq!(stats.active_queues, 0);
     }
 }
