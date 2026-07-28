@@ -16,7 +16,7 @@ const SELECTOR_PUBLIC_KEY: &[u8] = &[];
 /// SHA-256 of the exact reviewed bytes shipped at
 /// `packages/core-rs/config/bundled_selectors.json`.
 const BUNDLED_SELECTORS_SHA256: &str =
-    "22763ae7bd89e0bb1d51f75893d9d2ff19068237510b5fe634b2cd830ba77fde";
+    "65fa2b5c7f016b717c9c17efb89fd5293ec6385a804562f086ac1c520693e427";
 
 /// SHA-256 hashes of reviewed selector configurations used when a signing key
 /// is not embedded.
