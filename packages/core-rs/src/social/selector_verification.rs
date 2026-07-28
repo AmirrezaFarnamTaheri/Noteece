@@ -6,19 +6,24 @@
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 
-/// Public key for verifying selector signatures (Ed25519)
-/// This key should be generated and embedded during the build process
-/// For now, we use hash verification as the primary method
+/// Public key for verifying selector signatures (Ed25519).
+///
+/// A production signing key can be embedded here in a future key-rotation release.
+/// Until then, reviewed selector bundles are authenticated by exact SHA-256 digest.
 const SELECTOR_PUBLIC_KEY: &[u8] = &[];
 
-/// Fallback: SHA256 hashes of known-good selector configurations, used when
-/// signature verification is not available.
+/// SHA-256 of the reviewed selector bundle shipped at
+/// `packages/core-rs/config/bundled_selectors.json`.
+const BUNDLED_SELECTORS_SHA256: &str =
+    "130de5a43a78d92ac185f63149e11184bc41e1e74263270d082d1ebef2bff4c7";
+
+/// Fallback SHA-256 hashes of reviewed selector configurations, used when a
+/// signing key is not embedded.
 ///
-/// NOTE: this list must never contain the SHA-256 of an empty or trivial input
-/// (e.g. `e3b0c442…` = sha256("")), otherwise a tampered config that serves empty
-/// selectors would verify as "known good". Populate it only with digests of real,
-/// reviewed selector bundles produced by the build pipeline.
-const KNOWN_GOOD_HASHES: &[&str] = &[];
+/// This list must never contain the digest of empty, whitespace-only, or other
+/// placeholder content. Every digest must be generated from an exact reviewed
+/// bundle and covered by a regression test.
+const KNOWN_GOOD_HASHES: &[&str] = &[BUNDLED_SELECTORS_SHA256];
 
 #[derive(Error, Debug)]
 pub enum VerificationError {
@@ -26,7 +31,7 @@ pub enum VerificationError {
     InvalidSignature,
     #[error("Hash mismatch - selectors may have been tampered")]
     HashMismatch,
-    #[error("Missing signature")]
+    #[error("Missing signature verification key")]
     MissingSignature,
     #[error("Parsing error: {0}")]
     ParseError(String),
@@ -43,7 +48,7 @@ pub struct SignedSelectors {
 impl SignedSelectors {
     /// Parse signed selector JSON
     pub fn parse(json: &str) -> Result<Self, VerificationError> {
-        // Try to parse as signed format first
+        // Try to parse as signed format first.
         if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(json) {
             if let Some(obj) = parsed.as_object() {
                 if obj.contains_key("selectors") && obj.contains_key("signature") {
@@ -76,7 +81,7 @@ impl SignedSelectors {
             }
         }
 
-        // Plain JSON - compute hash only
+        // Plain JSON - compute hash only.
         let hash = compute_hash(json);
         Ok(SignedSelectors {
             selectors: json.to_string(),
@@ -85,7 +90,7 @@ impl SignedSelectors {
         })
     }
 
-    /// Verify the selectors are authentic
+    /// Verify the selectors are authentic.
     pub fn verify(&self) -> Result<(), VerificationError> {
         // Reject empty/whitespace-only selector payloads outright. This closes the
         // bypass where an attacker serves empty selectors whose hash happens to be
@@ -95,18 +100,30 @@ impl SignedSelectors {
             return Err(VerificationError::HashMismatch);
         }
 
-        // Method 1: Signature verification (preferred)
+        // Method 1: signature verification (preferred). During the transitional
+        // hash-pinned release, a signed envelope may still contain the exact
+        // reviewed bundle while no public key is embedded. Only that specific
+        // missing-key condition may fall through to the hash allowlist; an invalid
+        // signature with a configured key remains a hard failure.
         if let Some(ref sig) = self.signature {
-            return verify_signature(&self.selectors, sig);
+            match verify_signature(&self.selectors, sig) {
+                Ok(()) => return Ok(()),
+                Err(VerificationError::MissingSignature) => {
+                    log::warn!(
+                        "[selectors] Signature present but no verification key is embedded; checking reviewed hash"
+                    );
+                }
+                Err(error) => return Err(error),
+            }
         }
 
-        // Method 2: Hash allowlist verification (fallback)
+        // Method 2: exact reviewed-bundle hash verification.
         if KNOWN_GOOD_HASHES.contains(&self.hash.as_str()) {
-            log::info!("[selectors] Verified via hash allowlist");
+            log::info!("[selectors] Verified via reviewed hash allowlist");
             return Ok(());
         }
 
-        // Neither signature nor known hash - reject
+        // Neither a valid signature nor a reviewed hash - reject.
         log::error!(
             "[selectors] Verification failed - unknown hash: {}",
             self.hash
@@ -127,10 +144,9 @@ fn compute_hash(content: &str) -> String {
 fn verify_signature(content: &str, signature: &[u8]) -> Result<(), VerificationError> {
     use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 
-    // Skip if no public key embedded
     #[allow(clippy::const_is_empty)]
-    if SELECTOR_PUBLIC_KEY.is_empty() || SELECTOR_PUBLIC_KEY.len() != 32 {
-        log::warn!("[selectors] No valid public key embedded, skipping signature verification");
+    if SELECTOR_PUBLIC_KEY.len() != 32 {
+        log::warn!("[selectors] No valid Ed25519 public key embedded");
         return Err(VerificationError::MissingSignature);
     }
 
@@ -156,7 +172,7 @@ pub fn load_verified_selectors(
     url: &str,
     cache_path: Option<&std::path::Path>,
 ) -> Result<String, VerificationError> {
-    // Try to load from cache first
+    // Try to load from cache first.
     if let Some(path) = cache_path {
         if path.exists() {
             if let Ok(cached) = std::fs::read_to_string(path) {
@@ -190,7 +206,7 @@ pub fn load_verified_selectors(
     let signed = SignedSelectors::parse(&body)?;
     signed.verify()?;
 
-    // Cache only the verified selector content (not the raw, unverified body).
+    // Cache only verified content.
     if let Some(path) = cache_path {
         if let Err(e) = std::fs::write(path, &body) {
             log::warn!("[selectors] Failed to cache: {}", e);
@@ -200,7 +216,8 @@ pub fn load_verified_selectors(
     Ok(signed.selectors)
 }
 
-/// Get bundled fallback selectors (always verified)
+/// Get bundled fallback selectors. The bundle digest is pinned above and tested
+/// below so accidental edits fail verification until deliberately reviewed.
 pub fn get_bundled_selectors() -> &'static str {
     include_str!("../../config/bundled_selectors.json")
 }
@@ -208,6 +225,7 @@ pub fn get_bundled_selectors() -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use base64::Engine as _;
 
     #[test]
     fn test_compute_hash() {
@@ -224,8 +242,40 @@ mod tests {
     }
 
     #[test]
-    fn test_bundled_selectors_exist() {
+    fn test_bundled_selectors_have_reviewed_hash_and_verify() {
         let bundled = get_bundled_selectors();
-        assert!(!bundled.is_empty());
+        assert!(!bundled.trim().is_empty());
+        assert_eq!(compute_hash(bundled), BUNDLED_SELECTORS_SHA256);
+
+        let signed = SignedSelectors::parse(bundled).expect("Bundled selectors must parse");
+        signed
+            .verify()
+            .expect("Bundled selectors must match the reviewed hash");
+    }
+
+    #[test]
+    fn test_signed_reviewed_bundle_falls_back_to_hash_without_embedded_key() {
+        let envelope = serde_json::json!({
+            "selectors": get_bundled_selectors(),
+            "signature": base64::engine::general_purpose::STANDARD.encode([0_u8; 64]),
+        })
+        .to_string();
+
+        let signed = SignedSelectors::parse(&envelope).expect("Signed envelope must parse");
+        assert!(signed.signature.is_some());
+        signed
+            .verify()
+            .expect("Reviewed bundle must remain usable before signing-key rollout");
+    }
+
+    #[test]
+    fn test_empty_and_unknown_selector_payloads_are_rejected() {
+        for payload in ["", "   \n", r#"{"twitter":{"post":".tampered"}}"#] {
+            let signed = SignedSelectors::parse(payload).expect("Payload parsing must not panic");
+            assert!(matches!(
+                signed.verify(),
+                Err(VerificationError::HashMismatch)
+            ));
+        }
     }
 }
