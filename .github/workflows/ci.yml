@@ -20,8 +20,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 8
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -55,8 +53,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 8
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -79,7 +75,7 @@ jobs:
         working-directory: apps/desktop
         run: |
           if [ -f coverage/coverage-summary.json ]; then
-            COVERAGE=$(cat coverage/coverage-summary.json | jq -r '.total.lines.pct')
+            COVERAGE=$(jq -r '.total.lines.pct' coverage/coverage-summary.json)
             echo "Line coverage: $COVERAGE%"
             if echo "$COVERAGE" | awk '{exit !($1 < 90)}'; then
               echo "::warning::Coverage ($COVERAGE%) is below 90% threshold"
@@ -100,8 +96,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 8
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -155,29 +149,34 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            packages/core-rs/target/
+            target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
 
       - name: Check core-rs
-        run: cd packages/core-rs && cargo check --verbose
+        run: cargo check -p core-rs --verbose
 
       - name: Check relay-server
         run: cargo check -p relay-server --verbose
 
       - name: Format Check
         if: matrix.os == 'ubuntu-22.04'
-        run: cd packages/core-rs && cargo fmt -- --check
+        run: cargo fmt --all -- --check
 
-      - name: Clippy
+      - name: Clippy core-rs
         if: matrix.os == 'ubuntu-22.04'
-        run: cd packages/core-rs && cargo clippy --lib --all-features -- -D warnings
+        run: cargo clippy -p core-rs --lib --all-features -- -D warnings
 
-      - name: Test
-        run: |
-          cd packages/core-rs && cargo test --verbose
-          cd ../relay-server && cargo test --verbose
+      - name: Clippy relay-server
+        if: matrix.os == 'ubuntu-22.04'
+        run: cargo clippy -p relay-server --all-targets -- -D warnings
+
+      - name: Test core-rs
+        run: cargo test -p core-rs --verbose
+
+      - name: Test relay-server
+        run: cargo test -p relay-server --verbose
 
   ci-complete:
     name: "CI Complete"
