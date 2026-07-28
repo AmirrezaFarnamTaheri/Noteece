@@ -105,11 +105,7 @@ async fn register_device(app: Router, device_id: &str, key: &SigningKey) -> Stri
         .to_string()
 }
 
-fn signed_envelope(
-    from_device: &str,
-    to_device: &str,
-    key: &SigningKey,
-) -> RelayEnvelope {
+fn signed_envelope(from_device: &str, to_device: &str, key: &SigningKey) -> RelayEnvelope {
     let mut envelope = RelayEnvelope::new(
         from_device,
         to_device,
