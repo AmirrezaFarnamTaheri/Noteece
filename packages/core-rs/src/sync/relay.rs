@@ -1033,7 +1033,7 @@ mod tests {
     #[test]
     fn fetch_leases_until_ack_and_redelivers_after_timeout() {
         let server = BlindRelayServer::new();
-        let now = 50_000;
+        let now = now_secs();
         let sender_key = signing_key(4);
         let (sender_token, _, _) = register_at(&server, "device-a", &sender_key, now);
         register_at(&server, "device-b", &signing_key(5), now);
