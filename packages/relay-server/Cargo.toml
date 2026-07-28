@@ -25,6 +25,8 @@ hex = "0.4"
 core-rs = { path = "../core-rs" }
 
 [dev-dependencies]
+base64 = "0.21"
+ed25519-dalek = "2.2.0"
 tower = { version = "0.4", features = ["util"] }
 http = "1"
 http-body-util = "0.1"
