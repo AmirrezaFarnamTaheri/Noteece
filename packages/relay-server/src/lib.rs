@@ -9,12 +9,13 @@ use core_rs::sync::relay::{BlindRelayServer, RelayEnvelope, RelayError};
 use serde::Deserialize;
 use std::sync::Arc;
 
-/// Hard ceiling on how many messages a single fetch may drain.
+/// Hard ceiling on how many messages a single fetch may lease.
 const MAX_FETCH_LIMIT: usize = 100;
 
-/// Maximum accepted request body (12 MiB): the 10 MiB ciphertext ceiling plus
-/// JSON/base64 overhead. Prevents unbounded-body memory pressure.
-const MAX_BODY_BYTES: usize = 12 * 1024 * 1024;
+/// Maximum accepted request body (48 MiB). `Vec<u8>` currently serializes as a
+/// JSON number array, so a 10 MiB ciphertext can expand to roughly 40 MiB before
+/// envelope fields and JSON framing are included.
+const MAX_BODY_BYTES: usize = 48 * 1024 * 1024;
 
 pub fn app() -> Router {
     app_with_state(Arc::new(BlindRelayServer::new()))
@@ -28,6 +29,7 @@ pub fn app_with_state(state: Arc<BlindRelayServer>) -> Router {
         .route("/register", post(register))
         .route("/send", post(send_message))
         .route("/fetch", get(fetch_messages))
+        .route("/ack", post(acknowledge_messages))
         .route("/pending", get(check_pending))
         .route("/stats", get(get_stats))
         .layer(DefaultBodyLimit::max(MAX_BODY_BYTES))
@@ -88,8 +90,9 @@ fn bearer_token(headers: &HeaderMap) -> Option<&str> {
         .get("Authorization")
         .and_then(|value| value.to_str().ok())
         .and_then(|value| value.strip_prefix("Bearer "))
-        .map(str::trim)
-        .filter(|value| !value.is_empty() && !value.starts_with("Bearer "))
+        .filter(|value| {
+            !value.is_empty() && !value.bytes().any(|byte| byte.is_ascii_whitespace())
+        })
 }
 
 async fn send_message(
@@ -121,13 +124,44 @@ async fn fetch_messages(
     headers: HeaderMap,
     Query(query): Query<FetchQuery>,
 ) -> impl IntoResponse {
-    match bearer_token(&headers) {
-        Some(token) if state.verify_token(&query.device_id, token) => {
-            let limit = query.limit.unwrap_or(10).min(MAX_FETCH_LIMIT);
-            let messages = state.fetch_messages(&query.device_id, limit);
-            (StatusCode::OK, Json(serde_json::json!(messages)))
-        }
-        _ => unauthorized_response(),
+    let Some(token) = bearer_token(&headers) else {
+        return unauthorized_response();
+    };
+    if !state.verify_token(&query.device_id, token) {
+        return unauthorized_response();
+    }
+
+    let limit = query.limit.unwrap_or(10).min(MAX_FETCH_LIMIT);
+    match state.lease_messages(&query.device_id, limit) {
+        Ok(messages) => (StatusCode::OK, Json(serde_json::json!(messages))),
+        Err(error) => relay_error_response(error),
+    }
+}
+
+#[derive(Deserialize)]
+struct AcknowledgePayload {
+    device_id: String,
+    message_ids: Vec<String>,
+}
+
+async fn acknowledge_messages(
+    State(state): State<Arc<BlindRelayServer>>,
+    headers: HeaderMap,
+    Json(payload): Json<AcknowledgePayload>,
+) -> impl IntoResponse {
+    let Some(token) = bearer_token(&headers) else {
+        return unauthorized_response();
+    };
+    if !state.verify_token(&payload.device_id, token) {
+        return unauthorized_response();
+    }
+
+    match state.acknowledge_messages(&payload.device_id, &payload.message_ids) {
+        Ok(acknowledged) => (
+            StatusCode::OK,
+            Json(serde_json::json!({ "acknowledged": acknowledged })),
+        ),
+        Err(error) => relay_error_response(error),
     }
 }
 
@@ -141,17 +175,24 @@ async fn check_pending(
     headers: HeaderMap,
     Query(query): Query<PendingQuery>,
 ) -> impl IntoResponse {
-    match bearer_token(&headers) {
-        Some(token) if state.verify_token(&query.device_id, token) => {
-            let count = state.pending_count(&query.device_id);
-            (StatusCode::OK, Json(serde_json::json!({ "count": count })))
-        }
-        _ => unauthorized_response(),
+    let Some(token) = bearer_token(&headers) else {
+        return unauthorized_response();
+    };
+    if !state.verify_token(&query.device_id, token) {
+        return unauthorized_response();
+    }
+
+    match state.pending_count(&query.device_id) {
+        Ok(count) => (StatusCode::OK, Json(serde_json::json!({ "count": count }))),
+        Err(error) => relay_error_response(error),
     }
 }
 
 async fn get_stats(State(state): State<Arc<BlindRelayServer>>) -> impl IntoResponse {
-    Json(state.stats())
+    match state.stats() {
+        Ok(stats) => (StatusCode::OK, Json(serde_json::json!(stats))),
+        Err(error) => relay_error_response(error),
+    }
 }
 
 fn unauthorized_response() -> (StatusCode, Json<serde_json::Value>) {
@@ -165,8 +206,9 @@ fn relay_error_response(error: RelayError) -> (StatusCode, Json<serde_json::Valu
     let status = match error {
         RelayError::AuthenticationRequired | RelayError::InvalidToken => StatusCode::UNAUTHORIZED,
         RelayError::DeviceNotRegistered => StatusCode::NOT_FOUND,
+        RelayError::DuplicateMessage => StatusCode::CONFLICT,
         RelayError::AtCapacity | RelayError::TooManyPending => StatusCode::TOO_MANY_REQUESTS,
-        RelayError::EncryptionError(_) | RelayError::NetworkError(_) => {
+        RelayError::StateUnavailable(_) | RelayError::NetworkError(_) => {
             StatusCode::INTERNAL_SERVER_ERROR
         }
         RelayError::MessageTooLarge
