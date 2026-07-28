@@ -90,9 +90,7 @@ fn bearer_token(headers: &HeaderMap) -> Option<&str> {
         .get("Authorization")
         .and_then(|value| value.to_str().ok())
         .and_then(|value| value.strip_prefix("Bearer "))
-        .filter(|value| {
-            !value.is_empty() && !value.bytes().any(|byte| byte.is_ascii_whitespace())
-        })
+        .filter(|value| !value.is_empty() && !value.bytes().any(|byte| byte.is_ascii_whitespace()))
 }
 
 async fn send_message(
@@ -218,5 +216,8 @@ fn relay_error_response(error: RelayError) -> (StatusCode, Json<serde_json::Valu
         | RelayError::InvalidEnvelope(_) => StatusCode::BAD_REQUEST,
     };
 
-    (status, Json(serde_json::json!({ "error": error.to_string() })))
+    (
+        status,
+        Json(serde_json::json!({ "error": error.to_string() })),
+    )
 }
