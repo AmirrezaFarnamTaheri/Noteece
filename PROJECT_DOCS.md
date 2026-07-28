@@ -94,11 +94,11 @@ Security is a core principle of Noteece:
 - **Zero-Knowledge Architecture (desktop):** Encryption keys never leave your device. **Not yet true on mobile** — the React-Native data store is currently unencrypted at rest (`apps/mobile/src/lib/database.ts:585`); see [`STATUS.md`](STATUS.md).
 - **Encryption at rest (desktop):** SQLCipher (AES-256) for the database, XChaCha20-Poly1305 for content. Mobile at-rest encryption is **not** implemented on the shipping React-Native path.
 - **Key Derivation:** Vault keys are derived with **PBKDF2-HMAC-SHA512** (256k iterations, `packages/core-rs/src/crypto.rs:28`). **Argon2id** is used for password *authentication* hashing (`packages/core-rs/src/auth.rs:90-93`) and to wrap the mobile vault DEK.
-- **P2P Sync:** No central server required; direct device-to-device transfer. An optional relay server exists but is a prototype.
+- **P2P Sync (prototype):** Direct device-to-device transfer currently uses cleartext `ws://` and treats the peer as authenticated after ECDH without verifying a stable peer identity. A network attacker can therefore perform a man-in-the-middle attack. This path is **not production-safe** until authenticated transport, certificate/key verification, and a peer-identity binding are implemented. The optional internet relay is also a prototype and has separate deployment-hardening requirements.
 - **Open Source:** AGPL-3.0 licensed, fully auditable
 
 > Current security posture is documented in
-> [`docs/audit_reports/FORENSIC_AUDIT_2026-07-26.md`](docs/audit_reports/FORENSIC_AUDIT_2026-07-26.md).
+> [`docs/audit_reports/FORENSIC_AUDIT_V2_2026-07-26.md`](docs/audit_reports/FORENSIC_AUDIT_V2_2026-07-26.md).
 > The project is **not production ready**.
 
 ## Supported Languages
@@ -137,8 +137,8 @@ Noteece is available in 7 languages:
 | Languages           | 7        |
 | Widgets             | 8+       |
 
-> No test-coverage figure is quoted here because none is measured: there is no CI
-> coverage gate, and `packages/ui` and `packages/types` have zero tests.
+> No test-coverage figure is quoted here because no repository-wide coverage
+> gate covers every package; `packages/ui` and `packages/types` still have no tests.
 
 ---
 
@@ -167,4 +167,4 @@ We welcome contributions! See our [Contributing Guide](docs/development/CONTRIBU
 
 ---
 
-_Noteece Project Documentation - last reviewed 2026-07-26_
+_Noteece Project Documentation - last reviewed 2026-07-29_
