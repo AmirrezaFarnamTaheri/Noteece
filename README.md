@@ -37,7 +37,7 @@ pnpm dev:tauri
 ## ✨ Key Features
 
 - **🔒 Private by Default (Desktop):** The desktop vault is encrypted at rest with SQLCipher (AES-256-CBC + HMAC-SHA512) and note content is sealed with XChaCha20-Poly1305; keys never leave your device. **Note:** the mobile app currently stores its local database unencrypted (see `apps/mobile/src/lib/database.ts`) — rely on device-level full-disk encryption there.
-- **⚡ Local-First:** Works offline. Syncs peer-to-peer over WiFi.
+- **⚡ Local-First:** Works offline. Local-network synchronisation uses direct peer-to-peer WiFi; optional internet relay synchronisation is available when explicitly configured. Both sync paths remain prototypes and are not production-safe until the documented transport and peer-identity hardening is complete.
 - **📝 Markdown Centric:** First-class writing experience with backlinks and tags.
 - **📊 Integrated Workflow:** Tasks, Projects, Habits, and Goals in one place.
 - **📱 Mobile Companion:** React Native app for iOS and Android.
@@ -59,7 +59,7 @@ The mobile app includes a "Prime" sideload flavor that enables **Sovereign Inter
 
 All capture happens **on-device** using the Accessibility Service - no cloud required.
 
-> **⚠️ Legal and consent notice.** Sovereign Interception reads on-screen content from third-party apps, which includes messages, posts, and profiles authored by **other people** who have not consented to being recorded. Depending on your jurisdiction this may implicate wiretapping/interception laws, two-party consent rules, data-protection law (e.g. GDPR — you become a controller of other people's personal data), and the terms of service of the captured apps. Prime is distributed as a sideload flavor and is **not** available through app stores. You are solely responsible for determining whether your use is lawful, for obtaining any consent required, and for safeguarding and deleting captured third-party data. Do not enable Prime to monitor another person's device or communications without their knowledge.
+> **⚠️ Legal and consent notice — legal review required before distribution.** Sovereign Interception reads on-screen content from third-party apps, including messages, posts, and profiles authored by **other people** who may not have consented to being recorded. Depending on the facts and jurisdiction, this may implicate wiretapping/interception laws, two-party consent rules, data-protection law (for example, you **may** be a controller of other people's personal data under the GDPR), and captured-app terms of service. Prime is distributed as a sideload flavor and is **not** available through app stores. This notice is not legal advice and must be reviewed by qualified counsel before distribution. You are responsible for determining whether use is lawful, obtaining any required consent, and safeguarding and deleting captured third-party data. Do not enable Prime to monitor another person's device or communications without their knowledge.
 
 ## 🤖 LLM Integration
 
@@ -74,7 +74,7 @@ Full-featured LLM integration with:
 
 ## 🏗️ Architecture
 
-```
+```text
 noteece/
 ├── apps/
 │   ├── desktop/     # Tauri + React desktop app
