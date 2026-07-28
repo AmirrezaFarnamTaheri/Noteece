@@ -6,8 +6,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
 use std::collections::HashSet;
 use std::fs::{self, OpenOptions};
-#[cfg(unix)]
-use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
@@ -95,9 +93,9 @@ impl BackupService {
     fn validated_backup_path(&self, backup_id: &str) -> Result<PathBuf, BackupError> {
         let valid = !backup_id.is_empty()
             && backup_id.len() <= 128
-            && backup_id
-                .chars()
-                .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-');
+            && backup_id.chars().all(|character| {
+                character.is_ascii_alphanumeric() || matches!(character, '_' | '-')
+            });
         if !valid {
             return Err(BackupError::InvalidBackup(format!(
                 "Invalid backup id: {backup_id:?}"
@@ -235,6 +233,7 @@ impl BackupService {
             if self.validated_backup_path(backup_id).is_err() {
                 continue;
             }
+
             let bytes = fs::read(&path)?;
             let backup: Backup =
                 serde_json::from_slice(&bytes).map_err(|_| BackupError::BackupCorrupted)?;
@@ -403,17 +402,6 @@ impl BackupService {
     }
 }
 
-#[cfg(unix)]
-fn sync_directory(path: &Path) -> Result<(), std::io::Error> {
-    File::open(path)?.sync_all()
-}
-
-#[cfg(not(unix))]
-fn sync_directory(_path: &Path) -> Result<(), std::io::Error> {
-    // Windows does not expose portable directory handles through std::fs::File.
-    Ok(())
-}
-
 fn current_schema_version(conn: &Connection) -> i64 {
     conn.query_row("SELECT MAX(version) FROM schema_version", [], |row| {
         row.get::<_, Option<i64>>(0)
@@ -500,7 +488,7 @@ fn decode_value(value: &Value) -> Result<rusqlite::types::Value, BackupError> {
     // Backward-compatible decoding for version-1 primitive JSON backups.
     Ok(match value {
         Value::Null => SqlValue::Null,
-        Value::Bool(value) => SqlValue::Integer(i64::from(*value)),
+        Value::Bool(value) => SqlValue::Integer(if *value { 1 } else { 0 }),
         Value::String(value) => SqlValue::Text(value.clone()),
         Value::Number(value) => {
             if let Some(integer) = value.as_i64() {
@@ -518,6 +506,28 @@ fn decode_value(value: &Value) -> Result<rusqlite::types::Value, BackupError> {
 fn checksum(data: &[u8]) -> String {
     use sha2::{Digest, Sha256};
     hex::encode(Sha256::digest(data))
+}
+
+#[cfg(unix)]
+fn sync_directory(path: &Path) -> std::io::Result<()> {
+    fs::File::open(path)?.sync_all()
+}
+
+#[cfg(windows)]
+fn sync_directory(path: &Path) -> std::io::Result<()> {
+    use std::os::windows::fs::OpenOptionsExt;
+
+    const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
+    OpenOptions::new()
+        .read(true)
+        .custom_flags(FILE_FLAG_BACKUP_SEMANTICS)
+        .open(path)?
+        .sync_all()
+}
+
+#[cfg(not(any(unix, windows)))]
+fn sync_directory(_path: &Path) -> std::io::Result<()> {
+    Ok(())
 }
 
 #[cfg(test)]
@@ -543,23 +553,37 @@ mod tests {
         }
     }
 
-    fn test_connection() -> Connection {
-        let connection = Connection::open_in_memory().unwrap();
-        connection
-            .execute_batch(
-                "CREATE TABLE schema_version (version INTEGER NOT NULL);
-                 INSERT INTO schema_version(version) VALUES (1);
-                 CREATE TABLE social_account (
-                     id TEXT PRIMARY KEY,
-                     display_name TEXT NOT NULL,
-                     secret BLOB NOT NULL,
-                     score INTEGER NOT NULL,
-                     ratio REAL NOT NULL,
-                     optional TEXT
-                 );",
-            )
-            .unwrap();
-        connection
+    fn sample_connection() -> Connection {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "
+            CREATE TABLE schema_version (version INTEGER NOT NULL);
+            INSERT INTO schema_version(version) VALUES (1);
+            CREATE TABLE social_account (
+                id TEXT PRIMARY KEY,
+                display_name TEXT NOT NULL,
+                avatar BLOB NOT NULL,
+                score INTEGER NOT NULL,
+                ratio REAL NOT NULL,
+                note TEXT
+            );
+            ",
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO social_account(id, display_name, avatar, score, ratio, note)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            rusqlite::params![
+                "account-1",
+                "Original",
+                vec![0_u8, 1, 2, 255],
+                42_i64,
+                1.5_f64,
+                Option::<String>::None
+            ],
+        )
+        .unwrap();
+        conn
     }
 
     #[test]
@@ -599,6 +623,27 @@ mod tests {
     }
 
     #[test]
+    fn invalid_foreign_filename_is_skipped() {
+        let (service, directory) = service();
+        fs::write(directory.path().join("legacy.backup.json.enc"), b"not-json").unwrap();
+
+        let id = "backup_valid";
+        let backup = Backup {
+            metadata: metadata(),
+            data: vec![1, 2, 3],
+        };
+        fs::write(
+            service.validated_backup_path(id).unwrap(),
+            serde_json::to_vec(&backup).unwrap(),
+        )
+        .unwrap();
+
+        let listed = service.list_backups().unwrap();
+        assert_eq!(listed.len(), 1);
+        assert_eq!(listed[0].0, id);
+    }
+
+    #[test]
     fn corrupted_matching_file_is_reported_not_hidden() {
         let (service, _directory) = service();
         fs::write(
@@ -613,37 +658,26 @@ mod tests {
     }
 
     #[test]
-    fn encrypted_create_mutate_restore_round_trip_preserves_types() {
+    fn encrypted_create_mutate_restore_round_trip_preserves_typed_values() {
         let (service, _directory) = service();
-        let mut connection = test_connection();
-        let original_blob = vec![0, 1, 2, 127, 128, 255];
-        connection
-            .execute(
-                "INSERT INTO social_account
-                 (id, display_name, secret, score, ratio, optional)
-                 VALUES (?1, ?2, ?3, ?4, ?5, NULL)",
-                rusqlite::params!["account-1", "Original", original_blob, 42_i64, 1.5_f64],
-            )
-            .unwrap();
-
+        let mut conn = sample_connection();
         let dek = [7_u8; 32];
         let backup_id = service
-            .create_backup(&connection, &dek, Some("round trip"))
-            .unwrap();
-        connection
-            .execute(
-                "UPDATE social_account SET display_name = 'Mutated', secret = X'AA', score = -1",
-                [],
-            )
+            .create_backup(&conn, &dek, Some("round-trip"))
             .unwrap();
 
-        service
-            .restore_backup(&backup_id, &mut connection, &dek)
-            .unwrap();
+        conn.execute(
+            "UPDATE social_account
+             SET display_name = 'Mutated', avatar = X'AA', score = -1, ratio = 9.0, note = 'changed'
+             WHERE id = 'account-1'",
+            [],
+        )
+        .unwrap();
+        service.restore_backup(&backup_id, &mut conn, &dek).unwrap();
 
-        let restored = connection
+        let restored = conn
             .query_row(
-                "SELECT display_name, secret, score, ratio, optional
+                "SELECT display_name, avatar, score, ratio, note
                  FROM social_account WHERE id = 'account-1'",
                 [],
                 |row| {
@@ -658,53 +692,57 @@ mod tests {
             )
             .unwrap();
         assert_eq!(restored.0, "Original");
-        assert_eq!(restored.1, vec![0, 1, 2, 127, 128, 255]);
+        assert_eq!(restored.1, vec![0_u8, 1, 2, 255]);
         assert_eq!(restored.2, 42);
         assert_eq!(restored.3, 1.5);
         assert_eq!(restored.4, None);
     }
 
     #[test]
-    fn tampered_checksum_and_newer_schema_are_rejected() {
+    fn tampered_ciphertext_checksum_is_rejected() {
         let (service, _directory) = service();
-        let mut connection = test_connection();
-        connection
-            .execute(
-                "INSERT INTO social_account
-                 (id, display_name, secret, score, ratio, optional)
-                 VALUES ('account-1', 'Original', X'0102', 1, 1.0, NULL)",
-                [],
-            )
-            .unwrap();
-        let dek = [9_u8; 32];
+        let mut conn = sample_connection();
+        let dek = [8_u8; 32];
+        let backup_id = service.create_backup(&conn, &dek, None).unwrap();
+        let path = service.validated_backup_path(&backup_id).unwrap();
+        let mut backup: Backup = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        backup.data[0] ^= 1;
+        fs::write(path, serde_json::to_vec(&backup).unwrap()).unwrap();
 
-        let tampered_id = service.create_backup(&connection, &dek, None).unwrap();
-        let tampered_path = service.validated_backup_path(&tampered_id).unwrap();
-        let mut tampered: Backup =
-            serde_json::from_slice(&fs::read(&tampered_path).unwrap()).unwrap();
-        tampered.data[0] ^= 0xff;
-        fs::write(&tampered_path, serde_json::to_vec(&tampered).unwrap()).unwrap();
         assert!(matches!(
-            service.restore_backup(&tampered_id, &mut connection, &dek),
+            service.restore_backup(&backup_id, &mut conn, &dek),
             Err(BackupError::BackupCorrupted)
         ));
+    }
 
-        let newer_id = service.create_backup(&connection, &dek, None).unwrap();
-        let newer_path = service.validated_backup_path(&newer_id).unwrap();
-        let mut newer: Backup =
-            serde_json::from_slice(&fs::read(&newer_path).unwrap()).unwrap();
-        newer.metadata.schema_version = 2;
-        fs::write(&newer_path, serde_json::to_vec(&newer).unwrap()).unwrap();
+    #[test]
+    fn newer_database_schema_is_rejected_before_mutation() {
+        let (service, _directory) = service();
+        let mut conn = sample_connection();
+        let dek = [9_u8; 32];
+        let backup_id = service.create_backup(&conn, &dek, None).unwrap();
+        let path = service.validated_backup_path(&backup_id).unwrap();
+        let mut backup: Backup = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        backup.metadata.schema_version = 2;
+        fs::write(path, serde_json::to_vec(&backup).unwrap()).unwrap();
+
         assert!(matches!(
-            service.restore_backup(&newer_id, &mut connection, &dek),
+            service.restore_backup(&backup_id, &mut conn, &dek),
             Err(BackupError::InvalidBackup(_))
         ));
     }
 
     #[test]
-    fn list_skips_foreign_invalid_backup_filenames() {
-        let (service, directory) = service();
-        fs::write(directory.path().join("legacy.backup.json.enc"), b"not-json").unwrap();
-        assert!(service.list_backups().unwrap().is_empty());
+    fn future_backup_format_is_rejected() {
+        let (service, _directory) = service();
+        let conn = sample_connection();
+        let payload = json!({
+            "format_version": BACKUP_FORMAT_VERSION + 1,
+            "tables": { "social_account": [] },
+        });
+        assert!(matches!(
+            service.validate_payload(&conn, &payload),
+            Err(BackupError::InvalidBackup(_))
+        ));
     }
 }
