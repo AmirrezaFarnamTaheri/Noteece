@@ -14,30 +14,38 @@ async fn main() {
 
     let state = Arc::new(BlindRelayServer::new());
 
-    // Periodically reclaim expired messages so abandoned queues cannot accumulate
-    // for the full message-age window. `cleanup_expired` was previously never called.
+    // Periodically reclaim expired messages so abandoned queues cannot
+    // accumulate for the full message-age window.
     let cleanup_state = Arc::clone(&state);
     tokio::spawn(async move {
         let mut ticker = tokio::time::interval(Duration::from_secs(300));
         loop {
             ticker.tick().await;
-            let removed = cleanup_state.cleanup_expired();
-            if removed > 0 {
-                info!("[relay] cleanup_expired reclaimed {} messages", removed);
+            match cleanup_state.cleanup_expired() {
+                Ok(removed) if removed > 0 => {
+                    info!("[relay] cleanup_expired reclaimed {} messages", removed);
+                }
+                Ok(_) => {}
+                Err(error) => {
+                    // A poisoned in-memory state cannot be repaired by retrying
+                    // forever. Stop the maintenance task and surface the fault.
+                    error!("[relay] cleanup_expired failed: {}", error);
+                    break;
+                }
             }
         }
     });
 
     info!("Starting Relay Server on {}", addr);
     let listener = match tokio::net::TcpListener::bind(&addr).await {
-        Ok(l) => l,
-        Err(e) => {
-            error!("Failed to bind {}: {}", addr, e);
+        Ok(listener) => listener,
+        Err(error) => {
+            error!("Failed to bind {}: {}", addr, error);
             std::process::exit(1);
         }
     };
-    if let Err(e) = axum::serve(listener, app_with_state(state)).await {
-        error!("Relay server terminated: {}", e);
+    if let Err(error) = axum::serve(listener, app_with_state(state)).await {
+        error!("Relay server terminated: {}", error);
         std::process::exit(1);
     }
 }
