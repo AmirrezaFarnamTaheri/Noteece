@@ -1,29 +1,29 @@
 # Issues
 
-_Last reviewed: 2026-07-26. Canonical status: [`STATUS.md`](STATUS.md). Full
-findings: [`docs/audit_reports/FORENSIC_AUDIT_2026-07-26.md`](docs/audit_reports/FORENSIC_AUDIT_2026-07-26.md)._
+_Last reviewed: 2026-07-29. Canonical status: [`STATUS.md`](STATUS.md). Current audit:
+[`docs/audit_reports/FORENSIC_AUDIT_V2_2026-07-26.md`](docs/audit_reports/FORENSIC_AUDIT_V2_2026-07-26.md)._
 
 ## Open — Critical (release blockers)
 
 - [ ] **Mobile:** Data is stored **unencrypted at rest**. The React-Native layer opens `expo-sqlite` with no key (`apps/mobile/src/lib/database.ts:585`) and the decrypted DEK is never wired to the database. The vault is a navigation gate, not at-rest encryption. (FINDING-01)
-- [ ] **Privacy/Legal:** The Android Prime accessibility service captures third parties' private messages from a 30+ app allowlist (Signal, WhatsApp, Telegram, dating apps) with no consent surface and no working redaction, and writes captured text to logcat. (FINDING-02)
+- [ ] **Privacy/Legal:** The Android Prime accessibility service captures third parties' private messages from a 30+ app allowlist (Signal, WhatsApp, Telegram, dating apps) with no consent surface and no working redaction. Runtime logging records captured-text length rather than plaintext, but the captured content is still persisted to the unencrypted mobile store. (FINDING-02)
 - [ ] **Desktop:** The AI backend does not compile into the binary — `apps/desktop/src-tauri/src/commands/ai.rs` has no `mod ai;` in `commands/mod.rs` and no entry in `main.rs`'s `generate_handler!`. The frontend still invokes AI/RAG commands that do not exist. (FINDING-04)
-- [ ] **Desktop:** ~30 further IPC commands are invoked by live routes with no registered handler; the entire auth UI subsystem is unreachable dead code. No CI contract check exists between `invoke()` names and `generate_handler!`. (FINDING-04)
+- [ ] **Desktop:** Additional IPC commands are invoked by live routes with no registered handler; the auth UI subsystem remains unreachable dead code. CI now checks the frontend invoke/registered-command contract, but the underlying missing handlers must still be implemented or removed. (FINDING-04)
 
 ## Open — High
 
 - [ ] **Mobile Sync:** The P2P handshake runs over cleartext `ws://` and marks peers authenticated immediately after ECDH, with no identity verification — MITM by construction. (FINDING-10)
-- [ ] **Relay Server:** Bearer-token auth has landed, but the server is still plaintext HTTP with unbounded queues, no rate limiting, and no scheduled cleanup. Treat as pre-alpha; do not expose. (FINDING-09)
+- [ ] **Relay Server:** Challenge-response registration, rotating capability tokens, authenticated `/send`/`fetch`/`pending`/`ack`, envelope signatures, registered-recipient checks, per-device and global resource bounds, lease/ack delivery, and scheduled expiry cleanup have landed. Remaining exposure blockers are TLS termination, edge rate limiting/abuse controls, durable state or explicit restart semantics, deployment monitoring, and production operations hardening. Treat the relay as pre-alpha and do not expose it directly to the public internet. (FINDING-09)
 - [ ] **Mobile:** Hardcoded, globally-shared KDF salt fallback for legacy vaults on the Rust FFI path (`packages/core-rs/src/mobile_ffi.rs:611-612`). (FINDING-08)
-- [ ] **Android:** Release builds are signed with the checked-in debug keystore. (FINDING-06)
+- [ ] **Android:** Release signing supports injected credentials and no longer falls back to the checked-in debug keystore. Production distribution remains blocked until protected signing credentials are configured; otherwise only an unsigned artifact may be produced. (FINDING-06)
 
 ## Open — Medium
 
 - [ ] **Core-RS:** No key zeroization (`zeroize` is not a dependency); raw ECDH output used as a key without HKDF on the sync path. (FINDING-14)
-- [ ] **Core-RS:** Selector anti-tamper verification is bypassable — empty signing key and `sha256("")` in the hash allowlist. (FINDING-12)
+- [ ] **Core-RS:** Selector verification now rejects empty/unknown content and pins the reviewed bundled selector bytes by SHA-256. Residual risk: the remote selector-loading path is not wired into a production update flow and no Ed25519 verification key/signing and rotation process is deployed, so remote update authenticity remains an operational gap. (FINDING-12)
 - [ ] **Core-RS:** SQLCipher `kdf_iter` is applied via `format!` with the result discarded, silently masking a KDF-strength downgrade. (FINDING-13)
 - [ ] **Desktop:** OCR decrypts blobs to a predictable, world-readable path in the shared temp directory; RBAC is enforced only in the UI, not in Rust. (FINDING-16)
-- [ ] **Testing:** `packages/ui` and `packages/types` have **zero tests**, and there is no CI coverage gate. Any coverage percentage quoted in this repo's docs is unsourced.
+- [ ] **Testing:** Desktop and mobile coverage checks exist, and Rust workspace tests run on Linux, macOS, and Windows. `packages/ui` and `packages/types` still have zero tests, and no repository-wide coverage threshold covers every package.
 
 ## Resolved
 
@@ -46,9 +46,9 @@ _`[x]` = verified resolved. `[~]` = previously claimed resolved but only partial
 
 ## Pending / Known Limitations
 
-- [ ] **Mobile:** Certificate pinning for P2P sync is documented in `SECURITY.md` but requires a certificate generation strategy for production deployment.
-- [ ] **Mobile Test Environment:** Some jest tests may require `@babel/plugin-transform-private-methods` depending on node version, currently working with provided config.
-- [ ] **Desktop:** `tauri-plugin-store` mock is memory-only for tests; integration tests require running binary.
+- [ ] **Mobile:** Certificate pinning for P2P sync is documented in `SECURITY.md` but requires a certificate generation and peer-identity strategy for production deployment.
+- [ ] **Mobile Test Environment:** Some Jest tests may require `@babel/plugin-transform-private-methods` depending on Node.js version; the current CI configuration passes.
+- [ ] **Desktop:** `tauri-plugin-store` mock is memory-only for tests; integration tests require running the binary.
 
 ## Backlog
 
