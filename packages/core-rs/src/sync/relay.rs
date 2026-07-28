@@ -198,7 +198,6 @@ impl RelayEnvelope {
 struct PendingMessage {
     envelope: RelayEnvelope,
     leased_until: Option<u64>,
-    delivery_attempts: u32,
 }
 
 #[derive(Debug, Clone)]
@@ -273,9 +272,7 @@ impl BlindRelayServer {
 
         let mut challenges = self.challenges.lock().map_err(state_error)?;
         challenges.retain(|_, existing| now < existing.expires_at);
-        if !challenges.contains_key(device_id)
-            && challenges.len() >= MAX_REGISTRATION_CHALLENGES
-        {
+        if !challenges.contains_key(device_id) && challenges.len() >= MAX_REGISTRATION_CHALLENGES {
             return Err(RelayError::AtCapacity);
         }
         challenges.insert(
@@ -443,45 +440,29 @@ impl BlindRelayServer {
         self.queue_message(envelope, now)
     }
 
-    pub fn submit_message(&self, envelope: RelayEnvelope) -> Result<String, RelayError> {
-        let now = now_secs();
-        envelope.validate_at(now)?;
-        let devices = self.devices.lock().map_err(state_error)?;
-        if !devices.contains_key(&envelope.from_device)
-            || !devices.contains_key(&envelope.to_device)
-        {
-            return Err(RelayError::DeviceNotRegistered);
-        }
-        drop(devices);
-        self.queue_message(envelope, now)
-    }
-
     fn queue_message(&self, envelope: RelayEnvelope, now: u64) -> Result<String, RelayError> {
         let message_id = envelope.id.clone();
         let message_size = envelope.approximate_size();
         let mut pending = self.pending.lock().map_err(state_error)?;
         cleanup_pending_locked(&mut pending, now);
 
-        if pending
-            .values()
-            .flatten()
-            .any(|message| message.envelope.id == message_id)
-        {
-            return Err(RelayError::DuplicateMessage);
-        }
         if !pending.contains_key(&envelope.to_device) && pending.len() >= MAX_TOTAL_QUEUES {
             return Err(RelayError::AtCapacity);
         }
-        let total_messages = pending.values().map(Vec::len).sum::<usize>();
-        if total_messages >= MAX_TOTAL_PENDING_MESSAGES {
-            return Err(RelayError::AtCapacity);
+
+        let mut total_messages = 0_usize;
+        let mut total_bytes = 0_usize;
+        for message in pending.values().flatten() {
+            if message.envelope.id == message_id {
+                return Err(RelayError::DuplicateMessage);
+            }
+            total_messages = total_messages.saturating_add(1);
+            total_bytes = total_bytes.saturating_add(message.envelope.approximate_size());
         }
-        let total_bytes = pending
-            .values()
-            .flatten()
-            .map(|message| message.envelope.approximate_size())
-            .sum::<usize>();
-        if total_bytes.saturating_add(message_size) > MAX_TOTAL_PENDING_BYTES {
+
+        if total_messages >= MAX_TOTAL_PENDING_MESSAGES
+            || total_bytes.saturating_add(message_size) > MAX_TOTAL_PENDING_BYTES
+        {
             return Err(RelayError::AtCapacity);
         }
 
@@ -492,7 +473,6 @@ impl BlindRelayServer {
         queue.push(PendingMessage {
             envelope,
             leased_until: None,
-            delivery_attempts: 0,
         });
         Ok(message_id)
     }
@@ -519,22 +499,16 @@ impl BlindRelayServer {
 
         let mut leased = Vec::new();
         for message in queue.iter_mut() {
-            if leased.len() >= limit {
+            if leased.len() >= limit.min(MAX_PENDING_PER_DEVICE) {
                 break;
             }
             if message.leased_until.is_some_and(|expiry| now < expiry) {
                 continue;
             }
             message.leased_until = Some(now.saturating_add(DELIVERY_LEASE_SECS));
-            message.delivery_attempts = message.delivery_attempts.saturating_add(1);
             leased.push(message.envelope.clone());
         }
         Ok(leased)
-    }
-
-    /// Compatibility alias. Fetching now leases rather than deleting messages.
-    pub fn fetch_messages(&self, device_id: &str, limit: usize) -> Vec<RelayEnvelope> {
-        self.lease_messages(device_id, limit).unwrap_or_default()
     }
 
     pub fn acknowledge_messages(
@@ -547,6 +521,10 @@ impl BlindRelayServer {
                 "invalid acknowledgement set".to_string(),
             ));
         }
+        for message_id in message_ids {
+            validate_identifier(message_id, "message id")?;
+        }
+
         let ids = message_ids.iter().collect::<HashSet<_>>();
         let mut pending = self.pending.lock().map_err(state_error)?;
         let Some(queue) = pending.get_mut(device_id) else {
@@ -648,23 +626,23 @@ pub struct RelayClient {
 }
 
 impl RelayClient {
-    pub fn new(device_id: &str, relay_url: &str) -> Self {
+    pub fn new(device_id: &str, relay_url: &str) -> Result<Self, RelayError> {
+        validate_identifier(device_id, "device id")?;
         let http = reqwest::Client::builder()
             .connect_timeout(Duration::from_secs(5))
             .timeout(Duration::from_secs(20))
             .build()
-            .unwrap_or_default();
-        Self {
+            .map_err(network_error)?;
+        Ok(Self {
             device_id: device_id.to_string(),
             relay_url: relay_url.trim_end_matches('/').to_string(),
             auth_token: None,
             token_expires_at: None,
             http,
-        }
+        })
     }
 
     pub async fn register(&mut self, signing_key: &SigningKey) -> Result<(), RelayError> {
-        validate_identifier(&self.device_id, "device id")?;
         let public_key_b64 = base64::engine::general_purpose::STANDARD
             .encode(signing_key.verifying_key().to_bytes());
         let challenge_response = self
@@ -713,7 +691,8 @@ impl RelayClient {
             )));
         }
 
-        let result: serde_json::Value = registration_response.json().await.map_err(network_error)?;
+        let result: serde_json::Value =
+            registration_response.json().await.map_err(network_error)?;
         let token = result
             .get("token")
             .and_then(serde_json::Value::as_str)
@@ -786,12 +765,12 @@ impl RelayClient {
     pub async fn fetch(&self, limit: usize) -> Result<Vec<RelayEnvelope>, RelayError> {
         let response = self
             .http
-            .post(format!("{}/fetch", self.relay_url))
+            .get(format!("{}/fetch", self.relay_url))
             .bearer_auth(self.required_token()?)
-            .json(&serde_json::json!({
-                "device_id": self.device_id,
-                "limit": limit,
-            }))
+            .query(&[
+                ("device_id", self.device_id.clone()),
+                ("limit", limit.to_string()),
+            ])
             .send()
             .await
             .map_err(network_error)?;
@@ -918,21 +897,15 @@ mod tests {
         key: &SigningKey,
         now: u64,
     ) -> (String, u64, String) {
-        let public_key = base64::engine::general_purpose::STANDARD
-            .encode(key.verifying_key().to_bytes());
+        let public_key =
+            base64::engine::general_purpose::STANDARD.encode(key.verifying_key().to_bytes());
         let challenge = server
             .begin_registration_at(device_id, &public_key, now)
             .expect("challenge should be issued");
         let signature = key.sign(registration_message(device_id, &challenge).as_bytes());
         let signature = base64::engine::general_purpose::STANDARD.encode(signature.to_bytes());
         let (token, expires_at) = server
-            .complete_registration_at(
-                device_id,
-                &public_key,
-                &challenge,
-                &signature,
-                now,
-            )
+            .complete_registration_at(device_id, &public_key, &challenge, &signature, now)
             .expect("registration proof should verify");
         (token, expires_at, challenge)
     }
@@ -965,8 +938,8 @@ mod tests {
             .verify_token_at("device-a", &first_token, 1_001)
             .unwrap());
 
-        let public_key = base64::engine::general_purpose::STANDARD
-            .encode(key.verifying_key().to_bytes());
+        let public_key =
+            base64::engine::general_purpose::STANDARD.encode(key.verifying_key().to_bytes());
         let replay_signature =
             key.sign(registration_message("device-a", &first_challenge).as_bytes());
         let replay_signature =
@@ -1003,23 +976,32 @@ mod tests {
             .verify_token_at("device-a", &token, expires_at)
             .unwrap());
         let stored = server.tokens.lock().unwrap();
-        assert_ne!(stored["device-a"].digest.as_slice(), token.as_bytes());
+        assert_ne!(&stored["device-a"].digest[..], token.as_bytes());
     }
 
     #[test]
-    fn relay_requires_registered_sender_recipient_signature_and_token() {
+    fn relay_requires_registered_sender_recipient_signature_and_matching_token() {
         let server = BlindRelayServer::new();
         let now = now_secs();
         let sender_key = signing_key(4);
+        let recipient_key = signing_key(5);
         let (sender_token, _, _) = register_at(&server, "device-a", &sender_key, now);
-        register_at(&server, "device-b", &signing_key(5), now);
+        let (recipient_token, _, _) = register_at(&server, "device-b", &recipient_key, now);
 
         let envelope = signed_envelope("device-a", "device-b", &sender_key, now);
         let id = server
-            .submit_message_authorized(&sender_token, envelope)
+            .submit_message_authorized(&sender_token, envelope.clone())
             .expect("authenticated sender should queue a message");
         assert!(!id.is_empty());
         assert_eq!(server.pending_count("device-b").unwrap(), 1);
+
+        let mut wrong_token_envelope = envelope.clone();
+        wrong_token_envelope.id = "wrong-token-message".into();
+        wrong_token_envelope.sign(&sender_key);
+        assert!(matches!(
+            server.submit_message_authorized(&recipient_token, wrong_token_envelope),
+            Err(RelayError::InvalidToken)
+        ));
 
         let mut forged = signed_envelope("device-a", "device-b", &signing_key(9), now);
         forged.id = "forged-message".into();
@@ -1078,8 +1060,8 @@ mod tests {
     fn challenge_capacity_prunes_expired_entries() {
         let server = BlindRelayServer::new();
         let key = signing_key(1);
-        let public_key = base64::engine::general_purpose::STANDARD
-            .encode(key.verifying_key().to_bytes());
+        let public_key =
+            base64::engine::general_purpose::STANDARD.encode(key.verifying_key().to_bytes());
         {
             let mut challenges = server.challenges.lock().unwrap();
             for index in 0..MAX_REGISTRATION_CHALLENGES {
