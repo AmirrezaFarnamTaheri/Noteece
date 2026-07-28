@@ -5,26 +5,26 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use core_rs::sync::relay::{BlindRelayServer, RelayEnvelope};
+use core_rs::sync::relay::{BlindRelayServer, RelayEnvelope, RelayError};
 use serde::Deserialize;
 use std::sync::Arc;
 
 /// Hard ceiling on how many messages a single fetch may drain.
 const MAX_FETCH_LIMIT: usize = 100;
 
-/// Maximum accepted request body (12 MB): the 10 MB ciphertext ceiling plus
+/// Maximum accepted request body (12 MiB): the 10 MiB ciphertext ceiling plus
 /// JSON/base64 overhead. Prevents unbounded-body memory pressure.
 const MAX_BODY_BYTES: usize = 12 * 1024 * 1024;
 
 pub fn app() -> Router {
-    let state = Arc::new(BlindRelayServer::new());
-    app_with_state(state)
+    app_with_state(Arc::new(BlindRelayServer::new()))
 }
 
-/// Build the router around an existing server handle (lets `main` also drive the
-/// background expiry-cleanup task against the same state).
+/// Build the router around an existing server handle so the binary can run the
+/// expiry-cleanup task against the same state.
 pub fn app_with_state(state: Arc<BlindRelayServer>) -> Router {
     Router::new()
+        .route("/register/challenge", post(registration_challenge))
         .route("/register", post(register))
         .route("/send", post(send_message))
         .route("/fetch", get(fetch_messages))
@@ -35,51 +35,78 @@ pub fn app_with_state(state: Arc<BlindRelayServer>) -> Router {
 }
 
 #[derive(Deserialize)]
+struct RegistrationChallengePayload {
+    device_id: String,
+    public_key: String,
+}
+
+async fn registration_challenge(
+    State(state): State<Arc<BlindRelayServer>>,
+    Json(payload): Json<RegistrationChallengePayload>,
+) -> impl IntoResponse {
+    match state.begin_registration(&payload.device_id, &payload.public_key) {
+        Ok(challenge) => (
+            StatusCode::OK,
+            Json(serde_json::json!({ "challenge": challenge })),
+        ),
+        Err(error) => relay_error_response(error),
+    }
+}
+
+#[derive(Deserialize)]
 struct RegisterPayload {
     device_id: String,
-    public_key_hash: String,
+    public_key: String,
+    challenge: String,
+    signature: String,
 }
 
 async fn register(
     State(state): State<Arc<BlindRelayServer>>,
     Json(payload): Json<RegisterPayload>,
 ) -> impl IntoResponse {
-    // Register, then mint a real capability token bound to the device. The token
-    // must be presented to read that device's mailbox (see fetch/pending).
-    match state.register_device(&payload.device_id, &payload.public_key_hash) {
-        Ok(()) => match state.issue_token(&payload.device_id) {
-            Ok(token) => (StatusCode::OK, Json(serde_json::json!({ "token": token }))),
-            Err(e) => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({ "error": e.to_string() })),
-            ),
-        },
-        Err(e) => (
-            StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({ "error": e.to_string() })),
+    match state.complete_registration(
+        &payload.device_id,
+        &payload.public_key,
+        &payload.challenge,
+        &payload.signature,
+    ) {
+        Ok((token, expires_at)) => (
+            StatusCode::OK,
+            Json(serde_json::json!({
+                "token": token,
+                "expires_at": expires_at,
+            })),
         ),
+        Err(error) => relay_error_response(error),
     }
 }
 
-/// Extract a bearer token from the `Authorization: Bearer <token>` header.
-fn bearer_token(headers: &HeaderMap) -> Option<String> {
+/// Extract a token only from the exact `Authorization: Bearer <token>` scheme.
+fn bearer_token(headers: &HeaderMap) -> Option<&str> {
     headers
         .get("Authorization")
-        .and_then(|v| v.to_str().ok())
-        .map(|s| s.trim_start_matches("Bearer ").trim().to_string())
-        .filter(|s| !s.is_empty())
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.strip_prefix("Bearer "))
+        .map(str::trim)
+        .filter(|value| !value.is_empty() && !value.starts_with("Bearer "))
 }
 
 async fn send_message(
     State(state): State<Arc<BlindRelayServer>>,
+    headers: HeaderMap,
     Json(envelope): Json<RelayEnvelope>,
 ) -> impl IntoResponse {
-    match state.submit_message(envelope) {
+    let Some(token) = bearer_token(&headers) else {
+        return unauthorized_response();
+    };
+
+    match state.submit_message_authorized(token, envelope) {
         Ok(id) => (StatusCode::OK, Json(serde_json::json!({ "id": id }))),
-        Err(e) => (
-            StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({ "error": e.to_string() })),
-        ),
+        Err(RelayError::InvalidToken | RelayError::AuthenticationRequired) => {
+            unauthorized_response()
+        }
+        Err(error) => relay_error_response(error),
     }
 }
 
@@ -94,18 +121,13 @@ async fn fetch_messages(
     headers: HeaderMap,
     Query(query): Query<FetchQuery>,
 ) -> impl IntoResponse {
-    // Require a valid capability token for this device before draining its mailbox.
-    // Without this, any caller could steal and delete another device's messages.
     match bearer_token(&headers) {
-        Some(token) if state.verify_token(&query.device_id, &token) => {
+        Some(token) if state.verify_token(&query.device_id, token) => {
             let limit = query.limit.unwrap_or(10).min(MAX_FETCH_LIMIT);
             let messages = state.fetch_messages(&query.device_id, limit);
             (StatusCode::OK, Json(serde_json::json!(messages)))
         }
-        _ => (
-            StatusCode::UNAUTHORIZED,
-            Json(serde_json::json!({ "error": "invalid or missing token" })),
-        ),
+        _ => unauthorized_response(),
     }
 }
 
@@ -120,18 +142,39 @@ async fn check_pending(
     Query(query): Query<PendingQuery>,
 ) -> impl IntoResponse {
     match bearer_token(&headers) {
-        Some(token) if state.verify_token(&query.device_id, &token) => {
+        Some(token) if state.verify_token(&query.device_id, token) => {
             let count = state.pending_count(&query.device_id);
             (StatusCode::OK, Json(serde_json::json!({ "count": count })))
         }
-        _ => (
-            StatusCode::UNAUTHORIZED,
-            Json(serde_json::json!({ "error": "invalid or missing token" })),
-        ),
+        _ => unauthorized_response(),
     }
 }
 
 async fn get_stats(State(state): State<Arc<BlindRelayServer>>) -> impl IntoResponse {
-    let stats = state.stats();
-    Json(stats)
+    Json(state.stats())
+}
+
+fn unauthorized_response() -> (StatusCode, Json<serde_json::Value>) {
+    (
+        StatusCode::UNAUTHORIZED,
+        Json(serde_json::json!({ "error": "invalid or missing token" })),
+    )
+}
+
+fn relay_error_response(error: RelayError) -> (StatusCode, Json<serde_json::Value>) {
+    let status = match error {
+        RelayError::AuthenticationRequired | RelayError::InvalidToken => StatusCode::UNAUTHORIZED,
+        RelayError::DeviceNotRegistered => StatusCode::NOT_FOUND,
+        RelayError::AtCapacity | RelayError::TooManyPending => StatusCode::TOO_MANY_REQUESTS,
+        RelayError::EncryptionError(_) | RelayError::NetworkError(_) => {
+            StatusCode::INTERNAL_SERVER_ERROR
+        }
+        RelayError::MessageTooLarge
+        | RelayError::MessageExpired
+        | RelayError::InvalidSignature
+        | RelayError::InvalidRegistrationChallenge
+        | RelayError::InvalidEnvelope(_) => StatusCode::BAD_REQUEST,
+    };
+
+    (status, Json(serde_json::json!({ "error": error.to_string() })))
 }
