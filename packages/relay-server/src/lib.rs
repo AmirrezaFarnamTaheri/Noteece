@@ -1,3 +1,9 @@
+//! HTTP transport for the authenticated Noteece blind relay.
+//!
+//! The router exposes challenge-response registration, authenticated message
+//! submission, lease-based fetching, acknowledgement, pending counts, and
+//! operational statistics over the in-memory relay state machine.
+
 use axum::{
     extract::{DefaultBodyLimit, Query, State},
     http::{HeaderMap, StatusCode},
@@ -17,12 +23,19 @@ const MAX_FETCH_LIMIT: usize = 100;
 /// envelope fields and JSON framing are included.
 const MAX_BODY_BYTES: usize = 48 * 1024 * 1024;
 
+/// Build a relay router backed by a new in-memory state machine.
+///
+/// Registration credentials, queued messages, and active leases are lost when
+/// the process exits. Production deployments must provide the documented TLS,
+/// rate-limiting, monitoring, and restart semantics outside this constructor.
 pub fn app() -> Router {
     app_with_state(Arc::new(BlindRelayServer::new()))
 }
 
-/// Build the router around an existing server handle so the binary can run the
-/// expiry-cleanup task against the same state.
+/// Build the router around an existing server handle.
+///
+/// The binary uses this form so its expiry-cleanup task and HTTP handlers share
+/// exactly the same relay state.
 pub fn app_with_state(state: Arc<BlindRelayServer>) -> Router {
     Router::new()
         .route("/register/challenge", post(registration_challenge))
