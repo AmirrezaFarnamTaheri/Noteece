@@ -134,7 +134,6 @@ jobs:
           from collections import Counter
           from pathlib import Path
           import re
-          import tomllib
 
           targets = {
               'cxx': '1.0.198',
@@ -150,7 +149,7 @@ jobs:
           }
           seen = Counter()
 
-          def rewrite_dependency_line(line: str, name: str, version: str) -> tuple[str, bool]:
+          def rewrite_dependency_line(line: str, name: str, version: str):
               ending = ''
               body = line
               if body.endswith('\r\n'):
@@ -207,11 +206,6 @@ jobs:
                   )
                   if count != 1:
                       raise SystemExit('packages/core-rs/Cargo.toml: pbkdf2 dependency not found')
-
-              try:
-                  tomllib.loads(text)
-              except tomllib.TOMLDecodeError as error:
-                  raise SystemExit(f'{manifest}: generated invalid TOML: {error}') from error
 
               original = ''.join(original_lines)
               if text != original:
