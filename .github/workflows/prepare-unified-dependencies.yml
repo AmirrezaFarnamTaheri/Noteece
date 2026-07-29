@@ -1,0 +1,175 @@
+name: Prepare unified dependency integration
+
+on:
+  push:
+    branches: ["chore/unify-open-prs-ci-20260729"]
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout integration branch
+        uses: actions/checkout@v5
+        with:
+          ref: chore/unify-open-prs-ci-20260729
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Apply convergence edits
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+
+          const read = (path) => fs.readFileSync(path, 'utf8');
+          const write = (path, content) => fs.writeFileSync(path, content.endsWith('\n') ? content : `${content}\n`);
+
+          const updatePackage = (path, updates) => {
+            const pkg = JSON.parse(read(path));
+            for (const [section, values] of Object.entries(updates)) {
+              pkg[section] ??= {};
+              for (const [name, version] of Object.entries(values)) {
+                if (!(name in pkg[section])) throw new Error(`${name} is missing from ${path}#${section}`);
+                pkg[section][name] = version;
+              }
+            }
+            write(path, `${JSON.stringify(pkg, null, 2)}\n`);
+          };
+
+          updatePackage('apps/desktop/package.json', {
+            dependencies: {
+              '@lexical/clipboard': '^0.48.0',
+              '@lexical/code': '^0.48.0',
+              '@lexical/history': '^0.48.0',
+              '@lexical/link': '^0.48.0',
+              '@lexical/list': '^0.48.0',
+              '@lexical/markdown': '^0.48.0',
+              '@lexical/react': '^0.48.0',
+              '@lexical/rich-text': '^0.48.0',
+              '@lexical/selection': '^0.48.0',
+              '@lexical/utils': '^0.48.0',
+              lexical: '^0.48.0',
+              '@mantine/charts': '^9.5.0',
+              '@mantine/core': '^9.5.0',
+              '@mantine/dates': '^9.5.0',
+              '@mantine/form': '^9.5.0',
+              '@mantine/hooks': '^9.5.0',
+              '@mantine/notifications': '^9.5.0'
+            },
+            devDependencies: {
+              '@types/node': '^26.1.2',
+              'eslint-plugin-security': '^4.0.1'
+            }
+          });
+
+          updatePackage('apps/mobile/package.json', {
+            dependencies: {
+              'date-fns': '^4.4.0'
+            },
+            devDependencies: {
+              '@types/node': '^26.1.2'
+            }
+          });
+
+          updatePackage('packages/automation-dsl/package.json', {
+            devDependencies: {
+              '@types/node': '^26.1.2'
+            }
+          });
+
+          let cargo = read('packages/core-rs/Cargo.toml');
+          const cargoUpdates = new Map([
+            ['pbkdf2 = "0.12.2"', 'pbkdf2 = "0.13.0"'],
+            ['sha2 = "0.10.9"', 'sha2 = "0.11"'],
+            ['gray_matter = "0.2.2"', 'gray_matter = "0.3.2"'],
+            ['regex = "1.12.2"', 'regex = "1.13.1"'],
+            ['mdns-sd = "0.7"', 'mdns-sd = "0.20.0"'],
+            ['async-trait = "0.1"', 'async-trait = "0.1.91"'],
+            ['env_logger = "0.10"', 'env_logger = "0.11.9"'],
+            ['serde = { version = "1.0", features = ["derive"] }', 'serde = { version = "1.0.229", features = ["derive"] }'],
+            ['cxx = "1.0.190"', 'cxx = "1.0.198"']
+          ]);
+          for (const [before, after] of cargoUpdates) {
+            if (!cargo.includes(before)) throw new Error(`Missing Cargo dependency: ${before}`);
+            cargo = cargo.replace(before, after);
+          }
+          write('packages/core-rs/Cargo.toml', cargo);
+
+          let relayCargo = read('packages/relay-server/Cargo.toml');
+          relayCargo = relayCargo.replace('serde = { version = "1", features = ["derive"] }', 'serde = { version = "1.0.229", features = ["derive"] }');
+          relayCargo = relayCargo.replace('tracing = "0.1"', 'tracing = "0.1.44"');
+          relayCargo = relayCargo.replace('http = "1"', 'http = "1.4.2"');
+          write('packages/relay-server/Cargo.toml', relayCargo);
+
+          let backup = read('packages/core-rs/src/social/backup.rs');
+          const windowsSync = /#\[cfg\(windows\)\]\nfn sync_directory\(path: &Path\) -> std::io::Result<\(\)> \{[\s\S]*?\n\}\n\n#\[cfg\(not\(any\(unix, windows\)\)\)\]/;
+          if (!windowsSync.test(backup)) throw new Error('Windows directory sync implementation was not found');
+          backup = backup.replace(windowsSync, `#[cfg(windows)]\nfn sync_directory(_path: &Path) -> std::io::Result<()> {\n    // Windows has no portable directory-fsync equivalent. The temporary backup\n    // file is flushed before the atomic rename, so do not turn an unsupported\n    // directory metadata flush into a false backup failure.\n    Ok(())\n}\n\n#[cfg(not(any(unix, windows)))]`);
+          write('packages/core-rs/src/social/backup.rs', backup);
+
+          let attributes = read('.gitattributes');
+          const selectorRule = 'packages/core-rs/config/bundled_selectors.json text eol=lf';
+          if (!attributes.split(/\r?\n/).includes(selectorRule)) {
+            attributes = `${attributes.trimEnd()}\n${selectorRule}\n`;
+          }
+          write('.gitattributes', attributes);
+
+          let dependabot = read('.github/dependabot.yml');
+          dependabot = dependabot.replace(
+            '    open-pull-requests-limit: 10\n\n  # JS/TS workspace',
+            `    open-pull-requests-limit: 10\n    groups:\n      rust-crypto:\n        patterns:\n          - "pbkdf2"\n          - "sha2"\n          - "hmac"\n          - "digest"\n\n  # JS/TS workspace`
+          );
+          dependabot = dependabot.replace(
+            '    open-pull-requests-limit: 10\n\n  # GitHub Actions themselves',
+            `    open-pull-requests-limit: 10\n    groups:\n      mantine:\n        patterns:\n          - "@mantine/*"\n      lexical:\n        patterns:\n          - "@lexical/*"\n          - "lexical"\n      expo-sdk:\n        patterns:\n          - "expo"\n          - "expo-*"\n          - "@expo/*"\n\n  # GitHub Actions themselves`
+          );
+          write('.github/dependabot.yml', dependabot);
+          NODE
+
+      - name: Regenerate pnpm lockfile
+        run: pnpm install --lockfile-only --no-frozen-lockfile --strict-peer-dependencies=false
+
+      - name: Regenerate Cargo lockfile targets
+        shell: bash
+        run: |
+          cargo update -p pbkdf2 --precise 0.13.0
+          cargo update -p sha2
+          cargo update -p gray_matter --precise 0.3.2
+          cargo update -p regex --precise 1.13.1
+          cargo update -p mdns-sd --precise 0.20.0
+          cargo update -p async-trait --precise 0.1.91
+          cargo update -p env_logger --precise 0.11.9
+          cargo update -p serde --precise 1.0.229
+          cargo update -p cxx --precise 1.0.198
+          cargo update -p tracing --precise 0.1.44
+          cargo update -p http@1.4.0 --precise 1.4.2
+
+      - name: Normalize generated files
+        run: |
+          cargo fmt --all
+          rm .github/workflows/prepare-unified-dependencies.yml
+
+      - name: Commit generated convergence
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: unify dependency updates and repair cross-platform CI"
+          git push origin HEAD:chore/unify-open-prs-ci-20260729
