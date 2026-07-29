@@ -191,7 +191,8 @@ pub fn get_task_summaries_cmd(
                 })
             })
             .map_err(|e| e.to_string())?;
-        rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
+        rows.collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())
     })
 }
 
@@ -270,7 +271,8 @@ pub fn get_note_summaries_cmd(
                 })
             })
             .map_err(|e| e.to_string())?;
-        rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
+        rows.collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())
     })
 }
 
@@ -345,12 +347,12 @@ pub fn get_unified_timeline(
     filters: serde_json::Value,
 ) -> Result<Vec<core_rs::social::TimelinePost>, String> {
     crate::with_db!(db, conn, {
-        let platforms = filters.get("platforms").and_then(|v| {
-            serde_json::from_value::<Vec<String>>(v.clone()).ok()
-        });
-        let categories = filters.get("categories").and_then(|v| {
-            serde_json::from_value::<Vec<String>>(v.clone()).ok()
-        });
+        let platforms = filters
+            .get("platforms")
+            .and_then(|v| serde_json::from_value::<Vec<String>>(v.clone()).ok());
+        let categories = filters
+            .get("categories")
+            .and_then(|v| serde_json::from_value::<Vec<String>>(v.clone()).ok());
         let after = filters
             .get("start_time")
             .or_else(|| filters.get("after"))
@@ -359,8 +361,16 @@ pub fn get_unified_timeline(
             .get("end_time")
             .or_else(|| filters.get("before"))
             .and_then(|v| v.as_i64());
-        let limit = filters.get("limit").and_then(|v| v.as_i64()).unwrap_or(20).clamp(1, 200);
-        let offset = filters.get("offset").and_then(|v| v.as_i64()).unwrap_or(0).max(0);
+        let limit = filters
+            .get("limit")
+            .and_then(|v| v.as_i64())
+            .unwrap_or(20)
+            .clamp(1, 200);
+        let offset = filters
+            .get("offset")
+            .and_then(|v| v.as_i64())
+            .unwrap_or(0)
+            .max(0);
         let search = filters
             .get("search_query")
             .and_then(|v| v.as_str())
@@ -421,9 +431,13 @@ pub fn open_social_webview(
         }
         return Ok(label);
     }
-    let external_url = url.parse().map_err(|e| format!("Invalid platform URL: {e}"))?;
+    let external_url = url
+        .parse()
+        .map_err(|e| format!("Invalid platform URL: {e}"))?;
     tauri::WindowBuilder::new(&app, &label, tauri::WindowUrl::External(external_url))
-        .title(core_rs::social::get_platform_display_name(&account.platform))
+        .title(core_rs::social::get_platform_display_name(
+            &account.platform,
+        ))
         .build()
         .map_err(|e| e.to_string())?;
     Ok(label)
@@ -473,7 +487,9 @@ pub fn complete_goal_cmd(
     crate::with_db!(db, conn, {
         let id = Ulid::from_string(&goal_id).map_err(|e| e.to_string())?;
         let target: f64 = conn
-            .query_row("SELECT target FROM goal WHERE id = ?1", [&goal_id], |row| row.get(0))
+            .query_row("SELECT target FROM goal WHERE id = ?1", [&goal_id], |row| {
+                row.get(0)
+            })
             .map_err(|e| e.to_string())?;
         core_rs::goals::update_goal_progress(&conn, id, target).map_err(|e| e.to_string())
     })
@@ -591,7 +607,11 @@ pub fn get_gamification_data_cmd(
         )
         .map_err(|e| e.to_string())?;
         let completed_tasks: i64 = conn
-            .query_row("SELECT COUNT(*) FROM task WHERE status = 'done'", [], |row| row.get(0))
+            .query_row(
+                "SELECT COUNT(*) FROM task WHERE status = 'done'",
+                [],
+                |row| row.get(0),
+            )
             .map_err(|e| e.to_string())?;
         let habit_completions: i64 = conn
             .query_row("SELECT COUNT(*) FROM habit_log", [], |row| row.get(0))
@@ -679,7 +699,11 @@ pub fn use_streak_freeze_cmd(
 pub fn get_rag_stats_cmd(db: State<DbConnection>) -> Result<RagStatsResponse, String> {
     crate::with_db!(db, conn, {
         let total_notes: i64 = conn
-            .query_row("SELECT COUNT(*) FROM note WHERE is_trashed = 0", [], |row| row.get(0))
+            .query_row(
+                "SELECT COUNT(*) FROM note WHERE is_trashed = 0",
+                [],
+                |row| row.get(0),
+            )
             .map_err(|e| e.to_string())?;
         Ok(RagStatsResponse {
             total_notes,
@@ -737,13 +761,16 @@ pub fn rag_query_cmd(
             }
         } else {
             let rows = stmt
-                .query_map(rusqlite::params![pattern, rusqlite::types::Null, limit], |row| {
-                    Ok((
-                        row.get::<_, String>(0)?,
-                        row.get::<_, String>(1)?,
-                        row.get::<_, String>(2)?,
-                    ))
-                })
+                .query_map(
+                    rusqlite::params![pattern, rusqlite::types::Null, limit],
+                    |row| {
+                        Ok((
+                            row.get::<_, String>(0)?,
+                            row.get::<_, String>(1)?,
+                            row.get::<_, String>(2)?,
+                        ))
+                    },
+                )
                 .map_err(|e| e.to_string())?;
             for (index, row) in rows.enumerate() {
                 let (note_id, title, content) = row.map_err(|e| e.to_string())?;
@@ -871,14 +898,17 @@ pub fn get_temporal_correlations_cmd(
             )
             .map_err(|e| e.to_string())?;
         let rows = stmt
-            .query_map(rusqlite::params![space_id, since, metric1, metric2], |row| {
-                Ok((
-                    row.get::<_, String>(0)?,
-                    row.get::<_, i64>(1)?,
-                    row.get::<_, String>(2)?,
-                    row.get::<_, f64>(3)?,
-                ))
-            })
+            .query_map(
+                rusqlite::params![space_id, since, metric1, metric2],
+                |row| {
+                    Ok((
+                        row.get::<_, String>(0)?,
+                        row.get::<_, i64>(1)?,
+                        row.get::<_, String>(2)?,
+                        row.get::<_, f64>(3)?,
+                    ))
+                },
+            )
             .map_err(|e| e.to_string())?;
         let mut days: BTreeMap<String, (i64, Option<f64>, Option<f64>)> = BTreeMap::new();
         for row in rows {
@@ -892,11 +922,9 @@ pub fn get_temporal_correlations_cmd(
         }
         let paired = days
             .into_iter()
-            .filter_map(|(date, (timestamp, first, second))| {
-                match (first, second) {
-                    (Some(first), Some(second)) => Some((timestamp, date, first, second)),
-                    _ => None,
-                }
+            .filter_map(|(date, (timestamp, first, second))| match (first, second) {
+                (Some(first), Some(second)) => Some((timestamp, date, first, second)),
+                _ => None,
             })
             .collect::<Vec<_>>();
         if paired.len() < 2 {
@@ -916,11 +944,18 @@ pub fn get_temporal_correlations_cmd(
             .collect::<Vec<_>>();
         let start_time = paired.first().map(|value| value.0).unwrap_or(since);
         let end_time = paired.last().map(|value| value.0).unwrap_or(start_time);
-        let pattern_type = if correlation >= 0.0 { "positive" } else { "negative" };
+        let pattern_type = if correlation >= 0.0 {
+            "positive"
+        } else {
+            "negative"
+        };
         Ok(vec![TemporalPattern {
             id: format!("{}-{}-{}", metric1, metric2, start_time),
             name: format!("{} vs {}", metric1, metric2),
-            description: format!("Pearson correlation over {} paired daily observations", paired.len()),
+            description: format!(
+                "Pearson correlation over {} paired daily observations",
+                paired.len()
+            ),
             strength: correlation.abs(),
             start_time,
             end_time,
