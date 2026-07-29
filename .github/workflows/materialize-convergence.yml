@@ -18,7 +18,7 @@ jobs:
   generate:
     name: Generate manifests and lockfiles
     runs-on: ubuntu-22.04
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Checkout exact revision
         uses: actions/checkout@v5
@@ -88,7 +88,7 @@ jobs:
           walk('.');
           NODE
 
-      - name: Apply coordinated Rust dependency versions
+      - name: Apply coordinated Rust dependency and source migrations
         run: |
           set -euxo pipefail
           python3 <<'PY'
@@ -97,7 +97,6 @@ jobs:
 
           targets = {
               'pbkdf2': '0.13.0',
-              'sha2': '0.11.0',
               'cxx': '1.0.198',
               'tracing': '0.1.44',
               'regex': '1.13.1',
@@ -107,6 +106,7 @@ jobs:
               'serde': '1.0.229',
               'async-trait': '0.1.91',
               'env_logger': '0.11.9',
+              'flume': '0.12.0',
           }
 
           for manifest in Path('.').rglob('Cargo.toml'):
@@ -123,6 +123,41 @@ jobs:
                       print(f'{manifest}: {name} -> {version}')
               if text != original:
                   manifest.write_text(text, encoding='utf-8', newline='\n')
+
+          def replace_once(path, old, new):
+              file = Path(path)
+              text = file.read_text(encoding='utf-8')
+              if old in text:
+                  file.write_text(text.replace(old, new, 1), encoding='utf-8', newline='\n')
+                  print(f'{path}: applied source migration')
+              elif new not in text:
+                  raise SystemExit(f'{path}: expected migration anchor not found')
+
+          replace_once(
+              'packages/core-rs/src/crypto.rs',
+              'use pbkdf2::pbkdf2_hmac;\nuse rand::Rng;\nuse sha2::Sha512;',
+              'use pbkdf2::{pbkdf2_hmac, sha2::Sha512};\nuse rand::Rng;',
+          )
+
+          replace_once(
+              'packages/core-rs/src/sync/mobile_sync/protocol/handler.rs',
+              'ip_address: std::net::IpAddr::V4(*address),',
+              'ip_address: address.to_ip_addr(),',
+          )
+
+          import_path = Path('packages/core-rs/src/import.rs')
+          import_text = import_path.read_text(encoding='utf-8')
+          old = 'let result = matter.parse(&content);'
+          new = '''let result = matter
+                      .parse(&content)
+                      .map_err(|error| ImportError::GrayMatter(error.to_string()))?;'''
+          count = import_text.count(old)
+          if count:
+              import_text = import_text.replace(old, new)
+              import_path.write_text(import_text, encoding='utf-8', newline='\n')
+              print(f'packages/core-rs/src/import.rs: migrated {count} parser call(s)')
+          elif new not in import_text:
+              raise SystemExit('packages/core-rs/src/import.rs: expected parser migration anchors not found')
           PY
 
       - name: Regenerate JavaScript lockfile
@@ -136,19 +171,10 @@ jobs:
           cargo generate-lockfile
           cargo metadata --locked --format-version 1 --no-deps > cargo-metadata.json
 
-      - name: Validate generated dependency graph
-        run: |
-          set -euxo pipefail
-          pnpm install --frozen-lockfile --ignore-scripts --reporter=append-only
-          node scripts/check-ipc-contract.mjs
-          cargo check --locked -p core-rs --all-targets --all-features
-          cargo check --locked -p relay-server --all-targets
-          cargo fmt --all -- --check
-          git diff --check
-
       - name: Package generated payload
         run: |
           set -euxo pipefail
+          git diff --check
           git status --short
           git diff --stat
           mapfile -t files < <(git diff --name-only --diff-filter=ACMRT)
@@ -166,3 +192,18 @@ jobs:
           path: dependency-convergence.tar.gz
           if-no-files-found: error
           retention-days: 1
+
+      - name: Validate generated dependency graph
+        run: |
+          set -euxo pipefail
+          pnpm install --frozen-lockfile --reporter=append-only
+          node scripts/check-ipc-contract.mjs
+          pnpm lint
+          pnpm format --check
+          pnpm type-check
+          cargo check --locked -p core-rs --all-targets --all-features
+          cargo check --locked -p relay-server --all-targets
+          cargo fmt --all -- --check
+          cargo clippy --locked --workspace --all-targets -- -D warnings
+          cargo test --locked --workspace --verbose -- --nocapture
+          git diff --check
