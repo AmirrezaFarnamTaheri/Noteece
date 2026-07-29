@@ -1,0 +1,48 @@
+name: PR131 final repair
+
+on:
+  push:
+    branches:
+      - claude/omni-execution-protocol-4sn12p
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Fix formatting and workflow cache issue
+        run: |
+          set -euo pipefail
+          cargo fmt --all
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/security.yml')
+          s = p.read_text()
+          s = s.replace('cargo install cargo-audit --locked', 'cargo install cargo-audit --locked --force')
+          p.write_text(s)
+          PY
+          git diff --check
+
+      - name: Commit
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'Fix remaining PR131 CI failures' || true
+          git push
+
+      - name: Remove repair workflow
+        run: |
+          git rm .github/workflows/pr131-final-repair.yml || true
+          git commit -m 'Remove PR131 repair workflow' || true
+          git push || true
