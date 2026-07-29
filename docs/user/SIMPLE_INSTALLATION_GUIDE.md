@@ -76,10 +76,11 @@ npm run tauri dev
 
 ### Security Features
 
-🔒 **Military-Grade Encryption** - ChaCha20-Poly1305
-🔑 **Secure Passwords** - Argon2id protection
-🛡️ **No Cloud** - Everything stays on your device
-🔐 **Zero Knowledge** - We never see your data
+🔒 **Strong Encryption (desktop)** - ChaCha20-Poly1305 for note content, SQLCipher (AES-256) for the database
+⚠️ **Mobile is NOT encrypted** - the phone app currently stores your notes unencrypted on the device
+🔑 **Password Protection** - Argon2id when you log in; PBKDF2-HMAC-SHA512 (256,000 iterations) to unlock your vault
+🛡️ **No Cloud by default** - everything stays on your device unless you turn on relay sync
+🔐 **Zero Knowledge (desktop only)** - we never see your desktop data
 
 ---
 
@@ -204,11 +205,12 @@ npm install --legacy-peer-deps
 
 1. **Password Protected**
    - Your password never leaves your device
-   - Uses Argon2id (the strongest method available)
+   - When you log in, your password is checked using Argon2id. The key that actually unlocks your vault is made with PBKDF2-HMAC-SHA512, repeated 256,000 times.
+   - **To be clear:** this is a solid, widely used method, but it is **not** the strongest option available. PBKDF2 does not use much memory, which means someone with specialized cracking hardware can guess passwords far faster than against a memory-hard method like Argon2id. Your protection depends heavily on choosing a long, unique password.
 
-2. **Encrypted Storage**
-   - Everything is encrypted with ChaCha20-Poly1305
-   - Military-grade security (same as government agencies use)
+2. **Encrypted Storage — on desktop**
+   - On the desktop app, your notes are encrypted with ChaCha20-Poly1305 and the database is encrypted with AES-256.
+   - **⚠️ On the phone app, your data is NOT encrypted.** It is stored in a plain, readable database on the device. Anyone who can get at your phone's files, or an unencrypted phone backup, can read your notes. Please do not store sensitive information in the mobile app until this is fixed.
 
 3. **Secure Sync**
    - Only works on your local network

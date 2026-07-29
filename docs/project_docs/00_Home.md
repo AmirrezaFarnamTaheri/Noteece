@@ -80,6 +80,8 @@ Guides for contributors.
 | [01. Getting Started](04_User_Guide/01_Getting_Started.md) | First-time user orientation |
 | [02. Dashboard](04_User_Guide/02_Dashboard.md)             | Dashboard customization     |
 | [03. Settings](04_User_Guide/03_Settings.md)               | Application settings        |
+| [04. Daily Workflows](04_User_Guide/04_Daily_Workflows.md) | Recommended daily routines  |
+| [05. Tips and Tricks](04_User_Guide/05_Tips_and_Tricks.md) | Power user techniques       |
 
 ---
 

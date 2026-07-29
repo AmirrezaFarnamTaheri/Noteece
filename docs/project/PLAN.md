@@ -1,7 +1,15 @@
 # Noteece Project Plan
 
-**Version:** 1.1.0  
-**Last Updated:** November 2025
+**Version:** 1.1.0
+**Last reviewed:** 2026-07-26
+
+> **Not a status document.** For actual project state see
+> [`STATUS.md`](../../STATUS.md) (root) — **pre-release, not production ready** —
+> and [`docs/audit_reports/FORENSIC_AUDIT_2026-07-26.md`](../audit_reports/FORENSIC_AUDIT_2026-07-26.md).
+> The "Completed ✅" markers below record that feature work was *written*, not
+> that it was verified or shipped. Notably, Phase 5 "Production Ready" is **not**
+> achieved, and Phase 2's "Encryption: AES-256 at rest, Argon2id key derivation"
+> is inaccurate on both counts (see below).
 
 ## Completed Phases
 
@@ -18,7 +26,7 @@
 - [x] **Sync Transport:** X25519 ECDH handshake (replaced hardcoded keys)
 - [x] **Mobile Storage:** Migrated sensitive flags to SecureStore
 - [x] **Accessibility:** Package filtering and screen-off pause in Android service
-- [x] **Encryption:** AES-256 at rest, Argon2id key derivation
+- [~] **Encryption:** SQLCipher (AES-256) at rest **on desktop only** — the React-Native mobile store is unkeyed (`apps/mobile/src/lib/database.ts:585`). Vault key derivation is **PBKDF2-HMAC-SHA512** (`packages/core-rs/src/crypto.rs:28`), not Argon2id; Argon2id is used for password-auth hashing (`packages/core-rs/src/auth.rs:90-93`) and to wrap the mobile DEK.
 
 ### Phase 3: Architecture & Stability (Completed ✅)
 
@@ -35,9 +43,9 @@
 - [x] **CalDAV Sync:** Two-way calendar synchronization
 - [x] **Social Suite:** Multi-platform aggregation and analytics
 
-### Phase 5: Production Ready (Completed ✅)
+### Phase 5: Release Engineering (NOT complete ❌ — previously mislabelled "Production Ready ✅")
 
-- [x] **v1.0.0 Release:** Version alignment across all packages
+- [x] **Version alignment:** all packages are at 1.1.0. No release has ever been tagged.
 - [x] **License Standardization:** AGPL-3.0 throughout
 - [x] **CI/CD Pipeline:** Cross-platform builds and releases
 - [x] **Test Infrastructure:** Comprehensive mocks for all platforms
@@ -125,23 +133,30 @@
 
 ## Metrics & Goals
 
-| Metric           | Current | Target |
-| ---------------- | ------- | ------ |
-| Test Coverage    | 75%     | 95%    |
-| Lighthouse Score | 88      | 95     |
-| Bundle Size      | 10MB    | 8MB    |
-| Cold Start       | 1.5s    | 1s     |
-| FCP              | 1.2s    | 0.8s   |
+| Metric           | Current      | Target |
+| ---------------- | ------------ | ------ |
+| Test Coverage    | not measured | 95%    |
+| Lighthouse Score | 88           | 95     |
+| Bundle Size      | 10MB         | 8MB    |
+| Cold Start       | 1.5s         | 1s     |
+| FCP              | 1.2s         | 0.8s   |
+
+Coverage is listed as "not measured" because there is no CI coverage gate and
+`packages/ui` / `packages/types` have zero tests. Any percentage previously
+quoted here or elsewhere in the docs was unsourced.
 
 ## Release Schedule
 
-| Version | Target Date | Focus                |
-| ------- | ----------- | -------------------- |
-| v1.0.0  | Nov 2025    | Production ready ✅  |
-| v1.1.0  | Nov 2025    | LLM & Correlation ✅ |
-| v1.2.0  | Dec 2025    | Performance & polish |
-| v1.3.0  | Jan 2026    | Advanced sync        |
-| v2.0.0  | Q2 2026     | AI & collaboration   |
+No release has been tagged. All previously published target dates have lapsed,
+and release is currently blocked by the Critical findings in the forensic audit
+(see [`NEXT_STEPS.md`](../../NEXT_STEPS.md) §0). The intended ordering is:
+
+| Version | Focus                                    | State                      |
+| ------- | ---------------------------------------- | -------------------------- |
+| v1.1.0  | Current manifest version                 | Unreleased — blocked       |
+| v1.2.0  | Performance & polish                     | Planned                    |
+| v1.3.0  | Advanced sync                            | Planned                    |
+| v2.0.0  | AI & collaboration                       | Planned                    |
 
 ---
 

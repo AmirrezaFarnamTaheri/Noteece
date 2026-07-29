@@ -1,0 +1,73 @@
+# cargo-audit configuration
+#
+# Policy: the CI gate fails on VULNERABILITIES. The advisories ignored below are
+# informational (`unmaintained` / `unsound` / `yanked`) rather than exploitable
+# vulnerabilities, and none of them can be resolved from this repo today — they
+# arrive transitively through Tauri v1's GTK3 binding tree or through build-time
+# dependencies. Each entry is listed explicitly, with its reason, so that this is
+# documented risk acceptance rather than a silently disabled check.
+#
+# Review trigger: the GTK3 entries clear when the desktop app migrates to Tauri v2.
+# Re-audit this list at that point and delete every entry that no longer applies.
+
+[advisories]
+ignore = [
+    # --- VULNERABILITIES (not mere warnings) — accepted only because they are
+    # --- unreachable from this repo's own dependency requirements today.
+    #
+    # quick-xml RUSTSEC-2026-0194 (quadratic parse, CVSS 7.5) and RUSTSEC-2026-0195
+    # (unbounded namespace allocation → memory exhaustion, CVSS 7.5). Both fixed in
+    # quick-xml >= 0.41.0, which CANNOT be adopted here: the vulnerable copies are
+    # pulled in transitively by Tauri 1.8.3 via requirements that exclude it —
+    #   quick-xml 0.37.5 <- tauri-winrt-notification 0.7.2 (`^0.7`) <- notify-rust 4.11.7 <- tauri 1.8.3
+    #   quick-xml 0.38.4 <- plist 1.8.0 (`^0.38`)                                   <- tauri 1.8.3
+    # `cargo update --precise 0.41.0` fails on both with "candidate versions found
+    # which didn't match", so the only real fix is the Tauri v2 migration.
+    #
+    # Reachability: these paths are Tauri-internal (Windows toast notifications and
+    # macOS plist parsing), NOT the app's own XML handling — CalDAV/iCal parsing in
+    # core-rs uses the `ical` crate, not quick-xml. Exploiting either advisory needs
+    # attacker-controlled XML into those Tauri-internal parsers, which the app does
+    # not expose. That lowers practical risk but does NOT make it zero.
+    #
+    # THIS IS RISK ACCEPTANCE WITH AN EXPIRY, NOT A DISMISSAL. Remove these two
+    # entries the moment the Tauri v2 migration lands and re-run `cargo audit`.
+    "RUSTSEC-2026-0194", # quick-xml quadratic run time      (7.5 high)
+    "RUSTSEC-2026-0195", # quick-xml unbounded ns allocation (7.5 high)
+
+
+    # --- unmaintained: gtk-rs GTK3 bindings, pulled in by Tauri v1 ---
+    # Not fixable without a Tauri v2 migration (tracked separately).
+    "RUSTSEC-2024-0411", # gdkwayland-sys
+    "RUSTSEC-2024-0412", # gdk
+    "RUSTSEC-2024-0413", # atk
+    "RUSTSEC-2024-0414", # gdkx11-sys
+    "RUSTSEC-2024-0415", # gtk
+    "RUSTSEC-2024-0416", # atk-sys
+    "RUSTSEC-2024-0418", # gdk-sys
+    "RUSTSEC-2024-0419", # gtk3-macros
+    "RUSTSEC-2024-0420", # gtk-sys
+    "RUSTSEC-2024-0429", # glib: unsound VariantStrIter impls (same GTK3 tree)
+
+    # --- unmaintained: transitive build/runtime deps with no direct upgrade path ---
+    "RUSTSEC-2024-0370", # proc-macro-error (build-time only)
+    "RUSTSEC-2024-0384", # instant (transitive)
+    "RUSTSEC-2025-0057", # fxhash (transitive)
+    "RUSTSEC-2025-0134", # rustls-pemfile (transitive)
+    "RUSTSEC-2026-0215", # smallstr (transitive)
+
+    # --- unsound: not reachable from this codebase's usage ---
+    # RUSTSEC-2026-0097 concerns rand's behaviour with a custom logger calling
+    # rand::rng(); this crate uses OsRng/thread_rng directly and installs no such
+    # logger. See packages/core-rs/src/crypto.rs.
+    "RUSTSEC-2026-0097", # rand
+    "RUSTSEC-2026-0190", # anyhow: Error::downcast_mut unsoundness
+    "RUSTSEC-2026-0202", # cxx: let_cxx_string! (not used here)
+]
+
+# `spin 0.9.8` is yanked upstream but is reached only transitively, so there is no
+# advisory ID to ignore and no direct upgrade available. Yanked-crate detection is
+# disabled rather than left to fail the build on a condition this repo cannot fix.
+# Re-enable once the transitive dependency resolves to a non-yanked release.
+[yanked]
+enabled = false

@@ -5,7 +5,7 @@ Noteece operates on a **Zero-Trust, Zero-Knowledge** security model.
 ## 1. Encryption at Rest
 
 - **Database:** The SQLite database is encrypted using SQLCipher (AES-256-CBC).
-- **Key Derivation:** The user's master password is hashed using Argon2id to derive the Key Encryption Key (KEK).
+- **Key Derivation:** The user's master password is stretched using **PBKDF2-HMAC-SHA512 with 256,000 iterations** to derive the Key Encryption Key (KEK) (`packages/core-rs/src/crypto.rs:28`). Note that PBKDF2 is **not** memory-hard, so it offers limited resistance to GPU/ASIC-accelerated cracking. Argon2id is used only for password *authentication* hashing (`packages/core-rs/src/auth.rs:90-93`), not for key derivation.
 - **Data Encryption Key (DEK):** A random 32-byte key is generated at vault creation. This DEK is encrypted by the KEK and stored in the database header.
 - **Content:** Sensitive content (note bodies) is further encrypted using XChaCha20Poly1305 before being written to disk, ensuring that even if the DB page cache leaks, content remains secure.
 
@@ -21,7 +21,9 @@ Noteece operates on a **Zero-Trust, Zero-Knowledge** security model.
 
 ## 4. Threat Model
 
-- **Device Theft:** Attacker has physical access. Data is safe as long as the vault is locked (powered down or app closed).
+- **Device Theft:** Attacker has physical access.
+  - **Desktop:** Data is protected as long as the vault is locked, because the SQLite database itself is SQLCipher-encrypted.
+  - **⚠️ Mobile: NOT protected.** The mobile app stores data in a **plaintext** SQLite database (`apps/mobile/src/lib/database.ts:585` opens expo-sqlite with no key or PRAGMA). Locking the vault is a UI gate only; a stolen or forensically imaged device yields all notes in cleartext regardless of lock state.
 - **Network Eavesdropping:** Attacker is on the same WiFi. Data is safe due to E2EE transport.
 - **Malicious Server:** Noteece has no central server.
 

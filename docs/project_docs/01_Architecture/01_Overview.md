@@ -40,8 +40,8 @@ This Rust crate acts as the central source of truth for the desktop application.
   - Implements a connection pool using `r2d2` for concurrent access (e.g., sync running in background while user edits note).
 
 - **Cryptography:**
-  - **At Rest:** AES-256-GCM (via SQLCipher).
-  - **Auth:** Argon2id (for KEK derivation).
+  - **At Rest:** AES-256-**CBC** with **HMAC-SHA512** page authentication (via SQLCipher). It is not GCM.
+  - **Auth:** Argon2id is used for password **authentication** hashing only. KEK derivation uses **PBKDF2-HMAC-SHA512 (256,000 iterations)**.
   - **Blobs:** XChaCha20Poly1305 (via `RustCrypto`).
 
 - **Search Engine:**

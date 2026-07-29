@@ -1,0 +1,513 @@
+name: PR131 Source Remediation
+
+on:
+  push:
+    branches:
+      - claude/omni-execution-protocol-4sn12p
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pr131-source-remediation
+  cancel-in-progress: false
+
+jobs:
+  remediate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v5
+        with:
+          ref: claude/omni-execution-protocol-4sn12p
+          fetch-depth: 0
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.0-dev \
+            libssl-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Apply source and regression-test fixes
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              file = Path(path)
+              text = file.read_text(encoding="utf-8")
+              if new in text:
+                  return
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"Expected exactly one match in {path}, found {count}")
+              file.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          relay = "packages/core-rs/src/sync/relay.rs"
+          replace_once(
+              relay,
+              '''        let issued = self
+              .challenges
+              .lock()
+              .map_err(state_error)?
+              .remove(device_id)
+              .ok_or(RelayError::InvalidRegistrationChallenge)?;
+          if now >= issued.expires_at
+              || !bool::from(issued.public_key.ct_eq(&public_key))
+              || !bool::from(issued.challenge.ct_eq(&challenge))
+          {
+              return Err(RelayError::InvalidRegistrationChallenge);
+          }
+
+          let signature_bytes = base64::engine::general_purpose::STANDARD
+              .decode(signature_b64)
+              .map_err(|_| RelayError::InvalidSignature)?;
+          let signature =
+              Signature::from_slice(&signature_bytes).map_err(|_| RelayError::InvalidSignature)?;
+          let verifying_key =
+              VerifyingKey::from_bytes(&public_key).map_err(|_| RelayError::InvalidSignature)?;
+          verifying_key
+              .verify(
+                  registration_message(device_id, challenge_b64).as_bytes(),
+                  &signature,
+              )
+              .map_err(|_| RelayError::InvalidSignature)?;
+''',
+              '''        let signature_bytes = base64::engine::general_purpose::STANDARD
+              .decode(signature_b64)
+              .map_err(|_| RelayError::InvalidSignature)?;
+          let signature =
+              Signature::from_slice(&signature_bytes).map_err(|_| RelayError::InvalidSignature)?;
+          let verifying_key =
+              VerifyingKey::from_bytes(&public_key).map_err(|_| RelayError::InvalidSignature)?;
+
+          // Validate and consume under one lock. Failed attempts must not burn a
+          // legitimate challenge, while a valid proof remains strictly one-use.
+          let mut challenges = self.challenges.lock().map_err(state_error)?;
+          let issued = challenges
+              .get(device_id)
+              .ok_or(RelayError::InvalidRegistrationChallenge)?;
+          if now >= issued.expires_at
+              || !bool::from(issued.public_key.ct_eq(&public_key))
+              || !bool::from(issued.challenge.ct_eq(&challenge))
+          {
+              return Err(RelayError::InvalidRegistrationChallenge);
+          }
+          verifying_key
+              .verify(
+                  registration_message(device_id, challenge_b64).as_bytes(),
+                  &signature,
+              )
+              .map_err(|_| RelayError::InvalidSignature)?;
+          challenges.remove(device_id);
+          drop(challenges);
+''',
+          )
+          replace_once(
+              relay,
+              '''    #[test]
+      fn capability_tokens_expire_and_are_not_stored_in_plaintext() {
+''',
+              '''    #[test]
+      fn invalid_registration_proof_does_not_consume_challenge() {
+          let server = BlindRelayServer::new();
+          let legitimate_key = signing_key(11);
+          let attacker_key = signing_key(12);
+          let public_key = base64::engine::general_purpose::STANDARD
+              .encode(legitimate_key.verifying_key().to_bytes());
+          let challenge = server
+              .begin_registration_at("device-a", &public_key, 1_000)
+              .expect("challenge should be issued");
+
+          let invalid_signature = attacker_key
+              .sign(registration_message("device-a", &challenge).as_bytes());
+          let invalid_signature = base64::engine::general_purpose::STANDARD
+              .encode(invalid_signature.to_bytes());
+          assert!(matches!(
+              server.complete_registration_at(
+                  "device-a",
+                  &public_key,
+                  &challenge,
+                  &invalid_signature,
+                  1_001,
+              ),
+              Err(RelayError::InvalidSignature)
+          ));
+
+          let valid_signature = legitimate_key
+              .sign(registration_message("device-a", &challenge).as_bytes());
+          let valid_signature =
+              base64::engine::general_purpose::STANDARD.encode(valid_signature.to_bytes());
+          assert!(server
+              .complete_registration_at(
+                  "device-a",
+                  &public_key,
+                  &challenge,
+                  &valid_signature,
+                  1_002,
+              )
+              .is_ok());
+      }
+
+      #[test]
+      fn capability_tokens_expire_and_are_not_stored_in_plaintext() {
+''',
+          )
+
+          backup = "packages/core-rs/src/social/backup.rs"
+          replace_once(
+              backup,
+              '''#[cfg(windows)]
+  fn sync_directory(path: &Path) -> std::io::Result<()> {
+      use std::os::windows::fs::OpenOptionsExt;
+
+      const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
+      OpenOptions::new()
+          .read(true)
+          .custom_flags(FILE_FLAG_BACKUP_SEMANTICS)
+          .open(path)?
+          .sync_all()
+  }
+''',
+              '''#[cfg(windows)]
+  fn sync_directory(_path: &Path) -> std::io::Result<()> {
+      // Rust has no portable Windows directory-fsync primitive. The backup file
+      // itself is sync_all()'d before its same-volume atomic rename; attempting to
+      // open the directory as a file returns ERROR_ACCESS_DENIED on Windows hosts.
+      Ok(())
+  }
+''',
+          )
+
+          selectors = "packages/core-rs/src/social/selector_verification.rs"
+          replace_once(
+              selectors,
+              '''use sha2::{Digest, Sha256};
+  use thiserror::Error;
+''',
+              '''use sha2::{Digest, Sha256};
+  use std::borrow::Cow;
+  use thiserror::Error;
+''',
+          )
+          replace_once(
+              selectors,
+              '''/// Compute the SHA-256 digest of the exact selector bytes.
+  fn compute_hash(content: &str) -> String {
+      let mut hasher = Sha256::new();
+      hasher.update(content.as_bytes());
+      hex::encode(hasher.finalize())
+  }
+''',
+              '''/// Compute the SHA-256 digest of canonical UTF-8 selector text.
+  ///
+  /// Git can materialize reviewed text with CRLF on Windows. Canonicalizing only
+  /// line endings keeps the digest platform-independent without accepting any
+  /// semantic JSON change.
+  fn compute_hash(content: &str) -> String {
+      let canonical = if content.contains("\\r\\n") {
+          Cow::Owned(content.replace("\\r\\n", "\\n"))
+      } else {
+          Cow::Borrowed(content)
+      };
+      let mut hasher = Sha256::new();
+      hasher.update(canonical.as_bytes());
+      hex::encode(hasher.finalize())
+  }
+''',
+          )
+          replace_once(
+              selectors,
+              '''    #[test]
+      fn plain_json_is_parsed_without_a_signature() {
+''',
+              '''    #[test]
+      fn selector_hash_is_independent_of_checkout_line_endings() {
+          assert_eq!(compute_hash("a\\nb\\n"), compute_hash("a\\r\\nb\\r\\n"));
+      }
+
+      #[test]
+      fn plain_json_is_parsed_without_a_signature() {
+''',
+          )
+
+          runtime = "apps/desktop/src-tauri/src/commands/runtime_contract.rs"
+          replace_once(
+              runtime,
+              '''use std::fs;
+  use tauri::{Manager, State};
+''',
+              '''use std::fs;
+  use std::io::Write;
+  use tauri::{Manager, State};
+''',
+          )
+          replace_once(
+              runtime,
+              '''        let pattern = format!("%{}%", question.replace('%', "\\\\%").replace('_', "\\\\_"));
+''',
+              '''        let pattern = format!("%{}%", escape_like_literal(question));
+''',
+          )
+          replace_once(
+              runtime,
+              '''#[tauri::command]
+  pub fn process_ocr_cmd(
+      db: State<DbConnection>,
+      image_path: String,
+      language: Option<String>,
+  ) -> Result<String, String> {
+      let bytes = fs::read(&image_path).map_err(|e| format!("Failed to read image: {e}"))?;
+      if bytes.is_empty() {
+          return Err("Image file is empty".to_string());
+      }
+      let vault_path = db
+          .vault_path
+          .lock()
+          .map_err(|_| "Failed to lock vault path".to_string())?
+          .clone()
+          .ok_or_else(|| "Vault path is not available".to_string())?;
+      let dek = db
+          .dek
+          .lock()
+          .map_err(|_| "Failed to lock DEK".to_string())?
+          .clone()
+          .ok_or_else(|| "Vault is locked".to_string())?;
+      let blob_id = core_rs::blob::store_blob(&vault_path.to_string_lossy(), dek.as_slice(), &bytes)
+          .map_err(|e| e.to_string())?;
+      crate::with_db!(db, conn, {
+          core_rs::ocr::queue_ocr(&conn, &blob_id).map_err(|e| e.to_string())?;
+          core_rs::ocr::process_ocr_job(
+              &conn,
+              &blob_id,
+              std::path::Path::new(&image_path),
+              language.as_deref(),
+          )
+          .map_err(|e| e.to_string())?;
+          Ok(blob_id)
+      })
+  }
+''',
+              '''const MAX_OCR_IMAGE_BYTES: usize = 20 * 1024 * 1024;
+
+  fn escape_like_literal(value: &str) -> String {
+      value
+          .replace('\\\\', "\\\\\\\\")
+          .replace('%', "\\\\%")
+          .replace('_', "\\\\_")
+  }
+
+  fn detect_image_extension(bytes: &[u8]) -> Option<&'static str> {
+      if bytes.starts_with(b"\\x89PNG\\r\\n\\x1a\\n") {
+          Some("png")
+      } else if bytes.starts_with(&[0xff, 0xd8, 0xff]) {
+          Some("jpg")
+      } else if bytes.starts_with(b"BM") {
+          Some("bmp")
+      } else if bytes.starts_with(b"II*\\0") || bytes.starts_with(b"MM\\0*") {
+          Some("tiff")
+      } else if bytes.len() >= 12 && &bytes[..4] == b"RIFF" && &bytes[8..12] == b"WEBP" {
+          Some("webp")
+      } else {
+          None
+      }
+  }
+
+  #[tauri::command]
+  pub fn process_ocr_cmd(
+      db: State<DbConnection>,
+      image_bytes: Vec<u8>,
+      language: Option<String>,
+  ) -> Result<String, String> {
+      if image_bytes.is_empty() {
+          return Err("Image file is empty".to_string());
+      }
+      if image_bytes.len() > MAX_OCR_IMAGE_BYTES {
+          return Err(format!(
+              "Image exceeds the {} MiB OCR limit",
+              MAX_OCR_IMAGE_BYTES / (1024 * 1024)
+          ));
+      }
+      let extension = detect_image_extension(&image_bytes)
+          .ok_or_else(|| "Unsupported or malformed OCR image".to_string())?;
+
+      let vault_path = db
+          .vault_path
+          .lock()
+          .map_err(|_| "Failed to lock vault path".to_string())?
+          .clone()
+          .ok_or_else(|| "Vault path is not available".to_string())?;
+      let dek = db
+          .dek
+          .lock()
+          .map_err(|_| "Failed to lock DEK".to_string())?
+          .clone()
+          .ok_or_else(|| "Vault is locked".to_string())?;
+      let blob_id =
+          core_rs::blob::store_blob(&vault_path.to_string_lossy(), dek.as_slice(), &image_bytes)
+              .map_err(|e| e.to_string())?;
+
+      let temporary_path = std::env::temp_dir().join(format!(
+          "noteece-ocr-{}.{}",
+          Ulid::new(),
+          extension
+      ));
+      let write_result = std::fs::OpenOptions::new()
+          .write(true)
+          .create_new(true)
+          .open(&temporary_path)
+          .and_then(|mut file| {
+              file.write_all(&image_bytes)?;
+              file.sync_all()
+          });
+      if let Err(error) = write_result {
+          let _ = fs::remove_file(&temporary_path);
+          return Err(format!("Failed to stage OCR image: {error}"));
+      }
+
+      let result = (|| -> Result<String, String> {
+          crate::with_db!(db, conn, {
+              core_rs::ocr::queue_ocr(&conn, &blob_id).map_err(|e| e.to_string())?;
+              core_rs::ocr::process_ocr_job(
+                  &conn,
+                  &blob_id,
+                  &temporary_path,
+                  language.as_deref(),
+              )
+              .map_err(|e| e.to_string())?;
+              Ok(blob_id.clone())
+          })
+      })();
+      let _ = fs::remove_file(&temporary_path);
+      result
+  }
+
+  #[cfg(test)]
+  mod runtime_contract_tests {
+      use super::{detect_image_extension, escape_like_literal};
+
+      #[test]
+      fn like_literals_escape_backslash_before_wildcards() {
+          assert_eq!(escape_like_literal(r"a\\b%_"), r"a\\\\b\\%\\_");
+      }
+
+      #[test]
+      fn ocr_image_detection_accepts_supported_magic_and_rejects_text() {
+          assert_eq!(detect_image_extension(b"\\x89PNG\\r\\n\\x1a\\nrest"), Some("png"));
+          assert_eq!(detect_image_extension(&[0xff, 0xd8, 0xff, 0x00]), Some("jpg"));
+          assert_eq!(detect_image_extension(b"plain text"), None);
+      }
+  }
+''',
+          )
+
+          ocr_ui = "apps/desktop/src/components/OcrManager.tsx"
+          replace_once(
+              ocr_ui,
+              '''import { open } from '@tauri-apps/api/dialog';
+''',
+              '''import { open } from '@tauri-apps/api/dialog';
+  import { readBinaryFile } from '@tauri-apps/api/fs';
+''',
+          )
+          replace_once(
+              ocr_ui,
+              '''      // Generate a unique blob ID
+        const blobId = `blob_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+
+        await invoke<string>('process_ocr_cmd', {
+          blobId,
+          imagePath: filePath,
+          language: language || undefined,
+        });
+''',
+              '''      const imageBytes = await readBinaryFile(filePath);
+        const blobId = await invoke<string>('process_ocr_cmd', {
+          imageBytes: Array.from(imageBytes),
+          language: language || undefined,
+        });
+''',
+          )
+          replace_once(
+              ocr_ui,
+              '''                  description="Full path to the image file"
+                    value={manualFilePath}
+                    onChange={(e) => setManualFilePath(e.target.value)}
+                    placeholder="/path/to/image.png"
+                    required
+''',
+              '''                  description="Image selected through the system file picker"
+                    value={manualFilePath}
+                    readOnly
+                    placeholder="Choose an image with Browse"
+                    required
+''',
+          )
+          replace_once(
+              ocr_ui,
+              '''              Click Browse to select an image file or enter the path manually. Supported formats: PNG, JPG, JPEG, TIFF,
+                BMP
+''',
+              '''              Click Browse to select an image file. Supported formats: PNG, JPG, JPEG, TIFF, BMP, WEBP
+''',
+          )
+
+          payload = Path("scripts/pr131_one_shot_remediation.py.gz.b64")
+          if payload.exists():
+              payload.unlink()
+          PY
+
+      - name: Format and validate source
+        run: |
+          pnpm install --frozen-lockfile
+          cargo fmt --all
+          cargo fmt --all -- --check
+          cargo check -p core-rs --all-targets --locked
+          cargo clippy -p core-rs --all-targets --locked -- -D warnings
+          cargo test -p core-rs --lib --locked
+          cargo check --manifest-path apps/desktop/src-tauri/Cargo.toml --locked
+          node scripts/check-ipc-contract.mjs
+          pnpm lint
+          pnpm --filter @noteece/desktop type-check
+          git diff --check
+
+      - name: Commit verified source remediation
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            packages/core-rs/src/sync/relay.rs \
+            packages/core-rs/src/social/backup.rs \
+            packages/core-rs/src/social/selector_verification.rs \
+            apps/desktop/src-tauri/src/commands/runtime_contract.rs \
+            apps/desktop/src/components/OcrManager.tsx
+          git add -u scripts/pr131_one_shot_remediation.py.gz.b64
+          if git diff --cached --quiet; then
+            echo "No source changes to commit"
+            exit 0
+          fi
+          git commit -m "Fix PR131 review findings and Windows Rust tests"
+          git push origin HEAD:claude/omni-execution-protocol-4sn12p

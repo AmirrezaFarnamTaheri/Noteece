@@ -52,7 +52,8 @@ class OverlayService : Service() {
             Log.i("NoteeceOverlay", "Anchor Tapped!")
             // Trigger Rust Capture
             val result = com.noteece.RustBridge.anchorLatest()
-            Log.i("NoteeceOverlay", "Anchored: $result")
+            // Do not log the payload: it is captured third-party content.
+            Log.i("NoteeceOverlay", "Anchored (${result?.length ?: 0} chars)")
 
             // Send to React Native via Broadcast
             val intent = Intent("com.noteece.ACTION_ANCHOR_CAPTURED")

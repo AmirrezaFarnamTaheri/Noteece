@@ -1,4 +1,4 @@
-use core_rs::blob::{retrieve_blob, retrieve_chunk, store_blob, store_chunk};
+use core_rs::blob::{retrieve_blob, retrieve_chunk, store_blob};
 use tempfile::tempdir;
 
 #[test]

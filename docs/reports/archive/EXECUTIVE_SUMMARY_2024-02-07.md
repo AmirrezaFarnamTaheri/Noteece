@@ -1,3 +1,29 @@
+> ## ⚠️ ARCHIVED — SUPERSEDED, DO NOT RELY ON THIS DOCUMENT
+>
+> This February 2024 audit has been **superseded by
+> [`docs/audit_reports/FORENSIC_AUDIT_2026-07-26.md`](../../audit_reports/FORENSIC_AUDIT_2026-07-26.md)**,
+> which rates the system **4.0 / 10 and NOT production ready**.
+>
+> Two claims below are specifically incorrect:
+>
+> - **"The system is now considered Production Ready" / "stable, secure, and
+>   performant" (Overview and Conclusion) is wrong.** The 2026 forensic audit
+>   found Critical defects including plaintext mobile data at rest
+>   (`apps/mobile/src/lib/database.ts:585`), an Android capture feature that
+>   ingests third parties' private messages without consent, and an unregistered
+>   desktop AI backend.
+> - **"Argon2id (KDF)" under Security Posture is wrong.** Vault key derivation
+>   uses **PBKDF2-HMAC-SHA512** (`packages/core-rs/src/crypto.rs:28`). Argon2id is
+>   used only for password *authentication* hashing
+>   (`packages/core-rs/src/auth.rs:90-93`), and on the mobile vault to wrap the DEK.
+>
+> It is retained for historical reference only. It was moved out of
+> `docs/audit_reports/` because an AI-signed "Production Ready" assurance sitting
+> beside a current 4.0/10 forensic audit is actively misleading.
+> For current project status see [`STATUS.md`](../../../STATUS.md).
+
+---
+
 # Executive Summary: Noteece Codebase Audit
 
 **Date:** Feb 7, 2024

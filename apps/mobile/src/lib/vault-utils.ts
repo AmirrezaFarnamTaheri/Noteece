@@ -62,8 +62,11 @@ async function encryptDek(dek: Uint8Array, kek: Uint8Array): Promise<{ encrypted
   }
 
   const nonce = await Crypto.getRandomBytesAsync(12);
+  // AAD must match the unlock path in store/vault.ts, otherwise the DEK re-wrapped
+  // during changeVaultPassword can never be decrypted at unlock (permanent lockout).
+  const aad = new TextEncoder().encode('vault:dek:v1');
   const cipher = chacha20poly1305(kek, nonce);
-  const encrypted = cipher.encrypt(dek);
+  const encrypted = cipher.encrypt(dek, aad);
 
   return { encrypted, nonce };
 }
@@ -82,8 +85,10 @@ async function decryptDek(encrypted: Uint8Array, kek: Uint8Array, nonce: Uint8Ar
     throw new Error('Invalid nonce: expected 12 bytes');
   }
 
+  // AAD must match the encrypt path (and store/vault.ts) for authenticated decryption.
+  const aad = new TextEncoder().encode('vault:dek:v1');
   const cipher = chacha20poly1305(kek, nonce);
-  const decrypted = cipher.decrypt(encrypted);
+  const decrypted = cipher.decrypt(encrypted, aad);
 
   if (decrypted.length !== 32) {
     throw new Error('Decrypted DEK has invalid length');

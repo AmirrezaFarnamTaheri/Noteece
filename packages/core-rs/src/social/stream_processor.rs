@@ -101,11 +101,14 @@ impl StreamProcessor {
 
         // Auto-analyze after ingestion
         if let Some(post) = self.analyze_buffer() {
-            // Deduplication check using content hash
+            // Deduplication check using content hash.
+            // Truncate on a char boundary (not a byte index) so multibyte UTF-8
+            // content (emoji/CJK/accented Latin) cannot panic on this hot path.
+            let content_prefix: String = post.content_text.chars().take(100).collect();
             let content_key = format!(
                 "{}:{}",
                 post.author_handle.as_deref().unwrap_or("unknown"),
-                &post.content_text[..post.content_text.len().min(100)]
+                content_prefix
             );
 
             if !self.dedup_filter.check(&content_key) {

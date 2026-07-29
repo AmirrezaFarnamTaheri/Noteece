@@ -10,11 +10,11 @@ Noteece is a privacy-first, local-first note-taking application that prioritizes
 
 #### Data Encryption Key (DEK) Management
 
-- **Key Derivation**: DEKs are derived from user passwords using Argon2id, a memory-hard key derivation function resistant to GPU and ASIC attacks
+- **Key Derivation**: The key-encryption key (KEK) that wraps the DEK is derived from the user password using **PBKDF2-HMAC-SHA512 with 256,000 iterations** (`packages/core-rs/src/crypto.rs:28`). PBKDF2 is **not** memory-hard and therefore offers **no meaningful resistance to GPU or ASIC-accelerated cracking** beyond its iteration count. Argon2id is used elsewhere in the codebase, but only for password *authentication* hashing (`packages/core-rs/src/auth.rs:90-93`) — it is not used for key derivation.
 - **Storage**: DEKs are **never** stored on disk unencrypted
 - **Memory Security**:
   - DEKs are held in process memory for the application lifetime (required for local-first architecture)
-  - Automatically zeroed on application exit using the Zeroize trait
+  - **Keys are NOT zeroized.** `zeroize` is not a dependency of `core-rs`; key material is left to normal Rust drop semantics and may persist in freed memory or swap.
   - Protected by OS process isolation
 - **Lifetime**: While long-lived in-memory DEKs increase exposure surface, this is a necessary trade-off for the local-first architecture's responsiveness and offline capabilities
 
@@ -144,9 +144,9 @@ _Location: `packages/core-rs/src/search.rs`_
 **Mitigations**:
 
 - DEK is never written to disk unencrypted
-- Automatically zeroed on application exit (including panic scenarios)
+- ⚠️ **NOT automatically zeroed.** `zeroize` is not a dependency of `core-rs`, so key material is not scrubbed on exit or on panic and may remain in freed memory or swap.
 - Protected by OS process isolation
-- Derived from password using Argon2id (not stored directly)
+- Wrapped by a KEK derived from the password using **PBKDF2-HMAC-SHA512 (256,000 iterations)**, not stored directly. (Argon2id is used only for password authentication hashing, not for this derivation.)
 
 **Alternative Approach for Enhanced Security**: Future versions could integrate with OS keystore services (macOS Keychain, Windows Credential Manager, Linux Secret Service) to minimize in-memory lifetime, with the trade-off of platform-specific complexity and potential loss of cross-platform consistency.
 
@@ -257,6 +257,7 @@ We request that security researchers:
 | 2025-01    | PR Compliance Review | Batch 5     | 4 security hardening improvements  | ✅ Fixed                 |
 | 2025-01    | Architecture Review  | Major Items | 3 breaking changes identified      | 📝 Documented            |
 | 2025-11-06 | PR Compliance Review | Batch 6     | 6 security compliance issues       | ✅ 5 Fixed, 1 Documented |
+| 2026-07-26 | Forensic Security & Documentation Audit | Full repo (crypto, mobile, docs) | Documentation materially misstated the cryptography: KDF documented as Argon2id but is PBKDF2-HMAC-SHA512 (256k iters); at-rest cipher documented as AES-256-GCM but is AES-256-CBC + HMAC-SHA512; key zeroization claimed but `zeroize` is not a dependency; **mobile (React Native) stores all data in plaintext** (`apps/mobile/src/lib/database.ts:585` opens expo-sqlite with no key/PRAGMA), invalidating "zero-knowledge"/"encrypted at rest" claims for mobile; mobile sync documented as ECDH P-256 but is X25519 | 📝 Docs corrected; **mobile at-rest encryption remains UNIMPLEMENTED** |
 
 ### Batch 6 Improvements (Security Compliance)
 

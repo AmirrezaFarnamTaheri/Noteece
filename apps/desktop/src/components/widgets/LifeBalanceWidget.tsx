@@ -47,30 +47,17 @@ const DEFAULT_TARGETS: TimeDistribution = {
 };
 
 export function LifeBalanceWidget({ spaceId, timeRange = 'week', showTargets = true }: LifeBalanceWidgetProps) {
-  // Fetch time distribution data
+  // Fetch time distribution data. Fail honestly instead of substituting invented
+  // hours when the backend command is unavailable.
   const { data, isLoading, error } = useQuery({
     queryKey: ['life-balance', spaceId, timeRange],
-    queryFn: async (): Promise<TimeDistribution> => {
-      try {
-        const result = await invoke<TimeDistribution>('get_time_distribution_cmd', {
-          spaceId,
-          timeRange,
-        });
-        return result;
-      } catch {
-        // Return mock data if command not available
-        return {
-          work: 35,
-          personal: 15,
-          health: 8,
-          learning: 5,
-          social: 10,
-          creative: 3,
-          rest: 45,
-        };
-      }
-    },
+    queryFn: (): Promise<TimeDistribution> =>
+      invoke<TimeDistribution>('get_time_distribution_cmd', {
+        spaceId,
+        timeRange,
+      }),
     staleTime: 300_000, // 5 minutes
+    retry: false,
   });
 
   // Transform data for radar chart

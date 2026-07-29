@@ -1,3 +1,4 @@
+pub mod ai;
 pub mod analytics;
 pub mod auth;
 pub mod backup;
@@ -11,6 +12,7 @@ pub mod note;
 pub mod ocr;
 pub mod personal_modes;
 pub mod project;
+pub mod runtime_contract;
 pub mod search;
 pub mod social;
 pub mod space;
@@ -23,6 +25,7 @@ pub mod time_tracking;
 pub mod vault;
 pub mod weekly_review;
 
+pub use ai::*;
 pub use analytics::*;
 pub use auth::*;
 pub use backup::*;
@@ -36,6 +39,7 @@ pub use note::*;
 pub use ocr::*;
 pub use personal_modes::*;
 pub use project::*;
+pub use runtime_contract::*;
 pub use search::*;
 pub use social::*;
 pub use space::*;

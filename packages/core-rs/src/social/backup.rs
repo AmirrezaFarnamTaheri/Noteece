@@ -1,429 +1,533 @@
-use chrono;
-/// Backup and Restore Module for SocialHub
-/// Provides encrypted backup and restore functionality to prevent data loss
-use rusqlite::Connection;
+//! Encrypted backup and restore support for SocialHub data.
+
+use base64::Engine as _;
+use rusqlite::{types::ValueRef, Connection, Transaction};
 use serde::{Deserialize, Serialize};
-use std::fs;
+use serde_json::{json, Map, Value};
+use std::collections::HashSet;
+use std::fs::{self, OpenOptions};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
+
+const BACKUP_FORMAT_VERSION: u64 = 2;
+const BACKUP_SUFFIX: &str = ".json.enc";
+
+// This is an allowlist, not a promise that every historical database contains
+// every table. Export includes only tables present in the current schema.
+const BACKUP_TABLES: &[&str] = &[
+    "social_account",
+    "social_post",
+    "social_category",
+    "social_post_category",
+    "social_sync_history",
+    "social_webview_session",
+    "social_auto_rule",
+    "social_focus_mode",
+    "social_automation_rule",
+    "social_post_archive",
+];
+
+// Children first for destructive clearing.
+const DELETE_ORDER: &[&str] = &[
+    "social_post_category",
+    "social_post_archive",
+    "social_webview_session",
+    "social_auto_rule",
+    "social_automation_rule",
+    "social_post",
+    "social_category",
+    "social_focus_mode",
+    "social_sync_history",
+    "social_account",
+];
 
 #[derive(Error, Debug)]
 pub enum BackupError {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
-
     #[error("Database error: {0}")]
     Database(#[from] rusqlite::Error),
-
     #[error("Serialization error: {0}")]
     Serialization(#[from] serde_json::Error),
-
     #[error("Encryption error: {0}")]
     Encryption(String),
-
     #[error("Invalid backup: {0}")]
     InvalidBackup(String),
-
     #[error("Restore failed: {0}")]
     RestoreFailed(String),
-
     #[error("Backup not found")]
     BackupNotFound,
-
     #[error("Backup corrupted")]
     BackupCorrupted,
 }
 
-/// Metadata for a backup
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BackupMetadata {
-    /// Backup creation timestamp (ISO 8601)
     pub created_at: String,
-
-    /// Database version at backup time
     pub schema_version: i64,
-
-    /// Noteece application version
     pub app_version: String,
-
-    /// Size of backup in bytes
     pub size_bytes: u64,
-
-    /// Hash of backup for integrity check
     pub checksum: String,
-
-    /// Description provided by user
     pub description: Option<String>,
-
-    /// Whether backup is encrypted
     pub encrypted: bool,
 }
 
-/// Complete backup containing all data
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Backup {
     pub metadata: BackupMetadata,
-    pub data: Vec<u8>, // Encrypted backup data
+    pub data: Vec<u8>,
 }
 
-/// Backup service for managing database snapshots
 pub struct BackupService {
     backup_dir: PathBuf,
 }
 
 impl BackupService {
-    /// Create a new backup service with specified directory
     pub fn new(backup_dir: impl AsRef<Path>) -> Result<Self, BackupError> {
         let backup_dir = backup_dir.as_ref().to_path_buf();
-
-        // Create backup directory if it doesn't exist
-        if !backup_dir.exists() {
-            fs::create_dir_all(&backup_dir)?;
-        }
-
-        Ok(BackupService { backup_dir })
+        fs::create_dir_all(&backup_dir)?;
+        Ok(Self { backup_dir })
     }
 
-    /// Create an encrypted backup of the database
+    fn validated_backup_path(&self, backup_id: &str) -> Result<PathBuf, BackupError> {
+        let valid = !backup_id.is_empty()
+            && backup_id.len() <= 128
+            && backup_id.chars().all(|character| {
+                character.is_ascii_alphanumeric() || matches!(character, '_' | '-')
+            });
+        if !valid {
+            return Err(BackupError::InvalidBackup(format!(
+                "Invalid backup id: {backup_id:?}"
+            )));
+        }
+        Ok(self.backup_dir.join(format!("{backup_id}{BACKUP_SUFFIX}")))
+    }
+
     pub fn create_backup(
         &self,
         conn: &Connection,
         dek: &[u8],
         description: Option<&str>,
     ) -> Result<String, BackupError> {
-        // Get database version
-        let schema_version: i64 = conn
-            .query_row("SELECT MAX(version) FROM schema_version", [], |row| {
-                row.get(0)
-            })
-            .unwrap_or(0);
+        if dek.len() != 32 {
+            return Err(BackupError::Encryption(
+                "A 32-byte data-encryption key is required".into(),
+            ));
+        }
 
-        // Create timestamp for backup filename
-        let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S").to_string();
-        let backup_id = format!("backup_{}", timestamp);
+        let schema_version = current_schema_version(conn);
+        let payload = self.export_database(conn)?;
+        let encrypted_data = crate::crypto::encrypt_bytes(&payload, dek)
+            .map_err(|error| BackupError::Encryption(error.to_string()))?;
+        let backup_id = format!("backup_{}", ulid::Ulid::new());
+        let backup_path = self.validated_backup_path(&backup_id)?;
+        let temporary_path = self.backup_dir.join(format!(".{backup_id}.tmp"));
 
-        // Backup filename: backup_20251108_143022.json.enc
-        let backup_path = self.backup_dir.join(format!("{}.json.enc", backup_id));
-
-        // Serialize all tables to JSON
-        let backup_data = self.export_database(conn)?;
-
-        // Encrypt the backup data
-        let encrypted_data = crate::crypto::encrypt_bytes(&backup_data, dek)
-            .map_err(|e| BackupError::Encryption(e.to_string()))?;
-
-        // Create checksum for integrity verification
-        let checksum = self.calculate_checksum(&encrypted_data);
-
-        // Create metadata
-        let metadata = BackupMetadata {
-            created_at: chrono::Utc::now().to_rfc3339(),
-            schema_version,
-            app_version: env!("CARGO_PKG_VERSION").to_string(),
-            size_bytes: encrypted_data.len() as u64,
-            checksum: checksum.clone(),
-            description: description.map(|s| s.to_string()),
-            encrypted: true,
-        };
-
-        // Create backup object
         let backup = Backup {
-            metadata,
+            metadata: BackupMetadata {
+                created_at: chrono::Utc::now().to_rfc3339(),
+                schema_version,
+                app_version: env!("CARGO_PKG_VERSION").to_string(),
+                size_bytes: encrypted_data.len() as u64,
+                checksum: checksum(&encrypted_data),
+                description: description.map(str::to_string),
+                encrypted: true,
+            },
             data: encrypted_data,
         };
+        let encoded = serde_json::to_vec(&backup)?;
 
-        // Write to disk
-        fs::write(&backup_path, serde_json::to_vec(&backup)?)?;
-
-        log::info!(
-            "[backup] Created backup: {} ({} bytes)",
-            backup_id,
-            backup.metadata.size_bytes
-        );
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temporary_path)?;
+        if let Err(error) = (|| -> Result<(), std::io::Error> {
+            file.write_all(&encoded)?;
+            file.sync_all()?;
+            drop(file);
+            fs::rename(&temporary_path, &backup_path)?;
+            sync_directory(&self.backup_dir)?;
+            Ok(())
+        })() {
+            let _ = fs::remove_file(&temporary_path);
+            return Err(BackupError::Io(error));
+        }
 
         Ok(backup_id)
     }
 
-    /// Restore database from encrypted backup
     pub fn restore_backup(
         &self,
         backup_id: &str,
         conn: &mut Connection,
         dek: &[u8],
     ) -> Result<(), BackupError> {
-        let backup_path = self.backup_dir.join(format!("{}.json.enc", backup_id));
-
-        // Check if backup exists
-        if !backup_path.exists() {
-            return Err(BackupError::BackupNotFound);
+        if dek.len() != 32 {
+            return Err(BackupError::Encryption(
+                "A 32-byte data-encryption key is required".into(),
+            ));
         }
 
-        // Read backup file
-        let backup_bytes = fs::read(&backup_path)?;
-        let backup: Backup =
-            serde_json::from_slice(&backup_bytes).map_err(|_| BackupError::BackupCorrupted)?;
-
-        // Verify checksum
-        let calculated_checksum = self.calculate_checksum(&backup.data);
-        if calculated_checksum != backup.metadata.checksum {
+        let backup = self.read_backup(backup_id)?;
+        if !backup.metadata.encrypted || backup.metadata.size_bytes != backup.data.len() as u64 {
+            return Err(BackupError::BackupCorrupted);
+        }
+        if checksum(&backup.data) != backup.metadata.checksum {
             return Err(BackupError::BackupCorrupted);
         }
 
-        // Decrypt backup data
-        let decrypted_data = crate::crypto::decrypt_bytes(&backup.data, dek)
-            .map_err(|e| BackupError::Encryption(e.to_string()))?;
+        let current_version = current_schema_version(conn);
+        if backup.metadata.schema_version > current_version {
+            return Err(BackupError::InvalidBackup(format!(
+                "Backup schema {} is newer than database schema {}",
+                backup.metadata.schema_version, current_version
+            )));
+        }
 
-        // Parse JSON
-        let backup_json: serde_json::Value = serde_json::from_slice(&decrypted_data)?;
+        let plaintext = crate::crypto::decrypt_bytes(&backup.data, dek)
+            .map_err(|error| BackupError::Encryption(error.to_string()))?;
+        let payload: Value = serde_json::from_slice(&plaintext)?;
+        self.validate_payload(conn, &payload)?;
 
-        // Create backup of current database before restore
-        let _pre_restore_backup = self.create_backup(conn, dek, Some("pre_restore_backup"))?;
+        // A unique, verified safety snapshot is created before mutation.
+        let _safety_backup = self.create_backup(conn, dek, Some("pre_restore_backup"))?;
 
-        // Perform clear and restore in a single atomic transaction to prevent data loss
-        let tx = conn.transaction().map_err(|e| {
-            BackupError::RestoreFailed(format!("Failed to start transaction: {}", e))
-        })?;
+        let tx = conn
+            .transaction()
+            .map_err(|error| BackupError::RestoreFailed(error.to_string()))?;
+        tx.execute_batch("PRAGMA defer_foreign_keys = ON;")?;
+        self.clear_database_tx(&tx, &payload)?;
+        self.import_database_tx(&tx, &payload)?;
 
-        // Clear current database (inside transaction)
-        self.clear_database_tx(&tx)?;
+        let has_fk_violation = {
+            let mut statement = tx.prepare("PRAGMA foreign_key_check")?;
+            let mut rows = statement.query([])?;
+            rows.next()?.is_some()
+        };
+        if has_fk_violation {
+            return Err(BackupError::RestoreFailed(
+                "Restored data violates foreign-key constraints".into(),
+            ));
+        }
 
-        // Restore data from backup (inside transaction, without creating a nested tx)
-        self.import_database_tx(&tx, &backup_json)?;
-
-        // Commit the transaction atomically
-        tx.commit().map_err(|e| {
-            BackupError::RestoreFailed(format!("Failed to commit restore transaction: {}", e))
-        })?;
-
-        log::info!("[backup] Restored backup: {}", backup_id);
-
-        Ok(())
+        tx.commit()
+            .map_err(|error| BackupError::RestoreFailed(error.to_string()))
     }
 
-    /// List all available backups
     pub fn list_backups(&self) -> Result<Vec<(String, BackupMetadata)>, BackupError> {
         let mut backups = Vec::new();
-
-        // Read backup directory
         for entry in fs::read_dir(&self.backup_dir)? {
             let entry = entry?;
             let path = entry.path();
-
-            // Only process .enc files
-            if path.extension().and_then(|s| s.to_str()) == Some("enc") {
-                if let Ok(bytes) = fs::read(&path) {
-                    if let Ok(backup) = serde_json::from_slice::<Backup>(&bytes) {
-                        let backup_id = path
-                            .file_stem()
-                            .and_then(|s| s.to_str())
-                            .unwrap_or("unknown")
-                            .to_string();
-
-                        backups.push((backup_id, backup.metadata));
-                    }
-                }
+            if !path.is_file() {
+                continue;
             }
+            let Some(backup_id) = path
+                .file_name()
+                .and_then(|name| name.to_str())
+                .and_then(|name| name.strip_suffix(BACKUP_SUFFIX))
+            else {
+                continue;
+            };
+            if self.validated_backup_path(backup_id).is_err() {
+                continue;
+            }
+
+            let bytes = fs::read(&path)?;
+            let backup: Backup =
+                serde_json::from_slice(&bytes).map_err(|_| BackupError::BackupCorrupted)?;
+            backups.push((backup_id.to_string(), backup.metadata));
         }
-
-        // Sort by creation date (newest first)
-        backups.sort_by(|a, b| b.1.created_at.cmp(&a.1.created_at));
-
+        backups.sort_by(|left, right| right.1.created_at.cmp(&left.1.created_at));
         Ok(backups)
     }
 
-    /// Delete a backup file
     pub fn delete_backup(&self, backup_id: &str) -> Result<(), BackupError> {
-        let backup_path = self.backup_dir.join(format!("{}.json.enc", backup_id));
-
-        if backup_path.exists() {
-            fs::remove_file(&backup_path)?;
-            log::info!("[backup] Deleted backup: {}", backup_id);
+        let path = self.validated_backup_path(backup_id)?;
+        if !path.is_file() {
+            return Err(BackupError::BackupNotFound);
         }
-
+        fs::remove_file(path)?;
+        sync_directory(&self.backup_dir)?;
         Ok(())
     }
 
-    /// Get backup details
     pub fn get_backup_details(&self, backup_id: &str) -> Result<BackupMetadata, BackupError> {
-        let backups = self.list_backups()?;
-
-        backups
-            .into_iter()
-            .find(|(id, _)| id == backup_id)
-            .map(|(_, metadata)| metadata)
-            .ok_or(BackupError::BackupNotFound)
+        Ok(self.read_backup(backup_id)?.metadata)
     }
 
-    // Private helper methods
+    fn read_backup(&self, backup_id: &str) -> Result<Backup, BackupError> {
+        let path = self.validated_backup_path(backup_id)?;
+        if !path.is_file() {
+            return Err(BackupError::BackupNotFound);
+        }
+        let bytes = fs::read(path)?;
+        serde_json::from_slice(&bytes).map_err(|_| BackupError::BackupCorrupted)
+    }
 
-    /// Export database to JSON format
     fn export_database(&self, conn: &Connection) -> Result<Vec<u8>, BackupError> {
-        let mut export = serde_json::json!({
-            "version": 1,
-            "tables": {}
-        });
-
-        // Tables to backup (all social-related tables)
-        let tables = vec![
-            "social_account",
-            "social_post",
-            "social_category",
-            "social_post_category",
-            "social_sync_history",
-            "social_auto_rule",
-            "social_auto_rule_action",
-            "social_focus_mode",
-        ];
-
-        for table in tables {
-            let mut stmt = conn.prepare(&format!("SELECT * FROM {}", table))?;
-            let col_count = stmt.column_count();
-            let col_names: Vec<String> = (0..col_count)
-                .map(|i| stmt.column_name(i).unwrap_or("unknown").to_string())
-                .collect();
-
-            let rows = stmt.query_map([], |row| {
-                let mut obj = serde_json::Map::new();
-                for (i, col_name) in col_names.iter().enumerate() {
-                    // Try to get value as different types
-                    if let Ok(val) = row.get::<_, String>(i) {
-                        obj.insert(col_name.clone(), serde_json::json!(val));
-                    } else if let Ok(val) = row.get::<_, i64>(i) {
-                        obj.insert(col_name.clone(), serde_json::json!(val));
-                    } else if let Ok(val) = row.get::<_, f64>(i) {
-                        obj.insert(col_name.clone(), serde_json::json!(val));
-                    } else {
-                        obj.insert(col_name.clone(), serde_json::Value::Null);
-                    }
-                }
-                Ok(serde_json::Value::Object(obj))
-            })?;
-
-            let mut table_data = Vec::new();
-            for data in rows.flatten() {
-                table_data.push(data);
+        let mut tables = Map::new();
+        for table in BACKUP_TABLES {
+            if !table_exists(conn, table)? {
+                continue;
             }
+            let columns = table_columns(conn, table)?;
+            let sql = format!("SELECT * FROM {}", quote_identifier(table));
+            let mut statement = conn.prepare(&sql)?;
+            let mut rows = statement.query([])?;
+            let mut exported_rows = Vec::new();
 
-            export["tables"][table] = serde_json::json!(table_data);
+            while let Some(row) = rows.next()? {
+                let mut exported = Map::new();
+                for (index, column) in columns.iter().enumerate() {
+                    exported.insert(column.clone(), encode_value(row.get_ref(index)?)?);
+                }
+                exported_rows.push(Value::Object(exported));
+            }
+            tables.insert((*table).to_string(), Value::Array(exported_rows));
         }
 
-        Ok(serde_json::to_vec(&export)?)
+        serde_json::to_vec(&json!({
+            "format_version": BACKUP_FORMAT_VERSION,
+            "tables": tables,
+        }))
+        .map_err(BackupError::from)
     }
 
-    /// Clear all social-related tables within a transaction
-    fn clear_database_tx(&self, tx: &rusqlite::Transaction) -> Result<(), BackupError> {
-        let tables = vec![
-            "social_post_category", // Must delete junction table first
-            "social_auto_rule_action",
-            "social_auto_rule",
-            "social_post",
-            "social_category",
-            "social_focus_mode",
-            "social_sync_history",
-            "social_account",
-        ];
-
-        for table in tables {
-            tx.execute(&format!("DELETE FROM {}", table), [])?;
+    fn validate_payload(&self, conn: &Connection, payload: &Value) -> Result<(), BackupError> {
+        let version = payload
+            .get("format_version")
+            .or_else(|| payload.get("version"))
+            .and_then(Value::as_u64)
+            .ok_or_else(|| BackupError::InvalidBackup("Missing backup format version".into()))?;
+        if version == 0 || version > BACKUP_FORMAT_VERSION {
+            return Err(BackupError::InvalidBackup(format!(
+                "Unsupported backup format version: {version}"
+            )));
         }
 
+        let tables = payload
+            .get("tables")
+            .and_then(Value::as_object)
+            .ok_or_else(|| BackupError::InvalidBackup("Missing tables object".into()))?;
+        if tables.is_empty() {
+            return Err(BackupError::InvalidBackup(
+                "Backup contains no tables".into(),
+            ));
+        }
+
+        for (table, rows) in tables {
+            if !BACKUP_TABLES.contains(&table.as_str()) || !table_exists(conn, table)? {
+                return Err(BackupError::InvalidBackup(format!(
+                    "Unknown or unavailable table: {table}"
+                )));
+            }
+            let allowed_columns: HashSet<String> =
+                table_columns(conn, table)?.into_iter().collect();
+            let rows = rows
+                .as_array()
+                .ok_or_else(|| BackupError::InvalidBackup(format!("Invalid rows for {table}")))?;
+            for row in rows {
+                let row = row.as_object().ok_or_else(|| {
+                    BackupError::InvalidBackup(format!("Invalid row for {table}"))
+                })?;
+                if row.is_empty() || row.keys().any(|column| !allowed_columns.contains(column)) {
+                    return Err(BackupError::InvalidBackup(format!(
+                        "Invalid columns for {table}"
+                    )));
+                }
+                for value in row.values() {
+                    decode_value(value)?;
+                }
+            }
+        }
         Ok(())
     }
 
-    /// Import database from JSON format within a transaction
-    /// CRITICAL: Uses owned rusqlite::types::Value to avoid dangling references
-    fn import_database_tx(
-        &self,
-        tx: &rusqlite::Transaction,
-        data: &serde_json::Value,
-    ) -> Result<(), BackupError> {
-        use rusqlite::types::Value as SqlValue;
-
-        let tables = data
+    fn clear_database_tx(&self, tx: &Transaction<'_>, payload: &Value) -> Result<(), BackupError> {
+        let tables = payload
             .get("tables")
-            .ok_or(BackupError::InvalidBackup("No tables found".to_string()))?;
+            .and_then(Value::as_object)
+            .ok_or_else(|| BackupError::InvalidBackup("Missing tables object".into()))?;
+        for table in DELETE_ORDER {
+            if tables.contains_key(*table) {
+                tx.execute(&format!("DELETE FROM {}", quote_identifier(table)), [])?;
+            }
+        }
+        Ok(())
+    }
 
-        let tables_obj = tables.as_object().ok_or(BackupError::InvalidBackup(
-            "Invalid tables object".to_string(),
-        ))?;
+    fn import_database_tx(&self, tx: &Transaction<'_>, payload: &Value) -> Result<(), BackupError> {
+        let tables = payload
+            .get("tables")
+            .and_then(Value::as_object)
+            .ok_or_else(|| BackupError::InvalidBackup("Missing tables object".into()))?;
 
-        // Import each table
-        for (table_name, rows_val) in tables_obj {
-            let rows = rows_val
-                .as_array()
-                .ok_or(BackupError::InvalidBackup("Invalid rows".to_string()))?;
-
+        for table in BACKUP_TABLES {
+            let Some(rows) = tables.get(*table).and_then(Value::as_array) else {
+                continue;
+            };
             for row in rows {
-                let obj = row
-                    .as_object()
-                    .ok_or(BackupError::InvalidBackup("Invalid row object".to_string()))?;
-
-                let cols: Vec<&String> = obj.keys().collect();
-                let col_names = cols
+                let row = row.as_object().ok_or_else(|| {
+                    BackupError::InvalidBackup(format!("Invalid row for {table}"))
+                })?;
+                let columns: Vec<&String> = row.keys().collect();
+                let column_sql = columns
                     .iter()
-                    .map(|s| s.as_str())
+                    .map(|column| quote_identifier(column))
                     .collect::<Vec<_>>()
                     .join(",");
-                let placeholders = (0..cols.len()).map(|_| "?").collect::<Vec<_>>().join(",");
-
-                let query = format!(
-                    "INSERT INTO {} ({}) VALUES ({})",
-                    table_name, col_names, placeholders
+                let placeholders = (1..=columns.len())
+                    .map(|index| format!("?{index}"))
+                    .collect::<Vec<_>>()
+                    .join(",");
+                let sql = format!(
+                    "INSERT INTO {} ({column_sql}) VALUES ({placeholders})",
+                    quote_identifier(table)
                 );
-
-                let mut stmt = tx
-                    .prepare(&query)
-                    .map_err(|e| BackupError::RestoreFailed(e.to_string()))?;
-
-                // Build owned SQLite values to ensure lifetimes are valid and no dangling references
-                let mut values: Vec<SqlValue> = Vec::with_capacity(cols.len());
-                for col in &cols {
-                    let val = &obj[*col];
-                    let sql_val = match val {
-                        serde_json::Value::String(s) => SqlValue::from(s.clone()),
-                        serde_json::Value::Number(n) => {
-                            // Preserve numeric type precision
-                            if let Some(i) = n.as_i64() {
-                                SqlValue::from(i)
-                            } else if let Some(f) = n.as_f64() {
-                                SqlValue::from(f)
-                            } else if let Some(u) = n.as_u64() {
-                                // Coerce u64 to i64 if within range; otherwise, store as text
-                                if u <= i64::MAX as u64 {
-                                    SqlValue::from(u as i64)
-                                } else {
-                                    SqlValue::from(u.to_string())
-                                }
-                            } else {
-                                SqlValue::Null
-                            }
-                        }
-                        serde_json::Value::Bool(b) => SqlValue::from(if *b { 1i64 } else { 0i64 }),
-                        serde_json::Value::Null => SqlValue::Null,
-                        // For arrays/objects, store JSON string representation
-                        other => SqlValue::from(other.to_string()),
-                    };
-                    values.push(sql_val);
-                }
-
-                stmt.execute(rusqlite::params_from_iter(values.iter()))
-                    .map_err(|e| BackupError::RestoreFailed(e.to_string()))?;
+                let values = columns
+                    .iter()
+                    .map(|column| decode_value(&row[*column]))
+                    .collect::<Result<Vec<_>, _>>()?;
+                let mut statement = tx
+                    .prepare_cached(&sql)
+                    .map_err(|error| BackupError::RestoreFailed(format!("{table}: {error}")))?;
+                statement
+                    .execute(rusqlite::params_from_iter(values.iter()))
+                    .map_err(|error| BackupError::RestoreFailed(format!("{table}: {error}")))?;
             }
         }
-
         Ok(())
     }
+}
 
-    /// Calculate SHA256 checksum for integrity verification
-    /// Uses cryptographic SHA-256 hash instead of non-cryptographic hasher
-    /// to ensure backup integrity can be verified and tampering detected
-    fn calculate_checksum(&self, data: &[u8]) -> String {
-        use sha2::{Digest, Sha256};
+fn current_schema_version(conn: &Connection) -> i64 {
+    conn.query_row("SELECT MAX(version) FROM schema_version", [], |row| {
+        row.get::<_, Option<i64>>(0)
+    })
+    .ok()
+    .flatten()
+    .unwrap_or(0)
+}
 
-        let mut hasher = Sha256::new();
-        hasher.update(data);
-        format!("{:x}", hasher.finalize())
+fn table_exists(conn: &Connection, table: &str) -> Result<bool, BackupError> {
+    Ok(conn.query_row(
+        "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?1)",
+        [table],
+        |row| row.get::<_, i64>(0),
+    )? != 0)
+}
+
+fn table_columns(conn: &Connection, table: &str) -> Result<Vec<String>, BackupError> {
+    let mut statement = conn.prepare(&format!("PRAGMA table_info({})", quote_identifier(table)))?;
+    let rows = statement.query_map([], |row| row.get::<_, String>(1))?;
+    rows.collect::<Result<Vec<_>, _>>()
+        .map_err(BackupError::from)
+}
+
+fn quote_identifier(identifier: &str) -> String {
+    format!("\"{}\"", identifier.replace('"', "\"\""))
+}
+
+fn encode_value(value: ValueRef<'_>) -> Result<Value, BackupError> {
+    Ok(match value {
+        ValueRef::Null => json!({ "type": "null" }),
+        ValueRef::Integer(value) => json!({ "type": "integer", "value": value }),
+        ValueRef::Real(value) => json!({ "type": "real", "value": value }),
+        ValueRef::Text(value) => json!({
+            "type": "text",
+            "value": std::str::from_utf8(value).map_err(|_| {
+                BackupError::InvalidBackup("Database contains invalid UTF-8 text".into())
+            })?,
+        }),
+        ValueRef::Blob(value) => json!({
+            "type": "blob",
+            "value": base64::engine::general_purpose::STANDARD.encode(value),
+        }),
+    })
+}
+
+fn decode_value(value: &Value) -> Result<rusqlite::types::Value, BackupError> {
+    use rusqlite::types::Value as SqlValue;
+
+    if let Some(kind) = value.get("type").and_then(Value::as_str) {
+        return match kind {
+            "null" => Ok(SqlValue::Null),
+            "integer" => value
+                .get("value")
+                .and_then(Value::as_i64)
+                .map(SqlValue::Integer)
+                .ok_or_else(|| BackupError::InvalidBackup("Invalid integer value".into())),
+            "real" => value
+                .get("value")
+                .and_then(Value::as_f64)
+                .map(SqlValue::Real)
+                .ok_or_else(|| BackupError::InvalidBackup("Invalid real value".into())),
+            "text" => value
+                .get("value")
+                .and_then(Value::as_str)
+                .map(|value| SqlValue::Text(value.to_string()))
+                .ok_or_else(|| BackupError::InvalidBackup("Invalid text value".into())),
+            "blob" => {
+                let encoded = value
+                    .get("value")
+                    .and_then(Value::as_str)
+                    .ok_or_else(|| BackupError::InvalidBackup("Invalid blob value".into()))?;
+                let decoded = base64::engine::general_purpose::STANDARD
+                    .decode(encoded)
+                    .map_err(|_| BackupError::InvalidBackup("Invalid base64 blob".into()))?;
+                Ok(SqlValue::Blob(decoded))
+            }
+            _ => Err(BackupError::InvalidBackup(format!(
+                "Unknown value type: {kind}"
+            ))),
+        };
     }
+
+    // Backward-compatible decoding for version-1 primitive JSON backups.
+    Ok(match value {
+        Value::Null => SqlValue::Null,
+        Value::Bool(value) => SqlValue::Integer(if *value { 1 } else { 0 }),
+        Value::String(value) => SqlValue::Text(value.clone()),
+        Value::Number(value) => {
+            if let Some(integer) = value.as_i64() {
+                SqlValue::Integer(integer)
+            } else if let Some(real) = value.as_f64() {
+                SqlValue::Real(real)
+            } else {
+                return Err(BackupError::InvalidBackup("Unsupported number".into()));
+            }
+        }
+        other => SqlValue::Text(other.to_string()),
+    })
+}
+
+fn checksum(data: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    hex::encode(Sha256::digest(data))
+}
+
+#[cfg(unix)]
+fn sync_directory(path: &Path) -> std::io::Result<()> {
+    fs::File::open(path)?.sync_all()
+}
+
+#[cfg(windows)]
+fn sync_directory(path: &Path) -> std::io::Result<()> {
+    use std::os::windows::fs::OpenOptionsExt;
+
+    const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
+    OpenOptions::new()
+        .read(true)
+        .custom_flags(FILE_FLAG_BACKUP_SEMANTICS)
+        .open(path)?
+        .sync_all()
+}
+
+#[cfg(not(any(unix, windows)))]
+fn sync_directory(_path: &Path) -> std::io::Result<()> {
+    Ok(())
 }
 
 #[cfg(test)]
@@ -431,38 +535,214 @@ mod tests {
     use super::*;
     use tempfile::TempDir;
 
-    fn setup_backup_service() -> (BackupService, TempDir) {
-        let dir = TempDir::new().expect("Failed to create temp dir");
-        let service = BackupService::new(dir.path()).expect("Failed to create backup service");
-        (service, dir)
+    fn service() -> (BackupService, TempDir) {
+        let directory = TempDir::new().unwrap();
+        let service = BackupService::new(directory.path()).unwrap();
+        (service, directory)
     }
 
-    #[test]
-    fn test_backup_service_creation() {
-        let (service, _dir) = setup_backup_service();
-        assert!(service.backup_dir.exists());
-    }
-
-    #[test]
-    fn test_list_backups_empty() {
-        let (service, _dir) = setup_backup_service();
-        let backups = service.list_backups().expect("Failed to list backups");
-        assert_eq!(backups.len(), 0);
-    }
-
-    #[test]
-    fn test_backup_metadata_structure() {
-        let metadata = BackupMetadata {
-            created_at: "2025-11-08T12:00:00Z".to_string(),
-            schema_version: 8,
-            app_version: "1.0.0".to_string(),
-            size_bytes: 1024,
-            checksum: "abc123".to_string(),
-            description: Some("Test backup".to_string()),
+    fn metadata() -> BackupMetadata {
+        BackupMetadata {
+            created_at: "2026-07-28T00:00:00Z".into(),
+            schema_version: 1,
+            app_version: "1.1.0".into(),
+            size_bytes: 3,
+            checksum: checksum(&[1, 2, 3]),
+            description: Some("test".into()),
             encrypted: true,
-        };
+        }
+    }
 
-        assert_eq!(metadata.schema_version, 8);
-        assert!(metadata.encrypted);
+    fn sample_connection() -> Connection {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "
+            CREATE TABLE schema_version (version INTEGER NOT NULL);
+            INSERT INTO schema_version(version) VALUES (1);
+            CREATE TABLE social_account (
+                id TEXT PRIMARY KEY,
+                display_name TEXT NOT NULL,
+                avatar BLOB NOT NULL,
+                score INTEGER NOT NULL,
+                ratio REAL NOT NULL,
+                note TEXT
+            );
+            ",
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO social_account(id, display_name, avatar, score, ratio, note)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            rusqlite::params![
+                "account-1",
+                "Original",
+                vec![0_u8, 1, 2, 255],
+                42_i64,
+                1.5_f64,
+                Option::<String>::None
+            ],
+        )
+        .unwrap();
+        conn
+    }
+
+    #[test]
+    fn rejects_traversal_and_separator_ids() {
+        let (service, _directory) = service();
+        for invalid in ["", "../escape", "a/b", "a\\b", "backup.json"] {
+            assert!(matches!(
+                service.validated_backup_path(invalid),
+                Err(BackupError::InvalidBackup(_))
+            ));
+        }
+    }
+
+    #[test]
+    fn list_details_and_delete_round_trip_exact_id() {
+        let (service, _directory) = service();
+        let id = "backup_01JTESTROUNDTRIP";
+        let backup = Backup {
+            metadata: metadata(),
+            data: vec![1, 2, 3],
+        };
+        fs::write(
+            service.validated_backup_path(id).unwrap(),
+            serde_json::to_vec(&backup).unwrap(),
+        )
+        .unwrap();
+
+        let listed = service.list_backups().unwrap();
+        assert_eq!(listed.len(), 1);
+        assert_eq!(listed[0].0, id);
+        assert_eq!(service.get_backup_details(id).unwrap().app_version, "1.1.0");
+        service.delete_backup(id).unwrap();
+        assert!(matches!(
+            service.get_backup_details(id),
+            Err(BackupError::BackupNotFound)
+        ));
+    }
+
+    #[test]
+    fn invalid_foreign_filename_is_skipped() {
+        let (service, directory) = service();
+        fs::write(directory.path().join("legacy.backup.json.enc"), b"not-json").unwrap();
+
+        let id = "backup_valid";
+        let backup = Backup {
+            metadata: metadata(),
+            data: vec![1, 2, 3],
+        };
+        fs::write(
+            service.validated_backup_path(id).unwrap(),
+            serde_json::to_vec(&backup).unwrap(),
+        )
+        .unwrap();
+
+        let listed = service.list_backups().unwrap();
+        assert_eq!(listed.len(), 1);
+        assert_eq!(listed[0].0, id);
+    }
+
+    #[test]
+    fn corrupted_matching_file_is_reported_not_hidden() {
+        let (service, _directory) = service();
+        fs::write(
+            service.validated_backup_path("backup_corrupt").unwrap(),
+            b"not-json",
+        )
+        .unwrap();
+        assert!(matches!(
+            service.list_backups(),
+            Err(BackupError::BackupCorrupted)
+        ));
+    }
+
+    #[test]
+    fn encrypted_create_mutate_restore_round_trip_preserves_typed_values() {
+        let (service, _directory) = service();
+        let mut conn = sample_connection();
+        let dek = [7_u8; 32];
+        let backup_id = service
+            .create_backup(&conn, &dek, Some("round-trip"))
+            .unwrap();
+
+        conn.execute(
+            "UPDATE social_account
+             SET display_name = 'Mutated', avatar = X'AA', score = -1, ratio = 9.0, note = 'changed'
+             WHERE id = 'account-1'",
+            [],
+        )
+        .unwrap();
+        service.restore_backup(&backup_id, &mut conn, &dek).unwrap();
+
+        let restored = conn
+            .query_row(
+                "SELECT display_name, avatar, score, ratio, note
+                 FROM social_account WHERE id = 'account-1'",
+                [],
+                |row| {
+                    Ok((
+                        row.get::<_, String>(0)?,
+                        row.get::<_, Vec<u8>>(1)?,
+                        row.get::<_, i64>(2)?,
+                        row.get::<_, f64>(3)?,
+                        row.get::<_, Option<String>>(4)?,
+                    ))
+                },
+            )
+            .unwrap();
+        assert_eq!(restored.0, "Original");
+        assert_eq!(restored.1, vec![0_u8, 1, 2, 255]);
+        assert_eq!(restored.2, 42);
+        assert_eq!(restored.3, 1.5);
+        assert_eq!(restored.4, None);
+    }
+
+    #[test]
+    fn tampered_ciphertext_checksum_is_rejected() {
+        let (service, _directory) = service();
+        let mut conn = sample_connection();
+        let dek = [8_u8; 32];
+        let backup_id = service.create_backup(&conn, &dek, None).unwrap();
+        let path = service.validated_backup_path(&backup_id).unwrap();
+        let mut backup: Backup = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        backup.data[0] ^= 1;
+        fs::write(path, serde_json::to_vec(&backup).unwrap()).unwrap();
+
+        assert!(matches!(
+            service.restore_backup(&backup_id, &mut conn, &dek),
+            Err(BackupError::BackupCorrupted)
+        ));
+    }
+
+    #[test]
+    fn newer_database_schema_is_rejected_before_mutation() {
+        let (service, _directory) = service();
+        let mut conn = sample_connection();
+        let dek = [9_u8; 32];
+        let backup_id = service.create_backup(&conn, &dek, None).unwrap();
+        let path = service.validated_backup_path(&backup_id).unwrap();
+        let mut backup: Backup = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        backup.metadata.schema_version = 2;
+        fs::write(path, serde_json::to_vec(&backup).unwrap()).unwrap();
+
+        assert!(matches!(
+            service.restore_backup(&backup_id, &mut conn, &dek),
+            Err(BackupError::InvalidBackup(_))
+        ));
+    }
+
+    #[test]
+    fn future_backup_format_is_rejected() {
+        let (service, _directory) = service();
+        let conn = sample_connection();
+        let payload = json!({
+            "format_version": BACKUP_FORMAT_VERSION + 1,
+            "tables": { "social_account": [] },
+        });
+        assert!(matches!(
+            service.validate_payload(&conn, &payload),
+            Err(BackupError::InvalidBackup(_))
+        ));
     }
 }

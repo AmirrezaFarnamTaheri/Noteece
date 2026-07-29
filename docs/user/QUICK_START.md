@@ -437,10 +437,10 @@ Unfortunately, **there's no way to recover a forgotten password**. This is by de
 Your password is **never stored anywhere**. When you unlock:
 
 1. You enter your password
-2. It derives an encryption key (using Argon2id)
+2. It derives an encryption key (using PBKDF2-HMAC-SHA512 with 256,000 iterations)
 3. Key unlocks your vault
 4. Password is discarded from memory
-5. When you lock the app, keys are wiped
+5. When you lock the app, keys are no longer used — note that keys are **not** explicitly wiped from memory (the app does not currently zeroize key material), so they may persist in freed memory until the process exits
 
 ---
 

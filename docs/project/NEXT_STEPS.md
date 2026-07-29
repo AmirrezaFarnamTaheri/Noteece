@@ -1,6 +1,13 @@
 # Next Steps & Future Roadmap
 
-This document outlines a comprehensive vision for the future of **Noteece**, expanding on its current "Production Ready" foundation. It serves as a guide for developers, designers, and product managers to take the project to the next level.
+This document outlines a comprehensive long-range vision for **Noteece**. It is a
+guide for developers, designers, and product managers, not a statement of current
+capability.
+
+> **Noteece is not production ready.** See [`STATUS.md`](../../STATUS.md) (root)
+> and [`docs/audit_reports/FORENSIC_AUDIT_2026-07-26.md`](../audit_reports/FORENSIC_AUDIT_2026-07-26.md).
+> Near-term, blocking work is tracked in [`NEXT_STEPS.md`](../../NEXT_STEPS.md) §0;
+> nothing below should be started ahead of it.
 
 ---
 

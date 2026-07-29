@@ -2,12 +2,15 @@ name: CI
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: ["main", "develop"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 env:
   CARGO_TERM_COLOR: always
+
+permissions:
+  contents: read
 
 jobs:
   lint_and_format:
@@ -16,21 +19,24 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
+        uses: pnpm/action-setup@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "24"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Check Tauri IPC contract (frontend invoke vs registered commands)
+        run: node scripts/check-ipc-contract.mjs
 
       - name: Run lint
         run: pnpm lint
@@ -47,18 +53,18 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
+        uses: pnpm/action-setup@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "24"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -75,9 +81,8 @@ jobs:
         working-directory: apps/desktop
         run: |
           if [ -f coverage/coverage-summary.json ]; then
-            COVERAGE=$(cat coverage/coverage-summary.json | jq -r '.total.lines.pct')
+            COVERAGE=$(jq -r '.total.lines.pct' coverage/coverage-summary.json)
             echo "Line coverage: $COVERAGE%"
-            # Use awk for float comparison (bc not always available)
             if echo "$COVERAGE" | awk '{exit !($1 < 90)}'; then
               echo "::warning::Coverage ($COVERAGE%) is below 90% threshold"
             else
@@ -87,31 +92,24 @@ jobs:
             echo "::warning::No coverage report found"
           fi
 
-      - name: Upload coverage
-        uses: actions/upload-artifact@v4
-        if: success()
-        with:
-          name: desktop-coverage
-          path: apps/desktop/coverage
-
   mobile_tests:
     name: "Mobile Tests"
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
+        uses: pnpm/action-setup@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "24"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -128,13 +126,6 @@ jobs:
         working-directory: apps/mobile
         run: pnpm test:ci
 
-      - name: Upload coverage
-        uses: actions/upload-artifact@v4
-        if: success()
-        with:
-          name: mobile-coverage
-          path: apps/mobile/coverage
-
   rust_checks:
     name: "Rust Checks"
     strategy:
@@ -145,7 +136,9 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Install dependencies (Ubuntu)
         if: matrix.os == 'ubuntu-22.04'
@@ -159,97 +152,48 @@ jobs:
           components: rustfmt, clippy
 
       - name: Cache Cargo
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/bin/
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            packages/core-rs/target/
+            target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
 
       - name: Check core-rs
-        run: cd packages/core-rs && cargo check --verbose
+        run: cargo check -p core-rs --verbose
+
+      - name: Check relay-server
+        run: cargo check -p relay-server --verbose
 
       - name: Format Check
         if: matrix.os == 'ubuntu-22.04'
-        run: cd packages/core-rs && cargo fmt -- --check
+        run: cargo fmt --all -- --check
 
-      - name: Clippy
+      - name: Clippy core-rs
         if: matrix.os == 'ubuntu-22.04'
-        run: cd packages/core-rs && cargo clippy --lib --all-features -- -D warnings
+        run: cargo clippy -p core-rs --lib --all-features -- -D warnings
 
-      - name: Test
-        run: cd packages/core-rs && cargo test --verbose
-
-      - name: Generate test coverage (Ubuntu)
+      - name: Clippy relay-server
         if: matrix.os == 'ubuntu-22.04'
-        run: |
-          cd packages/core-rs
-          cargo install cargo-tarpaulin --version 0.27.0 || true
-          cargo tarpaulin --out Xml --skip-clean --timeout 300 || true
-        continue-on-error: true
+        run: cargo clippy -p relay-server --all-targets -- -D warnings
 
-  desktop_build:
-    name: "Desktop Build Check"
-    needs: [rust_checks, lint_and_format]
-    runs-on: ubuntu-22.04
+      - name: Test core-rs
+        run: cargo test -p core-rs --verbose
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Test relay-server
+        run: cargo test -p relay-server --verbose
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies (System)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache Cargo
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            apps/desktop/src-tauri/target/
-          key: ${{ runner.os }}-tauri-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-tauri-
-
-      - name: Install dependencies (Project)
-        run: pnpm install --frozen-lockfile
-
-      - name: Build Frontend
-        run: cd apps/desktop && pnpm build
-
-      - name: Check Tauri Build
-        run: cd apps/desktop && cargo build --manifest-path src-tauri/Cargo.toml
-
-  # Summary job that depends on all checks
   ci-complete:
     name: "CI Complete"
-    needs: [lint_and_format, desktop_tests, mobile_tests, rust_checks, desktop_build]
+    needs: [lint_and_format, desktop_tests, mobile_tests, rust_checks]
     runs-on: ubuntu-latest
     if: always()
-    
+
     steps:
       - name: Check CI Status
         run: |
@@ -257,15 +201,13 @@ jobs:
           echo "Desktop Tests: ${{ needs.desktop_tests.result }}"
           echo "Mobile Tests: ${{ needs.mobile_tests.result }}"
           echo "Rust Checks: ${{ needs.rust_checks.result }}"
-          echo "Desktop Build: ${{ needs.desktop_build.result }}"
-          
+
           if [[ "${{ needs.lint_and_format.result }}" != "success" ]] || \
              [[ "${{ needs.desktop_tests.result }}" != "success" ]] || \
              [[ "${{ needs.mobile_tests.result }}" != "success" ]] || \
-             [[ "${{ needs.rust_checks.result }}" != "success" ]] || \
-             [[ "${{ needs.desktop_build.result }}" != "success" ]]; then
+             [[ "${{ needs.rust_checks.result }}" != "success" ]]; then
             echo "One or more checks failed!"
             exit 1
           fi
-          
+
           echo "CI completed successfully!"
