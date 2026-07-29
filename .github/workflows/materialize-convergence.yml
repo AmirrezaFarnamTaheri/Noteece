@@ -49,7 +49,6 @@ jobs:
           const exact = new Map([
             ['@types/node', '26.1.2'],
             ['date-fns', '4.4.0'],
-            ['eslint-plugin-security', '4.0.1'],
           ]);
 
           function updatePackage(file) {
