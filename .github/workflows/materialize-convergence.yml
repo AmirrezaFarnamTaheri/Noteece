@@ -26,7 +26,7 @@ env:
 
 jobs:
   generate:
-    name: Generate, validate, and commit convergence state
+    name: Generate, commit, and validate convergence state
     if: >-
       github.event.pull_request.number == 152 &&
       github.event.pull_request.head.repo.full_name == github.repository
@@ -155,19 +155,17 @@ jobs:
               elif body.endswith('\n'):
                   body, ending = body[:-1], '\n'
               escaped = re.escape(name)
-              patterns = (
-                  re.compile(
-                      rf'^(?P<prefix>\s*{escaped}\s*=\s*\{{[^\n}}]*?\bversion\s*=\s*)'
-                      rf'(?P<quote>["\'])(?P<value>[^"\']+)(?P=quote)'
-                      rf'(?P<suffix>[^\n}}]*\}}\s*(?:#.*)?)$'
-                  ),
-                  re.compile(
-                      rf'^(?P<prefix>\s*{escaped}\s*=\s*)'
-                      rf'(?P<quote>["\'])(?P<value>[^"\']+)(?P=quote)'
-                      rf'(?P<suffix>\s*(?:#.*)?)$'
-                  ),
+              inline = re.compile(
+                  rf'^(?P<prefix>\s*{escaped}\s*=\s*\{{[^\n}}]*?\bversion\s*=\s*)'
+                  rf'(?P<quote>["\'])(?P<value>[^"\']+)(?P=quote)'
+                  rf'(?P<suffix>[^\n}}]*\}}\s*(?:#.*)?)$'
               )
-              match = patterns[0].match(body) or patterns[1].match(body)
+              simple = re.compile(
+                  rf'^(?P<prefix>\s*{escaped}\s*=\s*)'
+                  rf'(?P<quote>["\'])(?P<value>[^"\']+)(?P=quote)'
+                  rf'(?P<suffix>\s*(?:#.*)?)$'
+              )
+              match = inline.match(body) or simple.match(body)
               if not match:
                   return line, False
               return (
@@ -224,23 +222,13 @@ jobs:
               write(desktop_manifest, desktop_text)
               print('apps/desktop/src-tauri/Cargo.toml: added reqwest')
 
-          replace_once(
-              'packages/core-rs/src/crypto.rs',
-              'use pbkdf2::pbkdf2_hmac;\nuse rand::Rng;\nuse sha2::Sha512;',
-              'use pbkdf2::{pbkdf2_hmac, sha2::Sha512};\nuse rand::Rng;',
-          )
-          replace_once(
-              'packages/core-rs/src/sync/mobile_sync/protocol/handler.rs',
-              'ip_address: std::net::IpAddr::V4(*address),',
-              'ip_address: address.to_ip_addr(),',
-          )
+          replace_once('packages/core-rs/src/crypto.rs', 'use pbkdf2::pbkdf2_hmac;\nuse rand::Rng;\nuse sha2::Sha512;', 'use pbkdf2::{pbkdf2_hmac, sha2::Sha512};\nuse rand::Rng;')
+          replace_once('packages/core-rs/src/sync/mobile_sync/protocol/handler.rs', 'ip_address: std::net::IpAddr::V4(*address),', 'ip_address: address.to_ip_addr(),')
 
           import_path = Path('packages/core-rs/src/import.rs')
           import_text = import_path.read_text(encoding='utf-8')
           old_parse = 'let result = matter.parse(&content);'
-          new_parse = '''let result = matter
-                      .parse::<serde_json::Value>(&content)
-                      .map_err(|error| ImportError::GrayMatter(error.to_string()))?;'''
+          new_parse = 'let result = matter\n                    .parse::<serde_json::Value>(&content)\n                    .map_err(|error| ImportError::GrayMatter(error.to_string()))?;'
           count = import_text.count(old_parse)
           if count:
               write(import_path, import_text.replace(old_parse, new_parse))
@@ -248,75 +236,19 @@ jobs:
           elif import_text.count('.parse::<serde_json::Value>(&content)') != 2:
               raise SystemExit('packages/core-rs/src/import.rs: parser migration anchors not found')
 
-          replace_once(
-              'apps/desktop/src-tauri/src/commands/ai.rs',
-              '        for post in posts {',
-              '        let post_count = posts.len();\n        for post in &posts {',
-          )
-          replace_once(
-              'apps/desktop/src-tauri/src/commands/ai.rs',
-              'log::info!("[AI] Ingested {} social posts", posts.len());',
-              'log::info!("[AI] Ingested {} social posts", post_count);',
-          )
-          replace_once(
-              'apps/desktop/src-tauri/src/commands/runtime_contract.rs',
-              'use chrono::{NaiveDateTime, Utc};',
-              'use chrono::{DateTime, Utc};',
-          )
-          replace_once(
-              'apps/desktop/src-tauri/src/commands/runtime_contract.rs',
-              'use std::collections::{BTreeMap, HashMap};',
-              'use std::collections::BTreeMap;',
-          )
-          replace_once(
-              'apps/desktop/src-tauri/src/commands/runtime_contract.rs',
-              '''let date = NaiveDateTime::from_timestamp_opt(transaction.date, 0)
-                .map(|value| value.date().to_string())''',
-              '''let date = DateTime::from_timestamp(transaction.date, 0)
-                .map(|value| value.date_naive().to_string())''',
-          )
-          replace_once(
-              'apps/desktop/src-tauri/src/concurrency_tests.rs',
-              '    use std::path::Path;\n',
-              '',
-          )
-          replace_once(
-              'apps/desktop/src-tauri/src/commands/auth.rs',
-              'let mut attempts = LOGIN_ATTEMPTS.lock().map_err(|e| e.to_string())?;',
-              'let attempts = LOGIN_ATTEMPTS.lock().map_err(|e| e.to_string())?;',
-          )
-          replace_once(
-              'apps/desktop/src-tauri/src/commands/caldav.rs',
-              ''') -> Result<CalDavAccount, String> {
-    crate::with_db!(db, conn, {''',
-              ''') -> Result<CalDavAccount, String> {
-    let _ = &space_id;
-    crate::with_db!(db, conn, {''',
-          )
-          replace_once(
-              'apps/desktop/src-tauri/src/commands/caldav.rs',
-              ''') -> Result<Vec<CalDavAccount>, String> {
-    crate::with_db!(db, conn, {''',
-              ''') -> Result<Vec<CalDavAccount>, String> {
-    let _ = &space_id;
-    crate::with_db!(db, conn, {''',
-          )
-          replace_once(
-              'apps/desktop/src-tauri/src/commands/personal_modes.rs',
-              '''    crate::with_db!(db, conn, {
-        let note = core_rs::note::create_note(&conn, &space_id, &name, &instructions)
-            .map_err(|e| e.to_string())?;''',
-              '''    crate::with_db!(db, conn, {
-        let content = format!(
-            "# Ingredients\\n\\n{}\\n\\n# Instructions\\n\\n{}",
-            ingredients, instructions
-        );
-        let note = core_rs::note::create_note(&conn, &space_id, &name, &content)
-            .map_err(|e| e.to_string())?;''',
-          )
+          replace_once('apps/desktop/src-tauri/src/commands/ai.rs', '        for post in posts {', '        let post_count = posts.len();\n        for post in &posts {')
+          replace_once('apps/desktop/src-tauri/src/commands/ai.rs', 'log::info!("[AI] Ingested {} social posts", posts.len());', 'log::info!("[AI] Ingested {} social posts", post_count);')
+          replace_once('apps/desktop/src-tauri/src/commands/runtime_contract.rs', 'use chrono::{NaiveDateTime, Utc};', 'use chrono::{DateTime, Utc};')
+          replace_once('apps/desktop/src-tauri/src/commands/runtime_contract.rs', 'use std::collections::{BTreeMap, HashMap};', 'use std::collections::BTreeMap;')
+          replace_once('apps/desktop/src-tauri/src/commands/runtime_contract.rs', 'let date = NaiveDateTime::from_timestamp_opt(transaction.date, 0)\n                .map(|value| value.date().to_string())', 'let date = DateTime::from_timestamp(transaction.date, 0)\n                .map(|value| value.date_naive().to_string())')
+          replace_once('apps/desktop/src-tauri/src/concurrency_tests.rs', '    use std::path::Path;\n', '')
+          replace_once('apps/desktop/src-tauri/src/commands/auth.rs', 'let mut attempts = LOGIN_ATTEMPTS.lock().map_err(|e| e.to_string())?;', 'let attempts = LOGIN_ATTEMPTS.lock().map_err(|e| e.to_string())?;')
+          replace_once('apps/desktop/src-tauri/src/commands/caldav.rs', ') -> Result<CalDavAccount, String> {\n    crate::with_db!(db, conn, {', ') -> Result<CalDavAccount, String> {\n    let _space_id = space_id;\n    crate::with_db!(db, conn, {')
+          replace_once('apps/desktop/src-tauri/src/commands/caldav.rs', ') -> Result<Vec<CalDavAccount>, String> {\n    crate::with_db!(db, conn, {', ') -> Result<Vec<CalDavAccount>, String> {\n    let _space_id = space_id;\n    crate::with_db!(db, conn, {')
+          replace_once('apps/desktop/src-tauri/src/commands/personal_modes.rs', '    crate::with_db!(db, conn, {\n        let note = core_rs::note::create_note(&conn, &space_id, &name, &instructions)\n            .map_err(|e| e.to_string())?;', '    crate::with_db!(db, conn, {\n        let content = format!("# Ingredients\\n\\n{}\\n\\n# Instructions\\n\\n{}", ingredients, instructions);\n        let note = core_rs::note::create_note(&conn, &space_id, &name, &content)\n            .map_err(|e| e.to_string())?;')
           PY
 
-      - name: Regenerate lockfiles
+      - name: Regenerate lockfiles and format
         run: |
           set -euxo pipefail
           cargo metadata --format-version 1 --no-deps > "$RUNNER_TEMP/pre-lock-cargo-metadata.json"
@@ -325,6 +257,20 @@ jobs:
           cargo generate-lockfile
           cargo metadata --locked --format-version 1 --no-deps > "$RUNNER_TEMP/cargo-metadata.json"
           git diff --check
+
+      - name: Commit generated convergence state
+        run: |
+          set -euxo pipefail
+          if git diff --quiet; then
+            echo "Generated convergence state is already committed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "chore(deps): materialize convergence state"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
 
       - name: Validate complete repository state
         run: |
@@ -340,33 +286,3 @@ jobs:
           cargo clippy --locked --workspace --all-targets -- -D warnings
           cargo test --locked --workspace --verbose -- --nocapture
           git diff --check
-
-      - name: Commit validated convergence state
-        run: |
-          set -euxo pipefail
-          if git diff --quiet; then
-            echo "Validated convergence state is already committed."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            Cargo.lock \
-            pnpm-lock.yaml \
-            apps/desktop/package.json \
-            apps/mobile/package.json \
-            apps/desktop/src-tauri/Cargo.toml \
-            apps/desktop/src-tauri/src/commands/ai.rs \
-            apps/desktop/src-tauri/src/commands/auth.rs \
-            apps/desktop/src-tauri/src/commands/caldav.rs \
-            apps/desktop/src-tauri/src/commands/personal_modes.rs \
-            apps/desktop/src-tauri/src/commands/runtime_contract.rs \
-            apps/desktop/src-tauri/src/concurrency_tests.rs \
-            packages/core-rs/Cargo.toml \
-            packages/core-rs/src/crypto.rs \
-            packages/core-rs/src/import.rs \
-            packages/core-rs/src/sync/mobile_sync/protocol/handler.rs \
-            packages/relay-server/Cargo.toml
-          git diff --cached --check
-          git commit -m "chore(deps): materialize validated convergence"
-          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
