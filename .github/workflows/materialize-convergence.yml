@@ -1,5 +1,5 @@
 name: Materialize dependency convergence
-run-name: "Materialize convergence | PR #${{ github.event.pull_request.number }} | ${{ github.sha }}"
+run-name: "Materialize convergence | PR #${{ github.event.pull_request.number }} | ${{ github.event.pull_request.head.sha }}"
 
 on:
   pull_request:
@@ -8,22 +8,37 @@ on:
       - .github/workflows/materialize-convergence.yml
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: materialize-convergence-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 defaults:
   run:
     shell: bash
 
+env:
+  CI: "true"
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: full
+
 jobs:
   generate:
-    name: Generate manifests and lockfiles
+    name: Generate, validate, and commit manifests and lockfiles
+    if: >-
+      github.event.pull_request.number == 152 &&
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-22.04
-    timeout-minutes: 60
+    timeout-minutes: 75
     steps:
-      - name: Checkout exact revision
+      - name: Checkout writable PR head
         uses: actions/checkout@v5
         with:
-          persist-credentials: false
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+          persist-credentials: true
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -38,6 +53,16 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+
+      - name: Describe convergence environment
+        run: |
+          set -euxo pipefail
+          git status --short --branch
+          git log -1 --oneline --decorate
+          node --version
+          pnpm --version
+          rustc --version
+          cargo --version
 
       - name: Apply compatible JavaScript dependency versions
         run: |
@@ -93,7 +118,6 @@ jobs:
           import re
 
           targets = {
-              'pbkdf2': '0.13.0',
               'cxx': '1.0.198',
               'tracing': '0.1.44',
               'regex': '1.13.1',
@@ -118,6 +142,15 @@ jobs:
                   text, count_inline = inline.subn(rf'\g<1>{version}\g<3>', text)
                   if count_simple or count_inline:
                       print(f'{manifest}: {name} -> {version}')
+              if manifest.as_posix() == 'packages/core-rs/Cargo.toml':
+                  text, count = re.subn(
+                      r'(?m)^pbkdf2\s*=.*$',
+                      'pbkdf2 = { version = "0.13.0", features = ["sha2"] }',
+                      text,
+                      count=1,
+                  )
+                  if count != 1:
+                      raise SystemExit('packages/core-rs/Cargo.toml: pbkdf2 dependency not found')
               if text != original:
                   manifest.write_text(text, encoding='utf-8', newline='\n')
 
@@ -144,16 +177,25 @@ jobs:
 
           import_path = Path('packages/core-rs/src/import.rs')
           import_text = import_path.read_text(encoding='utf-8')
-          old = 'let result = matter.parse(&content);'
-          new = '''let result = matter
+          old_calls = [
+              'let result = matter.parse(&content);',
+              '''let result = matter
                       .parse(&content)
+                      .map_err(|error| ImportError::GrayMatter(error.to_string()))?;''',
+          ]
+          new = '''let result = matter
+                      .parse::<serde_json::Value>(&content)
                       .map_err(|error| ImportError::GrayMatter(error.to_string()))?;'''
-          count = import_text.count(old)
-          if count:
-              import_text = import_text.replace(old, new)
+          replaced = 0
+          for old in old_calls:
+              count = import_text.count(old)
+              if count:
+                  import_text = import_text.replace(old, new)
+                  replaced += count
+          if replaced:
               import_path.write_text(import_text, encoding='utf-8', newline='\n')
-              print(f'packages/core-rs/src/import.rs: migrated {count} parser call(s)')
-          elif new not in import_text:
+              print(f'packages/core-rs/src/import.rs: migrated {replaced} parser call(s)')
+          elif import_text.count(new) != 2:
               raise SystemExit('packages/core-rs/src/import.rs: expected parser migration anchors not found')
           PY
 
@@ -168,27 +210,13 @@ jobs:
           cargo generate-lockfile
           cargo metadata --locked --format-version 1 --no-deps > cargo-metadata.json
 
-      - name: Package generated payload
+      - name: Inspect generated state
         run: |
           set -euxo pipefail
           git diff --check
           git status --short
           git diff --stat
-          mapfile -t files < <(git diff --name-only --diff-filter=ACMRT)
-          if (( ${#files[@]} == 0 )); then
-            echo "::error::No convergence files were generated"
-            exit 1
-          fi
-          printf '%s\0' "${files[@]}" | tar --null -T - -czf dependency-convergence.tar.gz
-          sha256sum dependency-convergence.tar.gz
-
-      - name: Upload generated payload
-        uses: actions/upload-artifact@v4
-        with:
-          name: dependency-convergence
-          path: dependency-convergence.tar.gz
-          if-no-files-found: error
-          retention-days: 1
+          git diff -- packages/core-rs/Cargo.toml packages/core-rs/src/crypto.rs packages/core-rs/src/import.rs
 
       - name: Validate generated dependency graph
         run: |
@@ -204,3 +232,45 @@ jobs:
           cargo clippy --locked --workspace --all-targets -- -D warnings
           cargo test --locked --workspace --verbose -- --nocapture
           git diff --check
+
+      - name: Package validated payload
+        run: |
+          set -euxo pipefail
+          mapfile -t files < <(git diff --name-only --diff-filter=ACMRT)
+          if (( ${#files[@]} == 0 )); then
+            echo "No convergence changes remain to package."
+            exit 0
+          fi
+          printf '%s\0' "${files[@]}" | tar --null -T - -czf dependency-convergence.tar.gz
+          sha256sum dependency-convergence.tar.gz
+
+      - name: Upload validated payload
+        if: hashFiles('dependency-convergence.tar.gz') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-convergence
+          path: dependency-convergence.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Commit validated convergence state
+        run: |
+          set -euxo pipefail
+          if git diff --quiet; then
+            echo "Validated convergence state is already committed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Cargo.lock pnpm-lock.yaml \
+            apps/desktop/package.json \
+            apps/desktop/src-tauri/Cargo.toml \
+            apps/mobile/package.json \
+            packages/core-rs/Cargo.toml \
+            packages/core-rs/src/crypto.rs \
+            packages/core-rs/src/import.rs \
+            packages/core-rs/src/sync/mobile_sync/protocol/handler.rs \
+            packages/relay-server/Cargo.toml
+          git diff --cached --check
+          git commit -m "chore(deps): materialize validated convergence"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
