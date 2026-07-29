@@ -39,7 +39,7 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - name: Apply coordinated JavaScript dependency versions
+      - name: Apply compatible JavaScript dependency versions
         run: |
           set -euxo pipefail
           node <<'NODE'
@@ -47,7 +47,6 @@ jobs:
           const path = require('path');
 
           const exact = new Map([
-            ['@types/node', '26.1.2'],
             ['date-fns', '4.4.0'],
           ]);
 
@@ -60,7 +59,6 @@ jobs:
               for (const name of Object.keys(deps)) {
                 let version = exact.get(name);
                 if (name === 'lexical' || name.startsWith('@lexical/')) version = '0.48.0';
-                if (name.startsWith('@mantine/')) version = '9.5.0';
                 if (!version) continue;
                 const previous = deps[name];
                 const prefix = previous.startsWith('~') ? '~' : previous.startsWith('^') ? '^' : '';
@@ -87,7 +85,7 @@ jobs:
           walk('.');
           NODE
 
-      - name: Apply coordinated Rust dependency and source migrations
+      - name: Apply compatible Rust dependency and source migrations
         run: |
           set -euxo pipefail
           python3 <<'PY'
