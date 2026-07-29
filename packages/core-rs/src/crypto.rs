@@ -1,9 +1,8 @@
 use aes::Aes256;
 use aes_kw::Kek;
 use base64::Engine;
-use pbkdf2::pbkdf2_hmac;
+use pbkdf2::{pbkdf2_hmac, sha2::Sha512};
 use rand::Rng;
-use sha2::Sha512;
 use thiserror::Error;
 
 pub mod ecdh;

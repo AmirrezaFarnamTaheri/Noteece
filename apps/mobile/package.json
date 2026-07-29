@@ -37,7 +37,7 @@
     "@react-navigation/native": "^6.1.9",
     "@sentry/react-native": "^7.5.0",
     "@shopify/flash-list": "^2.2.0",
-    "date-fns": "^3.0.0",
+    "date-fns": "^4.4.0",
     "expo": "~50.0.0",
     "expo-av": "^16.0.7",
     "expo-background-fetch": "~11.6.0",

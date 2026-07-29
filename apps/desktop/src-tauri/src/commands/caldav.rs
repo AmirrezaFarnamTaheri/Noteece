@@ -11,6 +11,7 @@ pub fn add_caldav_account_cmd(
     username: String,
     password: Option<String>,
 ) -> Result<CalDavAccount, String> {
+    let _space_id = space_id;
     crate::with_db!(db, conn, {
         let dek_guard = db
             .dek
@@ -39,6 +40,7 @@ pub fn get_caldav_accounts_cmd(
     db: State<DbConnection>,
     space_id: String,
 ) -> Result<Vec<CalDavAccount>, String> {
+    let _space_id = space_id;
     crate::with_db!(db, conn, {
         core_rs::caldav::get_caldav_accounts(&conn).map_err(|e| e.to_string())
     })

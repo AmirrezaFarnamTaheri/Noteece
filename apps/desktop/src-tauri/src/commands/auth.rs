@@ -14,7 +14,7 @@ const MAX_ATTEMPTS: u32 = 5;
 const LOCKOUT_DURATION: Duration = Duration::from_secs(300); // 5 minutes
 
 fn check_rate_limit(username: &str) -> Result<(), String> {
-    let mut attempts = LOGIN_ATTEMPTS.lock().map_err(|e| e.to_string())?;
+    let attempts = LOGIN_ATTEMPTS.lock().map_err(|e| e.to_string())?;
     if let Some((count, first_attempt)) = attempts.get(username) {
         if *count >= MAX_ATTEMPTS && first_attempt.elapsed() < LOCKOUT_DURATION {
             return Err(format!(
