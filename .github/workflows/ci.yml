@@ -25,95 +25,6 @@ defaults:
     shell: bash
 
 jobs:
-  repair_integration_branch:
-    name: "PR #152 | repair shared Windows defects"
-    if: github.event_name == 'pull_request' && github.event.pull_request.number == 152
-    runs-on: ubuntu-22.04
-    timeout-minutes: 10
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout the real PR head branch
-        uses: actions/checkout@v5
-        with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0
-          persist-credentials: true
-
-      - name: Explain the source repair
-        run: |
-          set -euxo pipefail
-          echo "::notice::Repairing the two defects inherited by every dependency PR"
-          echo "::notice::Windows directory metadata flushes must not invalidate an already-flushed atomic backup"
-          echo "::notice::Integrity-sensitive and generated lock files must retain LF bytes on every runner"
-          git status --short --branch
-
-      - name: Apply idempotent source repair
-        run: |
-          set -euxo pipefail
-          python3 <<'PY'
-          from pathlib import Path
-
-          backup_path = Path("packages/core-rs/src/social/backup.rs")
-          backup = backup_path.read_text(encoding="utf-8")
-          old = '''#[cfg(windows)]
-          fn sync_directory(path: &Path) -> std::io::Result<()> {
-              use std::os::windows::fs::OpenOptionsExt;
-
-              const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
-              OpenOptions::new()
-                  .read(true)
-                  .custom_flags(FILE_FLAG_BACKUP_SEMANTICS)
-                  .open(path)?
-                  .sync_all()
-          }
-          '''
-          new = '''#[cfg(windows)]
-          fn sync_directory(_path: &Path) -> std::io::Result<()> {
-              // Windows does not expose a portable directory-fsync equivalent.
-              // The temporary backup file is already flushed before the atomic
-              // rename, so an unsupported directory metadata flush must not turn
-              // a successfully persisted backup into a false failure.
-              Ok(())
-          }
-          '''
-          if old in backup:
-              backup_path.write_text(backup.replace(old, new, 1), encoding="utf-8", newline="\n")
-          elif new not in backup:
-              raise SystemExit("Unexpected Windows sync_directory implementation")
-
-          attributes_path = Path(".gitattributes")
-          attributes = attributes_path.read_text(encoding="utf-8")
-          rules = [
-              "Cargo.lock text eol=lf",
-              "pnpm-lock.yaml text eol=lf",
-              "packages/core-rs/config/bundled_selectors.json text eol=lf",
-          ]
-          lines = attributes.splitlines()
-          for rule in rules:
-              if rule not in lines:
-                  lines.append(rule)
-          attributes_path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
-          PY
-
-      - name: Validate and publish source-only repair
-        run: |
-          set -euxo pipefail
-          git diff --check
-          git diff --stat
-          git diff -- .gitattributes packages/core-rs/src/social/backup.rs
-
-          if git diff --quiet -- .gitattributes packages/core-rs/src/social/backup.rs; then
-            echo "::notice::Shared Windows source defects are already repaired"
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .gitattributes packages/core-rs/src/social/backup.rs
-          git commit -m "fix: repair Windows persistence and line-ending integrity"
-          git push origin "HEAD:${{ github.head_ref }}"
-
   lint_and_format:
     name: "JS/TS | lint, format, types, IPC contract"
     runs-on: ubuntu-22.04
@@ -136,71 +47,27 @@ jobs:
       - name: Describe execution environment
         run: |
           set -euxo pipefail
-          echo "::group::Git context"
           git rev-parse HEAD
           git status --short --branch
-          git log -1 --format=fuller
-          echo "::endgroup::"
-          echo "::group::Runtime versions"
           node --version
           npm --version
           pnpm --version
-          echo "::endgroup::"
-          echo "::group::Workspace dependency roots"
           pnpm list --depth 0 --recursive || true
-          echo "::endgroup::"
 
       - name: Install locked dependencies
-        run: |
-          set -euxo pipefail
-          pnpm install --frozen-lockfile --reporter=append-only
+        run: pnpm install --frozen-lockfile --reporter=append-only
 
       - name: Verify Tauri IPC contract
-        run: |
-          set -euxo pipefail
-          node scripts/check-ipc-contract.mjs
+        run: node scripts/check-ipc-contract.mjs
 
       - name: Run repository lint
-        run: |
-          set -euxo pipefail
-          pnpm lint
+        run: pnpm lint
 
       - name: Verify formatting
-        run: |
-          set -euxo pipefail
-          pnpm format --check
+        run: pnpm format --check
 
       - name: Run TypeScript checks
-        run: |
-          set -euxo pipefail
-          pnpm type-check
-
-      - name: JS/TS failure diagnostics
-        if: failure()
-        run: |
-          set +e
-          echo "::group::Repository"
-          git status --short --branch
-          git diff --check
-          git diff
-          echo "::endgroup::"
-          echo "::group::Dependencies"
-          pnpm list --depth 1 --recursive
-          pnpm why typescript
-          echo "::endgroup::"
-          df -h
-
-      - name: Publish JS/TS summary
-        if: always()
-        run: |
-          {
-            echo "## JS/TS validation"
-            echo "- Commit: \`${GITHUB_SHA}\`"
-            echo "- Runner: \`${RUNNER_OS} ${RUNNER_ARCH}\`"
-            echo "- Node: \`$(node --version 2>/dev/null || echo unavailable)\`"
-            echo "- pnpm: \`$(pnpm --version 2>/dev/null || echo unavailable)\`"
-            echo "- Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          } >> "$GITHUB_STEP_SUMMARY"
+        run: pnpm type-check
 
   desktop_tests:
     name: "Desktop | tests and coverage"
@@ -221,73 +88,26 @@ jobs:
           node-version: "24"
           cache: pnpm
 
-      - name: Describe desktop environment
-        run: |
-          set -euxo pipefail
-          git rev-parse HEAD
-          node --version
-          pnpm --version
-          node -e "const p=require('./apps/desktop/package.json'); console.log({name:p.name,scripts:p.scripts})"
-
       - name: Install locked dependencies
-        run: |
-          set -euxo pipefail
-          pnpm install --frozen-lockfile --reporter=append-only
+        run: pnpm install --frozen-lockfile --reporter=append-only
 
       - name: Run desktop tests
         working-directory: apps/desktop
-        run: |
-          set -euxo pipefail
-          pnpm test:ci -- --runInBand
+        run: pnpm test:ci -- --runInBand
 
-      - name: Run desktop coverage with explicit reporters
+      - name: Run desktop coverage
         working-directory: apps/desktop
-        run: |
-          set -euxo pipefail
-          pnpm test:coverage:ci -- --runInBand --coverageReporters=json-summary --coverageReporters=text
-          echo "::group::Coverage artifacts"
-          find coverage -maxdepth 2 -type f -print 2>/dev/null || true
-          echo "::endgroup::"
+        run: pnpm test:coverage:ci -- --runInBand --coverageReporters=json-summary --coverageReporters=text
 
-      - name: Evaluate coverage without inventing a test failure
+      - name: Evaluate coverage
         working-directory: apps/desktop
         run: |
           set -euxo pipefail
           if [[ ! -f coverage/coverage-summary.json ]]; then
-            echo "::warning::Jest completed successfully but emitted no coverage-summary.json; coverage remains informational until instrumented source files are configured"
+            echo "::warning::Coverage summary not emitted; tests passed and coverage remains informational"
             exit 0
           fi
-
           jq . coverage/coverage-summary.json
-          COVERAGE=$(jq -r '.total.lines.pct' coverage/coverage-summary.json)
-          echo "Line coverage: ${COVERAGE}%"
-          if echo "$COVERAGE" | awk '{exit !($1 < 90)}'; then
-            echo "::warning::Coverage (${COVERAGE}%) is below the 90% target"
-          else
-            echo "::notice::Coverage target satisfied: ${COVERAGE}%"
-          fi
-
-      - name: Desktop failure diagnostics
-        if: failure()
-        run: |
-          set +e
-          git status --short --branch
-          find apps/desktop -maxdepth 4 -type f \( -name '*.log' -o -name 'junit*.xml' -o -name 'coverage-*.json' -o -name 'coverage-summary.json' \) -print
-          pnpm --filter @noteece/desktop list --depth 1
-          df -h
-
-      - name: Publish desktop summary
-        if: always()
-        run: |
-          {
-            echo "## Desktop tests"
-            echo "- Commit: \`${GITHUB_SHA}\`"
-            if [[ -f apps/desktop/coverage/coverage-summary.json ]]; then
-              echo "- Line coverage: \`$(jq -r '.total.lines.pct' apps/desktop/coverage/coverage-summary.json)%\`"
-            else
-              echo "- Coverage summary: not emitted; see job warning"
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
 
   mobile_tests:
     name: "Mobile | lint, types, tests"
@@ -308,58 +128,23 @@ jobs:
           node-version: "24"
           cache: pnpm
 
-      - name: Describe mobile environment
-        run: |
-          set -euxo pipefail
-          git rev-parse HEAD
-          node --version
-          pnpm --version
-          node -e "const p=require('./apps/mobile/package.json'); console.log({expo:p.dependencies.expo,reactNative:p.dependencies['react-native'],scripts:p.scripts})"
-
       - name: Install locked dependencies
-        run: |
-          set -euxo pipefail
-          pnpm install --frozen-lockfile --reporter=append-only
+        run: pnpm install --frozen-lockfile --reporter=append-only
 
       - name: Run mobile lint
         working-directory: apps/mobile
-        run: |
-          set -euxo pipefail
-          pnpm lint
+        run: pnpm lint
 
       - name: Run mobile type checking
         working-directory: apps/mobile
-        run: |
-          set -euxo pipefail
-          pnpm type-check
+        run: pnpm type-check
 
       - name: Run mobile tests
         working-directory: apps/mobile
-        run: |
-          set -euxo pipefail
-          pnpm test:ci -- --runInBand
-
-      - name: Mobile failure diagnostics
-        if: failure()
-        run: |
-          set +e
-          git status --short --branch
-          pnpm --filter @noteece/mobile list --depth 1
-          node -e "console.log(require('./apps/mobile/package.json'))"
-          df -h
-
-      - name: Publish mobile summary
-        if: always()
-        run: |
-          {
-            echo "## Mobile validation"
-            echo "- Commit: \`${GITHUB_SHA}\`"
-            echo "- Node: \`$(node --version 2>/dev/null || echo unavailable)\`"
-            echo "- pnpm: \`$(pnpm --version 2>/dev/null || echo unavailable)\`"
-          } >> "$GITHUB_STEP_SUMMARY"
+        run: pnpm test:ci -- --runInBand
 
   rust_checks:
-    name: "Rust | ${{ matrix.label }} | check and test${{ matrix.lint && ', fmt and clippy' || '' }}"
+    name: "Rust | ${{ matrix.label }}"
     strategy:
       fail-fast: false
       matrix:
@@ -381,173 +166,57 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install Ubuntu native dependencies
-        if: matrix.os == 'ubuntu-22.04'
-        run: |
-          set -euxo pipefail
-          sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
-
-      - name: Select complete Strawberry Perl for vendored OpenSSL
-        if: startsWith(matrix.os, 'windows-')
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $perl = 'C:\Strawberry\perl\bin\perl.exe'
-          if (-not (Test-Path $perl)) {
-            throw "Required Strawberry Perl was not found at $perl"
-          }
-          "OPENSSL_SRC_PERL=$perl" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          & $perl -MLocale::Maketext::Simple -e "print qq(Strawberry Perl modules available\n)"
-          & $perl --version
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
 
-      - name: Cache Cargo
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+      - name: Select Strawberry Perl for Windows OpenSSL
+        if: startsWith(matrix.os, 'windows-')
+        shell: pwsh
+        run: |
+          $perl = 'C:\Strawberry\perl\bin\perl.exe'
+          if (-not (Test-Path $perl)) { throw "Missing Strawberry Perl" }
+          "OPENSSL_SRC_PERL=$perl" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          & $perl -MLocale::Maketext::Simple -e "print qq(ok\n)"
 
-      - name: Describe Rust, dependency, and filesystem environment
+      - name: Describe Rust environment
         run: |
           set -euxo pipefail
-          echo "::group::Git and line endings"
-          git rev-parse HEAD
-          git status --short --branch
-          git config --show-origin --get core.autocrlf || true
-          git ls-files --eol Cargo.lock pnpm-lock.yaml packages/core-rs/config/bundled_selectors.json
-          echo "RUNNER_OS=${RUNNER_OS}"
-          echo "RUNNER_ARCH=${RUNNER_ARCH}"
-          echo "RUNNER_TEMP=${RUNNER_TEMP}"
-          echo "OPENSSL_SRC_PERL=${OPENSSL_SRC_PERL:-unset}"
-          echo "::endgroup::"
-          echo "::group::Rust toolchain"
           rustc -Vv
           cargo -Vv
-          rustup show
-          echo "::endgroup::"
-          echo "::group::Workspace graph"
-          cargo metadata --locked --format-version 1 --no-deps
-          cargo tree --locked --workspace --duplicates || true
-          echo "::endgroup::"
+          git ls-files --eol Cargo.lock pnpm-lock.yaml packages/core-rs/config/bundled_selectors.json
 
       - name: Check core-rs
-        run: |
-          set -euxo pipefail
-          cargo check --locked -p core-rs --all-targets --all-features --verbose
+        run: cargo check --locked -p core-rs --all-targets --all-features
 
       - name: Check relay-server
-        run: |
-          set -euxo pipefail
-          cargo check --locked -p relay-server --all-targets --verbose
+        run: cargo check --locked -p relay-server --all-targets
 
-      - name: Verify Rust formatting
+      - name: Rust format
         if: matrix.lint
-        run: |
-          set -euxo pipefail
-          cargo fmt --all -- --check
+        run: cargo fmt --all -- --check
 
-      - name: Clippy core-rs
+      - name: Clippy
         if: matrix.lint
-        run: |
-          set -euxo pipefail
-          cargo clippy --locked -p core-rs --lib --all-features -- -D warnings
+        run: cargo clippy --locked --workspace --all-targets -- -D warnings
 
-      - name: Clippy relay-server
-        if: matrix.lint
-        run: |
-          set -euxo pipefail
-          cargo clippy --locked -p relay-server --all-targets -- -D warnings
-
-      - name: Test core-rs with uncaptured output
-        run: |
-          set -euxo pipefail
-          cargo test --locked -p core-rs --all-features --verbose -- --nocapture
-
-      - name: Test relay-server with uncaptured output
-        run: |
-          set -euxo pipefail
-          cargo test --locked -p relay-server --verbose -- --nocapture
-
-      - name: Rust failure diagnostics
-        if: failure()
-        run: |
-          set +e
-          echo "::group::Repository and lockfile state"
-          git status --short --branch
-          git diff --check
-          git diff -- Cargo.lock
-          git ls-files --eol Cargo.lock pnpm-lock.yaml packages/core-rs/config/bundled_selectors.json
-          echo "::endgroup::"
-          echo "::group::Cargo resolution"
-          cargo tree --workspace --duplicates
-          cargo metadata --format-version 1
-          echo "::endgroup::"
-          echo "::group::Filesystem"
-          df -h || true
-          echo "RUNNER_TEMP=${RUNNER_TEMP}"
-          find "${RUNNER_TEMP}" -maxdepth 3 -type f 2>/dev/null | head -200 || true
-          echo "::endgroup::"
-
-      - name: Publish Rust summary
-        if: always()
-        run: |
-          {
-            echo "## Rust validation — ${{ matrix.label }}"
-            echo "- Commit: \`${GITHUB_SHA}\`"
-            echo "- Runner: \`${RUNNER_OS} ${RUNNER_ARCH}\`"
-            echo "- rustc: \`$(rustc --version 2>/dev/null || echo unavailable)\`"
-            echo "- cargo: \`$(cargo --version 2>/dev/null || echo unavailable)\`"
-            echo "- Lock and selector EOL: \`$(git ls-files --eol Cargo.lock packages/core-rs/config/bundled_selectors.json | tr '\n' ' ')\`"
-          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Tests
+        run: cargo test --locked --workspace --verbose -- --nocapture
 
   ci_complete:
     name: "Required CI gate"
-    needs: [repair_integration_branch, lint_and_format, desktop_tests, mobile_tests, rust_checks]
+    needs: [lint_and_format, desktop_tests, mobile_tests, rust_checks]
     runs-on: ubuntu-22.04
     if: always()
-    timeout-minutes: 5
     steps:
       - name: Publish consolidated result
         env:
-          REPAIR_RESULT: ${{ needs.repair_integration_branch.result }}
           LINT_RESULT: ${{ needs.lint_and_format.result }}
           DESKTOP_RESULT: ${{ needs.desktop_tests.result }}
           MOBILE_RESULT: ${{ needs.mobile_tests.result }}
           RUST_RESULT: ${{ needs.rust_checks.result }}
         run: |
           set -euxo pipefail
-          {
-            echo "## Required CI gate"
-            echo "| Area | Result |"
-            echo "|---|---|"
-            echo "| Shared source repair | ${REPAIR_RESULT} |"
-            echo "| JS/TS validation | ${LINT_RESULT} |"
-            echo "| Desktop tests | ${DESKTOP_RESULT} |"
-            echo "| Mobile tests | ${MOBILE_RESULT} |"
-            echo "| Rust matrix | ${RUST_RESULT} |"
-            echo ""
-            echo "Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          } | tee -a "$GITHUB_STEP_SUMMARY"
-
-          if [[ "$REPAIR_RESULT" != "success" ]] || \
-             [[ "$LINT_RESULT" != "success" ]] || \
-             [[ "$DESKTOP_RESULT" != "success" ]] || \
-             [[ "$MOBILE_RESULT" != "success" ]] || \
-             [[ "$RUST_RESULT" != "success" ]]; then
-            echo "::error::At least one required CI area failed. Inspect the named job and its diagnostics."
-            exit 1
-          fi
-
-          echo "::notice::All required CI areas completed successfully"
+          echo "JS/TS=${LINT_RESULT} Desktop=${DESKTOP_RESULT} Mobile=${MOBILE_RESULT} Rust=${RUST_RESULT}"
+          [[ "$LINT_RESULT" == success && "$DESKTOP_RESULT" == success && "$MOBILE_RESULT" == success && "$RUST_RESULT" == success ]]
