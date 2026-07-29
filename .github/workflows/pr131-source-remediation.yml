@@ -1,10 +1,10 @@
 name: PR131 Source Remediation
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - claude/omni-execution-protocol-4sn12p
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -18,7 +18,7 @@ jobs:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout branch
+      - name: Checkout PR branch
         uses: actions/checkout@v5
         with:
           ref: claude/omni-execution-protocol-4sn12p
@@ -40,7 +40,16 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - name: Apply reviewed source fixes
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Apply source and regression-test fixes
         shell: bash
         run: |
           python3 <<'PY'
@@ -49,6 +58,8 @@ jobs:
           def replace_once(path: str, old: str, new: str) -> None:
               file = Path(path)
               text = file.read_text(encoding="utf-8")
+              if new in text:
+                  return
               count = text.count(old)
               if count != 1:
                   raise SystemExit(f"Expected exactly one match in {path}, found {count}")
@@ -92,8 +103,8 @@ jobs:
           let verifying_key =
               VerifyingKey::from_bytes(&public_key).map_err(|_| RelayError::InvalidSignature)?;
 
-          // Keep validation and consumption atomic. Invalid requests must not burn
-          // a legitimate client's challenge, while successful proofs remain one-use.
+          // Validate and consume under one lock. Failed attempts must not burn a
+          // legitimate challenge, while a valid proof remains strictly one-use.
           let mut challenges = self.challenges.lock().map_err(state_error)?;
           let issued = challenges
               .get(device_id)
@@ -114,7 +125,6 @@ jobs:
           drop(challenges);
 ''',
           )
-
           replace_once(
               relay,
               '''    #[test]
@@ -183,9 +193,9 @@ jobs:
 ''',
               '''#[cfg(windows)]
   fn sync_directory(_path: &Path) -> std::io::Result<()> {
-      // Windows does not provide a portable Rust API for fsyncing a directory,
-      // and opening one as a normal file fails with ERROR_ACCESS_DENIED on hosted
-      // runners. The backup file is sync_all()'d before the same-volume rename.
+      // Rust has no portable Windows directory-fsync primitive. The backup file
+      // itself is sync_all()'d before its same-volume atomic rename; attempting to
+      // open the directory as a file returns ERROR_ACCESS_DENIED on Windows hosts.
       Ok(())
   }
 ''',
@@ -213,9 +223,9 @@ jobs:
 ''',
               '''/// Compute the SHA-256 digest of canonical UTF-8 selector text.
   ///
-  /// Git may check text files out with CRLF on Windows. Canonicalising line
-  /// endings makes the reviewed content digest platform-independent without
-  /// changing any JSON tokens or accepting semantically different content.
+  /// Git can materialize reviewed text with CRLF on Windows. Canonicalizing only
+  /// line endings keeps the digest platform-independent without accepting any
+  /// semantic JSON change.
   fn compute_hash(content: &str) -> String {
       let canonical = if content.contains("\\r\\n") {
           Cow::Owned(content.replace("\\r\\n", "\\n"))
@@ -246,15 +256,19 @@ jobs:
           runtime = "apps/desktop/src-tauri/src/commands/runtime_contract.rs"
           replace_once(
               runtime,
+              '''use std::fs;
+  use tauri::{Manager, State};
+''',
+              '''use std::fs;
+  use std::io::Write;
+  use tauri::{Manager, State};
+''',
+          )
+          replace_once(
+              runtime,
               '''        let pattern = format!("%{}%", question.replace('%', "\\\\%").replace('_', "\\\\_"));
 ''',
-              '''        let pattern = format!(
-              "%{}%",
-              question
-                  .replace('\\\\', "\\\\\\\\")
-                  .replace('%', "\\\\%")
-                  .replace('_', "\\\\_")
-          );
+              '''        let pattern = format!("%{}%", escape_like_literal(question));
 ''',
           )
           replace_once(
@@ -297,13 +311,34 @@ jobs:
   }
 ''',
               '''const MAX_OCR_IMAGE_BYTES: usize = 20 * 1024 * 1024;
-  const ALLOWED_OCR_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "webp", "bmp", "tif", "tiff"];
+
+  fn escape_like_literal(value: &str) -> String {
+      value
+          .replace('\\\\', "\\\\\\\\")
+          .replace('%', "\\\\%")
+          .replace('_', "\\\\_")
+  }
+
+  fn detect_image_extension(bytes: &[u8]) -> Option<&'static str> {
+      if bytes.starts_with(b"\\x89PNG\\r\\n\\x1a\\n") {
+          Some("png")
+      } else if bytes.starts_with(&[0xff, 0xd8, 0xff]) {
+          Some("jpg")
+      } else if bytes.starts_with(b"BM") {
+          Some("bmp")
+      } else if bytes.starts_with(b"II*\\0") || bytes.starts_with(b"MM\\0*") {
+          Some("tiff")
+      } else if bytes.len() >= 12 && &bytes[..4] == b"RIFF" && &bytes[8..12] == b"WEBP" {
+          Some("webp")
+      } else {
+          None
+      }
+  }
 
   #[tauri::command]
   pub fn process_ocr_cmd(
       db: State<DbConnection>,
       image_bytes: Vec<u8>,
-      file_extension: Option<String>,
       language: Option<String>,
   ) -> Result<String, String> {
       if image_bytes.is_empty() {
@@ -315,14 +350,8 @@ jobs:
               MAX_OCR_IMAGE_BYTES / (1024 * 1024)
           ));
       }
-
-      let extension = file_extension
-          .unwrap_or_else(|| "png".to_string())
-          .trim_start_matches('.')
-          .to_ascii_lowercase();
-      if !ALLOWED_OCR_EXTENSIONS.contains(&extension.as_str()) {
-          return Err("Unsupported OCR image type".to_string());
-      }
+      let extension = detect_image_extension(&image_bytes)
+          .ok_or_else(|| "Unsupported or malformed OCR image".to_string())?;
 
       let vault_path = db
           .vault_path
@@ -340,16 +369,16 @@ jobs:
           core_rs::blob::store_blob(&vault_path.to_string_lossy(), dek.as_slice(), &image_bytes)
               .map_err(|e| e.to_string())?;
 
-      let temporary_directory = std::env::temp_dir().join("noteece-ocr");
-      fs::create_dir_all(&temporary_directory)
-          .map_err(|e| format!("Failed to prepare OCR workspace: {e}"))?;
-      let temporary_path = temporary_directory.join(format!("{}.{}", Ulid::new(), extension));
+      let temporary_path = std::env::temp_dir().join(format!(
+          "noteece-ocr-{}.{}",
+          Ulid::new(),
+          extension
+      ));
       let write_result = std::fs::OpenOptions::new()
           .write(true)
           .create_new(true)
           .open(&temporary_path)
           .and_then(|mut file| {
-              use std::io::Write;
               file.write_all(&image_bytes)?;
               file.sync_all()
           });
@@ -358,34 +387,113 @@ jobs:
           return Err(format!("Failed to stage OCR image: {error}"));
       }
 
-      let result = crate::with_db!(db, conn, {
-          core_rs::ocr::queue_ocr(&conn, &blob_id).map_err(|e| e.to_string())?;
-          core_rs::ocr::process_ocr_job(
-              &conn,
-              &blob_id,
-              &temporary_path,
-              language.as_deref(),
-          )
-          .map_err(|e| e.to_string())?;
-          Ok(blob_id)
-      });
+      let result = (|| -> Result<String, String> {
+          crate::with_db!(db, conn, {
+              core_rs::ocr::queue_ocr(&conn, &blob_id).map_err(|e| e.to_string())?;
+              core_rs::ocr::process_ocr_job(
+                  &conn,
+                  &blob_id,
+                  &temporary_path,
+                  language.as_deref(),
+              )
+              .map_err(|e| e.to_string())?;
+              Ok(blob_id.clone())
+          })
+      })();
       let _ = fs::remove_file(&temporary_path);
       result
   }
+
+  #[cfg(test)]
+  mod runtime_contract_tests {
+      use super::{detect_image_extension, escape_like_literal};
+
+      #[test]
+      fn like_literals_escape_backslash_before_wildcards() {
+          assert_eq!(escape_like_literal(r"a\\b%_"), r"a\\\\b\\%\\_");
+      }
+
+      #[test]
+      fn ocr_image_detection_accepts_supported_magic_and_rejects_text() {
+          assert_eq!(detect_image_extension(b"\\x89PNG\\r\\n\\x1a\\nrest"), Some("png"));
+          assert_eq!(detect_image_extension(&[0xff, 0xd8, 0xff, 0x00]), Some("jpg"));
+          assert_eq!(detect_image_extension(b"plain text"), None);
+      }
+  }
 ''',
           )
+
+          ocr_ui = "apps/desktop/src/components/OcrManager.tsx"
+          replace_once(
+              ocr_ui,
+              '''import { open } from '@tauri-apps/api/dialog';
+''',
+              '''import { open } from '@tauri-apps/api/dialog';
+  import { readBinaryFile } from '@tauri-apps/api/fs';
+''',
+          )
+          replace_once(
+              ocr_ui,
+              '''      // Generate a unique blob ID
+        const blobId = `blob_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+
+        await invoke<string>('process_ocr_cmd', {
+          blobId,
+          imagePath: filePath,
+          language: language || undefined,
+        });
+''',
+              '''      const imageBytes = await readBinaryFile(filePath);
+        const blobId = await invoke<string>('process_ocr_cmd', {
+          imageBytes: Array.from(imageBytes),
+          language: language || undefined,
+        });
+''',
+          )
+          replace_once(
+              ocr_ui,
+              '''                  description="Full path to the image file"
+                    value={manualFilePath}
+                    onChange={(e) => setManualFilePath(e.target.value)}
+                    placeholder="/path/to/image.png"
+                    required
+''',
+              '''                  description="Image selected through the system file picker"
+                    value={manualFilePath}
+                    readOnly
+                    placeholder="Choose an image with Browse"
+                    required
+''',
+          )
+          replace_once(
+              ocr_ui,
+              '''              Click Browse to select an image file or enter the path manually. Supported formats: PNG, JPG, JPEG, TIFF,
+                BMP
+''',
+              '''              Click Browse to select an image file. Supported formats: PNG, JPG, JPEG, TIFF, BMP, WEBP
+''',
+          )
+
+          payload = Path("scripts/pr131_one_shot_remediation.py.gz.b64")
+          if payload.exists():
+              payload.unlink()
           PY
 
-      - name: Format and verify
+      - name: Format and validate source
         run: |
+          pnpm install --frozen-lockfile
           cargo fmt --all
           cargo fmt --all -- --check
-          cargo check --workspace --all-targets --locked
+          cargo check -p core-rs --all-targets --locked
           cargo clippy -p core-rs --all-targets --locked -- -D warnings
           cargo test -p core-rs --lib --locked
+          cargo check --manifest-path apps/desktop/src-tauri/Cargo.toml --locked
+          node scripts/check-ipc-contract.mjs
+          pnpm lint
+          pnpm --filter @noteece/desktop type-check
           git diff --check
 
-      - name: Commit verified source fixes
+      - name: Commit verified source remediation
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
@@ -394,10 +502,12 @@ jobs:
             packages/core-rs/src/sync/relay.rs \
             packages/core-rs/src/social/backup.rs \
             packages/core-rs/src/social/selector_verification.rs \
-            apps/desktop/src-tauri/src/commands/runtime_contract.rs
+            apps/desktop/src-tauri/src/commands/runtime_contract.rs \
+            apps/desktop/src/components/OcrManager.tsx
+          git add -u scripts/pr131_one_shot_remediation.py.gz.b64
           if git diff --cached --quiet; then
             echo "No source changes to commit"
             exit 0
           fi
-          git commit -m "Fix review findings and Windows Rust tests"
+          git commit -m "Fix PR131 review findings and Windows Rust tests"
           git push origin HEAD:claude/omni-execution-protocol-4sn12p
