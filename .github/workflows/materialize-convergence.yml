@@ -1,0 +1,168 @@
+name: Materialize dependency convergence
+run-name: "Materialize convergence | PR #${{ github.event.pull_request.number }} | ${{ github.sha }}"
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/materialize-convergence.yml
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  generate:
+    name: Generate manifests and lockfiles
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Apply coordinated JavaScript dependency versions
+        run: |
+          set -euxo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const exact = new Map([
+            ['@types/node', '26.1.2'],
+            ['date-fns', '4.4.0'],
+            ['eslint-plugin-security', '4.0.1'],
+          ]);
+
+          function updatePackage(file) {
+            const pkg = JSON.parse(fs.readFileSync(file, 'utf8'));
+            let changed = false;
+            for (const section of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {
+              const deps = pkg[section];
+              if (!deps) continue;
+              for (const name of Object.keys(deps)) {
+                let version = exact.get(name);
+                if (name === 'lexical' || name.startsWith('@lexical/')) version = '0.48.0';
+                if (name.startsWith('@mantine/')) version = '9.5.0';
+                if (!version) continue;
+                const previous = deps[name];
+                const prefix = previous.startsWith('~') ? '~' : previous.startsWith('^') ? '^' : '';
+                const next = `${prefix}${version}`;
+                if (previous !== next) {
+                  console.log(`${file}: ${name} ${previous} -> ${next}`);
+                  deps[name] = next;
+                  changed = true;
+                }
+              }
+            }
+            if (changed) fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + '\n');
+          }
+
+          function walk(dir) {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              if (['.git', 'node_modules', 'target'].includes(entry.name)) continue;
+              const full = path.join(dir, entry.name);
+              if (entry.isDirectory()) walk(full);
+              else if (entry.isFile() && entry.name === 'package.json') updatePackage(full);
+            }
+          }
+
+          walk('.');
+          NODE
+
+      - name: Apply coordinated Rust dependency versions
+        run: |
+          set -euxo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          targets = {
+              'pbkdf2': '0.13.0',
+              'sha2': '0.11.0',
+              'cxx': '1.0.198',
+              'tracing': '0.1.44',
+              'regex': '1.13.1',
+              'mdns-sd': '0.20.0',
+              'gray_matter': '0.3.2',
+              'http': '1.4.2',
+              'serde': '1.0.229',
+              'async-trait': '0.1.91',
+              'env_logger': '0.11.9',
+          }
+
+          for manifest in Path('.').rglob('Cargo.toml'):
+              if any(part in {'.git', 'target'} for part in manifest.parts):
+                  continue
+              text = manifest.read_text(encoding='utf-8')
+              original = text
+              for name, version in targets.items():
+                  simple = re.compile(rf'(?m)^(\s*{re.escape(name)}\s*=\s*")([^"]+)(".*)$')
+                  inline = re.compile(rf'(?m)^(\s*{re.escape(name)}\s*=\s*\{{[^}}\n]*?\bversion\s*=\s*")([^"]+)("[^}}\n]*\}}.*)$')
+                  text, count_simple = simple.subn(rf'\g<1>{version}\g<3>', text)
+                  text, count_inline = inline.subn(rf'\g<1>{version}\g<3>', text)
+                  if count_simple or count_inline:
+                      print(f'{manifest}: {name} -> {version}')
+              if text != original:
+                  manifest.write_text(text, encoding='utf-8', newline='\n')
+          PY
+
+      - name: Regenerate JavaScript lockfile
+        run: |
+          set -euxo pipefail
+          pnpm install --lockfile-only --ignore-scripts --reporter=append-only
+
+      - name: Regenerate Rust lockfile
+        run: |
+          set -euxo pipefail
+          cargo generate-lockfile
+          cargo metadata --locked --format-version 1 --no-deps > cargo-metadata.json
+
+      - name: Package generated payload
+        run: |
+          set -euxo pipefail
+          git diff --check
+          git status --short
+          git diff --stat
+          mapfile -t files < <(git diff --name-only --diff-filter=ACMRT)
+          if (( ${#files[@]} == 0 )); then
+            echo "::error::No convergence files were generated"
+            exit 1
+          fi
+          printf '%s\0' "${files[@]}" | tar --null -T - -czf dependency-convergence.tar.gz
+          sha256sum dependency-convergence.tar.gz
+
+      - name: Upload generated payload
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-convergence
+          path: dependency-convergence.tar.gz
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Validate generated dependency graph
+        run: |
+          set -euxo pipefail
+          pnpm install --frozen-lockfile --ignore-scripts --reporter=append-only
+          node scripts/check-ipc-contract.mjs
+          cargo check --locked -p core-rs --all-targets --all-features
+          cargo check --locked -p relay-server --all-targets
+          cargo fmt --all -- --check
