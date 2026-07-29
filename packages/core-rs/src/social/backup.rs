@@ -514,15 +514,12 @@ fn sync_directory(path: &Path) -> std::io::Result<()> {
 }
 
 #[cfg(windows)]
-fn sync_directory(path: &Path) -> std::io::Result<()> {
-    use std::os::windows::fs::OpenOptionsExt;
-
-    const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
-    OpenOptions::new()
-        .read(true)
-        .custom_flags(FILE_FLAG_BACKUP_SEMANTICS)
-        .open(path)?
-        .sync_all()
+fn sync_directory(_path: &Path) -> std::io::Result<()> {
+    // Windows does not expose a portable directory-fsync equivalent.
+    // The temporary backup file is already flushed before the atomic
+    // rename, so an unsupported directory metadata flush must not turn
+    // a successfully persisted backup into a false failure.
+    Ok(())
 }
 
 #[cfg(not(any(unix, windows)))]

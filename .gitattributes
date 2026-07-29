@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+Cargo.lock text eol=lf
+pnpm-lock.yaml text eol=lf
+packages/core-rs/config/bundled_selectors.json text eol=lf
