@@ -199,6 +199,12 @@ jobs:
               raise SystemExit('packages/core-rs/src/import.rs: expected parser migration anchors not found')
           PY
 
+      - name: Format generated Rust sources
+        run: |
+          set -euxo pipefail
+          cargo fmt --all
+          cargo fmt --all -- --check
+
       - name: Regenerate JavaScript lockfile
         run: |
           set -euxo pipefail
@@ -208,7 +214,7 @@ jobs:
         run: |
           set -euxo pipefail
           cargo generate-lockfile
-          cargo metadata --locked --format-version 1 --no-deps > cargo-metadata.json
+          cargo metadata --locked --format-version 1 --no-deps > "$RUNNER_TEMP/cargo-metadata.json"
 
       - name: Inspect generated state
         run: |
