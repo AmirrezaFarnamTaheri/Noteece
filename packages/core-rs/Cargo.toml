@@ -9,7 +9,7 @@ repository = "https://github.com/AmirrezaFarnamTaheri/Noteece"
 
 [dependencies]
 generic-array = "1.0.0"
-gray_matter = "0.2.2"
+gray_matter = "0.3.2"
 aead = "0.5.2"
 aes = "0.8.4"
 aes-kw = "0.2.1"
