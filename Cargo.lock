@@ -126,7 +126,7 @@ dependencies = [
  "objc2-foundation",
  "parking_lot",
  "percent-encoding",
- "windows-sys 0.52.0",
+ "windows-sys 0.60.2",
  "wl-clipboard-rs",
  "x11rb",
 ]
@@ -1062,9 +1062,9 @@ dependencies = [
 
 [[package]]
 name = "cxx"
-version = "1.0.190"
+version = "1.0.198"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7620f6cfc4dcca21f2b085b7a890e16c60fd66f560cd69ee60594908dc72ab1"
+checksum = "6fe442a792c7c736eea18b32a7f8a3b63cf8aafabda6760042dc2fdeda456291"
 dependencies = [
  "cc",
  "cxx-build",
@@ -1077,9 +1077,9 @@ dependencies = [
 
 [[package]]
 name = "cxx-build"
-version = "1.0.190"
+version = "1.0.198"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a9bc1a22964ff6a355fbec24cf68266a0ed28f8b84c0864c386474ea3d0e479"
+checksum = "e3184a94384c663718698311a78a51ac00c484c10b4eeac06fb0a068c5f64fa2"
 dependencies = [
  "cc",
  "codespan-reporting",
@@ -1087,39 +1087,39 @@ dependencies = [
  "proc-macro2",
  "quote",
  "scratch",
- "syn 2.0.110",
+ "syn 3.0.3",
 ]
 
 [[package]]
 name = "cxxbridge-cmd"
-version = "1.0.190"
+version = "1.0.198"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1f29a879d35f7906e3c9b77d7a1005a6a0787d330c09dfe4ffb5f617728cb44"
+checksum = "0148d8fd1199329ddf1d157a5e134e51ceff37c6a7ddd38615c399d81cb05d8d"
 dependencies = [
  "clap",
  "codespan-reporting",
  "indexmap 2.12.0",
  "proc-macro2",
  "quote",
- "syn 2.0.110",
+ "syn 3.0.3",
 ]
 
 [[package]]
 name = "cxxbridge-flags"
-version = "1.0.190"
+version = "1.0.198"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d67109015f93f683e364085aa6489a5b2118b4a40058482101d699936a7836d6"
+checksum = "52850339faed2eaadd24e286dc1d8268cc6f8a7bd9524d713adc9099566b4c89"
 
 [[package]]
 name = "cxxbridge-macro"
-version = "1.0.190"
+version = "1.0.198"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d187e019e7b05a1f3e69a8396b70800ee867aa9fc2ab972761173ccee03742df"
+checksum = "2c77c856545d886c9bd5215409ebb63b925e262135248b50c79e5a5f194ee47c"
 dependencies = [
  "indexmap 2.12.0",
  "proc-macro2",
  "quote",
- "syn 2.0.110",
+ "syn 3.0.3",
 ]
 
 [[package]]
@@ -1410,7 +1410,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2631,7 +2631,7 @@ checksum = "3640c1c38b8e4e43584d8df18be5fc6b0aa314ce6ebf51b53313d4306cca8e46"
 dependencies = [
  "hermit-abi",
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3523,7 +3523,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d8fae84b431384b68627d0f9b3b1245fcf9f46f6c0e3dc902e9dce64edd1967"
 dependencies = [
  "libc",
- "windows-sys 0.42.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4269,9 +4269,13 @@ name = "relay-server"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "base64 0.21.7",
  "core-rs",
+ "ed25519-dalek",
+ "hex",
  "http 1.4.0",
  "http-body-util",
+ "rand 0.8.6",
  "serde",
  "serde_json",
  "tokio",
@@ -4403,7 +4407,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.11.0",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4951,6 +4955,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "syn"
+version = "3.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53e9bae58849f64dfa4f5d5ae372c8341f7305f82a3868709269343628b659a3"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
 name = "sync_wrapper"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5335,7 +5350,7 @@ dependencies = [
  "getrandom 0.3.4",
  "once_cell",
  "rustix 1.1.2",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -6223,7 +6238,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
