@@ -1,3 +1,4 @@
+pub mod ai;
 pub mod analytics;
 pub mod auth;
 pub mod backup;
@@ -24,6 +25,7 @@ pub mod time_tracking;
 pub mod vault;
 pub mod weekly_review;
 
+pub use ai::*;
 pub use analytics::*;
 pub use auth::*;
 pub use backup::*;
