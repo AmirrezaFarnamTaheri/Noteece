@@ -51,7 +51,7 @@ pub fn authenticate_user_cmd(
 
         // Track failed attempts
         if result.is_err() {
-            let mut attempts = LOGIN_ATTEMPTS.lock().map_err(|e| e.to_string())?;
+            let attempts = LOGIN_ATTEMPTS.lock().map_err(|e| e.to_string())?;
             let entry = attempts
                 .entry(username.clone())
                 .or_insert((0, Instant::now()));

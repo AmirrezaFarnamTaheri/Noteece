@@ -65,6 +65,7 @@ pub fn update_caldav_account_cmd(
     username: String,
     password: Option<String>,
 ) -> Result<CalDavAccount, String> {
+    let _space_id = space_id;
     crate::with_db!(db, conn, {
         let dek_guard = db
             .dek

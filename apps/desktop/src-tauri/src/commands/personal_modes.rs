@@ -88,7 +88,10 @@ pub fn create_recipe_cmd(
     instructions: String,
 ) -> Result<Recipe, String> {
     crate::with_db!(db, conn, {
-        let content = format!("# Ingredients\n\n{}\n\n# Instructions\n\n{}", ingredients, instructions);
+        let content = format!(
+            "# Ingredients\n\n{}\n\n# Instructions\n\n{}",
+            ingredients, instructions
+        );
         let note = core_rs::note::create_note(&conn, &space_id, &name, &content)
             .map_err(|e| e.to_string())?;
         core_rs::personal_modes::create_recipe(
