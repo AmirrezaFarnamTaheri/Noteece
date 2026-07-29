@@ -27,7 +27,7 @@ pub struct AIConfig {
 #[tauri::command]
 pub async fn check_ollama_connection_cmd(url: Option<String>) -> Result<bool, String> {
     let base_url = url.unwrap_or_else(|| "http://localhost:11434".to_string());
-    
+
     match reqwest::Client::new()
         .get(format!("{}/api/version", base_url))
         .timeout(std::time::Duration::from_secs(5))
@@ -46,7 +46,7 @@ pub async fn check_ollama_connection_cmd(url: Option<String>) -> Result<bool, St
 #[tauri::command]
 pub async fn list_ollama_models_cmd() -> Result<Vec<String>, String> {
     let base_url = "http://localhost:11434";
-    
+
     let response = reqwest::Client::new()
         .get(format!("{}/api/tags", base_url))
         .timeout(std::time::Duration::from_secs(10))
@@ -249,8 +249,8 @@ pub fn save_ai_config_cmd(db: State<DbConnection>, config: AIConfig) -> Result<(
         conn.execute(
             "INSERT OR REPLACE INTO ai_config 
              (id, local_enabled, ollama_url, default_local_model, cloud_enabled,
-              provider, api_key, default_cloud_model, max_tokens, temperature,
-              cache_enabled, cost_tracking)
+               provider, api_key, default_cloud_model, max_tokens, temperature,
+               cache_enabled, cost_tracking)
              VALUES ('default', ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
             rusqlite::params![
                 config.local_enabled,
@@ -281,7 +281,10 @@ pub fn ingest_social_capture_cmd(
     crate::with_db!(db, conn, {
         for post in posts {
             let id = ulid::Ulid::new().to_string();
-            let platform = post.get("platform").and_then(|v| v.as_str()).unwrap_or("unknown");
+            let platform = post
+                .get("platform")
+                .and_then(|v| v.as_str())
+                .unwrap_or("unknown");
             let author = post.get("author").and_then(|v| v.as_str()).unwrap_or("");
             let text = post.get("text").and_then(|v| v.as_str()).unwrap_or("");
             let timestamp = post.get("timestamp").and_then(|v| v.as_i64()).unwrap_or(0);
@@ -305,4 +308,3 @@ pub fn ingest_social_capture_cmd(
         Ok(())
     })
 }
-
