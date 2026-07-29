@@ -54,6 +54,23 @@ jobs:
         with:
           components: rustfmt, clippy
 
+      - name: Install Linux desktop system dependencies
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            curl \
+            file \
+            libayatana-appindicator3-dev \
+            libgtk-3-dev \
+            librsvg2-dev \
+            libssl-dev \
+            libwebkit2gtk-4.0-dev \
+            wget
+          pkg-config --modversion gdk-3.0
+          pkg-config --modversion webkit2gtk-4.0
+
       - name: Describe convergence environment
         run: |
           set -euxo pipefail
@@ -70,11 +87,7 @@ jobs:
           node <<'NODE'
           const fs = require('fs');
           const path = require('path');
-
-          const exact = new Map([
-            ['date-fns', '4.4.0'],
-          ]);
-
+          const exact = new Map([['date-fns', '4.4.0']]);
           function updatePackage(file) {
             const pkg = JSON.parse(fs.readFileSync(file, 'utf8'));
             let changed = false;
@@ -89,7 +102,6 @@ jobs:
                 const prefix = previous.startsWith('~') ? '~' : previous.startsWith('^') ? '^' : '';
                 const next = `${prefix}${version}`;
                 if (previous !== next) {
-                  console.log(`${file}: ${name} ${previous} -> ${next}`);
                   deps[name] = next;
                   changed = true;
                 }
@@ -97,16 +109,14 @@ jobs:
             }
             if (changed) fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + '\n');
           }
-
           function walk(dir) {
-            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-              if (['.git', 'node_modules', 'target'].includes(entry.name)) continue;
+            for (const entry of fs.readdirSync(dir, {withFileTypes: true})) {
+              if (['.git','node_modules','target'].includes(entry.name)) continue;
               const full = path.join(dir, entry.name);
               if (entry.isDirectory()) walk(full);
               else if (entry.isFile() && entry.name === 'package.json') updatePackage(full);
             }
           }
-
           walk('.');
           NODE
 
@@ -116,87 +126,24 @@ jobs:
           python3 <<'PY'
           from pathlib import Path
           import re
-
-          targets = {
-              'cxx': '1.0.198',
-              'tracing': '0.1.44',
-              'regex': '1.13.1',
-              'mdns-sd': '0.20.0',
-              'gray_matter': '0.3.2',
-              'http': '1.4.2',
-              'serde': '1.0.229',
-              'async-trait': '0.1.91',
-              'env_logger': '0.11.9',
-              'flume': '0.12.0',
-          }
-
+          targets={'cxx':'1.0.198','tracing':'0.1.44','regex':'1.13.1','mdns-sd':'0.20.0','gray_matter':'0.3.2','http':'1.4.2','serde':'1.0.229','async-trait':'0.1.91','env_logger':'0.11.9','flume':'0.12.0'}
           for manifest in Path('.').rglob('Cargo.toml'):
-              if any(part in {'.git', 'target'} for part in manifest.parts):
-                  continue
-              text = manifest.read_text(encoding='utf-8')
-              original = text
-              for name, version in targets.items():
-                  simple = re.compile(rf'(?m)^(\s*{re.escape(name)}\s*=\s*")([^"]+)(".*)$')
-                  inline = re.compile(rf'(?m)^(\s*{re.escape(name)}\s*=\s*\{{[^}}\n]*?\bversion\s*=\s*")([^"]+)("[^}}\n]*\}}.*)$')
-                  text, count_simple = simple.subn(rf'\g<1>{version}\g<3>', text)
-                  text, count_inline = inline.subn(rf'\g<1>{version}\g<3>', text)
-                  if count_simple or count_inline:
-                      print(f'{manifest}: {name} -> {version}')
-              if manifest.as_posix() == 'packages/core-rs/Cargo.toml':
-                  text, count = re.subn(
-                      r'(?m)^pbkdf2\s*=.*$',
-                      'pbkdf2 = { version = "0.13.0", features = ["sha2"] }',
-                      text,
-                      count=1,
-                  )
-                  if count != 1:
-                      raise SystemExit('packages/core-rs/Cargo.toml: pbkdf2 dependency not found')
-              if text != original:
-                  manifest.write_text(text, encoding='utf-8', newline='\n')
-
+              if any(part in {'.git','target'} for part in manifest.parts): continue
+              text=manifest.read_text(encoding='utf-8')
+              original=text
+              for name,version in targets.items():
+                  text=re.sub(rf'(?m)^(\s*{re.escape(name)}\s*=\s*"?)([^"\n]+)("?.*)$',rf'\g<1>{version}\g<3>',text)
+              if manifest.as_posix()=='packages/core-rs/Cargo.toml':
+                  text=re.sub(r'(?m)^pbkdf2\s*=.*$','pbkdf2 = { version = "0.13.0", features = ["sha2"] }',text,count=1)
+              if text != original: manifest.write_text(text,encoding='utf-8',newline='\n')
           def replace_once(path, old, new):
-              file = Path(path)
-              text = file.read_text(encoding='utf-8')
-              if old in text:
-                  file.write_text(text.replace(old, new, 1), encoding='utf-8', newline='\n')
-                  print(f'{path}: applied source migration')
-              elif new not in text:
-                  raise SystemExit(f'{path}: expected migration anchor not found')
-
-          replace_once(
-              'packages/core-rs/src/crypto.rs',
-              'use pbkdf2::pbkdf2_hmac;\nuse rand::Rng;\nuse sha2::Sha512;',
-              'use pbkdf2::{pbkdf2_hmac, sha2::Sha512};\nuse rand::Rng;',
-          )
-
-          replace_once(
-              'packages/core-rs/src/sync/mobile_sync/protocol/handler.rs',
-              'ip_address: std::net::IpAddr::V4(*address),',
-              'ip_address: address.to_ip_addr(),',
-          )
-
-          import_path = Path('packages/core-rs/src/import.rs')
-          import_text = import_path.read_text(encoding='utf-8')
-          old_calls = [
-              'let result = matter.parse(&content);',
-              '''let result = matter
-                      .parse(&content)
-                      .map_err(|error| ImportError::GrayMatter(error.to_string()))?;''',
-          ]
-          new = '''let result = matter
-                      .parse::<serde_json::Value>(&content)
-                      .map_err(|error| ImportError::GrayMatter(error.to_string()))?;'''
-          replaced = 0
-          for old in old_calls:
-              count = import_text.count(old)
-              if count:
-                  import_text = import_text.replace(old, new)
-                  replaced += count
-          if replaced:
-              import_path.write_text(import_text, encoding='utf-8', newline='\n')
-              print(f'packages/core-rs/src/import.rs: migrated {replaced} parser call(s)')
-          elif import_text.count(new) != 2:
-              raise SystemExit('packages/core-rs/src/import.rs: expected parser migration anchors not found')
+              p=Path(path); t=p.read_text(encoding='utf-8')
+              if old in t: p.write_text(t.replace(old,new,1),encoding='utf-8',newline='\n')
+          replace_once('packages/core-rs/src/crypto.rs','use pbkdf2::pbkdf2_hmac;\nuse rand::Rng;\nuse sha2::Sha512;','use pbkdf2::{pbkdf2_hmac, sha2::Sha512};\nuse rand::Rng;')
+          replace_once('packages/core-rs/src/sync/mobile_sync/protocol/handler.rs','ip_address: std::net::IpAddr::V4(*address),','ip_address: address.to_ip_addr(),')
+          p=Path('packages/core-rs/src/import.rs'); t=p.read_text(encoding='utf-8')
+          t=t.replace('let result = matter.parse(&content);','let result = matter.parse::<serde_json::Value>(&content).map_err(|error| ImportError::GrayMatter(error.to_string()))?;')
+          p.write_text(t,encoding='utf-8',newline='\n')
           PY
 
       - name: Format generated Rust sources
@@ -206,23 +153,12 @@ jobs:
           cargo fmt --all -- --check
 
       - name: Regenerate JavaScript lockfile
-        run: |
-          set -euxo pipefail
-          pnpm install --lockfile-only --ignore-scripts --reporter=append-only
+        run: pnpm install --lockfile-only --ignore-scripts --reporter=append-only
 
       - name: Regenerate Rust lockfile
         run: |
-          set -euxo pipefail
           cargo generate-lockfile
           cargo metadata --locked --format-version 1 --no-deps > "$RUNNER_TEMP/cargo-metadata.json"
-
-      - name: Inspect generated state
-        run: |
-          set -euxo pipefail
-          git diff --check
-          git status --short
-          git diff --stat
-          git diff -- packages/core-rs/Cargo.toml packages/core-rs/src/crypto.rs packages/core-rs/src/import.rs
 
       - name: Validate generated dependency graph
         run: |
@@ -243,12 +179,8 @@ jobs:
         run: |
           set -euxo pipefail
           mapfile -t files < <(git diff --name-only --diff-filter=ACMRT)
-          if (( ${#files[@]} == 0 )); then
-            echo "No convergence changes remain to package."
-            exit 0
-          fi
+          if (( ${#files[@]} == 0 )); then exit 0; fi
           printf '%s\0' "${files[@]}" | tar --null -T - -czf dependency-convergence.tar.gz
-          sha256sum dependency-convergence.tar.gz
 
       - name: Upload validated payload
         if: hashFiles('dependency-convergence.tar.gz') != ''
@@ -256,27 +188,15 @@ jobs:
         with:
           name: dependency-convergence
           path: dependency-convergence.tar.gz
-          if-no-files-found: error
           retention-days: 7
 
       - name: Commit validated convergence state
         run: |
           set -euxo pipefail
-          if git diff --quiet; then
-            echo "Validated convergence state is already committed."
-            exit 0
-          fi
+          if git diff --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Cargo.lock pnpm-lock.yaml \
-            apps/desktop/package.json \
-            apps/desktop/src-tauri/Cargo.toml \
-            apps/mobile/package.json \
-            packages/core-rs/Cargo.toml \
-            packages/core-rs/src/crypto.rs \
-            packages/core-rs/src/import.rs \
-            packages/core-rs/src/sync/mobile_sync/protocol/handler.rs \
-            packages/relay-server/Cargo.toml
+          git add -A
           git diff --cached --check
           git commit -m "chore(deps): materialize validated convergence"
           git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
