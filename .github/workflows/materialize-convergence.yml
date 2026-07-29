@@ -26,7 +26,7 @@ env:
 
 jobs:
   generate:
-    name: Generate, validate, and commit manifests and lockfiles
+    name: Generate, validate, and commit convergence state
     if: >-
       github.event.pull_request.number == 152 &&
       github.event.pull_request.head.repo.full_name == github.repository
@@ -72,24 +72,13 @@ jobs:
           pkg-config --modversion gdk-3.0
           pkg-config --modversion webkit2gtk-4.0
 
-      - name: Describe convergence environment
+      - name: Apply dependency and source convergence
         run: |
           set -euxo pipefail
-          git status --short --branch
-          git log -1 --oneline --decorate
-          node --version
-          pnpm --version
-          python3 --version
-          rustc -Vv
-          cargo -Vv
 
-      - name: Apply compatible JavaScript dependency versions
-        run: |
-          set -euxo pipefail
           node <<'NODE'
           const fs = require('fs');
           const path = require('path');
-
           const exact = new Map([['date-fns', '4.4.0']]);
 
           function updatePackage(file) {
@@ -127,9 +116,6 @@ jobs:
           walk('.');
           NODE
 
-      - name: Apply syntax-safe Rust dependency and source migrations
-        run: |
-          set -euxo pipefail
           python3 <<'PY'
           from collections import Counter
           from pathlib import Path
@@ -149,67 +135,74 @@ jobs:
           }
           seen = Counter()
 
-          def rewrite_dependency_line(line: str, name: str, version: str):
+          def write(path, text):
+              Path(path).write_text(text, encoding='utf-8', newline='\n')
+
+          def replace_once(path, old, new):
+              file = Path(path)
+              text = file.read_text(encoding='utf-8')
+              if old in text:
+                  write(path, text.replace(old, new, 1))
+                  print(f'{path}: applied source migration')
+              elif new not in text:
+                  raise SystemExit(f'{path}: expected migration anchor not found')
+
+          def rewrite_dependency_line(line, name, version):
               ending = ''
               body = line
               if body.endswith('\r\n'):
                   body, ending = body[:-2], '\r\n'
               elif body.endswith('\n'):
                   body, ending = body[:-1], '\n'
-
               escaped = re.escape(name)
-              inline = re.compile(
-                  rf'^(?P<prefix>\s*{escaped}\s*=\s*\{{[^\n}}]*?\bversion\s*=\s*)'
-                  rf'(?P<quote>["\'])(?P<value>[^"\']+)(?P=quote)'
-                  rf'(?P<suffix>[^\n}}]*\}}\s*(?:#.*)?)$'
+              patterns = (
+                  re.compile(
+                      rf'^(?P<prefix>\s*{escaped}\s*=\s*\{{[^\n}}]*?\bversion\s*=\s*)'
+                      rf'(?P<quote>["\'])(?P<value>[^"\']+)(?P=quote)'
+                      rf'(?P<suffix>[^\n}}]*\}}\s*(?:#.*)?)$'
+                  ),
+                  re.compile(
+                      rf'^(?P<prefix>\s*{escaped}\s*=\s*)'
+                      rf'(?P<quote>["\'])(?P<value>[^"\']+)(?P=quote)'
+                      rf'(?P<suffix>\s*(?:#.*)?)$'
+                  ),
               )
-              simple = re.compile(
-                  rf'^(?P<prefix>\s*{escaped}\s*=\s*)'
-                  rf'(?P<quote>["\'])(?P<value>[^"\']+)(?P=quote)'
-                  rf'(?P<suffix>\s*(?:#.*)?)$'
-              )
-
-              match = inline.match(body) or simple.match(body)
+              match = patterns[0].match(body) or patterns[1].match(body)
               if not match:
                   return line, False
-
-              rewritten = (
+              return (
                   f"{match.group('prefix')}{match.group('quote')}"
-                  f"{version}{match.group('quote')}{match.group('suffix')}{ending}"
+                  f"{version}{match.group('quote')}{match.group('suffix')}{ending}",
+                  True,
               )
-              return rewritten, True
 
           manifests = [
               path for path in Path('.').rglob('Cargo.toml')
               if not any(part in {'.git', 'target'} for part in path.parts)
           ]
-
           for manifest in manifests:
-              original_lines = manifest.read_text(encoding='utf-8').splitlines(keepends=True)
-              rewritten_lines = []
-              for line in original_lines:
+              original = manifest.read_text(encoding='utf-8')
+              rewritten = []
+              for line in original.splitlines(keepends=True):
                   current = line
                   for name, version in targets.items():
                       current, matched = rewrite_dependency_line(current, name, version)
                       if matched:
                           seen[name] += 1
                           break
-                  rewritten_lines.append(current)
-
-              text = ''.join(rewritten_lines)
+                  rewritten.append(current)
+              text = ''.join(rewritten)
               if manifest.as_posix() == 'packages/core-rs/Cargo.toml':
-                  pbkdf2_pattern = re.compile(r'(?m)^\s*pbkdf2\s*=.*$')
-                  text, count = pbkdf2_pattern.subn(
+                  text, count = re.subn(
+                      r'(?m)^\s*pbkdf2\s*=.*$',
                       'pbkdf2 = { version = "0.13.0", features = ["sha2"] }',
                       text,
                       count=1,
                   )
                   if count != 1:
                       raise SystemExit('packages/core-rs/Cargo.toml: pbkdf2 dependency not found')
-
-              original = ''.join(original_lines)
               if text != original:
-                  manifest.write_text(text, encoding='utf-8', newline='\n')
+                  write(manifest, text)
                   print(f'{manifest}: dependency versions rewritten')
 
           missing = sorted(name for name in targets if seen[name] == 0)
@@ -217,14 +210,19 @@ jobs:
               raise SystemExit(f'Expected Cargo dependencies were not found: {missing}')
           print('Matched dependency declarations:', dict(sorted(seen.items())))
 
-          def replace_once(path: str, old: str, new: str) -> None:
-              file = Path(path)
-              text = file.read_text(encoding='utf-8')
-              if old in text:
-                  file.write_text(text.replace(old, new, 1), encoding='utf-8', newline='\n')
-                  print(f'{path}: applied source migration')
-              elif new not in text:
-                  raise SystemExit(f'{path}: expected migration anchor not found')
+          desktop_manifest = Path('apps/desktop/src-tauri/Cargo.toml')
+          desktop_text = desktop_manifest.read_text(encoding='utf-8')
+          if not re.search(r'(?m)^reqwest\s*=', desktop_text):
+              anchor = 'lazy_static = "1.5.0"\n'
+              if anchor not in desktop_text:
+                  raise SystemExit('desktop Cargo.toml: reqwest insertion anchor not found')
+              desktop_text = desktop_text.replace(
+                  anchor,
+                  anchor + 'reqwest = { version = "0.11", features = ["json"] }\n',
+                  1,
+              )
+              write(desktop_manifest, desktop_text)
+              print('apps/desktop/src-tauri/Cargo.toml: added reqwest')
 
           replace_once(
               'packages/core-rs/src/crypto.rs',
@@ -239,54 +237,96 @@ jobs:
 
           import_path = Path('packages/core-rs/src/import.rs')
           import_text = import_path.read_text(encoding='utf-8')
-          old = 'let result = matter.parse(&content);'
-          new = '''let result = matter
+          old_parse = 'let result = matter.parse(&content);'
+          new_parse = '''let result = matter
                       .parse::<serde_json::Value>(&content)
                       .map_err(|error| ImportError::GrayMatter(error.to_string()))?;'''
-          count = import_text.count(old)
+          count = import_text.count(old_parse)
           if count:
-              import_text = import_text.replace(old, new)
-              import_path.write_text(import_text, encoding='utf-8', newline='\n')
+              write(import_path, import_text.replace(old_parse, new_parse))
               print(f'packages/core-rs/src/import.rs: migrated {count} parser call(s)')
           elif import_text.count('.parse::<serde_json::Value>(&content)') != 2:
-              raise SystemExit('packages/core-rs/src/import.rs: expected parser migration anchors not found')
+              raise SystemExit('packages/core-rs/src/import.rs: parser migration anchors not found')
+
+          replace_once(
+              'apps/desktop/src-tauri/src/commands/ai.rs',
+              '        for post in posts {',
+              '        let post_count = posts.len();\n        for post in &posts {',
+          )
+          replace_once(
+              'apps/desktop/src-tauri/src/commands/ai.rs',
+              'log::info!("[AI] Ingested {} social posts", posts.len());',
+              'log::info!("[AI] Ingested {} social posts", post_count);',
+          )
+          replace_once(
+              'apps/desktop/src-tauri/src/commands/runtime_contract.rs',
+              'use chrono::{NaiveDateTime, Utc};',
+              'use chrono::{DateTime, Utc};',
+          )
+          replace_once(
+              'apps/desktop/src-tauri/src/commands/runtime_contract.rs',
+              'use std::collections::{BTreeMap, HashMap};',
+              'use std::collections::BTreeMap;',
+          )
+          replace_once(
+              'apps/desktop/src-tauri/src/commands/runtime_contract.rs',
+              '''let date = NaiveDateTime::from_timestamp_opt(transaction.date, 0)
+                .map(|value| value.date().to_string())''',
+              '''let date = DateTime::from_timestamp(transaction.date, 0)
+                .map(|value| value.date_naive().to_string())''',
+          )
+          replace_once(
+              'apps/desktop/src-tauri/src/concurrency_tests.rs',
+              '    use std::path::Path;\n',
+              '',
+          )
+          replace_once(
+              'apps/desktop/src-tauri/src/commands/auth.rs',
+              'let mut attempts = LOGIN_ATTEMPTS.lock().map_err(|e| e.to_string())?;',
+              'let attempts = LOGIN_ATTEMPTS.lock().map_err(|e| e.to_string())?;',
+          )
+          replace_once(
+              'apps/desktop/src-tauri/src/commands/caldav.rs',
+              ''') -> Result<CalDavAccount, String> {
+    crate::with_db!(db, conn, {''',
+              ''') -> Result<CalDavAccount, String> {
+    let _ = &space_id;
+    crate::with_db!(db, conn, {''',
+          )
+          replace_once(
+              'apps/desktop/src-tauri/src/commands/caldav.rs',
+              ''') -> Result<Vec<CalDavAccount>, String> {
+    crate::with_db!(db, conn, {''',
+              ''') -> Result<Vec<CalDavAccount>, String> {
+    let _ = &space_id;
+    crate::with_db!(db, conn, {''',
+          )
+          replace_once(
+              'apps/desktop/src-tauri/src/commands/personal_modes.rs',
+              '''    crate::with_db!(db, conn, {
+        let note = core_rs::note::create_note(&conn, &space_id, &name, &instructions)
+            .map_err(|e| e.to_string())?;''',
+              '''    crate::with_db!(db, conn, {
+        let content = format!(
+            "# Ingredients\\n\\n{}\\n\\n# Instructions\\n\\n{}",
+            ingredients, instructions
+        );
+        let note = core_rs::note::create_note(&conn, &space_id, &name, &content)
+            .map_err(|e| e.to_string())?;''',
+          )
           PY
 
-      - name: Parse and format rewritten Rust workspace
+      - name: Regenerate lockfiles
         run: |
           set -euxo pipefail
           cargo metadata --format-version 1 --no-deps > "$RUNNER_TEMP/pre-lock-cargo-metadata.json"
           cargo fmt --all
-          cargo fmt --all -- --check
-          git diff --check
-
-      - name: Regenerate JavaScript lockfile
-        run: |
-          set -euxo pipefail
           pnpm install --lockfile-only --ignore-scripts --reporter=append-only
-
-      - name: Regenerate Rust lockfile
-        run: |
-          set -euxo pipefail
           cargo generate-lockfile
           cargo metadata --locked --format-version 1 --no-deps > "$RUNNER_TEMP/cargo-metadata.json"
-
-      - name: Inspect generated state
-        run: |
-          set -euxo pipefail
-          git status --short
-          git diff --stat
           git diff --check
-          git diff -- \
-            apps/desktop/package.json \
-            apps/mobile/package.json \
-            packages/core-rs/Cargo.toml \
-            packages/core-rs/src/crypto.rs \
-            packages/core-rs/src/import.rs \
-            packages/core-rs/src/sync/mobile_sync/protocol/handler.rs \
-            packages/relay-server/Cargo.toml
 
-      - name: Validate generated dependency graph
+      - name: Validate complete repository state
         run: |
           set -euxo pipefail
           pnpm install --frozen-lockfile --reporter=append-only
@@ -301,26 +341,6 @@ jobs:
           cargo test --locked --workspace --verbose -- --nocapture
           git diff --check
 
-      - name: Package validated payload
-        run: |
-          set -euxo pipefail
-          mapfile -t files < <(git diff --name-only --diff-filter=ACMRT)
-          if (( ${#files[@]} == 0 )); then
-            echo "No convergence changes remain to package."
-            exit 0
-          fi
-          printf '%s\0' "${files[@]}" | tar --null -T - -czf dependency-convergence.tar.gz
-          sha256sum dependency-convergence.tar.gz
-
-      - name: Upload validated payload
-        if: hashFiles('dependency-convergence.tar.gz') != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: dependency-convergence
-          path: dependency-convergence.tar.gz
-          if-no-files-found: error
-          retention-days: 7
-
       - name: Commit validated convergence state
         run: |
           set -euxo pipefail
@@ -330,10 +350,18 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Cargo.lock pnpm-lock.yaml \
+          git add \
+            Cargo.lock \
+            pnpm-lock.yaml \
             apps/desktop/package.json \
-            apps/desktop/src-tauri/Cargo.toml \
             apps/mobile/package.json \
+            apps/desktop/src-tauri/Cargo.toml \
+            apps/desktop/src-tauri/src/commands/ai.rs \
+            apps/desktop/src-tauri/src/commands/auth.rs \
+            apps/desktop/src-tauri/src/commands/caldav.rs \
+            apps/desktop/src-tauri/src/commands/personal_modes.rs \
+            apps/desktop/src-tauri/src/commands/runtime_contract.rs \
+            apps/desktop/src-tauri/src/concurrency_tests.rs \
             packages/core-rs/Cargo.toml \
             packages/core-rs/src/crypto.rs \
             packages/core-rs/src/import.rs \
