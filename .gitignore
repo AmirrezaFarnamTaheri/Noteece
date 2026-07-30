@@ -8,6 +8,7 @@
 .vscode
 *.swp
 **/node_modules
+**/.expo/
 packages/automation-dsl/node_modules
 apps/mobile/node_modules
 packages/ui/node_modules
