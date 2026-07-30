@@ -61,11 +61,14 @@ jobs:
           const rootPath = 'package.json';
           const root = JSON.parse(fs.readFileSync(rootPath, 'utf8'));
           const overrides = root.pnpm?.overrides ?? {};
-          for (const key of ['react', 'react-dom', 'react-test-renderer', '@types/react']) {
+          for (const key of ['react', 'react-dom', 'react-test-renderer', '@types/react', 'typescript']) {
             delete overrides[key];
           }
-          overrides.typescript = '5.9.3';
-          root.pnpm = { ...(root.pnpm ?? {}), overrides };
+          if (root.pnpm) {
+            if (Object.keys(overrides).length > 0) root.pnpm.overrides = overrides;
+            else delete root.pnpm.overrides;
+            if (Object.keys(root.pnpm).length === 0) delete root.pnpm;
+          }
           fs.writeFileSync(rootPath, JSON.stringify(root, null, 2) + '\n');
 
           const mobilePath = 'apps/mobile/package.json';
@@ -74,7 +77,6 @@ jobs:
           delete mobile.devDependencies['@types/i18next'];
           delete mobile.devDependencies['@types/react-i18next'];
           mobile.devDependencies['@testing-library/react-native'] = '^13.2.0';
-          mobile.devDependencies.typescript = '5.9.3';
           fs.writeFileSync(mobilePath, JSON.stringify(mobile, null, 2) + '\n');
           NODE
 
