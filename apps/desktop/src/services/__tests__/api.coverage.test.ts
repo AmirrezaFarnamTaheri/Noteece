@@ -105,8 +105,8 @@ describe('API Service', () => {
     expect(mockInvoke).toHaveBeenCalledWith('update_task_cmd', { task });
   });
 
-  it('startTimeEntry calls correct command', async () => {
-    await api.startTimeEntry('s1', 't1', 'p1', 'n1', 'desc');
+  it('startTimeEntry calls correct command without breaking the existing description position', async () => {
+    await api.startTimeEntry('s1', 't1', 'p1', 'desc', 'n1');
     expect(mockInvoke).toHaveBeenCalledWith('start_time_entry_cmd', {
       spaceId: 's1',
       taskId: 't1',
