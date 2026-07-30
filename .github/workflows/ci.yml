@@ -143,6 +143,45 @@ jobs:
         working-directory: apps/mobile
         run: pnpm test:ci -- --runInBand
 
+  rust_msrv:
+    name: "Rust | MSRV 1.85"
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Install declared MSRV
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.85.0"
+
+      - name: Install Linux desktop system dependencies
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            curl \
+            file \
+            libayatana-appindicator3-dev \
+            libgtk-3-dev \
+            librsvg2-dev \
+            libssl-dev \
+            libwebkit2gtk-4.0-dev \
+            wget
+          pkg-config --modversion gdk-3.0
+          pkg-config --modversion webkit2gtk-4.0
+
+      - name: Verify declared MSRV
+        run: |
+          set -euxo pipefail
+          rustc -Vv
+          cargo -Vv
+          cargo check --locked --workspace --all-targets --all-features
+
   rust_checks:
     name: "Rust | ${{ matrix.label }}"
     strategy:
@@ -224,7 +263,7 @@ jobs:
 
   ci_complete:
     name: "Required CI gate"
-    needs: [lint_and_format, desktop_tests, mobile_tests, rust_checks]
+    needs: [lint_and_format, desktop_tests, mobile_tests, rust_msrv, rust_checks]
     runs-on: ubuntu-22.04
     if: always()
     steps:
@@ -233,8 +272,9 @@ jobs:
           LINT_RESULT: ${{ needs.lint_and_format.result }}
           DESKTOP_RESULT: ${{ needs.desktop_tests.result }}
           MOBILE_RESULT: ${{ needs.mobile_tests.result }}
+          MSRV_RESULT: ${{ needs.rust_msrv.result }}
           RUST_RESULT: ${{ needs.rust_checks.result }}
         run: |
           set -euxo pipefail
-          echo "JS/TS=${LINT_RESULT} Desktop=${DESKTOP_RESULT} Mobile=${MOBILE_RESULT} Rust=${RUST_RESULT}"
-          [[ "$LINT_RESULT" == success && "$DESKTOP_RESULT" == success && "$MOBILE_RESULT" == success && "$RUST_RESULT" == success ]]
+          echo "JS/TS=${LINT_RESULT} Desktop=${DESKTOP_RESULT} Mobile=${MOBILE_RESULT} MSRV=${MSRV_RESULT} Rust=${RUST_RESULT}"
+          [[ "$LINT_RESULT" == success && "$DESKTOP_RESULT" == success && "$MOBILE_RESULT" == success && "$MSRV_RESULT" == success && "$RUST_RESULT" == success ]]
