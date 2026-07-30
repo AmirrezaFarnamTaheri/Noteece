@@ -124,7 +124,7 @@ export default function MoreScreen() {
           { text: 'Cancel', style: 'cancel' },
           {
             text: 'Next',
-            onPress: (rawCurrentPassword) => {
+            onPress: (rawCurrentPassword?: string) => {
               const currentPassword = (rawCurrentPassword ?? '').trim();
               if (!currentPassword) {
                 Alert.alert('Error', 'Current password is required');
@@ -137,7 +137,7 @@ export default function MoreScreen() {
                   { text: 'Cancel', style: 'cancel' },
                   {
                     text: 'Next',
-                    onPress: (rawNewPassword) => {
+                    onPress: (rawNewPassword?: string) => {
                       const newPassword = (rawNewPassword ?? '').trim();
                       if (newPassword.length < 8) {
                         Alert.alert('Error', 'New password must be at least 8 characters');
@@ -150,7 +150,7 @@ export default function MoreScreen() {
                           { text: 'Cancel', style: 'cancel' },
                           {
                             text: 'Change',
-                            onPress: async (rawConfirmPassword) => {
+                            onPress: async (rawConfirmPassword?: string) => {
                               const confirmPassword = (rawConfirmPassword ?? '').trim();
                               if (newPassword !== confirmPassword) {
                                 Alert.alert('Error', 'Passwords do not match');
