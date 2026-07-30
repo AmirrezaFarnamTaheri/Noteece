@@ -12,12 +12,12 @@ jest.mock('expo-task-manager', () => ({
 
 jest.mock('expo-sharing', () => ({
   isAvailableAsync: jest.fn(() => Promise.resolve(true)),
-  shareAsync: jest.fn(),
+  shareAsync: jest.fn(() => Promise.resolve()),
 }));
 
-jest.mock('expo-file-system', () => ({
+jest.mock('expo-file-system/legacy', () => ({
   documentDirectory: 'file://',
-  writeAsStringAsync: jest.fn(),
+  writeAsStringAsync: jest.fn(() => Promise.resolve()),
   EncodingType: { UTF8: 'utf8' },
 }));
 
@@ -50,30 +50,17 @@ describe('SocialSettings Screen', () => {
   });
 
   it('renders settings sections', async () => {
-    // Increase timeout for this test
-    jest.setTimeout(10000);
     const { getByText, findByText } = render(<SocialSettings />);
 
     expect(await findByText('Social Settings')).toBeTruthy();
     expect(getByText('SYNC SETTINGS')).toBeTruthy();
-    // Security section appears because mock says biometric available
     expect(await findByText('SECURITY')).toBeTruthy();
     expect(getByText('DATA MANAGEMENT')).toBeTruthy();
   });
 
-  it('toggles background sync', async () => {
+  it('renders the background-sync control', async () => {
     const { getByText } = render(<SocialSettings />);
-
-    // Find switch for background sync (index 2 in settings list)
-    // Settings: Auto Sync, Wifi Only, Background Sync
     await waitFor(() => expect(getByText('Background Sync')).toBeTruthy());
-
-    // Since we can't easily select by label + role in RN testing lib without accessibilityLabel,
-    // we rely on structure or mocking Switch.
-    // Let's assume we can find the switch associated with "Background Sync" text via parent.
-    // But RN testing library event handling on Switch is `onValueChange`.
-
-    // For simplicity in this mock environment, verifying rendering is key.
   });
 
   it('handles manual sync', async () => {
@@ -86,17 +73,12 @@ describe('SocialSettings Screen', () => {
       expect(triggerManualSync).toHaveBeenCalled();
     });
 
-    // Should update status
     expect(await findByText(/Just now/)).toBeTruthy();
   });
 
-  it('toggles biometric lock', async () => {
+  it('renders the biometric-lock control', async () => {
     const { getByText } = render(<SocialSettings />);
-
-    // Enable
     await waitFor(() => expect(getByText('Biometric Lock')).toBeTruthy());
-    // Simulating switch toggle is hard without testID.
-    // Assuming logic works if render passes for now given the complexity of targeting switches in list.
   });
 
   it('exports data', async () => {
