@@ -114,8 +114,8 @@ export const startTimeEntry = (
   spaceId: string,
   taskId?: string,
   projectId?: string,
-  noteId?: string,
   description?: string,
+  noteId?: string,
 ): Promise<TimeEntry> =>
   invokeCmd('start_time_entry_cmd', {
     spaceId,
