@@ -188,6 +188,8 @@ jobs:
           set -euxo pipefail
           pnpm install --frozen-lockfile --reporter=append-only
           pnpm --dir apps/mobile exec expo install --check
+          mkdir -p apps/mobile/.expo
+          git check-ignore -v apps/mobile/.expo
           (
             cd apps/mobile
             pnpm dlx expo-doctor@latest
