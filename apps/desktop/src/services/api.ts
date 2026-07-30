@@ -154,8 +154,8 @@ export const createManualTimeEntry = (
     projectId: projectId || null,
     noteId: noteId || null,
     description: description || null,
-    started_at: startedAt,
-    duration_seconds: durationSeconds,
+    startedAt,
+    durationSeconds,
   });
 
 // P2P Sync
