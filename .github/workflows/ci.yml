@@ -180,6 +180,8 @@ jobs:
           set -euxo pipefail
           rustc -Vv
           cargo -Vv
+          mkdir -p apps/desktop/dist
+          printf '<!doctype html><html><body></body></html>\n' > apps/desktop/dist/index.html
           cargo check --locked --workspace --all-targets --all-features
 
   rust_checks:
