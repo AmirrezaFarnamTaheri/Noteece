@@ -25,57 +25,6 @@ defaults:
     shell: bash
 
 jobs:
-  materialize_js_security:
-    name: "Temporary | materialize audited JS lockfile"
-    if: >-
-      github.event_name == 'pull_request' &&
-      github.event.pull_request.number == 152 &&
-      github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout writable PR head
-        uses: actions/checkout@v6
-        with:
-          repository: AmirrezaFarnamTaheri/Noteece
-          ref: chore/unify-open-prs-ci-20260729
-          fetch-depth: 0
-          persist-credentials: true
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
-
-      - name: Setup Node.js 24
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: pnpm
-
-      - name: Regenerate and verify lockfile
-        run: |
-          set -euxo pipefail
-          pnpm install --lockfile-only --ignore-scripts --reporter=append-only
-          pnpm install --frozen-lockfile --reporter=append-only
-          pnpm audit --audit-level high
-          pnpm --filter @noteece/desktop build
-          git diff --check
-
-      - name: Commit lockfile
-        run: |
-          set -euxo pipefail
-          if git diff --quiet -- pnpm-lock.yaml; then
-            echo "pnpm-lock.yaml is already current."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add pnpm-lock.yaml
-          git diff --cached --check
-          git commit -m "security: regenerate audited pnpm lockfile"
-          git push origin HEAD:refs/heads/chore/unify-open-prs-ci-20260729
-
   lint_and_format:
     name: "JS/TS | lint, format, types, IPC contract"
     runs-on: ubuntu-24.04
