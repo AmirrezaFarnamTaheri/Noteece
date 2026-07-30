@@ -51,27 +51,44 @@ jobs:
       - name: Install current locked graph
         run: pnpm install --frozen-lockfile --reporter=append-only
 
-      - name: Remove incompatible workspace-wide React pins
+      - name: Align Expo SDK 57 dependency graph
         run: |
           set -euxo pipefail
+
           node <<'NODE'
           const fs = require('fs');
-          const file = 'package.json';
-          const pkg = JSON.parse(fs.readFileSync(file, 'utf8'));
-          const overrides = pkg.pnpm?.overrides ?? {};
+
+          const rootPath = 'package.json';
+          const root = JSON.parse(fs.readFileSync(rootPath, 'utf8'));
+          const overrides = root.pnpm?.overrides ?? {};
           for (const key of ['react', 'react-dom', 'react-test-renderer', '@types/react']) {
             delete overrides[key];
           }
-          pkg.pnpm = { ...(pkg.pnpm ?? {}), overrides };
-          fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + '\n');
+          overrides.typescript = '5.9.3';
+          root.pnpm = { ...(root.pnpm ?? {}), overrides };
+          fs.writeFileSync(rootPath, JSON.stringify(root, null, 2) + '\n');
+
+          const mobilePath = 'apps/mobile/package.json';
+          const mobile = JSON.parse(fs.readFileSync(mobilePath, 'utf8'));
+          delete mobile.expo;
+          delete mobile.devDependencies['@types/i18next'];
+          delete mobile.devDependencies['@types/react-i18next'];
+          mobile.devDependencies['@testing-library/react-native'] = '^13.2.0';
+          mobile.devDependencies.typescript = '5.9.3';
+          fs.writeFileSync(mobilePath, JSON.stringify(mobile, null, 2) + '\n');
           NODE
 
-      - name: Upgrade and align Expo SDK 57 dependencies
-        run: |
-          set -euxo pipefail
           cd apps/mobile
           pnpm exec expo install 'expo@^57.0.0' --fix --pnpm
+          pnpm exec expo install \
+            expo-system-ui \
+            react-dom \
+            react-native-safe-area-context \
+            react-native-web \
+            --pnpm
           pnpm exec expo install --fix --pnpm
+          cd ../..
+          pnpm install --lockfile-only --reporter=append-only
 
       - name: Commit dependency migration state
         run: |
@@ -79,20 +96,51 @@ jobs:
           git diff --check
           if git diff --quiet; then
             echo "Dependency migration state is already committed."
-            exit 0
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add package.json apps/mobile/package.json pnpm-lock.yaml
+            git diff --cached --check
+            git commit -m "fix(mobile): complete Expo SDK 57 dependency alignment"
+            git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json apps/mobile/package.json pnpm-lock.yaml
-          git diff --cached --check
-          git commit -m "feat(mobile): align dependencies with Expo SDK 57"
-          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
 
       - name: Regenerate native projects
         run: |
           set -euxo pipefail
           cd apps/mobile
           pnpm exec expo prebuild --clean --no-install
+          cd ../..
+
+          python3 <<'PY'
+          import subprocess
+          from pathlib import Path
+
+          changed = subprocess.check_output(
+              ['git', 'diff', '--name-only', '-z'],
+          ).decode('utf-8').split('\0')
+          for name in changed:
+              if not name:
+                  continue
+              path = Path(name)
+              if not path.is_file():
+                  continue
+              raw = path.read_bytes()
+              if b'\0' in raw:
+                  continue
+              try:
+                  text = raw.decode('utf-8')
+              except UnicodeDecodeError:
+                  continue
+              lines = text.splitlines(keepends=True)
+              normalized = ''.join(
+                  line.rstrip(' \t\r\n') + ('\r\n' if line.endswith('\r\n') else '\n' if line.endswith('\n') else '')
+                  for line in lines
+              )
+              if normalized != text:
+                  path.write_text(normalized, encoding='utf-8', newline='')
+                  print(f'normalized trailing whitespace: {name}')
+          PY
 
       - name: Commit regenerated native projects
         run: |
@@ -100,14 +148,14 @@ jobs:
           git diff --check
           if git diff --quiet; then
             echo "Native projects are already current."
-            exit 0
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add apps/mobile/android apps/mobile/ios apps/mobile/app.json
+            git diff --cached --check
+            git commit -m "chore(mobile): regenerate native projects for Expo SDK 57"
+            git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add apps/mobile/android apps/mobile/ios apps/mobile/app.json
-          git diff --cached --check
-          git commit -m "chore(mobile): regenerate native projects for Expo SDK 57"
-          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
 
       - name: Validate migrated mobile project
         run: |
