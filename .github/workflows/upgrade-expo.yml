@@ -66,38 +66,47 @@ jobs:
           fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + '\n');
           NODE
 
-      - name: Upgrade Expo SDK incrementally
-        run: |
-          set -euxo pipefail
-          for sdk in 51 52 53 54 55 56 57; do
-            echo "Upgrading mobile project to Expo SDK ${sdk}"
-            (
-              cd apps/mobile
-              pnpm exec expo install "expo@^${sdk}.0.0" --fix --pnpm
-            )
-          done
-
-      - name: Align final SDK dependencies and regenerate native projects
+      - name: Upgrade and align Expo SDK 57 dependencies
         run: |
           set -euxo pipefail
           cd apps/mobile
+          pnpm exec expo install 'expo@^57.0.0' --fix --pnpm
           pnpm exec expo install --fix --pnpm
-          pnpm dlx expo-doctor@latest
-          pnpm exec expo prebuild --clean --no-install
 
-      - name: Commit generated migration state
+      - name: Commit dependency migration state
         run: |
           set -euxo pipefail
           git diff --check
           if git diff --quiet; then
-            echo "Expo SDK 57 state is already committed."
+            echo "Dependency migration state is already committed."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
+          git add package.json apps/mobile/package.json pnpm-lock.yaml
           git diff --cached --check
-          git commit -m "feat(mobile): migrate to Expo SDK 57"
+          git commit -m "feat(mobile): align dependencies with Expo SDK 57"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+
+      - name: Regenerate native projects
+        run: |
+          set -euxo pipefail
+          cd apps/mobile
+          pnpm exec expo prebuild --clean --no-install
+
+      - name: Commit regenerated native projects
+        run: |
+          set -euxo pipefail
+          git diff --check
+          if git diff --quiet; then
+            echo "Native projects are already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/mobile/android apps/mobile/ios apps/mobile/app.json
+          git diff --cached --check
+          git commit -m "chore(mobile): regenerate native projects for Expo SDK 57"
           git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
 
       - name: Validate migrated mobile project
