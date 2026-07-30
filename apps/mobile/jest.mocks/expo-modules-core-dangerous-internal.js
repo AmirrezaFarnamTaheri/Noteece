@@ -1,9 +1,12 @@
 // Minimal stub for expo-modules-core's internal polyfill used by jest-expo.
-// Newer Expo SDKs expose this helper; on Expo 50 it may not exist.
-// We just need to ensure that globalThis.expo with the required classes exists.
+// It must provide the same global registry shape consumed during preset setup.
 function ensureExpoGlobal() {
   if (typeof globalThis.expo !== 'object' || globalThis.expo === null) {
     globalThis.expo = {};
+  }
+
+  if (!globalThis.expo.modules || typeof globalThis.expo.modules !== 'object') {
+    globalThis.expo.modules = {};
   }
 
   if (!globalThis.expo.EventEmitter) {
