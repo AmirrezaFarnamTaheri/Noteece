@@ -138,9 +138,16 @@ jobs:
         working-directory: apps/mobile
         run: pnpm type-check
 
-      - name: Run mobile tests and detect leaked handles
+      - name: Run mobile tests and reject leaked handles
         working-directory: apps/mobile
-        run: pnpm exec jest --config jest.config.js --runInBand --detectOpenHandles
+        run: |
+          set -euxo pipefail
+          log_file="$RUNNER_TEMP/mobile-jest.log"
+          pnpm exec jest --config jest.config.js --runInBand --detectOpenHandles 2>&1 | tee "$log_file"
+          if grep -Fq "Jest has detected the following" "$log_file"; then
+            echo "::error::Jest detected one or more leaked asynchronous handles"
+            exit 1
+          fi
 
   rust_msrv:
     name: "Rust | MSRV 1.89"
