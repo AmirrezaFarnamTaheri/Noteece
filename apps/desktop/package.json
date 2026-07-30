@@ -17,10 +17,10 @@
     "preview": "vite preview",
     "dev:tauri": "tauri dev",
     "build:tauri": "tauri build",
-    "test": "jest --preset ts-jest",
-    "test:ci": "jest --preset ts-jest --passWithNoTests",
-    "test:coverage": "jest --preset ts-jest --coverage",
-    "test:coverage:ci": "jest --preset ts-jest --coverage --passWithNoTests"
+    "test": "jest --config jest.config.cjs",
+    "test:ci": "jest --config jest.config.cjs --runInBand",
+    "test:coverage": "jest --config jest.config.cjs --coverage",
+    "test:coverage:ci": "jest --config jest.config.cjs --coverage --runInBand"
   },
   "dependencies": {
     "@lexical/clipboard": "^0.48.0",
@@ -98,7 +98,7 @@
     "ts-jest": "^29.4.5",
     "ts-jest-mock-import-meta": "^1.3.1",
     "typescript": "^5.9.3",
-    "vite": "^4.5.0",
+    "vite": "^6.4.3",
     "vite-tsconfig-paths": "^4.2.1"
   }
 }
