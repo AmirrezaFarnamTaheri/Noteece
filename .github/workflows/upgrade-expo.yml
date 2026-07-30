@@ -101,6 +101,25 @@ jobs:
             throw new Error('Share extension config-plugin import anchor not found');
           }
           fs.writeFileSync(pluginPath, updatedPlugin);
+
+          const legacyFileSystemUsers = [
+            'apps/mobile/src/lib/backup.ts',
+            'apps/mobile/src/lib/data-utils.ts',
+            'apps/mobile/src/screens/SocialAnalytics.tsx',
+            'apps/mobile/src/screens/SocialSettings.tsx',
+            'apps/mobile/src/utils/platform.ts',
+          ];
+          for (const file of legacyFileSystemUsers) {
+            const source = fs.readFileSync(file, 'utf8');
+            const migrated = source.replace(
+              "from 'expo-file-system';",
+              "from 'expo-file-system/legacy';",
+            );
+            if (migrated === source && !source.includes("from 'expo-file-system/legacy';")) {
+              throw new Error(`${file}: expo-file-system import anchor not found`);
+            }
+            fs.writeFileSync(file, migrated);
+          }
           NODE
 
           git rm -r --cached --ignore-unmatch apps/mobile/.expo
@@ -127,9 +146,19 @@ jobs:
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add package.json apps/mobile/package.json apps/mobile/.gitignore apps/mobile/plugins/withShareExtension.js pnpm-lock.yaml
+            git add \
+              package.json \
+              apps/mobile/package.json \
+              apps/mobile/.gitignore \
+              apps/mobile/plugins/withShareExtension.js \
+              apps/mobile/src/lib/backup.ts \
+              apps/mobile/src/lib/data-utils.ts \
+              apps/mobile/src/screens/SocialAnalytics.tsx \
+              apps/mobile/src/screens/SocialSettings.tsx \
+              apps/mobile/src/utils/platform.ts \
+              pnpm-lock.yaml
             git diff --cached --check
-            git commit -m "fix(mobile): resolve Expo SDK 57 compatibility findings"
+            git commit -m "fix(mobile): adapt file-system callers for Expo SDK 57"
             git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
           fi
 
