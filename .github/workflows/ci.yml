@@ -1,4 +1,5 @@
 name: CI
+run-name: "CI | ${{ github.event_name }} | ${{ github.ref_name }} | ${{ github.sha }}"
 
 on:
   push:
@@ -6,208 +7,296 @@ on:
   pull_request:
     branches: ["main"]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
+  CI: "true"
   CARGO_TERM_COLOR: always
+  CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: "true"
+  RUST_BACKTRACE: full
 
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   lint_and_format:
-    name: "Lint and Format Check"
-    runs-on: ubuntu-latest
-
+    name: "JS/TS | lint, format, types, IPC contract"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
+      - name: Checkout exact revision
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
-          cache: "pnpm"
+          cache: pnpm
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Describe execution environment
+        run: |
+          set -euxo pipefail
+          git rev-parse HEAD
+          git status --short --branch
+          node --version
+          npm --version
+          pnpm --version
+          pnpm list --depth 0 --recursive || true
 
-      - name: Check Tauri IPC contract (frontend invoke vs registered commands)
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile --reporter=append-only
+
+      - name: Verify Tauri IPC contract
         run: node scripts/check-ipc-contract.mjs
 
-      - name: Run lint
+      - name: Run repository lint
         run: pnpm lint
 
-      - name: Check formatting
+      - name: Verify formatting
         run: pnpm format --check
 
-      - name: TypeScript check
+      - name: Run TypeScript checks
         run: pnpm type-check
 
   desktop_tests:
-    name: "Desktop Tests"
-    runs-on: ubuntu-latest
-
+    name: "Desktop | build, tests and coverage"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
+      - name: Checkout exact revision
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
-          cache: "pnpm"
+          cache: pnpm
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile --reporter=append-only
 
-      - name: Run tests
+      - name: Build desktop frontend
+        run: pnpm --filter @noteece/desktop build
+
+      - name: Run desktop tests with coverage
         working-directory: apps/desktop
-        run: pnpm test:ci
+        run: >-
+          pnpm exec jest --config jest.config.cjs --runInBand --coverage
+          --coverageReporters=json-summary --coverageReporters=text
 
-      - name: Run tests with coverage
-        working-directory: apps/desktop
-        run: pnpm test:coverage:ci
-
-      - name: Check coverage threshold
+      - name: Verify coverage artifact
         working-directory: apps/desktop
         run: |
-          if [ -f coverage/coverage-summary.json ]; then
-            COVERAGE=$(jq -r '.total.lines.pct' coverage/coverage-summary.json)
-            echo "Line coverage: $COVERAGE%"
-            if echo "$COVERAGE" | awk '{exit !($1 < 90)}'; then
-              echo "::warning::Coverage ($COVERAGE%) is below 90% threshold"
-            else
-              echo "Coverage check passed: $COVERAGE%"
-            fi
-          else
-            echo "::warning::No coverage report found"
-          fi
+          set -euxo pipefail
+          test -s coverage/coverage-summary.json
+          jq . coverage/coverage-summary.json
 
   mobile_tests:
-    name: "Mobile Tests"
-    runs-on: ubuntu-latest
-
+    name: "Mobile | lint, types, tests"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
+      - name: Checkout exact revision
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
-          cache: "pnpm"
+          cache: pnpm
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile --reporter=append-only
 
-      - name: Run linting
+      - name: Verify Expo dependency alignment
+        working-directory: apps/mobile
+        run: pnpm exec expo install --check
+
+      - name: Run mobile lint
         working-directory: apps/mobile
         run: pnpm lint
 
-      - name: Run type checking
+      - name: Run mobile type checking
         working-directory: apps/mobile
         run: pnpm type-check
 
-      - name: Run tests
+      - name: Run mobile tests and reject leaked handles
         working-directory: apps/mobile
-        run: pnpm test:ci
+        run: |
+          set -euxo pipefail
+          log_file="$RUNNER_TEMP/mobile-jest.log"
+          pnpm exec jest --config jest.config.js --runInBand --detectOpenHandles 2>&1 | tee "$log_file"
+          if grep -Fq "Jest has detected the following" "$log_file"; then
+            echo "::error::Jest detected one or more leaked asynchronous handles"
+            exit 1
+          fi
 
-  rust_checks:
-    name: "Rust Checks"
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-22.04, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-
+  rust_msrv:
+    name: "Rust | MSRV 1.89"
+    # Tauri v1 links WebKitGTK 4.0, which is not packaged on Ubuntu 24.04.
+    # Keep native Rust validation on 22.04 until the Tauri v2/WebKitGTK 4.1 migration.
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
+      - name: Checkout exact revision
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
-      - name: Install dependencies (Ubuntu)
-        if: matrix.os == 'ubuntu-22.04'
+      - name: Install declared MSRV
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.89.0"
+
+      - name: Cache Rust build state
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: msrv-1.89
+
+      - name: Install Linux desktop system dependencies
         run: |
+          set -euxo pipefail
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            curl \
+            file \
+            libayatana-appindicator3-dev \
+            libgtk-3-dev \
+            librsvg2-dev \
+            libssl-dev \
+            libwebkit2gtk-4.0-dev \
+            wget
+          pkg-config --modversion gdk-3.0
+          pkg-config --modversion webkit2gtk-4.0
+
+      - name: Verify declared MSRV
+        run: |
+          set -euxo pipefail
+          rustc -Vv
+          cargo -Vv
+          mkdir -p apps/desktop/dist
+          printf '<!doctype html><html><body></body></html>\n' > apps/desktop/dist/index.html
+          cargo check --locked --workspace --all-targets --all-features
+
+  rust_checks:
+    name: "Rust | ${{ matrix.label }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Tauri v1 requires WebKitGTK 4.0; retain 22.04 until Tauri v2 migration.
+          - os: ubuntu-22.04
+            label: Linux
+            lint: true
+          - os: macos-latest
+            label: macOS
+            lint: false
+          - os: windows-2022
+            label: Windows 2022
+            lint: false
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
 
-      - name: Cache Cargo
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+      - name: Cache Rust build state
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install Linux desktop system dependencies
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            curl \
+            file \
+            libayatana-appindicator3-dev \
+            libgtk-3-dev \
+            librsvg2-dev \
+            libssl-dev \
+            libwebkit2gtk-4.0-dev \
+            wget
+          pkg-config --modversion gdk-3.0
+          pkg-config --modversion webkit2gtk-4.0
+
+      - name: Select Strawberry Perl for Windows OpenSSL
+        if: startsWith(matrix.os, 'windows-')
+        shell: pwsh
+        run: |
+          $perl = 'C:\Strawberry\perl\bin\perl.exe'
+          if (-not (Test-Path $perl)) { throw "Missing Strawberry Perl" }
+          "OPENSSL_SRC_PERL=$perl" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          & $perl -MLocale::Maketext::Simple -e "print qq(ok\n)"
+
+      - name: Describe Rust environment
+        run: |
+          set -euxo pipefail
+          rustc -Vv
+          cargo -Vv
+          git ls-files --eol Cargo.lock pnpm-lock.yaml packages/core-rs/config/bundled_selectors.json
 
       - name: Check core-rs
-        run: cargo check -p core-rs --verbose
+        run: cargo check --locked -p core-rs --all-targets --all-features
 
       - name: Check relay-server
-        run: cargo check -p relay-server --verbose
+        run: cargo check --locked -p relay-server --all-targets
 
-      - name: Format Check
-        if: matrix.os == 'ubuntu-22.04'
+      - name: Rust format
+        if: matrix.lint
         run: cargo fmt --all -- --check
 
-      - name: Clippy core-rs
-        if: matrix.os == 'ubuntu-22.04'
-        run: cargo clippy -p core-rs --lib --all-features -- -D warnings
+      - name: Clippy
+        if: matrix.lint
+        run: cargo clippy --locked --workspace --all-targets -- -D warnings
 
-      - name: Clippy relay-server
-        if: matrix.os == 'ubuntu-22.04'
-        run: cargo clippy -p relay-server --all-targets -- -D warnings
+      - name: Tests
+        run: cargo test --locked --workspace --verbose -- --nocapture
 
-      - name: Test core-rs
-        run: cargo test -p core-rs --verbose
-
-      - name: Test relay-server
-        run: cargo test -p relay-server --verbose
-
-  ci-complete:
-    name: "CI Complete"
-    needs: [lint_and_format, desktop_tests, mobile_tests, rust_checks]
-    runs-on: ubuntu-latest
+  ci_complete:
+    name: "Required CI gate"
+    needs: [lint_and_format, desktop_tests, mobile_tests, rust_msrv, rust_checks]
+    runs-on: ubuntu-24.04
     if: always()
-
     steps:
-      - name: Check CI Status
+      - name: Publish consolidated result
+        env:
+          LINT_RESULT: ${{ needs.lint_and_format.result }}
+          DESKTOP_RESULT: ${{ needs.desktop_tests.result }}
+          MOBILE_RESULT: ${{ needs.mobile_tests.result }}
+          MSRV_RESULT: ${{ needs.rust_msrv.result }}
+          RUST_RESULT: ${{ needs.rust_checks.result }}
         run: |
-          echo "Lint and Format: ${{ needs.lint_and_format.result }}"
-          echo "Desktop Tests: ${{ needs.desktop_tests.result }}"
-          echo "Mobile Tests: ${{ needs.mobile_tests.result }}"
-          echo "Rust Checks: ${{ needs.rust_checks.result }}"
-
-          if [[ "${{ needs.lint_and_format.result }}" != "success" ]] || \
-             [[ "${{ needs.desktop_tests.result }}" != "success" ]] || \
-             [[ "${{ needs.mobile_tests.result }}" != "success" ]] || \
-             [[ "${{ needs.rust_checks.result }}" != "success" ]]; then
-            echo "One or more checks failed!"
-            exit 1
-          fi
-
-          echo "CI completed successfully!"
+          set -euxo pipefail
+          echo "JS/TS=${LINT_RESULT} Desktop=${DESKTOP_RESULT} Mobile=${MOBILE_RESULT} MSRV=${MSRV_RESULT} Rust=${RUST_RESULT}"
+          [[ "$LINT_RESULT" == success && "$DESKTOP_RESULT" == success && "$MOBILE_RESULT" == success && "$MSRV_RESULT" == success && "$RUST_RESULT" == success ]]

@@ -9,6 +9,7 @@ pub fn start_time_entry_cmd(
     space_id: String,
     task_id: Option<String>,
     project_id: Option<String>,
+    note_id: Option<String>,
     description: Option<String>,
 ) -> Result<TimeEntry, String> {
     crate::with_db!(db, conn, {
@@ -20,12 +21,16 @@ pub fn start_time_entry_cmd(
             .map(|s| Ulid::from_string(&s))
             .transpose()
             .map_err(|e| e.to_string())?;
+        let note_ulid = note_id
+            .map(|s| Ulid::from_string(&s))
+            .transpose()
+            .map_err(|e| e.to_string())?;
         core_rs::time_tracking::start_time_entry(
             &conn,
             Ulid::from_string(&space_id).map_err(|e| e.to_string())?,
             task_ulid,
             project_ulid,
-            None,
+            note_ulid,
             description,
         )
         .map_err(|e| e.to_string())
@@ -122,6 +127,8 @@ pub fn delete_time_entry_cmd(db: State<DbConnection>, entry_id: String) -> Resul
     })
 }
 
+// This public Tauri command intentionally keeps its field-by-field IPC signature stable.
+#[allow(clippy::too_many_arguments)]
 #[tauri::command]
 pub fn create_manual_time_entry_cmd(
     db: State<DbConnection>,

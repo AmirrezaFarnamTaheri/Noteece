@@ -7,6 +7,8 @@ use serde_json::{json, Map, Value};
 use std::collections::HashSet;
 use std::fs::{self, OpenOptions};
 use std::io::Write;
+#[cfg(windows)]
+use std::os::windows::fs::OpenOptionsExt;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
@@ -515,14 +517,36 @@ fn sync_directory(path: &Path) -> std::io::Result<()> {
 
 #[cfg(windows)]
 fn sync_directory(path: &Path) -> std::io::Result<()> {
-    use std::os::windows::fs::OpenOptionsExt;
-
+    // Opening a directory on Windows requires backup semantics. Attempt the
+    // metadata flush so rename/delete durability is preserved where supported,
+    // while treating documented unsupported-directory cases as best effort.
     const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
-    OpenOptions::new()
+    let directory = match OpenOptions::new()
         .read(true)
         .custom_flags(FILE_FLAG_BACKUP_SEMANTICS)
-        .open(path)?
-        .sync_all()
+        .open(path)
+    {
+        Ok(directory) => directory,
+        Err(error) if is_unsupported_directory_sync_error(&error) => return Ok(()),
+        Err(error) => return Err(error),
+    };
+
+    match directory.sync_all() {
+        Ok(()) => Ok(()),
+        Err(error) if is_unsupported_directory_sync_error(&error) => Ok(()),
+        Err(error) => Err(error),
+    }
+}
+
+#[cfg(windows)]
+fn is_unsupported_directory_sync_error(error: &std::io::Error) -> bool {
+    matches!(
+        error.kind(),
+        std::io::ErrorKind::PermissionDenied | std::io::ErrorKind::Unsupported
+    ) || matches!(
+        error.raw_os_error(),
+        Some(1) | Some(5) | Some(6) | Some(50) | Some(87)
+    )
 }
 
 #[cfg(not(any(unix, windows)))]

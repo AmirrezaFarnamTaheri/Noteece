@@ -84,7 +84,7 @@ impl SyncProtocol {
                                     Some(t) if t == "desktop" => DeviceType::Desktop,
                                     _ => DeviceType::Mobile,
                                 },
-                                ip_address: std::net::IpAddr::V4(*address),
+                                ip_address: address.to_ip_addr(),
                                 sync_port: info.get_port(),
                                 public_key: info
                                     .get_properties()

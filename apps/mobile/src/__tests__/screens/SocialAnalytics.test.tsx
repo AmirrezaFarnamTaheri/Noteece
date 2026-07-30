@@ -1,8 +1,9 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { SocialAnalytics } from '../../screens/SocialAnalytics';
 import { getPlatformStats, getCategoryStats, getTotalPostCount } from '@/lib/social-database';
 import { Share } from 'react-native';
+import * as Sharing from 'expo-sharing';
 
 // Mock dependencies
 jest.mock('@/lib/social-database', () => ({
@@ -15,15 +16,15 @@ jest.mock('@/store/app-context', () => ({
   useCurrentSpace: jest.fn(() => 'default'),
 }));
 
-jest.mock('expo-file-system', () => ({
+jest.mock('expo-file-system/legacy', () => ({
   documentDirectory: 'file://',
-  writeAsStringAsync: jest.fn(),
+  writeAsStringAsync: jest.fn(() => Promise.resolve()),
   EncodingType: { UTF8: 'utf8' },
 }));
 
 jest.mock('expo-sharing', () => ({
   isAvailableAsync: jest.fn(() => Promise.resolve(true)),
-  shareAsync: jest.fn(),
+  shareAsync: jest.fn(() => Promise.resolve()),
 }));
 
 describe('SocialAnalytics Screen', () => {
@@ -54,12 +55,12 @@ describe('SocialAnalytics Screen', () => {
 
     const { findByText, getAllByText } = render(<SocialAnalytics />);
 
-    expect(await findByText('20')).toBeTruthy(); // Total posts
+    expect(await findByText('20')).toBeTruthy();
     expect(getAllByText('twitter').length).toBeGreaterThan(0);
     expect(getAllByText('Tech').length).toBeGreaterThan(0);
   });
 
-  it('handles export', async () => {
+  it('exports the analytics report through native and file sharing', async () => {
     const shareSpy = jest.spyOn(Share, 'share');
     (getPlatformStats as jest.Mock).mockResolvedValue([]);
     (getCategoryStats as jest.Mock).mockResolvedValue([]);
@@ -70,7 +71,10 @@ describe('SocialAnalytics Screen', () => {
     const exportBtn = await findByText('Export');
     fireEvent.press(exportBtn);
 
-    expect(shareSpy).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(shareSpy).toHaveBeenCalled();
+      expect(Sharing.shareAsync).toHaveBeenCalled();
+    });
   });
 
   it('displays empty states correctly', async () => {

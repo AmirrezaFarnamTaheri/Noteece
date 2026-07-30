@@ -1,11 +1,10 @@
-import { SyncClient } from '@/lib/sync/sync-client';
+import { SyncClient, type SyncManifest } from '@/lib/sync/sync-client';
 
 jest.mock('@/lib/database', () => ({
   dbQuery: jest.fn(async () => []),
   dbExecute: jest.fn(async () => undefined),
 }));
 
-// Mock react-native-zeroconf
 jest.mock('react-native-zeroconf', () => {
   return jest.fn().mockImplementation(() => ({
     scan: jest.fn(),
@@ -23,59 +22,51 @@ describe('SyncClient', () => {
   });
 
   describe('discoverDevices', () => {
-    it('should return an array of devices', async () => {
-      const devices = await syncClient.discoverDevices(100); // Short timeout for test
-      expect(Array.isArray(devices)).toBe(true);
+    it('returns an array of devices after the scan window', async () => {
+      const devices = await syncClient.discoverDevices(10);
+      expect(devices).toEqual([]);
     });
   });
 
   describe('initiateSync', () => {
-    it.skip('should handle sync initialization', async () => {
-      const mockWebSocket = {
-        send: jest.fn(),
-        close: jest.fn(),
-        addEventListener: jest.fn(),
-        removeEventListener: jest.fn(),
-        onopen: jest.fn(),
-        onerror: jest.fn(),
+    it('orchestrates a complete successful sync and closes the socket', async () => {
+      const socket = { close: jest.fn() };
+      const manifest: SyncManifest = {
+        changes: [],
+        entries: [],
+        vectorClock: {},
+        timestamp: 0,
+      };
+      const internals = syncClient as unknown as {
+        establishSecureConnection: jest.Mock;
+        getLastSyncTimestamp: jest.Mock;
+        requestSyncManifest: jest.Mock;
+        pullChanges: jest.Mock;
+        pushChanges: jest.Mock;
+        updateSyncState: jest.Mock;
       };
 
-      // Mock WebSocket constructor
-      global.WebSocket = jest.fn(() => mockWebSocket) as any;
+      internals.establishSecureConnection = jest.fn().mockResolvedValue(socket);
+      internals.getLastSyncTimestamp = jest.fn().mockResolvedValue(0);
+      internals.requestSyncManifest = jest.fn().mockResolvedValue(manifest);
+      internals.pullChanges = jest.fn().mockResolvedValue(undefined);
+      internals.pushChanges = jest.fn().mockResolvedValue(undefined);
+      internals.updateSyncState = jest.fn().mockResolvedValue(undefined);
 
-      // Mock socket behavior
-      setTimeout(() => {
-        if (mockWebSocket.onopen) mockWebSocket.onopen({} as any);
-      }, 100);
+      await expect(syncClient.initiateSync('remote-device', '192.168.1.100')).resolves.toBe(true);
 
-      // Mock receiving manifest response
-      mockWebSocket.send.mockImplementation((data) => {
-        const parsed = JSON.parse(data);
-        if (parsed.type === 'get_manifest') {
-          setTimeout(() => {
-            const listeners = (mockWebSocket.addEventListener as jest.Mock).mock.calls
-              .filter((c) => c[0] === 'message')
-              .map((c) => c[1]);
-            listeners.forEach((l: any) =>
-              l({
-                data: JSON.stringify({
-                  type: 'manifest_response',
-                  requestId: parsed.requestId,
-                  manifest: { changes: [] },
-                }),
-              }),
-            );
-          }, 500);
-        }
-      });
-
-      const result = await syncClient.initiateSync('remote-device', '192.168.1.100');
-      expect(typeof result).toBe('boolean');
-    }, 20000);
+      expect(internals.establishSecureConnection).toHaveBeenCalledWith('192.168.1.100', 8765);
+      expect(internals.getLastSyncTimestamp).toHaveBeenCalledWith('remote-device');
+      expect(internals.requestSyncManifest).toHaveBeenCalledWith(socket, 'remote-device', 0);
+      expect(internals.pullChanges).toHaveBeenCalledWith(socket, manifest);
+      expect(internals.pushChanges).toHaveBeenCalledWith(socket, 'remote-device', 0);
+      expect(internals.updateSyncState).toHaveBeenCalledWith('remote-device');
+      expect(socket.close).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('queueChange', () => {
-    it('should queue a change for sync', async () => {
+    it('queues a change for sync', async () => {
       await expect(
         syncClient.queueChange('task', 'task-123', 'create', {
           title: 'Test Task',

@@ -40,7 +40,9 @@ pub fn import_from_obsidian(
                 log::info!("[import] Importing file: {:?}", path);
                 let content = std::fs::read_to_string(path)?;
                 let matter = Matter::<YAML>::new();
-                let result = matter.parse(&content);
+                let result = matter
+                    .parse::<serde_json::Value>(&content)
+                    .map_err(|error| ImportError::GrayMatter(error.to_string()))?;
                 let title = path
                     .file_stem()
                     .and_then(|s| s.to_str())
@@ -71,7 +73,9 @@ pub fn import_from_notion(
                 let mut content = String::new();
                 file.read_to_string(&mut content)?;
                 let matter = Matter::<YAML>::new();
-                let result = matter.parse(&content);
+                let result = matter
+                    .parse::<serde_json::Value>(&content)
+                    .map_err(|error| ImportError::GrayMatter(error.to_string()))?;
                 let title = outpath
                     .file_stem()
                     .and_then(|s| s.to_str())

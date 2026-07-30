@@ -2,9 +2,6 @@
 import 'react-native-gesture-handler/jestSetup';
 import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/async-storage-mock';
 
-// Silence the warning: Animated: `useNativeDriver` is not supported because the native animated module is missing
-jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper');
-
 // Mock common native modules
 jest.mock('react-native-reanimated', () => {
   const Reanimated = require('react-native-reanimated/mock');
@@ -32,13 +29,14 @@ jest.mock('expo-haptics', () => ({
 }));
 
 jest.mock('expo-sharing', () => ({
-  shareAsync: jest.fn(),
+  isAvailableAsync: jest.fn(() => Promise.resolve(true)),
+  shareAsync: jest.fn(() => Promise.resolve()),
 }));
 
-jest.mock('expo-file-system', () => ({
+jest.mock('expo-file-system/legacy', () => ({
   documentDirectory: '/tmp/',
-  writeAsStringAsync: jest.fn(),
-  deleteAsync: jest.fn(),
+  writeAsStringAsync: jest.fn(() => Promise.resolve()),
+  deleteAsync: jest.fn(() => Promise.resolve()),
   EncodingType: {
     UTF8: 'utf8',
     Base64: 'base64',
@@ -80,16 +78,22 @@ jest.mock('expo-linking', () => ({
   getInitialURL: jest.fn(() => Promise.resolve(null)),
 }));
 
-jest.mock('react-native/Libraries/Linking/Linking', () => ({
-  getInitialURL: jest.fn(() => Promise.resolve(null)),
-  openURL: jest.fn(),
-  addEventListener: jest.fn(() => ({ remove: jest.fn() })),
-  removeEventListener: jest.fn(),
-}));
+jest.mock('react-native/Libraries/Linking/Linking', () => {
+  const Linking = {
+    getInitialURL: jest.fn(() => Promise.resolve(null)),
+    openURL: jest.fn(),
+    addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+    removeEventListener: jest.fn(),
+  };
+  return { __esModule: true, default: Linking };
+});
 
-jest.mock('react-native/Libraries/Share/Share', () => ({
-  share: jest.fn(),
-}));
+jest.mock('react-native/Libraries/Share/Share', () => {
+  const Share = {
+    share: jest.fn(() => Promise.resolve({ action: 'sharedAction' })),
+  };
+  return { __esModule: true, default: Share };
+});
 
 // Mock Ionicons
 jest.mock('@expo/vector-icons', () => ({
@@ -107,17 +111,15 @@ jest.mock('react-native-safe-area-context', () => ({
 // Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
 
-// Mock database - ONLY if not already mocked in individual tests
-// This fallback allows tests to override it, but provides a safe default for components
-if (!jest.isMockFunction(require('./src/lib/database').dbQuery)) {
-  jest.mock('./src/lib/database', () => ({
-    dbQuery: jest.fn(() => Promise.resolve([])),
-    dbExecute: jest.fn(() => Promise.resolve()),
-    getDatabase: jest.fn(() => ({})),
-    initDatabase: jest.fn(() => Promise.resolve()),
-    initializeDatabase: jest.fn(() => Promise.resolve()),
-  }));
-}
+// Provide a safe database default without importing the production module.
+// Importing it here initializes Logger/Sentry and leaves a cleanup timer open.
+jest.mock('./src/lib/database', () => ({
+  dbQuery: jest.fn(() => Promise.resolve([])),
+  dbExecute: jest.fn(() => Promise.resolve()),
+  getDatabase: jest.fn(() => ({})),
+  initDatabase: jest.fn(() => Promise.resolve()),
+  initializeDatabase: jest.fn(() => Promise.resolve()),
+}));
 
 // Global console error/warn suppression for noise
 const originalConsoleError = console.error;

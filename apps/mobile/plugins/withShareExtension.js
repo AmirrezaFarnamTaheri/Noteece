@@ -8,7 +8,7 @@
  * Android: Configures intent filters for sharing
  */
 
-const { withEntitlementsPlist, withAndroidManifest, withDangerousMod } = require('@expo/config-plugins');
+const { withEntitlementsPlist, withAndroidManifest, withDangerousMod } = require('expo/config-plugins');
 const fs = require('fs');
 const path = require('path');
 

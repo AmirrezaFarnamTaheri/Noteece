@@ -5,7 +5,7 @@
  * Supports JSON export, import, and automatic backups.
  */
 
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
 import * as SecureStore from 'expo-secure-store';

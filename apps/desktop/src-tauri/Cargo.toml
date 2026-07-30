@@ -7,7 +7,7 @@ license = "AGPL-3.0"
 repository = "https://github.com/AmirrezaFarnamTaheri/Noteece"
 default-run = "noteece-desktop"
 edition = "2021"
-rust-version = "1.60"
+rust-version = "1.89"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -16,7 +16,7 @@ tauri-build = { version = "1.5.1", features = [] }
 
 [dependencies]
 serde_json = "1.0"
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0.229", features = ["derive"] }
 tauri = { version = "1.6", features = ["dialog", "clipboard-all", "dialog-all", "fs-all", "global-shortcut-all", "notification-all", "os-all", "path-all", "shell-open", "window-all"] }
 core-rs = { path = "../../../packages/core-rs" }
 rusqlite = { version = "0.37.0", features = ["bundled-sqlcipher-vendored-openssl"] }
@@ -29,6 +29,7 @@ log = "0.4.27"
 hex = "0.4.3"
 tauri-plugin-store = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
 lazy_static = "1.5.0"
+reqwest = { version = "0.11", features = ["json"] }
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.

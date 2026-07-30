@@ -279,7 +279,8 @@ pub fn ingest_social_capture_cmd(
     posts: Vec<serde_json::Value>,
 ) -> Result<(), String> {
     crate::with_db!(db, conn, {
-        for post in posts {
+        let post_count = posts.len();
+        for post in &posts {
             let id = ulid::Ulid::new().to_string();
             let platform = post
                 .get("platform")
@@ -304,7 +305,7 @@ pub fn ingest_social_capture_cmd(
             .map_err(|e| e.to_string())?;
         }
 
-        log::info!("[AI] Ingested {} social posts", posts.len());
+        log::info!("[AI] Ingested {} social posts", post_count);
         Ok(())
     })
 }

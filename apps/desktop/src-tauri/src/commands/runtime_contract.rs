@@ -5,10 +5,10 @@
 //! core implementation or derives its response from persisted application data.
 
 use crate::state::DbConnection;
-use chrono::{NaiveDateTime, Utc};
+use chrono::{DateTime, Utc};
 use rusqlite::OptionalExtension;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use std::fs;
 use tauri::{Manager, State};
 use ulid::Ulid;
@@ -548,8 +548,8 @@ pub fn get_finance_stats_cmd(
         let mut by_category = BTreeMap::<String, f64>::new();
         let mut daily = BTreeMap::<String, (f64, f64)>::new();
         for transaction in transactions {
-            let date = NaiveDateTime::from_timestamp_opt(transaction.date, 0)
-                .map(|value| value.date().to_string())
+            let date = DateTime::from_timestamp(transaction.date, 0)
+                .map(|value| value.date_naive().to_string())
                 .unwrap_or_else(|| "unknown".to_string());
             let entry = daily.entry(date).or_insert((0.0, 0.0));
             if transaction.transaction_type == "income" {
