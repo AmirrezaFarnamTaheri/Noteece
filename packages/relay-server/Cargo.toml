@@ -2,7 +2,7 @@
 name = "relay-server"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.85"
+rust-version = "1.89"
 authors = ["Noteece Team"]
 description = "Blind Relay Server for Noteece P2P Sync"
 
