@@ -138,9 +138,9 @@ jobs:
         working-directory: apps/mobile
         run: pnpm type-check
 
-      - name: Run mobile tests
+      - name: Run mobile tests and detect leaked handles
         working-directory: apps/mobile
-        run: pnpm exec jest --config jest.config.js --runInBand --forceExit
+        run: pnpm exec jest --config jest.config.js --runInBand --detectOpenHandles
 
   rust_msrv:
     name: "Rust | MSRV 1.89"
