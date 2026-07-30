@@ -164,8 +164,8 @@ describe('API Service', () => {
       projectId: 'p1',
       noteId: 'n1',
       description: 'desc',
-      started_at: 1000,
-      duration_seconds: 60,
+      startedAt: 1000,
+      durationSeconds: 60,
     });
   });
 });
