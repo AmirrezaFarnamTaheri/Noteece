@@ -91,18 +91,17 @@ jobs:
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile --reporter=append-only
 
-      - name: Run desktop coverage
+      - name: Run desktop tests with coverage
         working-directory: apps/desktop
-        run: pnpm test:coverage:ci -- --runInBand --coverageReporters=json-summary --coverageReporters=text
+        run: >-
+          pnpm exec jest --config jest.config.cjs --runInBand --coverage
+          --coverageReporters=json-summary --coverageReporters=text
 
-      - name: Evaluate coverage
+      - name: Verify coverage artifact
         working-directory: apps/desktop
         run: |
           set -euxo pipefail
-          if [[ ! -f coverage/coverage-summary.json ]]; then
-            echo "::warning::Coverage summary not emitted; tests passed and coverage remains informational"
-            exit 0
-          fi
+          test -s coverage/coverage-summary.json
           jq . coverage/coverage-summary.json
 
   mobile_tests:
@@ -141,7 +140,7 @@ jobs:
 
       - name: Run mobile tests
         working-directory: apps/mobile
-        run: pnpm test:ci -- --runInBand
+        run: pnpm exec jest --config jest.config.js --runInBand --forceExit
 
   rust_msrv:
     name: "Rust | MSRV 1.89"
