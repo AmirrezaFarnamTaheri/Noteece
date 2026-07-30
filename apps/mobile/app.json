@@ -6,23 +6,18 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0A0E27"
-    },
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.noteece.app",
       "infoPlist": {
-        "NSFaceIDUsageDescription": "Noteece uses Face ID to unlock your encrypted vault securely."
+        "NSFaceIDUsageDescription": "Noteece uses Face ID to unlock your encrypted vault securely.",
+        "UIBackgroundModes": ["audio", "fetch", "processing"]
       },
       "config": {
         "usesNonExemptEncryption": false
       },
-      "backgroundColor": "#0A0E27",
-      "backgroundModes": ["fetch", "processing"]
+      "backgroundColor": "#0A0E27"
     },
     "android": {
       "package": "com.noteece.app",
@@ -37,6 +32,14 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#0A0E27"
+        }
+      ],
       "expo-location",
       "expo-notifications",
       "expo-task-manager",
@@ -65,9 +68,6 @@
       "eas": {
         "projectId": "63273789-4930-438a-8753-616384e41405"
       }
-    },
-    "hooks": {
-      "postPublish": []
     }
   }
 }
