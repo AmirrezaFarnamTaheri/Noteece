@@ -89,6 +89,7 @@ jobs:
             },
           };
           fs.writeFileSync(mobilePath, JSON.stringify(mobile, null, 2) + '\n');
+          fs.writeFileSync('apps/mobile/.gitignore', '.expo/\nnode_modules/\n');
 
           const pluginPath = 'apps/mobile/plugins/withShareExtension.js';
           const plugin = fs.readFileSync(pluginPath, 'utf8');
@@ -124,7 +125,7 @@ jobs:
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add package.json apps/mobile/package.json apps/mobile/plugins/withShareExtension.js pnpm-lock.yaml
+            git add package.json apps/mobile/package.json apps/mobile/.gitignore apps/mobile/plugins/withShareExtension.js pnpm-lock.yaml
             git diff --cached --check
             git commit -m "fix(mobile): resolve Expo SDK 57 compatibility findings"
             git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
