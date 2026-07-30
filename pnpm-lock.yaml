@@ -458,7 +458,7 @@ importers:
         specifier: ^3.1.1
         version: 3.6.2
       typescript:
-        specifier: ^6.0.3
+        specifier: 6.0.3
         version: 6.0.3
 
   packages/automation-dsl:
