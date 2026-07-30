@@ -144,7 +144,7 @@ jobs:
         run: pnpm test:ci -- --runInBand
 
   rust_msrv:
-    name: "Rust | MSRV 1.85"
+    name: "Rust | MSRV 1.89"
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
@@ -156,7 +156,7 @@ jobs:
       - name: Install declared MSRV
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: "1.85.0"
+          toolchain: "1.89.0"
 
       - name: Install Linux desktop system dependencies
         run: |
