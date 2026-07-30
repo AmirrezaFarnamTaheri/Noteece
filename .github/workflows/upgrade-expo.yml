@@ -1,0 +1,115 @@
+name: Upgrade mobile Expo SDK
+run-name: "Upgrade Expo | PR #${{ github.event.pull_request.number }} | ${{ github.event.pull_request.head.sha }}"
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/upgrade-expo.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: upgrade-expo-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: "true"
+  EXPO_NO_TELEMETRY: "1"
+
+jobs:
+  migrate:
+    name: Upgrade, regenerate, commit, and validate Expo SDK 57
+    if: >-
+      github.event.pull_request.number == 152 &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout writable PR head
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Install current locked graph
+        run: pnpm install --frozen-lockfile --reporter=append-only
+
+      - name: Remove incompatible workspace-wide React pins
+        run: |
+          set -euxo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const file = 'package.json';
+          const pkg = JSON.parse(fs.readFileSync(file, 'utf8'));
+          const overrides = pkg.pnpm?.overrides ?? {};
+          for (const key of ['react', 'react-dom', 'react-test-renderer', '@types/react']) {
+            delete overrides[key];
+          }
+          pkg.pnpm = { ...(pkg.pnpm ?? {}), overrides };
+          fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + '\n');
+          NODE
+
+      - name: Upgrade Expo SDK incrementally
+        run: |
+          set -euxo pipefail
+          for sdk in 51 52 53 54 55 56 57; do
+            echo "Upgrading mobile project to Expo SDK ${sdk}"
+            (
+              cd apps/mobile
+              pnpm exec expo install "expo@^${sdk}.0.0" --fix --pnpm
+            )
+          done
+
+      - name: Align final SDK dependencies and regenerate native projects
+        run: |
+          set -euxo pipefail
+          cd apps/mobile
+          pnpm exec expo install --fix --pnpm
+          pnpm dlx expo-doctor@latest
+          pnpm exec expo prebuild --clean --no-install
+
+      - name: Commit generated migration state
+        run: |
+          set -euxo pipefail
+          git diff --check
+          if git diff --quiet; then
+            echo "Expo SDK 57 state is already committed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "feat(mobile): migrate to Expo SDK 57"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+
+      - name: Validate migrated mobile project
+        run: |
+          set -euxo pipefail
+          pnpm install --frozen-lockfile --reporter=append-only
+          pnpm --dir apps/mobile exec expo install --check
+          (
+            cd apps/mobile
+            pnpm dlx expo-doctor@latest
+          )
+          pnpm --dir apps/mobile lint
+          pnpm --dir apps/mobile type-check
+          pnpm --dir apps/mobile test:ci -- --runInBand
+          pnpm audit --prod --audit-level high
