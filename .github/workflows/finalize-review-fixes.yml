@@ -1,0 +1,253 @@
+name: Finalize review fixes
+run-name: "Finalize PR 152 review fixes"
+
+on:
+  push:
+    branches:
+      - chore/unify-open-prs-ci-20260729
+    paths:
+      - .github/workflows/finalize-review-fixes.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: finalize-review-fixes-pr-152
+  cancel-in-progress: true
+
+jobs:
+  apply:
+    if: >-
+      github.repository == 'AmirrezaFarnamTaheri/Noteece' &&
+      github.ref == 'refs/heads/chore/unify-open-prs-ci-20260729'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout writable branch head
+        uses: actions/checkout@v5
+        with:
+          ref: chore/unify-open-prs-ci-20260729
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Apply reviewed source and CI fixes
+        run: |
+          set -euxo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected exactly one match, found {count}")
+              return text.replace(old, new, 1)
+
+          ci_path = Path('.github/workflows/ci.yml')
+          ci = ci_path.read_text(encoding='utf-8')
+
+          ci = replace_once(
+              ci,
+              '  lint_and_format:\n    name: "JS/TS | lint, format, types, IPC contract"\n    runs-on: ubuntu-22.04',
+              '  lint_and_format:\n    name: "JS/TS | lint, format, types, IPC contract"\n    runs-on: ubuntu-24.04',
+              'JS/TS runner migration',
+          )
+          ci = replace_once(
+              ci,
+              '  desktop_tests:\n    name: "Desktop | tests and coverage"\n    runs-on: ubuntu-22.04',
+              '  desktop_tests:\n    name: "Desktop | tests and coverage"\n    runs-on: ubuntu-24.04',
+              'desktop runner migration',
+          )
+          ci = replace_once(
+              ci,
+              '  mobile_tests:\n    name: "Mobile | lint, types, tests"\n    runs-on: ubuntu-22.04',
+              '  mobile_tests:\n    name: "Mobile | lint, types, tests"\n    runs-on: ubuntu-24.04',
+              'mobile runner migration',
+          )
+          ci = replace_once(
+              ci,
+              '  ci_complete:\n    name: "Required CI gate"\n    needs: [lint_and_format, desktop_tests, mobile_tests, rust_msrv, rust_checks]\n    runs-on: ubuntu-22.04',
+              '  ci_complete:\n    name: "Required CI gate"\n    needs: [lint_and_format, desktop_tests, mobile_tests, rust_msrv, rust_checks]\n    runs-on: ubuntu-24.04',
+              'required gate runner migration',
+          )
+          ci = replace_once(
+              ci,
+              '''      - name: Run desktop tests
+        working-directory: apps/desktop
+        run: pnpm test:ci -- --runInBand
+
+''',
+              '',
+              'duplicate desktop test removal',
+          )
+          ci = replace_once(
+              ci,
+              '''      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile --reporter=append-only
+
+      - name: Run mobile lint
+        working-directory: apps/mobile
+        run: pnpm lint
+''',
+              '''      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile --reporter=append-only
+
+      - name: Verify Expo dependency alignment
+        working-directory: apps/mobile
+        run: pnpm exec expo install --check
+
+      - name: Run mobile lint
+        working-directory: apps/mobile
+        run: pnpm lint
+''',
+              'Expo validation insertion',
+          )
+          ci = replace_once(
+              ci,
+              '''  rust_msrv:
+    name: "Rust | MSRV 1.89"
+    runs-on: ubuntu-22.04
+''',
+              '''  rust_msrv:
+    name: "Rust | MSRV 1.89"
+    # Tauri v1 links WebKitGTK 4.0, which is not packaged on Ubuntu 24.04.
+    # Keep native Rust validation on 22.04 until the Tauri v2/WebKitGTK 4.1 migration.
+    runs-on: ubuntu-22.04
+''',
+              'MSRV runner compatibility documentation',
+          )
+          ci = replace_once(
+              ci,
+              '''      - name: Install declared MSRV
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.89.0"
+
+      - name: Install Linux desktop system dependencies
+''',
+              '''      - name: Install declared MSRV
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.89.0"
+
+      - name: Cache Rust build state
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: msrv-1.89
+
+      - name: Install Linux desktop system dependencies
+''',
+              'MSRV Rust cache insertion',
+          )
+          ci = replace_once(
+              ci,
+              '''          - os: ubuntu-22.04
+            label: Linux
+            lint: true
+''',
+              '''          # Tauri v1 requires WebKitGTK 4.0; retain 22.04 until Tauri v2 migration.
+          - os: ubuntu-22.04
+            label: Linux
+            lint: true
+''',
+              'Linux matrix compatibility documentation',
+          )
+          ci = replace_once(
+              ci,
+              '''      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Install Linux desktop system dependencies
+''',
+              '''      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Rust build state
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install Linux desktop system dependencies
+''',
+              'matrix Rust cache insertion',
+          )
+          ci_path.write_text(ci, encoding='utf-8', newline='\n')
+
+          backup_path = Path('packages/core-rs/src/social/backup.rs')
+          backup = backup_path.read_text(encoding='utf-8')
+          backup = replace_once(
+              backup,
+              '''use std::io::Write;
+use std::path::{Path, PathBuf};
+''',
+              '''use std::io::Write;
+#[cfg(windows)]
+use std::os::windows::fs::OpenOptionsExt;
+use std::path::{Path, PathBuf};
+''',
+              'Windows OpenOptionsExt import',
+          )
+          backup = replace_once(
+              backup,
+              '''#[cfg(windows)]
+fn sync_directory(_path: &Path) -> std::io::Result<()> {
+    // Windows does not expose a portable directory-fsync equivalent.
+    // The temporary backup file is already flushed before the atomic
+    // rename, so an unsupported directory metadata flush must not turn
+    // a successfully persisted backup into a false failure.
+    Ok(())
+}
+''',
+              '''#[cfg(windows)]
+fn sync_directory(path: &Path) -> std::io::Result<()> {
+    // Opening a directory on Windows requires backup semantics. Attempt the
+    // metadata flush so rename/delete durability is preserved where supported,
+    // while treating documented unsupported-directory cases as best effort.
+    const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
+    let directory = match OpenOptions::new()
+        .read(true)
+        .custom_flags(FILE_FLAG_BACKUP_SEMANTICS)
+        .open(path)
+    {
+        Ok(directory) => directory,
+        Err(error) if is_unsupported_directory_sync_error(&error) => return Ok(()),
+        Err(error) => return Err(error),
+    };
+
+    match directory.sync_all() {
+        Ok(()) => Ok(()),
+        Err(error) if is_unsupported_directory_sync_error(&error) => Ok(()),
+        Err(error) => Err(error),
+    }
+}
+
+#[cfg(windows)]
+fn is_unsupported_directory_sync_error(error: &std::io::Error) -> bool {
+    matches!(
+        error.kind(),
+        std::io::ErrorKind::PermissionDenied | std::io::ErrorKind::Unsupported
+    ) || matches!(
+        error.raw_os_error(),
+        Some(1) | Some(5) | Some(6) | Some(50) | Some(87)
+    )
+}
+''',
+              'Windows directory durability implementation',
+          )
+          backup_path.write_text(backup, encoding='utf-8', newline='\n')
+          PY
+
+          git diff --check
+
+      - name: Commit reviewed fixes
+        env:
+          HEAD_REF: chore/unify-open-prs-ci-20260729
+        run: |
+          set -euxo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/ci.yml packages/core-rs/src/social/backup.rs
+          git diff --cached --check
+          git commit -m "fix: address final CI and Windows durability reviews"
+          git push origin "HEAD:refs/heads/${HEAD_REF}"
