@@ -53,7 +53,7 @@ pub fn get_caldav_account_cmd(
 pub fn update_caldav_account_cmd(
     db: State<DbConnection>,
     account_id: String,
-    name: String,
+    calendar_path: String,
     url: String,
     username: String,
     password: Option<String>,
@@ -75,7 +75,7 @@ pub fn update_caldav_account_cmd(
             Some(&url),
             Some(&username),
             password.as_deref(),
-            Some(&name),
+            Some(&calendar_path),
             dek,
         )
         .map_err(|e| e.to_string())?;
