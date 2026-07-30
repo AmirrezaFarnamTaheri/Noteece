@@ -48,8 +48,8 @@ jobs:
           node-version: "24"
           cache: pnpm
 
-      - name: Install current locked graph
-        run: pnpm install --frozen-lockfile --reporter=append-only
+      - name: Install migration baseline
+        run: pnpm install --no-frozen-lockfile --reporter=append-only
 
       - name: Align Expo SDK 57 dependency graph
         run: |
