@@ -7,7 +7,7 @@ license = "AGPL-3.0"
 repository = "https://github.com/AmirrezaFarnamTaheri/Noteece"
 default-run = "noteece-desktop"
 edition = "2021"
-rust-version = "1.60"
+rust-version = "1.70"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
