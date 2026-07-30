@@ -111,17 +111,15 @@ jest.mock('react-native-safe-area-context', () => ({
 // Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
 
-// Mock database - ONLY if not already mocked in individual tests
-// This fallback allows tests to override it, but provides a safe default for components
-if (!jest.isMockFunction(require('./src/lib/database').dbQuery)) {
-  jest.mock('./src/lib/database', () => ({
-    dbQuery: jest.fn(() => Promise.resolve([])),
-    dbExecute: jest.fn(() => Promise.resolve()),
-    getDatabase: jest.fn(() => ({})),
-    initDatabase: jest.fn(() => Promise.resolve()),
-    initializeDatabase: jest.fn(() => Promise.resolve()),
-  }));
-}
+// Provide a safe database default without importing the production module.
+// Importing it here initializes Logger/Sentry and leaves a cleanup timer open.
+jest.mock('./src/lib/database', () => ({
+  dbQuery: jest.fn(() => Promise.resolve([])),
+  dbExecute: jest.fn(() => Promise.resolve()),
+  getDatabase: jest.fn(() => ({})),
+  initDatabase: jest.fn(() => Promise.resolve()),
+  initializeDatabase: jest.fn(() => Promise.resolve()),
+}));
 
 // Global console error/warn suppression for noise
 const originalConsoleError = console.error;
