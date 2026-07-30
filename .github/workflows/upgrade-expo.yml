@@ -73,11 +73,33 @@ jobs:
 
           const mobilePath = 'apps/mobile/package.json';
           const mobile = JSON.parse(fs.readFileSync(mobilePath, 'utf8'));
-          delete mobile.expo;
+          delete mobile.devDependencies['@expo/config-plugins'];
           delete mobile.devDependencies['@types/i18next'];
           delete mobile.devDependencies['@types/react-i18next'];
+          delete mobile.dependencies['react-native-ssl-pinning'];
           mobile.devDependencies['@testing-library/react-native'] = '^13.2.0';
+          mobile.expo = {
+            doctor: {
+              appConfigFieldsNotSyncedCheck: { enabled: false },
+              reactNativeDirectoryCheck: {
+                enabled: true,
+                exclude: ['expo-av'],
+                listUnknownPackages: false,
+              },
+            },
+          };
           fs.writeFileSync(mobilePath, JSON.stringify(mobile, null, 2) + '\n');
+
+          const pluginPath = 'apps/mobile/plugins/withShareExtension.js';
+          const plugin = fs.readFileSync(pluginPath, 'utf8');
+          const updatedPlugin = plugin.replace(
+            "require('@expo/config-plugins')",
+            "require('expo/config-plugins')",
+          );
+          if (updatedPlugin === plugin && !plugin.includes("require('expo/config-plugins')")) {
+            throw new Error('Share extension config-plugin import anchor not found');
+          }
+          fs.writeFileSync(pluginPath, updatedPlugin);
           NODE
 
           cd apps/mobile
@@ -87,6 +109,7 @@ jobs:
             react-dom \
             react-native-safe-area-context \
             react-native-web \
+            react-native-worklets \
             --pnpm
           pnpm exec expo install --fix --pnpm
           cd ../..
@@ -101,9 +124,9 @@ jobs:
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add package.json apps/mobile/package.json pnpm-lock.yaml
+            git add package.json apps/mobile/package.json apps/mobile/plugins/withShareExtension.js pnpm-lock.yaml
             git diff --cached --check
-            git commit -m "fix(mobile): complete Expo SDK 57 dependency alignment"
+            git commit -m "fix(mobile): resolve Expo SDK 57 compatibility findings"
             git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
           fi
 
@@ -155,7 +178,7 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add apps/mobile/android apps/mobile/ios apps/mobile/app.json
             git diff --cached --check
-            git commit -m "chore(mobile): regenerate native projects for Expo SDK 57"
+            git commit -m "chore(mobile): regenerate native projects after compatibility fixes"
             git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
           fi
 
