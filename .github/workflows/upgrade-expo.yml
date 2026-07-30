@@ -103,6 +103,8 @@ jobs:
           fs.writeFileSync(pluginPath, updatedPlugin);
           NODE
 
+          git rm -r --cached --ignore-unmatch apps/mobile/.expo
+
           cd apps/mobile
           pnpm exec expo install 'expo@^57.0.0' --fix --pnpm
           pnpm exec expo install \
@@ -120,7 +122,7 @@ jobs:
         run: |
           set -euxo pipefail
           git diff --check
-          if git diff --quiet; then
+          if git diff --quiet && git diff --cached --quiet; then
             echo "Dependency migration state is already committed."
           else
             git config user.name "github-actions[bot]"
@@ -190,7 +192,7 @@ jobs:
           pnpm --dir apps/mobile exec expo install --check
           printf '.expo\n.expo/\nnode_modules/\n' > apps/mobile/.gitignore
           mkdir -p apps/mobile/.expo
-          git check-ignore -v apps/mobile/.expo
+          git check-ignore --no-index -v apps/mobile/.expo
           (
             cd apps/mobile
             pnpm dlx expo-doctor@latest
