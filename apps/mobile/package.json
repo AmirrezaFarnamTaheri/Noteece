@@ -28,7 +28,7 @@
     "submit:android": "eas submit --platform android"
   },
   "dependencies": {
-    "@babel/plugin-transform-private-methods": "^7.27.1",
+    "@babel/plugin-transform-private-methods": "^8.0.1",
     "@expo/vector-icons": "^15.0.3",
     "@noble/ciphers": "^1.0.0",
     "@noble/curves": "^1.6.0",
