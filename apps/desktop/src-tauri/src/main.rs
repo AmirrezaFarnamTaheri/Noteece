@@ -123,6 +123,8 @@ fn main() {
             get_ocr_status_cmd,
             search_ocr_text_cmd,
             process_ocr_job_cmd,
+            get_pending_ocr_jobs_cmd,
+            process_ocr_queue_cmd,
             generate_insights_cmd,
             get_active_insights_cmd,
             dismiss_insight_cmd,
@@ -215,7 +217,14 @@ fn main() {
             create_habit_cmd,
             get_habits_cmd,
             complete_habit_cmd,
-            delete_habit_cmd
+            delete_habit_cmd,
+            check_ollama_connection_cmd,
+            list_ollama_models_cmd,
+            chat_with_ollama_cmd,
+            test_cloud_provider_cmd,
+            get_ai_config_cmd,
+            save_ai_config_cmd,
+            ingest_social_capture_cmd
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

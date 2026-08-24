@@ -22,4 +22,4 @@ Definitions of terms used throughout the application and documentation.
 
 ---
 
-[Return to Project Documentation](../../PROJECT_DOCS.md)
+[Return to Project Documentation](../DOCUMENTATION_INDEX.md)

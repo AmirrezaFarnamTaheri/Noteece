@@ -1,5 +1,30 @@
 /**
  * Lexical Editor Component with rich text editing and markdown support
+ *
+ * F19 NOTE — Missing Features Roadmap:
+ * The current editor provides basic rich text editing with markdown shortcuts.
+ * The following features are identified for future implementation using Lexical's
+ * official plugin packages:
+ *
+ * 1. Tables — @lexical/table (TablePlugin, TableNode, TableCellNode, TableRowNode)
+ *    - Install: npm install @lexical/table
+ *    - Provides full table support with cell selection, navigation, copy/paste
+ *
+ * 2. Checklists — @lexical/list with INSERT_CHECK_LIST_COMMAND
+ *    - Already installed (@lexical/list is a dependency)
+ *    - Requires registering ChecklistNode and adding INSERT_CHECK_LIST_COMMAND handler
+ *
+ * 3. Link/Mention autocomplete — @lexical/link with AutoLinkNode
+ *    - Already installed (@lexical/link is a dependency)
+ *    - AutoLinkNode provides automatic URL detection; mention autocomplete requires
+ *      custom TypeaheadMenuPlugin integration
+ *
+ * 4. Image embedding — @lexical/image or custom decorator node
+ *    - Requires blob storage integration for local-first image handling
+ *
+ * 5. Collaborative editing — Lexical Yjs integration (@lexical/yjs)
+ *    - Requires Yjs document synchronization over the existing P2P sync layer
+ *    - Significant architectural effort; deferred to post-MVP
  */
 
 import { useEffect, useRef } from 'react';

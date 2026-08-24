@@ -332,12 +332,12 @@ print_success "Project directory: $SCRIPT_DIR"
 # Clean previous installations if needed
 if [ -d "$SCRIPT_DIR/node_modules" ]; then
     print_warning "Existing node_modules found. Cleaning..."
-    rm -rf "$SCRIPT_DIR/node_modules" "$SCRIPT_DIR/pnpm-lock.yaml"
+    rm -rf "$SCRIPT_DIR/node_modules"
 fi
 
 print_step "Installing Node dependencies..."
 cd "$SCRIPT_DIR"
-pnpm install --frozen-lockfile || pnpm install
+pnpm install --frozen-lockfile
 print_success "Node dependencies installed"
 
 print_step "Setting up Rust workspace..."
@@ -372,8 +372,8 @@ NOTEECE_DB_PATH=$HOME/.noteece/data
 NOTEECE_BACKUP_PATH=$HOME/.noteece/backups
 
 # Security Configuration
-NOTEECE_ENABLE_HTTPS=false
-NOTEECE_DEV_MODE=true
+NOTEECE_ENABLE_HTTPS=true
+NOTEECE_DEV_MODE=false
 
 # Build Configuration
 NOTEECE_VERSION=1.0.0

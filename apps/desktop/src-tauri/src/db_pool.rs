@@ -2,14 +2,15 @@ use r2d2::ManageConnection;
 use rusqlite::Connection;
 use std::fmt;
 use std::path::PathBuf;
+use zeroize::{Zeroize, Zeroizing};
 
 pub struct EncryptedConnectionManager {
     path: PathBuf,
-    dek: [u8; 32],
+    dek: Zeroizing<[u8; 32]>,
 }
 
 impl EncryptedConnectionManager {
-    pub fn new(path: PathBuf, dek: [u8; 32]) -> Self {
+    pub fn new(path: PathBuf, dek: Zeroizing<[u8; 32]>) -> Self {
         Self { path, dek }
     }
 }
@@ -22,7 +23,7 @@ impl ManageConnection for EncryptedConnectionManager {
         let conn = Connection::open(&self.path)?;
 
         // 1) Apply Key (DEK)
-        let key_hex = hex::encode(self.dek);
+        let mut key_hex = Zeroizing::new(hex::encode(self.dek.as_ref()));
         let keying_sql = format!(
             r#"
             PRAGMA kdf_iter = 256000;
@@ -30,9 +31,10 @@ impl ManageConnection for EncryptedConnectionManager {
             PRAGMA cipher_kdf_algorithm = PBKDF2_HMAC_SHA512;
             PRAGMA key = "x'{}'";
             "#,
-            key_hex
+            *key_hex
         );
         conn.execute_batch(&keying_sql)?;
+        key_hex.zeroize();
 
         // 2) Set WAL mode and other performance PRAGMAs
         // Note: `journal_mode=WAL` persists, but it's good practice to ensure it.

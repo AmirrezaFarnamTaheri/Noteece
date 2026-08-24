@@ -23,11 +23,22 @@ impl LogLevel {
     }
 }
 
+/// Log format options
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LogFormat {
+    /// Human-readable text format (default)
+    Text,
+    /// JSON structured logging format for log aggregation systems
+    /// (e.g., Elasticsearch, Datadog, CloudWatch)
+    Json,
+}
+
 /// Simple lightweight logger
 pub struct Logger {
     file: Mutex<Option<File>>,
     min_level: LogLevel,
     console_output: bool,
+    format: LogFormat,
 }
 
 impl Logger {
@@ -36,6 +47,16 @@ impl Logger {
         log_path: Option<PathBuf>,
         min_level: LogLevel,
         console_output: bool,
+    ) -> Result<Self, std::io::Error> {
+        Self::with_format(log_path, min_level, console_output, LogFormat::Text)
+    }
+
+    /// Create a new logger with a specific output format
+    pub fn with_format(
+        log_path: Option<PathBuf>,
+        min_level: LogLevel,
+        console_output: bool,
+        format: LogFormat,
     ) -> Result<Self, std::io::Error> {
         let file = if let Some(path) = log_path {
             let f = OpenOptions::new().create(true).append(true).open(path)?;
@@ -48,6 +69,7 @@ impl Logger {
             file: Mutex::new(file),
             min_level,
             console_output,
+            format,
         })
     }
 
@@ -57,14 +79,28 @@ impl Logger {
             return;
         }
 
-        let timestamp = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S%.3f");
-        let formatted = format!(
-            "[{}] [{}] [{}] {}\n",
-            timestamp,
-            level.as_str(),
-            module,
-            message
-        );
+        let timestamp = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ");
+        let formatted = match self.format {
+            LogFormat::Text => format!(
+                "[{}] [{}] [{}] {}\n",
+                timestamp,
+                level.as_str(),
+                module,
+                message
+            ),
+            LogFormat::Json => {
+                // Structured JSON log entry for log aggregation systems
+                let escaped_msg = message
+                    .replace('\\', "\\\\")
+                    .replace('"', "\\\"")
+                    .replace('\n', "\\n");
+                let escaped_mod = module.replace('\\', "\\\\").replace('"', "\\\"");
+                format!(
+                    "{{\"timestamp\":\"{}\",\"level\":\"{}\",\"module\":\"{}\",\"message\":\"{}\"}}\n",
+                    timestamp, level.as_str(), escaped_mod, escaped_msg
+                )
+            }
+        };
 
         // Write to file with error reporting
         if let Ok(mut file_opt) = self.file.lock() {
@@ -133,6 +169,18 @@ pub fn init_logger(
     Ok(())
 }
 
+/// Initialize the global logger with a specific output format
+pub fn init_logger_with_format(
+    log_path: Option<PathBuf>,
+    min_level: LogLevel,
+    console_output: bool,
+    format: LogFormat,
+) -> Result<(), std::io::Error> {
+    let logger = Logger::with_format(log_path, min_level, console_output, format)?;
+    let _ = GLOBAL_LOGGER.set(logger);
+    Ok(())
+}
+
 /// Get the global logger
 fn get_logger() -> Option<&'static Logger> {
     GLOBAL_LOGGER.get()
@@ -167,6 +215,24 @@ pub fn error(module: &str, message: &str) {
 }
 
 /// Convenience macro for logging
+///
+/// NOTE (Finding O10): Metrics & Observability
+/// For production deployments, consider integrating OpenTelemetry for:
+/// - Distributed tracing across sync operations
+/// - Metrics (sync latency, conflict rates, query performance)
+/// - Structured logging with correlation IDs
+///
+/// Recommended crates:
+/// - `opentelemetry` + `opentelemetry-otlp` for trace/metric export
+/// - `tracing` + `tracing-opentelemetry` for instrumented logging
+/// - `tracing-subscriber` with JSON formatter for structured logs
+///
+/// Integration pattern:
+/// ```text
+/// use tracing::{info, instrument};
+/// #[instrument(skip(conn))]
+/// pub fn apply_deltas(conn: &Connection, deltas: Vec<SyncDelta>) { ... }
+/// ```
 #[macro_export]
 macro_rules! log_debug {
     ($msg:expr) => {

@@ -168,4 +168,38 @@ describe('AutomationParser', () => {
       expect(result.triggers[0].conditions[0].expression.type).toBe('BinaryExpression');
     });
   });
+
+  describe('Documented Grammar (regression: README examples must parse)', () => {
+    it('parses array literals in action parameters', () => {
+      const script = [
+        'TRIGGER ON NoteCreated DO {',
+        '  CreateNote(title: "Follow-up", content: "Check", tags: ["tag1", "tag2"])',
+        '}',
+      ].join('\n');
+      const result = parser.parse(script);
+      const tags = result.triggers[0].actions[0].parameters['tags'];
+      expect(tags.type).toBe('ArrayLiteral');
+      expect((tags as { elements: unknown[] }).elements).toHaveLength(2);
+    });
+
+    it('parses logical AND/OR operators', () => {
+      const script =
+        'TRIGGER ON NoteUpdated WHEN priority > 5 && tag == "work" OR archived == true DO { Log(message: "x") }';
+      const result = parser.parse(script);
+      const expr = result.triggers[0].conditions[0].expression;
+      expect(expr.type).toBe('BinaryExpression');
+    });
+
+    it('rejects unknown characters instead of silently dropping them', () => {
+      const bad = 'TRIGGER ON NoteCreated WHEN note@id == 1 DO { Log(message: "x") }';
+      expect(() => parser.parse(bad)).toThrow(ParseError);
+    });
+
+    it('parses keyword AND/OR forms', () => {
+      const script =
+        'TRIGGER ON NoteUpdated WHEN priority > 5 AND tag == "work" OR archived == true DO { Log(message: "x") }';
+      const result = parser.parse(script);
+      expect(result.triggers).toHaveLength(1);
+    });
+  });
 });

@@ -24,6 +24,7 @@ class OverlayService : Service() {
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        com.noteece.RustBridge.attach(applicationContext)
         createOverlay()
     }
 

@@ -84,7 +84,7 @@ pub fn create_recipe_cmd(
     db: State<DbConnection>,
     space_id: String,
     name: String,
-    ingredients: String,
+    _ingredients: String,
     instructions: String,
 ) -> Result<Recipe, String> {
     crate::with_db!(db, conn, {

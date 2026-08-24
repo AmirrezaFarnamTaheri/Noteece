@@ -1,0 +1,14 @@
+{
+  "$comment": "Static mirror of the mode registry implemented in packages/core-rs (src/mode.rs enable_core_pack + src/personal_modes.rs). Keep in sync with the Rust source; the backend remains the source of truth for enabled modes per space.",
+  "core": [
+    { "id": "general-note", "name": "General Note" },
+    { "id": "daily-note", "name": "Daily Note" },
+    { "id": "today-board", "name": "Today Board" },
+    { "id": "scratchpad", "name": "Scratchpad" }
+  ],
+  "personal": [
+    { "id": "travel", "name": "Travel" },
+    { "id": "finance", "name": "Finance" },
+    { "id": "health", "name": "Health" }
+  ]
+}

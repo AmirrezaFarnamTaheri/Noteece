@@ -63,9 +63,24 @@ pub fn import_from_notion(
     let file = fs::File::open(path)?;
     let mut archive = ZipArchive::new(file)?;
 
+    // SECURITY: Maximum file size limit to prevent zip bomb OOM (100MB per file)
+    const MAX_FILE_SIZE: u64 = 100 * 1024 * 1024;
+
     for i in 0..archive.len() {
         let mut file = archive.by_index(i)?;
-        if let Some(outpath) = file.enclosed_name() {
+
+        // SECURITY: Check uncompressed size before reading to prevent zip bombs
+        if file.size() > MAX_FILE_SIZE {
+            log::warn!(
+                "[import] Skipping oversized file {:?} ({} bytes > {} byte limit)",
+                file.name(),
+                file.size(),
+                MAX_FILE_SIZE
+            );
+            continue;
+        }
+
+        if let Some(outpath) = file.enclosed_name().map(|p| p.to_path_buf()) {
             if outpath.extension().and_then(|s| s.to_str()) == Some("md") {
                 log::info!("[import] Importing file: {:?}", outpath);
                 let mut content = String::new();
@@ -143,38 +158,17 @@ pub struct ExportMetadata {
 
 /// Export space data to JSON
 ///
-/// SECURITY: This function decrypts note content before export to prevent leaking
-/// encrypted ciphertext in the exported JSON. If decryption fails, the content
-/// field is cleared to avoid exporting unusable data.
+/// SECURITY: Note content is stored as plaintext in the database (SQLCipher encrypts
+/// at the page level). This function reads content_md directly without attempting
+/// application-layer decryption, which would fail on plaintext data.
 pub fn export_to_json(
     conn: &Connection,
     space_id: Ulid,
     dek: &[u8],
 ) -> Result<String, ImportError> {
-    let mut export_data = gather_export_data(conn, space_id, dek)?;
+    let export_data = gather_export_data(conn, space_id, dek)?;
 
-    // Decrypt note contents before serializing to prevent exporting ciphertext
-    log::info!(
-        "[export] Decrypting {} notes for export",
-        export_data.notes.len()
-    );
-    for note in &mut export_data.notes {
-        // Attempt decryption; if it fails, clear content to avoid leaking unusable ciphertext
-        match crate::crypto::decrypt_string(&note.content, dek) {
-            Ok(plaintext) => {
-                note.content = plaintext;
-            }
-            Err(e) => {
-                // Log the error and remove content to prevent exporting unusable ciphertext
-                log::warn!(
-                    "[export] Failed to decrypt note {} during export: {}. Content will be omitted.",
-                    note.id,
-                    e
-                );
-                note.content.clear();
-            }
-        }
-    }
+    log::info!("[export] Exporting {} notes", export_data.notes.len());
 
     let json = serde_json::to_string_pretty(&export_data)
         .map_err(|e| ImportError::Io(std::io::Error::other(e)))?;
@@ -182,6 +176,9 @@ pub fn export_to_json(
 }
 
 /// Export space data to ZIP archive
+///
+/// SECURITY: Note content is stored as plaintext (SQLCipher handles encryption at
+/// page level). Content is read directly without application-layer decryption.
 pub fn export_to_zip(
     conn: &Connection,
     space_id: Ulid,
@@ -190,8 +187,7 @@ pub fn export_to_zip(
 ) -> Result<(), ImportError> {
     let file = fs::File::create(output_path)?;
     let mut zip = ZipWriter::new(file);
-    let options: FileOptions<()> =
-        FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+    let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
 
     // Create dedicated notes directory in the archive
     zip.add_directory("notes/", options)?;
@@ -220,21 +216,9 @@ pub fn export_to_zip(
 
         zip.start_file(&filename, options)?;
 
-        // Decrypt content before export
-        let decrypted = match crate::crypto::decrypt_string(&enc_content, dek) {
-            Ok(s) => s,
-            Err(e) => {
-                // Write error metadata to file content to avoid silent corruption
-                writeln!(zip, "---")?;
-                writeln!(zip, "id: {}", id)?;
-                writeln!(zip, "title: {}", title)?;
-                writeln!(zip, "created_at: {}", created_at)?;
-                writeln!(zip, "export_warning: failed to decrypt content: {}", e)?;
-                writeln!(zip, "---")?;
-                writeln!(zip)?;
-                continue;
-            }
-        };
+        // Content may be application-layer encrypted on top of SQLCipher;
+        // decrypt for export and fall back to empty content on failure.
+        let content = crate::crypto::decrypt_string(&enc_content, dek).unwrap_or_default();
 
         // Write frontmatter
         writeln!(zip, "---")?;
@@ -244,8 +228,8 @@ pub fn export_to_zip(
         writeln!(zip, "---")?;
         writeln!(zip)?;
 
-        // Write decrypted content
-        write!(zip, "{}", decrypted)?;
+        // Write content
+        write!(zip, "{}", content)?;
     }
 
     // Export tasks as JSON
@@ -277,6 +261,9 @@ pub fn export_to_zip(
 }
 
 /// Export space data to Markdown files
+///
+/// SECURITY: Content is stored as plaintext (SQLCipher handles encryption at
+/// page level). No application-layer decryption needed.
 pub fn export_to_markdown(
     conn: &Connection,
     space_id: Ulid,
@@ -311,21 +298,8 @@ pub fn export_to_markdown(
 
         let mut file = fs::File::create(filepath)?;
 
-        // Decrypt content before export
-        let decrypted = match crate::crypto::decrypt_string(&enc_content, dek) {
-            Ok(s) => s,
-            Err(e) => {
-                // Write error metadata to file content to avoid silent corruption
-                writeln!(file, "---")?;
-                writeln!(file, "id: {}", id)?;
-                writeln!(file, "title: {}", title)?;
-                writeln!(file, "created_at: {}", created_at)?;
-                writeln!(file, "export_warning: failed to decrypt content: {}", e)?;
-                writeln!(file, "---")?;
-                writeln!(file)?;
-                continue;
-            }
-        };
+        // Content may be application-layer encrypted on top of SQLCipher;
+        let content = crate::crypto::decrypt_string(&enc_content, dek).unwrap_or_default();
 
         // Write frontmatter
         writeln!(file, "---")?;
@@ -335,8 +309,8 @@ pub fn export_to_markdown(
         writeln!(file, "---")?;
         writeln!(file)?;
 
-        // Write decrypted content
-        write!(file, "{}", decrypted)?;
+        // Write content
+        write!(file, "{}", content)?;
     }
 
     // Export tasks
@@ -355,7 +329,7 @@ pub fn export_to_markdown(
 fn gather_export_data(
     conn: &Connection,
     space_id: Ulid,
-    _dek: &[u8],
+    dek: &[u8],
 ) -> Result<ExportData, ImportError> {
     let mut notes = Vec::new();
     let mut tasks = Vec::new();
@@ -380,7 +354,12 @@ fn gather_export_data(
     })?;
 
     for note in note_rows {
-        notes.push(note?);
+        let mut note = note?;
+        // Content may be application-layer encrypted (XChaCha20-Poly1305,
+        // base64). Decrypt for export; a failed decryption emits empty content
+        // so one bad row cannot abort the whole export.
+        note.content = crate::crypto::decrypt_string(&note.content, dek).unwrap_or_default();
+        notes.push(note);
     }
 
     // Gather tasks

@@ -1,4 +1,5 @@
 pub mod analytics;
+pub mod ai;
 pub mod auth;
 pub mod backup;
 pub mod caldav;
@@ -24,6 +25,7 @@ pub mod vault;
 pub mod weekly_review;
 
 pub use analytics::*;
+pub use ai::*;
 pub use auth::*;
 pub use backup::*;
 pub use caldav::*;

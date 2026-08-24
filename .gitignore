@@ -1,6 +1,8 @@
 /target
 /dist
 /node_modules
+/coverage
+**/coverage
 **/.DS_Store
 *.log
 .env
@@ -11,3 +13,27 @@
 packages/automation-dsl/node_modules
 apps/mobile/node_modules
 packages/ui/node_modules
+
+# Global Auto-Added Gitignore Rules
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+node_modules/
+.next/
+dist/
+build/
+out/
+target/
+*.zip
+*.rar
+*.tar.gz
+*.7z
+*.exe
+*.dll
+*.so
+*.dylib
+.idea/
+.vscode/
+*.log

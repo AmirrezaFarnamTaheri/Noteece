@@ -13,13 +13,13 @@ fn test_encrypt_decrypt_roundtrip() {
     let dek = derive_key("test-password", b"salt");
     let plaintext = "Hello, World! This is a test message with special chars: 🔐🚀";
 
-    let ciphertext = encrypt_string(plaintext, &dek).expect("Encryption failed");
+    let ciphertext = encrypt_string(plaintext, &dek[..]).expect("Encryption failed");
     assert_ne!(
         ciphertext, plaintext,
         "Ciphertext should differ from plaintext"
     );
 
-    let decrypted = decrypt_string(&ciphertext, &dek).expect("Decryption failed");
+    let decrypted = decrypt_string(&ciphertext, &dek[..]).expect("Decryption failed");
     assert_eq!(decrypted, plaintext, "Decrypted text should match original");
 }
 
@@ -52,7 +52,7 @@ fn test_encrypt_with_invalid_dek_length() {
 #[test]
 fn test_decrypt_with_invalid_dek_length() {
     let valid_dek = derive_key("password", b"salt");
-    let ciphertext = encrypt_string("test", &valid_dek).unwrap();
+    let ciphertext = encrypt_string("test", &valid_dek[..]).unwrap();
 
     // Try to decrypt with wrong DEK length
     let wrong_dek = vec![0u8; 16];
@@ -66,7 +66,7 @@ fn test_decrypt_with_invalid_ciphertext_too_short() {
 
     // A valid base64 string that is too short to be a valid ciphertext.
     let short_ciphertext = "AAAA";
-    let result = decrypt_string(short_ciphertext, &dek);
+    let result = decrypt_string(short_ciphertext, &dek[..]);
     assert!(result.is_err());
     if let Err(e) = result {
         assert!(e
@@ -78,12 +78,12 @@ fn test_decrypt_with_invalid_ciphertext_too_short() {
 #[test]
 fn test_decrypt_with_corrupted_ciphertext() {
     let dek = derive_key("password", b"salt");
-    let ciphertext = encrypt_string("original message", &dek).unwrap();
+    let ciphertext = encrypt_string("original message", &dek[..]).unwrap();
 
     // Corrupt the ciphertext by modifying a character
     let mut corrupted = ciphertext.clone();
     corrupted.push('X'); // Add invalid character
-    let result = decrypt_string(&corrupted, &dek);
+    let result = decrypt_string(&corrupted, &dek[..]);
     assert!(result.is_err(), "Should fail with corrupted ciphertext");
 }
 
@@ -92,10 +92,10 @@ fn test_decrypt_with_wrong_dek() {
     let dek1 = derive_key("password1", b"salt1");
     let dek2 = derive_key("password2", b"salt2");
 
-    let ciphertext = encrypt_string("secret message", &dek1).unwrap();
+    let ciphertext = encrypt_string("secret message", &dek1[..]).unwrap();
 
     // Try to decrypt with wrong DEK
-    let result = decrypt_string(&ciphertext, &dek2);
+    let result = decrypt_string(&ciphertext, &dek2[..]);
     assert!(
         result.is_err(),
         "Should fail with wrong DEK due to authentication tag mismatch"
@@ -105,8 +105,8 @@ fn test_decrypt_with_wrong_dek() {
 #[test]
 fn test_encrypt_empty_string() {
     let dek = derive_key("password", b"salt");
-    let ciphertext = encrypt_string("", &dek).expect("Should encrypt empty string");
-    let decrypted = decrypt_string(&ciphertext, &dek).expect("Should decrypt empty string");
+    let ciphertext = encrypt_string("", &dek[..]).expect("Should encrypt empty string");
+    let decrypted = decrypt_string(&ciphertext, &dek[..]).expect("Should decrypt empty string");
     assert_eq!(decrypted, "", "Empty string should round-trip correctly");
 }
 
@@ -115,8 +115,8 @@ fn test_encrypt_large_string() {
     let dek = derive_key("password", b"salt");
     let large_text = "A".repeat(1_000_000); // 1 MB of text
 
-    let ciphertext = encrypt_string(&large_text, &dek).expect("Should encrypt large string");
-    let decrypted = decrypt_string(&ciphertext, &dek).expect("Should decrypt large string");
+    let ciphertext = encrypt_string(&large_text, &dek[..]).expect("Should encrypt large string");
+    let decrypted = decrypt_string(&ciphertext, &dek[..]).expect("Should decrypt large string");
     assert_eq!(
         decrypted, large_text,
         "Large string should round-trip correctly"
@@ -137,8 +137,8 @@ fn test_encrypt_unicode_and_special_chars() {
     ];
 
     for plaintext in test_strings {
-        let ciphertext = encrypt_string(plaintext, &dek).expect("Encryption failed");
-        let decrypted = decrypt_string(&ciphertext, &dek).expect("Decryption failed");
+        let ciphertext = encrypt_string(plaintext, &dek[..]).expect("Encryption failed");
+        let decrypted = decrypt_string(&ciphertext, &dek[..]).expect("Decryption failed");
         assert_eq!(decrypted, plaintext, "Unicode should round-trip correctly");
     }
 }
@@ -148,8 +148,8 @@ fn test_same_plaintext_different_ciphertexts() {
     let dek = derive_key("password", b"salt");
     let plaintext = "same message";
 
-    let ciphertext1 = encrypt_string(plaintext, &dek).unwrap();
-    let ciphertext2 = encrypt_string(plaintext, &dek).unwrap();
+    let ciphertext1 = encrypt_string(plaintext, &dek[..]).unwrap();
+    let ciphertext2 = encrypt_string(plaintext, &dek[..]).unwrap();
 
     // Ciphertexts should differ due to random nonce
     assert_ne!(
@@ -158,8 +158,8 @@ fn test_same_plaintext_different_ciphertexts() {
     );
 
     // But both should decrypt to same plaintext
-    assert_eq!(decrypt_string(&ciphertext1, &dek).unwrap(), plaintext);
-    assert_eq!(decrypt_string(&ciphertext2, &dek).unwrap(), plaintext);
+    assert_eq!(decrypt_string(&ciphertext1, &dek[..]).unwrap(), plaintext);
+    assert_eq!(decrypt_string(&ciphertext2, &dek[..]).unwrap(), plaintext);
 }
 
 #[test]
@@ -183,6 +183,6 @@ fn test_decrypt_invalid_base64() {
 
     // Test with invalid base64 characters
     let invalid_base64 = "This is not valid base64!@#$%";
-    let result = decrypt_string(invalid_base64, &dek);
+    let result = decrypt_string(invalid_base64, &dek[..]);
     assert!(result.is_err(), "Should fail with invalid base64");
 }

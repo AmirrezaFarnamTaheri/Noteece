@@ -178,20 +178,13 @@ impl PragmaTuner {
 
         #[cfg(target_os = "macos")]
         {
-            // macOS: use sysctl
-            // For simplicity, return a reasonable default
+            // macOS: use sysctl. For simplicity, return a reasonable default.
             return 8_000_000_000; // 8GB default for macOS
         }
 
-        #[cfg(target_os = "windows")]
-        {
-            // Windows: use GlobalMemoryStatusEx
-            // For simplicity, return a reasonable default
-            return 8_000_000_000; // 8GB default for Windows
-        }
-
-        // Default fallback
-        4_000_000_000 // 4GB
+        // Windows and all other platforms: conservative 4GB cache default.
+        // (GlobalMemoryStatusEx integration tracked separately.)
+        4_000_000_000
     }
 
     /// Benchmark storage speed (MB/s)

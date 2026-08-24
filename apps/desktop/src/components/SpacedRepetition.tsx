@@ -230,6 +230,15 @@ const SpacedRepetition: React.FC = () => {
           p="xl"
           className={classes.flashcard}
           onClick={() => !isFlipped && setIsFlipped(true)}
+          tabIndex={0}
+          role="button"
+          aria-label={isFlipped ? 'Flashcard answer shown' : 'Click or press Enter to reveal answer'}
+          onKeyDown={(e) => {
+            if (!isFlipped && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault();
+              setIsFlipped(true);
+            }
+          }}
           style={{
             minHeight: 300,
             cursor: isFlipped ? 'default' : 'pointer',

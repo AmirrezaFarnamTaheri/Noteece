@@ -264,7 +264,8 @@ impl BackupService {
         });
 
         // Tables to backup (all social-related tables)
-        let tables = vec![
+        // SECURITY: Hardcoded allowlist prevents SQL injection via dynamic table names
+        let allowed_tables = [
             "social_account",
             "social_post",
             "social_category",
@@ -275,7 +276,7 @@ impl BackupService {
             "social_focus_mode",
         ];
 
-        for table in tables {
+        for table in &allowed_tables {
             let mut stmt = conn.prepare(&format!("SELECT * FROM {}", table))?;
             let col_count = stmt.column_count();
             let col_names: Vec<String> = (0..col_count)
@@ -311,8 +312,9 @@ impl BackupService {
     }
 
     /// Clear all social-related tables within a transaction
+    /// SECURITY: Hardcoded table list with correct deletion order
     fn clear_database_tx(&self, tx: &rusqlite::Transaction) -> Result<(), BackupError> {
-        let tables = vec![
+        let allowed_tables = [
             "social_post_category", // Must delete junction table first
             "social_auto_rule_action",
             "social_auto_rule",
@@ -323,7 +325,7 @@ impl BackupService {
             "social_account",
         ];
 
-        for table in tables {
+        for table in &allowed_tables {
             tx.execute(&format!("DELETE FROM {}", table), [])?;
         }
 

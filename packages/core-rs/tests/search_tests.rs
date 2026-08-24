@@ -84,7 +84,7 @@ fn test_search_does_not_expose_encrypted_content() -> Result<(), DbError> {
 
     // Create a note with encrypted content
     let plaintext = "This is secret content that should never appear in search results";
-    let encrypted = encrypt_string(plaintext, &dek).unwrap();
+    let encrypted = encrypt_string(plaintext, &dek[..]).unwrap();
 
     // Insert note with encrypted content directly
     let note_id = ulid::Ulid::new().to_string();
@@ -135,7 +135,7 @@ fn test_search_does_not_match_encrypted_content() -> Result<(), DbError> {
 
     // Create a note with encrypted content containing "secret"
     let plaintext = "This contains the word secret";
-    let encrypted = encrypt_string(plaintext, &dek).unwrap();
+    let encrypted = encrypt_string(plaintext, &dek[..]).unwrap();
 
     let note_id = ulid::Ulid::new().to_string();
     conn.execute(

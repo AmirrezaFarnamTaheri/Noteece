@@ -5,7 +5,7 @@ Noteece operates on a **Zero-Trust, Zero-Knowledge** security model.
 ## 1. Encryption at Rest
 
 - **Database:** The SQLite database is encrypted using SQLCipher (AES-256-CBC).
-- **Key Derivation:** The user's master password is hashed using Argon2id to derive the Key Encryption Key (KEK).
+- **Key Derivation:** The user's master password is run through PBKDF2-HMAC-SHA512 (256,000 iterations) to derive the Key Encryption Key (KEK).
 - **Data Encryption Key (DEK):** A random 32-byte key is generated at vault creation. This DEK is encrypted by the KEK and stored in the database header.
 - **Content:** Sensitive content (note bodies) is further encrypted using XChaCha20Poly1305 before being written to disk, ensuring that even if the DB page cache leaks, content remains secure.
 

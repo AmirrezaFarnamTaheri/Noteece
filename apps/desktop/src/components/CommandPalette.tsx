@@ -8,6 +8,12 @@ import {
   IconClipboardList,
   IconSearch,
   IconChevronRight,
+  IconBook,
+  IconSettings,
+  IconCloud,
+  IconChartBar,
+  IconDatabaseImport,
+  IconScan,
 } from '@tabler/icons-react';
 
 const commands = [
@@ -16,6 +22,12 @@ const commands = [
   { label: 'Tasks', to: '/main/tasks', icon: IconCheckbox, description: 'Manage your tasks' },
   { label: 'Projects', to: '/main/projects', icon: IconClipboardList, description: 'View project hub' },
   { label: 'Search', to: '/main/search', icon: IconSearch, description: 'Advanced search' },
+  { label: 'SRS', to: '/main/srs', icon: IconBook, description: 'Spaced repetition flashcards' },
+  { label: 'Settings', to: '/main/settings', icon: IconSettings, description: 'App preferences and vault' },
+  { label: 'Sync', to: '/main/sync', icon: IconCloud, description: 'Device sync and conflicts' },
+  { label: 'Analytics', to: '/main/analytics', icon: IconChartBar, description: 'Usage insights and stats' },
+  { label: 'Import', to: '/main/import', icon: IconDatabaseImport, description: 'Import data from other apps' },
+  { label: 'OCR', to: '/main/ocr', icon: IconScan, description: 'Extract text from images' },
 ];
 
 const CommandPalette: React.FC<{ opened: boolean; onClose: () => void }> = ({ opened, onClose }) => {

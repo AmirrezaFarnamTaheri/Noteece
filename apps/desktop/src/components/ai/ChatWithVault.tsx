@@ -3,6 +3,15 @@
  *
  * RAG-powered chat interface for querying the user's vault.
  * Retrieves relevant context from notes and generates AI answers.
+ *
+ * NOTE (Finding P12): AI Streaming
+ * The current implementation uses a request/response pattern via Tauri invoke.
+ * For better UX with long-running AI queries, consider implementing streaming:
+ * - Use Server-Sent Events (SSE) or WebSocket for token-by-token delivery
+ * - Add a `streamingQueryCmd` Tauri command that yields tokens as they're generated
+ * - Update the UI to append tokens incrementally (typewriter effect)
+ * - This requires changes to both the Rust LLM module (streaming support) and
+ *   the frontend (EventSource or WebSocket client)
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';

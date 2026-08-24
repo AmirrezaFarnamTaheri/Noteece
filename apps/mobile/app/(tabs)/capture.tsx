@@ -93,7 +93,7 @@ export default function CaptureScreen() {
       label: 'Task',
       description: 'Add a quick task',
     },
-    // Voice and Photo hidden/removed as requested until implemented
+    // Voice and Photo capture options (implementation pending)
   ];
 
   return (
@@ -172,23 +172,6 @@ export default function CaptureScreen() {
               multiline
               textAlignVertical="top"
             />
-          </View>
-        )}
-
-        {/* Coming Soon Features */}
-        {(captureType === 'voice' || captureType === 'photo') && (
-          <View style={styles.comingSoonContainer}>
-            <Ionicons name="construct-outline" size={48} color={colors.textTertiary} />
-            <Text style={styles.comingSoonText}>{captureType === 'voice' ? 'Voice Memo' : 'Photo Capture'}</Text>
-            <Text style={styles.comingSoonSubtext}>This feature is coming soon</Text>
-            <TouchableOpacity
-              style={styles.notifyButton}
-              onPress={() => {
-                Alert.alert('Noted!', "We'll let you know when this is ready.");
-              }}
-            >
-              <Text style={styles.notifyButtonText}>Notify Me</Text>
-            </TouchableOpacity>
           </View>
         )}
 

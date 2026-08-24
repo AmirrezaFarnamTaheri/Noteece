@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   AppShell,
   Title,
@@ -87,6 +88,7 @@ const navLinkGroups = [
 const MainLayout: React.FC = () => {
   const [commandPaletteOpened, setCommandPaletteOpened] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
   useHotkeys([['mod+K', () => setCommandPaletteOpened((o) => !o)]]);
   const { activeSpaceId, zenMode, toggleZenMode } = useStore();
 
@@ -113,9 +115,41 @@ const MainLayout: React.FC = () => {
         },
       })}
     >
+      <a
+        href="#main-content"
+        className="skip-to-content"
+        style={{
+          position: 'absolute',
+          left: '-9999px',
+          top: 'auto',
+          width: '1px',
+          height: '1px',
+          overflow: 'hidden',
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.left = '10px';
+          e.currentTarget.style.top = '10px';
+          e.currentTarget.style.width = 'auto';
+          e.currentTarget.style.height = 'auto';
+          e.currentTarget.style.zIndex = '9999';
+          e.currentTarget.style.padding = '8px 16px';
+          e.currentTarget.style.background = 'var(--mantine-color-violet-6)';
+          e.currentTarget.style.color = 'white';
+          e.currentTarget.style.borderRadius = '4px';
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.left = '-9999px';
+          e.currentTarget.style.top = 'auto';
+          e.currentTarget.style.width = '1px';
+          e.currentTarget.style.height = '1px';
+        }}
+      >
+        {t('accessibility.skipToContent', 'Skip to content')}
+      </a>
       {!zenMode && (
         <AppShell.Header
           p="md"
+          role="banner"
           style={{
             background: 'rgba(5, 5, 6, 0.85)', // Deep Obsidian transparent
             backdropFilter: 'blur(20px)',
@@ -165,7 +199,7 @@ const MainLayout: React.FC = () => {
                     backgroundColor: 'rgba(0, 0, 0, 0.2)',
                   }}
                 >
-                  Search...
+                  {t('commandPalette.search', 'Search...')}
                 </Button>
               </Tooltip>
 
@@ -181,12 +215,12 @@ const MainLayout: React.FC = () => {
                   transition: 'transform 0.2s ease',
                 }}
               >
-                Daily Note
+                {t('button.dailyNote', 'Daily Note')}
               </Button>
 
               <Divider orientation="vertical" mx={4} color="dark.6" />
 
-              <Tooltip label="Toggle Zen Mode">
+              <Tooltip label={t('zenMode.toggle', 'Toggle Zen Mode')}>
                 <ActionIcon
                   variant="subtle"
                   onClick={toggleZenMode}
@@ -208,6 +242,7 @@ const MainLayout: React.FC = () => {
       {!zenMode && (
         <AppShell.Navbar
           p="sm"
+          role="navigation"
           style={{
             backgroundColor: 'rgba(15, 16, 20, 0.4)', // Slightly transparent
             backdropFilter: 'blur(20px)',
@@ -311,13 +346,13 @@ const MainLayout: React.FC = () => {
         </AppShell.Navbar>
       )}
 
-      <AppShell.Main>
+      <AppShell.Main id="main-content" role="main">
         <CommandPalette opened={commandPaletteOpened} onClose={() => setCommandPaletteOpened(false)} />
         <UndoToast />
         <Outlet />
         {zenMode && (
           <Affix position={{ bottom: 24, right: 24 }}>
-            <Tooltip label="Exit Zen Mode" position="left">
+            <Tooltip label={t('zenMode.exit', 'Exit Zen Mode')} position="left">
               <ActionIcon
                 variant="filled"
                 color="dark"

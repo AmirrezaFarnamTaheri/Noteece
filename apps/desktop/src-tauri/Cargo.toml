@@ -7,7 +7,7 @@ license = "AGPL-3.0"
 repository = "https://github.com/AmirrezaFarnamTaheri/Noteece"
 default-run = "noteece-desktop"
 edition = "2021"
-rust-version = "1.60"
+rust-version = "1.82"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -17,9 +17,10 @@ tauri-build = { version = "1.5.1", features = [] }
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "1.6", features = ["dialog", "clipboard-all", "dialog-all", "fs-all", "global-shortcut-all", "notification-all", "os-all", "path-all", "shell-open", "window-all"] }
+tauri = { version = "1.6", features = ["dialog", "dialog-all", "fs-all", "notification-all", "os-all", "path-all", "shell-open", "window-all"] }
 core-rs = { path = "../../../packages/core-rs" }
 rusqlite = { version = "0.37.0", features = ["bundled-sqlcipher-vendored-openssl"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 ulid = { version = "1.2.1", features = ["serde"] }
 zeroize = { version = "1.7", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
@@ -27,7 +28,7 @@ r2d2 = "0.8"
 chrono = "0.4.31"
 log = "0.4.27"
 hex = "0.4.3"
-tauri-plugin-store = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
+tauri-plugin-store = { git = "https://github.com/tauri-apps/plugins-workspace", rev = "1e407ed56455558cf751022fd68eca3b9e3713a0" }
 lazy_static = "1.5.0"
 
 [features]

@@ -26,8 +26,11 @@ pub struct LLMConfig {
 
     // Provider-specific configurations
     pub ollama_base_url: String,
+    #[serde(skip)]
     pub openai_api_key: Option<String>,
+    #[serde(skip)]
     pub anthropic_api_key: Option<String>,
+    #[serde(skip)]
     pub google_api_key: Option<String>,
 }
 

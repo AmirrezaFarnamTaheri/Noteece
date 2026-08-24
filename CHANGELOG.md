@@ -9,9 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Mobile Security:** Implemented proper encryption key management in FFI layer with salt file support, fixing hardcoded salt vulnerability.
-- **Mobile Cleanup:** Removed deprecated `useSettings` hook and cleaned up AppContext.
-- **Tests:** Added comprehensive test suites for Mobile Database, AppContext, and Desktop Sync components.
+- **Desktop AI:** Registered all seven AI commands (`check_ollama_connection_cmd`, `list_ollama_models_cmd`, `chat_with_ollama_cmd`, `test_cloud_provider_cmd`, `get_ai_config_cmd`, `save_ai_config_cmd`, `ingest_social_capture_cmd`) and compiled the previously orphaned `commands/ai.rs` module; added reqwest (rustls) to the Tauri shell.
+- **Schema:** Added migration v26 creating `ai_config` and `capture_post` tables; capture ingestion now writes to `capture_post` instead of an incompatible `social_post` insert that always failed.
+- **Relay:** Device registration now rejects identity conflicts (HTTP 409) instead of silently overwriting; JWT secret fails fast in production when unset; added periodic expiry sweep; removed dead health-check branch; `/metrics` now requires authentication.
+- **Crypto:** `unwrap_dek` now returns a zeroizing DEK.
+- **Mobile (Prime):** Added missing `RustBridge` so the sideload flavor compiles; captures persist to bounded app-private storage; removed captured-content logging to logcat; session-start intents are rejected from foreign UIDs.
+- **Mobile:** Release builds use an env-injected upload keystore when provided (`NOTECEE_UPLOAD_*`); `allowBackup` disabled; versionName aligned to 1.1.0.
+- **Automation DSL:** Implemented array literals and logical AND/OR operators documented in the README; tokenizer now reports unknown characters with line/column info instead of silently dropping them.
+- **i18n:** Added es/fr/de/ja/zh/fa locale files matching en.json keys; restored package exports.
+- **Modes:** Added `modes.json` mirroring the core-rs mode registry so `@noteece/modes` resolves.
+- **CI:** Pinned pnpm/action-setup, codeql-action, and TruffleHog to immutable SHAs; CodeQL matrix now analyzes JavaScript/TypeScript and Rust (removed inapplicable C/C++); tarpaulin install failures no longer masked; coverage gate enforceable via the `COVERAGE_MIN` repo variable.
+- **Build:** Replaced unresolvable `rev = "v1"` git spec for tauri-plugin-store with a full commit pin.
+- **Docs:** Corrected KDF claims (PBKDF2-HMAC-SHA512, not Argon2id) across wiki; fixed README badges, links, and feature claims.
+- **Tooling:** `verify_dashboard.py` exits non-zero on missing widgets; `.gitattributes` forces LF for shell scripts; `coverage/` ignored; duplicate prettier config aligned.
+- **Relay build:** fixed pre-existing compile errors — axum-extra downgraded to the axum-0.7-compatible 0.9 line; JWT claims extraction marked `#[async_trait]`; register handler destructure removes partial-move error; tower's non-Clone global rate-limit layer replaced with per-device + registration sliding-window limiters (60/s global register, 300/s per device).
+- **Core build:** fixed pre-existing compile errors that left core-rs unbuildable — p2p Origin validation moved into the WebSocket handshake callback (`accept_hdr_async`), zip 0.6 `FileOptions` turbofish misuse removed (backup/import), import `enclosed_name` borrow conflict resolved, vault path-validation closure annotated.
+- **Export:** JSON/ZIP/dir exports now decrypt application-layer content with the supplied DEK (previously the key parameter was ignored); failed decryption yields empty content instead of aborting.
+- **Notes FTS:** removed legacy manual `fts_note` writes from create/update paths — migration v24 triggers own index sync; manual writes collided with triggers (primary-key failures on every note creation through migrated schemas).
+- **Desktop UI:** `UniversalDashboardWidget` fallback stats now satisfy the full `DashboardStats` contract; declared missing `i18next`/`react-i18next` dependencies used by four components; removed JSX from a `.ts` test file; dropped invalid `@jest/globals` import in favor of `@types/jest` globals.
+- **Lint/format:** core-rs is clippy-clean with `-D warnings` and rustfmt-normalized; logger doctest demoted to illustrative `text` fence.
+- **Gates reproduced locally:** desktop ESLint now passes its `--max-warnings 0` gate (auto-fixes applied; unused import, regex escape, negated conditions hand-fixed); mobile `type-check` clean after fixing a wrong sibling import in `vault.test.ts` (`../vault` → `./vault`) and pinning `module: esnext` so intentional dynamic imports type-check; vault store tests converted from dynamic imports to `require` + `jest.resetModules` (Jest CJS cannot run `import()` without ESM VM flags).
+- **Windows DX:** desktop lint script dropped the POSIX-only `ESLINT_USE_FLAT_CONFIG=` env prefix (eslint 8 defaults to eslintrc mode, making the prefix both broken on Windows and unnecessary).
+- **Tauri lint:** src-tauri is clippy-clean — MSRV aligned to the CI toolchain (1.82), OCR queue commands registered instead of left dead, rate-limit persistence helpers and config accessors annotated with their wiring roadmap.
+- **Repo hygiene:** `.gitattributes` normalizes ts/tsx/rs/json/md to LF so prettier/eslint agree across platforms (run `git add --renormalize .` once after pulling).
 
 ## [1.1.3] - 2025-12-27
 

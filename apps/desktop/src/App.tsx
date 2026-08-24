@@ -1,6 +1,6 @@
-import { MantineProvider } from '@mantine/core';
+import { MantineProvider, Loader, Center } from '@mantine/core';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
-import { useEffect, useMemo } from 'react';
+import { Suspense, lazy, useEffect, useMemo } from 'react';
 import { Notifications } from '@mantine/notifications';
 import { theme } from './theme';
 import { useStore } from './store';
@@ -8,29 +8,34 @@ import { useSpaces } from './hooks/useQueries';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import VaultManagement from './components/VaultManagement';
 import MainLayout from './components/MainLayout';
-import Dashboard from './components/Dashboard';
-import NoteEditor from './components/NoteEditor';
-import TaskBoard from './components/TaskBoard';
-import ProjectHub from './components/ProjectHub';
-import SavedSearches from './components/SavedSearches';
-import WeeklyReview from './components/WeeklyReview';
-import MeetingNotes from './components/MeetingNotes';
-import ModeStore from './components/ModeStore';
-import SpacedRepetition from './components/SpacedRepetition';
-import Settings from './components/Settings';
-import AdvancedImport from './components/AdvancedImport';
-import EnhancedSearch from './components/EnhancedSearch';
-import Overview from './components/project_hub/Overview';
-import Kanban from './components/project_hub/Kanban';
-import Timeline from './components/project_hub/Timeline';
-import Risks from './components/project_hub/Risks';
-import { SyncStatus } from './components/sync';
-import UserManagement from './components/user-management';
-import FormTemplates from './components/FormTemplates';
-import LocalAnalytics from './components/LocalAnalytics';
-import { OcrManager } from './components/OcrManager';
-import Journal from './pages/Journal';
-import Habits from './pages/Habits';
+
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const NoteEditor = lazy(() => import('./components/NoteEditor'));
+const TaskBoard = lazy(() => import('./components/TaskBoard'));
+const ProjectHub = lazy(() => import('./components/ProjectHub'));
+const SavedSearches = lazy(() => import('./components/SavedSearches'));
+const WeeklyReview = lazy(() => import('./components/WeeklyReview'));
+const MeetingNotes = lazy(() => import('./components/MeetingNotes'));
+const ModeStore = lazy(() => import('./components/ModeStore'));
+const SpacedRepetition = lazy(() => import('./components/SpacedRepetition'));
+const Settings = lazy(() => import('./components/Settings'));
+const AdvancedImport = lazy(() => import('./components/AdvancedImport'));
+const EnhancedSearch = lazy(() => import('./components/EnhancedSearch'));
+const Overview = lazy(() => import('./components/project_hub/Overview'));
+const Kanban = lazy(() => import('./components/project_hub/Kanban'));
+const Timeline = lazy(() => import('./components/project_hub/Timeline'));
+const Risks = lazy(() => import('./components/project_hub/Risks'));
+const SyncStatus = lazy(() => import('./components/sync').then(m => ({ default: m.SyncStatus })));
+const UserManagement = lazy(() => import('./components/user-management'));
+const FormTemplates = lazy(() => import('./components/FormTemplates'));
+const LocalAnalytics = lazy(() => import('./components/LocalAnalytics'));
+const OcrManager = lazy(() => import('./components/OcrManager').then(m => ({ default: m.OcrManager })));
+const Journal = lazy(() => import('./pages/Journal'));
+const Habits = lazy(() => import('./pages/Habits'));
+
+function LoadingFallback() {
+  return <Center h="100vh"><Loader /></Center>;
+}
 
 // Wrapper component to initialize spaces
 function SpaceInitializer({ children }: { children: React.ReactNode }) {
@@ -76,34 +81,34 @@ function App() {
             ),
             errorElement: <ErrorBoundary />,
             children: [
-              { index: true, element: <Dashboard /> },
-              { path: 'editor', element: <NoteEditor /> },
-              { path: 'tasks', element: <TaskBoard /> },
+              { index: true, element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><Dashboard /></Suspense></ErrorBoundary> },
+              { path: 'editor', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><NoteEditor /></Suspense></ErrorBoundary> },
+              { path: 'tasks', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><TaskBoard /></Suspense></ErrorBoundary> },
               {
                 path: 'projects',
-                element: <ProjectHub />,
+                element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><ProjectHub /></Suspense></ErrorBoundary>,
                 children: [
-                  { index: true, element: <Overview /> },
-                  { path: 'kanban', element: <Kanban /> },
-                  { path: 'timeline', element: <Timeline /> },
-                  { path: 'risks', element: <Risks /> },
+                  { index: true, element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><Overview /></Suspense></ErrorBoundary> },
+                  { path: 'kanban', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><Kanban /></Suspense></ErrorBoundary> },
+                  { path: 'timeline', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><Timeline /></Suspense></ErrorBoundary> },
+                  { path: 'risks', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><Risks /></Suspense></ErrorBoundary> },
                 ],
               },
-              { path: 'searches', element: <ActiveSpaceRoute Component={SavedSearches} /> },
-              { path: 'review', element: <ActiveSpaceRoute Component={WeeklyReview} /> },
-              { path: 'journal', element: <ActiveSpaceRoute Component={Journal} /> },
-              { path: 'habits', element: <ActiveSpaceRoute Component={Habits} /> },
-              { path: 'meetings', element: <MeetingNotes /> },
-              { path: 'modes', element: <ActiveSpaceRoute Component={ModeStore} /> },
-              { path: 'srs', element: <SpacedRepetition /> },
-              { path: 'settings', element: <Settings /> },
-              { path: 'import', element: <ActiveSpaceRoute Component={AdvancedImport} /> },
-              { path: 'search', element: <EnhancedSearch /> },
-              { path: 'sync', element: <SyncStatus /> },
-              { path: 'users', element: <UserManagement /> },
-              { path: 'templates', element: <FormTemplates /> },
-              { path: 'analytics', element: <LocalAnalytics /> },
-              { path: 'ocr', element: <OcrManager /> },
+              { path: 'searches', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><ActiveSpaceRoute Component={SavedSearches} /></Suspense></ErrorBoundary> },
+              { path: 'review', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><ActiveSpaceRoute Component={WeeklyReview} /></Suspense></ErrorBoundary> },
+              { path: 'journal', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><ActiveSpaceRoute Component={Journal} /></Suspense></ErrorBoundary> },
+              { path: 'habits', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><ActiveSpaceRoute Component={Habits} /></Suspense></ErrorBoundary> },
+              { path: 'meetings', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><MeetingNotes /></Suspense></ErrorBoundary> },
+              { path: 'modes', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><ActiveSpaceRoute Component={ModeStore} /></Suspense></ErrorBoundary> },
+              { path: 'srs', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><SpacedRepetition /></Suspense></ErrorBoundary> },
+              { path: 'settings', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><Settings /></Suspense></ErrorBoundary> },
+              { path: 'import', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><ActiveSpaceRoute Component={AdvancedImport} /></Suspense></ErrorBoundary> },
+              { path: 'search', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><EnhancedSearch /></Suspense></ErrorBoundary> },
+              { path: 'sync', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><SyncStatus /></Suspense></ErrorBoundary> },
+              { path: 'users', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><UserManagement /></Suspense></ErrorBoundary> },
+              { path: 'templates', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><FormTemplates /></Suspense></ErrorBoundary> },
+              { path: 'analytics', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><LocalAnalytics /></Suspense></ErrorBoundary> },
+              { path: 'ocr', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><OcrManager /></Suspense></ErrorBoundary> },
             ],
           },
         ],

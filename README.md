@@ -1,19 +1,19 @@
 # Noteece
 
-![Build Status](https://img.shields.io/github/actions/workflow/status/noteece/noteece/ci.yml?branch=main)
+![Build Status](https://img.shields.io/github/actions/workflow/status/AmirrezaFarnamTaheri/Noteece/ci.yml?branch=main)
 ![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)
-![Version](https://img.shields.io/badge/version-1.2.0-purple.svg)
+![Version](https://img.shields.io/badge/version-1.1.0-purple.svg)
 
 **Noteece** is a comprehensive, local-first workspace for your second brain. It combines encrypted note-taking, project management, and personal growth tracking into a single, beautiful application.
 
 ## 📚 Documentation
 
-The complete documentation is available in the **[Wiki](WIKI.md)**.
+The complete documentation is available in the **[Wiki](docs/wiki/WIKI.md)** and the **[Documentation Index](docs/DOCUMENTATION_INDEX.md)**.
 
-- **[Getting Started](docs/wiki/04_User_Guide/01_Getting_Started.md)**: First steps for new users
-- **[Architecture](docs/wiki/01_Architecture/01_Overview.md)**: System design and security model
-- **[Features](docs/wiki/02_Features/01_Notes_and_Knowledge.md)**: Detailed feature guides
-- **[Development](docs/wiki/03_Development/01_Setup.md)**: Contributor guide and setup
+- **[Getting Started](docs/wiki/WIKI.md)**: Concepts and glossary for new users
+- **[Architecture](docs/architecture/ARCHITECTURE.md)**: System design and security model
+- **[Features](docs/wiki/WIKI.md)**: Detailed feature guides and concepts
+- **[Development](docs/development/CONTRIBUTING.md)**: Contributor guide, setup, and testing
 
 ## 🚀 Quick Start
 
@@ -36,13 +36,13 @@ pnpm dev:tauri
 
 ## ✨ Key Features
 
-- **🔒 Private by Default:** AES-256 encryption at rest. Zero-knowledge architecture.
+- **🔒 Private by Default:** Encrypted at rest (XChaCha20-Poly1305 payloads, AES-256 key wrapping, SQLCipher database). Zero-knowledge architecture.
 - **⚡ Local-First:** Works offline. Syncs peer-to-peer over WiFi.
 - **📝 Markdown Centric:** First-class writing experience with backlinks and tags.
 - **📊 Integrated Workflow:** Tasks, Projects, Habits, and Goals in one place.
-- **📱 Mobile Companion:** React Native app for iOS and Android.
-- **🌐 Multi-Language:** Support for English, Spanish, French, German, Japanese, Chinese, and Farsi.
-- **🤖 AI Integration:** Multiple LLM providers (Ollama, OpenAI, Claude, Gemini) with cost tracking.
+- **📱 Mobile Companion:** React Native app for Android (iOS scaffolding planned).
+- **🌐 Multi-Language:** i18n scaffold for English, Spanish, French, German, Japanese, Chinese, and Farsi (English strings shipped; additional locales in progress).
+- **🤖 AI Integration:** LLM engine with multiple providers (Ollama, OpenAI, Claude, Gemini) and cost tracking (desktop settings wiring in progress).
 - **🔮 Prime Mode:** Android "Cyborg-Life OS" with 30+ platform content capture.
 
 ## 🔮 Noteece Prime (Sideload)
@@ -57,7 +57,7 @@ The mobile app includes a "Prime" sideload flavor that enables **Sovereign Inter
 | Browsers  | Chrome, Firefox, Brave, Edge                           |
 | Media     | YouTube, Twitch, Spotify                               |
 
-All capture happens **on-device** using the Accessibility Service - no cloud required.
+All capture happens **on-device** using the Accessibility Service - no cloud required. Prime is a separate sideload flavor: capture sessions start only on explicit user action, and because it reads screen content of third-party apps, users should review those platforms' terms of service and local law before enabling it. See [Privacy](docs/security/PRIVACY.md).
 
 ## 🤖 LLM Integration
 
@@ -78,16 +78,19 @@ noteece/
 │   ├── desktop/     # Tauri + React desktop app
 │   └── mobile/      # Expo + React Native mobile app
 ├── packages/
-│   ├── core-rs/     # Rust core library
+│   ├── core-rs/     # Rust core library (crypto, sync, LLM, social)
 │   ├── types/       # Shared TypeScript types
 │   ├── ui/          # Shared UI components
-│   └── editor/      # Lexical editor wrapper
+│   ├── locale/      # i18n string resources
+│   ├── modes/       # Mode system definitions
+│   ├── automation-dsl/ # Automation scripting DSL
+│   └── relay-server/   # Blind relay for P2P sync fallback
 └── docs/            # Documentation
 ```
 
 ## 🤝 Contributing
 
-We welcome contributions! Please read our [Contributing Guide](docs/development/CONTRIBUTING.md) and [Code of Conduct](docs/legal/CODE_OF_CONDUCT.md).
+We welcome contributions! Please read our [Contributing Guide](docs/development/CONTRIBUTING.md) (includes the Code of Conduct).
 
 ## 👤 Author
 

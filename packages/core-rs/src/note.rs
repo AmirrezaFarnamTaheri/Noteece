@@ -10,7 +10,7 @@ use std::fmt::{Display, Formatter};
 pub struct DbUlid(pub Ulid);
 
 impl Display for DbUlid {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
@@ -68,6 +68,16 @@ pub fn create_note(
     title: &str,
     content_md: &str,
 ) -> Result<Note, DbError> {
+    // Input validation (Finding D12)
+    if title.len() > 500 {
+        return Err(DbError::Message(
+            "Note title exceeds 500 character limit".into(),
+        ));
+    }
+    if content_md.len() > 1_048_576 {
+        return Err(DbError::Message("Note content exceeds 1MB limit".into()));
+    }
+
     log::info!("[note] Creating note with title: {}", title);
     let now = Utc::now().timestamp();
     let note = Note {
@@ -80,39 +90,14 @@ pub fn create_note(
         is_trashed: false,
     };
 
-    // Use explicit transaction if possible, or just implicit since we use last_insert_rowid immediately
-    // Note: If connection is shared/multithreaded (unlikely for SQLite unless explicitly handled), transaction is safer.
-    // However,  is per-connection. As long as this function holds the connection lock (via  or just serial execution), it's safe.
-    // But wrapping in execute block is better.
-    // Since  is , we can't call  easily unless  is .
-    // The signature is . Changing it would be a breaking change for callers.
-    // But   methods like  take .
-    // Wait,  takes .
-    // So I can't start a transaction here without changing signature!
-    // But  callers might pass .
-    // If I can't use transaction, I rely on  being correct for this connection.
-    // SQLite ensures  is specific to the connection.
-    // So as long as we use the SAME connection object, and no other thread uses THIS connection object concurrently (which is true due to Rust borrow rules if  is  elsewhere, but here it's ),
-    // actually,  is  but not ?
-    // rusqlite  is not . So it can only be used by one thread at a time.
-    // So  is safe.
-
     conn.execute(
         "INSERT INTO note (id, space_id, title, content_md, created_at, modified_at, is_trashed) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
         rusqlite::params![&note.id.0.to_string(), &note.space_id, &note.title, &note.content_md, &note.created_at, &note.modified_at, note.is_trashed],
     )?;
 
-    let rowid = conn.last_insert_rowid();
-
-    conn.execute(
-        "INSERT INTO fts_note (rowid, note_id, title, content_md) VALUES (?1, ?2, ?3, ?4)",
-        rusqlite::params![
-            rowid,
-            &note.id.0.to_string(),
-            &note.title.to_lowercase(),
-            &note.content_md
-        ],
-    )?;
+    // FTS sync is owned by the note_ai AFTER INSERT trigger (migration v24).
+    // A manual fts_note insert here would collide with the trigger's write on
+    // the same rowid and fail with a primary-key constraint violation.
 
     Ok(note)
 }
@@ -147,55 +132,46 @@ pub fn update_note_content(
     title: &str,
     content_md: &str,
 ) -> Result<(), DbError> {
+    // Input validation (Finding D12)
+    if title.len() > 500 {
+        return Err(DbError::Message(
+            "Note title exceeds 500 character limit".into(),
+        ));
+    }
+    if content_md.len() > 1_048_576 {
+        return Err(DbError::Message("Note content exceeds 1MB limit".into()));
+    }
+
     log::info!("[note] Updating note content for id: {}", id.0);
 
     let tx = conn.transaction()?;
 
     // Check if note exists first to return nice error
-    let rowid: i64 = tx
-        .query_row(
-            "SELECT rowid FROM note WHERE id = ?1",
-            [id.0.to_string()],
-            |row| row.get(0),
-        )
-        .map_err(|e| {
-            log::error!(
-                "[note] Error getting rowid for note with id: {}, error: {}",
-                id.0,
-                e
-            );
-            match e {
-                rusqlite::Error::QueryReturnedNoRows => DbError::Message("Note not found".into()),
-                _ => DbError::Rusqlite(e),
-            }
-        })?;
+    tx.query_row(
+        "SELECT rowid FROM note WHERE id = ?1",
+        [id.0.to_string()],
+        |_| Ok(()),
+    )
+    .map_err(|e| {
+        log::error!(
+            "[note] Error getting rowid for note with id: {}, error: {}",
+            id.0,
+            e
+        );
+        match e {
+            rusqlite::Error::QueryReturnedNoRows => DbError::Message("Note not found".into()),
+            _ => DbError::Rusqlite(e),
+        }
+    })?;
 
+    // FTS sync on update is owned by the note_au trigger (migration v24),
+    // which rewrites the index when title/content_md change.
     tx.execute(
         "UPDATE note SET title = ?1, content_md = ?2, modified_at = ?3 WHERE id = ?4",
         rusqlite::params![title, content_md, Utc::now().timestamp(), id.0.to_string(),],
     )?;
 
-    tx.execute(
-        "DELETE FROM fts_note WHERE rowid = ?1",
-        rusqlite::params![rowid],
-    )?;
-
-    tx.execute(
-        "INSERT INTO fts_note(rowid, title, content_md, note_id) VALUES (?1, ?2, ?3, ?4)",
-        rusqlite::params![rowid, title.to_lowercase(), content_md, id.0.to_string()],
-    )?;
-
     tx.commit()?;
-
-    // Need to drop tx to use conn again
-    // But  takes &Connection.  implements Deref<Target=Connection>.
-    // Wait,  is called AFTER .
-    // After commit,  is consumed.
-    // So we use  again.
-
-    // BUT we need to re-fetch note because  needs space_id.
-    // And  signature takes .
-    // So we are good.
 
     let note = get_note(conn, id.clone())?.ok_or(DbError::Message("Note not found".into()))?;
     handle_note_update(conn, &note.space_id, id, content_md)?;
@@ -285,5 +261,73 @@ pub fn get_or_create_daily_note(conn: &Connection, space_id: &str) -> Result<Not
             today
         );
         create_note(conn, space_id, &title, &content)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rusqlite::Connection;
+
+    fn setup_note_db() -> Connection {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            r#"
+            CREATE TABLE space (id TEXT PRIMARY KEY, name TEXT);
+            CREATE TABLE note (
+                id TEXT PRIMARY KEY,
+                space_id TEXT NOT NULL REFERENCES space(id),
+                title TEXT NOT NULL DEFAULT '',
+                content_md TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                modified_at INTEGER NOT NULL,
+                is_trashed INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE VIRTUAL TABLE fts_note USING fts5(title, content_md, note_id);
+            INSERT INTO space (id, name) VALUES ('test-space', 'Test');
+            "#,
+        )
+        .unwrap();
+        conn
+    }
+
+    #[test]
+    fn test_create_note_title_within_limit() {
+        let conn = setup_note_db();
+        let title = "a".repeat(500);
+        let result = create_note(&conn, "test-space", &title, "content");
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_create_note_title_over_limit() {
+        let conn = setup_note_db();
+        let title = "a".repeat(501);
+        let result = create_note(&conn, "test-space", &title, "content");
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            DbError::Message(msg) => assert!(msg.contains("500 character limit")),
+            other => panic!("Expected DbError::Message, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_create_note_content_within_limit() {
+        let conn = setup_note_db();
+        let content = "x".repeat(1_048_576);
+        let result = create_note(&conn, "test-space", "title", &content);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_create_note_content_over_limit() {
+        let conn = setup_note_db();
+        let content = "x".repeat(1_048_577);
+        let result = create_note(&conn, "test-space", "title", &content);
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            DbError::Message(msg) => assert!(msg.contains("1MB limit")),
+            other => panic!("Expected DbError::Message, got {:?}", other),
+        }
     }
 }

@@ -1,14 +1,32 @@
 /**
  * Automation DSL Parser
  *
- * Parses automation scripts into an Abstract Syntax Tree (AST)
+ * Parses automation scripts into an Abstract Syntax Tree (AST).
+ *
+ * Grammar (implemented):
+ *   program     := (trigger | standalone-action)*
+ *   trigger     := 'TRIGGER' 'ON' event ['WHEN' expression] 'DO' block
+ *   event       := NoteCreated | NoteUpdated | NoteDeleted | TaskCompleted |
+ *                  TagAdded | Schedule '(' STRING ')' | Manual
+ *   block       := '{' action* '}'
+ *   action      := IDENTIFIER '(' [param (',' param)*] ')' ';'?
+ *   param       := IDENTIFIER ':' expression
+ *   expression  := or
+ *   or          := and (('||' | OR) and)*
+ *   and         := equality (('&&' | AND) equality)*
+ *   equality    := comparison (('==' | '!=') comparison)*
+ *   comparison  := term (('<' | '>' | '<=' | '>=') term)*
+ *   term        := factor (('+' | '-') factor)*
+ *   factor      := primary (('*' | '/' | '%') primary)*
+ *   primary     := NUMBER | STRING | array | 'true' | 'false' | 'null'
+ *                | function-call | IDENTIFIER | '(' expression ')'
+ *   array       := '[' [expression (',' expression)*] ']'
+ *
+ * Unknown characters raise a ParseError instead of being silently dropped.
  */
 
-import { ProgramNode, TriggerNode, ActionNode, ExpressionNode, ParseError, TriggerEvent, ActionType } from './types';
+import { ProgramNode, TriggerNode, ActionNode, ExpressionNode, ParseError } from './types';
 
-/**
- * Simple recursive descent parser for automation scripts
- */
 export class AutomationParser {
   private tokens: Token[] = [];
   private current = 0;
@@ -26,6 +44,8 @@ export class AutomationParser {
       } else if (this.match('ACTION')) {
         actions.push(this.parseAction());
       } else {
+        // Skip stray top-level tokens (e.g. whitespace-separated identifiers)
+        // but never silently swallow structural keywords.
         this.advance();
       }
     }
@@ -39,22 +59,52 @@ export class AutomationParser {
 
   private tokenize(input: string): Token[] {
     const tokens: Token[] = [];
-    const regex = /\s*(=>|==|!=|<=|>=|&&|\|\||[+\-*/%<>(){}[\],;:]|"[^"]*"|'[^']*'|\d+|\w+)\s*/g;
+    // Order matters: multi-char operators before single-char delimiters.
+    const regex =
+      /\s*(=>|==|!=|<=|>=|&&|\|\||[+\-*/%<>(){}[\],;:]|"[^"\n]*"|'[^'\n]*'|-?\d+(?:\.\d+)?|[A-Za-z_]\w*)\s*/gy;
 
-    let match;
-    while ((match = regex.exec(input)) !== null) {
+    let cursor = 0;
+    while (cursor < input.length) {
+      regex.lastIndex = cursor;
+      const match = regex.exec(input);
+
+      if (!match || match.index !== cursor) {
+        // No valid token at this position: report it instead of dropping it.
+        const rest = input.slice(cursor);
+        const badChar = rest.trim()[0] ?? '';
+        throw new ParseError(
+          `Unexpected character '${badChar}' at offset ${cursor} ` +
+            `(near "${rest.slice(0, 20).replace(/\s+/g, ' ')}")`,
+        );
+      }
+
       const value = match[1];
-      if (value) {
+      if (value !== undefined && !/^\s*$/.test(value)) {
         tokens.push({
           type: this.getTokenType(value),
           value,
-          line: 0,
-          column: match.index,
+          line: this.lineAt(input, cursor),
+          column: this.columnAt(input, cursor),
         });
       }
+
+      cursor = regex.lastIndex;
     }
 
     return tokens;
+  }
+
+  private lineAt(input: string, offset: number): number {
+    let line = 1;
+    for (let i = 0; i < offset; i++) {
+      if (input[i] === '\n') line++;
+    }
+    return line;
+  }
+
+  private columnAt(input: string, offset: number): number {
+    const lastNewline = input.lastIndexOf('\n', offset - 1);
+    return offset - lastNewline;
   }
 
   private getTokenType(value: string): TokenType {
@@ -64,7 +114,7 @@ export class AutomationParser {
       return value.toUpperCase() as TokenType;
     }
 
-    if (/^\d+$/.test(value)) return 'NUMBER';
+    if (/^-?\d+(\.\d+)?$/.test(value)) return 'NUMBER';
     if (/^["']/.test(value)) return 'STRING';
     if (/^[a-zA-Z_]\w*$/.test(value)) return 'IDENTIFIER';
 
@@ -101,7 +151,7 @@ export class AutomationParser {
     };
   }
 
-  private parseTriggerEvent(): TriggerEvent {
+  private parseTriggerEvent(): TriggerNode['event'] {
     const eventType = this.advance().value;
 
     switch (eventType) {
@@ -135,7 +185,11 @@ export class AutomationParser {
   }
 
   private parseAction(): ActionNode {
-    const actionName = this.advance().value;
+    if (!this.check('IDENTIFIER')) {
+      throw new ParseError(`Expected action name, got: ${this.describeToken(this.peek())}`);
+    }
+    const nameToken = this.advance();
+    const actionName = nameToken.value;
 
     const parameters: Record<string, ExpressionNode> = {};
 
@@ -143,7 +197,7 @@ export class AutomationParser {
       while (!this.check(')') && !this.isAtEnd()) {
         // Ensure parameter name is a valid identifier
         if (!this.check('IDENTIFIER')) {
-          throw new ParseError(`Expected parameter name (identifier), got: ${this.peek().value}`);
+          throw new ParseError(`Expected parameter name (identifier), got: ${this.describeToken(this.peek())}`);
         }
         const paramName = this.advance().value;
         this.consume(':', 'Expected :');
@@ -160,13 +214,47 @@ export class AutomationParser {
 
     return {
       type: 'Action',
-      action: actionName as ActionType,
+      action: actionName as ActionNode['action'],
       parameters,
     };
   }
 
   private parseExpression(): ExpressionNode {
-    return this.parseEquality();
+    return this.parseOr();
+  }
+
+  /** Logical OR — lowest precedence. Accepts both symbolic and keyword forms. */
+  private parseOr(): ExpressionNode {
+    let expr = this.parseAnd();
+
+    while (this.match('||') || this.matchWord('OR')) {
+      const right = this.parseAnd();
+      expr = {
+        type: 'BinaryExpression',
+        operator: '||',
+        left: expr,
+        right,
+      };
+    }
+
+    return expr;
+  }
+
+  /** Logical AND — binds tighter than OR. Accepts both forms. */
+  private parseAnd(): ExpressionNode {
+    let expr = this.parseEquality();
+
+    while (this.match('&&') || this.matchWord('AND')) {
+      const right = this.parseEquality();
+      expr = {
+        type: 'BinaryExpression',
+        operator: '&&',
+        left: expr,
+        right,
+      };
+    }
+
+    return expr;
   }
 
   private parseEquality(): ExpressionNode {
@@ -252,6 +340,21 @@ export class AutomationParser {
       };
     }
 
+    // Array literal: ["tag1", "tag2"] — documented in the README.
+    if (this.match('[')) {
+      const elements: ExpressionNode[] = [];
+      if (!this.check(']')) {
+        do {
+          elements.push(this.parseExpression());
+        } while (this.match(',') && !this.check(']'));
+      }
+      this.consume(']', 'Expected ] to close array literal');
+      return {
+        type: 'ArrayLiteral',
+        elements,
+      };
+    }
+
     if (this.match('IDENTIFIER')) {
       const name = this.previous().value;
       // Recognize boolean and null literals
@@ -291,7 +394,21 @@ export class AutomationParser {
       return expr;
     }
 
-    throw new ParseError(`Unexpected token: ${this.peek().value}`);
+    throw new ParseError(`Unexpected token: ${this.describeToken(this.peek())}`);
+  }
+
+  /** Match a keyword by its canonical uppercase token type. */
+  private matchWord(word: string): boolean {
+    if (!this.isAtEnd() && this.peek().type === word.toUpperCase()) {
+      this.current++;
+      return true;
+    }
+    return false;
+  }
+
+  private describeToken(token: Token): string {
+    if (token.type === 'EOF') return 'end of script';
+    return `'${token.value}' (line ${token.line})`;
   }
 
   // Helper methods

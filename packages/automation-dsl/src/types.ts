@@ -50,7 +50,8 @@ export type ASTNode =
   | FunctionCallNode
   | LiteralNode
   | IdentifierNode
-  | BinaryExpressionNode;
+  | BinaryExpressionNode
+  | ArrayLiteralNode;
 
 export interface ProgramNode {
   type: 'Program';
@@ -128,7 +129,12 @@ export interface BinaryExpressionNode {
 
 export type BinaryOperator = '+' | '-' | '*' | '/' | '%' | '==' | '!=' | '<' | '>' | '<=' | '>=' | '&&' | '||';
 
-export type ExpressionNode = LiteralNode | IdentifierNode | BinaryExpressionNode | FunctionCallNode;
+export interface ArrayLiteralNode {
+  type: 'ArrayLiteral';
+  elements: ExpressionNode[];
+}
+
+export type ExpressionNode = LiteralNode | IdentifierNode | BinaryExpressionNode | FunctionCallNode | ArrayLiteralNode;
 
 // Runtime Types
 export interface AutomationRuntime {

@@ -1,399 +1,460 @@
 // packages/types/src/index.ts
 
+import { z } from 'zod';
+
 export type ULID = string;
 
-export interface Space {
-  id: ULID;
-  name: string;
-  icon?: string;
-  enabled_modes_json: string; // JSON array of mode IDs
-}
+export const ulidSchema = z.string().min(1);
 
-export interface Note {
-  id: ULID;
-  space_id: ULID;
-  title: string;
-  content_md: string;
-  created_at: number; // Unix timestamp
-  modified_at: number; // Unix timestamp
-  is_trashed: boolean;
-}
+export const SpaceSchema = z.object({
+  id: ulidSchema,
+  name: z.string(),
+  icon: z.string().optional(),
+  enabled_modes_json: z.string(),
+});
+export type Space = z.infer<typeof SpaceSchema>;
 
-export type TaskStatus = 'inbox' | 'next' | 'in_progress' | 'waiting' | 'done' | 'cancelled';
+export const NoteSchema = z.object({
+  id: ulidSchema,
+  space_id: ulidSchema,
+  title: z.string(),
+  content_md: z.string(),
+  created_at: z.number(),
+  modified_at: z.number(),
+  is_trashed: z.boolean(),
+});
+export type Note = z.infer<typeof NoteSchema>;
 
-export interface Task {
-  id: ULID;
-  space_id: ULID;
-  note_id?: ULID;
-  project_id?: ULID;
-  parent_task_id?: ULID;
-  title: string;
-  description?: string;
-  status: TaskStatus;
-  due_at?: number; // Unix timestamp
-  start_at?: number; // Unix timestamp
-  completed_at?: number; // Unix timestamp
-  priority?: 1 | 2 | 3 | 4;
-  estimate_minutes?: number;
-  recur_rule?: string; // iCal RRULE
-  context?: string;
-  area?: string;
-}
+export const TaskStatusSchema = z.enum(['inbox', 'next', 'in_progress', 'waiting', 'done', 'cancelled']);
+export type TaskStatus = z.infer<typeof TaskStatusSchema>;
 
-export type ProjectStatus = 'proposed' | 'active' | 'blocked' | 'done' | 'archived';
+export const TaskSchema = z.object({
+  id: ulidSchema,
+  space_id: ulidSchema,
+  note_id: ulidSchema.optional(),
+  project_id: ulidSchema.optional(),
+  parent_task_id: ulidSchema.optional(),
+  title: z.string(),
+  description: z.string().optional(),
+  status: TaskStatusSchema,
+  due_at: z.number().optional(),
+  start_at: z.number().optional(),
+  completed_at: z.number().optional(),
+  priority: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
+  estimate_minutes: z.number().optional(),
+  recur_rule: z.string().optional(),
+  context: z.string().optional(),
+  area: z.string().optional(),
+});
+export type Task = z.infer<typeof TaskSchema>;
 
-export interface Project {
-  id: ULID;
-  space_id: ULID;
-  title: string;
-  goal_outcome?: string;
-  status: ProjectStatus;
-  confidence?: number;
-  start_at?: number; // Unix timestamp
-  target_end_at?: number; // Unix timestamp
-}
+export const ProjectStatusSchema = z.enum(['proposed', 'active', 'blocked', 'done', 'archived']);
+export type ProjectStatus = z.infer<typeof ProjectStatusSchema>;
 
-export interface Tag {
-  id: ULID;
-  space_id: ULID;
-  name: string;
-  color?: string;
-}
+export const ProjectSchema = z.object({
+  id: ulidSchema,
+  space_id: ulidSchema,
+  title: z.string(),
+  goal_outcome: z.string().optional(),
+  status: ProjectStatusSchema,
+  confidence: z.number().optional(),
+  start_at: z.number().optional(),
+  target_end_at: z.number().optional(),
+});
+export type Project = z.infer<typeof ProjectSchema>;
 
-export interface Person {
-  id: ULID;
-  space_id?: ULID;
-  name?: string;
-  email?: string;
-  org?: string;
-}
+export const TagSchema = z.object({
+  id: ulidSchema,
+  space_id: ulidSchema,
+  name: z.string(),
+  color: z.string().optional(),
+});
+export type Tag = z.infer<typeof TagSchema>;
 
-export interface ProjectMilestone {
-  id: ULID;
-  project_id: ULID;
-  title: string;
-  due_at?: number; // Unix timestamp
-  status?: string;
-}
+export const PersonSchema = z.object({
+  id: ulidSchema,
+  space_id: ulidSchema.optional(),
+  name: z.string().optional(),
+  email: z.string().optional(),
+  org: z.string().optional(),
+});
+export type Person = z.infer<typeof PersonSchema>;
 
-export interface ProjectRisk {
-  id: ULID;
-  project_id: ULID;
-  description: string;
-  impact?: string;
-  likelihood?: string;
-  mitigation?: string;
-  owner_person_id?: ULID;
-}
+export const ProjectMilestoneSchema = z.object({
+  id: ulidSchema,
+  project_id: ulidSchema,
+  title: z.string(),
+  due_at: z.number().optional(),
+  status: z.string().optional(),
+});
+export type ProjectMilestone = z.infer<typeof ProjectMilestoneSchema>;
 
-export interface ProjectUpdate {
-  id: ULID;
-  project_id: ULID;
-  when_at: number; // Unix timestamp
-  health?: 'green' | 'amber' | 'red';
-  summary: string;
-}
+export const ProjectRiskSchema = z.object({
+  id: ulidSchema,
+  project_id: ulidSchema,
+  description: z.string(),
+  impact: z.string().optional(),
+  likelihood: z.string().optional(),
+  mitigation: z.string().optional(),
+  owner_person_id: ulidSchema.optional(),
+});
+export type ProjectRisk = z.infer<typeof ProjectRiskSchema>;
 
-export type SearchScope = 'note' | 'project' | 'space' | 'vault_all';
+export const ProjectUpdateSchema = z.object({
+  id: ulidSchema,
+  project_id: ulidSchema,
+  when_at: z.number(),
+  health: z.enum(['green', 'amber', 'red']).optional(),
+  summary: z.string(),
+});
+export type ProjectUpdate = z.infer<typeof ProjectUpdateSchema>;
 
-export interface SavedSearch {
-  id: ULID;
-  space_id: ULID;
-  title: string;
-  query_string: string;
-  scope: SearchScope;
-}
+export const SearchScopeSchema = z.enum(['note', 'project', 'space', 'vault_all']);
+export type SearchScope = z.infer<typeof SearchScopeSchema>;
 
-export type KnowledgeCardState = 'new' | 'learning' | 'review' | 'relearning';
+export const SavedSearchSchema = z.object({
+  id: ulidSchema,
+  space_id: ulidSchema,
+  title: z.string(),
+  query_string: z.string(),
+  scope: SearchScopeSchema,
+});
+export type SavedSearch = z.infer<typeof SavedSearchSchema>;
 
-export interface KnowledgeCard {
-  id: ULID;
-  note_id: ULID;
-  deck_id?: string;
-  state: KnowledgeCardState;
-  due_at: number; // Unix timestamp
-  stability: number;
-  difficulty: number;
-  lapses: number;
-  revision_history_json: string; // JSON array
-}
+export const KnowledgeCardStateSchema = z.enum(['new', 'learning', 'review', 'relearning']);
+export type KnowledgeCardState = z.infer<typeof KnowledgeCardStateSchema>;
 
-export interface ReviewLog {
-  id: ULID;
-  card_id: ULID;
-  review_at: number; // Unix timestamp
-  rating: number;
-  state: string;
-  due_at: number; // Unix timestamp
-  stability: number;
-  difficulty: number;
-  lapses: number;
-}
+export const KnowledgeCardSchema = z.object({
+  id: ulidSchema,
+  note_id: ulidSchema,
+  deck_id: z.string().optional(),
+  state: KnowledgeCardStateSchema,
+  due_at: z.number(),
+  stability: z.number(),
+  difficulty: z.number(),
+  lapses: z.number(),
+  revision_history_json: z.string(),
+});
+export type KnowledgeCard = z.infer<typeof KnowledgeCardSchema>;
 
-export type FormFieldType = 'Text' | 'Textarea' | 'Number' | 'Checkbox' | 'Date' | 'Time';
+export const ReviewLogSchema = z.object({
+  id: ulidSchema,
+  card_id: ulidSchema,
+  review_at: z.number(),
+  rating: z.number(),
+  state: z.string(),
+  due_at: z.number(),
+  stability: z.number(),
+  difficulty: z.number(),
+  lapses: z.number(),
+});
+export type ReviewLog = z.infer<typeof ReviewLogSchema>;
 
-export interface FormField {
-  name: string;
-  label: string;
-  field_type: FormFieldType;
-  default_value?: string;
-}
+export const FormFieldTypeSchema = z.enum(['Text', 'Textarea', 'Number', 'Checkbox', 'Date', 'Time']);
+export type FormFieldType = z.infer<typeof FormFieldTypeSchema>;
 
-export interface FormTemplate {
-  id: ULID;
-  space_id: ULID;
-  name: string;
-  fields: FormField[];
-}
+export const FormFieldSchema = z.object({
+  name: z.string(),
+  label: z.string(),
+  field_type: FormFieldTypeSchema,
+  default_value: z.string().optional(),
+});
+export type FormField = z.infer<typeof FormFieldSchema>;
 
-export interface WeeklyCount {
-  week: string;
-  count: number;
-}
+export const FormTemplateSchema = z.object({
+  id: ulidSchema,
+  space_id: ulidSchema,
+  name: z.string(),
+  fields: z.array(FormFieldSchema),
+});
+export type FormTemplate = z.infer<typeof FormTemplateSchema>;
 
-export interface AnalyticsData {
-  note_count: number;
-  task_count: number;
-  project_count: number;
-  tasks_completed_by_week: WeeklyCount[];
-  notes_created_by_week: WeeklyCount[];
-}
+export const WeeklyCountSchema = z.object({
+  week: z.string(),
+  count: z.number(),
+});
+export type WeeklyCount = z.infer<typeof WeeklyCountSchema>;
 
-export interface TimeEntry {
-  id: ULID;
-  space_id: ULID;
-  task_id?: ULID;
-  project_id?: ULID;
-  note_id?: ULID;
-  description?: string;
-  started_at: number; // Unix timestamp
-  ended_at?: number; // Unix timestamp
-  duration_seconds?: number;
-  is_running: boolean;
-}
+export const AnalyticsDataSchema = z.object({
+  note_count: z.number(),
+  task_count: z.number(),
+  project_count: z.number(),
+  tasks_completed_by_week: z.array(WeeklyCountSchema),
+  notes_created_by_week: z.array(WeeklyCountSchema),
+});
+export type AnalyticsData = z.infer<typeof AnalyticsDataSchema>;
 
-export interface TimeStats {
-  total_seconds: number;
-  entry_count: number;
-  average_seconds: number;
-}
+export const TimeEntrySchema = z.object({
+  id: ulidSchema,
+  space_id: ulidSchema,
+  task_id: ulidSchema.optional(),
+  project_id: ulidSchema.optional(),
+  note_id: ulidSchema.optional(),
+  description: z.string().optional(),
+  started_at: z.number(),
+  ended_at: z.number().optional(),
+  duration_seconds: z.number().optional(),
+  is_running: z.boolean(),
+});
+export type TimeEntry = z.infer<typeof TimeEntrySchema>;
 
-export interface SyncTask {
-  id: string;
-  device_id: string;
-  space_id: string;
-  direction: string;
-  status: string;
-  progress: number;
-  created_at: number;
-}
+export const TimeStatsSchema = z.object({
+  total_seconds: z.number(),
+  entry_count: z.number(),
+  average_seconds: z.number(),
+});
+export type TimeStats = z.infer<typeof TimeStatsSchema>;
 
-export interface SyncStats {
-  total_synced: number;
-  last_sync_at: number | null;
-  success_rate: number;
-  conflicts_total: number;
-}
+export const SyncTaskSchema = z.object({
+  id: z.string(),
+  device_id: z.string(),
+  space_id: z.string(),
+  direction: z.string(),
+  status: z.string(),
+  progress: z.number(),
+  created_at: z.number(),
+});
+export type SyncTask = z.infer<typeof SyncTaskSchema>;
 
-export interface DeviceInfo {
-  device_id: string;
-  device_name: string;
-  device_type: 'Desktop' | 'Mobile' | 'Web';
-  last_seen: number;
-  sync_address: string;
-  sync_port: number;
-  protocol_version: string;
-}
+export const SyncStatsSchema = z.object({
+  total_synced: z.number(),
+  last_sync_at: z.number().nullable(),
+  success_rate: z.number(),
+  conflicts_total: z.number(),
+});
+export type SyncStats = z.infer<typeof SyncStatsSchema>;
 
-export interface DiscoveredDevice {
-  device_id: string;
-  device_name: string;
-  device_type: 'Desktop' | 'Mobile' | 'Tablet';
-  ip_address: string;
-  sync_port: number;
-  os_version: string;
-  last_seen: string; // DateTime serialized
-}
+export const DeviceInfoSchema = z.object({
+  device_id: z.string(),
+  device_name: z.string(),
+  device_type: z.enum(['Desktop', 'Mobile', 'Web']),
+  last_seen: z.number(),
+  sync_address: z.string(),
+  sync_port: z.number(),
+  protocol_version: z.string(),
+});
+export type DeviceInfo = z.infer<typeof DeviceInfoSchema>;
 
-export type ConflictType = 'UpdateUpdate' | 'DeleteUpdate' | 'UpdateDelete';
+export const DiscoveredDeviceSchema = z.object({
+  device_id: z.string(),
+  device_name: z.string(),
+  device_type: z.enum(['Desktop', 'Mobile', 'Tablet']),
+  ip_address: z.string(),
+  sync_port: z.number(),
+  os_version: z.string(),
+  last_seen: z.string(),
+});
+export type DiscoveredDevice = z.infer<typeof DiscoveredDeviceSchema>;
 
-export enum ConflictResolution {
-  UseLocal = 'UseLocal',
-  UseRemote = 'UseRemote',
-  Merge = 'Merge',
-}
+export const ConflictTypeSchema = z.enum(['UpdateUpdate', 'DeleteUpdate', 'UpdateDelete']);
+export type ConflictType = z.infer<typeof ConflictTypeSchema>;
 
-export interface SyncConflict {
-  entity_type: string;
-  entity_id: string;
-  local_version: number[]; // Vec<u8> serializes to number array
-  remote_version: number[];
-  conflict_type: ConflictType;
-  space_id?: string;
-}
+export const ConflictResolutionSchema = z.enum(['UseLocal', 'UseRemote', 'Merge']);
+export type ConflictResolution = z.infer<typeof ConflictResolutionSchema>;
 
-// --- New types for Personal Modes & Social ---
+export const SyncConflictSchema = z.object({
+  entity_type: z.string(),
+  entity_id: z.string(),
+  local_version: z.array(z.number()),
+  remote_version: z.array(z.number()),
+  conflict_type: ConflictTypeSchema,
+  space_id: z.string().optional(),
+});
+export type SyncConflict = z.infer<typeof SyncConflictSchema>;
 
-export interface HealthMetric {
-  id: string;
-  space_id: string;
-  metric_type: string;
-  value: number;
-  unit: string;
-  notes?: string;
-  recorded_at: number;
-  created_at: number;
-  updated_at: number;
-}
+export const HealthMetricSchema = z.object({
+  id: z.string(),
+  space_id: z.string(),
+  metric_type: z.string(),
+  value: z.number(),
+  unit: z.string(),
+  notes: z.string().optional(),
+  recorded_at: z.number(),
+  created_at: z.number(),
+  updated_at: z.number(),
+});
+export type HealthMetric = z.infer<typeof HealthMetricSchema>;
 
-export interface Goal {
-  id: string;
-  space_id: string;
-  title: string;
-  description?: string;
-  target: number;
-  current: number;
-  unit: string;
-  category: string;
-  start_date: number;
-  target_date?: number;
-  is_completed: boolean;
-  created_at: number;
-  updated_at: number;
-}
+export const GoalSchema = z.object({
+  id: z.string(),
+  space_id: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+  target: z.number(),
+  current: z.number(),
+  unit: z.string(),
+  category: z.string(),
+  start_date: z.number(),
+  target_date: z.number().optional(),
+  is_completed: z.boolean(),
+  created_at: z.number(),
+  updated_at: z.number(),
+});
+export type Goal = z.infer<typeof GoalSchema>;
 
-export interface Habit {
-  id: string;
-  space_id: string;
-  title: string;
-  frequency: string;
-  is_archived: boolean;
-  created_at: number;
-}
+export const HabitSchema = z.object({
+  id: z.string(),
+  space_id: z.string(),
+  title: z.string(),
+  frequency: z.string(),
+  is_archived: z.boolean(),
+  created_at: z.number(),
+});
+export type Habit = z.infer<typeof HabitSchema>;
 
-export interface Transaction {
-  id: string;
-  space_id: string;
-  transaction_type: string;
-  amount: number;
-  currency: string;
-  category: string;
-  account_id: string;
-  date: number;
-  description?: string;
-  created_at: number;
-}
+export const TransactionSchema = z.object({
+  id: z.string(),
+  space_id: z.string(),
+  transaction_type: z.string(),
+  amount: z.number(),
+  currency: z.string(),
+  category: z.string(),
+  account_id: z.string(),
+  date: z.number(),
+  description: z.string().optional(),
+  created_at: z.number(),
+});
+export type Transaction = z.infer<typeof TransactionSchema>;
 
-export interface Recipe {
-  id: string;
-  space_id: string;
-  note_id: string;
-  name: string;
-  rating: number;
-  difficulty: string;
-  created_at: number;
-}
+export const RecipeSchema = z.object({
+  id: z.string(),
+  space_id: z.string(),
+  note_id: z.string(),
+  name: z.string(),
+  rating: z.number(),
+  difficulty: z.string(),
+  created_at: z.number(),
+});
+export type Recipe = z.infer<typeof RecipeSchema>;
 
-export interface Trip {
-  id: string;
-  space_id: string;
-  note_id: string;
-  name: string;
-  destination: string;
-  start_date: number;
-  end_date: number;
-  created_at: number;
-}
+export const TripSchema = z.object({
+  id: z.string(),
+  space_id: z.string(),
+  note_id: z.string(),
+  name: z.string(),
+  destination: z.string(),
+  start_date: z.number(),
+  end_date: z.number(),
+  created_at: z.number(),
+});
+export type Trip = z.infer<typeof TripSchema>;
 
-export interface GraphSnapshot {
-  space_id: string;
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-  metrics: GraphMetrics;
-  captured_at: number;
-}
+export const GraphSnapshotSchema = z.object({
+  space_id: z.string(),
+  nodes: z.array(z.object({
+    id: z.string(),
+    label: z.string(),
+    node_type: z.string(),
+    centrality: z.number(),
+  })),
+  edges: z.array(z.object({
+    source: z.string(),
+    target: z.string(),
+    weight: z.number(),
+  })),
+  metrics: z.object({
+    node_count: z.number(),
+    edge_count: z.number(),
+    density: z.number(),
+    avg_clustering: z.number(),
+  }),
+  captured_at: z.number(),
+});
+export type GraphSnapshot = z.infer<typeof GraphSnapshotSchema>;
 
-export interface GraphNode {
-  id: string;
-  label: string;
-  node_type: string;
-  centrality: number;
-}
+export const GraphNodeSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  node_type: z.string(),
+  centrality: z.number(),
+});
+export type GraphNode = z.infer<typeof GraphNodeSchema>;
 
-export interface GraphEdge {
-  source: string;
-  target: string;
-  weight: number;
-}
+export const GraphEdgeSchema = z.object({
+  source: z.string(),
+  target: z.string(),
+  weight: z.number(),
+});
+export type GraphEdge = z.infer<typeof GraphEdgeSchema>;
 
-export interface GraphMetrics {
-  node_count: number;
-  edge_count: number;
-  density: number;
-  avg_clustering: number;
-}
+export const GraphMetricsSchema = z.object({
+  node_count: z.number(),
+  edge_count: z.number(),
+  density: z.number(),
+  avg_clustering: z.number(),
+});
+export type GraphMetrics = z.infer<typeof GraphMetricsSchema>;
 
-export interface GraphMilestone {
-  note_id: string;
-  title: string;
-  date: number;
-  importance: number;
-  reason: string;
-}
+export const GraphMilestoneSchema = z.object({
+  note_id: z.string(),
+  title: z.string(),
+  date: z.number(),
+  importance: z.number(),
+  reason: z.string(),
+});
+export type GraphMilestone = z.infer<typeof GraphMilestoneSchema>;
 
-export interface SpaceUser {
-  user_id: string;
-  role: string;
-  joined_at: number;
-}
+export const SpaceUserSchema = z.object({
+  user_id: z.string(),
+  role: z.string(),
+  joined_at: z.number(),
+});
+export type SpaceUser = z.infer<typeof SpaceUserSchema>;
 
-export interface Role {
-  name: string;
-  permissions: string[];
-}
+export const RoleSchema = z.object({
+  name: z.string(),
+  permissions: z.array(z.string()),
+});
+export type Role = z.infer<typeof RoleSchema>;
 
-export interface WebViewSession {
-  id: string;
-  account_id: string;
-  cookies: string;
-  user_agent: string;
-}
+export const WebViewSessionSchema = z.object({
+  id: z.string(),
+  account_id: z.string(),
+  cookies: z.string(),
+  user_agent: z.string(),
+});
+export type WebViewSession = z.infer<typeof WebViewSessionSchema>;
 
-export interface AnalyticsOverview {
-  total_posts: number;
-  total_engagement: number;
-  top_platform: string;
-}
+export const AnalyticsOverviewSchema = z.object({
+  total_posts: z.number(),
+  total_engagement: z.number(),
+  top_platform: z.string(),
+});
+export type AnalyticsOverview = z.infer<typeof AnalyticsOverviewSchema>;
 
-export interface BackupMetadata {
-  id: string;
-  space_id?: string;
-  created_at: number;
-  size_bytes: number;
-  file_count: number;
-  encrypted: boolean;
-}
+export const BackupMetadataSchema = z.object({
+  id: z.string(),
+  space_id: z.string().optional(),
+  created_at: z.number(),
+  size_bytes: z.number(),
+  file_count: z.number(),
+  encrypted: z.boolean(),
+});
+export type BackupMetadata = z.infer<typeof BackupMetadataSchema>;
 
-export interface User {
-  id: string;
-  username: string;
-  email: string;
-  created_at: number;
-}
+export const UserSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  email: z.string().email(),
+  created_at: z.number(),
+});
+export type User = z.infer<typeof UserSchema>;
 
-export interface Session {
-  token: string;
-  expires_at: number;
-  user_id: string;
-}
+export const SessionSchema = z.object({
+  token: z.string(),
+  expires_at: z.number(),
+  user_id: z.string(),
+});
+export type Session = z.infer<typeof SessionSchema>;
 
-export interface SearchResult {
-  entity_type: string;
-  entity_id: string;
-  title?: string;
-  snippet?: string;
-  score: number;
-}
+export const SearchResultSchema = z.object({
+  entity_type: z.string(),
+  entity_id: z.string(),
+  title: z.string().optional(),
+  snippet: z.string().optional(),
+  score: z.number(),
+});
+export type SearchResult = z.infer<typeof SearchResultSchema>;
 
 // Social Media Suite types
 export * from './social';

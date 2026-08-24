@@ -279,6 +279,7 @@ pub fn ingest_social_capture_cmd(
     posts: Vec<serde_json::Value>,
 ) -> Result<(), String> {
     crate::with_db!(db, conn, {
+        let posts_count = posts.len();
         for post in posts {
             let id = ulid::Ulid::new().to_string();
             let platform = post.get("platform").and_then(|v| v.as_str()).unwrap_or("unknown");
@@ -287,21 +288,20 @@ pub fn ingest_social_capture_cmd(
             let timestamp = post.get("timestamp").and_then(|v| v.as_i64()).unwrap_or(0);
 
             conn.execute(
-                "INSERT INTO social_post (id, platform, author_handle, content_text, captured_at, created_at)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                "INSERT INTO capture_post (id, platform, author, content, captured_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5)",
                 rusqlite::params![
                     id,
                     platform,
                     author,
                     text,
-                    timestamp / 1000, // Convert from ms to seconds
-                    chrono::Utc::now().timestamp(),
+                    timestamp / 1000, // Convert from ms to seconds (capture_post.captured_at)
                 ],
             )
             .map_err(|e| e.to_string())?;
         }
 
-        log::info!("[AI] Ingested {} social posts", posts.len());
+        log::info!("[AI] Ingested {} social captures", posts_count);
         Ok(())
     })
 }

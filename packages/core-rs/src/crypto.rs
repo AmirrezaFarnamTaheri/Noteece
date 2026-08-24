@@ -5,6 +5,7 @@ use pbkdf2::pbkdf2_hmac;
 use rand::Rng;
 use sha2::Sha512;
 use thiserror::Error;
+use zeroize::Zeroizing;
 
 pub mod ecdh;
 
@@ -22,28 +23,28 @@ impl From<aes_kw::Error> for CryptoError {
 
 /// Derive a 32-byte key (KEK) from a password and 16+ byte salt via PBKDF2-HMAC-SHA512.
 /// Iterations set to 256k (aligns with your SQLCipher KDF setting).
-pub fn derive_key(password: &str, salt: &[u8]) -> [u8; 32] {
+pub fn derive_key(password: &str, salt: &[u8]) -> Zeroizing<[u8; 32]> {
     log::info!("[crypto] Deriving key from password");
-    let mut key = [0u8; 32];
-    pbkdf2_hmac::<Sha512>(password.as_bytes(), salt, 256_000, &mut key);
+    let mut key = Zeroizing::new([0u8; 32]);
+    pbkdf2_hmac::<Sha512>(password.as_bytes(), salt, 256_000, &mut *key);
     log::info!("[crypto] Key derived successfully");
     key
 }
 
 /// Generate a random 32-byte Data Encryption Key (DEK).
 pub fn generate_dek() -> [u8; 32] {
-    log::info!("[crypto] Generating DEK");
+    log::debug!("[crypto] Generating DEK");
     rand::random()
 }
 
 pub fn generate_recovery_key() -> [u8; 32] {
-    log::info!("[crypto] Generating recovery key");
+    log::debug!("[crypto] Generating recovery key");
     rand::random()
 }
 
 /// Generate 10 printable recovery codes (base32, 10 bytes → ~16 chars each).
-pub fn generate_recovery_codes(_rk: &[u8; 32]) -> Vec<String> {
-    log::info!("[crypto] Generating recovery codes");
+pub fn generate_recovery_codes() -> Vec<String> {
+    log::debug!("[crypto] Generating recovery codes");
     let mut codes = Vec::with_capacity(10);
     for _ in 0..10 {
         let mut code_bytes = [0u8; 10];
@@ -56,7 +57,7 @@ pub fn generate_recovery_codes(_rk: &[u8; 32]) -> Vec<String> {
 
 /// Wrap the DEK under the KEK using AES Key Wrap (RFC 3394).
 pub fn wrap_dek(dek: &[u8; 32], kek: &[u8]) -> Result<Vec<u8>, CryptoError> {
-    log::info!("[crypto] Wrapping DEK");
+    log::debug!("[crypto] Wrapping DEK");
     let kek = Kek::<Aes256>::new(kek.into());
     let mut wrapped_dek = vec![0u8; dek.len() + 8];
     kek.wrap(dek, &mut wrapped_dek)?;
@@ -64,11 +65,11 @@ pub fn wrap_dek(dek: &[u8; 32], kek: &[u8]) -> Result<Vec<u8>, CryptoError> {
 }
 
 /// Unwrap the DEK using the KEK.
-pub fn unwrap_dek(wrapped_dek: &[u8], kek: &[u8]) -> Result<[u8; 32], CryptoError> {
-    log::info!("[crypto] Unwrapping DEK");
+pub fn unwrap_dek(wrapped_dek: &[u8], kek: &[u8]) -> Result<Zeroizing<[u8; 32]>, CryptoError> {
+    log::debug!("[crypto] Unwrapping DEK");
     let kek = Kek::<Aes256>::new(kek.into());
-    let mut dek = [0u8; 32];
-    kek.unwrap(wrapped_dek, &mut dek)?;
+    let mut dek = Zeroizing::new([0u8; 32]);
+    kek.unwrap(wrapped_dek, &mut *dek)?;
     Ok(dek)
 }
 

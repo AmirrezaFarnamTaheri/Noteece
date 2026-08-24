@@ -371,8 +371,10 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         return false;
       }
 
-      // Generate unique identifiers
-      const spaceId = `space_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      // Generate unique identifiers using cryptographically secure random
+      const randomBytes = await Crypto.getRandomBytesAsync(16);
+      const randomHex = Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+      const spaceId = `space_${Date.now()}_${randomHex}`;
       const deviceId = await getOrCreateDeviceId();
 
       // Generate cryptographic salts

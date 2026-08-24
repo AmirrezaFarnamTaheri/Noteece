@@ -13,12 +13,18 @@ use crate::sync::discovery::DiscoveredDevice;
 use crate::sync::models::SyncProgress;
 use crate::sync_agent::{SyncAgent, SyncConflict, ConflictResolution, DeviceInfo, DeviceType};
 use crate::sync::p2p::P2pSync;
+use rand::RngCore;
+use zeroize::Zeroizing;
 
+/// Design Decision: Global singletons are used here because the FFI boundary requires
+/// process-wide state for cross-language access. Each mobile platform (iOS/Android) has
+/// a single Rust context per process. A handle-based API would be preferred for multi-vault
+/// scenarios, but the current single-vault design makes globals acceptable.
 lazy_static! {
     static ref DB_PATH: Mutex<Option<String>> = Mutex::new(None);
     static ref GLOBAL_P2P: Mutex<Option<Arc<P2pSync>>> = Mutex::new(None);
     static ref RUNTIME: Runtime = Runtime::new().expect("Failed to create Tokio runtime");
-    static ref GLOBAL_KEY: Mutex<Option<Vec<u8>>> = Mutex::new(None);
+    static ref GLOBAL_KEY: Mutex<Option<Zeroizing<Vec<u8>>>> = Mutex::new(None);
 }
 
 /// Initialize the FFI layer with the database path
@@ -203,7 +209,7 @@ fn obtain_db_connection() -> Result<rusqlite::Connection, String> {
     // Apply key if available
     if let Ok(guard) = GLOBAL_KEY.lock() {
         if let Some(key) = &*guard {
-            if let Err(e) = conn.pragma_update(None, "key", key) {
+            if let Err(e) = conn.pragma_update(None, "key", key.as_slice()) {
                 log::error!("[FFI] Failed to apply key to connection: {}", e);
                 return Err(format!("Failed to apply encryption key: {}", e));
             }
@@ -606,14 +612,26 @@ fn load_or_create_salt(db_path: &str) -> Vec<u8> {
         return content;
     }
 
-    // If DB exists but no salt file, assume legacy DB created with hardcoded salt
+    // If DB exists but no salt file, generate a new random salt
+    // and warn that the legacy hardcoded salt is no longer used
     if std::path::Path::new(db_path).exists() {
-        log::warn!("[FFI] DB exists without salt file. Using legacy hardcoded salt.");
-        return b"salt_should_be_stored_in_header".to_vec();
+        log::warn!(
+            "[FFI] DB exists without salt file. Generating new random 16-byte salt via OsRng. \
+             Legacy DB may require re-encryption with the new salt."
+        );
+        let mut salt = [0u8; 16];
+        rand::rngs::OsRng.fill_bytes(&mut salt);
+        if let Err(e) = std::fs::write(&salt_path, &salt) {
+            log::error!("[FFI] Failed to write salt to {}: {}", salt_path, e);
+        } else {
+            log::info!("[FFI] Generated and saved new salt for legacy DB at {}", db_path);
+        }
+        return salt.to_vec();
     }
 
     // New DB: Generate new random salt
-    let salt: [u8; 16] = rand::random();
+    let mut salt = [0u8; 16];
+    rand::rngs::OsRng.fill_bytes(&mut salt);
     if let Err(e) = std::fs::write(&salt_path, &salt) {
         log::error!("[FFI] Failed to write salt to {}: {}", salt_path, e);
     } else {
@@ -634,13 +652,20 @@ pub unsafe extern "C" fn rust_unlock_vault(password: *const c_char) -> bool {
     let c_str = CStr::from_ptr(password);
     let Ok(pass) = c_str.to_str() else { return false };
 
+    // Copy password to Zeroizing container to ensure it is zeroed after use
+    let pass_zeroized = Zeroizing::new(pass.as_bytes().to_vec());
+    let pass_str = match std::str::from_utf8(&pass_zeroized) {
+        Ok(s) => s,
+        Err(_) => return false,
+    };
+
     // Get DB Path
     let Ok(path_guard) = DB_PATH.lock() else { return false };
     let Some(path) = path_guard.as_ref() else { return false };
 
     // 1. Get salt (load or create)
     let salt = load_or_create_salt(path);
-    let key = derive_key(pass, &salt);
+    let key = derive_key(pass_str, &salt);
 
     // 2. Try to open DB
     // We open a new connection just to verify the key.
@@ -648,8 +673,8 @@ pub unsafe extern "C" fn rust_unlock_vault(password: *const c_char) -> bool {
 
     // 3. Apply Key (SQLCipher PRAGMA)
     // We pass the raw key bytes. rusqlite handles &[u8] as blob.
-    let key_vec = key.to_vec();
-    if conn.pragma_update(None, "key", &key_vec).is_err() {
+    let key_vec = Zeroizing::new(key.to_vec());
+    if conn.pragma_update(None, "key", key_vec.as_slice()).is_err() {
         log::error!("[FFI] Failed to apply key during unlock verification");
         return false;
     }

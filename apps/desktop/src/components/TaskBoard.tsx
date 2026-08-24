@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, TextInput, Group, Paper, Title, Stack, Text, Badge, Tooltip } from '@mantine/core';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import type { DropResult } from 'react-beautiful-dnd';
-import { invoke } from '@tauri-apps/api/tauri';
-import { Task } from './types';
+import { useQueryClient } from '@tanstack/react-query';
+import type { Task } from './types';
 import { useStore } from '../store';
+import { useTasks, useUpdateTask, queryKeys } from '../hooks/useQueries';
+import * as api from '../services/api';
 import { IconPlus, IconGripVertical, IconCalendar, IconFlag } from '@tabler/icons-react';
 import { logger } from '@/utils/logger';
 
@@ -89,42 +92,32 @@ const colorTokenMap: Record<SafeColor, { bgActive: string; bgIdle: string; borde
   };
 
 type ColumnKey = 'inbox' | 'next' | 'in_progress' | 'waiting' | 'done' | 'cancelled';
-type ColumnDef = { readonly title: string; readonly color: SafeColor; readonly icon: string };
+type ColumnDef = { readonly titleKey: string; readonly color: SafeColor; readonly icon: string };
 
 const columns: Readonly<Record<ColumnKey, ColumnDef>> = Object.freeze({
-  inbox: { title: 'Inbox', color: 'gray', icon: '📥' },
-  next: { title: 'Next', color: 'blue', icon: '📋' },
-  in_progress: { title: 'In Progress', color: 'yellow', icon: '⚡' },
-  waiting: { title: 'Waiting', color: 'orange', icon: '⏳' },
-  done: { title: 'Done', color: 'green', icon: '✅' },
-  cancelled: { title: 'Cancelled', color: 'gray', icon: '❌' },
+  inbox: { titleKey: 'tasks.columns.inbox', color: 'gray', icon: '📥' },
+  next: { titleKey: 'tasks.columns.next', color: 'blue', icon: '📋' },
+  in_progress: { titleKey: 'tasks.columns.inProgress', color: 'yellow', icon: '⚡' },
+  waiting: { titleKey: 'tasks.columns.waiting', color: 'orange', icon: '⏳' },
+  done: { titleKey: 'tasks.columns.done', color: 'green', icon: '✅' },
+  cancelled: { titleKey: 'tasks.columns.cancelled', color: 'gray', icon: '❌' },
 } as const);
 
 const TaskBoard: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const { t } = useTranslation();
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const { activeSpaceId } = useStore();
+  const queryClient = useQueryClient();
 
-  const fetchTasks = useCallback(async () => {
-    if (!activeSpaceId) return;
-    try {
-      const tasksData: Task[] = await invoke('get_all_tasks_in_space_cmd', { spaceId: activeSpaceId });
-      setTasks(tasksData);
-    } catch (error) {
-      logger.error('Failed to fetch tasks:', error as Error);
-    }
-  }, [activeSpaceId]);
-
-  useEffect(() => {
-    void fetchTasks();
-  }, [fetchTasks]);
+  const { data: tasks = [] } = useTasks(activeSpaceId ?? '', !!activeSpaceId);
+  const updateTaskMutation = useUpdateTask();
 
   const handleCreateTask = async () => {
     if (!newTaskTitle.trim() || !activeSpaceId) return;
     try {
-      await invoke('create_task_cmd', { spaceId: activeSpaceId, title: newTaskTitle, description: null });
+      await api.createTask(activeSpaceId, newTaskTitle, null);
       setNewTaskTitle('');
-      fetchTasks(); // Refresh the list
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.bySpace(activeSpaceId) });
     } catch (error) {
       logger.error('Failed to create task:', error as Error);
     }
@@ -147,8 +140,7 @@ const TaskBoard: React.FC = () => {
       const newStatus = destination.droppableId as Task['status'];
       const updatedTask = { ...task, status: newStatus };
       try {
-        await invoke('update_task_cmd', { task: updatedTask });
-        fetchTasks(); // Refresh the list
+        await updateTaskMutation.mutateAsync(updatedTask);
       } catch (error) {
         logger.error('Failed to update task:', error as Error);
       }
@@ -161,9 +153,9 @@ const TaskBoard: React.FC = () => {
       <Paper shadow="sm" p="md" radius="md" withBorder>
         <Group justify="space-between" align="center">
           <div>
-            <Title order={2}>Task Board</Title>
+            <Title order={2}>{t('tasks.taskBoard')}</Title>
             <Text size="sm" c="dimmed">
-              Drag and drop tasks between columns
+              {t('tasks.dragDrop')}
             </Text>
           </div>
           <Group gap="xs">
@@ -226,7 +218,7 @@ const TaskBoard: React.FC = () => {
                             {safeIcon}
                           </span>
                           <Text fw={600} size="md">
-                            {column.title}
+                            {t(column.titleKey)}
                           </Text>
                         </Group>
                         <Badge variant="light" color={safeColor} size="sm">
@@ -246,6 +238,8 @@ const TaskBoard: React.FC = () => {
                                 withBorder
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
+                                role="article"
+                                aria-label={`Task: ${task.title}, Status: ${t(column.titleKey)}${task.priority ? `, Priority: ${task.priority}` : ''}`}
                                 style={{
                                   ...provided.draggableProps.style,
                                   backgroundColor: snapshot.isDragging

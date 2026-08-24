@@ -2,6 +2,8 @@ use rusqlite::{Connection, Result};
 use serde::{Deserialize, Serialize};
 use ulid::Ulid;
 
+pub const DEFAULT_RETENTION_DAYS: i64 = 90;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AuditLog {
     pub id: String,
@@ -79,4 +81,91 @@ pub fn get_audit_logs(conn: &Connection, limit: usize, offset: usize) -> Result<
     }
 
     Ok(logs)
+}
+
+pub fn cleanup_old_entries(conn: &Connection, retention_days: i64) -> Result<usize> {
+    let cutoff = chrono::Utc::now().timestamp() - (retention_days * 86400);
+    let deleted = conn.execute(
+        "DELETE FROM audit_log WHERE created_at < ?1",
+        rusqlite::params![cutoff],
+    )?;
+    Ok(deleted)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rusqlite::Connection;
+
+    fn setup_audit_db(conn: &Connection) {
+        conn.execute_batch(
+            "CREATE TABLE audit_log (
+                id TEXT PRIMARY KEY,
+                user_id TEXT,
+                event_type TEXT NOT NULL,
+                entity_type TEXT NOT NULL,
+                entity_id TEXT,
+                details_json TEXT,
+                ip_address TEXT,
+                user_agent TEXT,
+                created_at INTEGER NOT NULL
+            );",
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn test_cleanup_old_entries() {
+        let conn = Connection::open_in_memory().unwrap();
+        setup_audit_db(&conn);
+
+        let now = chrono::Utc::now().timestamp();
+
+        // Insert an old entry (100 days ago)
+        conn.execute(
+            "INSERT INTO audit_log (id, event_type, entity_type, created_at) VALUES (?1, ?2, ?3, ?4)",
+            rusqlite::params!["old1", "test", "note", now - (100 * 86400)],
+        )
+        .unwrap();
+
+        // Insert another old entry (200 days ago)
+        conn.execute(
+            "INSERT INTO audit_log (id, event_type, entity_type, created_at) VALUES (?1, ?2, ?3, ?4)",
+            rusqlite::params!["old2", "test", "note", now - (200 * 86400)],
+        )
+        .unwrap();
+
+        // Insert a recent entry (10 days ago)
+        conn.execute(
+            "INSERT INTO audit_log (id, event_type, entity_type, created_at) VALUES (?1, ?2, ?3, ?4)",
+            rusqlite::params!["recent1", "test", "note", now - (10 * 86400)],
+        )
+        .unwrap();
+
+        // Insert a current entry
+        conn.execute(
+            "INSERT INTO audit_log (id, event_type, entity_type, created_at) VALUES (?1, ?2, ?3, ?4)",
+            rusqlite::params!["current1", "test", "note", now],
+        )
+        .unwrap();
+
+        // Cleanup entries older than 90 days
+        let deleted = cleanup_old_entries(&conn, 90).unwrap();
+        assert_eq!(deleted, 2);
+
+        // Verify only recent entries remain
+        let remaining: i64 = conn
+            .query_row("SELECT COUNT(*) FROM audit_log", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(remaining, 2);
+
+        let remaining_ids: Vec<String> = conn
+            .prepare("SELECT id FROM audit_log ORDER BY created_at")
+            .unwrap()
+            .query_map([], |row| row.get(0))
+            .unwrap()
+            .collect::<Result<Vec<String>, _>>()
+            .unwrap();
+        assert_eq!(remaining_ids, vec!["recent1", "current1"]);
+    }
 }

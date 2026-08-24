@@ -90,6 +90,8 @@ export const getAllProjectsInSpace = (spaceId: string): Promise<Project[]> =>
 // Tasks & Notes
 export const getAllTasksInSpace = (spaceId: string): Promise<Task[]> =>
   invokeCmd('get_all_tasks_in_space_cmd', { spaceId });
+export const createTask = (spaceId: string, title: string, description: string | null): Promise<Task> =>
+  invokeCmd('create_task_cmd', { spaceId, title, description });
 export const getAllNotesInSpace = (spaceId: string): Promise<Note[]> =>
   invokeCmd('get_all_notes_in_space_cmd', { spaceId });
 export const getOrCreateDailyNote = (spaceId: string): Promise<Note> =>

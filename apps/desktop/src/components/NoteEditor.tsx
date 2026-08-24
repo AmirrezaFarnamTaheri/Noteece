@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Button,
   TextInput,
@@ -13,6 +14,7 @@ import {
   ActionIcon,
   Tooltip,
   Box,
+  Badge,
 } from '@mantine/core';
 import { invoke } from '@tauri-apps/api/tauri';
 import { Note } from '@noteece/types';
@@ -21,9 +23,10 @@ import { useNotes, useFormTemplates } from '../hooks/useQueries';
 import LexicalEditor from './LexicalEditor';
 import classes from './NoteEditor.module.css';
 import { logger } from '@/utils/logger';
-import { IconPlus, IconTemplate, IconTrash, IconAlignJustified, IconMinimize } from '@tabler/icons-react';
+import { IconPlus, IconTemplate, IconTrash, IconAlignJustified, IconMinimize, IconSearch } from '@tabler/icons-react';
 
 const NoteEditor: React.FC = () => {
+  const { t } = useTranslation();
   const theme = useMantineTheme();
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [title, setTitle] = useState('');
@@ -31,8 +34,11 @@ const NoteEditor: React.FC = () => {
   const [templateModalOpened, setTemplateModalOpened] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [typewriterMode, setTypewriterMode] = useState(false);
+  const [noteSearch, setNoteSearch] = useState('');
   const { activeSpaceId } = useStore();
   const editorScrollRef = useRef<HTMLDivElement>(null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Use React Query hooks for data fetching
   const {
@@ -51,6 +57,14 @@ const NoteEditor: React.FC = () => {
       setContent('');
     }
   }, [selectedNote]);
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleCreateNote = async () => {
     if (!activeSpaceId) {
@@ -100,7 +114,32 @@ const NoteEditor: React.FC = () => {
 
   const handleContentChange = (newContent: string) => {
     setContent(newContent);
+    if (selectedNote) {
+      setSaveStatus('idle');
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+      autoSaveTimerRef.current = setTimeout(async () => {
+        try {
+          setSaveStatus('saving');
+          await invoke('update_note_content_cmd', { id: selectedNote.id, title, content: newContent });
+          setSaveStatus('saved');
+          setTimeout(() => setSaveStatus('idle'), 2000);
+        } catch (error) {
+          logger.error('Auto-save failed:', error as Error);
+          setSaveStatus('idle');
+        }
+      }, 2000);
+    }
   };
+
+  const wordCharCount = useMemo(() => {
+    const text = content || '';
+    const stripped = text.replaceAll(/<[^>]*>/g, '').replaceAll(/[#()*>[\]_`~-]/g, '').trim();
+    const chars = stripped.length;
+    const words = stripped.length === 0 ? 0 : stripped.split(/\s+/).filter(Boolean).length;
+    return { words, chars };
+  }, [content]);
 
   const handleNewNoteClick = () => {
     setSelectedNote(null);
@@ -169,7 +208,7 @@ const NoteEditor: React.FC = () => {
       >
         <Group justify="space-between" mb="md">
           <Text fw={800} size="sm" c="dimmed" tt="uppercase">
-            All Notes
+            {t('notes.allNotes')}
           </Text>
           <Tooltip label="Create New Note">
             <ActionIcon variant="light" color="violet" onClick={handleNewNoteClick} size="sm" radius="md">
@@ -188,11 +227,23 @@ const NoteEditor: React.FC = () => {
           leftSection={<IconTemplate size={14} />}
           styles={{ inner: { justifyContent: 'flex-start' } }}
         >
-          New from Template
+          {t('notes.newFromTemplate')}
         </Button>
 
+        <TextInput
+          placeholder="Filter notes..."
+          value={noteSearch}
+          onChange={(e) => setNoteSearch(e.currentTarget.value)}
+          size="xs"
+          mb="sm"
+          leftSection={<IconSearch size={14} />}
+          styles={{ input: { backgroundColor: theme.colors.dark[7] } }}
+        />
+
         <List spacing={2} listStyleType="none" style={{ overflowY: 'auto', flex: 1 }}>
-          {notes.map((note) => (
+          {notes
+            .filter((note) => !noteSearch.trim() || (note.title || '').toLowerCase().includes(noteSearch.toLowerCase()))
+            .map((note) => (
             <List.Item
               key={note.id.toString()}
               onClick={() => setSelectedNote(note)}
@@ -248,7 +299,7 @@ const NoteEditor: React.FC = () => {
         >
           <Group justify="space-between" mb="lg">
             <TextInput
-              placeholder="Untitled Note"
+              placeholder={t('notes.untitled')}
               value={title}
               onChange={(event) => setTitle(event.currentTarget.value)}
               size="xl"
@@ -294,22 +345,36 @@ const NoteEditor: React.FC = () => {
               key={selectedNote ? String(selectedNote.id) : 'new-note'}
               initialContent={content}
               onChange={handleContentChange}
-              placeholder="Start writing..."
+              placeholder={t('notes.startWriting')}
               typewriterMode={typewriterMode}
               scrollContainerRef={editorScrollRef}
             />
           </Box>
 
-          <Group mt="lg" justify="flex-end">
-            {selectedNote ? (
+          <Group mt="lg" justify="space-between" align="center">
+            <Group gap="sm">
+              <Text size="xs" c="dimmed">
+                {wordCharCount.words} word{wordCharCount.words === 1 ? '' : 's'} · {wordCharCount.chars} character{wordCharCount.chars === 1 ? '' : 's'}
+              </Text>
+              {selectedNote && (
+                saveStatus === 'saving' ? (
+                  <Badge color="yellow" size="xs" variant="light">Saving...</Badge>
+                ) : (saveStatus === 'saved' ? (
+                  <Badge color="green" size="xs" variant="light">Saved</Badge>
+                ) : null)
+              )}
+            </Group>
+            <Group gap="sm">
+              {selectedNote ? (
               <Button onClick={handleUpdateNote} color="violet" radius="md">
-                Save Changes
+                {t('notes.saveChanges')}
               </Button>
             ) : (
               <Button onClick={handleCreateNote} disabled={!title.trim()} color="violet" radius="md">
                 Create Note
               </Button>
             )}
+          </Group>
           </Group>
         </div>
       </Paper>

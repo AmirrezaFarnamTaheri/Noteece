@@ -77,6 +77,14 @@ export class AutomationRuntimeImpl implements AutomationRuntime {
         return this.evaluateBinaryExpression(expr.operator, left, right);
       }
 
+      case 'ArrayLiteral': {
+        const elements: AutomationValue[] = [];
+        for (const element of expr.elements) {
+          elements.push(await this.evaluateExpression(element));
+        }
+        return elements;
+      }
+
       case 'FunctionCall': {
         const func = this.context.functions.get(expr.name);
         if (!func) {

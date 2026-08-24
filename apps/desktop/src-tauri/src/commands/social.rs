@@ -233,6 +233,22 @@ pub fn save_session_cookies_cmd(
     session_id: String,
     cookies: String,
 ) -> Result<(), String> {
+    // SECURITY: Validate inputs to prevent cookie injection
+    // Session ID must be a valid ULID (26 characters, Crockford base32)
+    if session_id.len() != 26 || !session_id.chars().all(|c| c.is_alphanumeric()) {
+        return Err("Invalid session ID format".to_string());
+    }
+
+    // Cookie payload size limit (64KB) to prevent abuse
+    if cookies.len() > 65536 {
+        return Err("Cookie payload too large (max 64KB)".to_string());
+    }
+
+    // Basic JSON validation
+    if serde_json::from_str::<serde_json::Value>(&cookies).is_err() {
+        return Err("Invalid cookie format: must be valid JSON".to_string());
+    }
+
     crate::with_db!(db, conn, {
         core_rs::social::save_session_cookies(&conn, &session_id, &cookies, &[])
             .map_err(|e| e.to_string())

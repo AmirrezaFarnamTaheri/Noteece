@@ -365,17 +365,24 @@ impl SyncProtocol {
     }
 
     /// Constant-time comparison to prevent timing attacks
-    /// Returns true only if both slices have equal length AND equal contents
+    /// Uses subtle::ConstantTimeEq for all comparisons, including length.
     fn constant_time_compare(a: &[u8], b: &[u8]) -> bool {
         use subtle::ConstantTimeEq;
 
-        // First check lengths in constant time (if available)
-        // If lengths differ, the comparison should fail without leaking info
-        if a.len() != b.len() {
-            return false;
-        }
+        // Constant-time length comparison using XOR of lengths
+        // This avoids branching on length difference
+        let len_match = (a.len() as u64).ct_eq(&(b.len() as u64));
 
-        // Compare contents in constant time
-        a.ct_eq(b).into()
+        // If lengths differ, we still do a constant-time comparison on
+        // the minimum length to avoid leaking which prefix matched.
+        let min_len = a.len().min(b.len());
+        let content_match = if min_len > 0 {
+            a[..min_len].ct_eq(&b[..min_len])
+        } else {
+            1u8.into() // both empty
+        };
+
+        // Both length AND content must match
+        (len_match & content_match).into()
     }
 }

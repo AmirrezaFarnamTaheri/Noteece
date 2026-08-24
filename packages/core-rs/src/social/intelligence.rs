@@ -275,7 +275,7 @@ fn extract_topics(content: &str) -> Vec<String> {
     }
 
     // Sort by number of matches (descending) and cap results
-    topic_scores.sort_by(|a, b| b.1.cmp(&a.1));
+    topic_scores.sort_by_key(|a| std::cmp::Reverse(a.1));
     topics = topic_scores
         .into_iter()
         .take(MAX_TOPICS)

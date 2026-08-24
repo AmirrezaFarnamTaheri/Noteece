@@ -1,6 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Alert, Button, Container, Text, Stack, Code } from '@mantine/core';
-import { IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle, IconRefresh } from '@tabler/icons-react';
 import { logger } from '@/utils/logger';
 
 interface Properties {
@@ -12,6 +12,19 @@ interface State {
   hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
+  isChunkLoadError: boolean;
+}
+
+function isChunkLoadError(error: Error | null): boolean {
+  if (!error) return false;
+  const message = error.message || '';
+  return (
+    message.includes('Failed to fetch dynamically imported module') ||
+    message.includes('Loading chunk') ||
+    message.includes('Importing a module script failed') ||
+    message.includes('vite:preloadError') ||
+    (error.name === 'TypeError' && message.includes('fetch'))
+  );
 }
 
 /**
@@ -24,6 +37,7 @@ export class ErrorBoundary extends Component<Properties, State> {
       hasError: false,
       error: null,
       errorInfo: null,
+      isChunkLoadError: false,
     };
   }
 
@@ -31,6 +45,7 @@ export class ErrorBoundary extends Component<Properties, State> {
     return {
       hasError: true,
       error,
+      isChunkLoadError: isChunkLoadError(error),
     };
   }
 
@@ -42,18 +57,57 @@ export class ErrorBoundary extends Component<Properties, State> {
     });
   }
 
+  componentDidMount(): void {
+    window.addEventListener('vite:preloadError', this.handlePreloadError);
+  }
+
+  componentWillUnmount(): void {
+    window.removeEventListener('vite:preloadError', this.handlePreloadError);
+  }
+
+  handlePreloadError = (event: Event): void => {
+    event.preventDefault();
+    this.setState({
+      hasError: true,
+      error: new Error('Failed to load application chunk. A new version may be available.'),
+      isChunkLoadError: true,
+    });
+  };
+
   handleReset = (): void => {
     this.setState({
       hasError: false,
       error: null,
       errorInfo: null,
+      isChunkLoadError: false,
     });
+  };
+
+  handleReload = (): void => {
+    window.location.reload();
   };
 
   render(): ReactNode {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;
+      }
+
+      if (this.state.isChunkLoadError) {
+        return (
+          <Container size="sm" mt="xl">
+            <Alert icon={<IconRefresh size={24} />} title="Update Available" color="blue" variant="filled">
+              <Stack gap="md" mt="md">
+                <Text size="sm">
+                  A new version of the application is available. Please reload to get the latest version.
+                </Text>
+                <Button onClick={this.handleReload} variant="outline" color="white" leftSection={<IconRefresh size={16} />}>
+                  Reload Application
+                </Button>
+              </Stack>
+            </Alert>
+          </Container>
+        );
       }
 
       return (

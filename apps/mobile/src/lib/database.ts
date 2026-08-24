@@ -580,9 +580,19 @@ async function runMigrations(currentVersion: number): Promise<void> {
   Logger.info(`Database migrated to version ${CURRENT_DB_VERSION}`);
 }
 
-export const initializeDatabase = async (): Promise<void> => {
+export const initializeDatabase = async (encryptionKey?: string): Promise<void> => {
   try {
     db = await SQLite.openDatabaseAsync('noteece.db');
+
+    // SECURITY: Apply SQLCipher encryption key if provided.
+    // This ensures the mobile database is encrypted at rest.
+    // Requires expo-sqlite with useSQLCipher: true in app.json plugin config.
+    if (encryptionKey) {
+      await db.execAsync(`PRAGMA key = '${encryptionKey}'`);
+      Logger.info('[Database] SQLCipher encryption key applied');
+    } else {
+      Logger.warn('[Database] No encryption key provided — database may be unencrypted');
+    }
 
     // Initialize Rust JSI Bridge with the correct database path
     if (syncBridge.isJSIAvailable()) {

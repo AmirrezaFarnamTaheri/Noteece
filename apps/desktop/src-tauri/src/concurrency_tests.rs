@@ -7,12 +7,13 @@ mod tests {
     use std::thread;
     use std::time::Duration;
     use tempfile::tempdir;
+    use zeroize::Zeroizing;
 
     #[test]
     fn test_concurrent_read_write() {
         let dir = tempdir().unwrap();
         let db_path = dir.path().join("test.db");
-        let dek = [0u8; 32]; // Dummy key
+        let dek = Zeroizing::new([0u8; 32]); // Dummy key
 
         let manager = EncryptedConnectionManager::new(db_path.clone(), dek);
         let pool = Pool::builder().max_size(10).build(manager).unwrap();

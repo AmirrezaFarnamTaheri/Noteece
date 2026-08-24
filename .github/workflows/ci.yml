@@ -16,15 +16,15 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
         with:
           version: 8
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -47,15 +47,15 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
         with:
           version: 8
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -73,22 +73,31 @@ jobs:
 
       - name: Check coverage threshold
         working-directory: apps/desktop
+        env:
+          # Set the COVERAGE_MIN repo variable (e.g. 80) to make this gate
+          # blocking once a baseline exists; empty keeps it advisory.
+          COVERAGE_MIN: ${{ vars.COVERAGE_MIN }}
         run: |
-          if [ -f coverage/coverage-summary.json ]; then
+          if [ ! -f coverage/coverage-summary.json ]; then
+            echo "::warning::No coverage report found"
+            exit 0
+          fi
             COVERAGE=$(cat coverage/coverage-summary.json | jq -r '.total.lines.pct')
             echo "Line coverage: $COVERAGE%"
-            # Use awk for float comparison (bc not always available)
-            if echo "$COVERAGE" | awk '{exit !($1 < 90)}'; then
-              echo "::warning::Coverage ($COVERAGE%) is below 90% threshold"
-            else
-              echo "Coverage check passed: $COVERAGE%"
+            if [ -z "$COVERAGE_MIN" ]; then
+              if echo "$COVERAGE" | awk '{exit !($1 < 90)}'; then
+                echo "::warning::Coverage ($COVERAGE%) is below the 90% target"
+              fi
+              exit 0
             fi
-          else
-            echo "::warning::No coverage report found"
-          fi
+            if echo "$COVERAGE" "$COVERAGE_MIN" | awk '{exit !($1 < $2)}'; then
+              echo "::error::Coverage ($COVERAGE%) is below required minimum ($COVERAGE_MIN%)"
+              exit 1
+            fi
+            echo "Coverage gate passed: $COVERAGE% >= $COVERAGE_MIN%"
 
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: success()
         with:
           name: desktop-coverage
@@ -100,15 +109,15 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
         with:
           version: 8
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -129,7 +138,7 @@ jobs:
         run: pnpm test:ci
 
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: success()
         with:
           name: mobile-coverage
@@ -145,7 +154,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Install dependencies (Ubuntu)
         if: matrix.os == 'ubuntu-22.04'
@@ -154,12 +163,15 @@ jobs:
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        # Pin Rust toolchain for reproducible builds (Finding O4)
+        # Update this version periodically after testing with new Rust releases
+        uses: dtolnay/rust-toolchain@be73d7920c329f220ce7feac0f09e67c2e95f581 # stable
         with:
+          toolchain: 1.82.0
           components: rustfmt, clippy
 
       - name: Cache Cargo
-        uses: actions/cache@v4
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: |
             ~/.cargo/bin/
@@ -185,13 +197,15 @@ jobs:
       - name: Test
         run: cd packages/core-rs && cargo test --verbose
 
+      - name: Test relay-server
+        run: cargo test -p relay-server --verbose
+
       - name: Generate test coverage (Ubuntu)
         if: matrix.os == 'ubuntu-22.04'
         run: |
           cd packages/core-rs
-          cargo install cargo-tarpaulin --version 0.27.0 || true
-          cargo tarpaulin --out Xml --skip-clean --timeout 300 || true
-        continue-on-error: true
+          cargo install cargo-tarpaulin --version 0.27.0 --locked
+          cargo tarpaulin --out Xml --skip-clean --timeout 300 --fail-under 60
 
   desktop_build:
     name: "Desktop Build Check"
@@ -200,15 +214,15 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
         with:
           version: 8
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -219,10 +233,10 @@ jobs:
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@be73d7920c329f220ce7feac0f09e67c2e95f581 # stable
 
       - name: Cache Cargo
-        uses: actions/cache@v4
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: |
             ~/.cargo/bin/
@@ -243,10 +257,83 @@ jobs:
       - name: Check Tauri Build
         run: cd apps/desktop && cargo build --manifest-path src-tauri/Cargo.toml
 
+  codeql:
+    name: "CodeQL SAST Analysis"
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['javascript-typescript', 'rust']
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: github/codeql-action/init@42947a340483f03ba47bb1a039b2c519aab3df85 # v3.37.8
+        with:
+          languages: ${{ matrix.language }}
+      - uses: github/codeql-action/analyze@42947a340483f03ba47bb1a039b2c519aab3df85 # v3.37.8
+
+  security_audit:
+    name: "Security Audit"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@be73d7920c329f220ce7feac0f09e67c2e95f581 # stable
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
+
+      - name: Run cargo audit
+        run: cargo audit
+        working-directory: packages/core-rs
+
+      - name: Run pnpm audit
+        run: pnpm audit --audit-level moderate
+
+  secret_scanning:
+    name: "Secret Scanning"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog secret scan
+        uses: trufflesecurity/trufflehog@bcfcf73aaf4759d4dadc2783177c245a02792318 # v3.97.0
+        with:
+          extra_args: --only-verified
+
+  # Performance benchmarks should be run periodically (e.g., weekly or before releases).
+  # Use the perf-harness binary (packages/perf-harness) to measure relay throughput,
+  # sync latency, and memory usage under load. Run manually or as a scheduled workflow.
+  # Example: cargo run -p perf-harness -- --mode benchmark --duration 60
+
   # Summary job that depends on all checks
   ci-complete:
     name: "CI Complete"
-    needs: [lint_and_format, desktop_tests, mobile_tests, rust_checks, desktop_build]
+    needs: [lint_and_format, desktop_tests, mobile_tests, rust_checks, desktop_build, codeql, security_audit, secret_scanning]
     runs-on: ubuntu-latest
     if: always()
     
@@ -259,11 +346,18 @@ jobs:
           echo "Rust Checks: ${{ needs.rust_checks.result }}"
           echo "Desktop Build: ${{ needs.desktop_build.result }}"
           
+          echo "CodeQL SAST: ${{ needs.codeql.result }}"
+          echo "Security Audit: ${{ needs.security_audit.result }}"
+          echo "Secret Scanning: ${{ needs.secret_scanning.result }}"
+          
           if [[ "${{ needs.lint_and_format.result }}" != "success" ]] || \
              [[ "${{ needs.desktop_tests.result }}" != "success" ]] || \
              [[ "${{ needs.mobile_tests.result }}" != "success" ]] || \
              [[ "${{ needs.rust_checks.result }}" != "success" ]] || \
-             [[ "${{ needs.desktop_build.result }}" != "success" ]]; then
+             [[ "${{ needs.desktop_build.result }}" != "success" ]] || \
+             [[ "${{ needs.codeql.result }}" != "success" ]] || \
+             [[ "${{ needs.security_audit.result }}" != "success" ]] || \
+             [[ "${{ needs.secret_scanning.result }}" != "success" ]]; then
             echo "One or more checks failed!"
             exit 1
           fi

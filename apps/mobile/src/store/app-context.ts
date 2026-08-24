@@ -275,8 +275,13 @@ export function useUpdateSetting() {
 
 /**
  * Hook to get theme configuration
+ *
+ * F16 NOTE: Renamed from `useTheme` to `useAppTheme` to avoid name collision
+ * with the `useTheme` hook exported from `contexts/ThemeContext.tsx`.
+ * The ThemeContext version provides full theme context (mode, colors, toggle).
+ * This version provides only the theme configuration from app settings.
  */
-export function useTheme() {
+export function useAppTheme() {
   return useAppContext((state) => state.settings.theme);
 }
 

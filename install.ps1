@@ -136,6 +136,11 @@ function Compare-Versions {
 function Install-Chocolatey {
     Write-Step "Installing Chocolatey..."
 
+    # SECURITY WARNING: Invoke-Expression (iex) of remote scripts is a supply-chain risk.
+    # A MITM attack could inject malicious code during download.
+    # For production, verify the script hash before execution or install Chocolatey manually.
+    # See: https://chocolatey.org/install#individual
+
     try {
         Set-ExecutionPolicy Bypass -Scope Process -Force
         [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
@@ -355,7 +360,6 @@ Write-Success "Project directory: $ScriptDir"
 if (Test-Path "$ScriptDir\node_modules") {
     Write-Warning "Existing node_modules found. Cleaning..."
     Remove-Item -Path "$ScriptDir\node_modules" -Recurse -Force -ErrorAction SilentlyContinue
-    Remove-Item -Path "$ScriptDir\pnpm-lock.yaml" -Force -ErrorAction SilentlyContinue
 }
 
 Write-Step "Installing Node dependencies..."
@@ -363,8 +367,8 @@ Push-Location $ScriptDir
 try {
     & pnpm install --frozen-lockfile
     if ($LASTEXITCODE -ne 0) {
-        Write-Warning "Frozen install failed, installing fresh..."
-        & pnpm install
+        Write-Error-Custom "Frozen lockfile install failed. Run 'pnpm install' manually or update the lockfile."
+        exit 1
     }
     Write-Success "Node dependencies installed"
 }
@@ -413,8 +417,8 @@ NOTEECE_DB_PATH=$env:USERPROFILE\.noteece\data
 NOTEECE_BACKUP_PATH=$env:USERPROFILE\.noteece\backups
 
 # Security Configuration
-NOTEECE_ENABLE_HTTPS=false
-NOTEECE_DEV_MODE=true
+NOTEECE_ENABLE_HTTPS=true
+NOTEECE_DEV_MODE=false
 
 # Build Configuration
 NOTEECE_VERSION=1.0.0

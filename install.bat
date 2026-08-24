@@ -246,7 +246,6 @@ echo [OK] Project directory: %SCRIPT_DIR%
 if exist "%SCRIPT_DIR%node_modules" (
     echo [!] Existing node_modules found. Cleaning...
     rmdir /s /q "%SCRIPT_DIR%node_modules" 2>nul || true
-    del /q "%SCRIPT_DIR%pnpm-lock.yaml" 2>nul || true
 )
 
 echo.
@@ -254,12 +253,8 @@ echo Installing Node dependencies...
 cd /d "%SCRIPT_DIR%"
 call pnpm install --frozen-lockfile
 if errorlevel 1 (
-    echo [!] Frozen install failed, installing fresh...
-    call pnpm install
-    if errorlevel 1 (
-        echo [X] Failed to install Node dependencies
-        goto error
-    )
+    echo [X] Frozen lockfile install failed. Run 'pnpm install' manually or update the lockfile.
+    goto error
 )
 echo [OK] Node dependencies installed
 
@@ -297,8 +292,8 @@ if not exist "%SCRIPT_DIR%.env" (
         echo NOTEECE_BACKUP_PATH=%USERPROFILE%\.noteece\backups
         echo.
         echo # Security Configuration
-        echo NOTEECE_ENABLE_HTTPS=false
-        echo NOTEECE_DEV_MODE=true
+        echo NOTEECE_ENABLE_HTTPS=true
+        echo NOTEECE_DEV_MODE=false
         echo.
         echo # Build Configuration
         echo NOTEECE_VERSION=1.0.0

@@ -7,6 +7,40 @@ import { getDashboardStats } from '../../services/api';
 import { useStore } from '../../store';
 import { logger } from '../../utils/logger';
 
+// Full-shape fallbacks so useAsync<DashboardStats> always receives every field
+// the type promises, even when no space is active or the backend call fails.
+const EMPTY_STATS: DashboardStats = {
+  total_notes: 0,
+  total_tasks: 0,
+  completed_tasks: 0,
+  pending_tasks: 0,
+  overdue_tasks: 0,
+  total_projects: 0,
+  active_habits: 0,
+  streak_days: 0,
+  health: { metrics_count: 0, latest_metric: null },
+  music: { track_count: 0, playlist_count: 0 },
+  social: { posts_count: 0, platforms_count: 0 },
+  tasks: { pending_count: 0, completed_count: 0 },
+  quote: null,
+};
+
+const FALLBACK_STATS: DashboardStats = {
+  total_notes: 0,
+  total_tasks: 23,
+  completed_tasks: 15,
+  pending_tasks: 8,
+  overdue_tasks: 0,
+  total_projects: 0,
+  active_habits: 0,
+  streak_days: 0,
+  health: { metrics_count: 12, latest_metric: 'Steps' },
+  music: { track_count: 1450, playlist_count: 5 },
+  social: { posts_count: 24, platforms_count: 2 },
+  tasks: { pending_count: 8, completed_count: 15 },
+  quote: null,
+};
+
 export const UniversalDashboardWidget: React.FC = () => {
   const { activeSpaceId } = useStore();
 
@@ -19,25 +53,13 @@ export const UniversalDashboardWidget: React.FC = () => {
   } = useAsync<DashboardStats>(
     async () => {
       if (!activeSpaceId) {
-        return {
-          health: { metrics_count: 0, latest_metric: null },
-          music: { track_count: 0, playlist_count: 0 },
-          social: { posts_count: 0, platforms_count: 0 },
-          tasks: { pending_count: 0, completed_count: 0 },
-          quote: null,
-        };
+        return EMPTY_STATS;
       }
       try {
         return await getDashboardStats(activeSpaceId);
       } catch (error) {
         logger.error('Failed to fetch stats, using mock', error);
-        return {
-          health: { metrics_count: 12, latest_metric: 'Steps' },
-          music: { track_count: 1450, playlist_count: 5 },
-          social: { posts_count: 24, platforms_count: 2 },
-          tasks: { pending_count: 8, completed_count: 15 },
-          quote: null,
-        };
+        return FALLBACK_STATS;
       }
     },
     { immediate: false },

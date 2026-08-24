@@ -89,7 +89,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0.0"
+        versionName "1.1.0"
 
         buildConfigField("boolean", "REACT_NATIVE_UNSTABLE_USE_RUNTIME_SCHEDULER_ALWAYS", (findProperty("reactNative.unstable_useRuntimeSchedulerAlways") ?: true).toString())
 
@@ -127,15 +127,29 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        // Production signing is injected via gradle properties or environment
+        // (NOTECEE_UPLOAD_*) so no secret material lives in git. Falls back to
+        // the debug key for local release builds only.
+        if (project.hasProperty('NOTECEE_UPLOAD_STORE_FILE')) {
+            upload {
+                storeFile file(NOTECEE_UPLOAD_STORE_FILE)
+                storePassword project.findProperty('NOTECEE_UPLOAD_STORE_PASSWORD')
+                keyAlias project.findProperty('NOTECEE_UPLOAD_KEY_ALIAS')
+                keyPassword project.findProperty('NOTECEE_UPLOAD_KEY_PASSWORD')
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            if (project.hasProperty('NOTECEE_UPLOAD_STORE_FILE')) {
+                signingConfig signingConfigs.upload
+            } else {
+                // Local-only convenience; CI/distribution must set NOTECEE_UPLOAD_*.
+                signingConfig signingConfigs.debug
+            }
             shrinkResources (findProperty('android.enableShrinkResourcesInReleaseBuilds')?.toBoolean() ?: false)
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"

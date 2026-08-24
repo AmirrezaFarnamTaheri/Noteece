@@ -88,7 +88,7 @@ fn test_export_to_zip_unique_filenames() -> Result<(), DbError> {
     let zip_path = export_dir.path().join("export.zip");
 
     // This should succeed without filename collisions
-    let result = export_to_zip(&conn, space_id, &zip_path, &dek);
+    let result = export_to_zip(&conn, space_id, &zip_path, &dek[..]);
     assert!(
         result.is_ok(),
         "Export should succeed with duplicate titles"
@@ -145,7 +145,7 @@ fn test_export_to_json_decrypts_content() -> Result<(), DbError> {
 
     // Create a note with encrypted content
     let plaintext = "This is secret content that should be encrypted";
-    let encrypted = encrypt_string(plaintext, &dek).unwrap();
+    let encrypted = encrypt_string(plaintext, &dek[..]).unwrap();
 
     // Insert note with encrypted content directly
     conn.execute(
@@ -163,7 +163,7 @@ fn test_export_to_json_decrypts_content() -> Result<(), DbError> {
     .unwrap();
 
     // Export to JSON
-    let json_output = export_to_json(&conn, space_id, &dek).unwrap();
+    let json_output = export_to_json(&conn, space_id, &dek[..]).unwrap();
 
     // Verify the exported JSON contains decrypted plaintext, not ciphertext
     assert!(
@@ -206,7 +206,7 @@ fn test_export_to_json_handles_decryption_failure() -> Result<(), DbError> {
     .unwrap();
 
     // Export should succeed but content should be empty for failed decryption
-    let json_output = export_to_json(&conn, space_id, &dek).unwrap();
+    let json_output = export_to_json(&conn, space_id, &dek[..]).unwrap();
 
     // Should still contain the note structure
     assert!(
@@ -253,7 +253,7 @@ fn test_export_to_zip_filename_sanitization() -> Result<(), DbError> {
     let zip_path = export_dir.path().join("export.zip");
 
     // Should succeed without filesystem errors
-    let result = export_to_zip(&conn, space_id, &zip_path, &dek);
+    let result = export_to_zip(&conn, space_id, &zip_path, &dek[..]);
     assert!(
         result.is_ok(),
         "Export should succeed with special characters in titles"
@@ -279,7 +279,7 @@ fn test_export_to_zip_preserves_content() -> Result<(), DbError> {
 
     // Create note
     let plaintext = "Original content with unicode: 日本語 🚀";
-    let encrypted_content = encrypt_string(plaintext, &dek).unwrap();
+    let encrypted_content = encrypt_string(plaintext, &dek[..]).unwrap();
     let note = create_note(
         &conn,
         &space_id.to_string(),
@@ -291,7 +291,7 @@ fn test_export_to_zip_preserves_content() -> Result<(), DbError> {
     // Export to ZIP
     let export_dir = tempdir().unwrap();
     let zip_path = export_dir.path().join("export.zip");
-    export_to_zip(&conn, space_id, &zip_path, &dek).unwrap();
+    export_to_zip(&conn, space_id, &zip_path, &dek[..]).unwrap();
 
     // Read back from ZIP and verify content
     let file = File::open(&zip_path).unwrap();

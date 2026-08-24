@@ -11,6 +11,22 @@
 (function() {
   'use strict';
 
+  /**
+   * Sanitize HTML to prevent stored XSS when rendering captured innerHTML.
+   * Strips <script>, <iframe>, <object>, <embed>, <form> tags and event handler attributes.
+   */
+  function sanitizeHtml(html) {
+    if (!html) return '';
+    return html
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+      .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '')
+      .replace(/<embed\b[^<]*(?:(?!<\/embed>)<[^<]*)*<\/embed>/gi, '')
+      .replace(/<form\b[^<]*(?:(?!<\/form>)<[^<]*)*<\/form>/gi, '')
+      .replace(/\son\w+\s*=\s*["'][^"']*["']/gi, '')
+      .replace(/\son\w+\s*=\s*\S+/gi, '');
+  }
+
   const utils = window.__NOTEECE__.utils;
   const config = window.__NOTEECE__.config;
 
@@ -125,7 +141,7 @@
       sender: utils.safeText(senderEl),
       subject: utils.safeText(subjectEl),
       body: utils.safeText(bodyEl),
-      bodyHtml: bodyEl ? bodyEl.innerHTML : '',
+      bodyHtml: bodyEl ? sanitizeHtml(bodyEl.innerHTML) : '',
       time: utils.safeText(timeEl),
       hasAttachment: !!attachmentsEl,
     };

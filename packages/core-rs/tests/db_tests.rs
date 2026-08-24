@@ -25,8 +25,10 @@ fn test_migrations() -> Result<(), DbError> {
     assert_eq!(
         tables,
         vec![
+            "ai_config",
             "audit_log",
             "calendar_event",
+            "capture_post",
             "entity_sync_log",
             "form_template",
             "fts_note",

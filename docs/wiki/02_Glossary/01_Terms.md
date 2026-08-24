@@ -3,7 +3,7 @@
 ## A
 
 - **Anchor:** A coordinate-bound reference to a specific location on the mobile screen, used by Prime Interception to link notes to external app content. It contains `(x, y, width, height)` and the `package_name`.
-- **Argon2id:** The password hashing algorithm used for key derivation. It is memory-hard, making GPU-based brute-force attacks prohibitively expensive.
+- **PBKDF2-HMAC-SHA512:** The password-based key derivation function used for key derivation (256,000 iterations). Migrating to a memory-hard KDF such as Argon2id is tracked in the hardening roadmap.
 - **Artifact:** A compiled binary (APK, MSI, DMG) or file generated during the build process.
 
 ## B
@@ -34,7 +34,7 @@
 
 ## K
 
-- **KEK (Key Encryption Key):** A key derived from the user's password (via Argon2id) used exclusively to encrypt/decrypt the DEK. This allows changing the password without re-encrypting the whole database.
+- **KEK (Key Encryption Key):** A key derived from the user's password (via PBKDF2-HMAC-SHA512) used exclusively to encrypt/decrypt the DEK. This allows changing the password without re-encrypting the whole database.
 
 ## L
 

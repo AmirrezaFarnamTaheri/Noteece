@@ -4,6 +4,18 @@ use crate::db::DbError;
 
 /// Run database migrations to update the schema to the latest version.
 /// This function is idempotent and checks the current version before applying changes.
+///
+/// NOTE (Finding D13): Several columns use JSON-in-TEXT pattern (e.g., `enabled_modes_json`,
+/// `revision_history_json`, `fields_json`, `smart_criteria_json`, `filters_json`,
+/// `context_json`, `suggested_actions_json`). This provides schema flexibility but
+/// prevents efficient querying on JSON fields. Consider normalizing into separate
+/// tables if query patterns require it.
+///
+/// NOTE (Finding D15): Personal modes tables (`health_metric`, `transaction_log`,
+/// `recipe`, `trip`) are initialized by `init_personal_modes_tables()` outside this
+/// versioned migration system. They use `CREATE TABLE IF NOT EXISTS` which is safe
+/// but creates a parallel schema management path. Consider integrating them into
+/// the versioned migration system for consistency.
 pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
     log::info!("[db] Starting migration");
     let tx = conn.transaction()?;
@@ -900,6 +912,144 @@ pub fn migrate(conn: &mut Connection) -> Result<(), DbError> {
             INSERT INTO fts_project(fts_project) VALUES('optimize');
 
             INSERT INTO schema_version (version) VALUES (22);
+            ",
+        )?;
+    }
+
+    if current_version < 23 {
+        log::info!("[db] Migrating to version 23 - Foreign Key Constraints for link table");
+        tx.execute_batch(
+            "
+            -- SQLite does not support ALTER TABLE ADD CONSTRAINT.
+            -- We recreate the link table with proper FOREIGN KEY constraints.
+
+            CREATE TABLE link_new(
+                source_note_id TEXT NOT NULL,
+                target_note_id TEXT NOT NULL,
+                PRIMARY KEY(source_note_id, target_note_id),
+                FOREIGN KEY(source_note_id) REFERENCES note(id) ON DELETE CASCADE,
+                FOREIGN KEY(target_note_id) REFERENCES note(id) ON DELETE CASCADE
+            );
+
+            INSERT INTO link_new (source_note_id, target_note_id)
+            SELECT source_note_id, target_note_id FROM link;
+
+            DROP TABLE link;
+            ALTER TABLE link_new RENAME TO link;
+
+            INSERT INTO schema_version (version) VALUES (23);
+            ",
+        )?;
+    }
+
+    if current_version < 24 {
+        log::info!("[db] Migrating to version 24 - FTS Note Triggers");
+        tx.execute_batch(
+            "
+            -- FTS triggers for note table to keep fts_note in sync
+            -- Matches the pattern used for fts_task (v20) and fts_project (v20)
+
+            CREATE TRIGGER IF NOT EXISTS note_ai AFTER INSERT ON note BEGIN
+                INSERT INTO fts_note(rowid, title, content_md, note_id)
+                VALUES (new.rowid, new.title, COALESCE(new.content_md, ''), new.id);
+            END;
+
+            CREATE TRIGGER IF NOT EXISTS note_ad AFTER DELETE ON note BEGIN
+                DELETE FROM fts_note WHERE rowid = old.rowid;
+            END;
+
+            CREATE TRIGGER IF NOT EXISTS note_au AFTER UPDATE OF title, content_md ON note BEGIN
+                DELETE FROM fts_note WHERE rowid = old.rowid;
+                INSERT INTO fts_note(rowid, title, content_md, note_id)
+                VALUES (new.rowid, new.title, COALESCE(new.content_md, ''), new.id);
+            END;
+
+            INSERT INTO schema_version (version) VALUES (24);
+            ",
+        )?;
+    }
+
+    if current_version < 25 {
+        log::info!("[db] Migrating to version 25 - Foreign Key Constraints for link tables");
+        tx.execute_batch(
+            "
+            -- note_tags: add FK constraints by recreating the table
+            CREATE TABLE note_tags_new(
+                note_id TEXT NOT NULL,
+                tag_id TEXT NOT NULL,
+                PRIMARY KEY(note_id, tag_id),
+                FOREIGN KEY(note_id) REFERENCES note(id) ON DELETE CASCADE,
+                FOREIGN KEY(tag_id) REFERENCES tag(id) ON DELETE CASCADE
+            );
+            INSERT INTO note_tags_new (note_id, tag_id)
+            SELECT note_id, tag_id FROM note_tags;
+            DROP TABLE note_tags;
+            ALTER TABLE note_tags_new RENAME TO note_tags;
+
+            -- task_tags: add FK constraints by recreating the table
+            CREATE TABLE task_tags_new(
+                task_id TEXT NOT NULL,
+                tag_id TEXT NOT NULL,
+                PRIMARY KEY(task_id, tag_id),
+                FOREIGN KEY(task_id) REFERENCES task(id) ON DELETE CASCADE,
+                FOREIGN KEY(tag_id) REFERENCES tag(id) ON DELETE CASCADE
+            );
+            INSERT INTO task_tags_new (task_id, tag_id)
+            SELECT task_id, tag_id FROM task_tags;
+            DROP TABLE task_tags;
+            ALTER TABLE task_tags_new RENAME TO task_tags;
+
+            -- task_people: add FK constraints by recreating the table
+            CREATE TABLE task_people_new(
+                task_id TEXT NOT NULL,
+                person_id TEXT NOT NULL,
+                PRIMARY KEY(task_id, person_id),
+                FOREIGN KEY(task_id) REFERENCES task(id) ON DELETE CASCADE,
+                FOREIGN KEY(person_id) REFERENCES person(id) ON DELETE CASCADE
+            );
+            INSERT INTO task_people_new (task_id, person_id)
+            SELECT task_id, person_id FROM task_people;
+            DROP TABLE task_people;
+            ALTER TABLE task_people_new RENAME TO task_people;
+
+            INSERT INTO schema_version (version) VALUES (25);
+            ",
+        )?;
+    }
+
+    if current_version < 26 {
+        log::info!("[db] Migrating to version 26 - AI Config & Capture Store");
+        tx.execute_batch(
+            "
+            -- Single-row AI provider configuration (consumed by desktop ai commands)
+            CREATE TABLE IF NOT EXISTS ai_config (
+                id TEXT PRIMARY KEY DEFAULT 'default',
+                local_enabled INTEGER NOT NULL DEFAULT 1,
+                ollama_url TEXT NOT NULL DEFAULT 'http://localhost:11434',
+                default_local_model TEXT NOT NULL DEFAULT 'llama3.2',
+                cloud_enabled INTEGER NOT NULL DEFAULT 0,
+                provider TEXT NOT NULL DEFAULT 'openai',
+                api_key TEXT NOT NULL DEFAULT '',
+                default_cloud_model TEXT NOT NULL DEFAULT 'gpt-4o-mini',
+                max_tokens INTEGER NOT NULL DEFAULT 2048,
+                temperature REAL NOT NULL DEFAULT 0.7,
+                cache_enabled INTEGER NOT NULL DEFAULT 1,
+                cost_tracking INTEGER NOT NULL DEFAULT 1
+            );
+
+            -- Raw captures from webview/Prime ingestion. These arrive before any
+            -- social_account exists, so unlike social_post they carry no account FK.
+            CREATE TABLE IF NOT EXISTS capture_post (
+                id TEXT PRIMARY KEY,
+                platform TEXT NOT NULL,
+                author TEXT,
+                content TEXT,
+                captured_at INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_capture_post_platform_time
+                ON capture_post(platform, captured_at);
+
+            INSERT INTO schema_version (version) VALUES (26);
             ",
         )?;
     }

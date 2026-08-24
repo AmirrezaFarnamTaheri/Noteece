@@ -89,8 +89,16 @@ impl SyncAgent {
         let devices = stmt
             .query_map([], |row| {
                 let device_type_str: String = row.get(2)?;
-                let device_type: DeviceType =
-                    serde_json::from_str(&device_type_str).unwrap_or(DeviceType::Desktop);
+                let device_type: DeviceType = match serde_json::from_str(&device_type_str) {
+                    Ok(dt) => dt,
+                    Err(_) => {
+                        log::warn!(
+                            "[SyncAgent] Unknown device type '{}', defaulting to Desktop",
+                            device_type_str
+                        );
+                        DeviceType::Desktop
+                    }
+                };
 
                 Ok(DeviceInfo {
                     device_id: row.get(0)?,
@@ -504,9 +512,10 @@ impl SyncAgent {
                 let local_str = String::from_utf8(local_bytes.clone()).unwrap_or_default();
                 let remote_str = String::from_utf8(remote_bytes.clone()).unwrap_or_default();
 
+                let now = chrono::Utc::now().to_rfc3339();
                 let merged_content = format!(
-                    "{}\n\n--- MERGED REMOTE CONTENT ---\n\n{}",
-                    local_str, remote_str
+                    "<<<<<<< LOCAL (device: {}, synced: {})\n{}\n=======\n{}\n>>>>>>> REMOTE (synced: {}) — CONFLICT — please review and remove markers",
+                    self.device_id, now, local_str, remote_str, now
                 );
 
                 let delta = SyncDelta {
@@ -550,25 +559,52 @@ impl SyncAgent {
         let mut clock = HashMap::new();
 
         let mut stmt = conn.prepare(
-            "SELECT device_id, MAX(sync_time)
-             FROM sync_history
-             WHERE space_id = ?1
-             GROUP BY device_id",
+            "SELECT device_id, clock_value
+             FROM sync_vector_clock
+             WHERE space_id = ?1",
         )?;
 
         let rows = stmt.query_map([space_id.to_string()], |row| {
-            Ok((
-                row.get::<_, String>(0)?,
-                row.get::<_, Option<i64>>(1)?.unwrap_or(0),
-            ))
+            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
         })?;
 
         for row in rows {
-            let (device_id, timestamp) = row?;
-            clock.insert(device_id, timestamp);
+            let (device_id, counter) = row?;
+            clock.insert(device_id, counter);
         }
 
         Ok(clock)
+    }
+
+    /// Increment the vector clock for the local device on a given space.
+    /// Call this after each local mutation to maintain accurate causal ordering.
+    pub fn update_vector_clock(&self, conn: &Connection, space_id: &str) -> Result<(), SyncError> {
+        conn.execute(
+            "INSERT INTO sync_vector_clock (space_id, device_id, clock_value)
+             VALUES (?1, ?2, 1)
+             ON CONFLICT(space_id, device_id) DO UPDATE SET
+                 clock_value = clock_value + 1",
+            rusqlite::params![space_id, &self.device_id],
+        )?;
+        Ok(())
+    }
+
+    /// Merge a remote vector clock into the local clock by taking the max counter per device.
+    pub fn merge_vector_clock(
+        conn: &Connection,
+        space_id: &str,
+        remote_clock: &HashMap<String, i64>,
+    ) -> Result<(), SyncError> {
+        for (device_id, counter) in remote_clock {
+            conn.execute(
+                "INSERT INTO sync_vector_clock (space_id, device_id, clock_value)
+                 VALUES (?1, ?2, ?3)
+                 ON CONFLICT(space_id, device_id) DO UPDATE SET
+                     clock_value = MAX(clock_value, excluded.clock_value)",
+                rusqlite::params![space_id, device_id, counter],
+            )?;
+        }
+        Ok(())
     }
 
     fn compute_entity_hashes(

@@ -186,6 +186,64 @@ pub fn init_materialized_views(conn: &Connection) -> Result<(), rusqlite::Error>
         [],
     )?;
 
+    // Overdue tasks trigger: update overdue_tasks when a task is inserted
+    conn.execute(
+        r#"
+        CREATE TRIGGER IF NOT EXISTS trg_task_insert_overdue_stats
+        AFTER INSERT ON task
+        WHEN NEW.project_id IS NOT NULL AND NEW.status != 'done'
+            AND NEW.due_at IS NOT NULL AND NEW.due_at < strftime('%s', 'now')
+        BEGIN
+            UPDATE dashboard_stats SET
+                overdue_tasks = overdue_tasks + 1,
+                last_updated = strftime('%s', 'now')
+            WHERE space_id = (SELECT space_id FROM project WHERE id = NEW.project_id);
+        END
+        "#,
+        [],
+    )?;
+
+    // Overdue tasks trigger: update overdue_tasks when a task status or due_at changes
+    conn.execute(
+        r#"
+        CREATE TRIGGER IF NOT EXISTS trg_task_update_overdue_stats
+        AFTER UPDATE OF status, due_at ON task
+        WHEN NEW.project_id IS NOT NULL
+        BEGIN
+            UPDATE dashboard_stats SET
+                overdue_tasks = (
+                    SELECT COUNT(*)
+                    FROM task t
+                    JOIN project p ON t.project_id = p.id
+                    WHERE p.space_id = (SELECT space_id FROM project WHERE id = NEW.project_id)
+                      AND t.status != 'done'
+                      AND t.due_at IS NOT NULL
+                      AND t.due_at < strftime('%s', 'now')
+                ),
+                last_updated = strftime('%s', 'now')
+            WHERE space_id = (SELECT space_id FROM project WHERE id = NEW.project_id);
+        END
+        "#,
+        [],
+    )?;
+
+    // Overdue tasks trigger: update overdue_tasks when a task is deleted
+    conn.execute(
+        r#"
+        CREATE TRIGGER IF NOT EXISTS trg_task_delete_overdue_stats
+        AFTER DELETE ON task
+        WHEN OLD.project_id IS NOT NULL AND OLD.status != 'done'
+            AND OLD.due_at IS NOT NULL AND OLD.due_at < strftime('%s', 'now')
+        BEGIN
+            UPDATE dashboard_stats SET
+                overdue_tasks = MAX(0, overdue_tasks - 1),
+                last_updated = strftime('%s', 'now')
+            WHERE space_id = (SELECT space_id FROM project WHERE id = OLD.project_id);
+        END
+        "#,
+        [],
+    )?;
+
     Ok(())
 }
 

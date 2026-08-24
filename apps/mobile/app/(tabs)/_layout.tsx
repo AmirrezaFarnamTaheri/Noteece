@@ -3,6 +3,18 @@ import { StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography } from '@/lib/theme';
 
+/**
+ * F15 DESIGN DECISION: 9 tab items exceed the recommended maximum of 5 for bottom navigation.
+ * This is an intentional trade-off for this app's feature-rich personal workspace model.
+ * All primary content domains (Today, Tasks, Notes, Capture, Insights, Social, Music, Health)
+ * are given equal tab prominence. The "More" tab serves as an overflow for settings and
+ * secondary features.
+ *
+ * Future refinement: Consolidate to 5 primary tabs (Today, Tasks, Notes, Capture, More)
+ * with Social, Music, Health, and Insights accessible via the "More" drawer or a
+ * swipeable secondary tab bar.
+ */
+
 export default function TabLayout() {
   return (
     <Tabs

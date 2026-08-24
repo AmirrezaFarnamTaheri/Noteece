@@ -43,7 +43,7 @@ impl Default for AppConfig {
             server: ServerConfig {
                 port: 8765,
                 host: "127.0.0.1".to_string(),
-                enable_cors: true,
+                enable_cors: false,
             },
             security: SecurityConfig {
                 enable_https: false,
@@ -59,6 +59,7 @@ impl Default for AppConfig {
     }
 }
 
+#[allow(dead_code)] // several accessors reserved for relay bootstrap UI
 impl AppConfig {
     /// Initialize configuration from environment variables and defaults
     pub fn init() -> &'static AppConfig {

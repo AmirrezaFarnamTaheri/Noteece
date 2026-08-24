@@ -43,10 +43,10 @@ run_tests() {
         elif [ -f "package.json" ]; then
              if [ ! -d "node_modules" ]; then
                 echo "Installing dependencies..."
-                npm install
+                pnpm install --frozen-lockfile
             fi
 
-            if npm test -- --passWithNoTests 2>&1 | tee /tmp/test-$name.log; then
+            if pnpm test -- --passWithNoTests 2>&1 | tee /tmp/test-$name.log; then
                  echo -e "${GREEN}✓ $name tests passed${NC}"
             else
                  echo -e "${RED}✗ $name tests failed${NC}"
@@ -54,7 +54,7 @@ run_tests() {
             fi
 
             echo -e "${BLUE}Running ESLint for $name...${NC}"
-             if npm run lint 2>&1 | tee /tmp/lint-$name.log; then
+             if pnpm lint 2>&1 | tee /tmp/lint-$name.log; then
                 echo -e "${GREEN}✓ $name linting passed${NC}"
             else
                 echo -e "${RED}⚠ $name linting found issues${NC}"

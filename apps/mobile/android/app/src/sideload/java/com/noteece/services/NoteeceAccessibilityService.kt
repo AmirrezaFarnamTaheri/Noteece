@@ -5,6 +5,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Binder
+import android.os.Process
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.util.Log
@@ -30,9 +32,7 @@ class NoteeceAccessibilityService : AccessibilityService() {
                 }
                 Intent.ACTION_SCREEN_ON -> {
                     // We do not auto-resume on screen on for security/privacy.
-                    // User must explicitly re-engage via the app or widget if needed,
-                    // or we rely on the session state if we want to be more aggressive.
-                    // For now, let's keep it safe:
+                    // User must explicitly re-engage via the app or widget.
                     Log.i(TAG, "Screen ON - Waiting for session start")
                 }
             }
@@ -48,12 +48,12 @@ class NoteeceAccessibilityService : AccessibilityService() {
         "com.instagram.android",
         "com.linkedin.android",
         "com.facebook.katana",
-        
+
         // Messaging - Telegram
         "org.telegram.messenger",
         "org.telegram.messenger.web",
         "org.thunderdog.challegram",  // Telegram X
-        
+
         // Messaging - Other
         "com.discord",
         "com.slack",
@@ -61,14 +61,14 @@ class NoteeceAccessibilityService : AccessibilityService() {
         "com.viber.voip",
         "org.thoughtcrime.securesms",  // Signal
         "com.snapchat.android",
-        
+
         // Dating Apps
         "com.tinder",
         "com.bumble.app",
         "co.hinge.app",
         "com.okcupid.okcupid",
         "com.match.android.matchmobile",
-        
+
         // Browsers (for capturing articles/content)
         "com.android.chrome",
         "org.mozilla.firefox",
@@ -76,7 +76,7 @@ class NoteeceAccessibilityService : AccessibilityService() {
         "com.opera.browser",
         "com.brave.browser",
         "com.duckduckgo.mobile.android",
-        
+
         // Content Platforms
         "com.reddit.frontpage",
         "com.pinterest",
@@ -86,7 +86,7 @@ class NoteeceAccessibilityService : AccessibilityService() {
         "tv.twitch.android.app",
         "com.google.android.youtube",
         "com.spotify.music",
-        
+
         // Reading/News
         "com.medium.reader",
         "com.nytimes.android",
@@ -96,6 +96,8 @@ class NoteeceAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         Log.i(TAG, "Noteece Eyes Connected")
+        // Initialize the capture bridge (idempotent)
+        com.noteece.RustBridge.attach(applicationContext)
 
         // Register Screen State Receiver
         val filter = IntentFilter().apply {
@@ -110,13 +112,19 @@ class NoteeceAccessibilityService : AccessibilityService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_START_SESSION) {
-            val platformId = intent.getStringExtra("PLATFORM_ID")
-            Log.i(TAG, "Starting Session for: $platformId")
-            isRecording = true
-            // Signal Overlay to turn Green
-            val overlayIntent = Intent(this, OverlayService::class.java)
-            overlayIntent.action = OverlayService.ACTION_SET_ACTIVE
-            startService(overlayIntent)
+            // Security: only allow the app itself (same UID) to start a capture
+            // session. Foreign apps must not be able to trigger ingestion.
+            if (Binder.getCallingUid() == Process.myUid()) {
+                val platformId = intent.getStringExtra("PLATFORM_ID") ?: "unknown"
+                Log.i(TAG, "Starting Session for: $platformId")
+                isRecording = true
+                // Signal Overlay to turn Green
+                val overlayIntent = Intent(this, OverlayService::class.java)
+                overlayIntent.action = OverlayService.ACTION_SET_ACTIVE
+                startService(overlayIntent)
+            } else {
+                Log.w(TAG, "Rejected capture-session start from foreign uid")
+            }
         }
         return super.onStartCommand(intent, flags, startId)
     }
@@ -155,9 +163,13 @@ class NoteeceAccessibilityService : AccessibilityService() {
         val rawText = textBuilder.toString()
         if (rawText.isNotEmpty() && rawText != lastCapturedText) {
             lastCapturedText = rawText
-            // Send to Rust Bridge
-            com.noteece.RustBridge.ingest(rawText)
-            Log.d(TAG, "Captured: ${rawText.take(50)}...")
+            // Send to capture bridge (app-private storage; no content logged)
+            val stored = com.noteece.RustBridge.ingest(rawText)
+            if (!stored) {
+                Log.w(TAG, "Capture dropped: bridge store unavailable")
+            } else {
+                Log.d(TAG, "Captured screen snapshot (${rawText.length} chars)")
+            }
         }
 
         root.recycle()

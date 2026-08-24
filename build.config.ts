@@ -42,7 +42,7 @@ const config: BuildConfig = {
       os: 'macos',
       arch: 'x64',
       outputFormat: 'dmg',
-      buildScript: 'npm run build:desktop:macos:x64',
+      buildScript: 'pnpm build:desktop:macos:x64',
     },
     {
       name: 'Desktop macOS (Apple Silicon)',
@@ -50,7 +50,7 @@ const config: BuildConfig = {
       os: 'macos',
       arch: 'arm64',
       outputFormat: 'dmg',
-      buildScript: 'npm run build:desktop:macos:arm64',
+      buildScript: 'pnpm build:desktop:macos:arm64',
     },
     // Desktop - Windows
     {
@@ -59,7 +59,7 @@ const config: BuildConfig = {
       os: 'windows',
       arch: 'x64',
       outputFormat: 'msi',
-      buildScript: 'npm run build:desktop:windows',
+      buildScript: 'pnpm build:desktop:windows',
     },
     // Desktop - Linux
     {
@@ -68,7 +68,7 @@ const config: BuildConfig = {
       os: 'linux',
       arch: 'x64',
       outputFormat: 'AppImage',
-      buildScript: 'npm run build:desktop:linux',
+      buildScript: 'pnpm build:desktop:linux',
     },
     // Mobile - iOS
     {
@@ -77,7 +77,7 @@ const config: BuildConfig = {
       os: 'ios',
       arch: 'arm64',
       outputFormat: 'ipa',
-      buildScript: 'npm run build:mobile:ios',
+      buildScript: 'pnpm build:mobile:ios',
     },
     // Mobile - Android
     {
@@ -86,7 +86,7 @@ const config: BuildConfig = {
       os: 'android',
       arch: 'arm64',
       outputFormat: 'apk',
-      buildScript: 'npm run build:mobile:android',
+      buildScript: 'pnpm build:mobile:android',
     },
   ],
 

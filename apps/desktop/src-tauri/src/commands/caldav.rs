@@ -5,7 +5,7 @@ use tauri::State;
 #[tauri::command]
 pub fn add_caldav_account_cmd(
     db: State<DbConnection>,
-    space_id: String,
+    _space_id: String,
     name: String,
     url: String,
     username: String,
@@ -37,7 +37,7 @@ pub fn add_caldav_account_cmd(
 #[tauri::command]
 pub fn get_caldav_accounts_cmd(
     db: State<DbConnection>,
-    space_id: String,
+    _space_id: String,
 ) -> Result<Vec<CalDavAccount>, String> {
     crate::with_db!(db, conn, {
         core_rs::caldav::get_caldav_accounts(&conn).map_err(|e| e.to_string())

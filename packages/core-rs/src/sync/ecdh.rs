@@ -50,6 +50,7 @@ impl KeyPair {
     }
 
     /// Perform ECDH: derive shared secret from our private key and peer's public key
+    /// Passes the raw X25519 output through HKDF-SHA256 for domain separation.
     pub fn shared_secret(&self, peer_public_key: &PublicKey) -> Result<Vec<u8>, ECDHError> {
         if peer_public_key.bytes.len() != 32 {
             return Err(ECDHError::InvalidPublicKey);
@@ -59,9 +60,17 @@ impl KeyPair {
         peer_bytes.copy_from_slice(&peer_public_key.bytes);
 
         let peer_point = X25519PublicKey::from(peer_bytes);
-        let shared_secret = self.secret.diffie_hellman(&peer_point);
+        let raw_secret = self.secret.diffie_hellman(&peer_point);
 
-        Ok(shared_secret.to_bytes().to_vec())
+        // Apply HKDF-SHA256 for domain separation (best practice for ECDH output)
+        use hkdf::Hkdf;
+        use sha2::Sha256;
+        let hk = Hkdf::<Sha256>::new(Some(b"noteece-ecdh-v1"), raw_secret.as_bytes());
+        let mut derived = [0u8; 32];
+        hk.expand(b"shared-secret", &mut derived)
+            .map_err(|_| ECDHError::SharedSecretFailed)?;
+
+        Ok(derived.to_vec())
     }
 }
 

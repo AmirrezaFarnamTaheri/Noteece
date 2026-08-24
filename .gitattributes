@@ -1,2 +1,14 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Shell and Python scripts must always use LF, even on Windows checkouts,
+# otherwise bash shebangs break (/bin/bash^M) on Linux/macOS.
+*.sh text eol=lf
+*.py text eol=lf
+
+# Source files normalize to LF so prettier/eslint agree across platforms.
+*.ts text eol=lf
+*.tsx text eol=lf
+*.rs text eol=lf
+*.json text eol=lf
+*.md text eol=lf

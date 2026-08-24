@@ -1,5 +1,9 @@
 // P2P Sync Implementation
 // This module integrates the discovery and mobile_sync modules to provide a complete P2P sync solution.
+//
+// SECURITY: P2P WebSocket connections use plain ws:// (not wss://) and are intended
+// for use on trusted local networks (LAN) only. Do NOT expose P2P sync ports to the
+// internet. For WAN sync, use the relay server with TLS enabled.
 
 use super::discovery::{DiscoveredDevice, DiscoveryService};
 use super::mobile_sync::{DeltaOperation, DeviceInfo, SyncCategory, SyncDelta, SyncProtocol};
@@ -11,7 +15,9 @@ use std::time::Duration;
 use thiserror::Error;
 use tokio::net::TcpListener;
 use tokio::sync::{Mutex, Semaphore};
-use tokio_tungstenite::accept_async;
+use tokio_tungstenite::accept_hdr_async;
+use tokio_tungstenite::tungstenite::handshake::server::{Request, Response};
+use tokio_tungstenite::tungstenite::http::StatusCode;
 
 #[derive(Error, Debug)]
 pub enum P2pError {
@@ -46,7 +52,7 @@ impl P2pSync {
         let listener = TcpListener::bind(format!("0.0.0.0:{}", port))
             .await
             .map_err(|e| P2pError::Network(e.to_string()))?;
-        log::info!("[p2p] Sync server listening on port {}", port);
+        log::info!("[p2p] Sync server listening on port {} (LAN-only)", port);
 
         // Get server public key for handshake
         let server_pubkey_b64 = {
@@ -87,7 +93,41 @@ impl P2pSync {
                 // Permit is held until this task is dropped
                 let _permit = permit;
 
-                match accept_async(stream).await {
+                // SECURITY: Validate the Origin header during the WebSocket handshake to
+                // prevent cross-site WebSocket hijacking. Only localhost or file://
+                // origins (Tauri WebView) are accepted; requests with no Origin header
+                // are allowed for non-browser clients.
+                #[allow(clippy::result_large_err)] // tungstenite fixes this Err type
+                let origin_check = |req: &Request,
+                                    response: Response|
+                 -> Result<
+                    Response,
+                    tokio_tungstenite::tungstenite::handshake::server::ErrorResponse,
+                > {
+                    if let Some(origin) = req.headers().get("Origin") {
+                        let origin_str = origin.to_str().unwrap_or("");
+                        let allowed = origin_str.starts_with("http://localhost")
+                            || origin_str.starts_with("http://127.0.0.1")
+                            || origin_str.starts_with("https://localhost")
+                            || origin_str.starts_with("https://127.0.0.1")
+                            || origin_str.starts_with("file://")
+                            || origin_str.is_empty();
+                        if !allowed {
+                            log::warn!(
+                                "[p2p] Rejecting WebSocket from invalid origin: {}",
+                                origin_str
+                            );
+                            let reject = tokio_tungstenite::tungstenite::http::Response::builder()
+                                .status(StatusCode::FORBIDDEN)
+                                .body(Some("invalid origin".to_string()))
+                                .expect("static rejection response");
+                            return Err(reject);
+                        }
+                    }
+                    Ok(response)
+                };
+
+                match accept_hdr_async(stream, origin_check).await {
                     Ok(ws_stream) => {
                         let (mut writer, mut reader) = ws_stream.split();
                         // Expect a handshake JSON as the first text message
@@ -158,19 +198,22 @@ impl P2pSync {
 
                         // After handshake, handle the full sync data exchange
                         use tokio_tungstenite::tungstenite::Message;
-                        let mut proto_guard = protocol.lock().await;
                         while let Some(Ok(msg)) = reader.next().await {
                             if let Message::Text(text) = msg {
                                 // Deserialize delta from text, process it with SyncProtocol
                                 if let Ok(delta) = serde_json::from_str::<SyncDelta>(&text) {
+                                    let mut proto_guard = protocol.lock().await;
                                     if let Ok(response_delta) =
                                         proto_guard.handle_delta(delta).await
                                     {
+                                        drop(proto_guard);
                                         if let Ok(response_text) =
                                             serde_json::to_string(&response_delta)
                                         {
                                             let _ = writer.send(Message::Text(response_text)).await;
                                         }
+                                    } else {
+                                        drop(proto_guard);
                                     }
                                 }
                             }
@@ -193,7 +236,6 @@ impl P2pSync {
     /// Start sync with a specific device.
     pub async fn start_sync(&self, device_id: &str) -> Result<(), P2pError> {
         log::info!("[p2p] Starting sync with device {}", device_id);
-        let mut protocol = self.protocol.lock().await;
 
         // We are syncing all vault categories
         let categories = vec![
@@ -205,7 +247,14 @@ impl P2pSync {
             SyncCategory::Calendar,
         ];
 
-        match protocol.start_sync(device_id, categories).await {
+        // Lock scope: acquire lock only for the duration of the sync call,
+        // do not hold across the entire connection lifetime.
+        let result = {
+            let mut protocol = self.protocol.lock().await;
+            protocol.start_sync(device_id, categories).await
+        };
+
+        match result {
             Ok(_) => {
                 log::info!("[p2p] Sync finished successfully with {}", device_id);
                 Ok(())

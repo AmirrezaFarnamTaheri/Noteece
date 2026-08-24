@@ -59,11 +59,17 @@ impl DeltaApplier {
                     };
 
                     if let Some(sid) = space_id {
-                        conn.execute(
-                            "INSERT OR REPLACE INTO note (id, space_id, content_md, modified_at, created_at)
-                             VALUES (?1, ?2, ?3, ?4, COALESCE((SELECT created_at FROM note WHERE id = ?1), ?4))",
-                            rusqlite::params![&delta.entity_id, sid, content, delta.timestamp],
+                        let updated = conn.execute(
+                            "UPDATE note SET content_md = ?1, modified_at = ?2 WHERE id = ?3",
+                            rusqlite::params![content, delta.timestamp, &delta.entity_id],
                         )?;
+                        if updated == 0 {
+                            conn.execute(
+                                "INSERT INTO note (id, space_id, content_md, modified_at, created_at)
+                                 VALUES (?1, ?2, ?3, ?4, ?4)",
+                                rusqlite::params![&delta.entity_id, sid, content, delta.timestamp],
+                            )?;
+                        }
                     }
                 }
                 SyncOperation::Delete => {
@@ -93,17 +99,19 @@ impl DeltaApplier {
                     };
 
                     if let Some(sid) = space_id {
-                        conn.execute(
-                            "INSERT OR REPLACE INTO task (id, space_id, title, status, updated_at, created_at)
-                             VALUES (?1, ?2, ?3, ?4, ?5, COALESCE((SELECT created_at FROM task WHERE id = ?1), ?5))",
-                            rusqlite::params![
-                                &delta.entity_id,
-                                sid,
-                                task_data["title"].as_str().unwrap_or(""),
-                                task_data["status"].as_str().unwrap_or("inbox"),
-                                delta.timestamp
-                            ],
+                        let title = task_data["title"].as_str().unwrap_or("");
+                        let status = task_data["status"].as_str().unwrap_or("inbox");
+                        let updated = conn.execute(
+                            "UPDATE task SET title = ?1, status = ?2, updated_at = ?3 WHERE id = ?4",
+                            rusqlite::params![title, status, delta.timestamp, &delta.entity_id],
                         )?;
+                        if updated == 0 {
+                            conn.execute(
+                                "INSERT INTO task (id, space_id, title, status, updated_at, created_at)
+                                 VALUES (?1, ?2, ?3, ?4, ?5, ?5)",
+                                rusqlite::params![&delta.entity_id, sid, title, status, delta.timestamp],
+                            )?;
+                        }
                     }
                 }
                 SyncOperation::Delete => {
@@ -173,21 +181,35 @@ impl DeltaApplier {
                         .space_id
                         .clone()
                         .ok_or(SyncError::InvalidData("Missing space_id".to_string()))?;
-                    conn.execute(
-                        "INSERT OR REPLACE INTO health_metric (id, metric_type, value, unit, notes, recorded_at, created_at, updated_at, space_id)
-                         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+                    let updated = conn.execute(
+                        "UPDATE health_metric SET metric_type = ?1, value = ?2, unit = ?3, notes = ?4, recorded_at = ?5, updated_at = ?6 WHERE id = ?7",
                         rusqlite::params![
-                            &delta.entity_id,
                             metric_data["metric_type"].as_str().unwrap_or(""),
                             metric_data["value"].as_f64().unwrap_or(0.0),
                             metric_data["unit"].as_str(),
                             metric_data["notes"].as_str(),
                             metric_data["recorded_at"].as_i64().unwrap_or(0),
-                            metric_data["created_at"].as_i64().unwrap_or(0),
                             delta.timestamp,
-                            space_id
+                            &delta.entity_id
                         ],
                     )?;
+                    if updated == 0 {
+                        conn.execute(
+                            "INSERT INTO health_metric (id, metric_type, value, unit, notes, recorded_at, created_at, updated_at, space_id)
+                             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+                            rusqlite::params![
+                                &delta.entity_id,
+                                metric_data["metric_type"].as_str().unwrap_or(""),
+                                metric_data["value"].as_f64().unwrap_or(0.0),
+                                metric_data["unit"].as_str(),
+                                metric_data["notes"].as_str(),
+                                metric_data["recorded_at"].as_i64().unwrap_or(0),
+                                metric_data["created_at"].as_i64().unwrap_or(0),
+                                delta.timestamp,
+                                space_id
+                            ],
+                        )?;
+                    }
                 }
                 SyncOperation::Delete => {
                     conn.execute(
@@ -210,18 +232,30 @@ impl DeltaApplier {
                         .space_id
                         .clone()
                         .ok_or(SyncError::InvalidData("Missing space_id".to_string()))?;
-                    conn.execute(
-                        "INSERT OR REPLACE INTO track (id, title, artist, album, updated_at, space_id, added_at)
-                         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?5)",
+                    let updated = conn.execute(
+                        "UPDATE track SET title = ?1, artist = ?2, album = ?3, updated_at = ?4 WHERE id = ?5",
                         rusqlite::params![
-                            &delta.entity_id,
                             track_data["title"].as_str().unwrap_or(""),
                             track_data["artist"].as_str(),
                             track_data["album"].as_str(),
                             delta.timestamp,
-                            space_id
+                            &delta.entity_id
                         ],
                     )?;
+                    if updated == 0 {
+                        conn.execute(
+                            "INSERT INTO track (id, title, artist, album, updated_at, space_id, added_at)
+                             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?5)",
+                            rusqlite::params![
+                                &delta.entity_id,
+                                track_data["title"].as_str().unwrap_or(""),
+                                track_data["artist"].as_str(),
+                                track_data["album"].as_str(),
+                                delta.timestamp,
+                                space_id
+                            ],
+                        )?;
+                    }
                 }
                 SyncOperation::Delete => conn
                     .execute("DELETE FROM track WHERE id = ?1", [&delta.entity_id])
@@ -241,17 +275,28 @@ impl DeltaApplier {
                         .space_id
                         .clone()
                         .ok_or(SyncError::InvalidData("Missing space_id".to_string()))?;
-                    conn.execute(
-                        "INSERT OR REPLACE INTO playlist (id, name, description, updated_at, space_id, created_at)
-                         VALUES (?1, ?2, ?3, ?4, ?5, ?4)",
+                    let updated = conn.execute(
+                        "UPDATE playlist SET name = ?1, description = ?2, updated_at = ?3 WHERE id = ?4",
                         rusqlite::params![
-                            &delta.entity_id,
                             playlist_data["name"].as_str().unwrap_or(""),
                             playlist_data["description"].as_str(),
                             delta.timestamp,
-                            space_id
+                            &delta.entity_id
                         ],
                     )?;
+                    if updated == 0 {
+                        conn.execute(
+                            "INSERT INTO playlist (id, name, description, updated_at, space_id, created_at)
+                             VALUES (?1, ?2, ?3, ?4, ?5, ?4)",
+                            rusqlite::params![
+                                &delta.entity_id,
+                                playlist_data["name"].as_str().unwrap_or(""),
+                                playlist_data["description"].as_str(),
+                                delta.timestamp,
+                                space_id
+                            ],
+                        )?;
+                    }
                 }
                 SyncOperation::Delete => conn
                     .execute("DELETE FROM playlist WHERE id = ?1", [&delta.entity_id])
@@ -271,19 +316,29 @@ impl DeltaApplier {
                         .space_id
                         .clone()
                         .ok_or(SyncError::InvalidData("Missing space_id".to_string()))?;
-                    conn.execute(
-                        "INSERT OR REPLACE INTO calendar_event (id, title, description, start_time, end_time, updated_at, space_id, source, created_at)
-                         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'sync', ?6)",
-                        rusqlite::params![
-                            &delta.entity_id,
-                            event_data["title"].as_str().unwrap_or(""),
-                            event_data["description"].as_str(),
-                            event_data["start_time"].as_i64().unwrap_or(0),
-                            event_data["end_time"].as_i64(),
-                            delta.timestamp,
-                            space_id
-                        ],
+                    let title = event_data["title"].as_str().unwrap_or("");
+                    let description = event_data["description"].as_str();
+                    let start_time = event_data["start_time"].as_i64().unwrap_or(0);
+                    let end_time = event_data["end_time"].as_i64();
+                    let updated = conn.execute(
+                        "UPDATE calendar_event SET title = ?1, description = ?2, start_time = ?3, end_time = ?4, updated_at = ?5 WHERE id = ?6",
+                        rusqlite::params![title, description, start_time, end_time, delta.timestamp, &delta.entity_id],
                     )?;
+                    if updated == 0 {
+                        conn.execute(
+                            "INSERT INTO calendar_event (id, title, description, start_time, end_time, updated_at, space_id, source, created_at)
+                             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'sync', ?6)",
+                            rusqlite::params![
+                                &delta.entity_id,
+                                title,
+                                description,
+                                start_time,
+                                end_time,
+                                delta.timestamp,
+                                space_id
+                            ],
+                        )?;
+                    }
                 }
                 SyncOperation::Delete => conn
                     .execute(

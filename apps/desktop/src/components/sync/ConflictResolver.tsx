@@ -149,7 +149,7 @@ export const ConflictResolver: React.FC<ConflictResolverProps> = ({ conflicts, o
                     leftSection={<IconGitMerge size={14} />}
                     onClick={() => onResolve(conflict.id, 'merged')}
                   >
-                    Merge (Not Implemented)
+                    Merge
                   </Button>
                 </Group>
               </Stack>

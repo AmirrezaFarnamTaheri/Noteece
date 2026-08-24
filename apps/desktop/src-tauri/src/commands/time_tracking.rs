@@ -4,6 +4,7 @@ use tauri::State;
 use ulid::Ulid;
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)] // argument list mirrors the frontend invoke payload
 pub fn start_time_entry_cmd(
     db: State<DbConnection>,
     space_id: String,
@@ -33,6 +34,7 @@ pub fn start_time_entry_cmd(
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)] // argument list mirrors the frontend invoke payload
 pub fn stop_time_entry_cmd(db: State<DbConnection>, entry_id: String) -> Result<TimeEntry, String> {
     crate::with_db!(db, conn, {
         let id = Ulid::from_string(&entry_id).map_err(|e| e.to_string())?;
@@ -41,6 +43,7 @@ pub fn stop_time_entry_cmd(db: State<DbConnection>, entry_id: String) -> Result<
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)] // argument list mirrors the frontend invoke payload
 pub fn get_task_time_entries_cmd(
     db: State<DbConnection>,
     task_id: String,
@@ -52,6 +55,7 @@ pub fn get_task_time_entries_cmd(
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)] // argument list mirrors the frontend invoke payload
 pub fn get_project_time_entries_cmd(
     db: State<DbConnection>,
     project_id: String,
@@ -63,6 +67,7 @@ pub fn get_project_time_entries_cmd(
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)] // argument list mirrors the frontend invoke payload
 pub fn get_running_entries_cmd(
     db: State<DbConnection>,
     space_id: String,
@@ -77,6 +82,7 @@ pub fn get_running_entries_cmd(
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)] // argument list mirrors the frontend invoke payload
 pub fn get_recent_time_entries_cmd(
     db: State<DbConnection>,
     space_id: String,
@@ -93,6 +99,7 @@ pub fn get_recent_time_entries_cmd(
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)] // argument list mirrors the frontend invoke payload
 pub fn get_task_time_stats_cmd(
     db: State<DbConnection>,
     task_id: String,
@@ -104,6 +111,7 @@ pub fn get_task_time_stats_cmd(
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)] // argument list mirrors the frontend invoke payload
 pub fn get_project_time_stats_cmd(
     db: State<DbConnection>,
     project_id: String,
@@ -115,6 +123,7 @@ pub fn get_project_time_stats_cmd(
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)] // argument list mirrors the frontend invoke payload
 pub fn delete_time_entry_cmd(db: State<DbConnection>, entry_id: String) -> Result<(), String> {
     crate::with_db!(db, conn, {
         let id = Ulid::from_string(&entry_id).map_err(|e| e.to_string())?;
@@ -123,6 +132,7 @@ pub fn delete_time_entry_cmd(db: State<DbConnection>, entry_id: String) -> Resul
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)] // argument list mirrors the frontend invoke payload
 pub fn create_manual_time_entry_cmd(
     db: State<DbConnection>,
     space_id: String,

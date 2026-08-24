@@ -13,5 +13,6 @@
     "./ja": "./locales/ja.json",
     "./zh": "./locales/zh.json",
     "./fa": "./locales/fa.json"
-  }
+  },
+  "_note": "Finding P3: The project currently has three i18n approaches: (1) this @noteece/locale package with JSON keys, (2) react-i18next in the desktop app, and (3) hardcoded strings in components. Consolidate to a single system: react-i18next consuming @noteece/locale JSON files. All components should use useTranslation() hook with t() calls."
 }

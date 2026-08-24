@@ -8,12 +8,15 @@ use regex::Regex;
 /// - Credit card numbers
 /// - IP addresses
 pub fn redact_pii(text: &str) -> String {
-    let email_regex = Regex::new(r"(?i)\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b").unwrap();
-    let phone_regex = Regex::new(r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b").unwrap();
-    let ip_regex = Regex::new(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b").unwrap();
+    let email_regex = Regex::new(r"(?i)\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b")
+        .expect("regex compilation failed");
+    let phone_regex =
+        Regex::new(r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b").expect("regex compilation failed");
+    let ip_regex =
+        Regex::new(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b").expect("regex compilation failed");
 
     // Simple credit card regex (Luhn algorithm check would be better but this is a heuristic)
-    let cc_regex = Regex::new(r"\b(?:\d{4}[- ]?){3}\d{4}\b").unwrap();
+    let cc_regex = Regex::new(r"\b(?:\d{4}[- ]?){3}\d{4}\b").expect("regex compilation failed");
 
     let text = email_regex.replace_all(text, "[EMAIL]");
     let text = phone_regex.replace_all(&text, "[PHONE]");

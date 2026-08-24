@@ -70,7 +70,18 @@ const COLOR_MAP: Record<ButtonColor, string> = {
 };
 
 /**
- * A flexible button component with proper accessibility support
+ * A flexible button component with proper accessibility support.
+ *
+ * NOTE (F13): This component intentionally duplicates Mantine's Button API surface
+ * to provide a standalone, framework-agnostic button for the shared @noteece/ui package.
+ * Both desktop and mobile apps already depend on Mantine, so in practice the Mantine
+ * Button should be preferred. This component is retained for:
+ * - Shared UI package consumers that may not have Mantine as a peer dependency
+ * - Reference implementation for custom button variants
+ * - Future use in non-Mantine contexts (e.g., mobile React Native port)
+ *
+ * Consider wrapping Mantine's Button directly if this package adopts Mantine as
+ * a required peer dependency for all consumers.
  */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (

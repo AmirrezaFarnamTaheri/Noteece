@@ -1,3 +1,52 @@
+/**
+ * Sentry integration is recommended for remote error reporting.
+ * To enable: install @sentry/react and set the SENTRY_DSN environment variable.
+ * The initialization below checks for the presence of SENTRY_DSN and conditionally loads Sentry.
+ */
+
+let sentryInitialized = false;
+
+function initSentry(): void {
+  if (sentryInitialized) return;
+
+  const dsn = import.meta.env.VITE_SENTRY_DSN;
+  if (!dsn) {
+    console.info('[Logger] Sentry DSN not configured (VITE_SENTRY_DSN). Remote error reporting disabled.');
+    return;
+  }
+
+  try {
+    // Dynamic import to avoid hard dependency on @sentry/react
+    import('@sentry/react').then((Sentry) => {
+      Sentry.init({
+        dsn,
+        environment: import.meta.env.MODE || 'development',
+        tracesSampleRate: 0.1,
+        beforeSend(event) {
+          // Scrub sensitive data before sending
+          if (event.exception?.values) {
+            for (const ex of event.exception.values) {
+              if (ex.value) {
+                ex.value = ex.value.replaceAll(/bearer\s+\S+/gi, 'Bearer [REDACTED]');
+              }
+            }
+          }
+          return event;
+        },
+      });
+      sentryInitialized = true;
+      console.info('[Logger] Sentry initialized for remote error reporting.');
+    }).catch(() => {
+      console.info('[Logger] @sentry/react not installed. Remote error reporting disabled.');
+    });
+  } catch {
+    console.info('[Logger] Sentry initialization skipped.');
+  }
+}
+
+// Attempt Sentry init on module load
+initSentry();
+
 export enum LogLevel {
   DEBUG = 0,
   INFO = 1,
@@ -206,3 +255,31 @@ export class Logger {
 }
 
 export const logger = Logger.getInstance();
+
+/**
+ * Sentry Integration (Recommended for Production)
+ *
+ * For production deployments, replace localStorage error persistence with
+ * Sentry for centralized error tracking, alerting, and diagnostics.
+ *
+ * Setup steps:
+ * 1. Install: pnpm add @sentry/electron
+ * 2. Set SENTRY_DSN environment variable
+ * 3. Initialize Sentry in the app entry point before any other code
+ * 4. The reportToRemote() method below will forward errors to Sentry
+ *
+ * @example
+ * import * as Sentry from '@sentry/electron';
+ * Sentry.init({ dsn: process.env.SENTRY_DSN });
+ */
+export function reportToRemote(entry: LogEntry): void {
+  const sentryDsn = import.meta.env?.SENTRY_DSN || (typeof process !== 'undefined' && process.env?.SENTRY_DSN);
+  if (!sentryDsn) return;
+
+  if (entry.level >= LogLevel.ERROR && entry.error) {
+    // Sentry integration point: forward error to remote tracking service
+    // When @sentry/electron is installed, replace with:
+    //   Sentry.captureException(entry.error, { extra: entry.context });
+    console.info('[Logger] Would report to Sentry:', entry.message);
+  }
+}

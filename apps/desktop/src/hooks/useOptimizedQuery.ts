@@ -7,7 +7,11 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
+import type { DashboardStats } from '@noteece/types';
 import { logger } from '@/utils/logger';
+import { queryKeys } from './queryKeys';
+
+
 
 /**
  * Task summary for list views (minimal data)
@@ -57,31 +61,6 @@ export interface NoteDetails extends NoteSummary {
   backlinks?: string[];
   metadata?: Record<string, unknown>;
 }
-
-// Query keys factory for consistent cache management
-export const queryKeys = {
-  tasks: {
-    all: ['tasks'] as const,
-    lists: () => [...queryKeys.tasks.all, 'list'] as const,
-    list: (spaceId: string) => [...queryKeys.tasks.lists(), spaceId] as const,
-    summaries: (spaceId: string) => [...queryKeys.tasks.list(spaceId), 'summary'] as const,
-    details: () => [...queryKeys.tasks.all, 'detail'] as const,
-    detail: (id: string) => [...queryKeys.tasks.details(), id] as const,
-  },
-  notes: {
-    all: ['notes'] as const,
-    lists: () => [...queryKeys.notes.all, 'list'] as const,
-    list: (spaceId: string) => [...queryKeys.notes.lists(), spaceId] as const,
-    summaries: (spaceId: string) => [...queryKeys.notes.list(spaceId), 'summary'] as const,
-    details: () => [...queryKeys.notes.all, 'detail'] as const,
-    detail: (id: string) => [...queryKeys.notes.details(), id] as const,
-  },
-  stats: {
-    all: ['stats'] as const,
-    dashboard: (spaceId: string) => [...queryKeys.stats.all, 'dashboard', spaceId] as const,
-    tasks: (spaceId: string) => [...queryKeys.stats.all, 'tasks', spaceId] as const,
-  },
-};
 
 /**
  * Hook for fetching task summaries (optimized for list views)
@@ -164,20 +143,6 @@ export function useNoteDetails(noteId: string | null) {
 }
 
 /**
- * Dashboard stats interface
- */
-export interface DashboardStats {
-  total_notes: number;
-  total_tasks: number;
-  completed_tasks: number;
-  pending_tasks: number;
-  overdue_tasks: number;
-  total_projects: number;
-  active_habits: number;
-  streak_days: number;
-}
-
-/**
  * Hook for fetching dashboard statistics (cached summary data)
  */
 export function useDashboardStats(spaceId: string | null) {
@@ -194,6 +159,11 @@ export function useDashboardStats(spaceId: string | null) {
           total_projects: 0,
           active_habits: 0,
           streak_days: 0,
+          health: { metrics_count: 0, latest_metric: null },
+          music: { track_count: 0, playlist_count: 0 },
+          social: { posts_count: 0, platforms_count: 0 },
+          tasks: { pending_count: 0, completed_count: 0 },
+          quote: null,
         };
       }
       try {
@@ -282,3 +252,5 @@ export function useBatchUpdateTasks() {
     },
   });
 }
+
+export {queryKeys} from './queryKeys';

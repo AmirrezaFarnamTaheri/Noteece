@@ -30,6 +30,8 @@ const MAX_PENDING_PER_DEVICE: usize = 100;
 pub enum RelayError {
     #[error("Device not registered")]
     DeviceNotRegistered,
+    #[error("Device already registered with a different key")]
+    DeviceConflict,
     #[error("Message too large (max {MAX_MESSAGE_SIZE} bytes)")]
     MessageTooLarge,
     #[error("Too many pending messages")]
@@ -144,7 +146,12 @@ impl BlindRelayServer {
         }
     }
 
-    /// Register a device with the relay
+    /// Register a device with the relay.
+    ///
+    /// Idempotent for identical re-registrations. Rejects an attempt to claim an
+    /// existing device_id under a different public_key_hash with a
+    /// DeviceConflict error so a third party cannot hijack an already
+    /// registered device identity on the relay.
     pub fn register_device(
         &self,
         device_id: &str,
@@ -154,6 +161,19 @@ impl BlindRelayServer {
             .devices
             .lock()
             .map_err(|_| RelayError::EncryptionError("Mutex poisoned".to_string()))?;
+
+        if let Some(existing_hash) = devices.get(device_id) {
+            if existing_hash != public_key_hash {
+                log::warn!(
+                    "[relay] Registration conflict for device {}: key hash mismatch",
+                    device_id
+                );
+                return Err(RelayError::DeviceConflict);
+            }
+            // Same identity re-registering; treat as success.
+            return Ok(());
+        }
+
         devices.insert(device_id.to_string(), public_key_hash.to_string());
         log::info!("[relay] Registered device: {}", device_id);
         Ok(())
@@ -541,6 +561,27 @@ mod tests {
 
         // Queue should be empty now
         assert_eq!(server.pending_count("device_b"), 0);
+    }
+
+    #[test]
+    fn test_register_conflict_rejected() {
+        let server = BlindRelayServer::new();
+        server
+            .register_device("device_a", "hash_a")
+            .expect("first registration failed");
+
+        // Same identity re-registering is idempotent.
+        server
+            .register_device("device_a", "hash_a")
+            .expect("identical re-registration should succeed");
+
+        // A different key claiming the same device id must be rejected.
+        let result = server.register_device("device_a", "attacker_hash");
+        assert!(matches!(result, Err(RelayError::DeviceConflict)));
+
+        // The legitimate key hash must remain registered.
+        let stats_after = server.stats();
+        assert_eq!(stats_after.registered_devices, 1);
     }
 
     #[test]

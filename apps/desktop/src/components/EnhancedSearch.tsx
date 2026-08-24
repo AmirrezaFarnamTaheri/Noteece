@@ -137,7 +137,7 @@ const EnhancedSearch: React.FC = () => {
         </Group>
       </Paper>
 
-      <Stack gap="sm">
+      <Stack gap="sm" aria-live="polite">
         <Title order={4} px="xs">
           Results ({results.length})
         </Title>
