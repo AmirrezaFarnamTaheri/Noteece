@@ -11,8 +11,6 @@ import type { DashboardStats } from '@noteece/types';
 import { logger } from '@/utils/logger';
 import { queryKeys } from './queryKeys';
 
-
-
 /**
  * Task summary for list views (minimal data)
  */
@@ -253,4 +251,4 @@ export function useBatchUpdateTasks() {
   });
 }
 
-export {queryKeys} from './queryKeys';
+export { queryKeys } from './queryKeys';

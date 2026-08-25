@@ -188,14 +188,14 @@ function TypewriterScrollingPlugin({
         const containerRect = container.getBoundingClientRect();
 
         const cursorVisualTop = rect.top;
-        const containerCenter = containerRect.top + (containerRect.height / 2);
+        const containerCenter = containerRect.top + containerRect.height / 2;
         const offset = cursorVisualTop - containerCenter;
 
         if (Math.abs(offset) > 15) {
-           container.scrollTo({
-              top: container.scrollTop + offset,
-              behavior: 'smooth'
-           });
+          container.scrollTo({
+            top: container.scrollTop + offset,
+            behavior: 'smooth',
+          });
         }
       } catch {
         // Ignore
@@ -203,23 +203,22 @@ function TypewriterScrollingPlugin({
     };
 
     const removeUpdateListener = editor.registerUpdateListener(() => {
-        requestAnimationFrame(scroll);
+      requestAnimationFrame(scroll);
     });
 
     const removeSelectionListener = editor.registerCommand(
-        SELECTION_CHANGE_COMMAND,
-        () => {
-            requestAnimationFrame(scroll);
-            return false;
-        },
-        COMMAND_PRIORITY_CRITICAL
+      SELECTION_CHANGE_COMMAND,
+      () => {
+        requestAnimationFrame(scroll);
+        return false;
+      },
+      COMMAND_PRIORITY_CRITICAL,
     );
 
     return () => {
-        removeUpdateListener();
-        removeSelectionListener();
+      removeUpdateListener();
+      removeSelectionListener();
     };
-
   }, [editor, isActive, scrollContainerRef]);
 
   return null;

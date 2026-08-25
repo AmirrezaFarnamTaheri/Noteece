@@ -86,7 +86,9 @@ const Settings: React.FC = () => {
             </Tabs.Tab>
             <Tabs.Tab value="ai" leftSection={<IconBrain size={16} />}>
               AI
-              <Badge size="xs" color="violet" ml={6}>New</Badge>
+              <Badge size="xs" color="violet" ml={6}>
+                New
+              </Badge>
             </Tabs.Tab>
             <Tabs.Tab value="security" leftSection={<IconShield size={16} />}>
               Security
@@ -146,10 +148,18 @@ const Settings: React.FC = () => {
                 Configure AI providers and RAG settings for Chat with Vault.
               </Text>
               <Group>
-                <Badge variant="light" color="green">Ollama</Badge>
-                <Badge variant="light" color="blue">OpenAI</Badge>
-                <Badge variant="light" color="violet">Claude</Badge>
-                <Badge variant="light" color="orange">Gemini</Badge>
+                <Badge variant="light" color="green">
+                  Ollama
+                </Badge>
+                <Badge variant="light" color="blue">
+                  OpenAI
+                </Badge>
+                <Badge variant="light" color="violet">
+                  Claude
+                </Badge>
+                <Badge variant="light" color="orange">
+                  Gemini
+                </Badge>
               </Group>
               <Text size="xs" c="dimmed">
                 AI providers are configured per-vault. Navigate to the AI Chat page to test your configuration.
@@ -161,8 +171,8 @@ const Settings: React.FC = () => {
             <Stack gap="md">
               <Title order={3}>Security</Title>
               <Text size="sm" c="dimmed">
-                Security settings are managed through the vault encryption layer.
-                All data is encrypted at rest with XChaCha20-Poly1305.
+                Security settings are managed through the vault encryption layer. All data is encrypted at rest with
+                XChaCha20-Poly1305.
               </Text>
             </Stack>
           </Tabs.Panel>

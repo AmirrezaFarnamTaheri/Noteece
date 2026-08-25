@@ -8,7 +8,9 @@ test('has title', async ({ page }) => {
 test('vault creation flow renders unlock screen', async ({ page }) => {
   await page.goto('/');
   // On first visit, the app should show vault creation or unlock UI
-  const vaultUI = page.locator('[data-testid="vault-screen"], [data-testid="unlock-screen"], [data-testid="create-vault"]');
+  const vaultUI = page.locator(
+    '[data-testid="vault-screen"], [data-testid="unlock-screen"], [data-testid="create-vault"]',
+  );
   await expect(vaultUI.first()).toBeVisible({ timeout: 10_000 });
 });
 
@@ -40,9 +42,7 @@ test('dashboard renders without errors', async ({ page }) => {
   await page.waitForLoadState('networkidle');
 
   // Verify no critical JavaScript errors occurred
-  const criticalErrors = errors.filter(
-    (e) => !e.includes('ResizeObserver') && !e.includes('favicon')
-  );
+  const criticalErrors = errors.filter((e) => !e.includes('ResizeObserver') && !e.includes('favicon'));
   expect(criticalErrors).toHaveLength(0);
 });
 
@@ -52,7 +52,7 @@ test('search input is present', async ({ page }) => {
 
   // Search should be accessible somewhere in the UI
   const search = page.locator(
-    'input[type="search"], input[placeholder*="search" i], input[placeholder*="Search" i], [data-testid="search-input"]'
+    'input[type="search"], input[placeholder*="search" i], input[placeholder*="Search" i], [data-testid="search-input"]',
   );
   const count = await search.count();
   expect(count).toBeGreaterThanOrEqual(1);

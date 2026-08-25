@@ -52,5 +52,5 @@ export const useStore =
             spaces: [],
           }),
           onRehydrateStorage: () => validateHydratedState,
-        })
+        }),
       );

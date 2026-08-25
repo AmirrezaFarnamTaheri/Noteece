@@ -97,7 +97,7 @@ export function SocialSearch({ spaceId }: SocialSearchProperties) {
             <Center py="xl">
               <Loader size="lg" />
             </Center>
-          ) : (results && results.length > 0 ? (
+          ) : results && results.length > 0 ? (
             <>
               <Group>
                 <Text size="sm" fw={500}>
@@ -142,7 +142,7 @@ export function SocialSearch({ spaceId }: SocialSearchProperties) {
                 </Stack>
               </Center>
             )
-          ))}
+          )}
         </>
       )}
 

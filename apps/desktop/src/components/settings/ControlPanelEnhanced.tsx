@@ -291,7 +291,9 @@ export const ControlPanelEnhanced: React.FC = () => {
               className={`${classes.presetButton} ${activePreset === preset.id ? classes.active : ''}`}
               onClick={() => applyPreset(preset)}
             >
-              <div className={classes.presetIcon}><preset.icon size={22} /></div>
+              <div className={classes.presetIcon}>
+                <preset.icon size={22} />
+              </div>
               <div className={classes.presetName}>{preset.name}</div>
               <div className={classes.presetDescription}>{preset.description}</div>
             </Paper>

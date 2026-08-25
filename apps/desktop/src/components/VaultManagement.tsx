@@ -37,7 +37,10 @@ const VaultManagement: React.FC = () => {
       navigate('/main');
     } catch (error) {
       logger.error('Failed to create vault:', error as Error);
-      showError({ title: 'Vault Creation Failed', message: error instanceof Error ? error.message : 'An unexpected error occurred' });
+      showError({
+        title: 'Vault Creation Failed',
+        message: error instanceof Error ? error.message : 'An unexpected error occurred',
+      });
     }
   };
 
@@ -48,7 +51,10 @@ const VaultManagement: React.FC = () => {
       navigate('/main');
     } catch (error) {
       logger.error('Failed to unlock vault:', error as Error);
-      showError({ title: 'Vault Unlock Failed', message: error instanceof Error ? error.message : 'An unexpected error occurred' });
+      showError({
+        title: 'Vault Unlock Failed',
+        message: error instanceof Error ? error.message : 'An unexpected error occurred',
+      });
     }
   };
 
@@ -58,8 +64,8 @@ const VaultManagement: React.FC = () => {
         Vault Management
       </Title>
       <Text ta="center" c="dimmed" size="sm" mt="xs">
-        Welcome to Noteece! Create or unlock your encrypted knowledge vault to get started.
-        Your data is protected with end-to-end encryption.
+        Welcome to Noteece! Create or unlock your encrypted knowledge vault to get started. Your data is protected with
+        end-to-end encryption.
       </Text>
 
       <Paper withBorder shadow="md" p={30} mt={30} radius="md">
@@ -68,7 +74,10 @@ const VaultManagement: React.FC = () => {
             label="Vault Path"
             placeholder="/path/to/vault"
             value={path}
-            onChange={(event) => { setPath(event.currentTarget.value); setPathError(''); }}
+            onChange={(event) => {
+              setPath(event.currentTarget.value);
+              setPathError('');
+            }}
             required
             aria-required="true"
             aria-invalid={!!pathError}
@@ -79,7 +88,10 @@ const VaultManagement: React.FC = () => {
             placeholder="Your password"
             type="password"
             value={password}
-            onChange={(event) => { setPassword(event.currentTarget.value); setPasswordError(''); }}
+            onChange={(event) => {
+              setPassword(event.currentTarget.value);
+              setPasswordError('');
+            }}
             required
             aria-required="true"
             aria-invalid={!!passwordError}

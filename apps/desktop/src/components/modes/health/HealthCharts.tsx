@@ -65,7 +65,7 @@ export const HealthCharts: React.FC<HealthChartsProps> = ({
     const percentage = ((last - first) / first) * 100;
 
     return {
-      direction: percentage > 1 ? 'up' : (percentage < -1 ? 'down' : 'neutral'),
+      direction: percentage > 1 ? 'up' : percentage < -1 ? 'down' : 'neutral',
       percentage: Math.abs(percentage),
     };
   }, [chartData]);

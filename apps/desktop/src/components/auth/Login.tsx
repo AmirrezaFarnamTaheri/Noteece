@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-import {
-  IconLock,
-  IconDevices,
-  IconTarget,
-  IconChartBar,
-} from '@tabler/icons-react';
+import { IconLock, IconDevices, IconTarget, IconChartBar } from '@tabler/icons-react';
 import { authService } from '../../services/auth';
 import styles from './Auth.module.css';
 
@@ -115,10 +110,18 @@ const Login: React.FC<LoginProperties> = ({ onSuccess, onSwitchToRegister }) => 
       <div className={styles.features}>
         <h3>About Noteece</h3>
         <ul>
-          <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}><IconLock size={16} /> End-to-end encrypted vault</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}><IconDevices size={16} /> Works on desktop and mobile</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}><IconTarget size={16} /> Integrated social media management</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}><IconChartBar size={16} /> Advanced analytics and insights</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <IconLock size={16} /> End-to-end encrypted vault
+          </li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <IconDevices size={16} /> Works on desktop and mobile
+          </li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <IconTarget size={16} /> Integrated social media management
+          </li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <IconChartBar size={16} /> Advanced analytics and insights
+          </li>
         </ul>
       </div>
     </div>

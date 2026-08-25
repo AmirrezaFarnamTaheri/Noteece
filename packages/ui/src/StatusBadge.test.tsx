@@ -3,9 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { MantineProvider } from '@mantine/core';
 import { StatusBadge } from './StatusBadge';
 
-const wrapper = ({ children }: { children: React.ReactNode }) => (
-  <MantineProvider>{children}</MantineProvider>
-);
+const wrapper = ({ children }: { children: React.ReactNode }) => <MantineProvider>{children}</MantineProvider>;
 
 describe('StatusBadge', () => {
   it('renders status text with proper formatting', () => {

@@ -17,28 +17,30 @@ function initSentry(): void {
 
   try {
     // Dynamic import to avoid hard dependency on @sentry/react
-    import('@sentry/react').then((Sentry) => {
-      Sentry.init({
-        dsn,
-        environment: import.meta.env.MODE || 'development',
-        tracesSampleRate: 0.1,
-        beforeSend(event) {
-          // Scrub sensitive data before sending
-          if (event.exception?.values) {
-            for (const ex of event.exception.values) {
-              if (ex.value) {
-                ex.value = ex.value.replaceAll(/bearer\s+\S+/gi, 'Bearer [REDACTED]');
+    import('@sentry/react')
+      .then((Sentry) => {
+        Sentry.init({
+          dsn,
+          environment: import.meta.env.MODE || 'development',
+          tracesSampleRate: 0.1,
+          beforeSend(event) {
+            // Scrub sensitive data before sending
+            if (event.exception?.values) {
+              for (const ex of event.exception.values) {
+                if (ex.value) {
+                  ex.value = ex.value.replaceAll(/bearer\s+\S+/gi, 'Bearer [REDACTED]');
+                }
               }
             }
-          }
-          return event;
-        },
+            return event;
+          },
+        });
+        sentryInitialized = true;
+        console.info('[Logger] Sentry initialized for remote error reporting.');
+      })
+      .catch(() => {
+        console.info('[Logger] @sentry/react not installed. Remote error reporting disabled.');
       });
-      sentryInitialized = true;
-      console.info('[Logger] Sentry initialized for remote error reporting.');
-    }).catch(() => {
-      console.info('[Logger] @sentry/react not installed. Remote error reporting disabled.');
-    });
   } catch {
     console.info('[Logger] Sentry initialization skipped.');
   }

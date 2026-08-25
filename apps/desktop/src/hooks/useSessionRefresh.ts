@@ -65,28 +65,25 @@ export const useSessionRefresh = (onSessionExpired?: () => void, onWarning?: (mi
     checkSession();
 
     // Set up periodic session refresh (every 15 minutes)
-    refreshIntervalReference.current = setInterval(
-      () => {
-        checkSession();
+    refreshIntervalReference.current = setInterval(() => {
+      checkSession();
 
-        // Check if we should warn about expiry (5 minutes before expiry)
-        const minutesLeft = getSessionTimeRemaining();
+      // Check if we should warn about expiry (5 minutes before expiry)
+      const minutesLeft = getSessionTimeRemaining();
 
-        // Use functional update to avoid dependency on sessionWarning
-        setSessionWarning((previous) => {
-          if (minutesLeft > 0 && minutesLeft <= 5 && !previous.show) {
-            onWarning?.(minutesLeft);
-            return { show: true, minutesLeft };
-          }
-          if (minutesLeft > 5 && previous.show) {
-            // Clear warning if session has been refreshed
-            return { show: false, minutesLeft: 0 };
-          }
-          return previous;
-        });
-      },
-      SESSION_REFRESH_INTERVAL,
-    );
+      // Use functional update to avoid dependency on sessionWarning
+      setSessionWarning((previous) => {
+        if (minutesLeft > 0 && minutesLeft <= 5 && !previous.show) {
+          onWarning?.(minutesLeft);
+          return { show: true, minutesLeft };
+        }
+        if (minutesLeft > 5 && previous.show) {
+          // Clear warning if session has been refreshed
+          return { show: false, minutesLeft: 0 };
+        }
+        return previous;
+      });
+    }, SESSION_REFRESH_INTERVAL);
 
     // Cleanup on unmount
     return () => {

@@ -101,7 +101,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       style,
       ...rest
     },
-    ref
+    ref,
   ) => {
     const handleClick = useCallback(() => {
       if (!disabled && !loading && onClick) {
@@ -190,7 +190,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {!loading && rightSection && <span aria-hidden="true">{rightSection}</span>}
       </button>
     );
-  }
+  },
 );
 
 Button.displayName = 'Button';

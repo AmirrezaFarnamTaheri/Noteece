@@ -28,16 +28,18 @@ describe('Vault Store', () => {
 
   describe('checkVaultExists', () => {
     it('returns true when vault metadata exists', async () => {
-      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify({
-        spaceId: 'test-space',
-        createdAt: Date.now(),
-        version: '1.0.0',
-        passwordSalt: 'dGVzdA==',
-        passwordHash: 'dGVzdA==',
-        dekSalt: 'dGVzdA==',
-        encryptedDek: 'dGVzdA==',
-        dekNonce: 'dGVzdA==',
-      }));
+      mockAsyncStorage.getItem.mockResolvedValue(
+        JSON.stringify({
+          spaceId: 'test-space',
+          createdAt: Date.now(),
+          version: '1.0.0',
+          passwordSalt: 'dGVzdA==',
+          passwordHash: 'dGVzdA==',
+          dekSalt: 'dGVzdA==',
+          encryptedDek: 'dGVzdA==',
+          dekNonce: 'dGVzdA==',
+        }),
+      );
 
       const { useVaultStore } = require('./vault') as typeof import('./vault');
       const exists = await useVaultStore.getState().checkVaultExists();
@@ -97,11 +99,13 @@ describe('Vault Store', () => {
 
   describe('isBiometricEnabled', () => {
     it('returns true when biometric data exists', async () => {
-      mockSecureStore.getItemAsync.mockResolvedValue(JSON.stringify({
-        dek: 'dGVzdA==',
-        spaceId: 'test',
-        enabledAt: Date.now(),
-      }));
+      mockSecureStore.getItemAsync.mockResolvedValue(
+        JSON.stringify({
+          dek: 'dGVzdA==',
+          spaceId: 'test',
+          enabledAt: Date.now(),
+        }),
+      );
 
       const { useVaultStore } = require('./vault') as typeof import('./vault');
       const enabled = await useVaultStore.getState().isBiometricEnabled();

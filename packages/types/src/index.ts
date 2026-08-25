@@ -341,17 +341,21 @@ export type Trip = z.infer<typeof TripSchema>;
 
 export const GraphSnapshotSchema = z.object({
   space_id: z.string(),
-  nodes: z.array(z.object({
-    id: z.string(),
-    label: z.string(),
-    node_type: z.string(),
-    centrality: z.number(),
-  })),
-  edges: z.array(z.object({
-    source: z.string(),
-    target: z.string(),
-    weight: z.number(),
-  })),
+  nodes: z.array(
+    z.object({
+      id: z.string(),
+      label: z.string(),
+      node_type: z.string(),
+      centrality: z.number(),
+    }),
+  ),
+  edges: z.array(
+    z.object({
+      source: z.string(),
+      target: z.string(),
+      weight: z.number(),
+    }),
+  ),
   metrics: z.object({
     node_count: z.number(),
     edge_count: z.number(),

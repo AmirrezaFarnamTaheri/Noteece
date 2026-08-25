@@ -55,11 +55,7 @@ const mockHistory: SyncHistoryEntry[] = [
 ];
 
 const renderWithProviders = (ui: React.ReactNode) => {
-  return render(
-    <MantineProvider>
-      {ui}
-    </MantineProvider>
-  );
+  return render(<MantineProvider>{ui}</MantineProvider>);
 };
 
 describe('SyncHistory', () => {

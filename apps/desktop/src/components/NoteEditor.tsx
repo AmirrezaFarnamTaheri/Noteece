@@ -135,7 +135,10 @@ const NoteEditor: React.FC = () => {
 
   const wordCharCount = useMemo(() => {
     const text = content || '';
-    const stripped = text.replaceAll(/<[^>]*>/g, '').replaceAll(/[#()*>[\]_`~-]/g, '').trim();
+    const stripped = text
+      .replaceAll(/<[^>]*>/g, '')
+      .replaceAll(/[#()*>[\]_`~-]/g, '')
+      .trim();
     const chars = stripped.length;
     const words = stripped.length === 0 ? 0 : stripped.split(/\s+/).filter(Boolean).length;
     return { words, chars };
@@ -244,35 +247,35 @@ const NoteEditor: React.FC = () => {
           {notes
             .filter((note) => !noteSearch.trim() || (note.title || '').toLowerCase().includes(noteSearch.toLowerCase()))
             .map((note) => (
-            <List.Item
-              key={note.id.toString()}
-              onClick={() => setSelectedNote(note)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  setSelectedNote(note);
-                }
-              }}
-              tabIndex={0}
-              role="button"
-              aria-label={`Select note: ${note.title || 'Untitled'}`}
-              style={{
-                cursor: 'pointer',
-                padding: '10px 12px',
-                borderRadius: theme.radius.md,
-                backgroundColor: selectedNote?.id === note.id ? 'rgba(132, 94, 247, 0.15)' : 'transparent',
-                color: selectedNote?.id === note.id ? theme.colors.violet[3] : theme.colors.gray[4],
-                transition: 'all 0.2s ease',
-                fontSize: theme.fontSizes.sm,
-                borderLeft:
-                  selectedNote?.id === note.id ? `3px solid ${theme.colors.violet[5]}` : '3px solid transparent',
-              }}
-            >
-              <Text truncate fw={selectedNote?.id === note.id ? 600 : 400}>
-                {note.title || 'Untitled'}
-              </Text>
-            </List.Item>
-          ))}
+              <List.Item
+                key={note.id.toString()}
+                onClick={() => setSelectedNote(note)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedNote(note);
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-label={`Select note: ${note.title || 'Untitled'}`}
+                style={{
+                  cursor: 'pointer',
+                  padding: '10px 12px',
+                  borderRadius: theme.radius.md,
+                  backgroundColor: selectedNote?.id === note.id ? 'rgba(132, 94, 247, 0.15)' : 'transparent',
+                  color: selectedNote?.id === note.id ? theme.colors.violet[3] : theme.colors.gray[4],
+                  transition: 'all 0.2s ease',
+                  fontSize: theme.fontSizes.sm,
+                  borderLeft:
+                    selectedNote?.id === note.id ? `3px solid ${theme.colors.violet[5]}` : '3px solid transparent',
+                }}
+              >
+                <Text truncate fw={selectedNote?.id === note.id ? 600 : 400}>
+                  {note.title || 'Untitled'}
+                </Text>
+              </List.Item>
+            ))}
         </List>
       </Paper>
 
@@ -333,12 +336,12 @@ const NoteEditor: React.FC = () => {
           <Box
             ref={editorScrollRef}
             style={{
-                flex: 1,
-                overflowY: 'auto',
-                paddingRight: '8px',
-                paddingTop: typewriterMode ? '40vh' : '0',
-                paddingBottom: typewriterMode ? '40vh' : '0',
-                transition: 'padding 0.3s ease'
+              flex: 1,
+              overflowY: 'auto',
+              paddingRight: '8px',
+              paddingTop: typewriterMode ? '40vh' : '0',
+              paddingBottom: typewriterMode ? '40vh' : '0',
+              transition: 'padding 0.3s ease',
             }}
           >
             <LexicalEditor
@@ -354,27 +357,31 @@ const NoteEditor: React.FC = () => {
           <Group mt="lg" justify="space-between" align="center">
             <Group gap="sm">
               <Text size="xs" c="dimmed">
-                {wordCharCount.words} word{wordCharCount.words === 1 ? '' : 's'} · {wordCharCount.chars} character{wordCharCount.chars === 1 ? '' : 's'}
+                {wordCharCount.words} word{wordCharCount.words === 1 ? '' : 's'} · {wordCharCount.chars} character
+                {wordCharCount.chars === 1 ? '' : 's'}
               </Text>
-              {selectedNote && (
-                saveStatus === 'saving' ? (
-                  <Badge color="yellow" size="xs" variant="light">Saving...</Badge>
-                ) : (saveStatus === 'saved' ? (
-                  <Badge color="green" size="xs" variant="light">Saved</Badge>
-                ) : null)
-              )}
+              {selectedNote &&
+                (saveStatus === 'saving' ? (
+                  <Badge color="yellow" size="xs" variant="light">
+                    Saving...
+                  </Badge>
+                ) : saveStatus === 'saved' ? (
+                  <Badge color="green" size="xs" variant="light">
+                    Saved
+                  </Badge>
+                ) : null)}
             </Group>
             <Group gap="sm">
               {selectedNote ? (
-              <Button onClick={handleUpdateNote} color="violet" radius="md">
-                {t('notes.saveChanges')}
-              </Button>
-            ) : (
-              <Button onClick={handleCreateNote} disabled={!title.trim()} color="violet" radius="md">
-                Create Note
-              </Button>
-            )}
-          </Group>
+                <Button onClick={handleUpdateNote} color="violet" radius="md">
+                  {t('notes.saveChanges')}
+                </Button>
+              ) : (
+                <Button onClick={handleCreateNote} disabled={!title.trim()} color="violet" radius="md">
+                  Create Note
+                </Button>
+              )}
+            </Group>
           </Group>
         </div>
       </Paper>

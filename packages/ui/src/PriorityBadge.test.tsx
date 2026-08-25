@@ -3,9 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { MantineProvider } from '@mantine/core';
 import { PriorityBadge } from './PriorityBadge';
 
-const wrapper = ({ children }: { children: React.ReactNode }) => (
-  <MantineProvider>{children}</MantineProvider>
-);
+const wrapper = ({ children }: { children: React.ReactNode }) => <MantineProvider>{children}</MantineProvider>;
 
 describe('PriorityBadge', () => {
   it('renders low priority', () => {

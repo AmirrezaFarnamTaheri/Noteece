@@ -113,7 +113,7 @@ const FocusTimerComponent: React.FC = () => {
                 {formatTime(timeLeft)}
               </Text>
               <Text size="xs" c="dimmed">
-                {isFinished ? 'Complete!' : (isRunning ? 'Running' : 'Ready')}
+                {isFinished ? 'Complete!' : isRunning ? 'Running' : 'Ready'}
               </Text>
             </Stack>
           }
@@ -130,15 +130,30 @@ const FocusTimerComponent: React.FC = () => {
 
         <Group gap="xs">
           {isRunning ? (
-            <Button leftSection={<IconPlayerPause size={16} />} onClick={handlePause} color="orange" aria-label="Pause focus timer">
+            <Button
+              leftSection={<IconPlayerPause size={16} />}
+              onClick={handlePause}
+              color="orange"
+              aria-label="Pause focus timer"
+            >
               Pause
             </Button>
           ) : (
-            <Button leftSection={<IconPlayerPlay size={16} />} onClick={handleStart} color="blue" aria-label="Start focus timer">
+            <Button
+              leftSection={<IconPlayerPlay size={16} />}
+              onClick={handleStart}
+              color="blue"
+              aria-label="Start focus timer"
+            >
               Start
             </Button>
           )}
-          <Button leftSection={<IconRefresh size={16} />} onClick={handleReset} variant="light" aria-label="Reset focus timer">
+          <Button
+            leftSection={<IconRefresh size={16} />}
+            onClick={handleReset}
+            variant="light"
+            aria-label="Reset focus timer"
+          >
             Reset
           </Button>
         </Group>

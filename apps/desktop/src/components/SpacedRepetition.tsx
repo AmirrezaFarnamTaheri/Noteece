@@ -327,7 +327,7 @@ const SpacedRepetition: React.FC = () => {
                 Current Streak
               </Text>
               <Title order={2} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <IconFlame size={24} color='var(--mantine-color-orange-5)' /> {stats.streak}
+                <IconFlame size={24} color="var(--mantine-color-orange-5)" /> {stats.streak}
               </Title>
             </div>
           </Group>

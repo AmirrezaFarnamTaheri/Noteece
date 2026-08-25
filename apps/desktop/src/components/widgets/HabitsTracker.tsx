@@ -145,7 +145,7 @@ export default function HabitsTracker() {
           <Progress
             value={completionRate}
             size="lg"
-            color={completionRate === 100 ? 'green' : (completionRate > 50 ? 'blue' : 'red')}
+            color={completionRate === 100 ? 'green' : completionRate > 50 ? 'blue' : 'red'}
           />
         </div>
 
@@ -177,7 +177,7 @@ export default function HabitsTracker() {
                 <Badge
                   size="sm"
                   variant="light"
-                  color={habit.streak > 10 ? 'orange' : (habit.streak > 5 ? 'blue' : 'gray')}
+                  color={habit.streak > 10 ? 'orange' : habit.streak > 5 ? 'blue' : 'gray'}
                 >
                   <IconFlame size={13} style={{ marginRight: 2 }} /> {habit.streak}
                 </Badge>

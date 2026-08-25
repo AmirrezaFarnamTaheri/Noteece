@@ -19,7 +19,9 @@ const DiffField: React.FC<{ label: string; local: unknown; remote: unknown }> = 
 
   return (
     <Paper withBorder p="xs" bg="var(--mantine-color-body)">
-      <Text size="xs" fw={700} c="dimmed" mb={4}>{label}</Text>
+      <Text size="xs" fw={700} c="dimmed" mb={4}>
+        {label}
+      </Text>
       <Grid>
         <Grid.Col span={5}>
           <Text size="sm" style={{ wordBreak: 'break-word' }}>
@@ -57,17 +59,12 @@ const ConflictDiffViewer: React.FC<{ conflict: SyncConflict }> = ({ conflict }) 
   // Identify common fields based on entity type (heuristic)
   const allKeys = [...new Set([...Object.keys(localData), ...Object.keys(remoteData)])];
   const ignoredKeys = new Set(['id', 'created_at', 'modified_at', 'vector_clock']); // Ignore internal fields
-  const diffKeys = allKeys.filter(k => !ignoredKeys.has(k));
+  const diffKeys = allKeys.filter((k) => !ignoredKeys.has(k));
 
   return (
     <Stack gap="xs">
-      {diffKeys.map(key => (
-        <DiffField
-          key={key}
-          label={key}
-          local={localData[key]}
-          remote={remoteData[key]}
-        />
+      {diffKeys.map((key) => (
+        <DiffField key={key} label={key} local={localData[key]} remote={remoteData[key]} />
       ))}
       {diffKeys.length === 0 && (
         <Text c="dimmed" size="sm" fs="italic">
@@ -116,7 +113,9 @@ export const ConflictResolver: React.FC<ConflictResolverProps> = ({ conflicts, o
               <Group gap="sm">
                 <IconGitMerge size={16} />
                 <Text size="sm">{formatEntityType(conflict.entity_type)}</Text>
-                <Badge size="xs" variant="outline">{conflict.entity_id.slice(0, 8)}</Badge>
+                <Badge size="xs" variant="outline">
+                  {conflict.entity_id.slice(0, 8)}
+                </Badge>
               </Group>
             </Accordion.Control>
             <Accordion.Panel>

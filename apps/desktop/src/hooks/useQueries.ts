@@ -8,8 +8,6 @@ import type { FormField, Task } from '@noteece/types';
 import * as api from '../services/api';
 import { queryKeys } from './queryKeys';
 
-
-
 // ============================================
 // SPACES
 // ============================================
@@ -249,4 +247,4 @@ export function usePrefetchSpace() {
   };
 }
 
-export {queryKeys} from './queryKeys';
+export { queryKeys } from './queryKeys';

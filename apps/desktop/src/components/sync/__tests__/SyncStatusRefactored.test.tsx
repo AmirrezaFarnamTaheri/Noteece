@@ -101,7 +101,7 @@ describe('SyncStatusRefactored', () => {
     render(
       <AllTheProviders>
         <SyncStatus />
-      </AllTheProviders>
+      </AllTheProviders>,
     );
 
     expect(screen.getByText('No Space Selected')).toBeInTheDocument();
@@ -111,7 +111,7 @@ describe('SyncStatusRefactored', () => {
     render(
       <AllTheProviders>
         <SyncStatus />
-      </AllTheProviders>
+      </AllTheProviders>,
     );
 
     await waitFor(() => {
@@ -121,7 +121,7 @@ describe('SyncStatusRefactored', () => {
     // Mantine Tabs usually renders active panel. Default is 'devices'.
     // Need to wait for query to resolve.
     await waitFor(() => {
-        expect(screen.getAllByText('Desktop A').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Desktop A').length).toBeGreaterThan(0);
     });
   });
 
@@ -129,7 +129,7 @@ describe('SyncStatusRefactored', () => {
     render(
       <AllTheProviders>
         <SyncStatus />
-      </AllTheProviders>
+      </AllTheProviders>,
     );
 
     await waitFor(() => {

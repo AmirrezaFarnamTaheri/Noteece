@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-import {
-  IconShieldLock,
-  IconLock,
-  IconTrendingUp,
-  IconWorld,
-} from '@tabler/icons-react';
+import { IconShieldLock, IconLock, IconTrendingUp, IconWorld } from '@tabler/icons-react';
 import { authService } from '../../services/auth';
 import styles from './Auth.module.css';
 
@@ -230,10 +225,18 @@ const Register: React.FC<RegisterProperties> = ({ onSuccess, onSwitchToLogin }) 
       <div className={styles.features}>
         <h3>Why join Noteece?</h3>
         <ul>
-          <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}><IconShieldLock size={16} /> Privacy-first by design</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}><IconLock size={16} /> Strong encryption at rest</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}><IconTrendingUp size={16} /> Powerful analytics tools</li>
-          <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}><IconWorld size={16} /> Integrated social platforms</li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <IconShieldLock size={16} /> Privacy-first by design
+          </li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <IconLock size={16} /> Strong encryption at rest
+          </li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <IconTrendingUp size={16} /> Powerful analytics tools
+          </li>
+          <li style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <IconWorld size={16} /> Integrated social platforms
+          </li>
         </ul>
       </div>
     </div>

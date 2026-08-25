@@ -9,6 +9,7 @@ module.exports = {
   rules: {
     'react-hooks/exhaustive-deps': 'warn',
     'security/detect-object-injection': 'off',
+    'unicorn/no-nested-ternary': 'off', // conflicts with prettier ternary formatting
     'unicorn/prevent-abbreviations': 'off',
     'unicorn/filename-case': 'off',
     'unicorn/no-null': 'off',

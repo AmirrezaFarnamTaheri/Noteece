@@ -65,6 +65,7 @@ curl http://localhost:3000/health
 ```
 
 The health endpoint returns:
+
 - `status`: "ok" or "degraded"
 - `checks.accepting_connections`: always true if responding
 - `checks.in_memory_state`: true if internal state is accessible
@@ -91,6 +92,7 @@ curl http://localhost:3000/metrics
 ```
 
 The metrics endpoint returns:
+
 - `total_requests_served`: cumulative HTTP requests since server start
 - `active_device_count`: number of currently registered devices
 - `message_queue_depth`: total pending messages across all devices
@@ -146,12 +148,12 @@ SELECT MAX(version) FROM schema_version;
 
 ### 4.1 Common Issues
 
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| Devices not discovering each other | mDNS blocked by firewall | Ensure UDP port 5353 is open on both devices |
-| Sync conflicts appearing | Concurrent edits on same entity | Use the Conflict Resolver UI to choose local/remote/merge |
-| Relay connection refused | Relay server not running | Start relay server or check `RELAY_JWT_SECRET` |
-| Token expired | JWT token older than 24h | Re-register device with relay server |
+| Issue                              | Cause                           | Solution                                                  |
+| ---------------------------------- | ------------------------------- | --------------------------------------------------------- |
+| Devices not discovering each other | mDNS blocked by firewall        | Ensure UDP port 5353 is open on both devices              |
+| Sync conflicts appearing           | Concurrent edits on same entity | Use the Conflict Resolver UI to choose local/remote/merge |
+| Relay connection refused           | Relay server not running        | Start relay server or check `RELAY_JWT_SECRET`            |
+| Token expired                      | JWT token older than 24h        | Re-register device with relay server                      |
 
 ### 4.2 Force Sync Reset
 
@@ -189,6 +191,7 @@ If a vault DEK is suspected compromised:
 Rotating the JWT secret invalidates all existing device tokens. All devices must re-register.
 
 **When to rotate:**
+
 - Suspected secret compromise
 - Scheduled rotation (e.g., every 90 days)
 - After a security incident
@@ -202,14 +205,16 @@ Rotating the JWT secret invalidates all existing device tokens. All devices must
    openssl rand -hex 32
    ```
 3. **Update the environment variable:**
+
    ```bash
    # Stop the relay server
    # Update RELAY_JWT_SECRET with the new value
    export RELAY_JWT_SECRET=<new-secret>
-   
+
    # Restart the relay server
    ./relay-server
    ```
+
 4. **Re-register all devices:** Each device must call `POST /register` again to get a new JWT token
 5. **Verify:** Check `/health` returns ok and devices can send/fetch messages
 

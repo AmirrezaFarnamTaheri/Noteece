@@ -25,16 +25,20 @@ const Overview = lazy(() => import('./components/project_hub/Overview'));
 const Kanban = lazy(() => import('./components/project_hub/Kanban'));
 const Timeline = lazy(() => import('./components/project_hub/Timeline'));
 const Risks = lazy(() => import('./components/project_hub/Risks'));
-const SyncStatus = lazy(() => import('./components/sync').then(m => ({ default: m.SyncStatus })));
+const SyncStatus = lazy(() => import('./components/sync').then((m) => ({ default: m.SyncStatus })));
 const UserManagement = lazy(() => import('./components/user-management'));
 const FormTemplates = lazy(() => import('./components/FormTemplates'));
 const LocalAnalytics = lazy(() => import('./components/LocalAnalytics'));
-const OcrManager = lazy(() => import('./components/OcrManager').then(m => ({ default: m.OcrManager })));
+const OcrManager = lazy(() => import('./components/OcrManager').then((m) => ({ default: m.OcrManager })));
 const Journal = lazy(() => import('./pages/Journal'));
 const Habits = lazy(() => import('./pages/Habits'));
 
 function LoadingFallback() {
-  return <Center h="100vh"><Loader /></Center>;
+  return (
+    <Center h="100vh">
+      <Loader />
+    </Center>
+  );
 }
 
 // Wrapper component to initialize spaces
@@ -81,34 +85,238 @@ function App() {
             ),
             errorElement: <ErrorBoundary />,
             children: [
-              { index: true, element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><Dashboard /></Suspense></ErrorBoundary> },
-              { path: 'editor', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><NoteEditor /></Suspense></ErrorBoundary> },
-              { path: 'tasks', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><TaskBoard /></Suspense></ErrorBoundary> },
+              {
+                index: true,
+                element: (
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <Dashboard />
+                    </Suspense>
+                  </ErrorBoundary>
+                ),
+              },
+              {
+                path: 'editor',
+                element: (
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <NoteEditor />
+                    </Suspense>
+                  </ErrorBoundary>
+                ),
+              },
+              {
+                path: 'tasks',
+                element: (
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <TaskBoard />
+                    </Suspense>
+                  </ErrorBoundary>
+                ),
+              },
               {
                 path: 'projects',
-                element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><ProjectHub /></Suspense></ErrorBoundary>,
+                element: (
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ProjectHub />
+                    </Suspense>
+                  </ErrorBoundary>
+                ),
                 children: [
-                  { index: true, element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><Overview /></Suspense></ErrorBoundary> },
-                  { path: 'kanban', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><Kanban /></Suspense></ErrorBoundary> },
-                  { path: 'timeline', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><Timeline /></Suspense></ErrorBoundary> },
-                  { path: 'risks', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><Risks /></Suspense></ErrorBoundary> },
+                  {
+                    index: true,
+                    element: (
+                      <ErrorBoundary>
+                        <Suspense fallback={<LoadingFallback />}>
+                          <Overview />
+                        </Suspense>
+                      </ErrorBoundary>
+                    ),
+                  },
+                  {
+                    path: 'kanban',
+                    element: (
+                      <ErrorBoundary>
+                        <Suspense fallback={<LoadingFallback />}>
+                          <Kanban />
+                        </Suspense>
+                      </ErrorBoundary>
+                    ),
+                  },
+                  {
+                    path: 'timeline',
+                    element: (
+                      <ErrorBoundary>
+                        <Suspense fallback={<LoadingFallback />}>
+                          <Timeline />
+                        </Suspense>
+                      </ErrorBoundary>
+                    ),
+                  },
+                  {
+                    path: 'risks',
+                    element: (
+                      <ErrorBoundary>
+                        <Suspense fallback={<LoadingFallback />}>
+                          <Risks />
+                        </Suspense>
+                      </ErrorBoundary>
+                    ),
+                  },
                 ],
               },
-              { path: 'searches', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><ActiveSpaceRoute Component={SavedSearches} /></Suspense></ErrorBoundary> },
-              { path: 'review', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><ActiveSpaceRoute Component={WeeklyReview} /></Suspense></ErrorBoundary> },
-              { path: 'journal', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><ActiveSpaceRoute Component={Journal} /></Suspense></ErrorBoundary> },
-              { path: 'habits', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><ActiveSpaceRoute Component={Habits} /></Suspense></ErrorBoundary> },
-              { path: 'meetings', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><MeetingNotes /></Suspense></ErrorBoundary> },
-              { path: 'modes', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><ActiveSpaceRoute Component={ModeStore} /></Suspense></ErrorBoundary> },
-              { path: 'srs', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><SpacedRepetition /></Suspense></ErrorBoundary> },
-              { path: 'settings', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><Settings /></Suspense></ErrorBoundary> },
-              { path: 'import', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><ActiveSpaceRoute Component={AdvancedImport} /></Suspense></ErrorBoundary> },
-              { path: 'search', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><EnhancedSearch /></Suspense></ErrorBoundary> },
-              { path: 'sync', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><SyncStatus /></Suspense></ErrorBoundary> },
-              { path: 'users', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><UserManagement /></Suspense></ErrorBoundary> },
-              { path: 'templates', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><FormTemplates /></Suspense></ErrorBoundary> },
-              { path: 'analytics', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><LocalAnalytics /></Suspense></ErrorBoundary> },
-              { path: 'ocr', element: <ErrorBoundary><Suspense fallback={<LoadingFallback />}><OcrManager /></Suspense></ErrorBoundary> },
+              {
+                path: 'searches',
+                element: (
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ActiveSpaceRoute Component={SavedSearches} />
+                    </Suspense>
+                  </ErrorBoundary>
+                ),
+              },
+              {
+                path: 'review',
+                element: (
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ActiveSpaceRoute Component={WeeklyReview} />
+                    </Suspense>
+                  </ErrorBoundary>
+                ),
+              },
+              {
+                path: 'journal',
+                element: (
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ActiveSpaceRoute Component={Journal} />
+                    </Suspense>
+                  </ErrorBoundary>
+                ),
+              },
+              {
+                path: 'habits',
+                element: (
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ActiveSpaceRoute Component={Habits} />
+                    </Suspense>
+                  </ErrorBoundary>
+                ),
+              },
+              {
+                path: 'meetings',
+                element: (
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <MeetingNotes />
+                    </Suspense>
+                  </ErrorBoundary>
+                ),
+              },
+              {
+                path: 'modes',
+                element: (
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ActiveSpaceRoute Component={ModeStore} />
+                    </Suspense>
+                  </ErrorBoundary>
+                ),
+              },
+              {
+                path: 'srs',
+                element: (
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <SpacedRepetition />
+                    </Suspense>
+                  </ErrorBoundary>
+                ),
+              },
+              {
+                path: 'settings',
+                element: (
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <Settings />
+                    </Suspense>
+                  </ErrorBoundary>
+                ),
+              },
+              {
+                path: 'import',
+                element: (
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ActiveSpaceRoute Component={AdvancedImport} />
+                    </Suspense>
+                  </ErrorBoundary>
+                ),
+              },
+              {
+                path: 'search',
+                element: (
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <EnhancedSearch />
+                    </Suspense>
+                  </ErrorBoundary>
+                ),
+              },
+              {
+                path: 'sync',
+                element: (
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <SyncStatus />
+                    </Suspense>
+                  </ErrorBoundary>
+                ),
+              },
+              {
+                path: 'users',
+                element: (
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <UserManagement />
+                    </Suspense>
+                  </ErrorBoundary>
+                ),
+              },
+              {
+                path: 'templates',
+                element: (
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <FormTemplates />
+                    </Suspense>
+                  </ErrorBoundary>
+                ),
+              },
+              {
+                path: 'analytics',
+                element: (
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <LocalAnalytics />
+                    </Suspense>
+                  </ErrorBoundary>
+                ),
+              },
+              {
+                path: 'ocr',
+                element: (
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <OcrManager />
+                    </Suspense>
+                  </ErrorBoundary>
+                ),
+              },
             ],
           },
         ],

@@ -1,32 +1,17 @@
-design: implement design-audit remediation — emerald identity, icon discipline, a11y fixes
+style: apply prettier across ts/tsx/md; align eslint with prettier
 
-Applies the prioritized findings from DESIGN-AUDIT-2026-08-23.md.
+- Format the full CI surface (**/*.{ts,tsx,md}) so `prettier --check`
+  passes repo-wide (467 files drifted)
+- Disable unicorn/no-nested-ternary in the desktop ESLint config: it
+  fights Prettier's ternary chain formatting (parens stripped on every
+  Prettier pass re-triggering the lint). Prettier is the formatter of
+  record; both gates now pass simultaneously and stably
+- eslint --fix applied for mechanical violations surfaced by the
+  normalization (nested ternaries, import ordering)
+- Mobile tree converted to LF as part of the sweep; its remaining lint
+  output is warning-level only (exit 0) and clears fully after
+  `git add --renormalize .` + fresh checkout on LF platforms
 
-Identity (audit item 6, direction from ui-design-system query):
-- Primary accent violet -> emerald ramp (secure/trust semantics for an
-  encrypted vault); all measured pairs pass WCAG (5.4:1-9.0:1)
-- Headings move to Space Grotesk with Inter kept for body (2+1 font
-  discipline; kills the default Inter-only fingerprint)
-- Auth screen purple->blue gradient replaced with on-brand obsidian radial;
-  100dvh fallback added; disabled inputs given visible dark styling
-
-Iconography (items 1+3):
-- All 29 author-chosen emoji replaced with Tabler equivalents across 12 files
-  (Login/Register feature lists, TaskBoard columns, InsightsWidget insights,
-  ControlPanel presets, SpacedRepetition streaks, SocialAnalytics headings,
-  HabitsTracker badges, BackupRestore encryption marker, MeetingNotes guide,
-  CategoryManager folder defaults kept as user-data strings)
-- InsightsWidget/TaskBoard/ControlPanel preset icon fields converted from
-  emoji strings to typed Tabler component references
-
-Accessibility (item 2):
-- LexicalEditor contentEditable gains :focus-visible outline (WCAG 2.4.7)
-- Auth.module.css gains 100dvh fallback and dark disabled-state styling
-
-Hygiene (items 3+7):
-- console.log in socialConfig routed through the existing logger
-- Reduced-motion guard confirmed present globally in global.css
-- data-testid findings were test-file-local (false positives); no changes
-
-Verified after changes: desktop tsc clean, eslint max-warnings-0 clean,
-jest 348/348 (HabitsTracker assertions updated to match icon-based badge).
+No behavioral changes: desktop jest 348/348, tsc clean, ESLint clean,
+automation-dsl 36/36, mobile type-check clean and vault suite 9/9 all
+re-verified after formatting.

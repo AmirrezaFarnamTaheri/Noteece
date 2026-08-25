@@ -17,14 +17,22 @@ describe('Button', () => {
 
   it('does not call onClick when disabled', () => {
     const handleClick = jest.fn();
-    render(<Button disabled onClick={handleClick}>Click</Button>);
+    render(
+      <Button disabled onClick={handleClick}>
+        Click
+      </Button>,
+    );
     fireEvent.click(screen.getByRole('button'));
     expect(handleClick).not.toHaveBeenCalled();
   });
 
   it('does not call onClick when loading', () => {
     const handleClick = jest.fn();
-    render(<Button loading onClick={handleClick}>Click</Button>);
+    render(
+      <Button loading onClick={handleClick}>
+        Click
+      </Button>,
+    );
     fireEvent.click(screen.getByRole('button'));
     expect(handleClick).not.toHaveBeenCalled();
   });
@@ -55,7 +63,11 @@ describe('Button', () => {
   });
 
   it('hides leftSection when loading', () => {
-    render(<Button loading leftSection={<span data-testid="icon">I</span>}>Click</Button>);
+    render(
+      <Button loading leftSection={<span data-testid="icon">I</span>}>
+        Click
+      </Button>,
+    );
     expect(screen.queryByTestId('icon')).not.toBeInTheDocument();
   });
 

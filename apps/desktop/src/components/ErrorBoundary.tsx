@@ -101,7 +101,12 @@ export class ErrorBoundary extends Component<Properties, State> {
                 <Text size="sm">
                   A new version of the application is available. Please reload to get the latest version.
                 </Text>
-                <Button onClick={this.handleReload} variant="outline" color="white" leftSection={<IconRefresh size={16} />}>
+                <Button
+                  onClick={this.handleReload}
+                  variant="outline"
+                  color="white"
+                  leftSection={<IconRefresh size={16} />}
+                >
                   Reload Application
                 </Button>
               </Stack>

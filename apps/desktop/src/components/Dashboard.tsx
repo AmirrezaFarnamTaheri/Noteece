@@ -64,19 +64,18 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     if (activeSpaceId) {
-      getDashboardStats(activeSpaceId).then(stats => {
-        if (stats.quote) setQuote(stats.quote);
-      }).catch(error => logger.error("Failed to fetch dashboard stats", error));
+      getDashboardStats(activeSpaceId)
+        .then((stats) => {
+          if (stats.quote) setQuote(stats.quote);
+        })
+        .catch((error) => logger.error('Failed to fetch dashboard stats', error));
     }
   }, [activeSpaceId]);
 
-  const completedProjects = useMemo(
-    () => projects.filter((project) => project.status === 'done').length,
-    [projects]
-  );
+  const completedProjects = useMemo(() => projects.filter((project) => project.status === 'done').length, [projects]);
   const inProgressProjects = useMemo(
     () => projects.filter((project) => project.status === 'active').length,
-    [projects]
+    [projects],
   );
 
   return (
@@ -122,9 +121,9 @@ const Dashboard: React.FC = () => {
           <Grid gutter="lg">
             <Grid.Col span={{ base: 12, lg: 8 }}>
               <Stack gap="lg">
-                  {/* Universal Widget (Merged Health/Stats) */}
-                  <UniversalDashboardWidget />
-                  {quote && <QuoteWidget quote={quote} />}
+                {/* Universal Widget (Merged Health/Stats) */}
+                <UniversalDashboardWidget />
+                {quote && <QuoteWidget quote={quote} />}
               </Stack>
             </Grid.Col>
             <Grid.Col span={{ base: 12, lg: 4 }}>
