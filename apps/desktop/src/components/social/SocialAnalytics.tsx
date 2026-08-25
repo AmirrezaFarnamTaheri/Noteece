@@ -108,7 +108,7 @@ export function SocialAnalytics({ spaceId }: SocialAnalyticsProperties) {
       {/* Header */}
       <Group justify="space-between">
         <div>
-          <Title order={2}>📊 Analytics Dashboard</Title>
+          <Title order={2}>Analytics Dashboard</Title>
           <Text size="sm" c="dimmed" mt="xs">
             Insights from your social media activity
           </Text>
@@ -267,7 +267,7 @@ export function SocialAnalytics({ spaceId }: SocialAnalyticsProperties) {
       {analytics.top_posts.length > 0 && (
         <Card shadow="sm" padding="lg" radius="md" withBorder>
           <Title order={3} mb="md">
-            🔥 Top Performing Posts
+            Top Performing Posts
           </Title>
           <Stack gap="md">
             {analytics.top_posts.map((post, index) => {
@@ -307,7 +307,7 @@ export function SocialAnalytics({ spaceId }: SocialAnalyticsProperties) {
       {analytics.time_series.length > 0 && (
         <Card shadow="sm" padding="lg" radius="md" withBorder>
           <Title order={3} mb="md">
-            📈 Activity Timeline
+            Activity Timeline
           </Title>
           <Stack gap="xs">
             {analytics.time_series.slice(-14).map((point) => {

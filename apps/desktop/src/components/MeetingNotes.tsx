@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import { Textarea, TextInput, Button, Card, Text, Stack, Group, Badge, List, Alert } from '@mantine/core';
-import { IconCheck } from '@tabler/icons-react';
+import { IconBulb, IconCheck } from '@tabler/icons-react';
 import { showSuccess, showError } from '../utils/notifications';
 import { useActiveSpace } from '../hooks/useActiveSpace';
 import { logger } from '@/utils/logger';
@@ -138,7 +138,8 @@ const MeetingNotes: React.FC<MeetingNotesProperties> = ({ noteId }) => {
       <Card shadow="sm" p="md" radius="md" withBorder>
         <Stack gap="xs">
           <Text fw={500} size="sm">
-            💡 Quick Guide
+            <IconBulb size={15} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+            Quick Guide
           </Text>
           <Text size="sm" c="dimmed">
             To create action items automatically, use this syntax:

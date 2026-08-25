@@ -5,7 +5,7 @@
  */
 
 import { Stack, TextInput, Card, Text, Group, Center, Loader, ActionIcon, Pill } from '@mantine/core';
-import { IconSearch, IconX } from '@tabler/icons-react';
+import { IconBulb, IconSearch, IconX } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
 import { useState, useEffect } from 'react';
@@ -85,7 +85,8 @@ export function SocialSearch({ spaceId }: SocialSearchProperties) {
           onChange={(e) => setSearchQuery(e.currentTarget.value)}
         />
         <Text size="xs" c="dimmed" mt="xs">
-          💡 Tip: Search by keywords, author names, or platform
+          <IconBulb size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+          Tip: Search by keywords, author names, or platform
         </Text>
       </Card>
 

@@ -57,8 +57,8 @@ describe('HabitsTracker Widget', () => {
     expect(screen.getByText('Read Book')).toBeInTheDocument();
 
     // Check streaks
-    expect(screen.getByText('🔥 5')).toBeInTheDocument();
-    expect(screen.getByText('🔥 12')).toBeInTheDocument();
+    expect(screen.getByText('5')).toBeInTheDocument(); // streak rendered with IconFlame
+    expect(screen.getByText('12')).toBeInTheDocument();
   });
 
   it('calculates and displays progress', async () => {

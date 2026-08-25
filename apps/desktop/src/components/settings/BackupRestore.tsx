@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { IconLock } from '@tabler/icons-react';
 import { invoke } from '@tauri-apps/api/tauri';
 import { formatDateLocal, formatBytesLocal } from '@/utils/format';
 import styles from './BackupRestore.module.css';
@@ -204,7 +205,11 @@ const BackupRestore: React.FC<BackupRestoreProperties> = ({ onBackupComplete, on
                 <div className={styles.backupHeader}>
                   <h4>
                     {backup.metadata.description || 'Backup'}
-                    {backup.metadata.encrypted && <span className={styles.encrypted}>🔒</span>}
+                    {backup.metadata.encrypted && (
+                      <span className={styles.encrypted} title="Encrypted backup">
+                        <IconLock size={14} />
+                      </span>
+                    )}
                   </h4>
                   <span className={styles.date}>{formatDateLocal(backup.metadata.created_at)}</span>
                 </div>

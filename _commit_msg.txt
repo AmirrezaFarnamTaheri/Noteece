@@ -1,0 +1,32 @@
+design: implement design-audit remediation — emerald identity, icon discipline, a11y fixes
+
+Applies the prioritized findings from DESIGN-AUDIT-2026-08-23.md.
+
+Identity (audit item 6, direction from ui-design-system query):
+- Primary accent violet -> emerald ramp (secure/trust semantics for an
+  encrypted vault); all measured pairs pass WCAG (5.4:1-9.0:1)
+- Headings move to Space Grotesk with Inter kept for body (2+1 font
+  discipline; kills the default Inter-only fingerprint)
+- Auth screen purple->blue gradient replaced with on-brand obsidian radial;
+  100dvh fallback added; disabled inputs given visible dark styling
+
+Iconography (items 1+3):
+- All 29 author-chosen emoji replaced with Tabler equivalents across 12 files
+  (Login/Register feature lists, TaskBoard columns, InsightsWidget insights,
+  ControlPanel presets, SpacedRepetition streaks, SocialAnalytics headings,
+  HabitsTracker badges, BackupRestore encryption marker, MeetingNotes guide,
+  CategoryManager folder defaults kept as user-data strings)
+- InsightsWidget/TaskBoard/ControlPanel preset icon fields converted from
+  emoji strings to typed Tabler component references
+
+Accessibility (item 2):
+- LexicalEditor contentEditable gains :focus-visible outline (WCAG 2.4.7)
+- Auth.module.css gains 100dvh fallback and dark disabled-state styling
+
+Hygiene (items 3+7):
+- console.log in socialConfig routed through the existing logger
+- Reduced-motion guard confirmed present globally in global.css
+- data-testid findings were test-file-local (false positives); no changes
+
+Verified after changes: desktop tsc clean, eslint max-warnings-0 clean,
+jest 348/348 (HabitsTracker assertions updated to match icon-based badge).

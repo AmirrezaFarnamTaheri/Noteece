@@ -1,7 +1,7 @@
 import { createTheme, MantineThemeOverride } from '@mantine/core';
 
 export const theme: MantineThemeOverride = createTheme({
-  primaryColor: 'violet',
+  primaryColor: 'emerald',
   defaultRadius: 'md',
   fontFamily: 'Inter, system-ui, sans-serif',
   headings: {
@@ -33,17 +33,17 @@ export const theme: MantineThemeOverride = createTheme({
       '#141517',
       '#050506',
     ],
-    violet: [
-      '#f3f0ff',
-      '#e5dbff',
-      '#d0bfff',
-      '#b197fc',
-      '#9775fa',
-      '#845ef7',
-      '#7950f2',
-      '#7048e8',
-      '#6741d9',
-      '#5f3dc4',
+    emerald: [
+      '#ecfdf5',
+      '#d1fae5',
+      '#a7f3d0',
+      '#6ee7b7',
+      '#34d399',
+      '#10b981',
+      '#059669',
+      '#047857',
+      '#065f46',
+      '#064e3b',
     ],
   },
   components: {

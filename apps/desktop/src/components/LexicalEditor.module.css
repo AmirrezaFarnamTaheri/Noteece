@@ -174,3 +174,9 @@
 :global(.lexical-token-class-name) {
   color: var(--mantine-color-yellow-4);
 }
+
+.contentEditable:focus {
+  outline: 2px solid var(--mantine-color-emerald-6);
+  outline-offset: -2px;
+  border-radius: inherit;
+}

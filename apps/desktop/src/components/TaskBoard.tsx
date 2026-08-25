@@ -8,7 +8,18 @@ import type { Task } from './types';
 import { useStore } from '../store';
 import { useTasks, useUpdateTask, queryKeys } from '../hooks/useQueries';
 import * as api from '../services/api';
-import { IconPlus, IconGripVertical, IconCalendar, IconFlag } from '@tabler/icons-react';
+import {
+  IconPlus,
+  IconGripVertical,
+  IconCalendar,
+  IconFlag,
+  IconInbox,
+  IconClipboardList,
+  IconBolt,
+  IconHourglass,
+  IconCircleCheck,
+  IconX,
+} from '@tabler/icons-react';
 import { logger } from '@/utils/logger';
 
 // Whitelist of safe Mantine color tokens to prevent CSS injection
@@ -92,15 +103,19 @@ const colorTokenMap: Record<SafeColor, { bgActive: string; bgIdle: string; borde
   };
 
 type ColumnKey = 'inbox' | 'next' | 'in_progress' | 'waiting' | 'done' | 'cancelled';
-type ColumnDef = { readonly titleKey: string; readonly color: SafeColor; readonly icon: string };
+type ColumnDef = {
+  readonly titleKey: string;
+  readonly color: SafeColor;
+  readonly icon: React.ComponentType<{ size?: number | string; stroke?: number | string }>;
+};
 
 const columns: Readonly<Record<ColumnKey, ColumnDef>> = Object.freeze({
-  inbox: { titleKey: 'tasks.columns.inbox', color: 'gray', icon: '📥' },
-  next: { titleKey: 'tasks.columns.next', color: 'blue', icon: '📋' },
-  in_progress: { titleKey: 'tasks.columns.inProgress', color: 'yellow', icon: '⚡' },
-  waiting: { titleKey: 'tasks.columns.waiting', color: 'orange', icon: '⏳' },
-  done: { titleKey: 'tasks.columns.done', color: 'green', icon: '✅' },
-  cancelled: { titleKey: 'tasks.columns.cancelled', color: 'gray', icon: '❌' },
+  inbox: { titleKey: 'tasks.columns.inbox', color: 'gray', icon: IconInbox },
+  next: { titleKey: 'tasks.columns.next', color: 'blue', icon: IconClipboardList },
+  in_progress: { titleKey: 'tasks.columns.inProgress', color: 'yellow', icon: IconBolt },
+  waiting: { titleKey: 'tasks.columns.waiting', color: 'orange', icon: IconHourglass },
+  done: { titleKey: 'tasks.columns.done', color: 'green', icon: IconCircleCheck },
+  cancelled: { titleKey: 'tasks.columns.cancelled', color: 'gray', icon: IconX },
 } as const);
 
 const TaskBoard: React.FC = () => {

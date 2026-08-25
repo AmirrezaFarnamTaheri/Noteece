@@ -18,7 +18,7 @@ import {
   Select,
   ActionIcon,
 } from '@mantine/core';
-import { IconRun, IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconRun, IconPlus, IconTrash, IconFlame } from '@tabler/icons-react';
 import { useForm } from '@mantine/form';
 import { invoke } from '@tauri-apps/api/tauri';
 import { useStore } from '../../store';
@@ -179,7 +179,7 @@ export default function HabitsTracker() {
                   variant="light"
                   color={habit.streak > 10 ? 'orange' : (habit.streak > 5 ? 'blue' : 'gray')}
                 >
-                  🔥 {habit.streak}
+                  <IconFlame size={13} style={{ marginRight: 2 }} /> {habit.streak}
                 </Badge>
                 <ActionIcon
                   size="sm"

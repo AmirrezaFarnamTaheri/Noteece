@@ -4,7 +4,24 @@
 
 import { memo } from 'react';
 import { Paper, Title, Text, Group, Stack, Badge, ActionIcon } from '@mantine/core';
-import { IconBulb, IconRefresh, IconSparkles } from '@tabler/icons-react';
+import {
+  IconBulb,
+  IconRefresh,
+  IconSparkles,
+  IconPencil,
+  IconAlertTriangle,
+  IconTrophy,
+  IconClipboardList,
+  IconRocket,
+  IconLink,
+  IconStar,
+  IconTrendingUp,
+  IconNote,
+  IconFlame,
+  IconTrendingDown,
+  IconBooks,
+  IconSeeding,
+} from '@tabler/icons-react';
 import { useNotes, useTasks, useProjects } from '../../hooks/useQueries';
 import { useStore } from '../../store';
 
@@ -13,7 +30,7 @@ interface Insight {
   type: 'suggestion' | 'achievement' | 'warning';
   title: string;
   description: string;
-  icon: string;
+  icon: React.ComponentType<{ size?: number | string; stroke?: number | string }>;
 }
 
 const getTypeColor = (type: string) => {
@@ -58,7 +75,7 @@ const InsightsWidget: React.FC = () => {
         type: 'achievement',
         title: 'Productive Week!',
         description: `You created ${recentNotes.length} notes this week. Keep it up!`,
-        icon: '🎉',
+        icon: IconSparkles,
       });
     } else if (recentNotes.length === 0 && notes.length > 0) {
       insights.push({
@@ -66,7 +83,7 @@ const InsightsWidget: React.FC = () => {
         type: 'suggestion',
         title: 'Write Something New',
         description: 'No notes this week yet. Start capturing your thoughts!',
-        icon: '✍️',
+        icon: IconPencil,
       });
     }
 
@@ -82,7 +99,7 @@ const InsightsWidget: React.FC = () => {
         type: 'warning',
         title: 'Overdue Tasks',
         description: `You have ${overdueTasks.length} overdue ${overdueTasks.length === 1 ? 'task' : 'tasks'}. Consider reviewing your priorities.`,
-        icon: '⚠️',
+        icon: IconAlertTriangle,
       });
     }
 
@@ -97,7 +114,7 @@ const InsightsWidget: React.FC = () => {
           type: 'achievement',
           title: 'High Achiever!',
           description: `${completionRate}% task completion rate. You're crushing it!`,
-          icon: '🏆',
+          icon: IconTrophy,
         });
       } else if (completionRate < 25) {
         insights.push({
@@ -105,7 +122,7 @@ const InsightsWidget: React.FC = () => {
           type: 'suggestion',
           title: 'Task Backlog',
           description: 'Many pending tasks. Try breaking them into smaller steps.',
-          icon: '📋',
+          icon: IconClipboardList,
         });
       }
     }
@@ -118,7 +135,7 @@ const InsightsWidget: React.FC = () => {
         type: 'suggestion',
         title: 'Too Many Active Projects',
         description: `Consider focusing on fewer projects at once for better results.`,
-        icon: '💡',
+        icon: IconBulb,
       });
     } else if (activeProjects.length === 0 && projects.length > 0) {
       insights.push({
@@ -126,7 +143,7 @@ const InsightsWidget: React.FC = () => {
         type: 'suggestion',
         title: 'Inactive Projects',
         description: 'All projects are inactive. Time to start something new?',
-        icon: '🚀',
+        icon: IconRocket,
       });
     }
 
@@ -143,7 +160,7 @@ const InsightsWidget: React.FC = () => {
         type: 'suggestion',
         title: 'Unlinked Notes',
         description: `${orphanedNotes.length} notes have no connections. Try linking related ideas!`,
-        icon: '🔗',
+        icon: IconLink,
       });
     }
 
@@ -162,7 +179,7 @@ const InsightsWidget: React.FC = () => {
         type: 'achievement',
         title: 'Consistent Creator',
         description: `You've created notes on ${uniqueDates.size} different days!`,
-        icon: '⭐',
+        icon: IconStar,
       });
     }
 
@@ -187,7 +204,7 @@ const InsightsWidget: React.FC = () => {
         type: 'achievement',
         title: 'Momentum Building',
         description: 'Your productivity is trending up! Keep the momentum going!',
-        icon: '📈',
+        icon: IconTrendingUp,
       });
     } else if (previousWeekNotes > lastWeekNotes * 1.5 && previousWeekNotes > 0) {
       insights.push({
@@ -195,7 +212,7 @@ const InsightsWidget: React.FC = () => {
         type: 'suggestion',
         title: 'Slowing Down',
         description: 'Activity has decreased. Consider setting small daily goals.',
-        icon: '📉',
+        icon: IconTrendingDown,
       });
     }
 
@@ -212,7 +229,7 @@ const InsightsWidget: React.FC = () => {
         type: 'achievement',
         title: 'Prolific Writer',
         description: `${totalWords.toLocaleString()} words written! That's novel-length!`,
-        icon: '📚',
+        icon: IconBooks,
       });
     } else if (totalWords > 10_000) {
       insights.push({
@@ -220,7 +237,7 @@ const InsightsWidget: React.FC = () => {
         type: 'achievement',
         title: 'Growing Collection',
         description: `${totalWords.toLocaleString()} words written across all notes!`,
-        icon: '📝',
+        icon: IconNote,
       });
     }
 
@@ -234,7 +251,7 @@ const InsightsWidget: React.FC = () => {
         type: 'warning',
         title: 'Urgent Items Pending',
         description: `${highPriorityPending} high-priority tasks need attention.`,
-        icon: '🔥',
+        icon: IconFlame,
       });
     }
 
@@ -245,7 +262,7 @@ const InsightsWidget: React.FC = () => {
         type: 'achievement',
         title: 'First Note Created!',
         description: 'Welcome to Noteece! This is the start of something great.',
-        icon: '🌱',
+        icon: IconSeeding,
       });
     }
 
@@ -282,7 +299,7 @@ const InsightsWidget: React.FC = () => {
           {insights.map((insight) => (
             <Paper key={insight.id} withBorder p="sm" style={{ backgroundColor: 'var(--mantine-color-dark-6)' }}>
               <Group gap="xs" wrap="nowrap" align="flex-start">
-                <Text size="xl">{insight.icon}</Text>
+                <insight.icon size={22} stroke={1.8} />
                 <div style={{ flex: 1 }}>
                   <Group gap="xs" mb="xs">
                     <Text size="sm" fw={600}>

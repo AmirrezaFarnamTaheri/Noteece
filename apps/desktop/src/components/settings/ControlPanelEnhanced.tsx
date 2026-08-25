@@ -22,6 +22,8 @@ import {
 } from '@mantine/core';
 import {
   IconLayoutDashboard,
+  IconTarget,
+  IconBolt,
   IconPuzzle,
   IconRefresh,
   IconBrain,
@@ -43,7 +45,8 @@ interface Preset {
   id: string;
   name: string;
   description: string;
-  icon: string;
+  icon: React.ComponentType<{ size?: number | string }>;
+  iconSize?: number;
   widgets: string[];
   features: string[];
 }
@@ -53,7 +56,7 @@ const PRESETS: Preset[] = [
     id: 'minimal',
     name: 'Minimal',
     description: 'Clean and focused',
-    icon: '🎯',
+    icon: IconTarget,
     widgets: ['quickStats', 'dueToday', 'recentNotes'],
     features: ['notes', 'tasks', 'calendar'],
   },
@@ -61,7 +64,7 @@ const PRESETS: Preset[] = [
     id: 'productivity',
     name: 'Productivity',
     description: 'Get things done',
-    icon: '⚡',
+    icon: IconBolt,
     widgets: ['quickStats', 'dueToday', 'recentNotes', 'calendar', 'focusTimer', 'recentProjects', 'weeklyProgress'],
     features: ['notes', 'tasks', 'projects', 'calendar', 'localAI', 'aiInsights'],
   },
@@ -69,7 +72,7 @@ const PRESETS: Preset[] = [
     id: 'health',
     name: 'Health Focus',
     description: 'Track wellness',
-    icon: '💚',
+    icon: IconHeart,
     widgets: ['quickStats', 'habits', 'goals', 'mood', 'health', 'weeklyProgress'],
     features: ['notes', 'tasks', 'habits', 'goals', 'health', 'foresight'],
   },
@@ -77,7 +80,7 @@ const PRESETS: Preset[] = [
     id: 'power',
     name: 'Power User',
     description: 'Everything enabled',
-    icon: '🚀',
+    icon: IconRocket,
     widgets: [
       'quickStats',
       'dueToday',
@@ -288,7 +291,7 @@ export const ControlPanelEnhanced: React.FC = () => {
               className={`${classes.presetButton} ${activePreset === preset.id ? classes.active : ''}`}
               onClick={() => applyPreset(preset)}
             >
-              <div className={classes.presetIcon}>{preset.icon}</div>
+              <div className={classes.presetIcon}><preset.icon size={22} /></div>
               <div className={classes.presetName}>{preset.name}</div>
               <div className={classes.presetDescription}>{preset.description}</div>
             </Paper>

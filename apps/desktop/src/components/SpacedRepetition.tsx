@@ -27,6 +27,7 @@ import {
   IconTrophy,
   IconPlus,
   IconCards,
+  IconFlame,
   IconChartBar,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
@@ -213,7 +214,7 @@ const SpacedRepetition: React.FC = () => {
               Card {currentCardIndex + 1} of {cards.length}
             </Text>
             <Group gap="xs">
-              <Badge color="blue" leftSection="🔥">
+              <Badge color="blue" leftSection={<IconFlame size={12} />}>
                 Streak: {stats.streak}
               </Badge>
               <Badge color="green">
@@ -325,7 +326,9 @@ const SpacedRepetition: React.FC = () => {
               <Text size="sm" c="dimmed" mb="xs">
                 Current Streak
               </Text>
-              <Title order={2}>🔥 {stats.streak}</Title>
+              <Title order={2} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <IconFlame size={24} color='var(--mantine-color-orange-5)' /> {stats.streak}
+              </Title>
             </div>
           </Group>
         </Paper>
